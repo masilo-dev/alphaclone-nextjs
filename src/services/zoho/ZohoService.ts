@@ -140,6 +140,8 @@ export class ZohoService {
         // Encrypt tokens before saving
         if (newConfig.refreshToken && !newConfig.refreshToken.includes(':')) {
             newConfig.refreshToken = await encrypt(newConfig.refreshToken, this.encryptionSecret);
+            delete newConfig.authExpiredAt;
+            delete newConfig.authExpiredReason;
         }
         if (newConfig.accessToken && !newConfig.accessToken.includes(':')) {
             newConfig.accessToken = await encrypt(newConfig.accessToken, this.encryptionSecret);
@@ -185,6 +187,35 @@ export class ZohoService {
         }
     }
 
+    /** Disable cron/API use when Zoho revokes the refresh token. */
+    protected async markRefreshTokenRevoked(reason: string): Promise<void> {
+        const supabase = this.getSupabaseClient();
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('id, config')
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (!existing?.id) return;
+
+        const config = (existing.config as Record<string, unknown>) || {};
+        await supabase
+            .from('integrations')
+            .update({
+                enabled: false,
+                config: {
+                    ...config,
+                    authExpiredAt: new Date().toISOString(),
+                    authExpiredReason: reason,
+                },
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', existing.id);
+    }
+
     async refreshAccessToken(): Promise<string | null> {
         const config = await this.getConfig();
         if (!config?.refreshToken) return null;
@@ -214,10 +245,14 @@ export class ZohoService {
         const data = await response.json();
 
         if (data.error) {
+            const revoked = data.error === 'invalid_code' || data.error === 'invalid_grant';
             console.error('Zoho token refresh failed:', data.error);
-            // Do NOT auto-disconnect here — transient errors (network, rate limit)
-            // would delete the DB record and force a full reconnect unnecessarily.
-            // Only the user can explicitly disconnect via the UI.
+            if (revoked) {
+                await this.markRefreshTokenRevoked(String(data.error));
+                throw new ZohoAuthExpiredError(
+                    'Zoho refresh token is no longer valid. Reconnect Zoho in Integrations.'
+                );
+            }
             return null;
         }
 

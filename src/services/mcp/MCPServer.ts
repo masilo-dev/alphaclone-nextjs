@@ -37,6 +37,7 @@ import { ZohoMailService } from '../zoho/ZohoMailService';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
+import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
 import {
   cancelRun,
   executeRun,
@@ -2640,6 +2641,13 @@ class AlphaCloneMCPServer {
           if (assigned_to != null && assigned_to !== '' && !isUuidString(assigned_to)) {
             throw new Error('assigned_to must be a valid user UUID or omitted');
           }
+          const parsedDueDate =
+            due_date != null && due_date !== '' ? parseFlexibleDueDate(due_date) : null;
+          if (due_date != null && due_date !== '' && !parsedDueDate) {
+            throw new Error(
+              'due_date must be YYYY-MM-DD, ISO datetime, or a phrase like "next Wednesday"'
+            );
+          }
           const { data, error } = await supabaseAdmin
             .from('tasks')
             .insert({
@@ -2648,7 +2656,7 @@ class AlphaCloneMCPServer {
               description: description ?? null,
               related_to_project: project_id && isUuidString(project_id) ? project_id.trim() : null,
               assigned_to: assigned_to && isUuidString(assigned_to) ? assigned_to.trim() : null,
-              due_date: due_date ?? null,
+              due_date: parsedDueDate,
               priority,
               status: 'todo',
             })
@@ -2755,7 +2763,19 @@ class AlphaCloneMCPServer {
           if (typeof title === 'string') update.title = title.trim();
           if (description !== undefined) update.description = description ?? null;
           if (assigned_to !== undefined) update.assigned_to = assigned_to || null;
-          if (due_date !== undefined) update.due_date = due_date || null;
+          if (due_date !== undefined) {
+            if (due_date === null || due_date === '') {
+              update.due_date = null;
+            } else {
+              const parsedDueDate = parseFlexibleDueDate(due_date);
+              if (!parsedDueDate) {
+                throw new Error(
+                  'due_date must be YYYY-MM-DD, ISO datetime, or a phrase like "next Wednesday"'
+                );
+              }
+              update.due_date = parsedDueDate;
+            }
+          }
           if (priority !== undefined) update.priority = priority;
           if (status !== undefined) {
             update.status = status;
@@ -6212,14 +6232,23 @@ class AlphaCloneMCPServer {
           const dryRun = a.dry_run !== false;
           const tasks = Array.isArray(a.tasks) ? a.tasks : [];
           if (!tasks.length) throw new Error('tasks array is required');
-          const normalized = tasks.map((t: any, idx: number) => ({
-            index: idx,
-            title: String(t?.title || '').trim(),
-            description: t?.description ? String(t.description) : null,
-            priority: String(t?.priority || 'medium'),
-            due_date: t?.due_date ? String(t.due_date) : null,
-            assigned_to: t?.assigned_to ? String(t.assigned_to) : null,
-          }));
+          const normalized = tasks.map((t: any, idx: number) => {
+            const rawDue = t?.due_date ? String(t.due_date) : null;
+            const parsedDue = rawDue ? parseFlexibleDueDate(rawDue) : null;
+            if (rawDue && !parsedDue) {
+              throw new Error(
+                `tasks[${idx}].due_date must be YYYY-MM-DD, ISO datetime, or a phrase like "next Wednesday"`
+              );
+            }
+            return {
+              index: idx,
+              title: String(t?.title || '').trim(),
+              description: t?.description ? String(t.description) : null,
+              priority: String(t?.priority || 'medium'),
+              due_date: parsedDue,
+              assigned_to: t?.assigned_to ? String(t.assigned_to) : null,
+            };
+          });
           const invalid = normalized.filter((t) => !t.title);
           if (invalid.length) throw new Error('Every task must include title');
           let created: any[] = [];
