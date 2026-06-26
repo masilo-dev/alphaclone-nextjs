@@ -49,6 +49,7 @@ export function NativeListTile({
   trailing,
   onClick,
   selected,
+  bareIcon,
 }: {
   icon?: React.ReactNode;
   title: string;
@@ -56,6 +57,7 @@ export function NativeListTile({
   trailing?: React.ReactNode;
   onClick?: () => void;
   selected?: boolean;
+  bareIcon?: boolean;
 }) {
   const Tag = onClick ? 'button' : 'div';
   return (
@@ -66,7 +68,9 @@ export function NativeListTile({
         onClick ? 'native-tap active:bg-white/5' : ''
       } ${selected ? 'bg-teal-500/10' : ''}`}
     >
-      {icon ? <div className="native-list-icon shrink-0">{icon}</div> : null}
+      {icon ? (
+        <div className={bareIcon ? 'shrink-0' : 'native-list-icon shrink-0'}>{icon}</div>
+      ) : null}
       <div className="flex-1 min-w-0">
         <div className="text-[15px] font-medium text-white/95 truncate">{title}</div>
         {subtitle ? <div className="text-xs text-white/45 mt-0.5 truncate">{subtitle}</div> : null}

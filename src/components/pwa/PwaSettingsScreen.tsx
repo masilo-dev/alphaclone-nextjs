@@ -117,7 +117,14 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
           return (
             <NativeListTile
               key={mod.id}
-              icon={<Icon className={`w-5 h-5 ${selected ? 'text-teal-400' : 'text-slate-500'}`} />}
+              bareIcon
+              icon={
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${selected ? mod.tileBg : mod.tileBgMuted}`}
+                >
+                  <Icon className="w-4 h-4 text-white" />
+                </div>
+              }
               title={mod.label}
               subtitle={mod.hrefForRole(user.role).replace('/dashboard/', '')}
               selected={selected}
