@@ -90,6 +90,13 @@ export async function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
+    // Cron jobs and inbound webhooks authenticate in-route (cronAuth, webhook secrets).
+    // Skip session refresh and platform policy fetch to avoid edge noise when Supabase
+    // public keys are unset on secondary Vercel projects.
+    if (pathname.startsWith('/api/cron/') || pathname.startsWith('/api/webhooks/')) {
+        return NextResponse.next();
+    }
+
     if (pathname.startsWith('/.well-known')) {
         // MCP Discovery routes should bypass complex OWASP headers (like CSP) to ensure compatibility
         // This includes OAuth metadata and the MCP well-known endpoint itself
