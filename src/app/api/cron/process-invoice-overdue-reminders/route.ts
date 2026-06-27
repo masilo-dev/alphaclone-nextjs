@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 
@@ -123,7 +124,7 @@ async function processInvoiceOverdueReminders() {
             if (recipientEmail) {
                 try {
                     const { data: tenant } = await admin.from('tenants').select('name').eq('id', invoice.tenant_id).single();
-                    const actionUrl = `${appUrl}/invoice/${invoice.id}`;
+                    const actionUrl = await getPublicInvoicePaymentUrl(admin, invoice.id, invoice.tenant_id, appUrl);
                     const pixelUrl = `${appUrl}/api/invoices/track/${trackingToken(invoice.id)}`;
 
                     const emailData = {

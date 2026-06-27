@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
+import MarketingFooter from '@/components/landing/MarketingFooter';
 
 const PlatformGuide: React.FC = () => {
     const [, setIsLoginOpen] = React.useState(false);
@@ -282,7 +283,7 @@ The invited person receives an email with a secure invitation link. When they cl
         {
             icon: TrendingUp,
             title: 'The AI Works While You Work — and While You Sleep',
-            desc: 'The Growth Agent is finding and qualifying leads at 2am while you\'re asleep. By the time you open your laptop in the morning, there are warm conversations ready. This is leverage that would cost $5,000/month to hire a human to do.',
+            desc: 'The Growth Agent can qualify leads and queue follow-ups while you are offline — so warm conversations are ready when you start your day. Results vary by industry and setup.',
         },
         {
             icon: Building2,
@@ -536,6 +537,7 @@ The invited person receives an email with a secure invitation link. When they cl
                     </div>
                 </section>
             </div>
+            <MarketingFooter />
         </div>
     );
 };

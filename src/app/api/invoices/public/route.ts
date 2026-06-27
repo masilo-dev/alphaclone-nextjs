@@ -2,60 +2,138 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 
+export const dynamic = 'force-dynamic';
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function legacyTokenMatchesInvoiceId(token: string, invoiceId: string): boolean {
+  try {
+    const decoded = Buffer.from(token, 'base64url').toString('utf8');
+    return decoded === invoiceId && isUuid(decoded);
+  } catch {
+    return false;
+  }
+}
+
+function mapPublicInvoice(row: Record<string, unknown>, lineItems: Record<string, unknown>[]) {
+  const metadata = (row.metadata || {}) as Record<string, unknown>;
+  const paymentConfirmation = metadata.payment_confirmation as Record<string, unknown> | undefined;
+
+  return {
+    id: row.id,
+    invoiceNumber: row.invoice_number,
+    issueDate: row.issue_date,
+    dueDate: row.due_date,
+    status: row.status,
+    subtotal: row.subtotal,
+    tax_rate: row.tax_rate,
+    taxRate: row.tax_rate,
+    tax: row.tax,
+    discount_amount: row.discount_amount,
+    discountAmount: row.discount_amount,
+    total: row.total,
+    currency: row.currency || 'USD',
+    notes: row.notes,
+    bankDetails: row.bank_details,
+    mobilePaymentDetails: row.mobile_payment_details,
+    client_name: row.client_name,
+    client_email: row.client_email,
+    created_at: row.created_at,
+    sent_at: row.sent_at,
+    viewed_at: row.viewed_at,
+    paid_at: row.paid_at,
+    disputed_at: row.disputed_at,
+    publicToken: metadata.public_token,
+    paymentPendingConfirmation: Boolean(metadata.payment_pending_confirmation),
+    paymentConfirmation: paymentConfirmation || null,
+    lineItems: lineItems.map((li) => ({
+      description: li.description,
+      quantity: li.quantity,
+      unit_price: li.unit_price,
+      rate: li.unit_price,
+      line_total: li.amount,
+      amount: li.amount,
+    })),
+  };
+}
+
+async function authorizePublicInvoice(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  invoiceId: string,
+  token?: string | null
+) {
+  const { data: invoice, error } = await admin
+    .from('business_invoices')
+    .select('*')
+    .eq('id', invoiceId)
+    .maybeSingle();
+
+  if (error || !invoice) {
+    return { invoice: null, branding: null, error: 'Invoice not found' as const };
+  }
+
+  if (!invoice.is_public) {
+    return { invoice: null, branding: null, error: 'Invoice not available publicly' as const };
+  }
+
+  const metadata = (invoice.metadata || {}) as Record<string, string>;
+  const storedToken = String(metadata.public_token || '').trim();
+
+  if (token) {
+    const tokenOk =
+      (storedToken && storedToken === token) ||
+      legacyTokenMatchesInvoiceId(token, invoiceId);
+    if (!tokenOk) {
+      return { invoice: null, branding: null, error: 'Invalid invoice link' as const };
+    }
+  } else if (storedToken) {
+    return { invoice: null, branding: null, error: 'Payment token required' as const };
+  }
+
+  const { data: lineItems } = await admin
+    .from('invoice_line_items')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: true });
+
+  const { data: tenant } = await admin
+    .from('tenants')
+    .select('name, settings')
+    .eq('id', invoice.tenant_id)
+    .maybeSingle();
+
+  return {
+    invoice: mapPublicInvoice(invoice as Record<string, unknown>, (lineItems || []) as Record<string, unknown>[]),
+    branding: extractTenantBranding(tenant),
+    error: null,
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
-    const token = req.nextUrl.searchParams.get('token');
-    const id = req.nextUrl.searchParams.get('id');
+    const invoiceId = req.nextUrl.searchParams.get('id')?.trim() || '';
+    const token = req.nextUrl.searchParams.get('token')?.trim() || '';
 
-    if (!token && !id) {
-      return NextResponse.json({ error: 'token or id is required' }, { status: 400 });
+    if (!invoiceId || !isUuid(invoiceId)) {
+      return NextResponse.json({ error: 'Valid invoice id is required' }, { status: 400 });
     }
 
     const admin = createSupabaseAdminClient();
-    let query = admin
-      .from('business_invoices')
-      .select('*, tenant:tenants(name, settings), line_items:invoice_line_items(*)');
+    const result = await authorizePublicInvoice(admin, invoiceId, token || null);
 
-    if (token) {
-      query = query.eq('metadata->>public_token', token);
-    } else {
-      query = query.eq('id', id!).eq('is_public', true);
+    if (!result.invoice) {
+      const status = result.error === 'Invalid invoice link' ? 401 : 404;
+      return NextResponse.json({ error: result.error }, { status });
     }
-
-    const { data: invoice, error } = await query.maybeSingle();
-    if (error) throw error;
-    if (!invoice || !invoice.is_public) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    }
-
-    const branding = extractTenantBranding(invoice.tenant as { name?: string; settings?: unknown });
-    const metadata = (invoice.metadata || {}) as Record<string, unknown>;
 
     return NextResponse.json({
-      success: true,
-      invoice: {
-        id: invoice.id,
-        invoiceNumber: invoice.invoice_number,
-        clientName: invoice.client_name,
-        clientEmail: invoice.client_email,
-        issueDate: invoice.issue_date,
-        dueDate: invoice.due_date,
-        status: invoice.status,
-        subtotal: invoice.subtotal,
-        tax: invoice.tax,
-        taxRate: invoice.tax_rate,
-        discountAmount: invoice.discount_amount,
-        total: invoice.total,
-        notes: invoice.notes,
-        lineItems: invoice.line_items || [],
-        paymentPendingConfirmation: metadata.payment_pending_confirmation === true,
-        bankDetails: invoice.bank_details || metadata.bank_details || null,
-        mobilePaymentDetails: invoice.mobile_payment_details || metadata.mobile_payment_details || null,
-        publicToken: metadata.public_token || null,
-      },
-      branding,
+      invoice: result.invoice,
+      branding: result.branding,
     });
   } catch (error) {
+    console.error('[invoices/public] error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to load invoice' },
       { status: 500 }

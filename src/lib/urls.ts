@@ -6,15 +6,23 @@
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesystems.com';
 
 export const AppUrls = {
-  // Public Signing
-  signContract: (token: string) => `${BASE_URL}/sign/${token}`,
-  
+  // Public Signing (canonical native contract portal)
+  signContract: (token: string) => `${BASE_URL}/contract/${token}`,
+
   // Public Payment
-  payInvoice: (invoiceId: string) => `${BASE_URL}/invoice/${invoiceId}`,
-  
+  payInvoice: (invoiceId: string, publicToken?: string) =>
+    publicToken
+      ? `${BASE_URL}/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`
+      : `${BASE_URL}/invoice/${invoiceId}`,
+
+  clientFinancePortal: (token: string) => `${BASE_URL}/portal/${token}`,
+
   // Public Document View
-  viewDocument: (docId: string, type: 'invoice' | 'contract' | 'receipt') => 
-    `${BASE_URL}/view/${type}/${docId}`,
+  viewDocument: (docId: string, type: 'invoice' | 'contract' | 'receipt', token?: string) => {
+    if (type === 'contract') return `${BASE_URL}/contract/${docId}`;
+    if (type === 'invoice') return AppUrls.payInvoice(docId, token);
+    return `${BASE_URL}/public/receipt/${docId}`;
+  },
     
   viewReceipt: (docId: string) => `${BASE_URL}/public/receipt/${docId}`,
     

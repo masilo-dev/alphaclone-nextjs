@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
+import CompanyInfoBlock from '@/components/marketing/CompanyInfoBlock';
 
 export const metadata: Metadata = {
   title: 'Legal Documents | AlphaClone Systems',
@@ -94,13 +94,14 @@ const legalPages = [
 
 export default function LegalHubPage() {
   return (
-    <MarketingLandingShell>
-      <main className="min-h-screen bg-[#040A12] text-slate-200 pt-20">
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <main className="min-h-screen bg-[#040A12] text-slate-200">
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-4xl font-black text-white mb-4">Legal and Trust Center</h1>
         <p className="text-slate-300 mb-8">
           All official AlphaClone legal and trust documents are listed here for customers, partners, and search indexing.
         </p>
+
+        <CompanyInfoBlock className="mb-10" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {legalPages.map((page) => (
@@ -115,7 +116,6 @@ export default function LegalHubPage() {
           ))}
         </div>
       </section>
-      </main>
-    </MarketingLandingShell>
+    </main>
   );
 }

@@ -32,6 +32,8 @@ export interface EmailPayload {
   listUnsubscribeUrl?: string;
   isPlatformNotification?: boolean;
   skipFooter?: boolean;
+  /** Skip CRM recipient membership check (inbox replies, document send) */
+  skipRecipientGate?: boolean;
 }
 
 export interface SendEmailResult {
@@ -228,7 +230,7 @@ export async function sendEmail(
     }
 
     for (const recipient of recipients) {
-      if (!payload.isPlatformNotification) {
+      if (!payload.isPlatformNotification && !payload.skipRecipientGate) {
         const { allowed, reason } = await validateRecipient(supabase, tenantId, recipient);
         if (!allowed) return { success: false, tried, error: reason, code: 'BLOCKED_RECIPIENT' };
       }

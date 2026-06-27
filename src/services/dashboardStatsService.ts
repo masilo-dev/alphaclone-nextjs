@@ -173,6 +173,7 @@ export const dashboardStatsService = {
     const [clients, deals, leads] = await Promise.all([
       safeRows<{ id: string; is_active?: boolean; created_at: string }>(
         supabase, 'business_clients', 'id, is_active, created_at', tenantId,
+        (q) => q.eq('is_active', true),
       ),
       safeRows<{ stage: string; value?: number; source?: string; lead_source?: string; created_at: string; actual_close_date?: string }>(
         supabase, 'business_deals', 'stage, value, source, lead_source, created_at, actual_close_date', tenantId,
@@ -234,7 +235,7 @@ export const dashboardStatsService = {
 
     return {
       metrics: [
-        { label: 'Total contacts', value: clients.length + leads.length },
+        { label: 'Total contacts', value: activeClients + leads.length },
         { label: 'Active deals', value: activeDeals, delta: `${Math.abs(dealDelta)}%`, deltaDir: dealDelta >= 0 ? 'up' : 'down', deltaColor: dealDelta >= 0 ? 'green' : 'red', comparisonText: 'vs last 30 days' },
         { label: 'Pipeline value', value: formatMoney(pipelineValue) },
         { label: 'Conversion rate', value: formatPct(conversionRate) },

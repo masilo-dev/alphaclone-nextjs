@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import MarketingRelatedLinks from '@/components/landing/MarketingRelatedLinks';
+import MarketingProductCta from '@/components/marketing/MarketingProductCta';
 import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
 import { absoluteUrl } from '@/lib/siteUrl';
 
@@ -78,6 +79,7 @@ export default function LeadManagementPage() {
                 { label: 'AI Agents', href: '/ai-agents' },
               ]}
             />
+            <MarketingProductCta />
           </section>
         </main>
       </MarketingLandingShell>

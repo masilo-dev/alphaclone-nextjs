@@ -29,6 +29,7 @@ export default function PublicContractPage() {
     const [declined, setDeclined] = useState(false);
     const [declineNote, setDeclineNote] = useState('');
     const [showDeclineForm, setShowDeclineForm] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         if (signingToken) {
@@ -46,6 +47,7 @@ export default function PublicContractPage() {
             if (!response.ok || !payload?.contract) {
                 throw new Error(payload?.error || 'Contract not found');
             }
+            setLoadError(null);
             setContract(payload.contract);
             setSignerEmail(payload?.signer?.email || '');
             if (payload.contract.status === 'fully_signed' || payload.contract.status === 'client_signed') {
@@ -56,7 +58,9 @@ export default function PublicContractPage() {
             }
         } catch (error) {
             console.error('Error loading contract:', error);
-            toast.error('Contract not found or access denied.');
+            const message = error instanceof Error ? error.message : 'Contract not found or access denied.';
+            setLoadError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
@@ -224,7 +228,22 @@ export default function PublicContractPage() {
     }
 
     if (!contract) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Contract not found</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white p-6">
+                <div className="max-w-md w-full text-center bg-slate-900 border border-slate-800 rounded-2xl p-8">
+                    <h1 className="text-2xl font-bold text-red-400 mb-3">Contract Not Found</h1>
+                    <p className="text-slate-400 mb-6">
+                        {loadError || 'This signing link is invalid, expired, or has already been used.'}
+                    </p>
+                    <a
+                        href="/"
+                        className="inline-flex w-full items-center justify-center rounded-xl bg-teal-500 px-4 py-3 font-semibold text-slate-950 hover:bg-teal-400"
+                    >
+                        Return Home
+                    </a>
+                </div>
+            </div>
+        );
     }
 
     return (

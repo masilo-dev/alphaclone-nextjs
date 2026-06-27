@@ -23,6 +23,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { validateEmailField } from '@/lib/email/isValidEmail';
 import { generateText } from '../../services/unifiedAIService';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
@@ -135,8 +136,9 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             return;
         }
         const recipient = emailTo.trim();
-        if (!recipient) {
-            toast.error('Enter a recipient email');
+        const emailError = validateEmailField(recipient);
+        if (emailError) {
+            toast.error(emailError);
             return;
         }
         setIsEmailing(true);
@@ -153,6 +155,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     subject: emailSubject.trim() || `Document: ${emailFile.original_filename}`,
                     body_html: html,
                     document_file_ids: [emailFile.id],
+                    skipRecipientGate: true,
                 }),
             });
             const data = await response.json().catch(() => ({}));

@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { cn } from '@/lib/utils';
 import CreateInvoiceModal from './CreateInvoiceModal';
+import BillableExpensesPicker from './invoicing/BillableExpensesPicker';
 
 
 interface EnhancedInvoiceModalProps {
@@ -108,6 +109,50 @@ export default function EnhancedInvoiceModal({
     template: 'modern',
     paymentMethods: ['stripe']
   });
+
+  const [draftInvoiceId, setDraftInvoiceId] = useState<string | null>(invoice?.id ?? null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (invoice?.id) setDraftInvoiceId(invoice.id);
+  }, [invoice?.id]);
+
+  useEffect(() => {
+    if (!draftInvoiceId || !currentTenant?.id || mode === 'send') return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setAutoSaveStatus('saving');
+      try {
+        const res = await fetch(`/api/invoices/${draftInvoiceId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantId: currentTenant.id,
+            subtotal: formData.subtotal,
+            tax: formData.tax,
+            total: formData.total,
+            due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
+            notes: formData.notes,
+            line_items: formData.items.map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unit_price: item.rate,
+            })),
+            status: 'draft',
+          }),
+        });
+        if (res.ok) setAutoSaveStatus('saved');
+      } catch {
+        setAutoSaveStatus('idle');
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [formData, draftInvoiceId, currentTenant?.id, mode]);
 
   const [clients, setClients] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -200,10 +245,12 @@ export default function EnhancedInvoiceModal({
         const result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData as any);
         if (result.error) throw new Error(result.error);
         finalInvoice = { ...invoice, ...invoiceData, id: invoice.id };
+        setDraftInvoiceId(invoice.id);
       } else {
         const result = await businessInvoiceService.createInvoice(currentTenant?.id || '', invoiceData as any);
         if (result.error) throw new Error(result.error);
         finalInvoice = result.invoice;
+        if (finalInvoice?.id) setDraftInvoiceId(finalInvoice.id);
       }
 
       toast.success("Invoice saved as draft");
@@ -245,10 +292,12 @@ export default function EnhancedInvoiceModal({
         const result = await businessInvoiceService.updateInvoice(invoice.id, invoiceData as any);
         if (result.error) throw new Error(result.error);
         finalInvoice = { ...invoice, ...invoiceData, id: invoice.id };
+        setDraftInvoiceId(invoice.id);
       } else {
         const result = await businessInvoiceService.createInvoice(currentTenant?.id || '', invoiceData as any);
         if (result.error) throw new Error(result.error);
         finalInvoice = result.invoice;
+        if (finalInvoice?.id) setDraftInvoiceId(finalInvoice.id);
       }
 
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
@@ -278,14 +327,26 @@ export default function EnhancedInvoiceModal({
 
   const handleCopyPaymentLink = async () => {
     try {
-      const paymentUrl = `${window.location.origin}/invoice/${invoice?.id}`;
-      await navigator.clipboard.writeText(paymentUrl);
+      const invoiceId = invoice?.id;
+      const tenantId = currentTenant?.id;
+      if (!invoiceId || !tenantId) {
+        toast.error('Save the invoice first');
+        return;
+      }
+      const res = await fetch(
+        `/api/invoices/${invoiceId}/public-link?tenantId=${encodeURIComponent(tenantId)}`
+      );
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Failed to build payment link');
+      }
+      await navigator.clipboard.writeText(data.url);
       setCopiedLink(true);
-      toast.success("Payment link copied to clipboard");
+      toast.success('Payment link copied to clipboard');
       setTimeout(() => setCopiedLink(false), 2000);
     } catch (error) {
       console.error('Failed to copy link:', error);
-      toast.error("Failed to copy payment link");
+      toast.error(error instanceof Error ? error.message : 'Failed to copy payment link');
     }
   };
 
@@ -314,6 +375,28 @@ export default function EnhancedInvoiceModal({
     } catch (error) {
       console.error('Failed to download PDF:', error);
       toast.error("Failed to generate PDF");
+    }
+  };
+
+  const reloadInvoiceFromDraft = async () => {
+    if (!draftInvoiceId || !currentTenant?.id) return;
+    const { invoices } = await businessInvoiceService.getInvoices(currentTenant.id);
+    const found = invoices.find((i) => i.id === draftInvoiceId);
+    if (found) {
+      setFormData((prev) => ({
+        ...prev,
+        items: found.lineItems?.length
+          ? found.lineItems.map((li) => ({
+              description: li.description,
+              quantity: li.quantity,
+              rate: li.rate,
+              amount: li.amount,
+            }))
+          : prev.items,
+        subtotal: found.subtotal,
+        tax: found.tax,
+        total: found.total,
+      }));
     }
   };
 
@@ -411,6 +494,15 @@ export default function EnhancedInvoiceModal({
           />
         </div>
       </div>
+
+      {formData.clientId && currentTenant?.id && (
+        <BillableExpensesPicker
+          tenantId={currentTenant.id}
+          clientId={formData.clientId}
+          invoiceId={draftInvoiceId}
+          onAttached={reloadInvoiceFromDraft}
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -737,7 +829,6 @@ export default function EnhancedInvoiceModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pt-safe pb-safe md:pl-64">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
       <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col relative animate-fade-in overflow-hidden" onClick={e => e.stopPropagation()}>
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <div>
             <h2 className="text-xl font-semibold text-white">
@@ -787,9 +878,9 @@ export default function EnhancedInvoiceModal({
           {activeTab === 'preview' && renderPreviewTab()}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-900/50">
-          <div className="flex items-center space-x-2">
+        {/* Sticky action bar */}
+        <div className="sticky bottom-0 z-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 sm:p-6 border-t border-slate-800 bg-slate-900/95 backdrop-blur-md shrink-0">
+          <div className="flex flex-wrap items-center gap-2">
             {mode !== 'send' && (
               <button
                 onClick={handleSaveDraft}
@@ -817,10 +908,10 @@ export default function EnhancedInvoiceModal({
             )}
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-slate-300 hover:text-white"
+              className="px-4 py-2.5 text-slate-300 hover:text-white order-last sm:order-first"
             >
               Cancel
             </button>

@@ -52,6 +52,7 @@ import { emailHelpers } from '../email/emailService';
 import { invoiceEmailTemplates } from '../../lib/email/invoiceEmailTemplates';
 import { businessInvoiceService } from '../businessInvoiceService';
 import { AppUrls } from '../../lib/urls';
+import { getPublicInvoicePaymentUrl } from '../../lib/invoices/publicInvoiceAccess';
 import { getCampaignLanguageInstruction, resolveCampaignLanguage } from '../../lib/languageUtils';
 import { fileUploadService } from '../fileUploadService';
 import { publicShareService } from '../publicShareService';
@@ -1506,6 +1507,7 @@ class AlphaCloneMCPServer {
             .from('business_clients')
             .select('id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at')
             .eq('tenant_id', tenant_id)
+            .eq('is_active', true)
             .or(`name.ilike.${q},email.ilike.${q},phone.ilike.${q},website.ilike.${q},location.ilike.${q}`)
             .order('created_at', { ascending: false })
             .limit(Math.min(Number(limit) || 100, 1000));
@@ -4199,7 +4201,7 @@ class AlphaCloneMCPServer {
           if (!to) throw new Error('Recipient email is required (not found on client record)');
 
           const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
-          const pdfUrl = AppUrls.payInvoice(invoice.id);
+          const pdfUrl = await getPublicInvoicePaymentUrl(supabaseAdmin, invoice_id, tenant_id);
 
           const dispatch = await sendEmailServer({
             tenantId: tenant_id,

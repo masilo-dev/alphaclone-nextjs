@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
                 .from('contacts')
                 .select('id, full_name, email, company:companies(name, website)')
                 .eq('tenant_id', tenantId)
+                .is('deleted_at', null)
                 .not('email', 'is', null)
                 .order('full_name', { ascending: true });
             if (isMissingRelationOrCache(error, 'contacts') || isWorkspaceSetupError(error)) {
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
                 .from('business_clients')
                 .select('id, name, email, industry, website')
                 .eq('tenant_id', tenantId)
+                .eq('is_active', true)
                 .not('email', 'is', null)
                 .limit(500);
 
@@ -139,7 +141,16 @@ export async function GET(request: NextRequest) {
             return campaignsUnavailableResponse();
         }
         if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
-        return NextResponse.json({ success: true, campaigns: data || [] });
+        return NextResponse.json(
+            {
+                success: true,
+                campaigns: data || [],
+                deprecated: true,
+                message: 'Legacy email_campaigns API is deprecated. Use /api/zoho/campaigns and Zoho CampaignsHub.',
+                migration: '/dashboard/business/campaigns',
+            },
+            { headers: { 'X-Deprecated-API': 'email-campaigns-legacy' } }
+        );
     } catch (error) {
         if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
             return campaignsUnavailableResponse();

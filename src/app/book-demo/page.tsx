@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, CheckCircle2, Users, Zap, Shield } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import Script from 'next/script';
 
 const CALENDLY_URL = 'https://calendly.com/bonniealphaclonesystems/30min';
@@ -74,41 +73,7 @@ export default function BookDemoPage() {
       <div className="absolute top-[50%] -right-20 w-[400px] h-[400px] bg-blue-500/8 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/6 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Header */}
-      <nav className="fixed w-full z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/60 pt-safe">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18 py-4">
-            <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative w-9 h-9 flex-shrink-0">
-                <Image
-                  src="/logo.png"
-                  alt="AlphaClone Systems Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
-            </Link>
-
-            <div className="flex items-center gap-4">
-              <Link
-                href="/auth/login"
-                className="hidden sm:inline-flex items-center h-9 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
-              >
-                Sign in
-              </Link>
-              <Link href="/auth/login?register=true&type=business&plan=starter">
-                <button className="h-9 px-5 bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 text-sm font-bold rounded-xl shadow-lg shadow-teal-500/20 transition-all">
-                  Start Free Trial
-                </button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="relative z-10 pt-28 pb-24 px-4">
+      <main className="relative z-10 py-8 pb-24 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Page Hero */}
           <motion.div

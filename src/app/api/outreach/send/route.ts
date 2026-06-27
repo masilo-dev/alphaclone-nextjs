@@ -169,7 +169,12 @@ export async function POST(request: Request) {
       balanceByDailyLimit = false,
       language,
       languageMode,
+      skipCrmGate = false,
+      directSend = false,
+      entityType,
+      entityId,
     } = parsed.data;
+    const isDirectSend = skipCrmGate || directSend;
     const normalizedSubject = normalizeEmailSubject(subject);
     if (!normalizedSubject) {
       return NextResponse.json({ error: 'Subject is required.' }, { status: 400 });
@@ -178,18 +183,20 @@ export async function POST(request: Request) {
     const tenantCtx = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
 
-    // 0. Recipient Validation
-    const { allowed, reason } = await validateRecipient(admin, tenantId, leadEmail);
-    if (!allowed) {
-      await admin.from('email_audit_log').insert({
-        tenant_id: tenantId,
-        user_id: tenantCtx.user.id,
-        to_email: leadEmail,
-        subject: normalizedSubject,
-        allowed: false,
-        blocked_reason: reason,
-      });
-      return NextResponse.json({ error: reason }, { status: 403 });
+    // 0. Recipient Validation (skipped for direct inbox replies)
+    if (!isDirectSend) {
+      const { allowed, reason } = await validateRecipient(admin, tenantId, leadEmail);
+      if (!allowed) {
+        await admin.from('email_audit_log').insert({
+          tenant_id: tenantId,
+          user_id: tenantCtx.user.id,
+          to_email: leadEmail,
+          subject: normalizedSubject,
+          allowed: false,
+          blocked_reason: reason,
+        });
+        return NextResponse.json({ error: reason }, { status: 403 });
+      }
     }
 
     // 0.1 HTML Sanitization
@@ -225,7 +232,7 @@ export async function POST(request: Request) {
     // Default policy: manual approval required unless explicitly auto-send.
     // Auto-send is allowed only if consent is present and confidence passes threshold.
     const shouldAutoSend = autoSend === true;
-    if (consentGranted !== true) {
+    if (!isDirectSend && consentGranted !== true) {
       return NextResponse.json({ error: 'Marketing consent is required to send outreach emails.' }, { status: 400 });
     }
     const policyQueueOnly =

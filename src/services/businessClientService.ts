@@ -3,6 +3,10 @@ import { quotaService } from './quotaService';
 import { assertContactSalesStageTransition } from '../lib/stageProgression';
 import { tenantService } from './tenancy/TenantService';
 import { activityService } from './activityService';
+import {
+    softDeleteClientById,
+    restoreClientById,
+} from '../lib/crm/softDeleteContact';
 
 let hasLoggedMissingAiProviders = false;
 
@@ -146,6 +150,7 @@ export const businessClientService = {
                     .select('id, name')
                     .eq('tenant_id', tenantId)
                     .eq('email', client.email)
+                    .eq('is_active', true)
                     .maybeSingle();
 
                 if (existing) {
@@ -443,15 +448,15 @@ export const businessClientService = {
             if (!clientToArchive) return { error: 'Client not found' };
             if (!clientToArchive.is_active) return { error: 'Client is already archived' };
 
-            const { error } = await supabase
-                .from('business_clients')
-                .update({ is_active: false })
-                .eq('id', clientId);
-
-            if (error) throw error;
-
-            // Log audit
             const { data: { user } } = await supabase.auth.getUser();
+            const result = await softDeleteClientById(
+                supabase,
+                clientToArchive.tenant_id,
+                clientId,
+                user?.id
+            );
+            if (result.error) return result;
+
             if (user && clientToArchive) {
                 await activityService.logAudit({
                     userId: user.id,
@@ -461,9 +466,7 @@ export const businessClientService = {
                     resourceId: clientId,
                     oldValues: { isActive: true },
                     newValues: { isActive: false },
-                    metadata: {
-                        clientName: clientToArchive.name
-                    }
+                    metadata: { clientName: clientToArchive.name },
                 });
             }
 
@@ -471,6 +474,55 @@ export const businessClientService = {
         } catch (err: any) {
             console.error('Error deleting client:', err);
             return { error: err.message };
+        }
+    },
+
+    async restoreClient(clientId: string): Promise<{ error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'No tenant selected' };
+            return restoreClientById(supabase, tenantId, clientId);
+        } catch (err: any) {
+            return { error: err.message };
+        }
+    },
+
+    async getArchivedClients(): Promise<{ clients: BusinessClient[]; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { clients: [], error: 'No tenant selected' };
+
+            const { data, error } = await supabase
+                .from('business_clients')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .eq('is_active', false)
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+            return {
+                clients: (data || []).map((c: any) => ({
+                    id: c.id,
+                    tenantId: c.tenant_id,
+                    name: c.name,
+                    email: c.email,
+                    phone: c.phone,
+                    salesStage: c.sales_stage,
+                    value: parseFloat(c.value || 0),
+                    description: c.description,
+                    location: c.location,
+                    customFields: c.custom_fields,
+                    createdAt: c.created_at,
+                    updatedAt: c.updated_at,
+                    isActive: c.is_active,
+                    industry: c.industry,
+                    website: c.website,
+                    metadata: c.metadata,
+                })),
+                error: null,
+            };
+        } catch (err: any) {
+            return { clients: [], error: err.message };
         }
     },
 
@@ -484,13 +536,10 @@ export const businessClientService = {
             if (!tenantId) return { error: 'No tenant selected', count: 0 };
 
             const uniqueIds = [...new Set(clientIds)];
-            const { error } = await supabase
-                .from('business_clients')
-                .update({ is_active: false })
-                .in('id', uniqueIds)
-                .eq('tenant_id', tenantId);
-
-            if (error) throw error;
+            for (const id of uniqueIds) {
+                const result = await softDeleteClientById(supabase, tenantId, id);
+                if (result.error) throw new Error(result.error);
+            }
             return { error: null, count: uniqueIds.length };
         } catch (err: any) {
             console.error('Error bulk archiving clients:', err);
@@ -583,7 +632,7 @@ export const businessClientService = {
                 { data: invoiceData },
             ] = await Promise.all([
                 supabase.from('projects').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
-                supabase.from('business_clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                supabase.from('business_clients').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('is_active', true),
                 supabase.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
                 supabase.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
                 supabase.from('business_invoices').select('id, status, total').eq('tenant_id', tenantId),

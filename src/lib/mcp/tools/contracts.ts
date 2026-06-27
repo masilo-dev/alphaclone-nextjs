@@ -135,26 +135,48 @@ registerTool('contracts', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const token = crypto.randomUUID();
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data, error } = await supabase
+    const { data: contract, error: contractError } = await supabase
       .from('contracts')
-      .update({
-        signing_token: token,
-        updated_at: new Date().toISOString(),
-      })
+      .select('id, title, client_id')
       .eq('id', args.contract_id)
       .eq('tenant_id', args.tenant_id)
-      .select('id, title, signing_token')
       .single();
 
-    if (error) throw error;
+    if (contractError || !contract) {
+      throw new Error('Contract not found');
+    }
+
+    let clientEmail = '';
+    if (contract.client_id) {
+      const { data: client } = await supabase
+        .from('business_clients')
+        .select('email')
+        .eq('id', contract.client_id)
+        .maybeSingle();
+      clientEmail = String(client?.email || '').trim().toLowerCase();
+    }
+
+    const { error: tokenError } = await supabase.from('contract_signing_tokens').insert({
+      tenant_id: args.tenant_id,
+      contract_id: args.contract_id,
+      token,
+      signer_email: clientEmail || 'client@example.com',
+      signer_role: 'client',
+      expires_at: expiresAt,
+      metadata: { source: 'mcp_generate_contract_signing_token' },
+    });
+
+    if (tokenError) throw tokenError;
 
     return {
-      contract_id: data.id,
-      title: data.title,
-      signing_token: data.signing_token,
-      signing_link: AppUrls.signContract(data.signing_token),
+      contract_id: contract.id,
+      title: contract.title,
+      signing_token: token,
+      signing_link: AppUrls.signContract(token),
+      expires_at: expiresAt,
     };
   },
 });

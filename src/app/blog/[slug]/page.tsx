@@ -77,7 +77,7 @@ export default async function BlogPost({ params }: PageProps) {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
             />
 
-            <div className="relative pt-32 pb-16 overflow-hidden border-b border-white/5 bg-slate-900/50">
+            <div className="relative py-8 pb-16 overflow-hidden border-b border-white/5 bg-slate-900/50">
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl mx-auto">
                         <Link href="/blog" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8 transition-colors text-sm font-medium">

@@ -173,10 +173,10 @@ registerTool('crm', {
   },
 });
 
-// 4. delete_contact (soft delete by setting status to inactive)
+// 4. delete_contact (soft delete — sets deleted_at + archives linked client)
 registerTool('crm', {
   name: 'delete_contact',
-  description: 'Soft delete a contact by setting status to inactive.',
+  description: 'Soft delete a contact (sets deleted_at and archives linked business client).',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     contact_id: z.string().uuid(),
@@ -191,19 +191,10 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('contacts')
-      .update({
-        status: 'inactive',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', args.contact_id)
-      .eq('tenant_id', args.tenant_id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return { success: true, message: `Contact ${args.contact_id} marked as inactive.` };
+    const { softDeleteContactById } = await import('@/lib/crm/softDeleteContact');
+    const result = await softDeleteContactById(supabase, args.tenant_id, args.contact_id);
+    if (result.error) throw new Error(result.error);
+    return { success: true, message: `Contact ${args.contact_id} deleted.` };
   },
 });
 

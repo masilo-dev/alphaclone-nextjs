@@ -6,7 +6,7 @@ import {
     AlertCircle, ShieldCheck,
     User as UserIcon, Globe, Building,
     ChevronRight, DollarSign, Briefcase,
-    Eye, Copy, Upload, BookOpen,
+    Eye, Copy, Upload, BookOpen, Archive,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '@/contexts/TenantContext';
@@ -34,6 +34,8 @@ import ResendIntegration from './business/ResendIntegration';
 import BrevoIntegration from './business/BrevoIntegration';
 import Microsoft365Integration from './business/Microsoft365Integration';
 import MFAEnrollment from './business/MFAEnrollment';
+import DeletedRecordsSection from './settings/DeletedRecordsSection';
+import EmailProviderSettings from './settings/EmailProviderSettings';
 
 interface SettingsPageProps {
     user: UserType;
@@ -681,6 +683,22 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">System Integrations</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
+                    {/* Email delivery provider (transactional) */}
+                    <div>
+                        <div
+                            onClick={() => toggleRow('email_provider')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <span className="text-[13px] font-bold text-slate-200">Email Delivery Provider</span>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['email_provider'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['email_provider'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5">
+                                <EmailProviderSettings />
+                            </div>
+                        )}
+                    </div>
+
                     {/* Zoho */}
                     <div>
                         <div 
@@ -941,7 +959,36 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 </div>
             </div>
 
-            {/* 7. DEVELOPER MCP & API KEYS */}
+            {/* 7. DATA MANAGEMENT */}
+            <div className="space-y-3">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Data Management</span>
+                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                    <div>
+                        <div
+                            onClick={() => toggleRow('deleted_records')}
+                            className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-slate-500/10 flex items-center justify-center">
+                                    <Archive className="w-4 h-4 text-slate-400" />
+                                </div>
+                                <span className="text-[13px] font-bold text-slate-200">Deleted Records</span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-slate-500 transform transition-transform ${expandedRows['deleted_records'] ? 'rotate-90' : ''}`} />
+                        </div>
+                        {expandedRows['deleted_records'] && (
+                            <div className="p-4 bg-slate-950/40 border-t border-white/5">
+                                <p className="text-[10px] text-slate-500 mb-3">
+                                    Restore soft-deleted contacts and archived clients, or permanently purge contacts.
+                                </p>
+                                <DeletedRecordsSection />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* 8. DEVELOPER MCP & API KEYS */}
             <div className="space-y-3">
                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Developer MCP & API</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">

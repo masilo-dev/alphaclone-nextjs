@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import PublicNavigation from '@/components/PublicNavigation';
+import MarketingFooter from '@/components/landing/MarketingFooter';
 import LoomVideo from '@/components/ui/LoomVideo';
 
 const sections = [
@@ -613,15 +614,7 @@ export default function DocsPageContent() {
                 </main>
             </div>
 
-            <footer className="border-t border-slate-900 py-12 text-center text-slate-600 text-sm">
-                © {new Date().getFullYear()} AlphaClone Systems. Built for Scale.
-                <span className="mx-4">·</span>
-                <Link href="/guide" className="hover:text-slate-400 transition-colors">Full Onboarding Guide</Link>
-                <span className="mx-4">·</span>
-                <Link href="/services" className="hover:text-slate-400 transition-colors">All Services</Link>
-                <span className="mx-4">·</span>
-                <a href="mailto:support@alphaclonesystems.com" className="hover:text-slate-400 transition-colors">support@alphaclonesystems.com</a>
-            </footer>
+            <MarketingFooter />
         </div>
     );
 }

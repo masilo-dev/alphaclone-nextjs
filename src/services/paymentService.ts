@@ -687,11 +687,3 @@ export const paymentService = {
     }
 };
 
-export const ALPHACLONE_BANK_DETAILS = {
-    bankName: "Alpha Global Bank",
-    accountNumber: "001-9922881-01",
-    accountName: "Alphaclone Systems Ltd",
-    swiftCode: "ALPHUS66",
-    instructions: "Please use your Tenant ID as the reference."
-};
-

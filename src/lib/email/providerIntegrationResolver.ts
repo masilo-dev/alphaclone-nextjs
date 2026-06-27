@@ -59,7 +59,25 @@ export async function resolveEmailProviderConfig(params: {
   let lookupUserId = params.preferredUserId || null;
   let preferredProvider = params.preferredProvider;
 
-  // If tenant has a preferred email provider set in autonomous_runner_rules, use it
+  // Tenant default from business_settings.settings.email.default_provider
+  if (tenantId && (!preferredProvider || (preferredProvider as string) === 'system_default')) {
+    try {
+      const { data: business } = await supabase
+        .from('business_settings')
+        .select('settings')
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      const emailSettings = ((business?.settings as Record<string, unknown>)?.email || {}) as Record<string, unknown>;
+      const tenantDefault = String(emailSettings.default_provider || emailSettings.defaultProvider || '').trim();
+      if (tenantDefault && tenantDefault !== 'auto') {
+        preferredProvider = tenantDefault as EmailProvider;
+      }
+    } catch (err) {
+      console.warn('[resolveEmailProviderConfig] Failed to fetch business_settings email provider:', err);
+    }
+  }
+
+  // Fallback: autonomous_runner_rules email_provider
   if (tenantId && (!preferredProvider || (preferredProvider as string) === 'system_default')) {
     try {
       const { data: rules } = await supabase

@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 const lines = [
   'Alphaclone Systems, LLC',
   'Data Processing Agreement (DPA)',
-  'Effective date: June 9, 2025',
+  'Effective date: June 10, 2026',
   '',
   '1. Parties',
   'Alphaclone Systems, LLC acts as Processor. The customer acts as Controller.',

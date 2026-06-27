@@ -9,6 +9,7 @@ export interface ZohoConfig {
     expiryDate: string;
     mailApiHost?: string;
     crmApiHost?: string;
+    campaignsApiHost?: string;
     accountsServer: string;
     accountId?: string;
     booksOrgId?: string;  // Zoho Books organization ID
@@ -96,6 +97,7 @@ export class ZohoService {
 
         config.mailApiHost = ZohoService.normalizeHost(config.mailApiHost);
         config.crmApiHost = ZohoService.normalizeHost(config.crmApiHost);
+        config.campaignsApiHost = ZohoService.normalizeHost(config.campaignsApiHost);
         config.accountsServer = ZohoService.normalizeAccountsServer(config.accountsServer) || 'https://accounts.zoho.com';
 
         return config as ZohoConfig;
@@ -137,6 +139,7 @@ export class ZohoService {
         // Normalize host values for legacy configurations.
         newConfig.mailApiHost = ZohoService.normalizeHost(newConfig.mailApiHost);
         newConfig.crmApiHost = ZohoService.normalizeHost(newConfig.crmApiHost);
+        newConfig.campaignsApiHost = ZohoService.normalizeHost(newConfig.campaignsApiHost);
         newConfig.accountsServer = ZohoService.normalizeAccountsServer(newConfig.accountsServer);
 
         // Encrypt tokens before saving
@@ -346,13 +349,13 @@ export class ZohoService {
     }
 
     static getHostsByRegion(region: string) {
-        const hosts: Record<string, { accounts: string; mail: string; crm: string }> = {
-            US: { accounts: 'https://accounts.zoho.com',    mail: 'mail.zoho.com',    crm: 'www.zohoapis.com' },
-            EU: { accounts: 'https://accounts.zoho.eu',     mail: 'mail.zoho.eu',     crm: 'www.zohoapis.eu' },
-            IN: { accounts: 'https://accounts.zoho.in',     mail: 'mail.zoho.in',     crm: 'www.zohoapis.in' },
-            AU: { accounts: 'https://accounts.zoho.com.au', mail: 'mail.zoho.com.au', crm: 'www.zohoapis.com.au' },
-            JP: { accounts: 'https://accounts.zoho.jp',     mail: 'mail.zoho.jp',     crm: 'www.zohoapis.jp' },
-            CA: { accounts: 'https://accounts.zoho.ca',     mail: 'mail.zoho.ca',     crm: 'www.zohoapis.ca' },
+        const hosts: Record<string, { accounts: string; mail: string; crm: string; campaigns: string }> = {
+            US: { accounts: 'https://accounts.zoho.com',    mail: 'mail.zoho.com',    crm: 'www.zohoapis.com',    campaigns: 'campaigns.zoho.com' },
+            EU: { accounts: 'https://accounts.zoho.eu',     mail: 'mail.zoho.eu',     crm: 'www.zohoapis.eu',     campaigns: 'campaigns.zoho.eu' },
+            IN: { accounts: 'https://accounts.zoho.in',     mail: 'mail.zoho.in',     crm: 'www.zohoapis.in',     campaigns: 'campaigns.zoho.in' },
+            AU: { accounts: 'https://accounts.zoho.com.au', mail: 'mail.zoho.com.au', crm: 'www.zohoapis.com.au', campaigns: 'campaigns.zoho.com.au' },
+            JP: { accounts: 'https://accounts.zoho.jp',     mail: 'mail.zoho.jp',     crm: 'www.zohoapis.jp',     campaigns: 'campaigns.zoho.jp' },
+            CA: { accounts: 'https://accounts.zoho.ca',     mail: 'mail.zoho.ca',     crm: 'www.zohoapis.ca',     campaigns: 'campaigns.zoho.ca' },
         };
         return hosts[region] || hosts.US;
     }

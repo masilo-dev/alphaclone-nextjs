@@ -3,7 +3,7 @@ import { businessInvoiceService } from '@/services/businessInvoiceService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
-import { AppUrls } from '@/lib/urls';
+import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 
 /**
  * Invoice Lifecycle Workflow
@@ -67,7 +67,8 @@ async function sendEmail(invoiceId: string, tenantId: string) {
   const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
   const pdfBase64 = Buffer.from(doc.output('arraybuffer')).toString('base64');
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
-  const actionUrl = AppUrls.payInvoice(invoiceId);
+  const supabase = createSupabaseAdminClient();
+  const actionUrl = await getPublicInvoicePaymentUrl(supabase, invoiceId, tenantId);
   const result = await sendEmailServer({
     tenantId,
     to: invoice.client.email,
@@ -124,6 +125,8 @@ async function sendReminder(invoiceId: string, tenantId: string) {
   if (error || !invoice) throw new Error(`Invoice not found: ${error}`);
   if (!invoice.client?.email) throw new Error(`Invoice ${invoiceId} has no client email for reminder`);
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
+  const supabase = createSupabaseAdminClient();
+  const actionUrl = await getPublicInvoicePaymentUrl(supabase, invoiceId, tenantId);
   const result = await sendEmailServer({
     tenantId,
     to: invoice.client.email,
@@ -136,7 +139,7 @@ async function sendReminder(invoiceId: string, tenantId: string) {
       amount: invoice.total || invoice.total_amount || 0,
       currency: invoice.currency || 'USD',
       dueDate: invoice.due_date,
-      actionUrl: AppUrls.payInvoice(invoiceId),
+      actionUrl,
       workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
       notes: 'Friendly reminder that this invoice is still awaiting payment.',
     }),
@@ -158,6 +161,7 @@ async function escalateOverdue(invoiceId: string, tenantId: string) {
   await supabase.from('business_invoices').update({ status: 'overdue', updated_at: new Date().toISOString() }).eq('id', invoiceId);
   if (!invoice.client?.email) throw new Error(`Invoice ${invoiceId} has no client email for overdue notice`);
   const invoiceNumber = invoice.invoice_number || invoice.invoiceNumber;
+  const actionUrl = await getPublicInvoicePaymentUrl(supabase, invoiceId, tenantId);
   const result = await sendEmailServer({
     tenantId,
     to: invoice.client.email,
@@ -170,7 +174,7 @@ async function escalateOverdue(invoiceId: string, tenantId: string) {
       amount: invoice.total || invoice.total_amount || 0,
       currency: invoice.currency || 'USD',
       dueDate: invoice.due_date,
-      actionUrl: AppUrls.payInvoice(invoiceId),
+      actionUrl,
       workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
     }),
     templateName: 'invoiceLifecycleOverdue',

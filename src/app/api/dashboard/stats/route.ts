@@ -67,7 +67,7 @@ async function getStatsFallback(supabase: any, tenantId: string, userId: string)
     recentActivityRows,
   ] = await Promise.all([
     safeCount('leads', { tenant_id: tenantId }),
-    safeCount('business_clients', { tenant_id: tenantId }),
+    safeCount('business_clients', { tenant_id: tenantId, is_active: true }),
     // active projects = not done/cancelled — use .in() to avoid enum empty-string comparison
     (async () => {
       try {
