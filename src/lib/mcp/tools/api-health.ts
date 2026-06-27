@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getUnifiedMcpToolCount } from '@/lib/mcp/listAllTools';
 
 registerTool('api-health', {
   name: 'get_api_health',
@@ -54,6 +55,7 @@ registerTool('api-health', {
           success_rate_percent: total > 0 ? Math.round((successes / total) * 100) : 100,
           avg_duration_ms: avgDuration,
           tool_breakdown: toolStats,
+          unified_tool_catalog_count: await getUnifiedMcpToolCount(),
         }, null, 2),
       }],
     };

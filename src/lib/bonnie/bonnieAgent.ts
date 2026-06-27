@@ -13,6 +13,10 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { suggestToolsForQuestion } from '@/lib/bonnie/bonnieTenantDataRules';
 import { warmBonnieWorkspaceContext, formatWarmContextBlock } from '@/lib/bonnie/bonnieWarmContext';
 import { sanitizeBonnieResponse, BONNIE_ANTI_HEDGE_INSTRUCTION } from '@/lib/bonnie/bonnieResponseSanitizer';
+import {
+  BONNIE_MAX_AGENT_ROUNDS,
+  looksLikeComplexMission,
+} from '@/lib/bonnie/bonnieAgentConfig';
 
 export type BonnieAgentInput = {
   tenantId: string;
@@ -41,7 +45,7 @@ type BonniePlan = {
   done?: boolean;
 };
 
-const MAX_AGENT_ROUNDS = 4;
+const MAX_AGENT_ROUNDS = BONNIE_MAX_AGENT_ROUNDS;
 
 function parseJsonPlan(raw: string): BonniePlan {
   let jsonText = raw.trim();
@@ -62,6 +66,98 @@ function looksLikePureChitchat(text: string): boolean {
   if (!t) return true;
   if (t.length <= 3) return true;
   return /^(hi|hello|hey|thanks|thank you|ok|okay|bye|goodbye|good morning|good night)[!.?\s]*$/i.test(t);
+}
+
+function detectConversationMode(text: string): 'briefing' | 'autopilot' | 'query' | 'instruction' {
+  const t = text.toLowerCase().trim();
+  if (/\b(brief me|what needs attention|daily brief|morning brief|operator brief)\b/.test(t)) {
+    return 'briefing';
+  }
+  if (/\b(autopilot|chief of staff|cos routine|run chief of staff)\b/.test(t)) {
+    return 'autopilot';
+  }
+  if (/^(what is|how many|show me|list|who owes|how much|when is)\b/.test(t) && t.length < 120) {
+    return 'query';
+  }
+  return 'instruction';
+}
+
+async function runBriefingMode(
+  tenantId: string,
+  userId: string,
+  moduleId: BonnieModuleId
+): Promise<BonnieAgentResult> {
+  const { executeBonnieToolCalls } = await import('@/lib/bonnie/bonnieToolExecutor');
+  const toolResults = await executeBonnieToolCalls(
+    tenantId,
+    userId,
+    [
+      { tool: 'solo_owner_operator_brief', arguments: { tenant_id: tenantId } },
+      { tool: 'get_business_snapshot', arguments: { tenant_id: tenantId } },
+    ],
+    'briefing mode'
+  );
+
+  const synthesized = await synthesizeWithDeepSeek(
+    'Give me a concise executive briefing of what needs my attention today.',
+    { response: 'Briefing complete.' },
+    toolResults,
+    moduleId
+  ).catch(() => null);
+
+  return {
+    response: synthesized?.trim() || 'Here is your workspace briefing based on the latest snapshot.',
+    success: true,
+    provider: process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback',
+    model: 'deepseek-chat',
+    toolResults,
+    logs: ['Briefing mode: solo_owner_operator_brief + get_business_snapshot'],
+    rounds: 1,
+  };
+}
+
+async function runAutopilotMode(
+  tenantId: string,
+  userId: string,
+  moduleId: BonnieModuleId
+): Promise<BonnieAgentResult> {
+  const { executeBonnieToolCalls } = await import('@/lib/bonnie/bonnieToolExecutor');
+  const toolResults = await executeBonnieToolCalls(
+    tenantId,
+    userId,
+    [{ tool: 'run_chief_of_staff_routine', arguments: { tenant_id: tenantId } }],
+    'autopilot mode'
+  );
+
+  const pending = toolResults.find((r) => r.approvalRequired);
+  if (pending) {
+    return {
+      response: `Chief of Staff routine prepared "${pending.tool}" but needs your approval before it can complete.`,
+      success: true,
+      provider: process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback',
+      model: 'deepseek-chat',
+      toolResults,
+      logs: ['Autopilot mode: chief of staff routine queued approval'],
+      rounds: 1,
+    };
+  }
+
+  const synthesized = await synthesizeWithDeepSeek(
+    'Summarize the Chief of Staff routine results.',
+    { response: 'Chief of Staff routine complete.' },
+    toolResults,
+    moduleId
+  ).catch(() => null);
+
+  return {
+    response: synthesized?.trim() || 'Chief of Staff routine finished. Check activity logs for details.',
+    success: toolResults.every((r) => r.success),
+    provider: process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback',
+    model: 'deepseek-chat',
+    toolResults,
+    logs: ['Autopilot mode: run_chief_of_staff_routine'],
+    rounds: 1,
+  };
 }
 
 async function conversationalReply(
@@ -126,23 +222,27 @@ async function planWithDeepSeek(
             tool: r.tool,
             success: r.success,
             summary: r.summary,
+            approvalRequired: r.approvalRequired ?? false,
           })),
           null,
           2
-        )}\nIf the task is complete, set "done": true and return empty tool_calls with your final response. Otherwise continue with the next tool_calls needed.`
+        )}\nIf a tool shows approvalRequired, do NOT call it again — complete other prep work or set done:true and summarize what awaits approval. If the task is complete, set "done": true and return empty tool_calls with your final response. Otherwise continue with the next tool_calls needed.`
       : '';
 
   const suggestedTools = suggestToolsForQuestion(instruction, moduleId);
+  const missionHint = looksLikeComplexMission(instruction)
+    ? `\nCOMPLEX MISSION DETECTED: Prefer orchestrate_task for cross-module work, or chain multiple tool rounds until fully complete (gather → act → verify). Do not stop after the first successful tool.\n`
+    : '';
   const userBlock = `WORKSPACE CONTEXT (already loaded — answer from this, do not ask to check):
 ${formatWarmContextBlock(snapshot, round === 0 ? warmPrefetch : [])}
-
+${missionHint}
 SUGGESTED READ TOOLS FOR THIS MESSAGE (run if you need fresher detail):
 ${suggestedTools.join(', ')}
 
 USER INSTRUCTION:
 ${instruction}${priorBlock}
 
-Plan like DeepCode: fetch tenant data with tools when needed — never ask yes/no to read. Round ${round + 1} of ${MAX_AGENT_ROUNDS}.`;
+Plan like a power agent (Cursor/Devin style): fetch tenant data with tools when needed — never ask yes/no to read. Execute end-to-end until done or approval is queued. Round ${round + 1} of ${MAX_AGENT_ROUNDS}.`;
 
   if (process.env.DEEPSEEK_API_KEY) {
     const model = 'deepseek-chat';
@@ -300,6 +400,57 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   const provider = process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback';
 
   const { snapshot, warmResults } = await warmBonnieWorkspaceContext(tenantId, userId, moduleId);
+  const conversationMode = detectConversationMode(instruction);
+
+  if (conversationMode === 'briefing') {
+    return runBriefingMode(tenantId, userId, moduleId);
+  }
+
+  if (conversationMode === 'autopilot') {
+    return runAutopilotMode(tenantId, userId, moduleId);
+  }
+
+  if (conversationMode === 'query') {
+    const { executeBonnieToolCalls } = await import('@/lib/bonnie/bonnieToolExecutor');
+    const suggested = suggestToolsForQuestion(instruction, moduleId).slice(0, 2);
+    const queryTools = await executeBonnieToolCalls(
+      tenantId,
+      userId,
+      suggested.map((tool) => ({ tool, arguments: { tenant_id: tenantId } })),
+      instruction
+    );
+    const allQueryResults = [...warmResults, ...queryTools];
+    try {
+      const { text, model: chatModel } = await conversationalReply(
+        `${instruction}\n\nData retrieved:\n${allQueryResults.map((r) => `${r.tool}: ${r.summary}`).join('\n')}`,
+        history,
+        moduleId,
+        snapshot,
+        tenantId,
+        onStreamToken
+      );
+      return {
+        response: text,
+        success: true,
+        provider,
+        model: chatModel,
+        toolResults: allQueryResults,
+        logs: ['Query mode: targeted read tools + synthesis'],
+        rounds: 1,
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Query failed';
+      return {
+        response: `Bonnie could not answer that (${message}).`,
+        success: false,
+        provider,
+        model,
+        toolResults: allQueryResults,
+        logs: [],
+        rounds: 1,
+      };
+    }
+  }
 
   // Pure chitchat only — all business/data questions use the tool loop
   if (looksLikePureChitchat(instruction)) {
@@ -398,7 +549,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
 
     const toolResults = await (
       await import('@/lib/bonnie/bonnieToolExecutor')
-    ).executeBonnieToolCalls(tenantId, userId, toolCalls);
+    ).executeBonnieToolCalls(tenantId, userId, toolCalls, instruction);
 
     allToolResults.push(...toolResults);
     allLogs.push(
@@ -406,9 +557,24 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       ...toolResults.map((r) => `${r.success ? '✓' : '✗'} ${r.tool}: ${r.summary}`)
     );
 
-    const allSucceeded = toolResults.every((r) => r.success);
-    if (allSucceeded && toolCalls.length <= 2 && round >= 1) {
-      break;
+    const pendingApprovals = toolResults.filter((r) => r.approvalRequired);
+    if (pendingApprovals.length > 0) {
+      allLogs.push(
+        `${pendingApprovals.length} action(s) queued for inline approval — continuing prep work if needed`
+      );
+      lastPlan = {
+        response:
+          pendingApprovals.length === 1
+            ? `I prepared "${pendingApprovals[0].tool}" and queued it for your approval. Review below and tap Approve to execute.`
+            : `I prepared ${pendingApprovals.length} actions that need your approval before send/publish.`,
+        done: false,
+      };
+      // Allow one more planning round to finish reads/drafts; agent should not retry queued tools.
+      if (round >= MAX_AGENT_ROUNDS - 1) {
+        lastPlan.done = true;
+        break;
+      }
+      continue;
     }
   }
 

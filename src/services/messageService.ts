@@ -335,18 +335,25 @@ export const messageService = {
                 const preview = validated.text.length > 140
                     ? `${validated.text.substring(0, 140)}…`
                     : validated.text;
-                void fetch('/api/notifications/dispatch', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: validated.recipientId,
-                        tenantId,
-                        type: 'message',
-                        title: `New message from ${senderName}`,
-                        message: preview,
-                        link: '/dashboard/business/messages',
-                    }),
-                }).catch(() => { /* best-effort; never block sending */ });
+                try {
+                    const notifyRes = await fetch('/api/notifications/dispatch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            userId: validated.recipientId,
+                            tenantId,
+                            type: 'message',
+                            title: `New message from ${senderName}`,
+                            message: preview,
+                            link: '/dashboard/business/messages',
+                        }),
+                    });
+                    if (!notifyRes.ok) {
+                        console.warn('[messageService] notification dispatch failed:', notifyRes.status);
+                    }
+                } catch (err) {
+                    console.warn('[messageService] notification dispatch error:', err);
+                }
             }
 
             return { message, error: null };

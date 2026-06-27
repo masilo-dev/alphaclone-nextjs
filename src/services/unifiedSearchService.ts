@@ -238,7 +238,7 @@ async function searchInvoices(term: string, tenantId: string, limit: number): Pr
     metadata: { total: i.total, status: i.status },
     score: 0,
     updatedAt: i.updated_at,
-    route: `/dashboard/invoicing/invoices/${i.id}`,
+    route: `/dashboard/business/billing/manage?invoiceId=${i.id}`,
   }));
 }
 

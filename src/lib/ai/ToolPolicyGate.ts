@@ -24,7 +24,14 @@ const SEND_TOOLS = new Set([
   'create_linkedin_post',
   'create_social_post',
   'create_post_with_ai_image',
+]);
+
+const META_ORCHESTRATION_TOOLS = new Set([
   'run_chief_of_staff_routine',
+  'orchestrate_task',
+  'run_autonomous_scan',
+  'run_playbook',
+  'trigger_bonnie_dream',
 ]);
 
 const FINANCIAL_TOOLS = new Set([
@@ -48,11 +55,26 @@ const TENANT_INTERNAL_TOOLS = new Set([
   'summarize_ticket',
   'generate_outreach_draft',
   'summarize_workspace',
-  'run_autonomous_scan',
+  'get_account_overview',
+  'find_and_qualify_leads',
+  'parse_lead_criteria',
+  'qualify_crm_leads',
+  'get_scraper_leads',
+  'get_customer_360',
+  'get_integration_health',
+  'get_proactive_brief',
+  'list_scraper_campaigns',
+  'run_scraper_campaign',
+  'create_scraper_campaign',
+  'search_email_lead_context',
+  'ingest_content_to_lead',
+  'get_autonomous_rules',
   'search_facebook_leads',
+  'run_autonomous_scan',
   'list_skills',
   'load_skill',
   'activate_skill_for_session',
+  ...META_ORCHESTRATION_TOOLS,
 ]);
 
 function classifyTool(toolName: string): ToolRiskClass {
@@ -72,7 +94,7 @@ function classifyTool(toolName: string): ToolRiskClass {
 function modeBlocksExecution(mode: BusinessAIAgentMode, riskClass: ToolRiskClass): boolean {
   if (riskClass === 'read' || riskClass === 'draft') return false;
   if (mode === 'observe') return true;
-  if (mode === 'draft' && (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')) return true;
+  // draft mode queues high-risk actions instead of hard-blocking (power-agent UX)
   return false;
 }
 
@@ -92,8 +114,9 @@ export async function evaluateToolPolicy(params: {
   toolName: string;
   source: PolicySource;
   args?: Record<string, unknown>;
+  instruction?: string;
 }): Promise<PolicyDecision> {
-  const { tenantId, userId, toolName, source, args = {} } = params;
+  const { tenantId, userId, toolName, source, args = {}, instruction } = params;
   const riskClass = classifyTool(toolName);
   const admin = createSupabaseAdminClient();
 
@@ -136,6 +159,7 @@ export async function evaluateToolPolicy(params: {
         user_id: userId,
         risk_class: riskClass,
         agent_mode: agentMode,
+        instruction: instruction || undefined,
       },
     })
     .select('id')

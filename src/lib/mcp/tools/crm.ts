@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getUnifiedContacts } from '@/lib/crm/unifiedContacts';
 
 // Helper to split name into first/last
 function splitName(fullName: string): { first_name: string; last_name: string } {
@@ -35,24 +36,12 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    let query = supabase
-      .from('contacts')
-      .select('*')
-      .eq('tenant_id', args.tenant_id)
-      .neq('status', 'bounced')  // Exclude bounced emails
-      .limit(args.limit);
-
-    if (args.status) {
-      query = query.eq('status', args.status);
-    }
-    if (args.search) {
-      // Use full_name (generated column) for search
-      query = query.or(`full_name.ilike.%${args.search}%,email.ilike.%${args.search}%`);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
+    const contacts = await getUnifiedContacts(supabase, args.tenant_id, {
+      limit: args.limit,
+      search: args.search,
+      status: args.status,
+    });
+    return contacts;
   },
 });
 
@@ -99,6 +88,23 @@ registerTool('crm', {
       .single();
 
     if (error) throw error;
+
+    if (args.email) {
+      const { error: syncErr } = await supabase.from('business_clients').insert({
+        tenant_id: args.tenant_id,
+        name: args.name,
+        email: args.email,
+        phone: args.phone || null,
+        company: args.company || args.name,
+        sales_stage: args.status === 'customer' ? 'customer' : 'lead',
+        is_active: true,
+        crm_contact_id: data.id,
+      });
+      if (syncErr && !String(syncErr.message).includes('duplicate')) {
+        console.warn('[create_contact] business_clients sync:', syncErr.message);
+      }
+    }
+
     return data;
   },
 });
@@ -219,11 +225,21 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    // Query deal_activities linked to this contact via deals
+    const { data: deals, error: dealsErr } = await supabase
+      .from('deals')
+      .select('id')
+      .eq('tenant_id', args.tenant_id)
+      .eq('contact_id', args.contact_id);
+
+    if (dealsErr) throw dealsErr;
+    const dealIds = (deals || []).map((d: { id: string }) => d.id);
+    if (dealIds.length === 0) return [];
+
     const { data, error } = await supabase
       .from('deal_activities')
       .select('*')
       .eq('tenant_id', args.tenant_id)
+      .in('deal_id', dealIds)
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -286,5 +302,146 @@ registerTool('crm', {
       created_at: new Date().toISOString(),
       contact_updated: true,
     };
+  },
+});
+
+function mapUnifiedToClientRow(contact: Awaited<ReturnType<typeof getUnifiedContacts>>[number]) {
+  return {
+    id: contact.id,
+    name: contact.full_name,
+    email: contact.email,
+    phone: contact.phone,
+    industry: null,
+    location: null,
+    sales_stage: contact.status,
+    value: 0,
+    website: null,
+    is_active: contact.status !== 'inactive',
+    created_at: contact.created_at,
+  };
+}
+
+registerTool('crm', {
+  name: 'get_clients',
+  description: 'List CRM clients/contacts (unified contacts view). Alias for canonical contact reads.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    limit: z.number().optional().default(100),
+    offset: z.number().optional().default(0),
+    status: z.string().optional(),
+    industry: z.string().optional(),
+    search: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      limit: { type: 'number' },
+      offset: { type: 'number' },
+      status: { type: 'string' },
+      industry: { type: 'string' },
+      search: { type: 'string' },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const pageSize = Math.min(Math.max(args.limit ?? 100, 1), 1000);
+    const pageOffset = Math.max(args.offset ?? 0, 0);
+    const contacts = await getUnifiedContacts(supabase, args.tenant_id, {
+      limit: pageSize + pageOffset,
+      search: args.search,
+      status: args.status,
+    });
+    const page = contacts.slice(pageOffset, pageOffset + pageSize).map(mapUnifiedToClientRow);
+    return {
+      items: page,
+      pagination: {
+        limit: pageSize,
+        offset: pageOffset,
+        returned: page.length,
+        has_more: page.length === pageSize,
+        next_offset: page.length === pageSize ? pageOffset + pageSize : null,
+      },
+    };
+  },
+});
+
+registerTool('crm', {
+  name: 'search_contacts',
+  description: 'Search unified CRM contacts by name, email, or phone.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    query: z.string(),
+    limit: z.number().optional().default(100),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      query: { type: 'string' },
+      limit: { type: 'number' },
+    },
+    required: ['tenant_id', 'query'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const contacts = await getUnifiedContacts(supabase, args.tenant_id, {
+      limit: Math.min(args.limit ?? 100, 1000),
+      search: args.query,
+    });
+    return contacts;
+  },
+});
+
+registerTool('crm', {
+  name: 'create_client',
+  description: 'Create a business client record (delegates to create_contact unified path).',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    name: z.string(),
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
+    industry: z.string().optional(),
+    sales_stage: z.string().optional(),
+    value: z.number().optional(),
+    notes: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      name: { type: 'string' },
+      email: { type: 'string', format: 'email' },
+      phone: { type: 'string' },
+      industry: { type: 'string' },
+      sales_stage: { type: 'string' },
+      value: { type: 'number' },
+      notes: { type: 'string' },
+    },
+    required: ['tenant_id', 'name'],
+  },
+  handler: async (args) => {
+    if (!args.email) {
+      throw new Error('email is required for create_client');
+    }
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from('business_clients')
+      .insert({
+        tenant_id: args.tenant_id,
+        name: args.name,
+        email: args.email,
+        phone: args.phone || null,
+        industry: args.industry || null,
+        sales_stage: args.sales_stage || 'lead',
+        value: Number(args.value) || 0,
+        description: args.notes || null,
+        is_active: true,
+      })
+      .select('id, name, email')
+      .single();
+    if (error) throw error;
+    return data;
   },
 });

@@ -73,7 +73,7 @@ export async function searchEmailContext(
       .limit(8),
     supabase
       .from('contacts')
-      .select('id, first_name, last_name, email, phone, company')
+      .select('id, first_name, last_name, full_name, email, phone, custom_fields')
       .eq('tenant_id', tenantId)
       .or(
         domainPattern

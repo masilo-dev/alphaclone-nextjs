@@ -57,7 +57,8 @@ export interface Payment {
 
 export const paymentService = {
     /**
-     * Create a new invoice
+     * @deprecated Use businessInvoiceService.createInvoice for business_invoices.
+     * Legacy path for the `invoices` table (client billing / Stripe flows).
      */
     async createInvoice(invoice: Omit<Invoice, 'id' | 'created_at' | 'status'>) {
         // Check if tenant has payment processing enabled

@@ -169,7 +169,7 @@ export default function XIntegrationTab() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 p-4 pb-20">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-5xl mx-auto p-4 pb-20 space-y-6">
       <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 min-w-0">

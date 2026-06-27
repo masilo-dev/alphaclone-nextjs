@@ -14,6 +14,7 @@ import {
     FileText,
 } from 'lucide-react';
 import { Button, Card, Input } from '../../ui/UIComponents';
+import { ModulePageLayout } from '../../ui/ModulePageLayout';
 import toast from 'react-hot-toast';
 import type { PlatformEnvStatus, PlatformGlobalSettings } from '@/types/platformSettings';
 
@@ -131,7 +132,28 @@ const GlobalSettingsTab: React.FC = () => {
     const support = settings.support ?? {};
 
     return (
-        <div className="space-y-6 animate-fade-in pb-8">
+        <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module animate-fade-in pb-8">
+            <ModulePageLayout
+                header={(
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between pb-2">
+                        <div className="min-w-0">
+                            <h2 className="text-xl sm:text-2xl font-bold text-white">Global Settings</h2>
+                            <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium uppercase tracking-wider">
+                                Super admin
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving || loading || !!loadError}
+                            className="bg-teal-600 hover:bg-teal-500 text-white px-6 w-full sm:w-auto shrink-0"
+                        >
+                            {saving || loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                            Save
+                        </Button>
+                    </div>
+                )}
+            >
             {loadError && (
                 <div
                     role="alert"
@@ -155,24 +177,6 @@ const GlobalSettingsTab: React.FC = () => {
                     )}
                 </div>
             )}
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                    <h2 className="text-xl sm:text-2xl font-bold text-white">Global Settings</h2>
-                    <p className="text-slate-400 mt-1 text-xs sm:text-sm font-medium uppercase tracking-wider">
-                        Super admin
-                    </p>
-                </div>
-                <Button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving || loading || !!loadError}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 w-full sm:w-auto shrink-0"
-                >
-                    {saving || loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                    Save
-                </Button>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1 flex flex-row lg:flex-col gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:overflow-visible lg:pb-0 lg:mx-0 lg:px-0 [scrollbar-width:thin]">
@@ -204,18 +208,21 @@ const GlobalSettingsTab: React.FC = () => {
                                         placeholder="AlphaClone Systems"
                                         value={branding.platformName ?? ''}
                                         onChange={(e) => setBranding({ platformName: e.target.value })}
+                                        validate={(v) => !v.trim() ? 'Platform name is required' : undefined}
                                     />
                                     <Input
                                         label="Support Email"
                                         placeholder="support@example.com"
                                         value={branding.supportEmail ?? ''}
                                         onChange={(e) => setBranding({ supportEmail: e.target.value })}
+                                        validate={(v) => v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? 'Enter a valid email' : undefined}
                                     />
                                     <Input
                                         label="Platform URL"
                                         placeholder="https://app.example.com"
                                         value={branding.platformUrl ?? ''}
                                         onChange={(e) => setBranding({ platformUrl: e.target.value })}
+                                        validate={(v) => v.trim() && !/^https?:\/\/.+/.test(v.trim()) ? 'Enter a valid URL (https://…)' : undefined}
                                     />
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-300">Logo Assets</label>
@@ -411,6 +418,7 @@ const GlobalSettingsTab: React.FC = () => {
                     </Card>
                 </div>
             </div>
+            </ModulePageLayout>
         </div>
     );
 };

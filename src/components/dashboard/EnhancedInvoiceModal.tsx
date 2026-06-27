@@ -31,7 +31,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';
 import { cn } from '@/lib/utils';
-// Removed unused import causing build failure
+import CreateInvoiceModal from './CreateInvoiceModal';
 
 
 interface EnhancedInvoiceModalProps {
@@ -720,6 +720,17 @@ export default function EnhancedInvoiceModal({
     </div>
   );
 
+  if (mode === 'create') {
+    return (
+      <CreateInvoiceModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onInvoiceCreated={() => onSuccess?.(undefined)}
+        projects={[]}
+      />
+    );
+  }
+
   if (!isOpen) return null;
 
   return (
@@ -730,10 +741,10 @@ export default function EnhancedInvoiceModal({
         <div className="flex items-center justify-between p-6 border-b border-slate-800">
           <div>
             <h2 className="text-xl font-semibold text-white">
-              {mode === 'create' ? 'Create Invoice' : mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
+              {mode === 'edit' ? 'Edit Invoice' : 'Finalize Invoice'}
             </h2>
             <p className="text-sm text-slate-400">
-              {mode === 'send' ? 'Review and finalize invoice' : 'Create a professional invoice for your client'}
+              {mode === 'send' ? 'Review and finalize invoice' : 'Update invoice details for your client'}
             </p>
           </div>
           <button

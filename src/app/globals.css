@@ -1208,3 +1208,106 @@ html.pwa-standalone .pwa-page-title {
     scroll-padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
   }
 }
+
+/* Enterprise structural patterns — AlphaClone brand (hybrid v1) */
+.ac-module-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 576px) {
+  .ac-module-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ac-module-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+.ac-module-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .ac-module-section {
+    gap: 1.5rem;
+  }
+}
+
+.ac-module-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: color-mix(in srgb, #020617 95%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+.ac-data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ac-data-table th {
+  padding: 12px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  color: rgb(148 163 184);
+  background: color-mix(in srgb, rgb(15 23 42) 95%, transparent);
+  border-bottom: 1px solid rgb(51 65 85);
+}
+
+.ac-data-table td {
+  padding: 12px 8px;
+  font-size: 14px;
+  border-bottom: 1px solid rgb(51 65 85 / 0.5);
+}
+
+.ac-data-table tbody tr:nth-child(even) {
+  background: rgb(30 41 59 / 0.35);
+}
+
+.ac-data-table tbody tr:hover {
+  background: rgb(51 65 85 / 0.45);
+}
+
+.ac-scroll-full {
+  overflow: visible;
+  max-height: none;
+}
+
+/* Enterprise modules: prefer full scroll over clipped list panels */
+.ac-enterprise-module .ac-scroll-full,
+.ac-enterprise-module.ac-scroll-full {
+  overflow: visible;
+  max-height: none;
+}
+
+.ac-enterprise-module:not(.h-full) > * {
+  max-height: none;
+}
+
+.ac-skeleton-pulse {
+  animation: ac-skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ac-skeleton-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-skeleton-pulse,
+  .animate-pulse {
+    animation: none !important;
+  }
+}

@@ -132,7 +132,7 @@ const AnalyticsTab: React.FC = () => {
   }
 
   return (
-    <div className="overflow-y-auto pb-24 space-y-5 px-4 pt-4">
+    <div className="ac-scroll-full ac-enterprise-module pb-24 space-y-5 px-4 pt-4">
       <div className="flex items-center justify-between gap-3">
         <div className="flex gap-2">
           {(['7d', '30d', '90d'] as DateRange[]).map((r) => (

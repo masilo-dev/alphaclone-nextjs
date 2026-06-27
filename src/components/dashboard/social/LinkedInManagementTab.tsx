@@ -891,7 +891,7 @@ ${parentContext}Return only the comment text.`;
   }
 
   return (
-    <div className="space-y-6 pb-20 lg:pb-0">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 pb-20 lg:pb-0">
       {/* Action-first strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button

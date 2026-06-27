@@ -77,11 +77,10 @@ export const EMAIL_TEMPLATES = {
 };
 
 class EmailService {
-    private provider: EmailProvider;
+    private provider: EmailProvider | null;
     private defaultFrom: string;
 
     constructor() {
-        // Determine provider based on environment variables
         if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
             this.provider = 'brevo';
         } else if (process.env.SENDGRID_API_KEY) {
@@ -95,18 +94,43 @@ class EmailService {
         } else if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
             this.provider = 'smtp';
         } else {
-            this.provider = 'resend';
+            this.provider = null;
         }
 
         this.defaultFrom = process.env.EMAIL_FROM || 'notifications@alphaclonesystems.com';
     }
 
     /**
-     * Send email
+     * Send email — prefers tenant-aware routing when tenantId is provided.
      */
-    async send(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
-        // Allow per-call provider override
+    async send(options: EmailOptions & { tenantId?: string }): Promise<{ success: boolean; error?: string; provider?: string }> {
+        if (options.tenantId) {
+            const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+            const result = await sendEmailServer({
+                tenantId: options.tenantId,
+                to: options.to,
+                subject: options.subject,
+                html: options.html,
+                text: options.text,
+                fromName: options.from,
+                userId: options.userId,
+                replyTo: options.replyTo,
+                preferredProvider: options.provider as import('@/lib/email/sendEmail').OutboundEmailProvider | undefined,
+            });
+            return {
+                success: result.success,
+                error: result.error,
+                provider: result.provider,
+            };
+        }
+
         const provider = options.provider || this.provider;
+        if (!provider) {
+            return {
+                success: false,
+                error: 'No email provider configured. Pass tenantId for tenant routing or set BREVO/SENDGRID/RESEND/ZOHO env keys.',
+            };
+        }
 
         try {
             switch (provider) {

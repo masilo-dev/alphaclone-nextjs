@@ -57,6 +57,16 @@ export async function GET(req: NextRequest) {
         }
         console.log(`[Cron] Intelligence snapshot took ${Date.now() - intelligenceStart}ms`);
 
+        const deletionStart = Date.now();
+        let accountDeletions: { processed: number; failed: string[] } | null = null;
+        try {
+            const { accountDeletionService } = await import('@/services/accountDeletionService');
+            accountDeletions = await accountDeletionService.processScheduledDeletions();
+        } catch (deletionErr) {
+            console.error('Scheduled account deletions:', deletionErr);
+        }
+        console.log(`[Cron] Account deletions took ${Date.now() - deletionStart}ms`);
+
         return NextResponse.json({
             success: true,
             timestamp: new Date().toISOString(),
@@ -65,6 +75,7 @@ export async function GET(req: NextRequest) {
             digest,
             morning,
             intelligence,
+            accountDeletions,
         });
 
     } catch (error) {

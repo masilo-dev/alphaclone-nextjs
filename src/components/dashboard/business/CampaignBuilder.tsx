@@ -19,6 +19,7 @@ import EmailCampaignAnalytics from '../marketing/EmailCampaignAnalytics';
 import SegmentBuilder from '../marketing/SegmentBuilder';
 import DeliverabilityPanel from '../marketing/DeliverabilityPanel';
 import { showActionNextSteps } from '../../common/showActionNextSteps';
+import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
@@ -154,7 +155,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         scheduledAt: '',
         scheduleEnabled: false,
         skipPreviouslyContacted: true,
-        selectedProviders: ['resend'] as string[],
+        selectedProviders: [] as string[],
         deliveryChannel: 'email' as 'email' | 'whatsapp' | 'both',
         balanceByDailyLimit: true,
         sendImmediately: false,
@@ -199,11 +200,14 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             try {
                 const res = await fetch(`/api/email/sender-profile?tenantId=${encodeURIComponent(tenantId)}`);
                 const data = await res.json();
-                if (data?.profile?.fromEmail || data?.profile?.fromName) {
+                if (data?.profile?.fromEmail || data?.profile?.fromName || data?.profile?.defaultProvider) {
                     setForm((f) => ({
                         ...f,
                         fromName: data.profile.fromName || f.fromName,
                         fromEmail: data.profile.fromEmail || f.fromEmail,
+                        selectedProviders: data.profile.defaultProvider
+                            ? [data.profile.defaultProvider]
+                            : f.selectedProviders,
                     }));
                 }
             } catch {
@@ -404,11 +408,11 @@ Request: ${userMsg}`,
             name: form.name,
             subject: form.subject,
             fromName: form.fromName,
-            fromEmail: form.fromEmail || 'notifications@alphaclonesystems.com',
+            fromEmail: form.fromEmail || '',
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
                 metadata: { 
                 bodyHtml: form.bodyHtml,
-                provider: form.selectedProviders[0] || 'resend',
+                provider: form.selectedProviders[0] || 'zoho',
                 deliveryChannel: form.deliveryChannel,
                 languageMode: form.languageMode,
                 languageInstruction: getCampaignLanguageInstruction({ languageMode: form.languageMode }),
@@ -618,7 +622,7 @@ Voice & rules:
             scheduledAt: '',
             scheduleEnabled: false,
             skipPreviouslyContacted: true,
-            selectedProviders: [(meta.provider as string) || 'resend'],
+            selectedProviders: [(meta.provider as string) || 'zoho'],
             deliveryChannel: ((meta.deliveryChannel as string) || 'email') as 'email' | 'whatsapp' | 'both',
             balanceByDailyLimit: true,
             sendImmediately: false,
@@ -642,7 +646,7 @@ Voice & rules:
             scheduledAt: '',
             scheduleEnabled: false,
             skipPreviouslyContacted: true,
-            selectedProviders: ['resend'],
+            selectedProviders: [],
             deliveryChannel: 'email',
             balanceByDailyLimit: true,
             sendImmediately: false,
@@ -677,6 +681,7 @@ Voice & rules:
     if (loading) return <div className="p-8 text-slate-400 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" /> Loading Campaigns...</div>;
 
     return (
+        <BonnieModulePageShell>
         <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
             
             {/* Header bar */}
@@ -769,7 +774,7 @@ Voice & rules:
                                 <div className="divide-y divide-white/5 border border-white/5 rounded-2xl bg-slate-900/30 overflow-hidden">
                                     {campaigns.map((camp) => {
                                         const offset = swipeState[camp.id] || 0;
-                                        const provider = (camp.metadata as any)?.provider || 'resend';
+                                        const provider = (camp.metadata as any)?.provider || 'tenant-default';
                                         const sent = Number(camp.totalSent || 0);
                                         const opened = Number(camp.totalOpened || 0);
                                         const clicked = Number(camp.totalClicked || 0);
@@ -923,7 +928,7 @@ Voice & rules:
                                     <div className="relative">
                                         <div className="absolute -left-[30px] top-0.5 w-4 h-4 rounded-full bg-teal-500 border border-slate-950 animate-pulse" />
                                         <h4 className="text-xs font-bold text-teal-400">Queue Processing</h4>
-                                        <p className="text-[10px] text-slate-500">Sending active via Resend API</p>
+                                        <p className="text-[10px] text-slate-500">Sending via tenant email provider</p>
                                     </div>
                                 </div>
                             </div>
@@ -1139,7 +1144,7 @@ Voice & rules:
                                                     </div>
                                                     <div className="rounded-xl bg-slate-950 border border-white/5 p-3">
                                                         <p className="text-[10px] uppercase font-black text-slate-500">Provider</p>
-                                                        <p className="text-sm text-white font-semibold mt-1">{form.selectedProviders[0] || 'resend'}</p>
+                                                        <p className="text-sm text-white font-semibold mt-1">{form.selectedProviders[0] || 'tenant default'}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1381,7 +1386,7 @@ Voice & rules:
                                                 </div>
                                                 <div>
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase">Provider</span>
-                                                    <p className="text-xs text-white font-bold uppercase">{form.selectedProviders[0] || 'resend'}</p>
+                                                    <p className="text-xs text-white font-bold uppercase">{form.selectedProviders[0] || 'tenant default'}</p>
                                                 </div>
                                                 <div>
                                                     <span className="text-[9px] text-slate-500 font-bold uppercase">Language</span>
@@ -1622,6 +1627,7 @@ Voice & rules:
             )}
 
         </div>
+        </BonnieModulePageShell>
     );
 };
 

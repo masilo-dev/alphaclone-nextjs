@@ -6,6 +6,7 @@ type SenderProfile = {
     fromName: string;
     fromEmail: string;
     signature: string;
+    defaultProvider?: string;
 };
 
 const EMAIL_PROVIDER_TYPES = ['brevo', 'resend', 'sendgrid', 'zoho', 'gmail'] as const;
@@ -42,9 +43,17 @@ export async function GET(request: NextRequest) {
             fromName: String(tenantCtx.user.user_metadata?.full_name || tenantCtx.user.email?.split('@')[0] || 'Team').trim(),
             fromEmail: String(tenantCtx.user.email || '').trim(),
             signature: '',
+            defaultProvider: undefined,
         };
 
         const rows = Array.isArray(data) ? data : [];
+        const providerPriority = ['zoho', 'brevo', 'sendgrid', 'resend', 'gmail'] as const;
+        for (const preferred of providerPriority) {
+            if (rows.some((row) => row?.type === preferred)) {
+                profile.defaultProvider = preferred;
+                break;
+            }
+        }
         for (const row of rows) {
             const cfg = (row?.config || {}) as Record<string, unknown>;
             const candidate = normalizeProfile({

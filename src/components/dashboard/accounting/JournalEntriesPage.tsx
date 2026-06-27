@@ -12,6 +12,8 @@ import { ChartOfAccount, chartOfAccountsService } from '../../../services/accoun
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTenant } from '../../../contexts/TenantContext';
 import { JournalEntryModal } from './JournalEntryModal';
+import { ModulePageLayout } from '../../ui/ModulePageLayout';
+import { DetailDrawer } from '../../ui/DetailDrawer';
 
 export function JournalEntriesPage() {
     const { user } = useAuth();
@@ -107,52 +109,51 @@ export function JournalEntriesPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
+            <div className="flex items-center justify-center h-64 ac-enterprise-module">
                 <div className="text-slate-300">Loading journal entries...</div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 md:p-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Journal Entries</h1>
-                    <p className="text-slate-300 mt-1">Record manual accounting transactions</p>
-                </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                    + New Entry
-                </button>
-            </div>
-
-            {error && (
-                <div className="bg-red-900/20 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4">
-                    {error}
-                </div>
-            )}
-
-            {/* Filters */}
-            <div className="bg-slate-800 rounded-lg shadow-sm p-4 mb-6">
-                <div className="flex gap-4">
+        <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module p-4 md:p-6">
+            <ModulePageLayout
+                header={(
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pb-2">
+                        <div>
+                            <h1 className="text-lg font-semibold text-white">Journal Entries</h1>
+                            <p className="text-sm text-slate-400">Record manual accounting transactions</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setShowCreateModal(true)}
+                            className="px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-500"
+                        >
+                            + New entry
+                        </button>
+                    </div>
+                )}
+                toolbar={(
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value as JournalStatus | 'all')}
-                        className="px-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-teal-500/50"
                     >
-                        <option value="all">All Statuses</option>
+                        <option value="all">All statuses</option>
                         <option value="draft">Draft</option>
                         <option value="posted">Posted</option>
                         <option value="void">Voided</option>
                     </select>
-                </div>
-            </div>
+                )}
+            >
+                {error && (
+                    <div className="mb-3 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
+                        {error}
+                    </div>
+                )}
 
             {/* Entries List */}
-            <div className="bg-slate-800 rounded-lg shadow-sm overflow-hidden min-w-0">
+            <div className="bg-slate-900/40 border border-white/5 rounded-xl overflow-hidden min-w-0">
                 <div className="overflow-x-auto min-w-0">
                     <table className="min-w-[880px] w-full divide-y divide-slate-700">
                         <thead className="bg-slate-900">
@@ -237,12 +238,12 @@ export function JournalEntriesPage() {
             </div>
 
             {entries.length === 0 && (
-                <div className="text-center py-12 bg-slate-800 rounded-lg shadow-sm">
-                    <p className="text-slate-300">No journal entries found</p>
+                <div className="text-center py-12 rounded-xl border border-white/5 bg-slate-900/40">
+                    <p className="text-slate-400">No journal entries found</p>
                 </div>
             )}
+            </ModulePageLayout>
 
-            {/* Create Entry Modal */}
             <JournalEntryModal
                 isOpen={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
@@ -250,85 +251,60 @@ export function JournalEntriesPage() {
                 accounts={accounts}
             />
 
-            {/* View Entry Modal */}
-            {viewingEntry && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold text-white mb-4">
-                            Journal Entry: {viewingEntry.entryNumber}
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <DetailDrawer
+                open={Boolean(viewingEntry)}
+                onOpenChange={(open) => { if (!open) setViewingEntry(null); }}
+                title={viewingEntry ? `Entry ${viewingEntry.entryNumber}` : 'Journal entry'}
+                size="wide"
+            >
+                {viewingEntry && (
+                    <div className="space-y-4 pb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p className="text-sm text-slate-400">Date</p>
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Date</p>
                                 <p className="font-medium text-white">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400">Status</p>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${viewingEntry.status === 'posted'
-                                    ? 'bg-green-900/50 text-green-300'
-                                    : viewingEntry.status === 'void'
-                                        ? 'bg-red-900/50 text-red-300'
-                                        : 'bg-yellow-900/50 text-yellow-300'
-                                    }`}>
-                                    {viewingEntry.status.toUpperCase()}
-                                </span>
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Status</p>
+                                <p className="font-medium text-white capitalize">{viewingEntry.status}</p>
                             </div>
                             <div className="col-span-1 md:col-span-2">
-                                <p className="text-sm text-slate-400">Description</p>
-                                <p className="font-medium text-white">{viewingEntry.description}</p>
+                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Description</p>
+                                <p className="text-white">{viewingEntry.description}</p>
                             </div>
                         </div>
-
-                        <div className="overflow-x-auto mb-6 min-w-0">
-                            <table className="min-w-[520px] w-full divide-y divide-slate-700">
-                                <thead className="bg-slate-900">
+                        <div className="rounded-xl border border-white/5 overflow-x-auto">
+                            <table className="min-w-[520px] w-full divide-y divide-white/5 text-sm">
+                                <thead className="bg-slate-900/80">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase">Account</th>
-                                        <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
-                                        <th className="px-4 py-2 text-right text-xs font-medium text-slate-400 uppercase">Debit</th>
-                                        <th className="px-4 py-2 text-right text-xs font-medium text-slate-400 uppercase">Credit</th>
+                                        <th className="px-4 py-2 text-left text-xs text-slate-500 uppercase">Account</th>
+                                        <th className="px-4 py-2 text-left text-xs text-slate-500 uppercase">Description</th>
+                                        <th className="px-4 py-2 text-right text-xs text-slate-500 uppercase">Debit</th>
+                                        <th className="px-4 py-2 text-right text-xs text-slate-500 uppercase">Credit</th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-slate-800 divide-y divide-slate-700">
+                                <tbody className="divide-y divide-white/5">
                                     {viewingEntry.lines.map((line) => (
                                         <tr key={line.id}>
-                                            <td className="px-4 py-2 text-sm text-slate-200">
-                                                {line.accountCode} - {line.accountName}
-                                            </td>
-                                            <td className="px-4 py-2 text-sm text-slate-200">{line.description}</td>
-                                            <td className="px-4 py-2 text-sm text-right font-mono text-white">
-                                                {line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '-'}
-                                            </td>
-                                            <td className="px-4 py-2 text-sm text-right font-mono text-white">
-                                                {line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '-'}
-                                            </td>
+                                            <td className="px-4 py-2 text-slate-200">{line.accountCode} - {line.accountName}</td>
+                                            <td className="px-4 py-2 text-slate-400">{line.description}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-white">{line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '—'}</td>
+                                            <td className="px-4 py-2 text-right font-mono text-white">{line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '—'}</td>
                                         </tr>
                                     ))}
                                 </tbody>
-                                <tfoot className="bg-slate-900">
+                                <tfoot className="bg-slate-900/80">
                                     <tr>
-                                        <td colSpan={2} className="px-4 py-2 text-right font-semibold text-white">Totals:</td>
-                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">
-                                            ${viewingEntry.totalDebits.toFixed(2)}
-                                        </td>
-                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">
-                                            ${viewingEntry.totalCredits.toFixed(2)}
-                                        </td>
+                                        <td colSpan={2} className="px-4 py-2 text-right font-semibold text-white">Totals</td>
+                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">${viewingEntry.totalDebits.toFixed(2)}</td>
+                                        <td className="px-4 py-2 text-right font-mono font-semibold text-white">${viewingEntry.totalCredits.toFixed(2)}</td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
-
-                        <button
-                            onClick={() => setViewingEntry(null)}
-                            className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
-                        >
-                            Close
-                        </button>
                     </div>
-                </div>
-            )}
+                )}
+            </DetailDrawer>
         </div>
     );
 }

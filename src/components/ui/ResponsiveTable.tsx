@@ -11,7 +11,7 @@ export function ResponsiveTableDesktop({
   className?: string;
 }) {
   return (
-    <div className={`hidden md:block overflow-x-auto min-w-0 ${className}`}>
+    <div className={`hidden md:block overflow-x-auto min-w-0 ac-scroll-full ${className}`}>
       {children}
     </div>
   );
@@ -43,7 +43,7 @@ export function MobileDataCard({
     <Tag
       type={onClick ? 'button' : undefined}
       onClick={onClick}
-      className={`w-full text-left rounded-2xl border border-slate-800 bg-slate-900/50 p-4 space-y-3 ${onClick ? 'active:scale-[0.99] transition-transform' : ''} ${className}`}
+      className={`w-full text-left rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-3 min-h-11 ${onClick ? 'active:scale-[0.99] transition-transform' : ''} ${className}`}
     >
       {children}
     </Tag>

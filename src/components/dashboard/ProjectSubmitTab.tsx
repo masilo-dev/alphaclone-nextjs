@@ -23,7 +23,7 @@ const ProjectSubmitTab: React.FC<ProjectSubmitTabProps> = ({
     handleAddProject
 }) => {
     return (
-        <div className="max-w-2xl mx-auto animate-fade-in">
+        <div className="max-w-2xl mx-auto animate-fade-in" data-tour="submit-request">
             <Card className="bg-slate-900 border-slate-800 shadow-2xl p-4 sm:p-6">
                 <h2 className="text-xl md:text-2xl font-bold text-white mb-2">Initialize New Project</h2>
                 <p className="text-sm md:text-base text-slate-400 mb-6 md:mb-8">Submit a request for a new module, feature, or entire platform. Our team will review instantly.</p>

@@ -149,6 +149,30 @@ export async function updateSession(request: NextRequest) {
                 return NextResponse.redirect(url);
             }
 
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('account_status')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            if (!profile || profile.account_status === 'deleted') {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('reason', 'account_removed');
+                const redirect = NextResponse.redirect(url);
+                redirect.cookies.getAll()
+                    .filter((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
+                    .forEach((c) => redirect.cookies.set(c.name, '', { expires: new Date(0), path: '/' }));
+                return redirect;
+            }
+
+            if (profile.account_status === 'suspended') {
+                const url = request.nextUrl.clone();
+                url.pathname = '/auth/login';
+                url.searchParams.set('reason', 'account_suspended');
+                return NextResponse.redirect(url);
+            }
+
             // Skip gate for the upgrade page itself to avoid redirect loops
             if (pathname.startsWith('/billing/upgrade')) {
                 return response;

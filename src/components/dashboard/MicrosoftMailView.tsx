@@ -350,7 +350,7 @@ export const MicrosoftMailView: React.FC<MicrosoftMailViewProps> = ({ userId }) 
     }, [messages, activeLabel]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)] min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="flex flex-col min-h-[600px] w-full bg-slate-950 border border-slate-800 rounded-2xl ac-scroll-full ac-enterprise-module shadow-2xl">
             {!isLoading && messages.length > 0 && (
                 <div className="p-3 border-b border-slate-800 bg-slate-900/20 shrink-0">
                     <ModuleStatCards stats={mailStats} />

@@ -368,4 +368,6 @@ class CampaignService {
     }
 }
 
-export const campaignService = new CampaignService();
+export const legacyMarketingCampaignService = new CampaignService();
+/** @deprecated Use legacyMarketingCampaignService — avoids collision with services/campaignService.ts */
+export const campaignService = legacyMarketingCampaignService;

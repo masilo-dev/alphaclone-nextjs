@@ -455,6 +455,8 @@ export const leadService = {
 
         const dbPayload: any = {};
         if (updates.businessName) dbPayload.business_name = updates.businessName;
+        if (updates.businessName) dbPayload.contact_name = updates.businessName;
+        if (updates.status !== undefined) dbPayload.status = updates.status;
         if (updates.industry !== undefined) dbPayload.industry = updates.industry;
         if (updates.location !== undefined) dbPayload.location = updates.location;
         if (updates.phone !== undefined) dbPayload.phone = updates.phone;

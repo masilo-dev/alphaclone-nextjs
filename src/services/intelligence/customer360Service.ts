@@ -253,18 +253,27 @@ class Customer360Service {
     // Try contacts first (most reliable), then leads, then clients
     if (contactIds.length > 0) {
       const { data } = await supabase
-        .from('contacts').select('name, phone, company').eq('id', contactIds[0]).single();
-      if (data) return { name: data.name || email, phone: data.phone, company: data.company };
+        .from('contacts').select('first_name, last_name, full_name, phone, company_id').eq('id', contactIds[0]).single();
+      if (data) {
+        const name = data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim();
+        return { name: name || email, phone: data.phone, company: undefined };
+      }
     }
     if (leadIds.length > 0) {
       const { data } = await supabase
-        .from('leads').select('name, phone, company').eq('id', leadIds[0]).single();
-      if (data) return { name: data.name || email, phone: data.phone, company: data.company };
+        .from('leads').select('business_name, contact_name, phone, industry').eq('id', leadIds[0]).single();
+      if (data) {
+        return {
+          name: data.business_name || data.contact_name || email,
+          phone: data.phone,
+          company: data.industry,
+        };
+      }
     }
     if (clientIds.length > 0) {
       const { data } = await supabase
-        .from('business_clients').select('name, phone, company_name').eq('id', clientIds[0]).single();
-      if (data) return { name: data.name || email, phone: data.phone, company: data.company_name };
+        .from('business_clients').select('name, phone, company').eq('id', clientIds[0]).single();
+      if (data) return { name: data.name || email, phone: data.phone, company: data.company };
     }
     return { name: email };
   }

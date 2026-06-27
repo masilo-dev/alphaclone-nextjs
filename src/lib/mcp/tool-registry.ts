@@ -137,4 +137,5 @@ export function initializeRegistry() {
   require('./tools/platform-advantage');
   require('./tools/api-health');
   require('./tools/documents');
+  require('./tools/nexus-memory');
 }

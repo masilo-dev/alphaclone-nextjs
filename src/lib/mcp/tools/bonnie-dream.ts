@@ -178,8 +178,9 @@ registerTool('bonnie-dream', {
     },
     required: ['tenant_id', 'session_id'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const { mergeDreamSession } = await import('@/services/nexusMemoryService');
     const { data, error } = await supabase
       .from('bonnie_dream_sessions')
       .update({ status: 'applied', applied_at: new Date().toISOString() })
@@ -190,8 +191,18 @@ registerTool('bonnie-dream', {
 
     if (error) throw new Error(`Failed to approve dream session: ${error.message}`);
 
+    const mergeResult = await mergeDreamSession(args.tenant_id, args.session_id, ctx.userId);
+
     return {
-      content: [{ type: 'text', text: JSON.stringify({ success: true, session: data }, null, 2) }],
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          success: true,
+          session: data,
+          memories_merged: mergeResult.merged,
+          memory_summary_updated: mergeResult.memorySummary.slice(0, 500),
+        }, null, 2),
+      }],
     };
   },
 });

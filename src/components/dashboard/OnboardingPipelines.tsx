@@ -4,7 +4,7 @@ import { Plus, MoreVertical, Mail, Phone, Calendar, DollarSign, Edit, Trash2, X,
 import { Button, Card, Modal, Input } from '../ui/UIComponents';
 import { User } from '../../types';
 import { leadService, Lead } from '../../services/leadService';
-import LeadDetailView from './leads/LeadDetailView';
+import LeadDetailModal from './leads/LeadDetailModal';
 import toast from 'react-hot-toast';
 
 interface OnboardingPipelinesProps {
@@ -506,17 +506,17 @@ const OnboardingPipelines: React.FC<OnboardingPipelinesProps> = () => {
             )}
 
             {/* Lead Detail View */}
-            <LeadDetailView
+            <LeadDetailModal
                 lead={selectedLead!}
                 isOpen={showDetailView}
                 onClose={() => {
                     setShowDetailView(false);
                     setSelectedLead(null);
                 }}
-                onUpdate={(updatedLead) => {
+                onLeadUpdate={(updatedLead) => {
                     setLeads(leads.map(l => l.id === updatedLead.id ? updatedLead : l));
                 }}
-                onDelete={(leadId) => {
+                onLeadDelete={(leadId) => {
                     setLeads(leads.filter(l => l.id !== leadId));
                     setShowDetailView(false);
                     setSelectedLead(null);

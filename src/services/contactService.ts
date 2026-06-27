@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
+import { getUnifiedContacts, type UnifiedContact } from '../lib/crm/unifiedContacts';
 
 export interface Contact {
     id: string;
@@ -415,5 +416,102 @@ export const contactService = {
             deletedAt: data.deleted_at,
             company: data.company,
         };
+    },
+
+    /**
+     * Merged contacts + business_clients without a contacts row (canonical CRM read path).
+     */
+    async getUnifiedContactsList(options?: {
+        limit?: number;
+        search?: string;
+        status?: string;
+    }): Promise<{ contacts: UnifiedContact[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const contacts = await getUnifiedContacts(supabase, tenantId, options);
+            return { contacts, error: null };
+        } catch (err) {
+            console.error('Error fetching unified contacts:', err);
+            return {
+                contacts: [],
+                error: err instanceof Error ? err.message : 'Unknown error',
+            };
+        }
+    },
+
+    async bulkUpsertOutlookImports(
+        tenantId: string,
+        contacts: Array<{
+            name: string;
+            email: string;
+            phone?: string;
+            industry?: string;
+            location?: string | null;
+        }>
+    ): Promise<{ processed: number; error: string | null }> {
+        try {
+            const emails = contacts.map((c) => c.email).filter(Boolean);
+            if (emails.length === 0) {
+                return { processed: 0, error: null };
+            }
+
+            const { data: existingClients, error: existingError } = await supabase
+                .from('business_clients')
+                .select('id, email')
+                .eq('tenant_id', tenantId)
+                .in('email', emails);
+
+            if (existingError) throw existingError;
+
+            const existingByEmail = new Map(
+                ((existingClients as Array<{ id: string; email: string }>) || []).map((client) => [client.email, client.id])
+            );
+
+            const inserts = contacts
+                .filter((contact) => !existingByEmail.has(contact.email))
+                .map((contact) => ({
+                    tenant_id: tenantId,
+                    name: contact.name,
+                    email: contact.email,
+                    phone: contact.phone,
+                    industry: contact.industry,
+                    location: contact.location || null,
+                    sales_stage: 'lead',
+                    value: 0,
+                    is_active: true,
+                    description: 'Imported from Outlook contacts',
+                }));
+
+            const updates = contacts.filter((contact) => existingByEmail.has(contact.email));
+
+            if (inserts.length > 0) {
+                const { error: insertError } = await supabase.from('business_clients').insert(inserts);
+                if (insertError) throw insertError;
+            }
+
+            await Promise.all(
+                updates.map((contact) =>
+                    supabase
+                        .from('business_clients')
+                        .update({
+                            name: contact.name,
+                            phone: contact.phone,
+                            industry: contact.industry,
+                            location: contact.location || null,
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq('id', existingByEmail.get(contact.email)!)
+                        .eq('tenant_id', tenantId)
+                )
+            );
+
+            return { processed: contacts.length, error: null };
+        } catch (err) {
+            console.error('bulkUpsertOutlookImports failed:', err);
+            return {
+                processed: 0,
+                error: err instanceof Error ? err.message : 'Outlook sync failed',
+            };
+        }
     },
 };

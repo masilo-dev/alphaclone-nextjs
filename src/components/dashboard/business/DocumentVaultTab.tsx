@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { fileUploadService } from '@/services/fileUploadService';
 import toast from 'react-hot-toast';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
 
 interface VaultDocument {
   id: string;
@@ -214,7 +215,7 @@ export default function DocumentVaultTab() {
   }, [documents]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ac-scroll-full ac-enterprise-module">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -338,16 +339,12 @@ export default function DocumentVaultTab() {
         )}
       </div>
 
-      {/* Modal Dialog */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
-              <h3 className="font-bold text-white text-sm">Upload Vault File</h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white text-sm">Close</button>
-            </div>
-
-            <form onSubmit={handleUpload} className="p-5 space-y-4">
+      <DetailDrawer
+        open={showModal}
+        onOpenChange={setShowModal}
+        title="Upload Vault File"
+      >
+        <form onSubmit={handleUpload} className="space-y-4 pt-2">
               <div>
                 <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">File</label>
                 <input
@@ -420,9 +417,7 @@ export default function DocumentVaultTab() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </DetailDrawer>
     </div>
   );
 }

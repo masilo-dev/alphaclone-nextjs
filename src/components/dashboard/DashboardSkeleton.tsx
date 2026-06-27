@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
+import { MetricCardSkeleton } from '@/components/dashboard/MetricCard';
 
 interface DashboardSkeletonProps {
   row?: 1 | 2 | 3 | 'all';
 }
 
 function Pulse({ className }: { className?: string }) {
-  return <div className={`bg-slate-800/60 rounded-lg animate-pulse ${className ?? ''}`} />;
+  return <div className={`bg-slate-800/60 rounded-lg ac-skeleton-pulse ${className ?? ''}`} />;
 }
 
 export function DashboardSkeleton({ row = 'all' }: DashboardSkeletonProps) {
@@ -15,7 +16,7 @@ export function DashboardSkeleton({ row = 'all' }: DashboardSkeletonProps) {
     return (
       <>
         {Array.from({ length: 4 }).map((_, i) => (
-          <Pulse key={i} className="h-[88px]" />
+          <MetricCardSkeleton key={i} />
         ))}
       </>
     );

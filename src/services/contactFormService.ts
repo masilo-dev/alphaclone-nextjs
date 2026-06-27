@@ -12,7 +12,7 @@ export interface ContactSubmission {
     date: string;
 }
 
-export const contactService = {
+export const contactFormLegacyService = {
     /**
      * Get tenant ID (required for all operations)
      */

@@ -23,6 +23,7 @@ import KanbanBoard from './crm/KanbanBoard';
 import AutomationBuilder from './workflows/AutomationBuilder';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
+import { BonnieModulePageShell } from './bonnie/BonnieModulePageShell';
 
 interface ParsedContact {
     name?: string;
@@ -1015,6 +1016,7 @@ const SalesAgent: React.FC = () => {
     };
 
     return (
+        <BonnieModulePageShell>
         <div className="space-y-4 sm:space-y-6 animate-fade-in h-full flex flex-col px-4 py-4 sm:px-6 sm:py-6 lg:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4 sm:mb-6">
                 <div className="min-w-0">
@@ -1272,6 +1274,7 @@ const SalesAgent: React.FC = () => {
                 />
             )}
         </div>
+        </BonnieModulePageShell>
     );
 };
 

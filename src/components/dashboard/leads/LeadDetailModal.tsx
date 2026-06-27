@@ -21,9 +21,14 @@ import {
     ArrowRight,
     Target,
     MoreVertical,
-    History as HistoryIcon
+    Copy,
+    PhoneCall,
+    Search,
+    DollarSign,
+    History as HistoryIcon,
 } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponents';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
 import { calendarService, CalendarEvent } from '../../../services/calendarService';
@@ -34,7 +39,16 @@ import { quoteService } from '../../../services/quoteService';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import GhostIntelligence from '@/components/leads/GhostIntelligence';
+import { useTenant } from '@/contexts/TenantContext';
+import {
+    calculateLeadScore,
+    getNextBestAction,
+    getScoreColor,
+    getStageBadge,
+    getVerificationStatus,
+} from './leadDetailHelpers';
 import { googleMapsService } from '../../../services/googleMapsService';
 import { getPublicGoogleMapsApiKey } from '@/config/publicEnv';
 import dynamic from 'next/dynamic';
@@ -49,6 +63,7 @@ interface LeadDetailModalProps {
     onClose: () => void;
     lead: Lead;
     onLeadUpdate?: (lead: Lead) => void;
+    onLeadDelete?: (leadId: string) => void;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -63,11 +78,17 @@ function getErrorMessage(error: unknown): string {
     return 'Unknown error';
 }
 
-export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }: LeadDetailModalProps) {
+export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, onLeadDelete }: LeadDetailModalProps) {
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'notes' | 'history'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'deals' | 'tasks' | 'meetings' | 'notes' | 'history'>('overview');
     const [isLoading, setIsLoading] = useState(false);
+    const [relatedDeals, setRelatedDeals] = useState<any[]>([]);
+
+    const leadScore = calculateLeadScore(lead);
+    const nextAction = getNextBestAction(lead);
+    const verificationBadge = getVerificationStatus(lead);
 
     // Quote Creation State
     const [showQuoteForm, setShowQuoteForm] = useState(false);
@@ -142,7 +163,10 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                 setActivities(fetchedActivities);
             }
 
-            // Fetch Meetings (Events)
+            if (activeTab === 'deals' || activeTab === 'overview') {
+                const { data: deals } = await leadService.getRelatedDeals(lead.id);
+                setRelatedDeals(deals || []);
+            }
             // Note: Assuming calendarService supports filtering by metadata or explicit column
             // For now, we manually check if we can filter client side from global events or if we need a new service method
             // We'll try to fetch all user events and filter client side for MVP to avoid strict schema dependency immediately,
@@ -336,16 +360,75 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
             const { notes, error } = await leadService.enrichLead(lead.id, user.id);
             if (error) throw new Error(error);
 
+            if (currentTenant?.id) {
+                await fetch('/api/leads/enrich', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tenantId: currentTenant.id, leadId: lead.id }),
+                }).catch(() => null);
+            }
+
             if (notes) {
                 setLeadNotes(notes);
                 if (onLeadUpdate) onLeadUpdate({ ...lead, notes });
-                toast.success('Business intelligence gathered successfully!');
-                fetchRelatedData();
             }
+            toast.success('Business intelligence gathered successfully!');
+            fetchRelatedData();
         } catch (error: unknown) {
             toast.error('Research failed: ' + getErrorMessage(error));
         } finally {
             setIsEnriching(false);
+        }
+    };
+
+    const handleScheduleCall = async () => {
+        if (!lead.phone) {
+            toast.error('No phone number available');
+            return;
+        }
+        if (!user) {
+            toast.error('You must be signed in to create tasks');
+            return;
+        }
+        const { error } = await taskService.createTask(user.id, {
+            title: `Call ${lead.businessName}`,
+            description: `Phone: ${lead.phone}`,
+            relatedToLead: lead.id,
+            priority: 'high',
+        });
+        if (error) {
+            toast.error('Failed to create call task');
+            return;
+        }
+        toast.success('Call task created');
+        fetchRelatedData();
+    };
+
+    const handleCopyEmail = async () => {
+        if (!lead.email) return;
+        await navigator.clipboard.writeText(lead.email);
+        toast.success('Email copied');
+    };
+
+    const handleNextAction = () => {
+        switch (nextAction.action) {
+            case 'Send Outreach Email':
+            case 'Find Contact Info':
+                handleSendProviderEmail();
+                break;
+            case 'Qualify Lead':
+                handleConvert(lead.businessName);
+                break;
+            case 'Enrich Data':
+                void handleEnrich();
+                break;
+            case 'Schedule Follow-up':
+            case 'Add Value Estimate':
+                setActiveTab('tasks');
+                setShowTaskForm(true);
+                break;
+            default:
+                break;
         }
     };
 
@@ -631,22 +714,48 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
         }
     };
 
+    const handleDeleteLead = async () => {
+        if (!window.confirm(`Delete lead "${lead.businessName}"? This cannot be undone.`)) return;
+        setIsLoading(true);
+        try {
+            const { error } = await leadService.deleteLead(lead.id);
+            if (error) throw new Error(error);
+            toast.success('Lead deleted');
+            onLeadDelete?.(lead.id);
+            onClose();
+        } catch (error: unknown) {
+            toast.error('Failed to delete lead: ' + getErrorMessage(error));
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title=""
-            maxWidth="max-w-4xl"
-            containerClassName="lg:pl-64"
+        <DetailDrawer
+            open={isOpen}
+            onOpenChange={(open) => { if (!open) onClose(); }}
+            title={lead.businessName}
+            description={lead.industry || 'Lead details'}
+            size="wide"
         >
-            <div className="flex flex-col h-[80vh] -m-6">
+            <div className="flex flex-col min-h-0">
                 {/* Header */}
                 <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start gap-4 bg-slate-900">
                     <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-3 mb-1">
                             <h2 className="text-xl sm:text-2xl font-bold text-white truncate">{lead.businessName}</h2>
                             <StatusBadge status={lead.status || 'New'} />
-                            {lead.isVerified && (
+                            {getStageBadge(lead.stage || 'lead')}
+                            {verificationBadge && (
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${verificationBadge.className}`}>
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    {verificationBadge.label}
+                                    {lead.metadata?.verification?.score != null && (
+                                        <span className="opacity-80">· {lead.metadata.verification.score}</span>
+                                    )}
+                                </span>
+                            )}
+                            {lead.isVerified && !verificationBadge && (
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                     <CheckCircle2 className="w-3 h-3" />
                                     VERIFIED
@@ -769,7 +878,15 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                     icon: <Zap className="w-4 h-4 text-indigo-400" />,
                                     onClick: handleExecuteFullFlow,
                                     variant: 'default'
-                                }
+                                },
+                                ...(onLeadDelete
+                                    ? [{
+                                        label: 'Delete Lead',
+                                        icon: <AlertCircle className="w-4 h-4 text-rose-400" />,
+                                        onClick: handleDeleteLead,
+                                        variant: 'danger' as const,
+                                    }]
+                                    : []),
                             ]}
                         />
                     </div>
@@ -802,7 +919,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
 
                 {/* Tabs */}
                 <div className="px-4 sm:px-6 border-b border-slate-800 bg-slate-900/50 flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide">
-                    {['overview', 'history', 'tasks', 'meetings', 'notes'].map((tab) => (
+                    {['overview', 'deals', 'history', 'tasks', 'meetings', 'notes'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
@@ -876,6 +993,63 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                     )}
 
                     {activeTab === 'overview' && (
+                        <div className="space-y-6">
+                            <GhostIntelligence lead={lead} onAction={handleSendProviderEmail} />
+
+                            <Card className="p-5 border-slate-800 bg-slate-900/40">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                                    <div>
+                                        <p className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-1">Lead completeness</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className={`text-3xl font-bold ${getScoreColor(leadScore)}`}>{leadScore}</span>
+                                            <span className="text-slate-500 text-sm">/ 100</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={handleNextAction}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-slate-950/60 hover:bg-slate-800 transition-colors ${nextAction.color}`}
+                                    >
+                                        {nextAction.icon}
+                                        <div className="text-left">
+                                            <p className="text-sm font-semibold text-white">{nextAction.action}</p>
+                                            <p className="text-[11px] text-slate-500">{nextAction.reason}</p>
+                                        </div>
+                                    </button>
+                                </div>
+                                <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 transition-all duration-500"
+                                        style={{ width: `${leadScore}%` }}
+                                    />
+                                </div>
+                            </Card>
+
+                            <div className="flex flex-wrap gap-2">
+                                {lead.email && (
+                                    <Button variant="outline" size="sm" onClick={handleSendProviderEmail}>
+                                        <Send className="w-4 h-4 mr-2" /> Send Email
+                                    </Button>
+                                )}
+                                {lead.phone && (
+                                    <Button variant="outline" size="sm" onClick={handleScheduleCall}>
+                                        <PhoneCall className="w-4 h-4 mr-2" /> Schedule Call
+                                    </Button>
+                                )}
+                                {lead.email && (
+                                    <Button variant="outline" size="sm" onClick={handleCopyEmail}>
+                                        <Copy className="w-4 h-4 mr-2" /> Copy Email
+                                    </Button>
+                                )}
+                                {lead.phone && (
+                                    <a href={`tel:${lead.phone}`} className="inline-flex">
+                                        <Button variant="outline" size="sm">
+                                            <Phone className="w-4 h-4 mr-2" /> Call
+                                        </Button>
+                                    </a>
+                                )}
+                            </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="p-6 space-y-4">
                                 <h3 className="text-lg font-semibold text-white mb-4">Contact Info</h3>
@@ -1109,6 +1283,40 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                 )}
                             </div>
                         </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'deals' && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-semibold text-white">Related Deals</h3>
+                            {relatedDeals.length === 0 ? (
+                                <div className="text-center py-12 text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+                                    <Target className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                                    <p>No deals linked to this lead yet.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {relatedDeals.map((deal) => (
+                                        <Card key={deal.id} className="p-4 flex items-center justify-between gap-3 border-slate-800">
+                                            <div>
+                                                <p className="font-medium text-white">{deal.name || deal.title}</p>
+                                                <p className="text-xs text-slate-500 capitalize">{deal.stage || deal.status}</p>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    onClose();
+                                                    router.push(`/dashboard/deals?dealId=${encodeURIComponent(deal.id)}`);
+                                                }}
+                                            >
+                                                Open <ArrowRight className="w-4 h-4 ml-1" />
+                                            </Button>
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {activeTab === 'tasks' && (
@@ -1259,7 +1467,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                                         <div className="glass-panel p-4 rounded-2xl border border-white/5">
                                             <div className="flex justify-between items-start mb-1">
                                                 <p className="font-medium text-white">{activity.description}</p>
-                                                <span className="text-xs text-slate-500">{format(new Date(activity.created_at), 'MMM d, p')}</span>
+                                                <span className="text-xs text-slate-500">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
                                             </div>
                                             {activity.metadata?.old_stage && (
                                                 <div className="flex items-center gap-2 mt-2 text-xs">
@@ -1293,6 +1501,6 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate }:
                     initialBody={emailDraft.body}
                 />
             )}
-        </Modal>
+        </DetailDrawer>
     );
 }

@@ -296,8 +296,8 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
   }
 
   return (
-    <div className="relative flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto pb-20">
+    <div className="relative flex flex-col h-full ac-scroll-full ac-enterprise-module" data-tour="my-projects">
+      <div className="flex-1 pb-20">
         {loading ? (
           <div className="space-y-px">{[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-900/40 animate-pulse mx-4 my-1 rounded-2xl" />)}</div>
         ) : projects.length === 0 ? (

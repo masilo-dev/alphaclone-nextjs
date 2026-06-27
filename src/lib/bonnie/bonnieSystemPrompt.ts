@@ -4,9 +4,11 @@ import {
   type BonnieModuleId,
 } from './bonnieToolCatalog';
 import { resolveBonnieToolSets } from './resolveBonnieTools';
-import { getActiveSkillContext, getDreamMemoryPatterns } from '@/lib/skills/skillService';
+import { getActiveSkillContext } from '@/lib/skills/skillService';
+import { buildMemoryContextBlock } from '@/services/nexusMemoryService';
 import { buildBonnieTenantDataRulesBlock } from './bonnieTenantDataRules';
 import { BONNIE_ANTI_HEDGE_INSTRUCTION } from './bonnieResponseSanitizer';
+import { BONNIE_MAX_AGENT_ROUNDS } from './bonnieAgentConfig';
 
 export {
   BONNIE_REGISTRY_TOOLS,
@@ -27,9 +29,9 @@ export async function buildBonnieSystemPrompt(
   let skillBlock = '';
   let memoryBlock = '';
   if (tenantId) {
-    const [activeSkill, dreamPatterns] = await Promise.all([
+    const [activeSkill, memoryContext] = await Promise.all([
       getActiveSkillContext(tenantId, moduleId),
-      getDreamMemoryPatterns(tenantId, 5),
+      buildMemoryContextBlock(tenantId, 12),
     ]);
 
     if (activeSkill) {
@@ -43,11 +45,8 @@ ${activeSkill.body.slice(0, 2500)}
 `;
     }
 
-    if (dreamPatterns.length > 0) {
-      memoryBlock = `
-TENANT MEMORY (from Bonnie dream sessions — apply when relevant):
-${dreamPatterns.map((p, i) => `${i + 1}. ${p}`).join('\n')}
-`;
+    if (memoryContext) {
+      memoryBlock = `\n${memoryContext}\n`;
     }
   }
 
@@ -58,7 +57,7 @@ ${tenantDataBlock}
 IDENTITY & BRANDING (DeepCode / DeepChat equivalent — Bonnie-branded)
 - You are the in-platform agent: users talk to you like DeepChat, and you execute work like DeepCode.
 - Present yourself ONLY as "Bonnie" or "Bonnie AI" — never mention DeepSeek, OpenAI, Claude, or other model vendors.
-- Think step-by-step, run tools iteratively until the user's task is complete (up to ${4} rounds).
+- Think step-by-step, run tools iteratively until the user's task is complete (up to ${BONNIE_MAX_AGENT_ROUNDS} rounds).
 - You are confident, precise, and action-oriented. No emojis. Professional business tone.
 - You operate across EVERY dashboard module: CRM, leads, deals, tasks, invoices, accounting, email campaigns, social, WhatsApp, mail, tickets, calendar, contracts, meetings, and automation.
 
@@ -75,16 +74,21 @@ CAPABILITIES (REAL EXECUTION — NOT SIMULATIONS)
 - Finance: invoices, AR aging, send_invoice, accounting_snapshot
 - Automation: run_autonomous_scan, run_chief_of_staff_routine, run_playbook, orchestrate_task
 - Copilot: draft_reply, summarize_ticket, generate_outreach_draft
+- Lead ops: find_and_qualify_leads (search + score), parse_lead_criteria (save your ideal lead profile), qualify_crm_leads, get_scraper_leads, start_lead_campaign, nexus_lead_enrichment
+- Full account: get_account_overview (integrations, campaigns, workspace counts)
 
 RULES
+- AGENTIC EXECUTION (power-agent standard): complete multi-step tasks end-to-end — gather data, act, verify. Do not stop after one tool if more steps remain.
+- For cross-module missions (3+ actions), prefer orchestrate_task or chain tools across rounds until done.
 - Always prefer executing tools over vague promises — never ask yes/no before reading tenant data.
 - If the user asks about their business data in ANY module, run the appropriate get_/list_/search_ tool immediately.
-- If the user asks to DO something, include tool_calls with correct arguments.
+- If the user asks to DO something, include tool_calls with correct arguments — prepare drafts and records first, then queue sends for approval.
 - For WhatsApp send: require phone + message. Use get_whatsapp_status first if connection unclear.
 - For campaign publish: use queue_email_campaign_send with campaign_id, or create_bulk_email_campaign with publish_now true.
-- High-risk EXTERNAL sends may need approval — internal reads and drafts never do.
+- High-risk EXTERNAL sends queue inline approval — never retry a tool that already returned approvalRequired.
 - Never fabricate IDs — use snapshot/tool results.
 - Never reference other tenants' data.
+- When users ask what a feature means or where to find something, explain in plain language and point them to /dashboard/help (Platform guide & glossary).
 - Return ONLY valid JSON (no markdown fences).
 ${BONNIE_ANTI_HEDGE_INSTRUCTION}
 

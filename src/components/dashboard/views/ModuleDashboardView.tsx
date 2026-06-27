@@ -18,6 +18,9 @@ import { DashboardSkeleton } from '../DashboardSkeleton';
 import type { OverviewStatsResponse } from '@/types/dashboardStats';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
+import { resolveModuleActions } from '@/config/moduleDashboardActions';
+import { cn } from '@/lib/utils';
+import { Info, ChevronRight } from 'lucide-react';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -48,6 +51,7 @@ function DashboardContent({
 }: ModuleDashboardViewProps) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
+  const router = useRouter();
   const { data, loading, error } = useDashboardStats(currentTenant?.id, endpoint);
 
   if (loading && !data) {
@@ -73,13 +77,37 @@ function DashboardContent({
   }
 
   const overviewData = overview ? (data as OverviewStatsResponse) : null;
+  const { actions } = resolveModuleActions(moduleId, user?.role ?? 'client');
+  const workspaceAction = actions.find((a) => a.primary) ?? actions[0];
 
   return (
-    <div className={loading ? 'opacity-80 transition-opacity' : ''}>
+    <div className={cn('ac-scroll-full ac-module-section', loading ? 'opacity-80 transition-opacity' : '')}>
       <ModuleDashboardActions moduleId={moduleId} userRole={user?.role} showChartNote />
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3 px-1">
-        Read-only snapshot
-      </p>
+      <div
+        className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 py-3"
+        role="note"
+        aria-label="Overview page guidance"
+      >
+        <div className="flex gap-3 min-w-0">
+          <Info className="w-5 h-5 shrink-0 text-teal-400 mt-0.5" aria-hidden />
+          <div>
+            <p className="text-sm font-medium text-slate-100">Overview — read-only snapshot</p>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Charts and metrics update automatically. To add, edit, or send anything, open the workspace.
+            </p>
+          </div>
+        </div>
+        {workspaceAction ? (
+          <button
+            type="button"
+            onClick={() => router.push(workspaceAction.resolvedHref)}
+            className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-colors"
+          >
+            {workspaceAction.label}
+            <ChevronRight className="w-3.5 h-3.5" aria-hidden />
+          </button>
+        ) : null}
+      </div>
       <ModuleDashboardLayout
         row1={data.metrics.map((m) => (
           <MetricCard
@@ -89,6 +117,7 @@ function DashboardContent({
             delta={m.delta}
             deltaDir={m.deltaDir}
             deltaColor={m.deltaColor}
+            comparisonText={m.comparisonText}
           />
         ))}
         row1Extra={
@@ -101,6 +130,7 @@ function DashboardContent({
                   delta={m.delta}
                   deltaDir={m.deltaDir}
                   deltaColor={m.deltaColor}
+                  comparisonText={m.comparisonText}
                 />
               ))
             : undefined

@@ -340,7 +340,7 @@ export default function WorkflowDashboard() {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 ac-scroll-full ac-enterprise-module">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>

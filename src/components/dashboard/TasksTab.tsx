@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, Calendar, Briefcase,
   Trash2, RefreshCw, LayoutGrid, List,
@@ -17,6 +17,10 @@ import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import EmptyState from '../ui/EmptyState';
+import { DetailDrawer } from '../ui/DetailDrawer';
+import { ModulePageLayout } from '../ui/ModulePageLayout';
+import { Input } from '../ui/UIComponents';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
 
@@ -167,8 +171,8 @@ const SwipeableTaskRow: React.FC<{
   );
 };
 
-// ── Task Detail Bottom Sheet ───────────────────────────────────────────────────
-const TaskDetailSheet: React.FC<{
+// ── Task Detail (DetailDrawer content) ───────────────────────────────────────
+const TaskDetailContent: React.FC<{
   task: Task;
   onClose: () => void;
   onUpdate: (id: string, changes: Partial<Task>) => void;
@@ -181,76 +185,52 @@ const TaskDetailSheet: React.FC<{
   const save = () => { onUpdate(task.id, { title, priority, notes }); onClose(); };
 
   return (
-    <motion.div
-      initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-      className="fixed inset-0 z-50 flex flex-col"
-    >
-      <div className="flex-1 bg-black/50" onClick={onClose} />
-      <div className="bg-slate-900 border-t border-white/10 rounded-t-3xl max-h-[85vh] overflow-y-auto">
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 bg-slate-700 rounded-full" />
-        </div>
-
-        <div className="px-4 pb-10 space-y-5">
-          {/* Editable title */}
-          <textarea
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            className="w-full text-[17px] font-bold text-white bg-transparent resize-none outline-none leading-snug"
-            rows={2}
-          />
-
-          {/* Priority */}
-          <div>
-            <label className="text-[11px] text-slate-500 uppercase font-black block mb-2">Priority</label>
-            <div className="flex gap-2">
-              {(['low', 'medium', 'high'] as Priority[]).map(p => (
-                <button key={p} onClick={() => setPriority(p)} className={`flex-1 py-2 rounded-xl text-[13px] font-bold border capitalize transition-all ${priority === p ? (p === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : p === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-slate-700 text-slate-300 border-slate-600') : 'bg-slate-900 text-slate-500 border-white/5'}`}>
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Due date */}
-          <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
-            <Calendar className="w-5 h-5 text-slate-500" />
-            <span className="text-[15px] text-slate-300">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No due date'}</span>
-          </div>
-
-          {/* Project */}
-          {task.project_name && (
-            <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
-              <Briefcase className="w-5 h-5 text-slate-500" />
-              <span className="text-[15px] text-slate-300">{task.project_name}</span>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div>
-            <label className="text-[11px] text-slate-500 uppercase font-black block mb-2">Notes</label>
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Add notes..."
-              rows={4}
-              className="w-full text-[15px] text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
-            />
-          </div>
-
-          <button onClick={save} className="w-full py-3 bg-teal-600 text-white font-black uppercase tracking-wider rounded-xl text-[13px]">Save Changes</button>
-
-          <button
-            onClick={() => { if (confirm('Delete this task?')) { onDelete(task.id); onClose(); } }}
-            className="w-full py-3 text-red-400 font-bold text-[13px]"
-          >
-            Delete Task
-          </button>
+    <div className="space-y-5 pb-6">
+      <Input
+        label="Task title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        validate={(v) => !v.trim() ? 'Task title is required' : undefined}
+      />
+      <div>
+        <label className="text-xs font-medium text-slate-400 block mb-2">Priority</label>
+        <div className="flex gap-2">
+          {(['low', 'medium', 'high'] as Priority[]).map(p => (
+            <button key={p} type="button" onClick={() => setPriority(p)} className={`flex-1 min-h-11 py-2 rounded-xl text-sm font-bold border capitalize transition-all ${priority === p ? (p === 'high' ? 'bg-red-500/20 text-red-400 border-red-500/30' : p === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-slate-700 text-slate-300 border-slate-600') : 'bg-slate-900 text-slate-500 border-white/5'}`}>
+              {p}
+            </button>
+          ))}
         </div>
       </div>
-    </motion.div>
+      <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+        <Calendar className="w-5 h-5 text-slate-500" />
+        <span className="text-sm text-slate-300">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'No due date'}</span>
+      </div>
+      {task.project_name && (
+        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+          <Briefcase className="w-5 h-5 text-slate-500" />
+          <span className="text-sm text-slate-300">{task.project_name}</span>
+        </div>
+      )}
+      <div>
+        <label className="text-xs font-medium text-slate-400 block mb-2">Notes</label>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Add notes..."
+          rows={4}
+          className="w-full text-sm text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
+        />
+      </div>
+      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-teal-600 text-white font-semibold rounded-xl text-sm">Save Changes</button>
+      <button
+        type="button"
+        onClick={() => { if (confirm('Delete this task?')) { onDelete(task.id); onClose(); } }}
+        className="w-full min-h-11 py-3 text-red-400 font-medium text-sm"
+      >
+        Delete Task
+      </button>
+    </div>
   );
 };
 
@@ -301,11 +281,11 @@ const TaskSection: React.FC<{
   );
 };
 
-const TaskCreateSheet: React.FC<{
-  onClose: () => void;
+const TaskCreateContent: React.FC<{
   onCreate: (data: { title: string; due_date?: string; priority: Priority }) => Promise<void>;
   creating: boolean;
-}> = ({ onClose, onCreate, creating }) => {
+  onClose: () => void;
+}> = ({ onCreate, creating, onClose }) => {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState('');
@@ -316,55 +296,49 @@ const TaskCreateSheet: React.FC<{
       return;
     }
     await onCreate({ title: title.trim(), due_date: dueDate || undefined, priority });
+    onClose();
   };
 
   return (
-    <motion.div
-      initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-      className="fixed inset-0 z-50 flex flex-col"
-    >
-      <div className="flex-1 bg-black/50" onClick={onClose} />
-      <div className="bg-slate-900 border-t border-white/10 rounded-t-3xl p-4 pb-10 space-y-4">
-        <h3 className="text-lg font-bold text-white">New task</h3>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="What needs to be done?"
-          className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none focus:border-teal-500/50"
-          autoFocus
-        />
-        <div>
-          <label className="text-[11px] text-slate-500 uppercase font-black block mb-2">Priority</label>
-          <div className="flex gap-2">
-            {(['low', 'medium', 'high'] as Priority[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-500 border-white/5'}`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+    <div className="space-y-4 pb-6">
+      <Input
+        label="Task title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="What needs to be done?"
+        validate={(v) => !v.trim() ? 'Task title is required' : undefined}
+        autoFocus
+      />
+      <div>
+        <label className="text-xs font-medium text-slate-400 block mb-2">Priority</label>
+        <div className="flex gap-2">
+          {(['low', 'medium', 'high'] as Priority[]).map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setPriority(p)}
+              className={`flex-1 min-h-11 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-500 border-white/5'}`}
+            >
+              {p}
+            </button>
+          ))}
         </div>
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
-        />
-        <button
-          type="button"
-          onClick={submit}
-          disabled={creating}
-          className="w-full py-3 bg-teal-600 text-white font-bold rounded-xl text-sm disabled:opacity-50"
-        >
-          {creating ? 'Saving…' : 'Create task'}
-        </button>
       </div>
-    </motion.div>
+      <input
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+        className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
+      />
+      <button
+        type="button"
+        onClick={submit}
+        disabled={creating}
+        className="w-full min-h-11 py-3 bg-teal-600 text-white font-semibold rounded-xl text-sm disabled:opacity-50"
+      >
+        {creating ? 'Saving…' : 'Create task'}
+      </button>
+    </div>
   );
 };
 
@@ -390,6 +364,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const PAGE_SIZE = 200;
 
@@ -541,12 +516,19 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     ];
   }, [tasks, totalCount]);
 
+  useInfiniteScroll(listRef, loadMore, { enabled: hasMore && !loading && viewMode === 'list' });
+
   return (
-    <div className="relative flex flex-col h-full">
-      <div className="px-4 pt-3">
-        <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
-      </div>
-      <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+      <ModulePageLayout
+        showBonnieDock
+        header={(
+          <div className="px-4 pt-3">
+            <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+          </div>
+        )}
+        toolbar={(
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -589,12 +571,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto pb-20 bg-slate-950">
-        {!loading && (
+        )}
+        stats={!loading ? (
           <div className="p-4 border-b border-white/5 bg-slate-900/20">
             <ModuleStatCards stats={taskStats} />
           </div>
-        )}
+        ) : null}
+      >
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950">
         {microsoftConnected && (
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">
@@ -681,18 +665,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               />
             ))}
             {hasMore && (
-              <div className="p-4">
-                <button
-                  onClick={loadMore}
-                  className="w-full py-3 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-xl text-[13px] font-bold text-slate-200"
-                >
-                  Load more
-                </button>
+              <div className="p-4 text-center text-xs text-slate-500 ac-skeleton-pulse">
+                Loading more…
               </div>
             )}
           </div>
         )}
       </div>
+      </ModulePageLayout>
 
       {/* FAB */}
       <button
@@ -703,24 +683,24 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         <Plus className="w-6 h-6 text-white" />
       </button>
 
-      {/* Task Detail Sheet */}
-      <AnimatePresence>
-        {createOpen && (
-          <TaskCreateSheet
-            onClose={() => setCreateOpen(false)}
-            onCreate={handleCreateTask}
-            creating={creating}
-          />
-        )}
-        {detailTask && (
-          <TaskDetailSheet
+      <DetailDrawer open={createOpen} onOpenChange={setCreateOpen} title="New task">
+        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} />
+      </DetailDrawer>
+
+      <DetailDrawer
+        open={!!detailTask}
+        onOpenChange={(open) => !open && setDetailTask(null)}
+        title="Task details"
+      >
+        {detailTask ? (
+          <TaskDetailContent
             task={detailTask}
             onClose={() => setDetailTask(null)}
             onUpdate={handleUpdate}
             onDelete={handleDelete}
           />
-        )}
-      </AnimatePresence>
+        ) : null}
+      </DetailDrawer>
     </div>
   );
 };

@@ -216,17 +216,24 @@ export const authService = {
             // Welcome email when Supabase returns a session immediately (no email-confirm gate).
             // Otherwise triggerPlatformWelcomeIfNeeded runs after first SIGNED_IN (e.g. email link).
             if (typeof window !== 'undefined' && data.session?.access_token) {
-                void fetch(`${window.location.origin}/api/email/platform-transactional`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${data.session.access_token}`,
-                    },
-                    body: JSON.stringify({
-                        templateName: 'Welcome Email',
-                        variables: { name: validated.name, email: validated.email },
-                    }),
-                }).catch((err) => console.error('Failed to trigger welcome email:', err));
+                try {
+                    const welcomeRes = await fetch(`${window.location.origin}/api/email/platform-transactional`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${data.session.access_token}`,
+                        },
+                        body: JSON.stringify({
+                            templateName: 'Welcome Email',
+                            variables: { name: validated.name, email: validated.email },
+                        }),
+                    });
+                    if (!welcomeRes.ok) {
+                        console.error('Welcome email failed:', await welcomeRes.text().catch(() => welcomeRes.status));
+                    }
+                } catch (err) {
+                    console.error('Failed to trigger welcome email:', err);
+                }
             }
 
             return { user, error: null };
@@ -576,12 +583,29 @@ export const authService = {
             // FAST PATH: If we have basic metadata, return immediately and sync in background
             if (metadata?.name && metadata?.role) {
                 console.log("AuthService: Fast-path hit (metadata exists)");
+                const { data: statusRow } = await supabase
+                    .from('profiles')
+                    .select('account_status, scheduled_deletion_at')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (!statusRow) {
+                    console.warn('AuthService: Profile missing for active session');
+                    return { user: null, error: 'Account no longer exists' };
+                }
+
+                if (statusRow.account_status === 'deleted' || statusRow.account_status === 'suspended') {
+                    return { user: null, error: 'Account is not active' };
+                }
+
                 const fastUser: User = {
                     id: session.user.id,
                     email: session.user.email || '',
                     name: metadata.name,
                     role: metadata.role,
                     avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
+                    account_status: statusRow.account_status,
+                    scheduled_deletion_at: statusRow.scheduled_deletion_at,
                 };
 
                 // Sync profile in background to ensure database is up to date
@@ -757,10 +781,10 @@ export const authService = {
      */
     async requestAccountDeletion(): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase.rpc('request_account_deletion');
-            if (error) {
-                console.error("Request Account Deletion Error:", error);
-                return { error: error.message };
+            const res = await fetch('/api/account/delete', { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { error: data.error || 'Failed to schedule account deletion' };
             }
             return { error: null };
         } catch (err) {
@@ -773,10 +797,10 @@ export const authService = {
      */
     async cancelAccountDeletion(): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase.rpc('cancel_account_deletion');
-            if (error) {
-                console.error("Cancel Account Deletion Error:", error);
-                return { error: error.message };
+            const res = await fetch('/api/account/delete', { method: 'DELETE' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { error: data.error || 'Failed to cancel account deletion' };
             }
             return { error: null };
         } catch (err) {

@@ -1,12 +1,14 @@
 'use client';
 
 import type { DeltaColor, DeltaDir } from '@/types/dashboardStats';
+import { ENTERPRISE } from '@/constants/design';
+import { cn } from '@/lib/utils';
 
 const DELTA_STYLES: Record<DeltaColor, string> = {
-  green: 'text-dashboard-green bg-dashboard-greenBg/20',
-  amber: 'text-dashboard-amber bg-dashboard-amberBg/20',
-  red: 'text-dashboard-red bg-dashboard-redBg/20',
-  blue: 'text-dashboard-blue bg-dashboard-blueBg/20',
+  green: 'text-dashboard-green',
+  amber: 'text-dashboard-amber',
+  red: 'text-dashboard-red',
+  blue: 'text-dashboard-blue',
 };
 
 interface MetricCardProps {
@@ -15,22 +17,82 @@ interface MetricCardProps {
   delta?: string;
   deltaDir?: DeltaDir;
   deltaColor?: DeltaColor;
+  comparisonText?: string;
+  className?: string;
 }
 
-export function MetricCard({ label, value, delta, deltaDir, deltaColor = 'green' }: MetricCardProps) {
+export function MetricCard({
+  label,
+  value,
+  delta,
+  deltaDir,
+  deltaColor = 'green',
+  comparisonText,
+  className,
+}: MetricCardProps) {
   const arrow = deltaDir === 'down' ? '↓' : deltaDir === 'up' ? '↑' : '';
+  const period =
+    comparisonText ?? (delta ? ENTERPRISE.metricCard.defaultComparison : undefined);
 
   return (
-    <div className="bg-surface-1 rounded-lg p-4 md:p-5 min-h-[96px] flex flex-col justify-between border border-slate-800/40">
-      <span className="text-xs md:text-sm text-slate-400 truncate">{label}</span>
-      <div className="flex items-end justify-between gap-2 mt-2">
-        <span className="text-2xl md:text-3xl font-semibold text-white leading-none tabular-nums">{value}</span>
-        {delta ? (
-          <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${DELTA_STYLES[deltaColor]}`}>
-            {arrow} {delta}
-          </span>
-        ) : null}
+    <div
+      className={cn(
+        'bg-surface-1 rounded-lg p-4 border border-slate-800/40 flex flex-col justify-between',
+        ENTERPRISE.metricCard.minHeight,
+        className
+      )}
+    >
+      <span className={cn(ENTERPRISE.metricCard.labelSize, 'text-slate-400 truncate')}>
+        {label}
+      </span>
+
+      <div className="mt-2">
+        <span
+          className={cn(
+            ENTERPRISE.metricCard.valueSize,
+            'font-bold text-teal-400 leading-none tabular-nums block'
+          )}
+        >
+          {value}
+        </span>
+
+        {(delta || period) && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2">
+            {delta ? (
+              <span
+                className={cn(
+                  ENTERPRISE.metricCard.trendSize,
+                  'font-medium tabular-nums',
+                  DELTA_STYLES[deltaColor]
+                )}
+              >
+                {arrow} {delta}
+              </span>
+            ) : null}
+            {period ? (
+              <span className={cn(ENTERPRISE.metricCard.comparisonSize, 'text-slate-500')}>
+                {period}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+export function MetricCardSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        'bg-surface-1 rounded-lg p-4 border border-slate-800/40 ac-skeleton-pulse',
+        ENTERPRISE.metricCard.minHeight,
+        className
+      )}
+    >
+      <div className="h-3.5 w-24 bg-slate-800 rounded" />
+      <div className="h-8 w-32 bg-slate-800 rounded mt-3" />
+      <div className="h-3 w-20 bg-slate-800/70 rounded mt-2" />
     </div>
   );
 }

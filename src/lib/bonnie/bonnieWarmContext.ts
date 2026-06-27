@@ -16,29 +16,27 @@ export async function warmBonnieWorkspaceContext(
   warmResults: BonnieToolResult[];
 }> {
   const snapshot = await getBonnieWorkspaceSnapshot(tenantId);
-  const warmResults: BonnieToolResult[] = [];
 
-  const summary = await executeSingleBonnieTool({
+  const summaryPromise = executeSingleBonnieTool({
     tenantId,
     userId,
     tool: 'summarize_workspace',
   });
-  warmResults.push(summary);
 
   const moduleTool = (BONNIE_MODULE_DATA_TOOLS[moduleId] || BONNIE_MODULE_DATA_TOOLS.general)[0];
-  if (moduleTool && moduleTool !== 'summarize_workspace') {
-    try {
-      const modResult = await executeSingleBonnieTool({
-        tenantId,
-        userId,
-        tool: moduleTool,
-        args: { tenant_id: tenantId, user_id: userId, limit: 10 },
-      });
-      warmResults.push(modResult);
-    } catch {
-      // optional module prefetch
-    }
-  }
+  const modulePromise =
+    moduleTool && moduleTool !== 'summarize_workspace'
+      ? executeSingleBonnieTool({
+          tenantId,
+          userId,
+          tool: moduleTool,
+          args: { tenant_id: tenantId, user_id: userId, limit: 10 },
+        }).catch(() => null)
+      : Promise.resolve(null);
+
+  const [summary, modResult] = await Promise.all([summaryPromise, modulePromise]);
+  const warmResults: BonnieToolResult[] = [summary];
+  if (modResult) warmResults.push(modResult);
 
   return { snapshot, warmResults };
 }

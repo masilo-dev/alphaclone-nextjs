@@ -9,6 +9,7 @@ const MONEY_TABS = [
   { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
   { label: 'Bills', href: '/dashboard/accounting/bills', icon: Receipt },
   { label: 'Billing', href: '/dashboard/business/billing', icon: DollarSign },
+  { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: FileText },
   { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
   { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
   { label: 'Cash Flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
@@ -24,6 +25,7 @@ export default function MoneyHub({ children }: MoneyHubProps) {
       title="Money Hub"
       description="Invoicing, accounting, expenses, and financial reports"
       tabs={MONEY_TABS}
+      dataTour="money-hub"
     >
       {children}
     </HubShell>

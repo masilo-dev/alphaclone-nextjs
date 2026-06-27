@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { Landmark, RefreshCw, Loader2, Plus, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Landmark, RefreshCw, Loader2, Plus } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import {
   accountingManagementClient,
@@ -9,6 +9,12 @@ import {
   type ReconciliationSession,
 } from '@/services/accounting/accountingManagementClient';
 import EmptyState from '@/components/ui/EmptyState';
+import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { EnterpriseDataTable, type EnterpriseColumn } from '@/components/ui/EnterpriseDataTable';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { Input } from '@/components/ui/UIComponents';
+import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import toast from 'react-hot-toast';
 
 type AccountType = 'checking' | 'savings' | 'credit' | 'other';
@@ -22,12 +28,19 @@ const EMPTY_FORM = {
   openingBalance: '',
 };
 
+function reconciliationVariant(status: string) {
+  if (status === 'completed' || status === 'reconciled') return 'success' as const;
+  if (status === 'in_progress') return 'info' as const;
+  if (status === 'failed') return 'error' as const;
+  return 'neutral' as const;
+}
+
 export default function BankingCenterPage() {
   const { currentTenant } = useTenant();
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
   const [sessions, setSessions] = useState<ReconciliationSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddDrawer, setShowAddDrawer] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
 
@@ -88,7 +101,7 @@ export default function BankingCenterPage() {
         openingBalance: Number(form.openingBalance) || 0,
       });
       toast.success('Bank account added');
-      setShowAddModal(false);
+      setShowAddDrawer(false);
       setForm(EMPTY_FORM);
       load();
     } catch (err) {
@@ -98,167 +111,224 @@ export default function BankingCenterPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
-      </div>
-    );
-  }
+  const totalBalance = accounts.reduce((sum, a) => sum + Number(a.current_balance || 0), 0);
+  const activeSessions = sessions.filter((s) => s.status === 'in_progress').length;
 
-  return (
-    <div className="p-4 space-y-5 overflow-y-auto pb-24">
-      <div className="flex justify-end gap-2">
+  const bankStats = useMemo<ModuleStat[]>(() => [
+    { label: 'Bank accounts', value: accounts.length, Icon: Landmark, accent: 'teal' },
+    { label: 'Total balance', value: `$${totalBalance.toLocaleString()}`, Icon: Landmark, accent: 'emerald' },
+    { label: 'Reconciliations', value: sessions.length, sub: `${activeSessions} in progress`, Icon: RefreshCw, accent: 'sky' },
+  ], [accounts.length, totalBalance, sessions.length, activeSessions]);
+
+  const accountColumns = useMemo<EnterpriseColumn<BankAccount>[]>(() => [
+    {
+      id: 'name',
+      header: 'Account',
+      mobilePrimary: true,
+      sortable: true,
+      sortValue: (a) => a.name,
+      accessor: (a) => (
+        <div>
+          <span className="text-[13px] font-bold text-white block">{a.name}</span>
+          <span className="text-[11px] text-slate-500 capitalize">{a.account_type || 'checking'}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'balance',
+      header: 'Balance',
+      sortable: true,
+      sortValue: (a) => Number(a.current_balance || 0),
+      accessor: (a) => (
+        <span className="font-mono text-teal-400">
+          ${Number(a.current_balance || 0).toLocaleString()} {a.currency || 'USD'}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      accessor: (a) => (
         <button
           type="button"
-          onClick={() => setShowAddModal(true)}
-          className="h-9 px-3 rounded-xl bg-teal-500 text-white text-xs font-bold flex items-center gap-1.5"
+          onClick={(e) => { e.stopPropagation(); void startReconciliation(a.id); }}
+          className="px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold hover:bg-teal-500"
         >
-          <Plus className="w-4 h-4" />
-          Add account
+          Reconcile
         </button>
-        <button onClick={load} className="p-2 rounded-xl border border-white/5 text-slate-400 hover:text-teal-400">
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
+      ),
+    },
+  ], []);
 
-      {accounts.length === 0 ? (
-        <EmptyState
-          icon={Landmark}
-          title="No bank accounts"
-          description="Connect a bank account to reconcile transactions and match payments to invoices."
-          actionLabel="Add bank account"
-          onAction={() => setShowAddModal(true)}
-        />
-      ) : (
-        <div className="grid gap-3">
-          {accounts.map((a) => (
-            <div key={a.id} className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex justify-between items-center">
-              <div>
-                <div className="font-bold text-white">{a.name}</div>
-                <div className="text-xs text-slate-500 capitalize">{a.account_type || 'checking'}</div>
-                <div className="text-lg font-bold text-teal-400 mt-1">
-                  ${Number(a.current_balance || 0).toLocaleString()} {a.currency || 'USD'}
-                </div>
-              </div>
-              <button
-                onClick={() => startReconciliation(a.id)}
-                className="h-9 px-3 rounded-xl bg-teal-500 text-white text-xs font-bold"
-              >
-                Reconcile
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+  const sessionColumns = useMemo<EnterpriseColumn<ReconciliationSession>[]>(() => [
+    {
+      id: 'period',
+      header: 'Period',
+      mobilePrimary: true,
+      sortable: true,
+      sortValue: (s) => s.statement_start_date,
+      accessor: (s) => (
+        <span className="text-sm text-white">
+          {s.statement_start_date} → {s.statement_end_date}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: (s) => (
+        <StatusBadge variant={reconciliationVariant(s.status)}>
+          {s.status.replace('_', ' ')}
+        </StatusBadge>
+      ),
+    },
+    {
+      id: 'balance',
+      header: 'Statement balance',
+      accessor: (s) => `$${Number(s.statement_ending_balance || 0).toLocaleString()}`,
+    },
+  ], []);
 
-      <div>
-        <h3 className="text-sm font-bold text-white mb-3">Reconciliation history</h3>
-        {sessions.length === 0 ? (
-          <p className="text-sm text-slate-500">No reconciliation sessions yet.</p>
-        ) : (
-          <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
-            {sessions.map((s) => (
-              <div key={s.id} className="px-4 py-3 flex justify-between text-sm">
-                <span className="text-white">
-                  {s.statement_start_date} → {s.statement_end_date}
-                </span>
-                <span className="text-teal-400 capitalize">{s.status}</span>
-              </div>
-            ))}
+  return (
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+      <ModulePageLayout
+        header={(
+          <div className="px-1 pb-2">
+            <h1 className="text-lg font-semibold text-white">Banking center</h1>
+            <p className="text-sm text-slate-400">Reconcile accounts and track statement sessions</p>
           </div>
         )}
-      </div>
-
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">Add bank account</h2>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <form onSubmit={handleCreateAccount} className="space-y-4">
-              <label className="block">
-                <span className="text-xs text-slate-400">Account name *</span>
-                <input
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
-                  placeholder="Operating checking"
-                />
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-400">Bank name</span>
-                <input
-                  value={form.bankName}
-                  onChange={(e) => setForm((f) => ({ ...f, bankName: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
-                  placeholder="Chase"
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="text-xs text-slate-400">Last 4 digits</span>
-                  <input
-                    maxLength={4}
-                    value={form.accountNumberLast4}
-                    onChange={(e) => setForm((f) => ({ ...f, accountNumberLast4: e.target.value.replace(/\D/g, '') }))}
-                    className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
-                    placeholder="1234"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-xs text-slate-400">Type</span>
-                  <select
-                    value={form.accountType}
-                    onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value as AccountType }))}
-                    className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
-                  >
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                    <option value="credit">Credit</option>
-                    <option value="other">Other</option>
-                  </select>
-                </label>
-              </div>
-              <label className="block">
-                <span className="text-xs text-slate-400">Opening balance</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={form.openingBalance}
-                  onChange={(e) => setForm((f) => ({ ...f, openingBalance: e.target.value }))}
-                  className="mt-1 w-full px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
-                  placeholder="0.00"
-                />
-              </label>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 h-10 rounded-xl border border-white/10 text-slate-300 text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 h-10 rounded-xl bg-teal-500 text-white text-sm font-bold disabled:opacity-50"
-                >
-                  {saving ? 'Saving…' : 'Add account'}
-                </button>
-              </div>
-            </form>
+        toolbar={(
+          <div className="flex items-center gap-2 px-1 py-2">
+            <button
+              type="button"
+              onClick={() => setShowAddDrawer(true)}
+              className="h-9 px-3 rounded-xl bg-teal-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-teal-500"
+            >
+              <Plus className="w-4 h-4" />
+              Add account
+            </button>
+            <button
+              type="button"
+              onClick={load}
+              className="p-2 rounded-xl border border-white/5 text-slate-400 hover:text-teal-400"
+              title="Refresh"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
           </div>
-        </div>
-      )}
+        )}
+        stats={!loading ? (
+          <div className="px-1">
+            <ModuleStatCards stats={bankStats} />
+          </div>
+        ) : null}
+      >
+        {loading ? (
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+          </div>
+        ) : accounts.length === 0 ? (
+          <EmptyState
+            icon={Landmark}
+            title="No bank accounts"
+            description="Connect a bank account to reconcile transactions and match payments to invoices."
+            actionLabel="Add bank account"
+            onAction={() => setShowAddDrawer(true)}
+          />
+        ) : (
+          <div className="px-2 pb-6 space-y-6">
+            <EnterpriseDataTable
+              columns={accountColumns}
+              data={accounts}
+              getRowId={(a) => a.id}
+              onRowClick={(a) => void startReconciliation(a.id)}
+              emptyMessage="No bank accounts."
+            />
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Reconciliation history</h3>
+              {sessions.length === 0 ? (
+                <p className="text-sm text-slate-500 px-1">No reconciliation sessions yet.</p>
+              ) : (
+                <EnterpriseDataTable
+                  columns={sessionColumns}
+                  data={sessions}
+                  getRowId={(s) => s.id}
+                  emptyMessage="No sessions."
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </ModulePageLayout>
+
+      <DetailDrawer
+        open={showAddDrawer}
+        onOpenChange={setShowAddDrawer}
+        title="Add bank account"
+      >
+        <form onSubmit={handleCreateAccount} className="space-y-4 pb-6">
+          <Input
+            label="Account name"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="Operating checking"
+            validate={(v) => !v.trim() ? 'Account name is required' : undefined}
+          />
+          <Input
+            label="Bank name"
+            value={form.bankName}
+            onChange={(e) => setForm((f) => ({ ...f, bankName: e.target.value }))}
+            placeholder="Chase"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Last 4 digits"
+              value={form.accountNumberLast4}
+              onChange={(e) => setForm((f) => ({ ...f, accountNumberLast4: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+              placeholder="1234"
+              validate={(v) => v.trim() && v.trim().length !== 4 ? 'Enter exactly 4 digits' : undefined}
+            />
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Type</label>
+              <select
+                value={form.accountType}
+                onChange={(e) => setForm((f) => ({ ...f, accountType: e.target.value as AccountType }))}
+                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-teal-500/50"
+              >
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="credit">Credit</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <Input
+            label="Opening balance"
+            type="number"
+            step="0.01"
+            value={form.openingBalance}
+            onChange={(e) => setForm((f) => ({ ...f, openingBalance: e.target.value }))}
+            placeholder="0.00"
+          />
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowAddDrawer(false)}
+              className="flex-1 min-h-11 rounded-xl border border-white/10 text-slate-300 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 min-h-11 rounded-xl bg-teal-600 text-white text-sm font-bold disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Add account'}
+            </button>
+          </div>
+        </form>
+      </DetailDrawer>
     </div>
   );
 }

@@ -10,7 +10,7 @@ interface ContractsTabProps {
 
 const ContractsTab: React.FC<ContractsTabProps> = ({ user }) => {
   return (
-    <div className="w-full h-full bg-slate-950 p-2 sm:p-4 rounded-3xl overflow-y-auto">
+    <div className="w-full h-full bg-slate-950 p-2 sm:p-4 rounded-3xl ac-scroll-full ac-enterprise-module">
       <ContractDashboard user={user} initialTab="list" />
     </div>
   );

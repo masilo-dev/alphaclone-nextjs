@@ -345,19 +345,24 @@ export const workflowService = {
                 });
                 return { success: true, error: null };
 
-            case 'create_invoice':
-                // Create invoice
-                const { paymentService } = await import('./paymentService');
-                await paymentService.createInvoice({
-                    user_id: context.userId,
-                    project_id: config.projectId,
-                    amount: config.amount,
-                    description: config.description,
-                    currency: 'USD',
-                    due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                    items: [],
+            case 'create_invoice': {
+                const { businessInvoiceService } = await import('./businessInvoiceService');
+                const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                if (!tenantId) {
+                    return { success: false, error: 'No active organization for invoice creation' };
+                }
+                const { error } = await businessInvoiceService.createInvoice(tenantId, {
+                    projectId: config.projectId,
+                    total: Number(config.amount) || 0,
+                    notes: config.description || 'Workflow-generated invoice',
+                    status: 'draft',
+                    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                 });
+                if (error) {
+                    return { success: false, error };
+                }
                 return { success: true, error: null };
+            }
 
             case 'send_email':
                 return await this.executeSendEmail(step, context);

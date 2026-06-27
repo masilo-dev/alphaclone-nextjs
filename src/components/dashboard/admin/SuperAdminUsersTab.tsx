@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import {
     Users,
@@ -8,20 +8,13 @@ import {
     UserMinus,
     UserCheck,
     Trash2,
-    ShieldAlert,
-    Mail,
-    Filter,
-    MoreHorizontal
 } from 'lucide-react';
 import { userService } from '../../../services/userService';
 import { User } from '../../../types';
-import { Button, Input } from '../../ui/UIComponents';
-import {
-    MobileDataCard,
-    ResponsiveTableDesktop,
-    ResponsiveTableMobile,
-    rowActionsClass,
-} from '../../ui/ResponsiveTable';
+import { Input } from '../../ui/UIComponents';
+import { EnterpriseDataTable, type EnterpriseColumn } from '../../ui/EnterpriseDataTable';
+import { StatusBadge, userStatusVariant } from '../../ui/StatusBadge';
+import { rowActionsClass } from '../../ui/ResponsiveTable';
 import { toast } from 'react-hot-toast';
 
 const SuperAdminUsersTab: React.FC = () => {
@@ -87,9 +80,78 @@ const SuperAdminUsersTab: React.FC = () => {
         return matchesSearch && matchesFilter;
     });
 
+    const userColumns = useMemo<EnterpriseColumn<User>[]>(() => [
+        {
+            id: 'identity',
+            header: 'User',
+            mobilePrimary: true,
+            sortable: true,
+            sortValue: (u) => u.name,
+            accessor: (u) => (
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 shrink-0 relative">
+                        <Image
+                            src={u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${u.email}`}
+                            alt={u.name}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                        />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="font-bold text-white text-sm truncate">{u.name}</p>
+                        <p className="text-xs text-slate-500 font-mono truncate">{u.email}</p>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'role',
+            header: 'Role',
+            accessor: (u) => (
+                <span className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter ${
+                    u.role === 'admin' || u.role === 'super_admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                    u.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                    'bg-slate-800 text-slate-400 border border-white/5'
+                }`}>
+                    {u.role}
+                </span>
+            ),
+        },
+        {
+            id: 'status',
+            header: 'Status',
+            accessor: (u) => (
+                <StatusBadge variant={userStatusVariant(String((u as User & { status?: string }).status || 'active'))}>
+                    {(u as User & { status?: string }).status || 'active'}
+                </StatusBadge>
+            ),
+        },
+        {
+            id: 'actions',
+            header: 'Actions',
+            accessor: (u) => (
+                <div className={`${rowActionsClass} justify-end`}>
+                    {(u as User & { status?: string }).status === 'suspended' ? (
+                        <button onClick={() => handleRestore(u.id)} className="min-h-11 p-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg border border-green-500/20" title="Restore User">
+                            <UserCheck className="w-4 h-4" />
+                        </button>
+                    ) : (
+                        <button onClick={() => handleSuspend(u.id)} className="min-h-11 p-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg border border-orange-500/20" title="Suspend User">
+                            <UserMinus className="w-4 h-4" />
+                        </button>
+                    )}
+                    <button onClick={() => handleDelete(u.id, u.name)} className="min-h-11 p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20" title="Permanent Delete">
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                </div>
+            ),
+        },
+    ], [handleDelete, handleRestore, handleSuspend]);
+
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-96">
+            <div className="flex items-center justify-center h-96 ac-enterprise-module">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
                     <p className="text-slate-400 font-medium">Synchronizing Platform Users...</p>
@@ -99,7 +161,7 @@ const SuperAdminUsersTab: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in min-w-0">
+        <div className="space-y-6 animate-fade-in min-w-0 ac-scroll-full ac-enterprise-module">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -139,144 +201,13 @@ const SuperAdminUsersTab: React.FC = () => {
                 ))}
             </div>
 
-            {/* Mobile cards */}
-            <ResponsiveTableMobile className="mb-4">
-                {filteredUsers.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500 italic bg-slate-900/40 border border-slate-800 rounded-2xl">
-                        No users match your current criteria.
-                    </div>
-                ) : (
-                    filteredUsers.map((user) => (
-                        <MobileDataCard key={user.id} className="group border-slate-800 bg-slate-900/40">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 shrink-0 relative">
-                                        <Image
-                                            src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email}`}
-                                            alt={user.name}
-                                            fill
-                                            className="object-cover"
-                                            sizes="40px"
-                                        />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="font-bold text-white text-sm truncate">{user.name}</p>
-                                        <p className="text-xs text-slate-500 font-mono truncate">{user.email}</p>
-                                    </div>
-                                </div>
-                                <span className={`px-2 py-1 rounded text-xs font-black uppercase shrink-0 ${(user as any).status === 'suspended' ? 'text-red-400 bg-red-500/10' : 'text-green-400 bg-green-500/10'}`}>
-                                    {(user as any).status || 'active'}
-                                </span>
-                            </div>
-                            <span className={`inline-block px-2 py-1 rounded text-xs font-black uppercase ${
-                                user.role === 'admin' || user.role === 'super_admin' ? 'bg-purple-500/10 text-purple-400' :
-                                user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400' :
-                                'bg-slate-800 text-slate-400'
-                            }`}>
-                                {user.role}
-                            </span>
-                            <div className={`${rowActionsClass} justify-end`}>
-                                {(user as any).status === 'suspended' ? (
-                                    <button onClick={() => handleRestore(user.id)} className="min-h-11 px-3 py-2 bg-green-500/10 text-green-400 rounded-lg border border-green-500/20 text-xs font-bold">Restore</button>
-                                ) : (
-                                    <button onClick={() => handleSuspend(user.id)} className="min-h-11 px-3 py-2 bg-orange-500/10 text-orange-400 rounded-lg border border-orange-500/20 text-xs font-bold">Suspend</button>
-                                )}
-                                <button onClick={() => handleDelete(user.id, user.name)} className="min-h-11 px-3 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20 text-xs font-bold">Delete</button>
-                            </div>
-                        </MobileDataCard>
-                    ))
-                )}
-            </ResponsiveTableMobile>
-
-            {/* Table */}
-            <ResponsiveTableDesktop className="bg-slate-900/40 border border-slate-800 rounded-2xl backdrop-blur-md min-w-0">
-                <table className="w-full min-w-[720px] text-left border-collapse">
-                    <thead>
-                        <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-500 text-xs uppercase tracking-widest font-black">
-                            <th className="p-4">User Identity</th>
-                            <th className="p-4">Platform Role</th>
-                            <th className="p-4">Account Status</th>
-                            <th className="p-4 text-right">Administrative Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                        {filteredUsers.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="p-12 text-center text-slate-500 italic">
-                                    No users match your current criteria.
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredUsers.map(user => (
-                                <tr key={user.id} className="group hover:bg-slate-800/30 transition-colors">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 ring-2 ring-transparent group-hover:ring-teal-500/30 transition-all relative">
-                                                <Image
-                                                    src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email}`}
-                                                    alt={user.name}
-                                                    fill
-                                                    className="object-cover"
-                                                    sizes="40px"
-                                                />
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-white text-sm">{user.name}</div>
-                                                <div className="text-xs text-slate-500 font-mono">{user.email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter ${
-                                            user.role === 'admin' || user.role === 'super_admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
-                                            user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                            'bg-slate-800 text-slate-400 border border-white/5'
-                                        }`}>
-                                            {user.role}
-                                        </span>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-1.5 h-1.5 rounded-full ${(user as any).status === 'suspended' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
-                                            <span className={`text-xs font-bold uppercase tracking-wider ${(user as any).status === 'suspended' ? 'text-red-400' : 'text-green-400'}`}>
-                                                {(user as any).status || 'active'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className={`${rowActionsClass} justify-end`}>
-                                            {(user as any).status === 'suspended' ? (
-                                                <button
-                                                    onClick={() => handleRestore(user.id)}
-                                                    className="p-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg border border-green-500/20"
-                                                    title="Restore User"
-                                                >
-                                                    <UserCheck className="w-4 h-4" />
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => handleSuspend(user.id)}
-                                                    className="p-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg border border-orange-500/20"
-                                                    title="Suspend User"
-                                                >
-                                                    <UserMinus className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleDelete(user.id, user.name)}
-                                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20"
-                                                title="Permanent Delete"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </ResponsiveTableDesktop>
+            <EnterpriseDataTable
+                columns={userColumns}
+                data={filteredUsers}
+                getRowId={(u) => u.id}
+                emptyMessage="No users match your current criteria."
+                className="bg-slate-900/40 border border-slate-800 rounded-2xl p-2"
+            />
         </div>
     );
 };

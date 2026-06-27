@@ -1,27 +1,28 @@
 import type { BonnieToolCall, BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
 import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
+import { BONNIE_MAX_TOOLS_PER_ROUND } from '@/lib/bonnie/bonnieAgentConfig';
 
 export type { BonnieToolCall, BonnieToolResult } from '@/lib/bonnie/bonnieToolTypes';
 
 export async function executeBonnieToolCalls(
   tenantId: string,
   userId: string,
-  toolCalls: BonnieToolCall[]
+  toolCalls: BonnieToolCall[],
+  instruction?: string
 ): Promise<BonnieToolResult[]> {
-  const results: BonnieToolResult[] = [];
+  const calls = toolCalls.slice(0, BONNIE_MAX_TOOLS_PER_ROUND);
 
-  for (const call of toolCalls.slice(0, 8)) {
-    const tool = String(call.tool || '').trim();
-    const args = { ...(call.arguments || {}) };
-    results.push(
-      await executeSingleBonnieTool({
+  return Promise.all(
+    calls.map(async (call) => {
+      const tool = String(call.tool || '').trim();
+      const args = { ...(call.arguments || {}) };
+      return executeSingleBonnieTool({
         tenantId,
         userId,
         tool,
         args,
-      })
-    );
-  }
-
-  return results;
+        instruction,
+      });
+    })
+  );
 }

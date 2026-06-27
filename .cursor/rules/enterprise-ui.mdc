@@ -1,0 +1,28 @@
+---
+description: Enterprise hybrid UI patterns for dashboard modules (AlphaClone brand)
+globs: src/components/dashboard/**/*.tsx,src/components/ui/**/*.tsx
+alwaysApply: false
+---
+
+# Enterprise UI (Hybrid)
+
+When building or editing dashboard UI:
+
+1. **Brand**: Keep teal/dark slate palette — do not introduce Office navy/light theme.
+2. **Layout**: Use `ModulePageLayout`, `ModuleStatCards`, `EnterpriseTabWrapper` patterns.
+3. **Detail panels**: Use `DetailDrawer` from `@/components/ui/enterprise` — bottom on mobile, right on desktop.
+4. **Tables**: Prefer `EnterpriseDataTable` + `StatusBadge` for list modules.
+5. **Scroll**: Never clip primary list content with `max-h` or `overflow-hidden` — use `ac-scroll-full`.
+6. **Loading**: Use `MetricCardSkeleton` / `TabSkeleton`, not spinners alone.
+7. **Reference**: `docs/ENTERPRISE_UI_HYBRID.md` and `ENTERPRISE` in `src/constants/design.ts`.
+
+## PR checklist (dashboard modules)
+
+When adding or changing list/detail UI in a PR:
+
+- **Empty lists**: Use `EmptyState` from `@/components/ui/EmptyState` — not ad-hoc “no data” divs or one-off illustrations.
+- **Status chips**: Use `StatusBadge` from `@/components/ui/StatusBadge` (or `@/components/ui/enterprise`) — not raw colored `<span>` badges.
+- **Tables**: Prefer `EnterpriseDataTable` + column `render` with `StatusBadge` for status columns.
+- **Detail panels**: Use `DetailDrawer`, not legacy `Modal` wrappers for record detail.
+- **Do not** reintroduce duplicate route switches for shared extension routes — use `renderSharedDashboardRoute` in `src/lib/dashboard/sharedDashboardRoutes.tsx`.
+- **ESLint**: `eslint.config.mjs` warns on `Modal` imports under `src/components/dashboard/**` — prefer `DetailDrawer`.

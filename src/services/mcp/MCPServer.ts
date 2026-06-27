@@ -932,8 +932,12 @@ class AlphaCloneMCPServer {
       return { prompts };
     });
 
-    // ── Tool Manifest ──────────────────────────────────────────────────────
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: MCP_TOOLS }));
+    // ── Tool Manifest (unified discovery) ─────────────────────────────────
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+      const tools = await getUnifiedMcpTools({ sanitizeForClient: false });
+      return { tools };
+    });
 
     // ── Tool Execution ──────────────────────────────────────────────────────
     this.server.setRequestHandler(CallToolRequestSchema, async (request: unknown) => {
@@ -1041,7 +1045,8 @@ class AlphaCloneMCPServer {
             .from('leads')
             .select('id, business_name, value, notes, source, status, created_at')
             .eq('tenant_id', tenant_id)
-            .neq('status', 'converted')
+            .neq('stage', 'converted')
+            .is('client_id', null)
             .order('created_at', { ascending: false });
 
           const { data: contacts } = await supabaseAdmin
@@ -1469,83 +1474,7 @@ class AlphaCloneMCPServer {
           break;
         }
 
-        // â”€â”€ get_clients â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        case 'get_clients': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { status, industry, location, min_value, max_value, limit = 100, offset = 0, cursor, sort_by, sort_order, fields } = a;
-          const cursorOffset =
-            typeof cursor === 'string' && cursor.trim()
-              ? Number(Buffer.from(cursor, 'base64').toString('utf8')) || 0
-              : 0;
-          const pageSize = Math.min(Math.max(Number(limit) || 100, 1), 1000);
-          const pageOffset = Math.max(Number(offset) || cursorOffset || 0, 0);
-          const selectable = typeof fields === 'string' && fields.trim()
-            ? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')
-            : 'id, name, email, phone, industry, location, sales_stage, value, website, is_active, created_at';
-          const orderBy = ['created_at', 'value', 'sales_stage', 'name'].includes(String(sort_by || '')) ? String(sort_by) : 'created_at';
-          const asc = String(sort_order || 'desc').toLowerCase() === 'asc';
-          let query = supabaseAdmin
-            .from('business_clients')
-            .select(selectable)
-            .eq('tenant_id', tenant_id)
-            .order(orderBy, { ascending: asc })
-            .range(pageOffset, pageOffset + pageSize - 1);
-          if (status) query = query.eq('sales_stage', status);
-          if (industry) query = query.ilike('industry', `%${String(industry).trim()}%`);
-          if (location) query = query.ilike('location', `%${String(location).trim()}%`);
-          if (min_value != null) query = query.gte('value', Number(min_value) || 0);
-          if (max_value != null) query = query.lte('value', Number(max_value) || 0);
-          let data: any;
-          let error: any;
-          ({ data, error } = await query);
-          if (error && isSchemaOrRelationError(error)) {
-            // Legacy fallback
-            let legacyQuery = supabaseAdmin
-              .from('business_clients')
-              .select('id, name, email, phone, created_at')
-              .eq('tenant_id', tenant_id)
-              .order('created_at', { ascending: false })
-              .range(pageOffset, pageOffset + pageSize - 1);
-            ({ data, error } = await legacyQuery);
-          }
-          if (error) throw supabaseErrorToMcpClientError('get_clients', (error as { message?: string }).message || 'Failed to fetch clients');
-          const rows = (Array.isArray(data) ? data : []).map((row: Record<string, unknown>) => {
-            const phone = row.phone;
-            const normalizedPhone = normalizePhoneForStorage(phone);
-            return {
-              ...row,
-              phone: normalizedPhone || phone || null,
-              phone_has_country_code: hasCountryCode(normalizedPhone || phone),
-            };
-          });
-          const missingCountryCode = rows.filter((row) => !row.phone_has_country_code && row.phone).length;
-          result = {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(
-                  {
-                    items: rows,
-                    pagination: {
-                      limit: pageSize,
-                      offset: pageOffset,
-                      cursor: Buffer.from(String(pageOffset)).toString('base64'),
-                      returned: rows.length,
-                      has_more: rows.length === pageSize,
-                      next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
-                      next_cursor: rows.length === pageSize ? Buffer.from(String(pageOffset + pageSize)).toString('base64') : null,
-                    },
-                    contacts_missing_country_code_count: missingCountryCode,
-                  },
-                  null,
-                  2
-                ),
-              },
-            ],
-          };
-          break;
-        }
+        // get_clients, search_contacts, create_client — handled by tool-registry (lib/mcp/tools/crm.ts)
 
         case 'get_client_by_id': {
           const a = args as Record<string, any>;
@@ -1596,150 +1525,12 @@ class AlphaCloneMCPServer {
           break;
         }
 
-        case 'get_contacts': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { limit = 100, offset = 0 } = a;
-          const pageSize = Math.min(Math.max(Number(limit) || 100, 1), 1000);
-          const pageOffset = Math.max(Number(offset) || 0, 0);
-          const { data, error } = await supabaseAdmin
-            .from('contacts')
-            .select('id, first_name, last_name, full_name, email, phone, status, created_at')
-            .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
-            .range(pageOffset, pageOffset + pageSize - 1);
-          if (error) throw supabaseErrorToMcpClientError('get_contacts', error.message);
-          result = {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(
-                  {
-                    items: data || [],
-                    pagination: {
-                      limit: pageSize,
-                      offset: pageOffset,
-                      returned: (data || []).length,
-                      has_more: (data || []).length === pageSize,
-                    },
-                  },
-                  null,
-                  2
-                ),
-              },
-            ],
-          };
-          break;
-        }
+        // Registry handles this tool (lib/mcp/tools/crm.ts)
 
-        case 'search_contacts': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { query, limit = 100 } = a;
-          if (typeof query !== 'string' || !query.trim()) {
-            throw new Error('query is required');
-          }
-          const q = `%${query.trim()}%`;
-          const { data, error } = await supabaseAdmin
-            .from('contacts')
-            .select('id, first_name, last_name, full_name, email, phone, status, created_at')
-            .eq('tenant_id', tenant_id)
-            .or(`first_name.ilike.${q},last_name.ilike.${q},full_name.ilike.${q},email.ilike.${q},phone.ilike.${q}`)
-            .order('created_at', { ascending: false })
-            .limit(Math.min(Number(limit) || 100, 1000));
-          if (error) throw supabaseErrorToMcpClientError('search_contacts', error.message);
-          result = {
-            content: [
-              {
-                type: 'text',
-                text: renderBusinessSuccess('mcp-tool', 'mcp-trace', 'Data retrieved', data),
-              },
-              {
-                type: 'text',
-                text: JSON.stringify(data || [], null, 2),
-              },
-            ],
-          };
-          break;
-        }
+                // ——————————————————————————————————————————————————————————————————————————————
+        // Registry handles this tool (lib/mcp/tools/crm.ts)
 
-        // ——————————————————————————————————————————————————————————————————————————————
-        case 'create_client': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const owner_id = this.requireProfileUser(a);
-          const {
-            name,
-            email,
-            phone,
-            industry,
-            website,
-            location,
-            sales_stage,
-            value,
-            source,
-            notes,
-            metadata,
-          } = a;
-          const resolvedSource = inferMcpLeadSource(source, this.ctx);
-          const metaExtra =
-            metadata && typeof metadata === 'object' && !Array.isArray(metadata)
-              ? (metadata as Record<string, unknown>)
-              : {};
-          const primary = await supabaseAdmin
-            .from('business_clients')
-            .insert(cleanObjectPlaceholders({
-              tenant_id,
-              name,
-              email: email || null,
-              phone: normalizePhoneForStorage(phone),
-              industry: industry || null,
-              website: website || null,
-              location: location || null,
-              sales_stage,
-              value: Number(value) || 0,
-              description: notes || null,
-              custom_fields: { source: resolvedSource, ...metaExtra },
-              is_active: true,
-              owner_id,
-            }))
-            .select('id, name, email')
-            .single();
-          let data = primary.data;
-          let error = primary.error;
-          if (error && isSchemaOrRelationError(error)) {
-            const fallback = await supabaseAdmin
-              .from('business_clients')
-              .insert(cleanObjectPlaceholders({
-                tenant_id,
-                name,
-                email: email || null,
-                phone: normalizePhoneForStorage(phone),
-                industry: industry || null,
-                website: website || null,
-                location: location || null,
-                description: notes || null,
-                custom_fields: { source: resolvedSource, ...metaExtra },
-              }))
-              .select('id, name, email')
-              .single();
-            data = fallback.data;
-            error = fallback.error;
-          }
-          if (error) throw supabaseErrorToMcpClientError('create_client', (error as { message?: string }).message || 'Failed to create client');
-          if (!data) throw new Error('Failed to create client');
-          result = {
-            content: [
-              {
-                type: 'text',
-                text: `âś… **Client Created Successfully**\n\n- **Name**: ${data.name}\n- **Email**: ${data.email || 'None'}\n\n*Next Steps: You can now add a deal or create an invoice for this client in the dashboard.*`,
-              },
-            ],
-          };
-          break;
-        }
-
-        case 'update_client': {
+                case 'update_client': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const {
@@ -2350,121 +2141,7 @@ class AlphaCloneMCPServer {
           break;
         }
 
-        // â”€â”€ get_deals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        case 'get_deals': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { stage, limit = 20 } = a;
-          let query = supabaseAdmin
-            .from('deals')
-            .select('id, name, value, stage, description, source, created_at')
-            .eq('tenant_id', tenant_id)
-            .order('created_at', { ascending: false })
-            .limit(Math.min(limit, 100));
-          if (stage) query = query.eq('stage', stage);
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_deals', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-          break;
-        }
-
-        // â”€â”€ create_deal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        case 'create_deal': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          // Bug #1 fix: owner_id is optional — use the authenticated user from
-          // the MCP context when available; fall back to the user_id arg if
-          // provided; do NOT throw if neither is present (deals can be ownerless).
-          const owner_id: string | null =
-            this.ctx?.userId ||
-            (a.user_id && typeof a.user_id === 'string' && isUuidString(a.user_id.trim())
-              ? a.user_id.trim()
-              : null);
-          const { name, value, stage = 'qualified', description, source } = a;
-          if (!name || typeof name !== 'string' || !name.trim()) {
-            throw new Error('name is required');
-          }
-          if (!DEAL_STAGES.has(String(stage))) {
-            throw new Error('stage must be one of: lead, qualified, proposal, negotiation, closed_won, closed_lost');
-          }
-          const numericValue = Number(value ?? 0);
-          if (!Number.isFinite(numericValue) || numericValue < 0) {
-            throw new Error('value must be a non-negative number');
-          }
-          const validSources = ['referral', 'website', 'cold_outreach', 'social_media', 'event', 'partner', 'organic', 'other'];
-          const finalSource = (typeof source === 'string' && validSources.includes(source.trim()))
-            ? source.trim()
-            : 'other';
-
-          const { data, error } = await supabaseAdmin
-            .from('deals')
-            .insert({
-              tenant_id,
-              owner_id,
-              name: name.trim(),
-              value: numericValue,
-              stage,
-              description: typeof description === 'string' ? description : null,
-              source: finalSource,
-            })
-            .select('id, name, value, stage')
-            .single();
-          if (error) throw supabaseErrorToMcpClientError('create_deal', error.message);
-          result = {
-            content: [
-              {
-                type: 'text',
-                text: `Deal created: ${JSON.stringify(data)}. Next: set expected close and probability in Deals, tie to a contact, and when won use Billing/Accounting so revenue is recorded.`,
-              },
-            ],
-          };
-          break;
-        }
-
-        case 'update_deal': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { deal_id, name, value, stage, description, source, metadata } = a;
-          if (!isUuidString(deal_id)) {
-            throw new Error('deal_id must be a valid deal UUID from get_deals');
-          }
-          const update: Record<string, unknown> = {};
-          if (name !== undefined) update.name = String(name).trim();
-          if (value !== undefined) {
-            const v = Number(value);
-            if (!Number.isFinite(v) || v < 0) throw new Error('value must be a non-negative number');
-            update.value = v;
-          }
-          if (stage !== undefined) {
-            if (!DEAL_STAGES.has(String(stage))) {
-              throw new Error('stage must be one of: lead, qualified, proposal, negotiation, closed_won, closed_lost');
-            }
-            update.stage = stage;
-          }
-          if (description !== undefined) update.description = description || null;
-          if (source !== undefined) update.source = source || null;
-          if (metadata !== undefined && metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
-            update.metadata = metadata;
-          }
-          if (Object.keys(update).length === 0) throw new Error('Provide at least one field to update');
-          const { data, error } = await supabaseAdmin
-            .from('deals')
-            .update(update)
-            .eq('tenant_id', tenant_id)
-            .eq('id', deal_id.trim())
-            .select('id, name, value, stage, description, updated_at')
-            .single();
-          if (error) throw supabaseErrorToMcpClientError('update_deal', error.message);
-          await enqueueMcpEvent(
-            supabaseAdmin,
-            tenant_id,
-            this.ctx?.userId || null,
-            'on_deal_stage_changed',
-            { deal_id: data?.id || deal_id, stage: data?.stage || update.stage || null }
-          );
-          result = { content: [{ type: 'text', text: `Deal updated: ${JSON.stringify(data)}` }] };
-          break;
-        }
+        // get_deals, create_deal, update_deal — handled by lib/mcp/tools/deals.ts registry
 
         // â”€â”€ get_projects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'get_projects': {

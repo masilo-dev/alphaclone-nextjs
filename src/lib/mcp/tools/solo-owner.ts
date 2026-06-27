@@ -51,7 +51,7 @@ registerTool('solo-owner', {
         .limit(100),
       supabase
         .from('leads')
-        .select('id, business_name, name, email, status, source, created_at, value')
+        .select('id, business_name, email, status, stage, source, created_at, value')
         .eq('tenant_id', args.tenant_id)
         .gte('created_at', since)
         .order('created_at', { ascending: false })
