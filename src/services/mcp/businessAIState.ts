@@ -99,7 +99,7 @@ export const DEFAULT_BUSINESS_AI_STATE: BusinessAIState = {
   version: 1,
   primary_domain: 'operations',
   secondary_domains: ['crm', 'finance', 'marketing'],
-  agent_mode: 'draft',
+  agent_mode: 'act_with_approval',
   preferred_model: 'claude',
   preferred_model_by_task: {
     research: 'claude',

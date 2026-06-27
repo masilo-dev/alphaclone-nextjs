@@ -39,6 +39,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/bonnie-morning-brief",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/sync-zoho-inbox",
       "schedule": "*/5 * * * *"
     }

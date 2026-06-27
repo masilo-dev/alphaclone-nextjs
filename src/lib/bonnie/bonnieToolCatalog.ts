@@ -54,6 +54,9 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'get_business_snapshot', 'get_strategic_plan',
   'run_chief_of_staff_routine', 'get_recent_messages',
   'run_playbook', 'get_automation_health',
+  'start_lead_campaign', 'start_lead_nurture',
+  'nexus_lead_enrichment', 'nexus_sales_campaign',
+  'capture_linkedin_comment_leads', 'auto_create_lead_from_message',
   // Tickets
   'create_ticket', 'get_tickets',
   // Invoicing actions
@@ -65,7 +68,21 @@ export const BONNIE_MCP_SERVER_TOOLS = [
 export const BONNIE_CUSTOM_TOOLS = [
   'run_autonomous_scan',
   'summarize_workspace',
+  'get_account_overview',
   'search_facebook_leads',
+  'find_and_qualify_leads',
+  'parse_lead_criteria',
+  'qualify_crm_leads',
+  'get_scraper_leads',
+  'get_customer_360',
+  'get_integration_health',
+  'get_proactive_brief',
+  'list_scraper_campaigns',
+  'run_scraper_campaign',
+  'create_scraper_campaign',
+  'search_email_lead_context',
+  'ingest_content_to_lead',
+  'get_autonomous_rules',
   'draft_reply',
   'summarize_ticket',
   'generate_outreach_draft',
@@ -84,6 +101,11 @@ export type BonnieModuleId =
   | 'tasks'
   | 'meetings'
   | 'tickets'
+  | 'quotes'
+  | 'projects'
+  | 'inbox'
+  | 'analytics'
+  | 'automation'
   | 'general';
 
 export const BONNIE_MODULE_HINTS: Record<
@@ -97,8 +119,26 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   leads: {
     label: 'Leads',
-    tools: ['get_leads', 'create_lead', 'update_lead_status', 'recommend_next_steps'],
-    examples: ['List hot leads', 'Create a lead for john@example.com'],
+    tools: [
+      'get_leads',
+      'create_lead',
+      'update_lead_status',
+      'find_and_qualify_leads',
+      'parse_lead_criteria',
+      'qualify_crm_leads',
+      'get_scraper_leads',
+      'search_facebook_leads',
+      'start_lead_campaign',
+      'nexus_lead_enrichment',
+      'recommend_next_steps',
+      'generate_outreach_draft',
+    ],
+    examples: [
+      'Find plumbers in Austin and qualify hot leads only',
+      'Score my CRM leads for dental clinics — min score 50',
+      'Remember I only want SMB owners, no franchises',
+      'List hot leads',
+    ],
   },
   deals: {
     label: 'Deals',
@@ -147,13 +187,56 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   tickets: {
     label: 'Support tickets',
-    tools: ['create_ticket', 'get_tickets'],
-    examples: ['Open a ticket for billing issue'],
+    tools: ['create_ticket', 'get_tickets', 'escalate_ticket', 'summarize_ticket', 'draft_reply'],
+    examples: ['Open a ticket for billing issue', 'Summarize ticket thread'],
+  },
+  quotes: {
+    label: 'Quotes',
+    tools: ['get_quotes', 'create_quote', 'send_quote', 'get_deals'],
+    examples: ['List draft quotes', 'Send quote to client'],
+  },
+  projects: {
+    label: 'Projects',
+    tools: ['get_projects', 'create_project', 'get_project_tasks', 'create_project_task'],
+    examples: ['Show active projects', 'Add task to website redesign project'],
+  },
+  inbox: {
+    label: 'Unified inbox',
+    tools: ['microsoft_get_emails', 'search_email_lead_context', 'draft_reply', 'get_recent_messages'],
+    examples: ['Who is this email from?', 'Draft reply to latest client email'],
+  },
+  analytics: {
+    label: 'Analytics',
+    tools: ['get_dashboard_stats', 'get_revenue_summary', 'get_api_health', 'get_business_snapshot'],
+    examples: ['How is the business performing?', 'Revenue this month vs last'],
+  },
+  automation: {
+    label: 'Automation',
+    tools: ['run_playbook', 'get_automation_health', 'orchestrate_task', 'get_autonomous_rules', 'run_autonomous_scan'],
+    examples: ['Run invoice recovery playbook', 'What automations are unhealthy?'],
   },
   general: {
     label: 'Workspace',
-    tools: ['run_autonomous_scan', 'run_chief_of_staff_routine', 'get_business_snapshot', 'orchestrate_task', 'get_automation_health'],
-    examples: ['Run full workspace scan', 'Give me chief of staff briefing'],
+    tools: [
+      'get_account_overview',
+      'get_integration_health',
+      'get_proactive_brief',
+      'get_customer_360',
+      'run_autonomous_scan',
+      'run_chief_of_staff_routine',
+      'get_business_snapshot',
+      'orchestrate_task',
+      'get_automation_health',
+      'summarize_workspace',
+      'start_lead_campaign',
+      'start_invoice_lifecycle',
+      'start_contract_lifecycle',
+    ],
+    examples: [
+      'Give me full account overview',
+      'Run full workspace scan',
+      'Give me chief of staff briefing',
+    ],
   },
 };
 
@@ -170,7 +253,14 @@ export function resolveBonnieModuleFromPath(pathname: string): BonnieModuleId {
   if (p.includes('/ticket') || p.includes('/deep-desk')) return 'tickets';
   if (p.includes('/lead') || p.includes('/sales-agent')) return 'leads';
   if (p.includes('/deal')) return 'deals';
-  if (p.includes('/crm') || p.includes('/client')) return 'crm';
+  if (p.includes('/quote')) return 'quotes';
+  if (p.includes('/project')) return 'projects';
+  if (p.includes('/analytics') || p.includes('/performance')) return 'analytics';
+  if (p.includes('/inbox') || p.includes('/messages')) return 'inbox';
+  if (p.includes('/automation') || p.includes('/engine') || p.includes('/playbook')) return 'automation';
+  if (p.includes('/bonnie')) return 'general';
+  if (p.includes('/scraper')) return 'leads';
+  if (p.includes('/crm') || p.includes('/client') || p.includes('/contact')) return 'crm';
   return 'general';
 }
 

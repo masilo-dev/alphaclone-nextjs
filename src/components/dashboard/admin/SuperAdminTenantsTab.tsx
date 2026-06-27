@@ -1,25 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Building2,
     Search,
-    MoreVertical,
-    CheckCircle,
-    XCircle,
-    ShieldAlert,
     Eye,
-    LogIn,
     Trash2,
     MapPin,
-    Calendar // Added for Calendly status
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-    MobileDataCard,
-    ResponsiveTableDesktop,
-    ResponsiveTableMobile,
-} from '../../ui/ResponsiveTable';
 import { tenantManagementService, TenantInfo } from '../../../services/tenantManagementService';
 import { securityLogService } from '../../../services/securityLogService';
+import { ModulePageLayout } from '../../ui/ModulePageLayout';
+import { DetailDrawer } from '../../ui/DetailDrawer';
+import { EnterpriseDataTable, type EnterpriseColumn } from '../../ui/EnterpriseDataTable';
+import { StatusBadge } from '../../ui/StatusBadge';
+import { ModuleStatCards } from '../common/ModuleStatCards';
 
 const SuperAdminTenantsTab: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -65,268 +59,169 @@ const SuperAdminTenantsTab: React.FC = () => {
     );
 
     const totalMRR = tenants.reduce((sum, t) => sum + (t.subscription === 'enterprise' ? 24000 : t.subscription === 'pro' ? 12000 : 0), 0);
+    const selectedTenantName = tenants.find((t) => t.id === selectedTenant)?.name;
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-slate-400">Loading tenants...</div>
-            </div>
-        );
-    }
+    const tenantColumns = useMemo<EnterpriseColumn<TenantInfo>[]>(() => [
+        {
+            id: 'name',
+            header: 'Tenant',
+            mobilePrimary: true,
+            sortable: true,
+            sortValue: (t) => t.name,
+            accessor: (t) => (
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
+                        {t.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                        <span className="text-[13px] font-bold text-white block truncate">{t.name}</span>
+                        <span className="text-[11px] text-slate-500">ID: {t.id.substring(0, 8)}…</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'plan',
+            header: 'Plan',
+            accessor: (t) => <span className="capitalize text-slate-300">{t.subscription || 'free'}</span>,
+        },
+        {
+            id: 'status',
+            header: 'Status',
+            accessor: (t) => <StatusBadge variant={t.status === 'active' ? 'success' : t.status === 'suspended' ? 'warning' : 'neutral'}>{t.status}</StatusBadge>,
+        },
+        {
+            id: 'users',
+            header: 'Users',
+            sortable: true,
+            sortValue: (t) => t.userCount,
+            accessor: (t) => <span className="font-mono">{t.userCount}</span>,
+        },
+        {
+            id: 'created',
+            header: 'Created',
+            sortable: true,
+            sortValue: (t) => t.createdAt,
+            accessor: (t) => new Date(t.createdAt).toLocaleDateString(),
+        },
+        {
+            id: 'actions',
+            header: '',
+            accessor: (t) => (
+                <div className="flex items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleViewLogs(t.id); }}
+                        className="px-2 py-1.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold hover:bg-white/5"
+                    >
+                        <Eye className="w-3.5 h-3.5 inline" /> Logs
+                    </button>
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleDeleteTenant(t.id, t.name); }}
+                        className="p-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            ),
+        },
+    ], [handleDeleteTenant, handleViewLogs]);
+
+    const tenantStats = useMemo(() => [
+        { label: 'Total tenants', value: tenants.length, sub: `${filteredTenants.length} shown`, Icon: Building2, accent: 'teal' as const },
+        { label: 'Total MRR', value: `$${(totalMRR / 1000).toFixed(1)}k`, Icon: Building2, accent: 'emerald' as const },
+        { label: 'Active users', value: tenants.reduce((sum, t) => sum + t.userCount, 0), Icon: Building2, accent: 'blue' as const },
+        { label: 'Avg users/tenant', value: (tenants.reduce((sum, t) => sum + t.userCount, 0) / (tenants.length || 1)).toFixed(1), Icon: Building2, accent: 'sky' as const },
+    ], [tenants, filteredTenants.length, totalMRR]);
 
     return (
-        <div className="space-y-6 p-3 sm:p-4 md:p-6 animate-fade-in min-w-0">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Building2 className="w-6 h-6 text-teal-400" />
-                        Platform Overview
-                    </h2>
-                    <p className="text-slate-400">Manage all tenants on the platform</p>
-                </div>
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search tenants..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 text-white"
-                    />
-                </div>
-            </div>
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <StatCard label="Total Tenants" value={tenants.length.toString()} trend={`${tenants.length} Active`} />
-                <StatCard label="Total MRR" value={`$${(totalMRR / 1000).toFixed(1)}k`} trend={`+$${(totalMRR * 0.1 / 1000).toFixed(1)}k`} color="text-green-400" />
-                <StatCard label="Active Users" value={tenants.reduce((sum, t) => sum + t.userCount, 0).toString()} trend="All Tenants" color="text-teal-400" />
-                <StatCard label="Avg Users/Tenant" value={(tenants.reduce((sum, t) => sum + t.userCount, 0) / (tenants.length || 1)).toFixed(1)} trend="Growing" color="text-blue-400" />
-            </div>
-
-            {/* Tenants — mobile cards */}
-            <ResponsiveTableMobile className="mb-4">
-                {filteredTenants.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                        No tenants found. {searchTerm && 'Try a different search term.'}
+        <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module p-3 sm:p-4 md:p-6">
+            <ModulePageLayout
+                header={(
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
+                        <div>
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Building2 className="w-6 h-6 text-teal-400" />
+                                Platform Overview
+                            </h2>
+                            <p className="text-slate-400 text-sm">Manage all tenants on the platform</p>
+                        </div>
                     </div>
-                ) : (
-                    filteredTenants.map((tenant) => (
-                        <MobileDataCard key={tenant.id} className="border-slate-800 bg-slate-900/50">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-xs text-white shrink-0">
-                                        {tenant.name.substring(0, 2).toUpperCase()}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="font-medium text-white truncate">{tenant.name}</p>
-                                        <p className="text-xs text-slate-500">ID: {tenant.id.substring(0, 8)}…</p>
-                                    </div>
-                                </div>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium border shrink-0 ${getStatusColor(tenant.status)} uppercase`}>
-                                    {tenant.status}
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
-                                <span>Plan: <span className="text-slate-200 capitalize">{tenant.subscription || 'Free'}</span></span>
-                                <span>Users: <span className="text-slate-200 font-mono">{tenant.userCount}</span></span>
-                                <span>Created: {new Date(tenant.createdAt).toLocaleDateString()}</span>
-                                <span className="flex items-center gap-1">
-                                    Calendly:
-                                    {(tenant.settings as any)?.calendly?.enabled ? (
-                                        <Calendar className="w-4 h-4 text-teal-400" />
-                                    ) : (
-                                        <Calendar className="w-4 h-4 text-slate-600" />
-                                    )}
-                                </span>
-                            </div>
-                            <div className="flex flex-wrap gap-2 pt-1">
-                                <button
-                                    onClick={() => handleViewLogs(tenant.id)}
-                                    className="min-h-11 flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 text-slate-300 rounded-lg border border-slate-700 text-xs font-medium"
-                                >
-                                    <Eye className="w-4 h-4" /> Logs
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
-                                    className="min-h-11 px-3 py-2 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20 text-xs font-medium"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </MobileDataCard>
-                    ))
                 )}
-            </ResponsiveTableMobile>
-
-            {/* Tenants Table */}
-            <ResponsiveTableDesktop className="bg-slate-900/50 border border-slate-800 rounded-2xl backdrop-blur-sm min-w-0">
-                <table className="w-full min-w-[920px] text-left border-collapse">
-                    <thead>
-                        <tr className="bg-slate-900 border-b border-slate-800 text-slate-400 text-sm">
-                            <th className="p-4 font-medium">Business Name</th>
-                            <th className="p-4 font-medium">Subscription</th>
-                            <th className="p-4 font-medium">Status</th>
-                            <th className="p-4 font-medium text-center">Calendly</th>
-                            <th className="p-4 font-medium">Users</th>
-                            <th className="p-4 font-medium">Created</th>
-                            <th className="p-4 font-medium text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredTenants.length === 0 ? (
-                            <tr>
-                                <td colSpan={7} className="p-8 text-center text-slate-400">
-                                    No tenants found. {searchTerm && 'Try a different search term.'}
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredTenants.map(tenant => (
-                                <tr key={tenant.id} className="border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors group">
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-xs text-white border border-teal-500 shadow-lg shadow-teal-500/20">
-                                                {tenant.name.substring(0, 2).toUpperCase()}
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-white">{tenant.name}</div>
-                                                <div className="text-xs text-slate-500">ID: {tenant.id.substring(0, 8)}...</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className="text-slate-300 text-sm capitalize">{tenant.subscription || 'Free'}</span>
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(tenant.status)} uppercase tracking-wide`}>
-                                            {tenant.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        {(tenant.settings as any)?.calendly?.enabled ? (
-                                            <div className="flex items-center justify-center text-teal-400" title="Calendly Connected">
-                                                <Calendar className="w-4 h-4" />
-                                                <div className="w-1.5 h-1.5 bg-teal-400 rounded-full ml-1 animate-pulse" />
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center justify-center text-slate-600" title="Not Connected">
-                                                <Calendar className="w-4 h-4" />
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-4 font-mono text-slate-300">
-                                        {tenant.userCount}
-                                    </td>
-                                    <td className="p-4 text-slate-400 text-sm">
-                                        {new Date(tenant.createdAt).toLocaleDateString()}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => handleViewLogs(tenant.id)}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-teal-600 text-slate-300 hover:text-white rounded-lg transition-all border border-slate-700 hover:border-teal-500"
-                                                title="View Security Logs"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                <span className="text-xs font-medium">Logs</span>
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
-                                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all border border-red-500/20 hover:border-red-500/50"
-                                                title="Delete Tenant"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </ResponsiveTableDesktop>
-
-            {/* Security Logs Modal */}
-            {selectedTenant && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold flex items-center gap-2 text-white">
-                                <ShieldAlert className="w-6 h-6 text-teal-400" />
-                                Security Logs & IP Tracking
-                            </h3>
-                            <button
-                                onClick={() => setSelectedTenant(null)}
-                                className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
-                            >
-                                <XCircle className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <div className="space-y-3">
-                            {tenantLogs.length === 0 ? (
-                                <div className="text-center py-8 text-slate-400">
-                                    No security logs found for this tenant
-                                </div>
-                            ) : (
-                                tenantLogs.map(log => (
-                                    <div key={log.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div>
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${log.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
-                                                    log.severity === 'warning' ? 'bg-orange-500/20 text-orange-400' :
-                                                        'bg-blue-500/20 text-blue-400'
-                                                    }`}>
-                                                    {log.eventType}
-                                                </span>
-                                            </div>
-                                            <span className="text-xs text-slate-500">
-                                                {new Date(log.createdAt).toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-4 text-sm">
-                                            <div className="flex items-center gap-2 text-slate-300">
-                                                <MapPin className="w-4 h-4 text-teal-400" />
-                                                <span className="font-mono">{log.ipAddress}</span>
-                                            </div>
-                                            {log.location && (
-                                                <span className="text-slate-400">{log.location}</span>
-                                            )}
-                                            {log.deviceInfo && (
-                                                <span className="text-slate-500">
-                                                    {log.deviceInfo.browser} on {log.deviceInfo.os}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                toolbar={(
+                    <div className="relative px-1">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Search tenants..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-teal-500/50"
+                        />
                     </div>
+                )}
+                stats={!loading ? (
+                    <div className="px-1">
+                        <ModuleStatCards stats={tenantStats} />
+                    </div>
+                ) : null}
+            >
+                <div className="px-1 pb-20">
+                    {loading ? (
+                        <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+                    ) : (
+                        <EnterpriseDataTable
+                            columns={tenantColumns}
+                            data={filteredTenants}
+                            getRowId={(t) => t.id}
+                            onRowClick={(t) => handleViewLogs(t.id)}
+                            emptyMessage={searchTerm ? 'No tenants match your search.' : 'No tenants found.'}
+                        />
+                    )}
                 </div>
-            )}
+            </ModulePageLayout>
+
+            <DetailDrawer
+                open={Boolean(selectedTenant)}
+                onOpenChange={(open) => { if (!open) setSelectedTenant(null); }}
+                title="Security logs"
+                description={selectedTenantName}
+                size="wide"
+            >
+                <div className="space-y-3 pb-6">
+                    {tenantLogs.length === 0 ? (
+                        <p className="text-sm text-slate-500 py-8 text-center">No security logs found for this tenant.</p>
+                    ) : (
+                        tenantLogs.map((log) => (
+                            <div key={log.id} className="bg-slate-900/60 border border-white/5 rounded-xl p-4">
+                                <div className="flex items-start justify-between mb-2 gap-2">
+                                    <StatusBadge variant={log.severity === 'critical' ? 'error' : log.severity === 'warning' ? 'warning' : 'info'}>
+                                        {log.eventType}
+                                    </StatusBadge>
+                                    <span className="text-xs text-slate-500 shrink-0">
+                                        {new Date(log.createdAt).toLocaleString()}
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                                    <span className="inline-flex items-center gap-1.5 font-mono">
+                                        <MapPin className="w-3.5 h-3.5 text-teal-400" />
+                                        {log.ipAddress}
+                                    </span>
+                                    {log.location && <span className="text-slate-400">{log.location}</span>}
+                                    {log.deviceInfo && (
+                                        <span className="text-slate-500 text-xs">
+                                            {log.deviceInfo.browser} on {log.deviceInfo.os}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </DetailDrawer>
         </div>
     );
 };
-
-const getStatusColor = (status: string) => {
-    switch (status) {
-        case 'active': return 'bg-teal-500/10 text-teal-400 border-teal-500/20';
-        case 'suspended': return 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-        case 'inactive': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-        default: return 'bg-slate-800 text-slate-400 border-slate-700';
-    }
-};
-
-const StatCard = ({ label, value, trend, color = 'text-white' }: any) => (
-    <div className="p-5 bg-slate-900/50 border border-slate-800 rounded-2xl">
-        <div className="text-slate-500 text-xs uppercase tracking-wider font-semibold mb-1">{label}</div>
-        <div className="flex items-end justify-between">
-            <div className={`text-2xl font-bold ${color}`}>{value}</div>
-            <div className={`text-xs font-medium ${trend.startsWith('+') ? 'text-teal-400' : 'text-slate-400'}`}>{trend}</div>
-        </div>
-    </div>
-);
 
 export default SuperAdminTenantsTab;

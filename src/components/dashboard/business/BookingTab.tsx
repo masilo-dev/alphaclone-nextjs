@@ -106,7 +106,7 @@ const BookingTab: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-6 pb-20 ac-scroll-full ac-enterprise-module">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">

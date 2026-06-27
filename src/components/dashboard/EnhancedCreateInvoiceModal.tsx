@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
-import { paymentService } from '../../services/paymentService';
 import { Project } from '../../types';
 import toast from 'react-hot-toast';
 import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps';

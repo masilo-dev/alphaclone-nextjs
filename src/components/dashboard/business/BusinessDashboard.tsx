@@ -53,7 +53,6 @@ import TeamPage from './TeamPage';
 // Lazy load heavier tabs that aren't needed on dashboard mount
 const MessagesPage = React.lazy(() => import('./MessagesPage'));
 const CalendarPage = React.lazy(() => import('./CalendarPage'));
-const BillingPage = React.lazy(() => import('./BillingPage'));
 const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
 const ReportsPage = React.lazy(() => import('./ReportsPage'));
 const SettingsPage = React.lazy(() => import('./SettingsPage'));
@@ -121,8 +120,7 @@ const PeriodClosePage = React.lazy(() => import('../accounting/PeriodClosePage')
 const SequenceBuilder = React.lazy(() => import('../marketing/SequenceBuilder'));
 const DeliverabilityPanel = React.lazy(() => import('../marketing/DeliverabilityPanel'));
 const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
-const FinanceTab = React.lazy(() => import('../FinanceTab'));
-
+import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
 import SalesHub from '../hubs/SalesHub';
 import MoneyHub from '../hubs/MoneyHub';
 import MarketingHub from '../hubs/MarketingHub';
@@ -149,6 +147,7 @@ const MONEY_HUB_ROUTES = new Set([
   '/dashboard/accounting/bills',
   '/dashboard/accounting/period-close',
   '/dashboard/business/billing',
+  '/dashboard/business/invoices',
   '/dashboard/business/expenses',
   '/dashboard/business/quotes',
   '/dashboard/business/cash-flow',
@@ -209,9 +208,11 @@ import BonnieFullView from '../bonnie/BonnieFullView';
 import Sidebar from '@/components/dashboard/Sidebar';
 import BottomNav from '../BottomNav';
 import { TableSkeleton } from '@/components/ui/Skeleton';
+import { TabSkeleton } from '@/components/ui/TabSkeleton';
 import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
+import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
 import NotificationCenter from '../NotificationCenter';
 import CommandPalette from '../CommandPalette';
 import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
@@ -488,6 +489,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 </div>
             </div>
         );
+
+        const sharedRoute = renderSharedDashboardRoute(tab, user);
+        if (sharedRoute) return sharedRoute;
 
         switch (tab) {
             case '/dashboard':
@@ -910,7 +914,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/finance/manage':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
-                        <FinanceTab user={user} />
+                        <EnhancedBillingPage user={user} />
                     </React.Suspense>
                 );
 
@@ -1193,7 +1197,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                     : 'min-h-full'
                             }`}
                         >
+                        <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(route)}>
                             {moduleContent}
+                        </EnterpriseTabWrapper>
                         </div>
                     </WidgetErrorBoundary>
                 </div>

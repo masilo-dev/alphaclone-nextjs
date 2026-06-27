@@ -116,3 +116,47 @@ export const Z_INDEX = {
     popover: 1060,
     tooltip: 1070,
 } as const;
+
+/**
+ * Enterprise structural patterns (AlphaClone brand colors preserved).
+ * Layout, spacing, and component anatomy — not the Office-style palette.
+ */
+export const ENTERPRISE = {
+    spacing: {
+        xs: '0.25rem',  // 4px
+        sm: '0.5rem',   // 8px
+        md: '1rem',     // 16px
+        lg: '1.5rem',   // 24px
+        xl: '2rem',     // 32px
+    },
+    breakpoints: {
+        mobile: '575px',
+        tablet: '767px',
+        desktop: '1023px',
+        wide: '1439px',
+    },
+    metricCard: {
+        valueSize: 'text-[32px]',
+        labelSize: 'text-sm',
+        trendSize: 'text-xs',
+        comparisonSize: 'text-[11px]',
+        minHeight: 'min-h-[96px]',
+        defaultComparison: 'vs last 30 days',
+    },
+    moduleLayout: {
+        summaryGrid: 'grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6',
+        sectionGap: 'space-y-4 md:space-y-6',
+        stickyHeader: 'sticky top-0 z-[1020] bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/60',
+    },
+    dataTable: {
+        cellPadding: 'px-2 py-3',
+        stickyHeader: 'sticky top-0 z-[1] bg-slate-900/95 backdrop-blur-sm',
+        rowHover: 'hover:bg-slate-800/60',
+        rowAlt: 'even:bg-slate-800/30',
+    },
+    touchTarget: 'min-h-11 min-w-11',
+    drawer: {
+        mobileMaxHeight: 'max-h-[85vh]',
+        desktopWidth: 'w-[min(100vw,28rem)]',
+    },
+} as const;

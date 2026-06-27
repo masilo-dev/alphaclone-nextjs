@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 
 interface SocialPost {
     id: string;
@@ -572,6 +573,7 @@ export default function SocialCommandCenter() {
     }
 
     return (
+        <BonnieModulePageShell>
         <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
             
             {/* Top Workspace Tab Mode Switcher */}
@@ -1455,5 +1457,6 @@ export default function SocialCommandCenter() {
             </AnimatePresence>
 
         </div>
+        </BonnieModulePageShell>
     );
 }

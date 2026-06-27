@@ -235,7 +235,7 @@ export const dashboardStatsService = {
     return {
       metrics: [
         { label: 'Total contacts', value: clients.length + leads.length },
-        { label: 'Active deals', value: activeDeals, delta: `${Math.abs(dealDelta)}%`, deltaDir: dealDelta >= 0 ? 'up' : 'down', deltaColor: dealDelta >= 0 ? 'green' : 'red' },
+        { label: 'Active deals', value: activeDeals, delta: `${Math.abs(dealDelta)}%`, deltaDir: dealDelta >= 0 ? 'up' : 'down', deltaColor: dealDelta >= 0 ? 'green' : 'red', comparisonText: 'vs last 30 days' },
         { label: 'Pipeline value', value: formatMoney(pipelineValue) },
         { label: 'Conversion rate', value: formatPct(conversionRate) },
       ],

@@ -100,6 +100,11 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             placement: 'right',
         },
         {
+            target: '[data-tour="money-hub-nav"]',
+            content: 'Money Hub groups billing, invoices, accounting, expenses, and cash flow. Open it to manage revenue end-to-end.',
+            placement: 'right',
+        },
+        {
             target: '[data-tour="global-search"]',
             content: 'Press ⌘K or Ctrl+K to search projects, clients, and messages. Press / to open the command palette.',
             placement: 'bottom',
@@ -108,6 +113,11 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             target: '[data-tour="business-notifications"]',
             content: 'Notifications appear here for tickets, form submissions, and team alerts.',
             placement: 'bottom',
+        },
+        {
+            target: '[data-tour="bonnie-widget"]',
+            content: 'Bonnie is your AI operator — approve actions, run automations, and get a morning brief from this floating assistant.',
+            placement: 'left',
         },
     ];
 

@@ -144,6 +144,7 @@ const BankingCenterPage = React.lazy(() => import('./dashboard/accounting/Bankin
 const IngestionPanel = React.lazy(() => import('./dashboard/engine/IngestionPanel'));
 const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
 const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
+import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
 import { GlobalShortcutListener } from './common/GlobalShortcutListener';
 import { QuickTaskOverlay } from './dashboard/QuickTaskOverlay';
 
@@ -152,6 +153,7 @@ import { QuickTaskOverlay } from './dashboard/QuickTaskOverlay';
 import { TableSkeleton } from './ui/Skeleton';
 import { TabSkeleton } from './ui/TabSkeleton';
 import { EmptyState } from './ui/EmptyState';
+import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from './ui/EnterpriseTabWrapper';
 
 interface DashboardProps {
   user: User;
@@ -1139,6 +1141,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const renderContent = () => {
+    const sharedRoute = renderSharedDashboardRoute(activeTab, user);
+    if (sharedRoute) return sharedRoute;
+
     switch (activeTab) {
       case '/dashboard/conference':
       case '/dashboard/meetings':
@@ -1340,6 +1345,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/business/reports':
+      case '/dashboard/reporting':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <ReportsPage user={user} />
@@ -1441,8 +1447,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       case '/dashboard/onboarding':
         return <OnboardingPipelines user={user} />;
-
-
 
       case '/dashboard/tasks':
         return (
@@ -1580,7 +1584,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         return <PortfolioShowcase projects={filteredProjects} isAdmin={isPlatformAdminRole(user.role)} onRefresh={refreshProjects} userId={user.id} />;
 
       case '/dashboard/projects':
-        return <ProjectsDashboard />;
+        return (
+          <div data-tour="projects">
+            <ProjectsDashboard />
+          </div>
+        );
 
       case '/dashboard/projects/manage':
         return (
@@ -1591,7 +1599,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       default:
         if (location === '/dashboard' || location === '/dashboard/business') {
-          return <OverviewDashboard />;
+          return (
+            <div data-tour="dashboard-overview">
+              <OverviewDashboard />
+            </div>
+          );
         }
         return (
           <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
@@ -1971,7 +1983,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 max-w-7xl mx-auto min-h-full">
               <WidgetErrorBoundary title="Dashboard Content Error">
-                {renderContent()}
+                <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(activeTab)}>
+                  {renderContent()}
+                </EnterpriseTabWrapper>
               </WidgetErrorBoundary>
             </div>
           </div>

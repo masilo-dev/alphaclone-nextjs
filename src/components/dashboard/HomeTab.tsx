@@ -19,6 +19,8 @@ import { IntegratedIntelligencePanel } from './IntegratedIntelligencePanel';
 import { CelebrationOverlay } from '../ui/CelebrationOverlay';
 import { paymentService } from '@/services/paymentService';
 import { contractService } from '@/services/contractService';
+import { notificationService, type Notification } from '../../services/dashboardService';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { Button } from '../ui/UIComponents';
 
 interface Module {
@@ -87,8 +89,20 @@ const HomeTab: React.FC<HomeTabProps> = ({
   const router = useRouter();
   const { currentTenant } = useTenant();
   const { text: greeting, Icon: GreetIcon } = useMemo(() => getGreeting(), []);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id || !currentTenant?.id) return;
+    notificationService.getNotifications(user.id, currentTenant.id).then(({ notifications }) => {
+      if (notifications) {
+        setUnreadNotifications(notifications.filter((n: Notification) => !n.read).length);
+      }
+    });
+  }, [user?.id, currentTenant?.id]);
 
   const [quickStats, setQuickStats] = useState({ leads: 0, deals: 0, tasks: 0, unpaidInvoices: 0 });
+  const [trendStats, setTrendStats] = useState({ leads: 0, deals: 0, tasks: 0, invoices: 0 });
+  const [periodNew, setPeriodNew] = useState({ leads: 0, deals: 0, tasks: 0, invoices: 0 });
   const [activity, setActivity] = useState<any[]>([]);
   const [celebration, setCelebration] = useState({ show: false, message: '' });
   const [clientInvoices, setClientInvoices] = useState<any[]>([]);
@@ -111,17 +125,52 @@ const HomeTab: React.FC<HomeTabProps> = ({
   useEffect(() => {
     if (!currentTenant?.id) return;
     const tid = currentTenant.id;
+    const d30 = new Date();
+    d30.setDate(d30.getDate() - 30);
+    const d60 = new Date();
+    d60.setDate(d60.getDate() - 60);
+    const iso30 = d30.toISOString();
+    const iso60 = d60.toISOString();
+
+    const pctChange = (recent: number, prior: number) => {
+      if (prior === 0) return recent > 0 ? 100 : 0;
+      return Math.round(((recent - prior) / prior) * 100);
+    };
+
     Promise.all([
       supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tid),
       supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('stage', 'closed_won').neq('stage', 'closed_lost'),
       supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).neq('status', 'completed'),
       supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'sent'),
-    ]).then(([leads, deals, tasks, inv]) => {
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', iso30),
+      supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', iso60).lt('created_at', iso30),
+      supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', iso30),
+      supabase.from('deals').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', iso60).lt('created_at', iso30),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', iso30),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).gte('created_at', iso60).lt('created_at', iso30),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'sent').gte('created_at', iso30),
+      supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'sent').gte('created_at', iso60).lt('created_at', iso30),
+    ]).then(([leads, deals, tasks, inv, leadsR, leadsP, dealsR, dealsP, tasksR, tasksP, invR, invP]) => {
+      const lr = leadsR.count || 0;
+      const lp = leadsP.count || 0;
+      const dr = dealsR.count || 0;
+      const dp = dealsP.count || 0;
+      const tr = tasksR.count || 0;
+      const tp = tasksP.count || 0;
+      const ir = invR.count || 0;
+      const ip = invP.count || 0;
       setQuickStats({
         leads: leads.count || 0,
         deals: deals.count || 0,
         tasks: tasks.count || 0,
         unpaidInvoices: inv.count || 0,
+      });
+      setPeriodNew({ leads: lr, deals: dr, tasks: tr, invoices: ir });
+      setTrendStats({
+        leads: pctChange(lr, lp),
+        deals: pctChange(dr, dp),
+        tasks: pctChange(tr, tp),
+        invoices: pctChange(ip, ir),
       });
     }).catch(() => {});
 
@@ -187,12 +236,12 @@ const HomeTab: React.FC<HomeTabProps> = ({
   }
 
   // Admin / Tenant Admin view
-  const statChips = [
-    { label: 'Open Leads',      value: quickStats.leads,          color: 'text-blue-400' },
-    { label: 'Active Deals',    value: quickStats.deals,          color: 'text-emerald-400' },
-    { label: 'Pending Tasks',   value: quickStats.tasks,          color: 'text-orange-400' },
-    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, color: 'text-rose-400' },
-  ];
+  const homeStats = useMemo<ModuleStat[]>(() => [
+    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
+    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
+    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
+    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
+  ], [quickStats, trendStats, periodNew]);
   const memoryCount = Number(
     databaseStats?.memoryCount ??
     databaseStats?.knowledgeCount ??
@@ -240,7 +289,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
   ];
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-24 ac-scroll-full ac-enterprise-module">
       <CelebrationOverlay isOpen={celebration.show} title="Done!" message={celebration.message} onClose={() => setCelebration(p => ({ ...p, show: false }))} />
 
       {/* Greeting */}
@@ -254,7 +303,11 @@ const HomeTab: React.FC<HomeTabProps> = ({
         </div>
         <button onClick={() => router.push('/dashboard/notifications')} className="relative w-9 h-9 flex items-center justify-center rounded-full bg-slate-800 border border-white/5">
           <Bell className="w-4 h-4 text-slate-300" />
-          <span className="absolute -top-0.5 -right-0.5 w-[11px] h-[11px] bg-red-500 rounded-full flex items-center justify-center text-[7px] font-black text-white">3</span>
+          {unreadNotifications > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[11px] h-[11px] px-0.5 bg-red-500 rounded-full flex items-center justify-center text-[7px] font-black text-white">
+              {unreadNotifications > 9 ? '9+' : unreadNotifications}
+            </span>
+          )}
         </button>
       </div>
 
@@ -308,13 +361,8 @@ const HomeTab: React.FC<HomeTabProps> = ({
 
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)] gap-4 items-start">
         <div className="space-y-3">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {statChips.map(s => (
-              <div key={s.label} className="bg-slate-900 border border-white/5 rounded-xl p-3 min-w-0">
-                <div className={`text-[18px] font-black leading-none ${s.color}`}>{s.value}</div>
-                <div className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider leading-tight">{s.label}</div>
-              </div>
-            ))}
+          <div className="mb-2">
+            <ModuleStatCards stats={homeStats} className="grid-cols-2 lg:grid-cols-4" />
           </div>
 
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-3">

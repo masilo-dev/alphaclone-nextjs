@@ -28,7 +28,10 @@ import {
 import { ticketService, isSupportChannelTicket, type Ticket, type TicketComment, type TicketPriority, type TicketStatus, type TicketSource } from '@/services/ticketService';
 import { draftTicketReply, summarizeTicket } from '@/services/bonnieCopilotService';
 import toast from 'react-hot-toast';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { Input } from '@/components/ui/UIComponents';
 import { useTenant } from '@/contexts/TenantContext';
+import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 
 const PRIORITY_COLORS: Record<TicketPriority, string> = {
     low: 'bg-slate-500/20 text-slate-400 border border-slate-500/30',
@@ -349,7 +352,8 @@ export default function DeepDeskView() {
     }, [tickets]);
 
     return (
-        <div className="flex flex-col h-[calc(100vh-6rem)] bg-slate-950 text-slate-100 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+        <BonnieModulePageShell>
+        <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950 text-slate-100 rounded-2xl border border-slate-800 shadow-2xl">
             
             {/* Top Toolbar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border-b border-slate-800 bg-slate-900/60 gap-4 shrink-0">
@@ -823,30 +827,22 @@ export default function DeepDeskView() {
 
             </div>
 
-            {/* Create Ticket Modal */}
-            {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="p-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-white">Create New Support Ticket</h3>
-                            <button
-                                onClick={() => setShowCreateModal(false)}
-                                className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                            >
-                                <XCircle className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleCreateTicket} className="p-5 space-y-4">
+            {/* Create Ticket */}
+            <DetailDrawer
+                open={showCreateModal}
+                onOpenChange={setShowCreateModal}
+                title="Create New Support Ticket"
+                size="wide"
+            >
+                <form onSubmit={handleCreateTicket} className="space-y-4 pt-2">
                             <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Ticket Title</label>
-                                <input
+                                <Input
+                                    label="Ticket Title"
                                     type="text"
-                                    required
                                     placeholder="Enter a descriptive issue title"
                                     value={newTitle}
                                     onChange={(e) => setNewTitle(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-slate-850 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:border-teal-500"
+                                    validate={(v) => !v.trim() ? 'Ticket title is required' : undefined}
                                 />
                             </div>
 
@@ -934,10 +930,9 @@ export default function DeepDeskView() {
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
+            </DetailDrawer>
 
         </div>
+        </BonnieModulePageShell>
     );
 }

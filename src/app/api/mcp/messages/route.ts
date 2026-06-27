@@ -109,8 +109,8 @@ export async function POST(req: NextRequest) {
 
   // Robust discovery handling for stateless environments
   if (requestBody.method === 'tools/list') {
-    const { listAllMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await listAllMcpTools();
+    const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+    const tools = await getUnifiedMcpTools();
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,

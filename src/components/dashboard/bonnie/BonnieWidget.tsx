@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain, Play, Pause, RefreshCw, X,
-  CheckCircle2, AlertCircle, Clock
+  CheckCircle2, AlertCircle, Clock, Sun, BookOpen
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
@@ -11,6 +12,9 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import BonnieChatPanel from './BonnieChatPanel';
+import { useBonnieApprovals } from '../../../hooks/useBonnieApprovals';
+import { useBonnieMorningBrief } from '../../../hooks/useBonnieMorningBrief';
+import type { BonniePendingApprovalResponse } from '../../../services/bonnieService';
 
 export default function BonnieWidget() {
   const { currentTenant } = useTenant();
@@ -27,6 +31,9 @@ export default function BonnieWidget() {
   const logEndRef = useRef<HTMLDivElement>(null);
 
   const tenantId = currentTenant?.id;
+  const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
+  const { brief: morningBrief, refresh: refreshBrief } = useBonnieMorningBrief(tenantId);
+  const hasUnreadBrief = Boolean(morningBrief?.summary && morningBrief.read !== true);
 
   // Load Rules and Logs when open or tenant changes
   useEffect(() => {
@@ -122,10 +129,29 @@ export default function BonnieWidget() {
 
   const isRunning = rules?.enabled ?? true;
 
+  const mapInstructionResult = (res: {
+    response: string;
+    success: boolean;
+    toolsExecuted?: Array<{
+      tool: string;
+      success: boolean;
+      summary: string;
+      approvalRequired?: boolean;
+      approvalId?: string;
+      riskClass?: string;
+      preview?: { target?: string; draft?: string };
+    }>;
+    pendingApproval?: BonniePendingApprovalResponse | null;
+  }) => ({
+    text: res.response,
+    tools: res.toolsExecuted,
+    approval: res.pendingApproval || undefined,
+  });
+
   const handleBonnieMessage = async (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = []
-  ): Promise<{ text: string; error?: boolean; tools?: Array<{ tool: string; success: boolean; summary: string }> }> => {
+  ) => {
     setLogs(prev => [
       {
         id: String(Date.now()),
@@ -161,10 +187,8 @@ export default function BonnieWidget() {
     if (res.success) {
       const logsData = await bonnieService.getCombinedLogs(tenantId);
       setLogs(logsData);
-      return {
-        text: res.response,
-        tools: res.toolsExecuted,
-      };
+      void refreshApprovals();
+      return mapInstructionResult(res);
     }
 
     return { text: res.response || 'Failed to process command.', error: true };
@@ -185,13 +209,51 @@ export default function BonnieWidget() {
     if (res.success) {
       const logsData = await bonnieService.getCombinedLogs(tenantId);
       setLogs(logsData);
-      return { text: res.response, tools: res.toolsExecuted };
+      void refreshApprovals();
+      return mapInstructionResult(res);
     }
     return { text: res.response || 'Failed to process command.', error: true };
   };
 
+  const handleResolveApproval = async (
+    approvalId: string,
+    status: 'approved' | 'rejected',
+    editedArgs?: Record<string, unknown>
+  ) => {
+    const result = await handleApproval(approvalId, status, editedArgs);
+    if (result.success && status === 'approved') {
+      const logsData = await bonnieService.getCombinedLogs(tenantId);
+      setLogs(logsData);
+    }
+    return {
+      success: result.success,
+      message: result.execution?.result?.summary || result.execution?.error,
+      continuation: result.continuation || null,
+    };
+  };
+
+  const markBriefRead = async () => {
+    if (!morningBrief?.notificationId || !tenantId) return;
+    try {
+      await fetch('/api/bonnie/briefing', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, notificationId: morningBrief.notificationId }),
+      });
+      void refreshBrief();
+    } catch {
+      // non-critical
+    }
+  };
+
+  const handleOpenWidget = () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    if (next && hasUnreadBrief) void markBriefRead();
+  };
+
   return (
-    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+72px)] right-4 z-[70] flex flex-col items-end md:bottom-6 md:right-6">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+72px)] right-4 z-[70] flex flex-col items-end md:bottom-6 md:right-6" data-tour="bonnie-widget">
       {/* Drawer / Popup Window */}
       <AnimatePresence>
         {isOpen && (
@@ -277,6 +339,27 @@ export default function BonnieWidget() {
             </div>
 
             <div className="border-b border-slate-800 bg-slate-950/20 p-4">
+              {hasUnreadBrief && morningBrief && (
+                <div className="mb-3 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-teal-500/5 p-3">
+                  <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                    <Sun className="h-3.5 w-3.5" />
+                    Morning briefing
+                  </div>
+                  <p className="text-sm leading-relaxed text-slate-200">{morningBrief.summary}</p>
+                  {morningBrief.attentionItems.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-xs text-slate-400">
+                      {morningBrief.attentionItems.slice(0, 4).map((item) => (
+                        <li key={item}>• {item}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {pendingCount > 0 && (
+                <div className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                  {pendingCount} action{pendingCount === 1 ? '' : 's'} need your approval
+                </div>
+              )}
               <BonnieChatPanel
                 compact
                 streaming
@@ -285,7 +368,17 @@ export default function BonnieWidget() {
                 introMessage={`I'm Bonnie AI — your in-platform agent for ${moduleHint.label}. Tell me what to do and I'll execute it. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
                 onSend={handleBonnieMessage}
                 onStreamSend={handleBonnieStream}
+                onResolveApproval={handleResolveApproval}
+                tenantId={tenantId}
+                pathname={pathname || undefined}
               />
+              <Link
+                href="/dashboard/help"
+                className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 hover:text-teal-400 transition-colors"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Platform guide & glossary
+              </Link>
             </div>
 
             {/* Activity Feed / Logs Container */}
@@ -352,13 +445,23 @@ export default function BonnieWidget() {
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => handleOpenWidget()}
         title="Open Bonnie AI"
         aria-label="Open Bonnie AI assistant"
         className="relative flex h-14 min-w-[3.5rem] items-center justify-center gap-1.5 rounded-full bg-gradient-to-br from-teal-500 via-cyan-500 to-indigo-600 px-4 text-white shadow-xl shadow-teal-500/20 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-slate-900 border border-teal-400/20"
       >
         <Brain className="h-6 w-6 shrink-0" />
         <span className="hidden sm:inline text-xs font-black uppercase tracking-wide">Bonnie</span>
+        {hasUnreadBrief && (
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-300 text-slate-950 shadow-lg">
+            <Sun className="h-3 w-3" />
+          </span>
+        )}
+        {pendingCount > 0 && (
+          <span className="absolute -top-1 -left-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-slate-950">
+            {pendingCount}
+          </span>
+        )}
         {/* Glow pulsing ring around the button */}
         <span className="absolute inset-0 rounded-full bg-teal-500 animate-ping opacity-20 pointer-events-none" />
 

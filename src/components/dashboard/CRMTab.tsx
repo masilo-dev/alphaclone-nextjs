@@ -30,10 +30,16 @@ import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
+import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { leadService } from '../../services/leadService';
 import { businessClientService } from '../../services/businessClientService';
+import { contactService } from '../../services/contactService';
+import { dealService } from '../../services/dealService';
 import { CRMNav } from './crm/CRMNav';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
+import { Input } from '../ui/UIComponents';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -287,9 +293,23 @@ const LeadDetail: React.FC<{
   onBack: () => void;
   onUpdate: (id: string, status: LeadStatus) => void;
   onQualify: (lead: Lead) => void;
-}> = ({ lead, onBack, onUpdate, onQualify }) => {
+  onSaveLead?: (id: string, patch: { name: string; email?: string; phone?: string; company?: string }) => Promise<void>;
+  inDrawer?: boolean;
+}> = ({ lead, onBack, onUpdate, onQualify, onSaveLead, inDrawer }) => {
   const [activities, setActivities] = useState<Array<{ id: string; type: string; description: string; created_at: string }>>([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
+  const [name, setName] = useState(lead.name);
+  const [email, setEmail] = useState(lead.email || '');
+  const [phone, setPhone] = useState(lead.phone || '');
+  const [company, setCompany] = useState(lead.company || lead.business_name || '');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setName(lead.name);
+    setEmail(lead.email || '');
+    setPhone(lead.phone || '');
+    setCompany(lead.company || lead.business_name || '');
+  }, [lead.id, lead.name, lead.email, lead.phone, lead.company, lead.business_name]);
 
   useEffect(() => {
     let cancelled = false;
@@ -313,22 +333,65 @@ const LeadDetail: React.FC<{
     return () => { cancelled = true; };
   }, [lead.id]);
 
+  const handleSaveLead = async () => {
+    if (!onSaveLead || !name.trim()) return;
+    setSaving(true);
+    try {
+      await onSaveLead(lead.id, {
+        name: name.trim(),
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        company: company.trim() || undefined,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const leadActions = (
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+      <button
+        onClick={() => onUpdate(lead.id, 'contacted')}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+      >
+        <Phone className="w-5 h-5 text-amber-400" />
+        <span className="text-[10px] text-slate-400 font-bold">Mark Contacted</span>
+      </button>
+      <button
+        onClick={() => onQualify(lead)}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-teal-500/5 ${inDrawer ? 'min-h-11 rounded-xl border border-teal-500/20 py-2' : 'py-3.5'}`}
+      >
+        <Sparkles className="w-5 h-5 text-teal-400 animate-pulse" />
+        <span className="text-[10px] text-teal-300 font-bold">Qualify & Convert</span>
+      </button>
+      <button
+        onClick={() => onUpdate(lead.id, 'disqualified')}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+      >
+        <X className="w-5 h-5 text-rose-500" />
+        <span className="text-[10px] text-slate-400 font-bold">Disqualify</span>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100">
+    <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-slate-950 text-slate-100'}>
+      {!inDrawer && (
       <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
           <ArrowLeft className="w-4 h-4 text-slate-300" />
         </button>
         <span className="text-sm font-bold text-white">Lead Details</span>
       </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-28">
+      <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-5 space-y-6 pb-28'}>
         {/* Header Profile */}
         <div className="flex flex-col items-center gap-2 py-4">
           <div className={`w-20 h-20 rounded-2xl ${hashColor(lead.name)} flex items-center justify-center shadow-lg shadow-black/30`}>
             <span className="text-2xl font-black text-white">{getInitials(lead.name)}</span>
           </div>
-          <h2 className="text-xl font-bold text-white text-center mt-2">{lead.name}</h2>
+          <h2 className="text-xl font-bold text-white text-center mt-2">{name || lead.name}</h2>
           <div className="flex items-center gap-2">
             <span className={`text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${statusColors[lead.status]}`}>
               {lead.status}
@@ -341,29 +404,47 @@ const LeadDetail: React.FC<{
           </div>
         </div>
 
-        {/* Info Grid */}
+        {/* Editable contact fields */}
+        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 space-y-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Contact details</span>
+          <Input
+            label="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            validate={(v) => !v.trim() ? 'Name is required' : undefined}
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            validate={(v) => v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? 'Enter a valid email' : undefined}
+          />
+          <Input
+            label="Phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            validate={(v) => v.trim() && v.replace(/\D/g, '').length < 7 ? 'Enter a valid phone number' : undefined}
+          />
+          <Input
+            label="Company"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+          />
+          {onSaveLead && (
+            <button
+              type="button"
+              onClick={() => void handleSaveLead()}
+              disabled={saving || !name.trim()}
+              className="w-full min-h-11 rounded-xl bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
+            >
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+          )}
+        </div>
+
+        {/* Read-only metadata */}
         <div className="bg-slate-900/50 border border-white/5 rounded-2xl divide-y divide-white/5">
-          <div className="flex items-center gap-3 p-4">
-            <Mail className="w-5 h-5 text-slate-500 flex-shrink-0" />
-            <div>
-              <span className="block text-[11px] text-slate-500 font-bold uppercase tracking-wider">Email Address</span>
-              <span className="text-sm text-slate-300">{lead.email || '—'}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4">
-            <Phone className="w-5 h-5 text-slate-500 flex-shrink-0" />
-            <div>
-              <span className="block text-[11px] text-slate-500 font-bold uppercase tracking-wider">Phone Number</span>
-              <span className="text-sm text-slate-300">{lead.phone || '—'}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4">
-            <Building className="w-5 h-5 text-slate-500 flex-shrink-0" />
-            <div>
-              <span className="block text-[11px] text-slate-500 font-bold uppercase tracking-wider">Company</span>
-              <span className="text-sm text-slate-300">{lead.company || lead.business_name || '—'}</span>
-            </div>
-          </div>
           <div className="flex items-center gap-3 p-4">
             <Clock className="w-5 h-5 text-slate-500 flex-shrink-0" />
             <div>
@@ -373,6 +454,15 @@ const LeadDetail: React.FC<{
               </span>
             </div>
           </div>
+          {lead.source && (
+            <div className="flex items-center gap-3 p-4">
+              <Building className="w-5 h-5 text-slate-500 flex-shrink-0" />
+              <div>
+                <span className="block text-[11px] text-slate-500 font-bold uppercase tracking-wider">Source</span>
+                <span className="text-sm text-slate-300 capitalize">{lead.source}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Activity / Email History */}
@@ -412,30 +502,7 @@ const LeadDetail: React.FC<{
         </div>
       </div>
 
-      {/* Action footer */}
-      <div className="fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30">
-        <button
-          onClick={() => onUpdate(lead.id, 'contacted')}
-          className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors"
-        >
-          <Phone className="w-5 h-5 text-amber-400" />
-          <span className="text-[10px] text-slate-400 font-bold">Mark Contacted</span>
-        </button>
-        <button
-          onClick={() => onQualify(lead)}
-          className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors bg-teal-500/5"
-        >
-          <Sparkles className="w-5 h-5 text-teal-400 animate-pulse" />
-          <span className="text-[10px] text-teal-300 font-bold">Qualify & Convert</span>
-        </button>
-        <button
-          onClick={() => onUpdate(lead.id, 'disqualified')}
-          className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors"
-        >
-          <X className="w-5 h-5 text-rose-500" />
-          <span className="text-[10px] text-slate-400 font-bold">Disqualify</span>
-        </button>
-      </div>
+      {leadActions}
     </div>
   );
 };
@@ -447,12 +514,74 @@ const Client360Detail: React.FC<{
   onBack: () => void;
   onNewDeal: (client: BusinessClient) => void;
   onDraftContract: (client: BusinessClient) => void;
+  onClientSaved?: (clientId: string, patch: Partial<BusinessClient>) => Promise<void>;
   status: 'online' | 'away' | 'busy' | 'offline';
   isTeamsConnected: boolean;
-}> = ({ client, user, onBack, onNewDeal, onDraftContract, status, isTeamsConnected }) => {
+  inDrawer?: boolean;
+}> = ({ client, user, onBack, onNewDeal, onDraftContract, onClientSaved, status, isTeamsConnected, inDrawer }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [name, setName] = useState(client.name);
+  const [email, setEmail] = useState(client.email || '');
+  const [phone, setPhone] = useState(client.phone || '');
+  const [industry, setIndustry] = useState(client.industry || '');
+  const [website, setWebsite] = useState(client.website || '');
+  const [description, setDescription] = useState(client.description || '');
+  const [salesStage, setSalesStage] = useState(client.sales_stage);
+  const [value, setValue] = useState(String(client.value ?? 0));
+  const [savingClient, setSavingClient] = useState(false);
+
+  useEffect(() => {
+    setName(client.name);
+    setEmail(client.email || '');
+    setPhone(client.phone || '');
+    setIndustry(client.industry || '');
+    setWebsite(client.website || '');
+    setDescription(client.description || '');
+    setSalesStage(client.sales_stage);
+    setValue(String(client.value ?? 0));
+  }, [client.id, client.name, client.email, client.phone, client.industry, client.website, client.description, client.sales_stage, client.value]);
+
+  const handleSaveClient = async () => {
+    if (!name.trim()) {
+      toast.error('Client name is required');
+      return;
+    }
+    setSavingClient(true);
+    try {
+      const patch: Partial<BusinessClient> = {
+        name: name.trim(),
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        industry: industry.trim() || undefined,
+        website: website.trim() || undefined,
+        description: description.trim() || undefined,
+        sales_stage: salesStage,
+        value: Number(value) || 0,
+      };
+      if (onClientSaved) {
+        await onClientSaved(client.id, patch);
+      } else {
+        const { error } = await businessClientService.updateClient(client.id, {
+          name: patch.name,
+          email: patch.email,
+          phone: patch.phone,
+          industry: patch.industry,
+          website: patch.website,
+          description: patch.description,
+          salesStage: patch.sales_stage,
+          value: patch.value,
+        });
+        if (error) throw new Error(error);
+        toast.success('Client updated');
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update client');
+    } finally {
+      setSavingClient(false);
+    }
+  };
 
   // AI & Timeline States
   const [loadingAi, setLoadingAi] = useState(true);
@@ -541,17 +670,44 @@ const Client360Detail: React.FC<{
     sendViaPlatform();
   };
 
+  const clientActions = (
+    <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
+      <button
+        onClick={() => onNewDeal(client)}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+      >
+        <TrendingUp className="w-5 h-5 text-emerald-400" />
+        <span className="text-[10px] text-slate-400 font-bold">Add Deal</span>
+      </button>
+      <button
+        onClick={() => onDraftContract(client)}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-teal-500/5 ${inDrawer ? 'min-h-11 rounded-xl border border-teal-500/20 py-2' : 'py-3.5'}`}
+      >
+        <ShieldCheck className="w-5 h-5 text-teal-400" />
+        <span className="text-[10px] text-teal-300 font-bold">Draft Contract</span>
+      </button>
+      <button
+        onClick={() => router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance')}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors ${inDrawer ? 'min-h-11 rounded-xl border border-white/5 py-2' : 'py-3.5'}`}
+      >
+        <DollarSign className="w-5 h-5 text-blue-400" />
+        <span className="text-[10px] text-slate-400 font-bold">Create Invoice</span>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100">
-      {/* Sticky header */}
+    <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-slate-950 text-slate-100'}>
+      {!inDrawer && (
       <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
         <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
           <ArrowLeft className="w-4 h-4 text-slate-300" />
         </button>
         <span className="text-sm font-bold text-white">Client 360 Workspace</span>
       </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6 pb-28">
+      <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-5 space-y-6 pb-28'}>
         {/* Profile Card */}
         <div className="flex flex-col items-center gap-2 py-4">
           <div className={`w-20 h-20 rounded-2xl ${hashColor(client.name)} flex items-center justify-center shadow-lg shadow-black/30 relative`}>
@@ -562,14 +718,14 @@ const Client360Detail: React.FC<{
               className="absolute -bottom-1 -right-1 border-4 border-slate-950 rounded-full bg-slate-950"
             />
           </div>
-          <h2 className="text-xl font-bold text-white text-center mt-2">{client.name}</h2>
-          <div className="flex items-center gap-2">
-            <span className={`text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${statusColors[client.sales_stage]}`}>
-              {client.sales_stage}
+          <h2 className="text-xl font-bold text-white text-center mt-2">{name || client.name}</h2>
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <span className={`text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${statusColors[salesStage]}`}>
+              {salesStage}
             </span>
-            {client.industry && (
+            {(industry || client.industry) && (
               <span className="text-[11px] font-bold px-3 py-1 rounded-full border border-slate-700 bg-slate-900/60 text-slate-400 capitalize">
-                {client.industry}
+                {industry || client.industry}
               </span>
             )}
             {isTeamsConnected && (
@@ -578,6 +734,79 @@ const Client360Detail: React.FC<{
               </span>
             )}
           </div>
+        </div>
+
+        {/* Editable client profile */}
+        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 space-y-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Client details</span>
+          <Input
+            label="Full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            validate={(v) => !v.trim() ? 'Name is required' : undefined}
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            validate={(v) => v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? 'Enter a valid email' : undefined}
+          />
+          <Input
+            label="Phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            validate={(v) => v.trim() && v.replace(/\D/g, '').length < 7 ? 'Enter a valid phone number' : undefined}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Industry"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value)}
+            />
+            <Input
+              label="Portfolio value ($)"
+              type="number"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+          </div>
+          <Input
+            label="Website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            validate={(v) => v.trim() && !/^https?:\/\/.+/.test(v.trim()) ? 'Enter a valid URL (https://…)' : undefined}
+          />
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sales stage</label>
+            <select
+              value={salesStage}
+              onChange={(e) => setSalesStage(e.target.value as BusinessClient['sales_stage'])}
+              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-teal-500/50 capitalize"
+            >
+              {(['lead', 'prospect', 'customer', 'lost'] as const).map((stage) => (
+                <option key={stage} value={stage}>{stage}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Notes</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Account notes…"
+              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50 resize-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleSaveClient()}
+            disabled={savingClient || !name.trim()}
+            className="w-full min-h-11 rounded-xl bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
+          >
+            {savingClient ? 'Saving…' : 'Save changes'}
+          </button>
         </div>
 
         {/* Quick Communication Outreach Bar */}
@@ -736,30 +965,7 @@ const Client360Detail: React.FC<{
         </div>
       </div>
 
-      {/* Action Footer */}
-      <div className="fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30">
-        <button
-          onClick={() => onNewDeal(client)}
-          className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors"
-        >
-          <TrendingUp className="w-5 h-5 text-emerald-400" />
-          <span className="text-[10px] text-slate-400 font-bold">Add Deal</span>
-        </button>
-        <button
-          onClick={() => onDraftContract(client)}
-          className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors bg-teal-500/5"
-        >
-          <ShieldCheck className="w-5 h-5 text-teal-400" />
-          <span className="text-[10px] text-teal-300 font-bold">Draft Contract</span>
-        </button>
-        <button
-          onClick={() => router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance')}
-          className="flex-1 flex flex-col items-center justify-center py-3.5 gap-1 hover:bg-slate-900 transition-colors"
-        >
-          <DollarSign className="w-5 h-5 text-blue-400" />
-          <span className="text-[10px] text-slate-400 font-bold">Create Invoice</span>
-        </button>
-      </div>
+      {clientActions}
 
       {showEmailModal && (
         <CommunicationModal
@@ -785,22 +991,15 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
   const [industry, setIndustry] = useState('');
   const [value, setValue] = useState('2500');
 
-  if (!isOpen || !lead) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in-up">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">Convert Lead to Client</h3>
-          <button onClick={onClose} className="p-1 rounded bg-slate-800 text-slate-400 hover:text-white">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="p-4 space-y-4">
-          <p className="text-xs text-slate-400 leading-normal">
-            Qualifying <span className="text-white font-bold">{lead.name}</span> will create a customer account and launch an active sales deal in your pipeline.
-          </p>
-
+    <DetailDrawer
+      open={isOpen && Boolean(lead)}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      title="Convert Lead to Client"
+      description={lead ? `Qualifying ${lead.name} creates a customer account and active deal.` : undefined}
+    >
+      {lead && (
+        <div className="space-y-4 pt-2">
           <div className="space-y-1">
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Industry</label>
             <input
@@ -821,23 +1020,24 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
               className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
             />
           </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 text-xs font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm(lead.id, { industry, value: parseFloat(value) || 0 })}
+              className="flex-1 py-2.5 text-xs font-bold text-white bg-teal-500 rounded-xl hover:bg-teal-400 transition-colors"
+            >
+              Qualify Account
+            </button>
+          </div>
         </div>
-        <div className="p-4 border-t border-white/5 bg-slate-950/40 flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2 text-xs font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(lead.id, { industry, value: parseFloat(value) || 0 })}
-            className="flex-1 py-2 text-xs font-bold text-white bg-teal-500 rounded-xl hover:bg-teal-400 transition-colors shadow-lg shadow-teal-500/10"
-          >
-            Qualify Account
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </DetailDrawer>
   );
 };
 
@@ -867,8 +1067,6 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
   const [industry, setIndustry] = useState('');
   const [value, setValue] = useState('');
 
-  if (!isOpen) return null;
-
   const handleSave = () => {
     if (!name) {
       toast.error('Name is required');
@@ -877,119 +1075,107 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
     onSave({
       type, name, email, phone, company, source, industry, value: parseFloat(value) || 0
     });
-    // Reset
     setName(''); setEmail(''); setPhone(''); setCompany(''); setSource('Manual'); setIndustry(''); setValue('');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm p-4">
-      <motion.div
-        initial={{ x: '100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '100%' }}
-        className="bg-slate-900 border-l border-white/10 w-full max-w-md h-full flex flex-col shadow-2xl rounded-2xl overflow-hidden"
-      >
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">Add Entity to CRM</h3>
-          <button onClick={onClose} className="p-1 rounded bg-slate-800 text-slate-400 hover:text-white">
-            <X className="w-4 h-4" />
-          </button>
+    <DetailDrawer
+      open={isOpen}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      title="Add Entity to CRM"
+    >
+      <div className="space-y-4 pt-2">
+        <div className="flex border border-white/5 p-1 rounded-xl bg-slate-950">
+          {(['lead', 'client'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setType(t)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-teal-500 text-white' : 'text-slate-500'}`}
+            >
+              {t}
+            </button>
+          ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <div className="flex border border-white/5 p-1 rounded-xl bg-slate-950">
-            {(['lead', 'client'] as const).map(t => (
-              <button
-                key={t}
-                onClick={() => setType(t)}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-teal-500 text-white' : 'text-slate-500'}`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+        <div className="space-y-1">
+          <Input
+            label="Full Name *"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="e.g. John Doe"
+            validate={(v) => !v.trim() ? 'Name is required' : undefined}
+          />
+        </div>
 
+        <div className="space-y-1">
+          <Input
+            label="Email address"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="e.g. john@example.com"
+            validate={(v) => v.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? 'Enter a valid email' : undefined}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Input
+            label="Phone number"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            placeholder="e.g. +1 234 567 890"
+            validate={(v) => v.trim() && v.replace(/\D/g, '').length < 7 ? 'Enter a valid phone number' : undefined}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <Input
+            label="Company / business name"
+            value={company}
+            onChange={e => setCompany(e.target.value)}
+            placeholder="e.g. Acme Corp"
+          />
+        </div>
+
+        {type === 'lead' ? (
           <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Full Name *</label>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="e.g. John Doe"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
-            />
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lead Source</label>
+            <select
+              value={source}
+              onChange={e => setSource(e.target.value)}
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50"
+            >
+              {['LinkedIn', 'WhatsApp', 'Referral', 'Website', 'Manual'].map(src => (
+                <option key={src} value={src}>{src}</option>
+              ))}
+            </select>
           </div>
-
-          <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="e.g. john@example.com"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phone Number</label>
-            <input
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="e.g. +1 234 567 890"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Company / Business Name</label>
-            <input
-              value={company}
-              onChange={e => setCompany(e.target.value)}
-              placeholder="e.g. Acme Corp"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
-            />
-          </div>
-
-          {type === 'lead' ? (
+        ) : (
+          <>
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lead Source</label>
-              <select
-                value={source}
-                onChange={e => setSource(e.target.value)}
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50"
-              >
-                {['LinkedIn', 'WhatsApp', 'Referral', 'Website', 'Manual'].map(src => (
-                  <option key={src} value={src}>{src}</option>
-                ))}
-              </select>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Industry</label>
+              <input
+                value={industry}
+                onChange={e => setIndustry(e.target.value)}
+                placeholder="e.g. Real Estate"
+                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              />
             </div>
-          ) : (
-            <>
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Industry</label>
-                <input
-                  value={industry}
-                  onChange={e => setIndustry(e.target.value)}
-                  placeholder="e.g. Real Estate"
-                  className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
-                />
-              </div>
 
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Target Portfolio Value ($)</label>
-                <input
-                  type="number"
-                  value={value}
-                  onChange={e => setValue(e.target.value)}
-                  placeholder="e.g. 5000"
-                  className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
-                />
-              </div>
-            </>
-          )}
-        </div>
+            <div className="space-y-1">
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Target Portfolio Value ($)</label>
+              <input
+                type="number"
+                value={value}
+                onChange={e => setValue(e.target.value)}
+                placeholder="e.g. 5000"
+                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              />
+            </div>
+          </>
+        )}
 
-        <div className="p-4 border-t border-white/5 bg-slate-950/40 flex gap-2">
+        <div className="flex gap-2 pt-2">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 text-xs font-bold text-slate-400 bg-slate-800 rounded-xl hover:bg-slate-700 transition-colors"
@@ -1003,8 +1189,8 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
             Save Record
           </button>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </DetailDrawer>
   );
 };
 
@@ -1248,38 +1434,71 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     }
   }, [searchParams]);
 
-  // Fetch data across leads & business_clients
+  // Fetch data across leads & unified contacts
   const loadCRMData = useCallback(async () => {
     if (!currentTenant?.id) return;
     setLoading(true);
     try {
-      const [leadsRes, clientsRes] = await Promise.all([
-        supabase
-          .from('leads')
-          .select('*')
-          .eq('tenant_id', currentTenant.id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('business_clients')
-          .select('*')
-          .eq('tenant_id', currentTenant.id)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
+      const [leadsResult, unifiedResult] = await Promise.all([
+        leadService.getLeads(),
+        contactService.getUnifiedContactsList({ limit: 500 }),
       ]);
 
-      if (leadsRes.data) {
-        setLeads(leadsRes.data.map((row: any) => ({
-          ...row,
-          name: row.name || row.business_name || row.company || 'Unknown Lead',
-          company: row.company || row.business_name || '',
-          status: (['new', 'contacted', 'qualified', 'disqualified'].includes(row.status) ? row.status : 'new') as LeadStatus,
-          created_at: row.created_at || new Date().toISOString()
-        })));
+      if (leadsResult.error) {
+        throw new Error(leadsResult.error);
+      }
+      if (unifiedResult.error) {
+        throw new Error(unifiedResult.error);
       }
 
-      if (clientsRes.data) {
-        setClients(clientsRes.data);
-      }
+      const openLeads = leadsResult.leads.filter(
+        (lead) => !lead.client_id && lead.stage !== 'converted'
+      );
+
+      setLeads(
+        openLeads.map((lead) => {
+          const mappedStatus = (['new', 'contacted', 'qualified', 'disqualified'].includes(
+            lead.status || ''
+          )
+            ? lead.status
+            : lead.stage === 'qualified'
+              ? 'qualified'
+              : lead.stage === 'contacted'
+                ? 'contacted'
+                : 'new') as LeadStatus;
+          return {
+            id: lead.id,
+            name: lead.businessName || 'Unknown Lead',
+            business_name: lead.businessName,
+            email: lead.email,
+            phone: lead.phone,
+            company: lead.businessName || '',
+            source: lead.source,
+            status: mappedStatus,
+            created_at: lead.created_at || new Date().toISOString(),
+            tenant_id: currentTenant.id,
+          };
+        })
+      );
+
+      setClients(
+        unifiedResult.contacts.map((contact) => ({
+          id: contact.business_client_id || contact.id,
+          tenant_id: contact.tenant_id,
+          name: contact.full_name,
+          email: contact.email ?? undefined,
+          phone: contact.phone ?? undefined,
+          sales_stage:
+            contact.lifecycle_stage === 'customer'
+              ? 'customer'
+              : contact.lifecycle_stage === 'prospect'
+                ? 'prospect'
+                : 'lead',
+          value: 0,
+          created_at: contact.created_at,
+          is_active: true,
+        }))
+      );
     } catch (err) {
       console.error('Failed to sync CRM resources:', err);
       toast.error('Failed to load CRM data');
@@ -1315,56 +1534,13 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         }))
         .filter((contact: any) => contact.email);
 
-      const emails = normalized.map((contact: any) => contact.email);
-      const { data: existingClients } = await supabase
-        .from('business_clients')
-        .select('id, email')
-        .eq('tenant_id', currentTenant.id)
-        .in('email', emails);
-
-      const existingByEmail = new Map(
-        ((existingClients as any[]) || []).map((client) => [client.email, client.id])
+      const { processed, error: syncError } = await contactService.bulkUpsertOutlookImports(
+        currentTenant.id,
+        normalized
       );
+      if (syncError) throw new Error(syncError);
 
-      const inserts = normalized
-        .filter((contact: any) => !existingByEmail.has(contact.email))
-        .map((contact: any) => ({
-          tenant_id: currentTenant.id,
-          name: contact.name,
-          email: contact.email,
-          phone: contact.phone,
-          industry: contact.industry,
-          location: contact.location || null,
-          sales_stage: 'lead',
-          value: 0,
-          is_active: true,
-          description: 'Imported from Outlook contacts',
-        }));
-
-      const updates = normalized.filter((contact: any) => existingByEmail.has(contact.email));
-
-      if (inserts.length > 0) {
-        const { error: insertError } = await supabase.from('business_clients').insert(inserts);
-        if (insertError) throw insertError;
-      }
-
-      await Promise.all(
-        updates.map((contact: any) =>
-          supabase
-            .from('business_clients')
-            .update({
-              name: contact.name,
-              phone: contact.phone,
-              industry: contact.industry,
-              location: contact.location || null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingByEmail.get(contact.email))
-            .eq('tenant_id', currentTenant.id)
-        )
-      );
-
-      toast.success(`Outlook sync complete: ${normalized.length} contacts processed`);
+      toast.success(`Outlook sync complete: ${processed} contacts processed`);
       await loadCRMData();
     } catch (error: any) {
       toast.error(error.message || 'Failed to sync Outlook contacts');
@@ -1445,8 +1621,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   // Lead status transition
   const handleStatusUpdate = async (id: string, status: LeadStatus) => {
     try {
-      const { error } = await supabase.from('leads').update({ status }).eq('id', id);
-      if (error) throw error;
+      const { error } = await leadService.updateLead(id, { status });
+      if (error) throw new Error(error);
       setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
       if (selectedEntity?.id === id) {
         setSelectedEntity(prev => prev ? { ...prev, status } : null);
@@ -1455,6 +1631,78 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     } catch (err) {
       toast.error('Failed to update lead status');
     }
+  };
+
+  const handleLeadSave = async (
+    id: string,
+    patch: { name: string; email?: string; phone?: string; company?: string },
+  ) => {
+    try {
+      const { error } = await leadService.updateLead(id, {
+        businessName: patch.name,
+        email: patch.email ?? undefined,
+        phone: patch.phone ?? undefined,
+      });
+      if (error) throw new Error(error);
+      setLeads((prev) => prev.map((l) => (l.id === id ? {
+        ...l,
+        name: patch.name,
+        email: patch.email,
+        phone: patch.phone,
+        company: patch.company,
+        business_name: patch.name,
+      } : l)));
+      setSelectedEntity((prev) => {
+        if (!prev?.rawLead || prev.rawLead.id !== id) return prev;
+        const updatedLead = {
+          ...prev.rawLead,
+          name: patch.name,
+          email: patch.email,
+          phone: patch.phone,
+          company: patch.company,
+          business_name: patch.name,
+        };
+        return {
+          ...prev,
+          name: patch.name,
+          email: patch.email,
+          phone: patch.phone,
+          company: patch.company,
+          rawLead: updatedLead,
+        };
+      });
+      toast.success('Lead updated');
+    } catch {
+      toast.error('Failed to update lead');
+    }
+  };
+
+  const handleClientSave = async (clientId: string, patch: Partial<BusinessClient>) => {
+    const { error } = await businessClientService.updateClient(clientId, {
+      name: patch.name,
+      email: patch.email,
+      phone: patch.phone,
+      industry: patch.industry,
+      website: patch.website,
+      description: patch.description,
+      salesStage: patch.sales_stage,
+      value: patch.value,
+    });
+    if (error) throw new Error(error);
+    setClients((prev) => prev.map((c) => (c.id === clientId ? { ...c, ...patch } : c)));
+    setSelectedEntity((prev) => {
+      if (!prev?.rawClient || prev.rawClient.id !== clientId) return prev;
+      const updatedClient = { ...prev.rawClient, ...patch };
+      return {
+        ...prev,
+        name: patch.name ?? prev.name,
+        email: patch.email ?? prev.email,
+        phone: patch.phone ?? prev.phone,
+        industry: patch.industry ?? prev.industry,
+        rawClient: updatedClient,
+      };
+    });
+    toast.success('Client updated');
   };
 
   // Convert/Qualify Lead to Client & active Deal
@@ -1471,43 +1719,35 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     const resolveToast = toast.loading('Converting lead & provisioning account...');
 
     try {
-      // 1. Mark lead qualified
-      await supabase.from('leads').update({ status: 'qualified' }).eq('id', leadId);
+      // 1. Atomic conversion: contacts + business_clients via RPC
+      const { contactId, clientId, error: convertErr } = await contactService.convertLeadToContact(
+        leadId,
+        { contactName: targetLead.name, companyName: targetLead.company || targetLead.name }
+      );
+      if (convertErr || !contactId) throw new Error(convertErr || 'Lead conversion failed');
 
-      // 2. Insert business_clients record
-      const { data: newClient, error: clientErr } = await supabase
-        .from('business_clients')
-        .insert({
-          tenant_id: currentTenant?.id,
-          name: targetLead.name,
-          email: targetLead.email,
-          phone: targetLead.phone,
+      // 2. Enrich business_client metadata from qualify form
+      if (clientId) {
+        const { error: clientUpdateErr } = await businessClientService.updateClient(clientId, {
           industry: clientData.industry || 'General Services',
-          sales_stage: 'customer',
+          salesStage: 'customer',
           value: clientData.value,
           description: `Converted qualified lead on ${new Date().toLocaleDateString()}`,
-          is_active: true
-        })
-        .select()
-        .single();
-
-      if (clientErr) throw clientErr;
-
-      // 3. Insert deals record linked to client
-      const { error: dealErr } = await supabase
-        .from('deals')
-        .insert({
-          tenant_id: currentTenant?.id,
-          name: `${targetLead.name} - Acquisition`,
-          value: clientData.value,
-          stage: 'qualified',
-          contact_name: targetLead.name,
-          contact_email: targetLead.email,
-          contact_id: newClient.id,
-          score: 7
         });
+        if (clientUpdateErr) throw new Error(clientUpdateErr);
+      }
 
-      if (dealErr) throw dealErr;
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('You must be signed in to create a deal');
+
+      const { error: dealErr } = await dealService.createDeal(authUser.id, {
+        name: `${targetLead.name} - Acquisition`,
+        value: clientData.value,
+        stage: 'qualified',
+        contactId,
+        description: 'Qualified from CRM workspace',
+      });
+      if (dealErr) throw new Error(dealErr);
 
       toast.success('Lead converted to Customer & Deal active!', { id: resolveToast });
       showActionNextSteps('lead_qualified', (path) => router.push(path));
@@ -1534,29 +1774,27 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     const saveToast = toast.loading('Saving record...');
     try {
       if (entity.type === 'lead') {
-        const { error } = await supabase.from('leads').insert({
-          tenant_id: currentTenant?.id,
-          name: entity.name,
+        const { error } = await leadService.addLead({
+          businessName: entity.name,
           email: entity.email,
           phone: entity.phone,
-          company: entity.company,
-          source: entity.source,
-          status: 'new'
+          industry: entity.industry || undefined,
+          source: entity.source || 'manual',
+          stage: 'lead',
+          value: entity.value || 0,
         });
-        if (error) throw error;
+        if (error) throw new Error(error);
       } else {
-        const { error } = await supabase.from('business_clients').insert({
-          tenant_id: currentTenant?.id,
+        const { error } = await businessClientService.createClient(currentTenant!.id, {
           name: entity.name,
           email: entity.email,
           phone: entity.phone,
           industry: entity.industry || 'General',
-          sales_stage: 'customer',
+          salesStage: 'customer',
           value: entity.value,
           description: 'Manually added client',
-          is_active: true
         });
-        if (error) throw error;
+        if (error) throw new Error(error);
       }
       toast.success('Record added successfully', { id: saveToast });
       loadCRMData();
@@ -1658,138 +1896,59 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const allBulkSelected =
     bulkSelectTargetKeys.length > 0 && bulkSelectTargetKeys.every((k) => selectedKeys.has(k));
 
-  // Render detail views
-  if (selectedEntity) {
-    if (selectedEntity.type === 'lead' && selectedEntity.rawLead) {
-      return (
-        <LeadDetail
-          lead={selectedEntity.rawLead}
-          onBack={() => setSelectedEntity(null)}
-          onUpdate={handleStatusUpdate}
-          onQualify={handleQualifyLead}
-        />
-      );
-    } else if (selectedEntity.rawClient) {
-      return (
-        <Client360Detail
-          client={selectedEntity.rawClient}
-          user={user}
-          onBack={() => setSelectedEntity(null)}
-          onNewDeal={() => {
-            setSelectedEntity(null);
-            router.push('/dashboard/deals');
-          }}
-          onDraftContract={() => {
-            setSelectedEntity(null);
-            router.push(user.role === 'tenant_admin' ? '/dashboard/business/contracts' : '/dashboard/contracts');
-          }}
-          status={isTeamsConnected ? (teamsPresenceMap[selectedEntity.id] || 'offline') : (presenceMap[selectedEntity.id] || 'offline')}
-          isTeamsConnected={isTeamsConnected}
-        />
-      );
-    }
-  }
-
   // Calculate summaries for stats indicators
   const totalLeadsCount = (leads || []).length;
   const activeClientsCount = (clients || []).filter(c => c.sales_stage === 'customer').length;
   const totalClientValue = (clients || []).filter(c => c.sales_stage === 'customer').reduce((sum, c) => sum + (c.value || 0), 0);
 
+  const crmStats = React.useMemo<ModuleStat[]>(() => [
+    { label: t('Leads Pool'), value: totalLeadsCount.toLocaleString(), sub: t('In the funnel'), Icon: Target, accent: 'purple' },
+    { label: t('Customers'), value: activeClientsCount.toLocaleString(), sub: t('Won accounts'), Icon: UserCheck, accent: 'teal' },
+    { label: t('Active Book'), value: `$${totalClientValue.toLocaleString()}`, sub: t('Customer value'), Icon: DollarSign, accent: 'emerald' },
+  ], [t, totalLeadsCount, activeClientsCount, totalClientValue]);
+
   return (
-    <div className="flex flex-col h-full min-h-0 bg-slate-950 select-none relative">
-      <div className="px-4 pt-3 space-y-3 shrink-0">
-        <CRMNav pathname={pathname} />
-        <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
-      </div>
-      {/* Metric Cards Banner */}
-      <div className="grid grid-cols-3 gap-3 p-4 bg-slate-900/20 border-b border-white/5">
-        {([
-          {
-            label: t('Leads Pool'),
-            value: totalLeadsCount.toLocaleString(),
-            sub: t('In the funnel'),
-            Icon: Target,
-            card: 'from-purple-500/12 via-slate-900/70 to-slate-900/50 hover:border-purple-500/40',
-            glow: 'bg-purple-500/10 group-hover:bg-purple-500/20',
-            tile: 'from-purple-500/25 to-purple-500/5 border-purple-500/30',
-            iconColor: 'text-purple-300',
-            valueColor: 'text-white',
-          },
-          {
-            label: t('Customers'),
-            value: activeClientsCount.toLocaleString(),
-            sub: t('Won accounts'),
-            Icon: UserCheck,
-            card: 'from-teal-500/12 via-slate-900/70 to-slate-900/50 hover:border-teal-500/40',
-            glow: 'bg-teal-500/10 group-hover:bg-teal-500/20',
-            tile: 'from-teal-500/25 to-teal-500/5 border-teal-500/30',
-            iconColor: 'text-teal-300',
-            valueColor: 'text-teal-300',
-          },
-          {
-            label: t('Active Book'),
-            value: `$${totalClientValue.toLocaleString()}`,
-            sub: t('Customer value'),
-            Icon: DollarSign,
-            card: 'from-emerald-500/12 via-slate-900/70 to-slate-900/50 hover:border-emerald-500/40',
-            glow: 'bg-emerald-500/10 group-hover:bg-emerald-500/20',
-            tile: 'from-emerald-500/25 to-emerald-500/5 border-emerald-500/30',
-            iconColor: 'text-emerald-300',
-            valueColor: 'text-white',
-          },
-        ]).map((m, i) => {
-          const MetricIcon = m.Icon;
-          return (
-            <motion.div
-              key={m.label}
-              initial={{ opacity: 0, y: 12, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.05 + i * 0.06, type: 'spring', stiffness: 240, damping: 22 }}
-              className={`group relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br ${m.card} p-3 shadow-lg shadow-black/20 transition-all duration-300`}
-            >
-              <div className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full blur-2xl transition-colors ${m.glow}`} />
-              <div className="relative z-10 flex items-center gap-2.5">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-gradient-to-br ${m.tile}`}>
-                  <MetricIcon className={`h-4 w-4 ${m.iconColor}`} />
-                </div>
-                <div className="min-w-0">
-                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 truncate">{m.label}</span>
-                  <span className={`block text-base sm:text-lg font-black tabular-nums leading-tight truncate ${m.valueColor}`}>{m.value}</span>
-                </div>
-              </div>
-              <span className="relative z-10 mt-1.5 hidden sm:block text-[10px] text-slate-500 truncate">{m.sub}</span>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      <div className="px-4 pb-2">
-        <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />
-      </div>
-
-      {/* Segment Tabs */}
-      <div className="flex border-b border-white/5 bg-slate-950">
-        {([
-          { key: 'leads', label: t('Leads'), count: leads.length },
-          { key: 'clients', label: t('Customers'), count: activeClientsCount },
-          { key: 'contacts', label: t('Contacts'), count: clients.length },
-        ] as { key: SubView; label: string; count: number }[]).map(({ key, label, count }) => (
-          <button
-            key={key}
-            onClick={() => {
-              setSubView(key);
-              setSelectedEntity(null);
-              setAccountFilter('all');
-            }}
-            className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}
-          >
-            {label} ({count})
-          </button>
-        ))}
-      </div>
-
-      {/* Control panel (Search & Filter) */}
-      <div className="px-4 py-3 space-y-2.5 bg-slate-950/80 sticky top-0 z-10 backdrop-blur-md">
+    <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950 select-none relative">
+      <ModulePageLayout
+        showBonnieDock
+        header={(
+          <div className="px-4 pt-3 space-y-3 shrink-0">
+            <CRMNav pathname={pathname} />
+            <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+          </div>
+        )}
+        stats={(
+          <>
+            <div className="p-4 border-b border-white/5 bg-slate-900/20">
+              <ModuleStatCards stats={crmStats} className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" />
+            </div>
+            <div className="px-4 pb-2">
+              <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />
+            </div>
+          </>
+        )}
+        toolbar={(
+          <>
+            <div className="flex border-b border-white/5 bg-slate-950">
+              {([
+                { key: 'leads', label: t('Leads'), count: leads.length },
+                { key: 'clients', label: t('Customers'), count: activeClientsCount },
+                { key: 'contacts', label: t('Contacts'), count: clients.length },
+              ] as { key: SubView; label: string; count: number }[]).map(({ key, label, count }) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setSubView(key);
+                    setSelectedEntity(null);
+                    setAccountFilter('all');
+                  }}
+                  className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}
+                >
+                  {label} ({count})
+                </button>
+              ))}
+            </div>
+            <div className="px-4 py-3 space-y-2.5 bg-slate-950/80 sticky top-0 z-10 backdrop-blur-md">
         {isTeamsConnected && (
           <div className="flex items-center justify-between rounded-xl border border-blue-500/10 bg-blue-500/5 px-3 py-2">
             <div>
@@ -1931,10 +2090,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             )}
           </div>
         )}
-      </div>
-
-      {/* List content */}
-      <div className={`flex-1 ${subView === 'leads' && leadsView === 'board' ? 'overflow-hidden' : 'overflow-y-auto'} bg-slate-950`}>
+            </div>
+          </>
+        )}
+      >
+      <div className={`flex-1 ac-scroll-full bg-slate-950 ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
         {!loading && subView === 'leads' && leadsView === 'board' ? (
           <LeadKanban
             leads={filteredKanbanLeads}
@@ -2014,6 +2174,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           </>
         )}
       </div>
+      </ModulePageLayout>
 
       {/* FAB (Add Entity drawer trigger) */}
       <button
@@ -2032,15 +2193,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       />
 
       {/* Create entity drawer */}
-      <AnimatePresence>
-        {isCreateOpen && (
-          <CreateDrawer
-            isOpen={isCreateOpen}
-            onClose={() => setIsCreateOpen(false)}
-            onSave={handleCreateEntity}
-          />
-        )}
-      </AnimatePresence>
+      <CreateDrawer
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSave={handleCreateEntity}
+      />
 
       <LeadImportModal
         isOpen={isLeadImportOpen}
@@ -2050,6 +2207,51 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           loadCRMData();
         }}
       />
+
+      <DetailDrawer
+        open={Boolean(selectedEntity?.type === 'lead' && selectedEntity.rawLead)}
+        onOpenChange={(open) => { if (!open) setSelectedEntity(null); }}
+        title={selectedEntity?.rawLead?.name || 'Lead'}
+        size="wide"
+      >
+        {selectedEntity?.type === 'lead' && selectedEntity.rawLead && (
+          <LeadDetail
+            lead={selectedEntity.rawLead}
+            onBack={() => setSelectedEntity(null)}
+            onUpdate={handleStatusUpdate}
+            onQualify={handleQualifyLead}
+            onSaveLead={handleLeadSave}
+            inDrawer
+          />
+        )}
+      </DetailDrawer>
+
+      <DetailDrawer
+        open={Boolean(selectedEntity?.rawClient)}
+        onOpenChange={(open) => { if (!open) setSelectedEntity(null); }}
+        title={selectedEntity?.rawClient?.name || 'Client'}
+        size="wide"
+      >
+        {selectedEntity?.rawClient && (
+          <Client360Detail
+            client={selectedEntity.rawClient}
+            user={user}
+            onBack={() => setSelectedEntity(null)}
+            onClientSaved={handleClientSave}
+            onNewDeal={() => {
+              setSelectedEntity(null);
+              router.push('/dashboard/deals');
+            }}
+            onDraftContract={() => {
+              setSelectedEntity(null);
+              router.push(user.role === 'tenant_admin' ? '/dashboard/business/contracts' : '/dashboard/contracts');
+            }}
+            status={isTeamsConnected ? (teamsPresenceMap[selectedEntity.id] || 'offline') : (presenceMap[selectedEntity.id] || 'offline')}
+            isTeamsConnected={isTeamsConnected}
+            inDrawer
+          />
+        )}
+      </DetailDrawer>
     </div>
   );
 };

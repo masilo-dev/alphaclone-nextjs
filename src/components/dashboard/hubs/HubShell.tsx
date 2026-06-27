@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
+import { ENTERPRISE } from '@/constants/design';
+import { cn } from '@/lib/utils';
 
 export interface HubTab {
   label: string;
@@ -17,17 +19,21 @@ interface HubShellProps {
   description?: string;
   tabs: HubTab[];
   children: React.ReactNode;
+  dataTour?: string;
 }
 
-export default function HubShell({ title, description, tabs, children }: HubShellProps) {
+export default function HubShell({ title, description, tabs, children, dataTour }: HubShellProps) {
   const pathname = usePathname();
   const router = useRouter();
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-white/5 bg-slate-950/80 backdrop-blur-md sticky top-0 z-20">
-        <h1 className="text-lg font-bold text-white">{title}</h1>
-        {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}
+    <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+      <div
+        className={cn('flex-shrink-0 px-4 pt-4 pb-2', ENTERPRISE.moduleLayout.stickyHeader)}
+        {...(dataTour ? { 'data-tour': dataTour } : {})}
+      >
+        <h1 className="text-2xl md:text-[32px] font-bold text-white tracking-tight">{title}</h1>
+        {description && <p className="text-sm text-slate-400 mt-1">{description}</p>}
 
         <ModuleJumpSelect
           options={tabs.map((t) => ({ label: t.label, href: t.href }))}
@@ -37,7 +43,7 @@ export default function HubShell({ title, description, tabs, children }: HubShel
           className="mt-3"
         />
 
-        <div className="hidden md:flex gap-2 overflow-x-auto scrollbar-hide mt-3 -mx-1 px-1 pb-1">
+        <div className="flex gap-2 overflow-x-auto ios-scroll mt-3 -mx-1 px-1 pb-1 md:flex-wrap md:overflow-visible">
           {tabs.map((tab) => {
             const isActive = pathname != null && (pathname === tab.href || pathname.startsWith(`${tab.href}?`));
             const Icon = tab.icon;
@@ -45,11 +51,12 @@ export default function HubShell({ title, description, tabs, children }: HubShel
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex-shrink-0 inline-flex items-center gap-1.5 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
+                className={cn(
+                  'flex-shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-full text-xs font-bold transition-all border',
                   isActive
                     ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/10'
                     : 'bg-slate-900 text-slate-400 border-white/5 hover:border-teal-500/30 hover:text-white'
-                }`}
+                )}
               >
                 {Icon && <Icon className="w-3.5 h-3.5" />}
                 {tab.label}
@@ -58,7 +65,9 @@ export default function HubShell({ title, description, tabs, children }: HubShel
           })}
         </div>
       </div>
-      <div className="flex-1 min-h-0 overflow-x-hidden max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-safe">{children}</div>
+      <div className="flex-1 min-h-0 ac-scroll-full max-md:pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-safe">
+        {children}
+      </div>
     </div>
   );
 }

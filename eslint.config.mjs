@@ -27,6 +27,23 @@ const eslintConfig = defineConfig([
       "react/display-name": "off",
     },
   },
+  {
+    files: ["src/components/dashboard/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "@/components/ui/Modal",
+              message:
+                "Prefer DetailDrawer from @/components/ui/DetailDrawer for record detail panels (see .cursor/rules/enterprise-ui.mdc).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",

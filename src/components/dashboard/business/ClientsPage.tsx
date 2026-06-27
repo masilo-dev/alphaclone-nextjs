@@ -603,7 +603,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (isContactsRoute && directoryView === 'email') {
         return (
-            <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+            <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
                 <CRMNav pathname={pathname} />
                 {directorySwitcher}
                 <Suspense fallback={crmSectionFallback}>
@@ -656,7 +656,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
     if (isSoloOwner) {
         return (
-            <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+            <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
                 <CRMNav pathname={pathname} />
                 {isContactsRoute && directorySwitcher}
                 <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
@@ -710,7 +710,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+        <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
             <CRMNav pathname={pathname} />
             {directorySwitcher}
             <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />

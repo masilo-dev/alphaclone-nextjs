@@ -676,6 +676,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
 
     return (
         <div
+            data-tour="messages"
             className="h-[100dvh] md:h-[calc(100dvh-140px)] flex flex-col glass-panel rounded-none md:rounded-2xl overflow-hidden shadow-none md:shadow-2xl animate-fade-in relative backdrop-blur-xl border-0 md:border border-white/5"
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}

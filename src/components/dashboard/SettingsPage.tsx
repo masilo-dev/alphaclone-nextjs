@@ -6,12 +6,13 @@ import {
     AlertCircle, ShieldCheck,
     User as UserIcon, Globe, Building,
     ChevronRight, DollarSign, Briefcase,
-    Eye, Copy, Upload
+    Eye, Copy, Upload, BookOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '@/contexts/TenantContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { User as UserType } from '@/types';
 import { userService } from '@/services/userService';
 import { authService } from '@/services/authService';
@@ -20,6 +21,7 @@ import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServiceCatalog';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 // Integration subcomponents
 import CalendlySettings from './business/CalendlySettings';
@@ -44,6 +46,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function SettingsPage({ user }: SettingsPageProps) {
+    const { signOut } = useAuth();
     const { currentTenant } = useTenant();
     const { backgroundColor, setBackgroundColor, themeMode, setThemeMode } = useTheme();
     const { language, setLanguage, t: translate } = useLanguage();
@@ -364,8 +367,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         try {
             const { error } = await authService.requestAccountDeletion();
             if (error) throw new Error(error);
-            toast.success('Account deletion scheduled. Logging out...');
-            setTimeout(() => { window.location.reload(); }, 1500);
+            toast.success('Account deletion scheduled. Signing out...');
+            await signOut();
+            window.location.href = '/auth/login?reason=deletion_scheduled';
         } catch (err: any) {
             toast.error(err.message || 'Deletion failed');
         } finally {
@@ -404,6 +408,22 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
                 </div>
             </div>
+
+            <Link
+                href="/dashboard/help"
+                className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/15 transition-colors group"
+            >
+                <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center shrink-0">
+                        <BookOpen className="w-5 h-5 text-teal-400" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-white">Platform guide & glossary</p>
+                        <p className="text-xs text-slate-400 mt-0.5">Learn hub names, overview vs workspace, and where to find each feature.</p>
+                    </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-teal-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </Link>
 
             {/* 1. ACCOUNT GROUP */}
             <div className="space-y-3">

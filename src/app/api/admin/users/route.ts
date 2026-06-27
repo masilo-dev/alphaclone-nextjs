@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requirePlatformSuperAdmin, routeErrorResponse } from '@/lib/apiAuth';
+import { accountDeletionService } from '@/services/accountDeletionService';
 import type { UserRole } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,7 @@ export async function GET() {
 
     const { data, error } = await admin
       .from('profiles')
-      .select('id, email, name, role, status, avatar, created_at')
+      .select('id, email, name, role, account_status, avatar, created_at')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -28,7 +29,8 @@ export async function GET() {
       email: p.email,
       name: p.name,
       role: p.role as UserRole,
-      status: p.status || 'active',
+      status: p.account_status || 'active',
+      account_status: p.account_status || 'active',
       avatar: p.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(String(p.name || 'User'))}&background=random`,
     }));
 
@@ -52,15 +54,15 @@ export async function PATCH(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    const status = parsed.data.action === 'suspend' ? 'suspended' : 'active';
+    const accountStatus = parsed.data.action === 'suspend' ? 'suspended' : 'active';
 
     const { error } = await admin
       .from('profiles')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update({ account_status: accountStatus, updated_at: new Date().toISOString() })
       .eq('id', parsed.data.userId);
 
     if (error) throw error;
-    return NextResponse.json({ success: true, status });
+    return NextResponse.json({ success: true, status: accountStatus });
   } catch (err) {
     return routeErrorResponse(err);
   }
@@ -78,13 +80,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
     }
 
-    const admin = createSupabaseAdminClient();
-
-    const { error: tuError } = await admin.from('tenant_users').delete().eq('user_id', userId);
-    if (tuError) throw tuError;
-
-    const { error: pError } = await admin.from('profiles').delete().eq('id', userId);
-    if (pError) throw pError;
+    const result = await accountDeletionService.purgeUserAccount(userId, 'admin_delete');
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || 'Failed to delete user' }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

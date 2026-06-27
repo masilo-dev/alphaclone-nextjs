@@ -112,18 +112,24 @@ export async function POST(req: NextRequest) {
       }),
     });
 
+    const emailPayload = await emailResponse.json().catch(() => ({}));
     if (!emailResponse.ok) {
-      const payload = await emailResponse.json().catch(() => ({}));
-      return NextResponse.json({ error: payload?.error || 'Failed to send invoice email' }, { status: 502 });
+      return NextResponse.json({ error: emailPayload?.error || 'Failed to send invoice email' }, { status: 502 });
     }
 
     const now = new Date().toISOString();
     const recipientEmail = Array.isArray(recipients) ? recipients[0] : String(recipients);
+    const emailProvider = String(emailPayload?.provider || 'tenant-default');
 
-    // Update invoice sent_at
+    // Update invoice sent_at + delivery_status
     await supabase
       .from('invoices')
-      .update({ status: 'sent', sent_at: now, updated_at: now })
+      .update({
+        status: 'sent',
+        sent_at: now,
+        updated_at: now,
+        delivery_status: 'DELIVERED',
+      })
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId);
 
@@ -132,8 +138,10 @@ export async function POST(req: NextRequest) {
       invoice_id: invoiceId,
       tenant_id: tenantId,
       sent_at: now,
+      delivered_at: now,
       sent_to_email: recipientEmail,
-      delivery_status: 'PENDING',
+      email_provider: emailProvider,
+      delivery_status: 'DELIVERED',
     });
 
     // Audit log

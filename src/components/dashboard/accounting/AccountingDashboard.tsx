@@ -201,7 +201,7 @@ export default function AccountingDashboard() {
     }
 
     return (
-        <div className={`relative space-y-6 max-w-7xl mx-auto pb-24 ${isMobile ? 'px-2' : 'px-6'}`}>
+        <div className={`relative space-y-6 max-w-7xl mx-auto pb-24 ac-scroll-full ac-enterprise-module ${isMobile ? 'px-2' : 'px-6'}`}>
             {/* Initialization Banner for Empty Accounts */}
             {!loading && accounts.length === 0 && (
                 <div className="bg-teal-500/10 border border-teal-500/20 rounded-[32px] p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-2xl shadow-teal-900/10 animate-in fade-in slide-in-from-top-4 duration-500">

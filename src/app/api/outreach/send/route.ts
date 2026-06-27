@@ -12,6 +12,7 @@ import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signal
 import { normalizeEmailSubject } from '@/lib/email/emailComposition';
 import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { buildEmail } from '@/lib/email/template';
+import { sendEmail } from '@/lib/email/sendEmail';
 import sanitizeHtml from 'sanitize-html';
 import { validateRecipient } from '@/lib/email/validateRecipient';
 
@@ -479,86 +480,28 @@ export async function POST(request: Request) {
             content: htmlWithComplianceFooter,
           });
           providerMessageId = sendResult?.data?.messageId || null;
-        } else if (selectedProvider.provider === 'brevo') {
-          if (!selectedProvider.fromEmail) throw new Error('Brevo sender email missing. Set a verified From Email in Brevo integration.');
-          const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-key': selectedProvider.apiKey,
-            },
-            body: JSON.stringify({
-              sender: { email: selectedProvider.fromEmail || fromAddress, name: selectedProvider.fromName || 'AlphaClone Systems' },
-              to: [{ email: leadEmail }],
-              subject: normalizedSubject,
-              htmlContent: htmlWithComplianceFooter,
-              headers: unsubscribeUrl ? {
-                'List-Unsubscribe': `<${unsubscribeUrl}>`,
-                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-              } : undefined,
-            }),
-          });
-          if (!response.ok) {
-            const errorBody = await response.text().catch(() => '');
-            throw new Error(`Brevo send failed (${response.status}): ${errorBody.slice(0, 220)}`);
-          }
-          const responseJson = await response.json().catch(() => ({}));
-          providerMessageId = typeof responseJson?.messageId === 'string' ? responseJson.messageId : providerMessageId;
-        } else if (selectedProvider.provider === 'resend') {
-          if (!selectedProvider.fromEmail) throw new Error('Resend sender email missing. Set a verified From Email in Resend integration.');
-          const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${selectedProvider.apiKey}`,
-            },
-            body: JSON.stringify({
-              from: `${selectedProvider.fromName || 'AlphaClone Systems'} <${selectedProvider.fromEmail || fromAddress}>`,
+        } else if (
+          selectedProvider.provider === 'brevo' ||
+          selectedProvider.provider === 'resend' ||
+          selectedProvider.provider === 'sendgrid'
+        ) {
+          const result = await sendEmail(
+            tenantId,
+            {
               to: leadEmail,
               subject: normalizedSubject,
               html: htmlWithComplianceFooter,
-              headers: unsubscribeUrl ? {
-                'List-Unsubscribe': `<${unsubscribeUrl}>`,
-                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-              } : undefined,
-            }),
-          });
-          if (!response.ok) {
-            const errorBody = await response.text().catch(() => '');
-            throw new Error(`Resend send failed (${response.status}): ${errorBody.slice(0, 220)}`);
-          }
-          const responseJson = await response.json().catch(() => ({}));
-          providerMessageId =
-            (responseJson?.data && typeof responseJson.data.id === 'string' ? responseJson.data.id : null) ||
-            (typeof responseJson?.id === 'string' ? responseJson.id : providerMessageId);
-        } else if (selectedProvider.provider === 'sendgrid') {
-          if (!selectedProvider.fromEmail) throw new Error('SendGrid sender email missing. Set a verified From Email in SendGrid integration.');
-          const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${selectedProvider.apiKey}`,
+              from_name: selectedProvider.fromName,
+              userId: tenantCtx.user.id,
+              listUnsubscribeUrl: unsubscribeUrl,
+              skipFooter: true,
             },
-            body: JSON.stringify({
-              personalizations: [{ to: [{ email: leadEmail }] }],
-              from: {
-                email: selectedProvider.fromEmail || fromAddress,
-                name: selectedProvider.fromName || 'AlphaClone Systems',
-              },
-              subject: normalizedSubject,
-              headers: unsubscribeUrl ? {
-                'List-Unsubscribe': `<${unsubscribeUrl}>`,
-                'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-              } : undefined,
-              content: [{ type: 'text/html', value: htmlWithComplianceFooter }],
-            }),
-          });
-          if (!response.ok) {
-            const errorBody = await response.text().catch(() => '');
-            throw new Error(`SendGrid send failed (${response.status}): ${errorBody.slice(0, 220)}`);
+            selectedProvider.provider
+          );
+          if (!result.success) {
+            throw new Error(result.error || `Failed to send via ${selectedProvider.provider}`);
           }
-          const sendgridMessageId = response.headers.get('x-message-id');
-          if (sendgridMessageId) providerMessageId = sendgridMessageId;
+          providerMessageId = result.emailId || null;
         }
 
         sentProvider = selectedProvider.provider;

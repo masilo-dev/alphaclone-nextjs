@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { runBonnieAgent } from '@/lib/bonnie/bonnieAgent';
+import { mapToolResultsForApi, findPendingApproval } from '@/lib/bonnie/bonnieApiMappers';
 import { createSupabaseServerClient, createSupabaseAdminClient } from '@/lib/supabase-server';
 import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
 import { UNITS_PER_CHAT_TURN } from '@/config/aiUsageQuotas';
@@ -62,23 +63,24 @@ export async function POST(request: NextRequest) {
 
           if (result.toolResults.length > 0) {
             push('phase', { phase: 'executing' });
-            push('tools', {
-              tools: result.toolResults.map((t) => ({
-                tool: t.tool,
-                success: t.success,
-                summary: t.summary,
-              })),
-            });
+            push('tools', { tools: mapToolResultsForApi(result.toolResults) });
           }
+
+          const pending = findPendingApproval(result.toolResults);
 
           push('done', {
             success: result.success,
             response: result.response,
-            toolsExecuted: result.toolResults.map((t) => ({
-              tool: t.tool,
-              success: t.success,
-              summary: t.summary,
-            })),
+            toolsExecuted: mapToolResultsForApi(result.toolResults),
+            pendingApproval: pending
+              ? {
+                  approvalId: pending.approvalId,
+                  tool: pending.tool,
+                  riskClass: pending.riskClass,
+                  preview: pending.preview,
+                  summary: pending.summary,
+                }
+              : null,
             rounds: result.rounds,
           });
         } catch (error: any) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText, Mail } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
@@ -13,6 +13,12 @@ import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { CommunicationModal } from './crm/CommunicationModal';
+import { DetailDrawer } from '../ui/DetailDrawer';
+import { ModulePageLayout } from '../ui/ModulePageLayout';
+import { Input } from '../ui/UIComponents';
+import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
+import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 
 type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
@@ -88,7 +94,7 @@ const QuoteListRow: React.FC<{ quote: QuoteRow; onDelete: (id: string) => void; 
         </div>
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <span className="text-[15px] font-bold text-white">{amountDisplay}</span>
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border capitalize ${STATUS_COLORS[quote.status]}`}>{quote.status}</span>
+          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
         </div>
       </motion.div>
     </div>
@@ -103,21 +109,45 @@ const QuoteDetail: React.FC<{
   onEdit: (quote: QuoteRow) => void;
   onDelete: (id: string) => void;
   onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
-}> = ({ quote, onBack, onSend, onConvert, onEdit, onDelete, onComposeEmail }) => {
+  inDrawer?: boolean;
+}> = ({ quote, onBack, onSend, onConvert, onEdit, onDelete, onComposeEmail, inDrawer }) => {
   const clientName = quote.client_name?.trim() || 'Unnamed Client';
   const amountDisplay = quote.amount && quote.amount > 0 ? `$${quote.amount.toLocaleString()}` : '$0.00 (Draft)';
 
+  const actions = (
+    <div className={`grid grid-cols-2 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 native-bottom-bar pb-safe grid-cols-4 divide-x divide-white/5'}`}>
+      <button onClick={() => onEdit(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+        <Edit3 className="w-4 h-4 text-violet-400" />
+        <span className="text-[11px] font-bold">Edit</span>
+      </button>
+      <button onClick={() => onSend(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+        <Send className="w-4 h-4 text-sky-400" />
+        <span className="text-[11px] font-bold">Send</span>
+      </button>
+      <button onClick={() => onConvert(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+        <CheckCircle className="w-4 h-4 text-teal-400" />
+        <span className="text-[11px] font-bold">Convert</span>
+      </button>
+      <button onClick={() => onDelete(quote.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400">
+        <Trash2 className="w-4 h-4 text-red-400" />
+        <span className="text-[11px] font-bold">Delete</span>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="relative flex flex-col h-full overflow-hidden">
+    <div className={inDrawer ? 'space-y-4 pb-2' : 'relative flex flex-col min-h-0 ac-scroll-full overflow-hidden'}>
+      {!inDrawer && (
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
         <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
         <span className="text-[15px] font-bold text-white">Quote Detail</span>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-4">
+      )}
+      <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-4 pb-28 space-y-4'}>
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
           <div className="text-[13px] text-slate-500">Quote #{quote.number || quote.id.slice(0,8)}</div>
           <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
-          <span className={`inline-block text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${STATUS_COLORS[quote.status]}`}>{quote.status}</span>
+          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
         </div>
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
           <div className="text-[15px] font-bold text-white">{clientName}</div>
@@ -146,24 +176,7 @@ const QuoteDetail: React.FC<{
           </button>
         )}
       </div>
-      <div className="absolute bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 native-bottom-bar pb-safe">
-        <button onClick={() => onEdit(quote)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors text-slate-400">
-          <Edit3 className="w-4 h-4 text-violet-400" />
-          <span className="text-[11px] font-bold">Edit</span>
-        </button>
-        <button onClick={() => onSend(quote)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors text-slate-400">
-          <Send className="w-4 h-4 text-sky-400" />
-          <span className="text-[11px] font-bold">Send Quote</span>
-        </button>
-        <button onClick={() => onConvert(quote)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors text-slate-400">
-          <CheckCircle className="w-4 h-4 text-teal-400" />
-          <span className="text-[11px] font-bold">Convert</span>
-        </button>
-        <button onClick={() => onDelete(quote.id)} className="flex-1 flex flex-col items-center justify-center h-[56px] gap-1 hover:bg-white/5 transition-colors text-red-400">
-          <Trash2 className="w-4 h-4 text-red-400" />
-          <span className="text-[11px] font-bold">Delete</span>
-        </button>
-      </div>
+      {actions}
     </div>
   );
 };
@@ -228,47 +241,42 @@ const CreateQuoteModal: React.FC<{
     }
   };
 
+  if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">New Quote</h2>
-          <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-white"><X className="w-5 h-5" /></button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Client or project name"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
-            required
-          />
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Recipient email (for sending)"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
-          />
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Amount (USD)"
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
-          />
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full h-12 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold disabled:opacity-50"
-          >
-            {saving ? 'Creating...' : 'Create Quote'}
-          </button>
-        </form>
-      </div>
-    </div>
+    <DetailDrawer open={open} onOpenChange={(o) => !o && onClose()} title="New Quote">
+      <form onSubmit={handleSubmit} className="space-y-3 pb-6">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Client or project name"
+          validate={(v) => !v.trim() ? 'Client or quote name is required' : undefined}
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Recipient email (for sending)"
+          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
+        />
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Amount (USD)"
+          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
+        />
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full min-h-11 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold disabled:opacity-50"
+        >
+          {saving ? 'Creating...' : 'Create Quote'}
+        </button>
+      </form>
+    </DetailDrawer>
   );
 };
 
@@ -450,25 +458,26 @@ const QuoteEditModal: React.FC<{
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] bg-black/70 p-4 overflow-y-auto">
-      <div className="mx-auto my-4 max-w-5xl rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-bold text-white">Edit Quote</h2>
-            <p className="text-xs text-slate-400">{quote.number || quote.id.slice(0, 8)}</p>
-          </div>
-          <button type="button" onClick={onClose} className="rounded-full border border-slate-800 p-2 text-slate-400 hover:text-white">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+  if (!open || !quote) return null;
 
-        <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">
+  return (
+    <DetailDrawer
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+      title="Edit Quote"
+      description={quote.number || quote.id.slice(0, 8)}
+      size="wide"
+    >
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] pb-6">
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Quote name</label>
-                <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white" />
+                <Input
+                  label="Quote name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  validate={(v) => !v.trim() ? 'Quote name is required' : undefined}
+                />
               </div>
               <div>
                 <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Status</label>
@@ -540,14 +549,13 @@ const QuoteEditModal: React.FC<{
               type="button"
               onClick={handleSave}
               disabled={saving || loading}
-              className="w-full rounded-2xl bg-teal-500 px-4 py-3 text-sm font-black uppercase tracking-widest text-black disabled:opacity-50"
+              className="w-full min-h-11 rounded-2xl bg-teal-500 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Quote'}
             </button>
           </div>
-        </div>
       </div>
-    </div>
+    </DetailDrawer>
   );
 };
 
@@ -563,6 +571,9 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<QuoteRow | null>(null);
   const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(40);
+  const loadMoreQuotes = useCallback(() => setVisibleCount((c) => c + 30), []);
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -618,43 +629,25 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
     if (!currentTenant?.id) return;
     try {
       toast.loading('Converting to invoice...', { id: 'conv' });
-      const invoiceNum = `INV-${Date.now().toString(36).toUpperCase()}`;
-      const amount = quote.amount || 0;
-      const { data: inv, error } = await supabase.from('business_invoices').insert({
-        tenant_id: currentTenant.id,
-        invoice_number: invoiceNum,
-        issue_date: new Date().toISOString(),
-        due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'draft',
-        subtotal: amount,
-        tax_rate: 0,
-        tax: 0,
-        discount_amount: 0,
-        total: amount,
-        notes: `Converted from quote ${quote.number || quote.id}`,
-        is_public: false,
-      }).select('id').single();
-
-      if (error) throw error;
-
-      if (amount > 0 && inv?.id) {
-        await supabase.from('invoice_line_items').insert({
-          invoice_id: inv.id,
-          tenant_id: currentTenant.id,
-          description: quote.client_name || 'Services',
-          quantity: 1,
-          unit_price: amount,
-          amount,
-        });
+      const response = await fetch('/api/quotes/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quoteId: quote.id, tenantId: currentTenant.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || 'Conversion failed');
       }
 
-      await supabase.from('quotes').update({ status: 'accepted' }).eq('id', quote.id);
       setQuotes(p => p.map(q => q.id === quote.id ? { ...q, status: 'accepted' } : q));
       setSelected(null);
-      toast.success('Converted to business invoice', { id: 'conv' });
+      toast.success('Quote converted to invoice', { id: 'conv' });
       showActionNextSteps('quote_to_invoice', (path) => router.push(path));
+      if (payload.invoiceId) {
+        router.push(`/dashboard/business/billing/manage?invoiceId=${encodeURIComponent(payload.invoiceId)}`);
+      }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to convert';
+      const message = err instanceof Error ? err.message : 'Failed to convert quote';
       toast.error(message, { id: 'conv' });
     }
   };
@@ -675,56 +668,81 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
     ];
   }, [quotes]);
 
-  if (selected) {
-    return (
-      <>
-        <QuoteDetail
-          quote={selected}
-          onBack={() => setSelected(null)}
-          onSend={sendQuote}
-          onConvert={convertToInvoice}
-          onEdit={(q) => setEditing(q)}
-          onDelete={deleteQuote}
-          onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
-        />
-        {emailCompose && (
-          <CommunicationModal
-            user={user}
-            recipient={emailCompose.recipient}
-            prefilledSubject={emailCompose.subject}
-            onClose={() => setEmailCompose(null)}
-            onSent={() => setEmailCompose(null)}
-          />
-        )}
-        <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
-        <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
-      </>
-    );
-  }
-
   const filtered = quotes.filter(q => filter === 'all' || q.status === filter);
+  useInfiniteScroll(listRef, loadMoreQuotes, { enabled: filtered.length > visibleCount });
+  const visibleQuotes = filtered.slice(0, visibleCount);
+
+  const quoteColumns = useMemo<EnterpriseColumn<QuoteRow>[]>(() => [
+    {
+      id: 'client',
+      header: 'Quote',
+      mobilePrimary: true,
+      sortable: true,
+      sortValue: (q) => q.client_name,
+      accessor: (q) => (
+        <div>
+          <span className="text-[13px] font-bold text-white block">{q.client_name?.trim() || 'Unnamed Client'}</span>
+          <span className="text-[11px] text-slate-500">#{q.number || q.id.slice(0, 6)}</span>
+        </div>
+      ),
+    },
+    {
+      id: 'amount',
+      header: 'Amount',
+      sortable: true,
+      sortValue: (q) => q.amount,
+      accessor: (q) => `$${q.amount.toLocaleString()}`,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessor: (q) => <StatusBadge variant={quoteStatusVariant(q.status)}>{q.status}</StatusBadge>,
+    },
+    {
+      id: 'valid',
+      header: 'Valid until',
+      sortable: true,
+      sortValue: (q) => q.valid_until || '',
+      accessor: (q) => q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
+    },
+  ], []);
 
   return (
-    <div className="relative flex flex-col h-full">
-      <div className="px-4 pt-3">
-        <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
-      </div>
-      {!loading && quotes.length > 0 && (
-        <div className="p-4 border-b border-white/5 bg-slate-900/20">
-          <ModuleStatCards stats={quoteStats} />
-        </div>
-      )}
-      <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+      <ModulePageLayout
+        showBonnieDock
+        header={(
+          <div className="px-4 pt-3">
+            <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
+          </div>
+        )}
+        toolbar={(
+          <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5">
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
         ))}
+          </div>
+        )}
+        stats={!loading && quotes.length > 0 ? (
+          <div className="p-4 border-b border-white/5 bg-slate-900/20">
+            <ModuleStatCards stats={quoteStats} />
+          </div>
+        ) : null}
+      >
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950 px-2">
+        {loading ? (
+          <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : (
+          <EnterpriseDataTable
+            columns={quoteColumns}
+            data={visibleQuotes}
+            getRowId={(q) => q.id}
+            onRowClick={setSelected}
+            emptyMessage="No quotes found."
+          />
+        )}
       </div>
-      <div className="flex-1 overflow-y-auto pb-20 divide-y divide-white/5 bg-slate-950">
-        {loading ? [...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />) :
-          filtered.length === 0 ? <div className="py-12 text-center text-[13px] text-slate-500">No quotes found.</div> :
-          filtered.map(q => <QuoteListRow key={q.id} quote={q} onDelete={deleteQuote} onTap={setSelected} />)
-        }
-      </div>
+      </ModulePageLayout>
       <button
         type="button"
         onClick={() => setShowCreate(true)}
@@ -734,6 +752,36 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       </button>
       <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
       <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
+
+      <DetailDrawer
+        open={Boolean(selected)}
+        onOpenChange={(open) => { if (!open) setSelected(null); }}
+        title={selected ? `Quote #${selected.number || selected.id.slice(0, 8)}` : 'Quote'}
+        size="wide"
+      >
+        {selected && (
+          <QuoteDetail
+            quote={selected}
+            onBack={() => setSelected(null)}
+            onSend={sendQuote}
+            onConvert={convertToInvoice}
+            onEdit={(q) => setEditing(q)}
+            onDelete={deleteQuote}
+            onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
+            inDrawer
+          />
+        )}
+      </DetailDrawer>
+
+      {emailCompose && (
+        <CommunicationModal
+          user={user}
+          recipient={emailCompose.recipient}
+          prefilledSubject={emailCompose.subject}
+          onClose={() => setEmailCompose(null)}
+          onSent={() => setEmailCompose(null)}
+        />
+      )}
     </div>
   );
 };

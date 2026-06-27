@@ -30,6 +30,7 @@ import {
   Instagram,
   Smartphone,
 
+  Bell,
   Bot,
   Search,
   Star,
@@ -38,6 +39,7 @@ import {
   Database,
   Target,
   Brain,
+  BookOpen,
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -72,6 +74,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
       { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ]
   },
   {
@@ -81,11 +84,12 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
       { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-      { label: 'Creative Intel Lab', href: '/dashboard/ai-studio', icon: Palette },
+      { label: 'AI Studio', href: '/dashboard/ai-studio', icon: Palette },
       { label: 'Documents', href: '/dashboard/submit', icon: FileText },
     ]
   },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
 ];
 
 // --- ADMIN NAVIGATION ---
@@ -94,9 +98,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Platform Users', href: '/dashboard/admin/users', icon: Users },
   { label: 'Operations', href: '/dashboard/admin/operations', icon: Activity },
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Bonnie AI Console', href: '/dashboard/bonnie', icon: Brain },
-  { label: 'Business OS', href: '/dashboard/performance', icon: Zap },
-  { label: 'Live Stats', href: '/dashboard/analytics', icon: Activity },
+  { label: 'Bonnie AI', href: '/dashboard/bonnie', icon: Brain },
+  { label: 'Performance', href: '/dashboard/performance', icon: Zap },
+  { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
   {
     label: 'Communication',
     href: '#',
@@ -109,7 +113,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    label: 'Creative Intel',
+    label: 'AI Studio',
     href: '#',
     icon: Layers,
     subItems: [
@@ -118,17 +122,23 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     ]
   },
   {
-    label: 'Enterprise CRM',
+    label: 'Sales Hub',
     href: '#',
     icon: TrendingUp,
     subItems: [
       { label: 'Tasks', href: '/dashboard/tasks' },
       { label: 'Deals', href: '/dashboard/deals' },
       { label: 'Forecast', href: '/dashboard/forecast' },
+      { label: 'Goals & Targets', href: '/dashboard/goals' },
+      { label: 'Annual Planning', href: '/dashboard/planning' },
+      { label: 'Jobs & Queue', href: '/dashboard/jobs' },
+      { label: 'Webhooks', href: '/dashboard/webhooks' },
     ]
   },
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
+  { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
+  { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
   { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
@@ -143,19 +153,23 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: Users,
     subItems: [
-      { label: 'CRM Overview', href: '/dashboard/crm', icon: Users },
-      { label: 'CRM Workspace', href: '/dashboard/crm/workspace', icon: Users },
+      { label: 'CRM overview', href: '/dashboard/crm', icon: Users },
+      { label: 'CRM workspace', href: '/dashboard/crm/workspace', icon: Users },
       { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
-      { label: 'Sales Console', href: '/dashboard/crm/console', icon: Target },
+      { label: 'Sales console', href: '/dashboard/crm/console', icon: Target },
       { label: 'Leads Board', href: '/dashboard/leads', icon: TrendingUp },
       { label: 'Deals Pipeline', href: '/dashboard/deals', icon: Target },
       { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
       { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
       { label: 'CRM Reports', href: '/dashboard/crm/reports', icon: BarChart3 },
       { label: 'Sales Forecast', href: '/dashboard/forecast', icon: TrendingUp },
+      { label: 'Goals & Targets', href: '/dashboard/goals', icon: Target },
+      { label: 'Annual Planning', href: '/dashboard/planning', icon: Calendar },
+      { label: 'Jobs & Queue', href: '/dashboard/jobs', icon: Clock },
       { label: 'Production Tasks', href: '/dashboard/tasks', icon: CheckSquare },
       { label: 'Lead Finder', href: '/dashboard/leads/campaigns', icon: MessageSquare },
       { label: 'Lead Ingestion', href: '/dashboard/business/ingestion', icon: Database },
+      { label: 'Webhooks', href: '/dashboard/webhooks', icon: Zap },
     ],
   },
 
@@ -164,14 +178,13 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: Globe,
     subItems: [
-      { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
       { label: 'Email Campaigns', href: '/dashboard/business/campaigns', icon: Presentation },
       { label: 'Sequences', href: '/dashboard/marketing/sequences', icon: Mail },
       { label: 'Deliverability', href: '/dashboard/marketing/deliverability', icon: MessageSquare },
       { label: 'Branded Forms', href: '/dashboard/business/forms', icon: FileText },
       { label: 'Social Media', href: '/dashboard/business/social', icon: Globe },
       { label: 'Post Composer', href: '/dashboard/business/social/compose', icon: Globe },
-      { label: 'Mail Inbox', href: '/dashboard/mail', icon: Mail },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
       { label: 'Social Command Center', href: '/dashboard/business/social-command', icon: Star },
       { label: 'SMS Outreach', href: '/dashboard/business/sms', icon: Smartphone },
     ],
@@ -185,11 +198,11 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
       { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
       { label: 'Bills Payable', href: '/dashboard/accounting/bills', icon: FileText },
+      { label: 'Vendors', href: '/dashboard/vendors', icon: Briefcase },
       { label: 'Period Close', href: '/dashboard/accounting/period-close', icon: FileText },
-      { label: 'Billing Center', href: '/dashboard/business/billing', icon: DollarSign },
-      { label: 'Invoice Manager', href: '/dashboard/business/billing/manage', icon: DollarSign },
-      { label: 'Finance Manager', href: '/dashboard/finance/manage', icon: DollarSign },
-      { label: 'Expense Tracker', href: '/dashboard/business/expenses', icon: Receipt },
+      { label: 'Billing overview', href: '/dashboard/business/billing', icon: DollarSign },
+      { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: DollarSign },
+      { label: 'Finance & expenses', href: '/dashboard/finance/manage', icon: Receipt },
       { label: 'Quotes & Proposals', href: '/dashboard/business/quotes', icon: FileText },
       { label: 'Cash Flow Forecast', href: '/dashboard/business/cash-flow', icon: TrendingUp },
       { label: 'Tax Estimator', href: '/dashboard/business/tax-estimator', icon: FileText },
@@ -203,8 +216,10 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Executive Dashboard', href: '/dashboard/executive', icon: BarChart3 },
       { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
-      { label: 'Business OS Performance', href: '/dashboard/performance', icon: Zap },
+      { label: 'Performance', href: '/dashboard/performance', icon: Zap },
       { label: 'Revenue Reports', href: '/dashboard/business/reports', icon: TrendingUp },
+      { label: 'Reporting', href: '/dashboard/reporting', icon: BarChart3 },
+      { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ],
   },
 
@@ -230,13 +245,12 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Deep-Desk Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
       { label: 'Team Messages', href: '/dashboard/business/messages', icon: MessageSquare },
-      { label: 'Mail Inbox', href: '/dashboard/mail', icon: Mail },
+      { label: 'Mail', href: '/dashboard/mail', icon: Mail },
       { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
       { label: 'Facebook Inbox', href: '/dashboard/business/facebook', icon: Facebook },
       { label: 'LinkedIn', href: '/dashboard/business/linkedin', icon: Linkedin },
       { label: 'Instagram', href: '/dashboard/business/instagram', icon: Instagram },
       { label: 'X (Twitter)', href: '/dashboard/business/x', icon: Twitter },
-      { label: 'Zoho Mail', href: '/dashboard/mail', icon: Mail },
     ],
   },
 
@@ -258,6 +272,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe },
       { label: 'Workflow Builder', href: '/dashboard/business/workflows', icon: Zap },
+      { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
       { label: 'System Settings', href: '/dashboard/business/settings', icon: Settings },
     ],
   },

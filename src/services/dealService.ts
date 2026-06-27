@@ -44,48 +44,22 @@ export interface Deal {
 
 function triggerDealIntelligenceRecompute(tenantId: string, dealId: string) {
     if (typeof window === 'undefined') return;
-    void fetch('/api/intelligence/deals/recompute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId, dealId }),
-    });
+    void import('../lib/automation/request-event').then(({ requestBusinessEvent }) =>
+        requestBusinessEvent(tenantId, 'deal_intelligence_requested', { dealId, action: 'recompute' })
+            .then((res) => {
+                if (!res.ok) console.warn('[DealIntel] recompute event failed:', res.error);
+            })
+    );
 }
 
-/**
- * AUTO DEAL INTELLIGENCE (Professional)
- * Fires score_deal and trigger_deal_automation in the background.
- * Ensures zero UI lag and strictly professional brand voice.
- */
 function triggerDealIntelligence(tenantId: string, dealId: string, stage: DealStage) {
     if (typeof window === 'undefined') return;
-    
-    const professionalRules = `STRICT BRAND VOICE: NO EMOJIS. NO INFORMAL JARGON. NO DECORATIVE SYMBOLS (e.g. ££**).`;
-    
-    // 1. Fire score_deal (Fire and forget)
-    void fetch('/api/mcp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            method: 'call_tool',
-            params: {
-                name: 'score_deal',
-                arguments: { deal_id: dealId, tenant_id: tenantId, style_guidance: professionalRules }
-            }
-        })
-    }).catch(err => console.warn('[AutoDealIntel] score_deal failed:', err));
-
-    // 2. Fire trigger_deal_automation (Fire and forget)
-    void fetch('/api/mcp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            method: 'call_tool',
-            params: {
-                name: 'trigger_deal_automation',
-                arguments: { deal_id: dealId, stage, tenant_id: tenantId, style_guidance: professionalRules }
-            }
-        })
-    }).catch(err => console.warn('[AutoDealIntel] trigger_deal_automation failed:', err));
+    void import('../lib/automation/request-event').then(({ requestBusinessEvent }) =>
+        requestBusinessEvent(tenantId, 'deal_intelligence_requested', { dealId, stage })
+            .then((res) => {
+                if (!res.ok) console.warn('[DealIntel] automation event failed:', res.error);
+            })
+    );
 }
 
 export interface DealActivity {
@@ -565,8 +539,8 @@ export const dealService: DealService = {
 
             // EMIT AUTOMATION EVENT
             if (updates.stage) {
-                const { emitBusinessEvent } = await import('../lib/automation/emit-event');
-                await emitBusinessEvent(tenantId, 'deal_stage_changed', {
+                const { requestBusinessEvent } = await import('../lib/automation/request-event');
+                await requestBusinessEvent(tenantId, 'deal_stage_changed', {
                     dealId,
                     newStage: updates.stage,
                     oldStage: existingDeal?.stage,
@@ -574,7 +548,6 @@ export const dealService: DealService = {
                     name: data.name
                 }).catch(err => console.error('Failed to emit deal_stage_changed event:', err));
 
-                // AUTO DEAL INTELLIGENCE (Stage Change)
                 triggerDealIntelligence(tenantId, dealId, updates.stage);
             }
 

@@ -237,82 +237,13 @@ export async function POST(req: NextRequest) {
 
   // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
-    const { listAllMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await listAllMcpTools();
-    
-    // Add ticketing tools
-    const ticketingTools = [
-      {
-        name: 'create_ticket',
-        description: 'Create a new support ticket',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            title: { type: 'string', description: 'Ticket title' },
-            description: { type: 'string', description: 'Ticket description' },
-            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Priority level' },
-            category: { type: 'string', enum: ['billing', 'technical', 'general', 'feature_request', 'bug', 'onboarding'], description: 'Category' },
-            source: { type: 'string', enum: ['whatsapp', 'email', 'chat', 'manual', 'bonnie_agent', 'api'], description: 'Source' },
-            contact_id: { type: 'string', description: 'Contact UUID (optional)' },
-            client_id: { type: 'string', description: 'Client UUID (optional)' },
-          },
-          required: ['title'],
-        },
-      },
-      {
-        name: 'get_tickets',
-        description: 'Get support tickets with optional filters',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], description: 'Filter by status' },
-            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'Filter by priority' },
-            category: { type: 'string', enum: ['billing', 'technical', 'general', 'feature_request', 'bug', 'onboarding'], description: 'Filter by category' },
-            limit: { type: 'number', description: 'Max results (default 20)' },
-          },
-        },
-      },
-      {
-        name: 'update_ticket',
-        description: 'Update a support ticket status, priority, or resolution',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            ticket_id: { type: 'string', description: 'Ticket UUID' },
-            status: { type: 'string', enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], description: 'New status' },
-            priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'], description: 'New priority' },
-            resolution_note: { type: 'string', description: 'Resolution note' },
-            assigned_to: { type: 'string', description: 'User UUID to assign' },
-          },
-          required: ['ticket_id'],
-        },
-      },
-      {
-        name: 'get_ticket_stats',
-        description: 'Get ticket statistics including counts by status, avg resolution time, SLA breaches',
-        inputSchema: {
-          type: 'object',
-          properties: {},
-        },
-      },
-      {
-        name: 'escalate_ticket',
-        description: 'Escalate a ticket to urgent priority and notify Alpha',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            ticket_id: { type: 'string', description: 'Ticket UUID' },
-            reason: { type: 'string', description: 'Reason for escalation' },
-          },
-          required: ['ticket_id', 'reason'],
-        },
-      },
-    ];
-    
+    const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+    const tools = await getUnifiedMcpTools();
+
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: { tools: [...tools, ...ticketingTools] }
+      result: { tools },
     }, { headers: mcpJsonHeaders(req) });
   }
 
@@ -645,14 +576,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
     }
 
-    const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-    const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
-    initializeRegistry();
-    const newTools = listTools();
-    const newToolNames = new Set(newTools.map(t => t.name));
-    const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
+    const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+    const tools = await getUnifiedMcpTools();
 
-    return NextResponse.json({ tools: [...newTools, ...legacyFiltered] }, {
+    return NextResponse.json({ tools, count: tools.length }, {
       headers: mcpJsonHeaders(req, {
         'X-MCP-Version': '2.0.0',
         'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,

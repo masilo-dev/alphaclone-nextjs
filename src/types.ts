@@ -11,7 +11,7 @@ export interface User {
   avatar: string;
   user_metadata?: any;
   company?: string;
-  account_status?: 'active' | 'pending_deletion';
+  account_status?: 'active' | 'pending_deletion' | 'suspended' | 'deleted';
   scheduled_deletion_at?: string;
   sectors?: string[];
   services?: string[];

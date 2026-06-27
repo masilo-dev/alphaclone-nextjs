@@ -362,17 +362,14 @@ function LoginContent() {
         setError('');
 
         try {
-            const { paymentService } = await import('@/services/paymentService');
-            // 1. Create a setup/first invoice for the subscription
+            const { businessInvoiceService } = await import('@/services/businessInvoiceService');
             const amount = selectedPlan === 'starter' ? 15 : selectedPlan === 'pro' ? 45 : 80;
 
-            const { invoice, error: invoiceErr } = await paymentService.createInvoice({
-                user_id: 'pending', // Will be linked during processing or use current user
-                amount: amount,
-                currency: 'usd',
-                description: `First month subscription - ${selectedPlan} plan`,
-                items: [{ description: `${selectedPlan} Plan Subscription`, quantity: 1, unit_price: amount, amount: amount }],
-                due_date: new Date().toISOString()
+            const { invoice, error: invoiceErr } = await businessInvoiceService.createInvoice(newTenantData.id, {
+                total: amount,
+                notes: `First month subscription — ${selectedPlan} plan`,
+                status: 'draft',
+                dueDate: new Date().toISOString().split('T')[0],
             });
 
             if (invoiceErr) throw new Error(invoiceErr);

@@ -4,8 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain, Play, Pause, RefreshCw,
-  CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert
+  CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert, BookOpen
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
@@ -13,6 +14,8 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import BonnieChatPanel from './BonnieChatPanel';
+import { useBonnieApprovals } from '../../../hooks/useBonnieApprovals';
+import type { BonniePendingApprovalResponse } from '../../../services/bonnieService';
 
 export default function BonnieFullView() {
   const { currentTenant } = useTenant();
@@ -28,6 +31,7 @@ export default function BonnieFullView() {
   const logEndRef = useRef<HTMLDivElement>(null);
 
   const tenantId = currentTenant?.id;
+  const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
 
   // Load Rules and Logs when tenant changes
   useEffect(() => {
@@ -135,10 +139,29 @@ export default function BonnieFullView() {
 
   const isRunning = rules?.enabled ?? true;
 
+  const mapInstructionResult = (res: {
+    response: string;
+    success: boolean;
+    toolsExecuted?: Array<{
+      tool: string;
+      success: boolean;
+      summary: string;
+      approvalRequired?: boolean;
+      approvalId?: string;
+      riskClass?: string;
+      preview?: { target?: string; draft?: string };
+    }>;
+    pendingApproval?: BonniePendingApprovalResponse | null;
+  }) => ({
+    text: res.response,
+    tools: res.toolsExecuted,
+    approval: res.pendingApproval || undefined,
+  });
+
   const handleBonnieMessage = async (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = []
-  ): Promise<{ text: string; error?: boolean; tools?: Array<{ tool: string; success: boolean; summary: string }> }> => {
+  ) => {
     setLogs(prev => [
       {
         id: String(Date.now()),
@@ -174,10 +197,8 @@ export default function BonnieFullView() {
     if (res.success) {
       const logsData = await bonnieService.getCombinedLogs(tenantId);
       setLogs(logsData);
-      return {
-        text: res.response,
-        tools: res.toolsExecuted,
-      };
+      void refreshApprovals();
+      return mapInstructionResult(res);
     }
 
     return { text: res.response || 'Failed to process command.', error: true };
@@ -198,9 +219,26 @@ export default function BonnieFullView() {
     if (res.success) {
       const logsData = await bonnieService.getCombinedLogs(tenantId);
       setLogs(logsData);
-      return { text: res.response, tools: res.toolsExecuted };
+      void refreshApprovals();
+      return mapInstructionResult(res);
     }
     return { text: res.response || 'Failed to process command.', error: true };
+  };
+
+  const handleResolveApproval = async (
+    approvalId: string,
+    status: 'approved' | 'rejected',
+    editedArgs?: Record<string, unknown>
+  ) => {
+    const result = await handleApproval(approvalId, status, editedArgs);
+    if (result.success) {
+      const logsData = await bonnieService.getCombinedLogs(tenantId);
+      setLogs(logsData);
+    }
+    return {
+      success: result.success,
+      message: result.execution?.result?.summary || result.execution?.error,
+    };
   };
 
   return (
@@ -223,6 +261,13 @@ export default function BonnieFullView() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/help"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-teal-500/40 hover:text-teal-300 transition-all"
+          >
+            <BookOpen size={14} />
+            Platform guide
+          </Link>
           <button
             onClick={handleToggleStatus}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md ${
@@ -376,10 +421,17 @@ export default function BonnieFullView() {
               <Sparkles className="w-5 h-5 text-teal-400" />
               <span className="text-sm font-black uppercase tracking-wider text-slate-200">Talk to Bonnie</span>
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-              <span className="text-[10px] font-black text-teal-400/80 uppercase tracking-wider">
-                Bonnie AI · Agentic
-              </span>
+            <div className="flex items-center gap-2">
+              {pendingCount > 0 && (
+                <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+                  {pendingCount} pending
+                </span>
+              )}
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
+                <span className="text-[10px] font-black text-teal-400/80 uppercase tracking-wider">
+                  Bonnie AI · Agentic
+                </span>
+              </div>
             </div>
           </div>
 
@@ -391,6 +443,7 @@ export default function BonnieFullView() {
               introMessage="I'm Bonnie AI — your full-stack workspace agent. Chat naturally; I execute real tools across CRM, finance, outreach, social, WhatsApp, and automation."
               onSend={handleBonnieMessage}
               onStreamSend={handleBonnieStream}
+              onResolveApproval={handleResolveApproval}
             />
           </div>
         </div>

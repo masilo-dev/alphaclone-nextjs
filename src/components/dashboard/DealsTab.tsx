@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ChevronRight, ArrowLeft, Plus, TrendingUp, Clock,
@@ -20,6 +20,11 @@ import type { EmailRecipient } from './crm/emailRecipient';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { DealRevenueTimeline } from './deals/DealRevenueTimeline';
 import EmptyState from '../ui/EmptyState';
+import { DetailDrawer } from '../ui/DetailDrawer';
+import { ModulePageLayout } from '../ui/ModulePageLayout';
+import { Input } from '../ui/UIComponents';
+import { StatusBadge, dealStatusVariant } from '../ui/StatusBadge';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import {
   getDealStageProgress,
   getForwardStageTarget,
@@ -36,6 +41,15 @@ type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won
 
 const STAGES: DealStage[] = ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
 const BOARD_STAGES = ACTIVE_DEAL_STAGES;
+const COLUMN_WIP_LIMIT = 8;
+const STALL_DAYS = 7;
+
+const probabilityAccent = (probability?: number) => {
+  const p = probability ?? 0;
+  if (p >= 70) return 'border-l-emerald-500';
+  if (p >= 20) return 'border-l-yellow-500';
+  return 'border-l-red-500';
+};
 
 const STAGE_COLORS: Record<DealStage, { bg: string; text: string; border: string }> = {
   lead:          { bg: 'bg-slate-500/15',   text: 'text-slate-400',   border: 'border-slate-500/30' },
@@ -54,6 +68,7 @@ interface Deal {
   contact_name?: string;
   contact_email?: string;
   score?: number;
+  probability?: number;
   created_at: string;
   updated_at?: string;
   description?: string;
@@ -146,7 +161,8 @@ const DealDetail: React.FC<{
   onBack: () => void;
   onStageChange: (id: string, stage: DealStage) => void;
   onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
-}> = ({ deal, user, onBack, onStageChange, onComposeEmail }) => {
+  inDrawer?: boolean;
+}> = ({ deal, user, onBack, onStageChange, onComposeEmail, inDrawer }) => {
   const col = STAGE_COLORS[deal.stage];
   const progress = getDealStageProgress(deal.stage);
   const nextStage = getForwardStageTarget(deal.stage);
@@ -225,15 +241,17 @@ const DealDetail: React.FC<{
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={inDrawer ? 'space-y-4 pb-6' : 'flex flex-col h-full'}>
+      {!inDrawer && (
       <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
         <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
           <ArrowLeft className="w-4 h-4 text-slate-300" />
         </button>
         <span className="text-[15px] font-bold text-white flex-1">Deal Detail</span>
       </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
+      <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-4 space-y-4 pb-28'}>
         {/* Value hero */}
         <div className="flex flex-col items-center py-4 gap-2">
           <span className="text-[32px] font-extrabold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
@@ -377,13 +395,21 @@ const DealDetail: React.FC<{
         )}
       </div>
 
-      {/* Fixed actions */}
+      {inDrawer ? (
+        <div className="flex gap-2 pt-2 border-t border-white/5">
+          <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 text-[13px] text-slate-400 font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
+          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 text-[13px] text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
+            {creatingInvoice ? 'Creating…' : 'Create Invoice'}
+          </button>
+        </div>
+      ) : (
       <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
         <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
         <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 text-[13px] text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
           {creatingInvoice ? 'Creating…' : 'Create Invoice'}
         </button>
       </div>
+      )}
     </div>
   );
 };
@@ -419,6 +445,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   const [newDealDescription, setNewDealDescription] = useState('');
   const [savingNewDeal, setSavingNewDeal] = useState(false);
   const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(40);
+  const loadMoreDeals = useCallback(() => setVisibleCount((c) => c + 30), []);
   const [selectedDealIds, setSelectedDealIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -683,28 +712,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       });
   }, [deals, searchTerm, filterStage, sortBy, sortOrder]);
 
-  if (selectedDeal) {
-    return (
-      <>
-        <DealDetail
-          deal={selectedDeal}
-          user={user}
-          onBack={() => setSelectedDeal(null)}
-          onStageChange={handleStageChange}
-          onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
-        />
-        {emailCompose && (
-          <CommunicationModal
-            user={user}
-            recipient={emailCompose.recipient}
-            prefilledSubject={emailCompose.subject}
-            onClose={() => setEmailCompose(null)}
-            onSent={() => setEmailCompose(null)}
-          />
-        )}
-      </>
-    );
-  }
+  useInfiniteScroll(listRef, loadMoreDeals, {
+    enabled: viewMode === 'list' && filteredDeals.length > visibleCount,
+  });
+  const visibleDeals = filteredDeals.slice(0, visibleCount);
 
   // ── RENDER BOARD VIEW ──────────────────────────────────────────────────────────
   const renderBoard = () => (
@@ -730,6 +741,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 <span className={`w-2 h-2 rounded-full ${col.text} bg-current`} />
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-300">{stage.replace('_', ' ')}</span>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${col.bg} ${col.text}`}>{stageDeals.length}</span>
+                {stageDeals.length > COLUMN_WIP_LIMIT && (
+                  <span className="text-[9px] font-bold text-amber-400" title="WIP limit exceeded">WIP!</span>
+                )}
               </div>
               <span className="text-[11px] font-bold text-slate-500 opacity-60">${totalVal.toLocaleString()}</span>
             </div>
@@ -749,7 +763,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       e.dataTransfer.setData('text/plain', deal.id);
                     }}
                     onClick={() => setSelectedDeal(deal)}
-                    className={`bg-slate-950 border hover:border-slate-800 p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
+                    className={`bg-slate-950 border hover:border-slate-800 border-l-4 ${probabilityAccent(deal.probability)} p-4 rounded-xl cursor-pointer hover:shadow-lg transition-all flex flex-col gap-3 group relative overflow-hidden active:scale-[0.98] ${
                       selectedDealIds.has(deal.id) ? 'border-teal-500/40' : 'border-white/5'
                     }`}
                   >
@@ -795,7 +809,12 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <span className="text-[13px] font-extrabold text-teal-400">${(deal.value || 0).toLocaleString()}</span>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3 text-slate-550" />
-                        <span className="text-[10px] text-slate-550 font-semibold">{daysInStage(deal.updated_at)}d</span>
+                        <span className={`text-[10px] font-semibold tabular-nums ${daysInStage(deal.updated_at) >= STALL_DAYS ? 'text-amber-400' : 'text-slate-550'}`}>
+                          {daysInStage(deal.updated_at)}d
+                        </span>
+                        {daysInStage(deal.updated_at) >= STALL_DAYS && (
+                          <span className="text-[9px] font-bold text-amber-400 uppercase">Stall</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -880,7 +899,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
       {/* Table grid */}
       <div className="overflow-x-auto rounded-2xl border border-white/5 bg-slate-950/30">
-        <table className="w-full border-collapse text-left min-w-[700px]">
+        <table className="ac-data-table w-full border-collapse text-left min-w-[700px]">
           <thead>
             <tr className="border-b border-white/5 bg-slate-900/20">
               <th className="p-4 w-10">
@@ -915,9 +934,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 </td>
               </tr>
             ) : (
-              filteredDeals.map((deal) => {
-                const col = STAGE_COLORS[deal.stage];
-                return (
+              visibleDeals.map((deal) => (
                   <tr
                     key={deal.id}
                     onClick={() => setSelectedDeal(deal)}
@@ -939,9 +956,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <span className="text-[13px] font-bold text-white block">{deal.name}</span>
                     </td>
                     <td className="p-4">
-                      <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-full capitalize ${col.bg} ${col.text} border ${col.border}`}>
-                        {deal.stage.replace('_', ' ')}
-                      </span>
+                      <StatusBadge variant={dealStatusVariant(deal.stage)}>{deal.stage.replace('_', ' ')}</StatusBadge>
                     </td>
                     <td className="p-4">
                       <span className="text-[13px] font-black text-teal-400">${(deal.value || 0).toLocaleString()}</span>
@@ -965,8 +980,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <span className="text-xs text-slate-500 font-semibold font-mono">{daysInStage(deal.updated_at)} days</span>
                     </td>
                   </tr>
-                );
-              })
+                ))
             )}
           </tbody>
         </table>
@@ -1025,13 +1039,15 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }
 
   return (
-    <div className="relative flex flex-col h-full bg-slate-950">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950">
       <div className="px-4 pt-3 shrink-0 space-y-3">
         <CRMNav pathname={pathname} />
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
       </div>
-      {/* View Switcher Top Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
+      <ModulePageLayout
+        showBonnieDock
+        toolbar={(
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
         <div>
           <h1 className="text-[15px] font-black text-white">Deals Pipeline</h1>
           <p className="text-[11px] text-slate-500 mt-0.5 font-semibold">
@@ -1108,49 +1124,47 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             <span>New Deal</span>
           </button>
         </div>
-      </div>
-
-      {!loading && (
-        <div className="px-4 pt-3 shrink-0">
-          <RevenueLeakagePanel deals={deals} heading="What to fix next" />
-        </div>
-      )}
-
-      {/* KPI Overview + Stage Funnel */}
-      {!loading && deals.length > 0 && (
-        <div className="p-4 border-b border-white/5 bg-slate-900/20 space-y-4 shrink-0">
-          <ModuleStatCards stats={dealStats} />
-          <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline by Stage</h3>
-              <span className="text-[11px] text-slate-500">Value distribution</span>
-            </div>
-            <div className="space-y-2">
-              {stageBreakdown.map(({ stage, count, value, pct }) => (
-                <div key={stage} className="flex items-center gap-3">
-                  <span className={`w-24 shrink-0 text-[11px] font-bold capitalize ${STAGE_COLORS[stage].text}`}>
-                    {stage.replace('_', ' ')}
-                  </span>
-                  <div className="flex-1 h-2.5 rounded-full bg-slate-800/80 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${pct}%` }}
-                      transition={{ duration: 0.7, ease: 'easeOut' }}
-                      className={`h-full rounded-full ${STAGE_COLORS[stage].bg.replace('/15', '/60')}`}
-                    />
+          </div>
+        )}
+        stats={!loading && deals.length > 0 ? (
+          <div className="p-4 border-b border-white/5 bg-slate-900/20 space-y-4 shrink-0">
+            <RevenueLeakagePanel deals={deals} heading="What to fix next" />
+            <ModuleStatCards stats={dealStats} />
+            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[11px] font-black uppercase tracking-wider text-slate-400">Pipeline by Stage</h3>
+                <span className="text-[11px] text-slate-500">Value distribution</span>
+              </div>
+              <div className="space-y-2">
+                {stageBreakdown.map(({ stage, count, value, pct }) => (
+                  <div key={stage} className="flex items-center gap-3">
+                    <span className={`w-24 shrink-0 text-[11px] font-bold capitalize ${STAGE_COLORS[stage].text}`}>
+                      {stage.replace('_', ' ')}
+                    </span>
+                    <div className="flex-1 h-2.5 rounded-full bg-slate-800/80 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.7, ease: 'easeOut' }}
+                        className={`h-full rounded-full ${STAGE_COLORS[stage].bg.replace('/15', '/60')}`}
+                      />
+                    </div>
+                    <span className="w-28 shrink-0 text-right text-[11px] tabular-nums text-slate-300">
+                      ${value.toLocaleString()} <span className="text-slate-600">({count})</span>
+                    </span>
                   </div>
-                  <span className="w-28 shrink-0 text-right text-[11px] tabular-nums text-slate-300">
-                    ${value.toLocaleString()} <span className="text-slate-600">({count})</span>
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
+        ) : !loading ? (
+          <div className="p-4 border-b border-white/5 shrink-0 space-y-4">
+            <RevenueLeakagePanel deals={deals} heading="What to fix next" />
+          </div>
+        ) : null}
+      >
       {/* Main View Area */}
-      <div className="flex-1 overflow-auto">
+      <div ref={listRef} className="flex-1 ac-scroll-full">
         {loading ? (
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
         ) : (
@@ -1161,32 +1175,24 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
           </>
         )}
       </div>
+      </ModulePageLayout>
 
-      {/* Create Deal Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-2xl flex flex-col gap-4">
-            <div className="flex items-center justify-between pb-2 border-b border-white/5">
-              <h3 className="text-sm font-bold text-white">Create New Deal</h3>
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white text-xs font-bold"
-              >
-                Cancel
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateDeal} className="space-y-3.5">
+      {/* Create Deal */}
+      <DetailDrawer
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        title="Create New Deal"
+        description="Add a deal to your pipeline"
+      >
+        <form onSubmit={handleCreateDeal} className="space-y-3.5 pb-6">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Deal Name *</label>
-                <input
+                <Input
+                  label="Deal Name *"
                   type="text"
-                  required
                   value={newDealName}
                   onChange={(e) => setNewDealName(e.target.value)}
                   placeholder="e.g. Acme Enterprise SaaS"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50"
+                  validate={(v) => !v.trim() ? 'Deal name is required' : undefined}
                 />
               </div>
 
@@ -1252,13 +1258,40 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               <button
                 type="submit"
                 disabled={savingNewDeal}
-                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 disabled:opacity-50 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-emerald-500/10 mt-2"
+                className="w-full min-h-11 py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-800 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all mt-2"
               >
                 {savingNewDeal ? 'Saving...' : 'Create Deal'}
               </button>
             </form>
-          </div>
-        </div>
+      </DetailDrawer>
+
+      <DetailDrawer
+        open={Boolean(selectedDeal)}
+        onOpenChange={(open) => { if (!open) setSelectedDeal(null); }}
+        title={selectedDeal?.name || 'Deal'}
+        description={selectedDeal?.contact_name || undefined}
+        size="wide"
+      >
+        {selectedDeal && (
+          <DealDetail
+            deal={selectedDeal}
+            user={user}
+            onBack={() => setSelectedDeal(null)}
+            onStageChange={handleStageChange}
+            onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
+            inDrawer
+          />
+        )}
+      </DetailDrawer>
+
+      {emailCompose && (
+        <CommunicationModal
+          user={user}
+          recipient={emailCompose.recipient}
+          prefilledSubject={emailCompose.subject}
+          onClose={() => setEmailCompose(null)}
+          onSent={() => setEmailCompose(null)}
+        />
       )}
     </div>
   );

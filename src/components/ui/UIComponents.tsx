@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useBlurValidation } from '@/hooks/useBlurValidation';
 import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
 
@@ -20,20 +21,20 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95";
+  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95 min-w-11";
 
   const variants = {
-    primary: "bg-teal-600 text-white hover:bg-teal-500 shadow-lg shadow-teal-900/20",
-    secondary: "bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20",
+    primary: "bg-teal-600 text-white hover:bg-teal-500/90 shadow-lg shadow-teal-900/20",
+    secondary: "bg-blue-600 text-white hover:bg-blue-500/90 shadow-lg shadow-blue-900/20",
     outline: "border border-slate-600 text-white hover:bg-slate-800",
-    ghost: "text-white hover:text-teal-400 hover:bg-slate-800/50",
-    danger: "bg-red-600 text-white hover:bg-red-500",
+    ghost: "text-teal-400 hover:text-teal-300 hover:underline underline-offset-2 bg-transparent",
+    danger: "bg-red-600 text-white hover:bg-red-500/90",
   };
 
   const sizes = {
-    sm: "h-8 px-3 text-xs", // 32px - Ultra Compact
-    md: "h-10 px-4 py-2 text-sm", // 40px - Space Efficient
-    lg: "h-12 px-6 text-base", // 48px - Standard
+    sm: "h-8 px-3 text-xs min-h-11",
+    md: "h-10 px-4 py-2 text-sm min-h-11",
+    lg: "h-12 px-6 text-base min-h-11",
   };
 
   return (
@@ -84,7 +85,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
   };
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${variants[variant]} ${className}`}>
+    <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
       {children}
     </span>
   );
@@ -97,20 +98,55 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTe
   hint?: string;
   textarea?: boolean;
   icon?: React.ReactNode;
+  /** Runs on blur (debounced); sets error when validation fails */
+  validate?: (value: string) => string | undefined;
 }
 
 export const Input: React.FC<InputProps> = ({
   label,
-  error,
+  error: errorProp,
   hint,
   icon,
   className = '',
   textarea = false,
+  validate,
+  value,
+  defaultValue,
+  onBlur,
+  onChange,
   ...props
 }) => {
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(String(defaultValue ?? ''));
+  const fieldValue = isControlled ? String(value) : internalValue;
+  const validateFn = useCallback(
+    (v: string) => validate?.(v),
+    [validate]
+  );
+  const blurValidation = useBlurValidation(fieldValue, validateFn);
+  const error = errorProp ?? (validate ? blurValidation.error : undefined);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (!isControlled) setInternalValue(e.target.value);
+    onChange?.(e);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (validate) blurValidation.onBlur();
+    onBlur?.(e);
+  };
+
+  const fieldProps = validate || isControlled
+    ? { value: fieldValue, onChange: handleChange, onBlur: handleBlur }
+    : { defaultValue, onBlur, onChange, ...props };
+
+  const sharedClass = `w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-sm leading-normal text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`;
+
   return (
     <div className="w-full">
-      {label && <label className="block text-xs font-semibold text-slate-400 mb-1">{label}</label>}
+      {label && (
+        <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+      )}
       <div className="relative group">
         {icon && (
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors">
@@ -119,13 +155,17 @@ export const Input: React.FC<InputProps> = ({
         )}
         {textarea ? (
           <textarea
-            className={`w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-md text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500 transition-all min-h-[80px] resize-y ${icon ? 'pl-10' : ''} ${className}`}
-            {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+            className={`${sharedClass} min-h-[80px] resize-y`}
+            {...(validate || isControlled
+              ? { ...props, ...fieldProps }
+              : fieldProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
-            className={`w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-md text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`}
-            {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+            className={sharedClass}
+            {...(validate || isControlled
+              ? { ...props, ...fieldProps }
+              : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
       </div>
@@ -213,10 +253,10 @@ export const AvatarFallback: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   <div className={`flex h-full w-full items-center justify-center rounded-full bg-slate-800 text-slate-400 ${className}`} {...props} />
 );
 
-// --- Table ---
+// --- Table (enterprise: sticky header, alternating rows via ac-data-table) ---
 export const Table: React.FC<React.HTMLAttributes<HTMLTableElement>> = ({ className = '', ...props }) => (
-  <div className="relative w-full overflow-auto">
-    <table className={`w-full caption-bottom text-sm text-left ${className}`} {...props} />
+  <div className="relative w-full overflow-x-auto ac-scroll-full">
+    <table className={`ac-data-table w-full caption-bottom text-sm text-left ${className}`} {...props} />
   </div>
 );
 

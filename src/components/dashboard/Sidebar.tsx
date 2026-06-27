@@ -235,7 +235,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         const Icon = item.icon;
 
                         return (
-                            <div key={idx}>
+                            <div key={idx} {...(item.label === 'Money Hub' ? { 'data-tour': 'money-hub-nav' } : {})}>
                                 <button
                                     onClick={() => {
                                         if (item.comingSoon) return;

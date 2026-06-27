@@ -1,4 +1,4 @@
-import { listAllMcpTools } from '@/lib/mcp/listAllTools';
+import { getUnifiedMcpTools, invalidateUnifiedMcpToolCache } from '@/lib/mcp/listAllTools';
 import { BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
 
 let cachedRegistryTools: string[] | null = null;
@@ -22,7 +22,7 @@ export async function resolveBonnieToolSets(): Promise<{
     };
   }
 
-  const all = await listAllMcpTools();
+  const all = await getUnifiedMcpTools();
   const names = all.map((t) => t.name);
   const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
   initializeRegistry();
@@ -45,4 +45,5 @@ export function invalidateBonnieToolCache(): void {
   cachedRegistryTools = null;
   cachedMcpTools = null;
   cacheTime = 0;
+  invalidateUnifiedMcpToolCache();
 }

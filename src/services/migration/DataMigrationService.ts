@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { companyService } from '../unified/CompanyService';
-import { contactService } from '../unified/ContactService';
+import { unifiedContactService } from '../unified/ContactService';
 
 export class DataMigrationService {
   /**
@@ -93,7 +93,7 @@ export class DataMigrationService {
           const [firstName, ...lastNameParts] = (lead.businessName || lead.email || 'Unknown').split(' ');
           const lastName = lastNameParts.join(' ') || 'Contact';
 
-          const contact = await contactService.create({
+          const contact = await unifiedContactService.create({
             company_id: company.id,
             first_name: firstName,
             last_name: lastName,
@@ -337,7 +337,7 @@ export class DataMigrationService {
         let companyId = null;
 
         if (recipientUser.data?.email) {
-          const contact = await contactService.findByEmail(recipientUser.data.email);
+          const contact = await unifiedContactService.findByEmail(recipientUser.data.email);
           if (contact) {
             contactId = contact.id;
             companyId = contact.company_id;
@@ -469,7 +469,7 @@ export class DataMigrationService {
       }
 
       // Try to find contact with this email
-      const contact = await contactService.findByEmail(email);
+      const contact = await unifiedContactService.findByEmail(email);
       if (contact?.company_id) {
         return await companyService.get(contact.company_id);
       }

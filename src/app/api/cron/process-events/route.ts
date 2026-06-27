@@ -10,6 +10,7 @@ import { leadCreatedWorkflow } from '@/workflows/lead-flows';
 import { contractSignedWorkflow } from '@/workflows/contract-flows';
 import { taskOverdueWorkflow, taskCreatedWorkflow } from '@/workflows/task-flows';
 import { tenantCreatedWorkflow } from '@/workflows/tenant-flows';
+import { quantumDealIntelligenceService } from '@/services/intelligence/quantumDealIntelligenceService';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,20 @@ export async function GET(request: NextRequest) {
               results.push({ eventId: event.id, status: 'dispatched', runId, type: 'lead_nurture' });
             }
             await supabase.from('business_automation_events').update({ processed: true }).eq('id', event.id);
+            continue;
+          }
+          case 'deal_intelligence_requested': {
+            const dealId = String(event.payload?.dealId || '');
+            if (!dealId) {
+              results.push({ eventId: event.id, status: 'skipped', reason: 'missing_deal_id' });
+              break;
+            }
+            await quantumDealIntelligenceService.recomputeDeal(supabase, event.tenant_id, dealId);
+            await supabase
+              .from('business_automation_events')
+              .update({ processed: true })
+              .eq('id', event.id);
+            results.push({ eventId: event.id, status: 'dispatched', type: 'deal_intelligence' });
             continue;
           }
           default:

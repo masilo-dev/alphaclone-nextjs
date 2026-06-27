@@ -7,6 +7,8 @@ export interface DashboardMetric {
   delta?: string;
   deltaDir?: DeltaDir;
   deltaColor?: DeltaColor;
+  /** Period comparison label, e.g. "vs last 30 days" */
+  comparisonText?: string;
 }
 
 export interface DashboardChartPoint {

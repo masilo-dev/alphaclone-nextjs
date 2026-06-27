@@ -384,7 +384,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 ac-scroll-full ac-enterprise-module">
             <ModuleStatCards stats={calendarStats} />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

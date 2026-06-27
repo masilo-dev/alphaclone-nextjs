@@ -102,7 +102,7 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
     }, [meetings, user.id]);
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto">
+        <div className="space-y-8 max-w-5xl mx-auto ac-scroll-full ac-enterprise-module">
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Meetings</h1>

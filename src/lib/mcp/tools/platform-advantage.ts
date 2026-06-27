@@ -54,7 +54,7 @@ async function collectOperatingSignals(tenantId: string, lookbackDays = 30) {
       .limit(100),
     supabase
       .from('leads')
-      .select('id, business_name, name, email, status, source, created_at, value')
+      .select('id, business_name, email, status, stage, source, created_at, value')
       .eq('tenant_id', tenantId)
       .gte('created_at', since)
       .order('created_at', { ascending: false })
@@ -105,7 +105,10 @@ async function collectOperatingSignals(tenantId: string, lookbackDays = 30) {
     }),
     active_deals: deals.filter((deal) => isOpenStatus(deal.stage)),
     open_tasks: tasks.filter((task) => isOpenStatus(task.status)),
-    warm_leads: leads.filter((lead) => isOpenStatus(lead.status)),
+    warm_leads: leads.filter((lead) => {
+      const stage = String(lead.stage || '').toLowerCase();
+      return stage !== 'converted' && stage !== 'closed_lost';
+    }),
   };
 }
 
@@ -265,7 +268,7 @@ registerTool('platform-advantage', {
     const supabase = createSupabaseAdminClient();
     const limit = args.limit || 50;
     const [contactsRes, companiesRes, dealsRes, invoicesRes, sessionsRes] = await Promise.all([
-      supabase.from('contacts').select('id, name, email, company_id, created_at').eq('tenant_id', args.tenant_id).limit(limit),
+      supabase.from('contacts').select('id, first_name, last_name, full_name, email, company_id, created_at').eq('tenant_id', args.tenant_id).limit(limit),
       supabase.from('companies').select('id, name, website, created_at').eq('tenant_id', args.tenant_id).limit(limit),
       supabase.from('deals').select('id, name, stage, value, contact_id, company_id, updated_at').eq('tenant_id', args.tenant_id).limit(limit),
       supabase.from('business_invoices').select('id, invoice_number, status, total_amount, client_id, created_at').eq('tenant_id', args.tenant_id).limit(limit),
@@ -313,9 +316,11 @@ registerTool('platform-advantage', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const since = new Date(Date.now() - (args.hours || 72) * 60 * 60 * 1000).toISOString();
-    const [sessionsRes, auditRes] = await Promise.all([
+    const { getRecentDecisions } = await import('@/services/nexusDecisionLogService');
+    const [sessionsRes, auditRes, decisions] = await Promise.all([
       supabase.from('mcp_sessions').select('tool_name, success, error_message, duration_ms, metadata, created_at').eq('tenant_id', args.tenant_id).gte('created_at', since).order('created_at', { ascending: false }).limit(100),
       supabase.from('audit_logs').select('*').eq('tenant_id', args.tenant_id).gte('created_at', since).order('created_at', { ascending: false }).limit(100),
+      getRecentDecisions(args.tenant_id, args.hours || 72, 100),
     ]);
     const sessions = sessionsRes.data || [];
     return {
@@ -324,10 +329,12 @@ registerTool('platform-advantage', {
         text: JSON.stringify({
           mcp_calls: sessions,
           audit_logs: auditRes.data || [],
+          decision_log: decisions,
           summary: {
             total_mcp_calls: sessions.length,
             failed_mcp_calls: sessions.filter((s) => !s.success).length,
             audit_entries: (auditRes.data || []).length,
+            decision_entries: decisions.length,
           },
         }, null, 2),
       }],
@@ -496,7 +503,7 @@ registerTool('platform-advantage', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const [contactsRes, invoicesRes, dealsRes, formsRes] = await Promise.all([
-      supabase.from('contacts').select('id, name, email, company_id, created_at').eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(100),
+      supabase.from('contacts').select('id, first_name, last_name, full_name, email, company_id, created_at').eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(100),
       supabase.from('business_invoices').select('id, status, total_amount, client_id, created_at, due_date').eq('tenant_id', args.tenant_id).limit(100),
       supabase.from('deals').select('id, name, stage, value, contact_id, updated_at').eq('tenant_id', args.tenant_id).limit(100),
       supabase.from('form_submissions').select('id, submitter_name, submitter_email, created_at').eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(50),

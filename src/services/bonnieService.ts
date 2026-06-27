@@ -84,6 +84,30 @@ export function resolveBonnieNavIntent(
 
   return null;
 }
+export interface BonnieToolExecuted {
+  tool: string;
+  success: boolean;
+  summary: string;
+  approvalRequired?: boolean;
+  approvalId?: string;
+  riskClass?: string;
+  preview?: { target?: string; draft?: string };
+}
+
+export interface BonniePendingApprovalResponse {
+  approvalId: string;
+  tool: string;
+  riskClass?: string;
+  preview?: { target?: string; draft?: string };
+  summary?: string;
+}
+
+export interface BonnieInstructionResult {
+  response: string;
+  success: boolean;
+  toolsExecuted?: BonnieToolExecuted[];
+  pendingApproval?: BonniePendingApprovalResponse | null;
+}
 
 export const bonnieService = {
   /**
@@ -248,7 +272,7 @@ export const bonnieService = {
     instruction: string,
     history?: Array<{ role: 'user' | 'assistant'; content: string }>,
     options?: { pathname?: string; moduleContext?: string }
-  ): Promise<{ response: string; success: boolean; toolsExecuted?: Array<{ tool: string; success: boolean; summary: string }> }> {
+  ): Promise<BonnieInstructionResult> {
     try {
       const response = await fetch('/api/bonnie/instruct', {
         method: 'POST',
@@ -287,7 +311,8 @@ export const bonnieService = {
       return {
         response: String(data.response || 'Instruction processed.'),
         success: Boolean(data.success),
-        toolsExecuted: data.toolsExecuted as Array<{ tool: string; success: boolean; summary: string }> | undefined,
+        toolsExecuted: data.toolsExecuted as BonnieToolExecuted[] | undefined,
+        pendingApproval: (data.pendingApproval as BonniePendingApprovalResponse | null) || null,
       };
     } catch (e: any) {
       console.error('Error sending instruction to Bonnie:', e);
@@ -303,7 +328,7 @@ export const bonnieService = {
     instruction: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> | undefined,
     options: { pathname?: string; moduleContext?: string; onToken?: (token: string) => void; onPhase?: (phase: string) => void }
-  ): Promise<{ response: string; success: boolean; toolsExecuted?: Array<{ tool: string; success: boolean; summary: string }> }> {
+  ): Promise<BonnieInstructionResult> {
     const response = await fetch('/api/bonnie/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -334,7 +359,8 @@ export const bonnieService = {
     let streamedText = '';
     let finalResponse = '';
     let success = false;
-    let toolsExecuted: Array<{ tool: string; success: boolean; summary: string }> | undefined;
+    let toolsExecuted: BonnieToolExecuted[] | undefined;
+    let pendingApproval: BonniePendingApprovalResponse | null = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -368,7 +394,8 @@ export const bonnieService = {
         if (event === 'done') {
           finalResponse = String(data.response || streamedText || '');
           success = Boolean(data.success);
-          toolsExecuted = data.toolsExecuted as typeof toolsExecuted;
+          toolsExecuted = data.toolsExecuted as BonnieToolExecuted[] | undefined;
+          pendingApproval = (data.pendingApproval as BonniePendingApprovalResponse | null) || null;
         }
         if (event === 'error') {
           return { response: String(data.message || 'Bonnie stream failed.'), success: false };
@@ -380,6 +407,38 @@ export const bonnieService = {
       response: finalResponse || streamedText || 'Bonnie finished without a response.',
       success,
       toolsExecuted,
+      pendingApproval,
     };
+  },
+
+  async sendVoiceCommand(
+    tenantId: string,
+    transcript: string,
+    options?: { pathname?: string }
+  ): Promise<BonnieInstructionResult & { intent?: string }> {
+    try {
+      const response = await fetch('/api/bonnie/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, transcript, pathname: options?.pathname }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        return { response: data.error || 'Voice command failed.', success: false };
+      }
+      return {
+        response: data.response,
+        success: true,
+        toolsExecuted: (data.toolResults || []).map((r: { tool: string; success: boolean; summary: string }) => ({
+          tool: r.tool,
+          success: r.success,
+          summary: r.summary,
+        })),
+        intent: data.intent,
+      };
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Voice request failed';
+      return { response: message, success: false };
+    }
   },
 };

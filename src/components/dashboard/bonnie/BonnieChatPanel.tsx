@@ -1,7 +1,21 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Loader2, Send, Wrench, XCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { BookOpen, CheckCircle2, Loader2, Mic, MicOff, Send, Wrench, XCircle } from 'lucide-react';
+import BonnieApprovalCard from './BonnieApprovalCard';
+import { bonnieService } from '@/services/bonnieService';
+
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: { results: Array<{ 0?: { transcript?: string } }> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
 
 // Sanitize text to remove problematic characters
 function sanitizeDisplayText(text: string): string {
@@ -20,6 +34,18 @@ export type BonnieToolStep = {
   tool: string;
   success: boolean;
   summary: string;
+  approvalRequired?: boolean;
+  approvalId?: string;
+  riskClass?: string;
+  preview?: { target?: string; draft?: string };
+};
+
+export type BonniePendingApproval = {
+  approvalId: string;
+  tool: string;
+  riskClass?: string;
+  summary?: string;
+  preview?: { target?: string; draft?: string };
 };
 
 export type BonnieChatMessage = {
@@ -28,6 +54,14 @@ export type BonnieChatMessage = {
   text: string;
   error?: boolean;
   tools?: BonnieToolStep[];
+  approval?: BonniePendingApproval;
+};
+
+type BonnieChatSendResult = {
+  text: string;
+  error?: boolean;
+  tools?: BonnieToolStep[];
+  approval?: BonniePendingApproval;
 };
 
 type BonnieChatPanelProps = {
@@ -40,13 +74,21 @@ type BonnieChatPanelProps = {
   onSend: (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>
-  ) => Promise<{ text: string; error?: boolean; tools?: BonnieToolStep[] }>;
+  ) => Promise<BonnieChatSendResult>;
   onStreamSend?: (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
     onToken: (token: string) => void,
     onPhase?: (phase: string) => void
-  ) => Promise<{ text: string; error?: boolean; tools?: BonnieToolStep[] }>;
+  ) => Promise<BonnieChatSendResult>;
+  onResolveApproval?: (
+    approvalId: string,
+    status: 'approved' | 'rejected',
+    editedArgs?: Record<string, unknown>
+  ) => Promise<{ success: boolean; message?: string; continuation?: { response?: string; continued?: boolean } | null }>;
+  /** Tenant id for voice commands */
+  tenantId?: string;
+  pathname?: string;
 };
 
 function loadStoredMessages(key: string, intro: string): BonnieChatMessage[] {
@@ -74,6 +116,9 @@ export default function BonnieChatPanel({
   streaming = false,
   onSend,
   onStreamSend,
+  onResolveApproval,
+  tenantId,
+  pathname,
 }: BonnieChatPanelProps) {
   const [messages, setMessages] = useState<BonnieChatMessage[]>(() =>
     storageKey ? loadStoredMessages(storageKey, introMessage) : introMessage ? [{ id: 'intro', role: 'assistant', text: introMessage }] : []
@@ -81,8 +126,89 @@ export default function BonnieChatPanel({
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [agentPhase, setAgentPhase] = useState<'idle' | 'thinking' | 'executing' | 'responding'>('idle');
+  const [listening, setListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setListening(false);
+  }, []);
+
+  const sendVoiceTranscript = useCallback(
+    async (transcript: string) => {
+      if (!tenantId || sending || !transcript.trim()) return;
+      setSending(true);
+      setAgentPhase('executing');
+      const userMsg: BonnieChatMessage = { id: `user-voice-${Date.now()}`, role: 'user', text: `🎤 ${transcript}` };
+      setMessages((prev) => [...prev, userMsg]);
+      try {
+        const res = await bonnieService.sendVoiceCommand(tenantId, transcript, { pathname });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-voice-${Date.now()}`,
+            role: 'assistant',
+            text: res.response,
+            error: !res.success,
+            tools: res.toolsExecuted?.map((t) => ({
+              tool: t.tool,
+              success: t.success,
+              summary: t.summary,
+            })),
+          },
+        ]);
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          { id: `voice-fail-${Date.now()}`, role: 'assistant', text: 'Voice command failed.', error: true },
+        ]);
+      } finally {
+        setSending(false);
+        setAgentPhase('idle');
+      }
+    },
+    [tenantId, sending, pathname]
+  );
+
+  const startVoiceInput = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const win = window as Window & {
+      SpeechRecognition?: new () => BrowserSpeechRecognition;
+      webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
+    };
+    const SpeechRecognitionCtor = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `voice-err-${Date.now()}`,
+          role: 'assistant',
+          text: 'Voice input is not supported in this browser. Use Chrome or Edge.',
+          error: true,
+        },
+      ]);
+      return;
+    }
+    if (listening) {
+      stopListening();
+      return;
+    }
+    const recognition = new SpeechRecognitionCtor();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (transcript) void sendVoiceTranscript(transcript);
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => setListening(false);
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
+  }, [listening, stopListening, sendVoiceTranscript]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -142,6 +268,7 @@ export default function BonnieChatPanel({
                   text: result.text || m.text,
                   error: result.error,
                   tools: result.tools,
+                  approval: result.approval,
                 }
               : m
           )
@@ -159,6 +286,7 @@ export default function BonnieChatPanel({
             text: result.text,
             error: result.error,
             tools: result.tools,
+            approval: result.approval,
           },
         ]);
       }
@@ -257,6 +385,63 @@ export default function BonnieChatPanel({
                   ))}
                 </div>
               )}
+              {msg.approval && onResolveApproval && (
+                <BonnieApprovalCard
+                  approvalId={msg.approval.approvalId}
+                  tool={msg.approval.tool}
+                  riskClass={msg.approval.riskClass}
+                  summary={msg.approval.summary}
+                  preview={msg.approval.preview}
+                  onApprove={async (editedArgs) => {
+                    const result = await onResolveApproval(
+                      msg.approval!.approvalId,
+                      'approved',
+                      editedArgs
+                    );
+                    if (result.success) {
+                      const followUps: BonnieChatMessage[] = [
+                        {
+                          id: `assistant-approval-${Date.now()}`,
+                          role: 'assistant',
+                          text: result.message
+                            ? `Approved and executed: ${result.message}`
+                            : 'Action approved and executed successfully.',
+                        },
+                      ];
+                      if (result.continuation?.response) {
+                        followUps.push({
+                          id: `assistant-resume-${Date.now() + 1}`,
+                          role: 'assistant',
+                          text: result.continuation.response,
+                        });
+                      }
+                      setMessages((prev) => [
+                        ...prev.map((m) =>
+                          m.id === msg.id ? { ...m, approval: undefined } : m
+                        ),
+                        ...followUps,
+                      ]);
+                    }
+                    return result;
+                  }}
+                  onReject={async () => {
+                    const result = await onResolveApproval(msg.approval!.approvalId, 'rejected');
+                    if (result.success) {
+                      setMessages((prev) => [
+                        ...prev.map((m) =>
+                          m.id === msg.id ? { ...m, approval: undefined } : m
+                        ),
+                        {
+                          id: `assistant-reject-${Date.now()}`,
+                          role: 'assistant',
+                          text: 'Action cancelled. I will not proceed with that step.',
+                        },
+                      ]);
+                    }
+                    return { success: result.success };
+                  }}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -269,6 +454,13 @@ export default function BonnieChatPanel({
       </div>
 
       <div className="shrink-0 border-t border-slate-800 bg-slate-950/80 p-3">
+        <Link
+          href="/dashboard/help"
+          className="mb-2 inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-teal-400 transition-colors"
+        >
+          <BookOpen className="h-3 w-3" />
+          Platform guide & glossary
+        </Link>
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -288,6 +480,20 @@ export default function BonnieChatPanel({
           />
           <button
             type="button"
+            onClick={() => startVoiceInput()}
+            disabled={disabled || sending || !tenantId}
+            aria-label={listening ? 'Stop voice input' : 'Voice command'}
+            title={listening ? 'Listening… tap to stop' : 'Speak a command'}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+              listening
+                ? 'border-rose-500/50 bg-rose-500/20 text-rose-300'
+                : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-teal-500/50 hover:text-teal-300'
+            }`}
+          >
+            {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+          </button>
+          <button
+            type="button"
             onClick={() => void handleSend()}
             disabled={disabled || sending || !input.trim()}
             aria-label="Send to Bonnie"
@@ -297,7 +503,7 @@ export default function BonnieChatPanel({
           </button>
         </div>
         <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
-          Enter to send · Bonnie AI runs real tools across your workspace — chat persists in this session
+          Enter to send · Mic uses Web Speech → voice API · Bonnie runs real tools across your workspace
         </p>
       </div>
     </div>
