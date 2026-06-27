@@ -25,7 +25,6 @@
     "pentest": "node scripts/platform-pentest.mjs"
   },
   "dependencies": {
-    "ai": "^6.0.0",
     "@ai-sdk/gateway": "^3.0.0",
     "@anthropic-ai/sdk": "^0.74.0",
     "@azure/communication-calling": "^1.43.1",
@@ -94,6 +93,7 @@
     "@vercel/functions": "^3.5.0",
     "@xyflow/react": "^12.10.2",
     "@zernio/node": "^0.2.201",
+    "ai": "^6.0.0",
     "animated-charts": "^0.1.3",
     "axios": "^1.14.0",
     "botid": "^1.5.11",
@@ -163,6 +163,7 @@
     "resend": "^6.7.0",
     "robots-txt-guard": "^1.0.2",
     "sanitize-html": "^2.17.4",
+    "server-only": "^0.0.1",
     "serwist": "^9.5.6",
     "sonner": "^2.0.7",
     "stripe": "^20.2.0",

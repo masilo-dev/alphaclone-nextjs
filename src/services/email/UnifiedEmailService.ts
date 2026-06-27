@@ -1,6 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { emailService } from './emailService';
-import { tenantService } from '../tenancy/TenantService';
 
 export interface UnifiedMessage {
     id: string;
