@@ -102,6 +102,11 @@ export const outreachSendSchema = z.object({
     balanceByDailyLimit: z.boolean().optional(),
     language: z.string().max(40).optional(),
     languageMode: z.string().max(40).optional(),
+    /** Direct compose/reply — skip CRM membership gate */
+    skipCrmGate: z.boolean().optional(),
+    directSend: z.boolean().optional(),
+    entityType: z.enum(['invoice', 'contract', 'document', 'lead', 'client', 'direct']).optional(),
+    entityId: z.string().uuid().optional(),
 });
 
 const tenantIdSchema = z.string().uuid('Invalid tenantId');

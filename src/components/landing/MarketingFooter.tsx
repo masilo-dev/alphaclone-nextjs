@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Twitter, Linkedin, Mail, Shield, Globe, Facebook } from 'lucide-react';
 import Image from 'next/image';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
-import { SOCIAL_PROFILES } from '@/lib/seo/siteEntity';
+import { SOCIAL_PROFILES, COMPANY_LEGAL, formatCopyrightLine, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 const MarketingFooter: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -61,7 +61,7 @@ const MarketingFooter: React.FC = () => {
     return (
         <footer className="relative bg-slate-950/90 border-t border-slate-900/50 pt-20 pb-10 backdrop-blur-md overflow-hidden">
             {/* Subtle background glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-teal-500/50 to-transparent" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-16">
@@ -89,7 +89,7 @@ const MarketingFooter: React.FC = () => {
                                 rel="me noopener noreferrer"
                                 target="_blank"
                                 aria-label="AlphaClone on X (Twitter)"
-                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all"
                             >
                                 <Twitter className="w-5 h-5" />
                             </a>
@@ -98,7 +98,7 @@ const MarketingFooter: React.FC = () => {
                                 rel="me noopener noreferrer"
                                 target="_blank"
                                 aria-label="AlphaClone on Facebook"
-                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all"
                             >
                                 <Facebook className="w-5 h-5" />
                             </a>
@@ -107,14 +107,14 @@ const MarketingFooter: React.FC = () => {
                                 rel="me noopener noreferrer"
                                 target="_blank"
                                 aria-label="AlphaClone on LinkedIn"
-                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all"
                             >
                                 <Linkedin className="w-5 h-5" />
                             </a>
                             <a
                                 href="mailto:support@alphaclonesystems.com"
                                 aria-label="Email AlphaClone support"
-                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/50 transition-all"
+                                className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all"
                             >
                                 <Mail className="w-5 h-5" />
                             </a>
@@ -131,10 +131,10 @@ const MarketingFooter: React.FC = () => {
                                             <ObfuscatedEmail 
                                                 email={link.href.replace('mailto:', '')} 
                                                 label={link.label}
-                                                className="hover:text-teal-400 transition-colors"
+                                                className="hover:text-cyan-400 transition-colors"
                                             />
                                         ) : (
-                                            <Link href={link.href} className="hover:text-teal-400 transition-colors">
+                                            <Link href={link.href} className="hover:text-cyan-400 transition-colors">
                                                 {link.label}
                                             </Link>
                                         )}
@@ -148,7 +148,7 @@ const MarketingFooter: React.FC = () => {
                 <div className="pt-8 border-t border-slate-900/50 flex flex-col md:flex-row justify-between items-center gap-6 text-sm text-slate-500">
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-teal-500/50" />
+                            <Shield className="w-4 h-4 text-cyan-500/50" />
                             <span>Security Controls</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -156,8 +156,12 @@ const MarketingFooter: React.FC = () => {
                             <span>Cloud Infrastructure</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2" suppressHydrationWarning>
-                        <p>&copy; {currentYear} AlphaClone Systems. All rights reserved.</p>
+                    <div className="flex flex-col items-center md:items-end gap-1 text-center md:text-right">
+                        <p suppressHydrationWarning>{formatCopyrightLine(currentYear)}</p>
+                        <p className="text-xs text-slate-600">{formatLegalAddress()}</p>
+                        <p className="text-xs text-slate-600">
+                          {COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}
+                        </p>
                     </div>
                 </div>
             </div>

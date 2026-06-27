@@ -1,18 +1,20 @@
 /** Single source of truth for outcome-led marketing copy. */
 
 export const OUTCOME_PROMISE = {
-  badge: 'For service businesses & agencies',
-  headline: 'Stop losing clients and revenue',
-  headlineAccent: 'between your tools.',
+  badge: 'Every lead-to-invoice workflow in one place',
+  /** Shorter badge for narrow screens — clearer ICP, less wrap under the nav */
+  badgeMobile: 'For service businesses & agencies',
+  headline: 'Turn more leads into paid clients —',
+  headlineAccent: 'without five apps and a spreadsheet.',
   subhead:
-    'AlphaClone connects leads, delivery, contracts, and billing in one workspace — so you follow up faster, deliver with context, and get paid without chasing five apps.',
-  icp: 'Built for consultants, agencies, and solo founders who are tired of tab-switching—not learning another platform.',
+    'From first inquiry to signed contract to invoice, every client lives in one record. Follow up faster, deliver with full context, and get paid without copy-pasting between Gmail, CRM, and billing.',
+  icp: 'For consultants, agencies, and solo founders who sell services — not teams shopping for "enterprise CRM."',
 } as const;
 
 export const OUTCOME_HERO_BULLETS = [
-  'Win clients: leads, follow-ups, and pipeline in one place',
-  'Get paid: quotes, contracts, and invoices tied to each client',
-  'Deliver calm: projects, tasks, and meetings share the same record',
+  'Win more work: leads, follow-ups, and pipeline in one inbox',
+  'Get paid on time: quotes, contracts, and invoices on the same client record',
+  'Deliver without chaos: projects, tasks, and meetings tied to each deal',
 ] as const;
 
 export const OUTCOME_TRUST_POINTS = [

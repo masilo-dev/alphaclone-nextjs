@@ -41,6 +41,7 @@ interface Expense {
     receipt_url: string | null;
     notes: string | null;
     category_id: string | null;
+    client_id?: string | null;
     created_at: string;
     expense_categories?: ExpenseCategory;
     asset_account?: {
@@ -79,6 +80,7 @@ const EMPTY_FORM = {
     payment_method: 'card',
     status: 'pending',
     billable: false,
+    client_id: '',
     notes: '',
     category_id: '',
     asset_account_id: '',
@@ -87,6 +89,7 @@ const EMPTY_FORM = {
 export default function ExpenseTrackerTab() {
     const { currentTenant: tenant } = useTenant();
     const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [categories, setCategories] = useState<ExpenseCategory[]>([]);
     const [assetAccounts, setAssetAccounts] = useState<ChartOfAccount[]>([]);
     const [loading, setLoading] = useState(true);
@@ -133,6 +136,7 @@ export default function ExpenseTrackerTab() {
                 payment_method: 'card',
                 status: 'pending',
                 billable: Math.random() > 0.5,
+                client_id: '',
                 notes: 'Receipt automatically parsed using built-in AI scanner.',
                 category_id: catId,
                 asset_account_id: assetAccounts[0]?.id || '',
@@ -149,7 +153,7 @@ export default function ExpenseTrackerTab() {
         if (!tenant?.id) return;
         setLoading(true);
 
-        const [expRes, catRes] = await Promise.all([
+        const [expRes, catRes, clientRes] = await Promise.all([
             supabase
                 .from('expenses')
                 .select('*, expense_categories(id, name, color, icon), asset_account:chart_of_accounts!asset_account_id(id, account_name, account_code)')
@@ -159,6 +163,12 @@ export default function ExpenseTrackerTab() {
             supabase
                 .from('expense_categories')
                 .select('*')
+                .eq('tenant_id', tenant.id)
+                .eq('is_active', true)
+                .order('name'),
+            supabase
+                .from('business_clients')
+                .select('id, name')
                 .eq('tenant_id', tenant.id)
                 .eq('is_active', true)
                 .order('name'),
@@ -175,6 +185,7 @@ export default function ExpenseTrackerTab() {
 
         if (!expRes.error) setExpenses(expRes.data || []);
         if (!catRes.error) setCategories(catRes.data || []);
+        if (!clientRes.error) setClients(clientRes.data || []);
         if (!assetAccountsResult.error) {
             setAssetAccounts(assetAccountsResult.accounts);
         } else {
@@ -239,6 +250,7 @@ export default function ExpenseTrackerTab() {
             payment_method: form.payment_method,
             status: form.status,
             billable: form.billable,
+            client_id: form.billable && form.client_id ? form.client_id : null,
             notes: form.notes || null,
             category_id: form.category_id || null,
             asset_account_id: form.asset_account_id || null,
@@ -274,6 +286,7 @@ export default function ExpenseTrackerTab() {
             payment_method: expense.payment_method,
             status: expense.status,
             billable: expense.billable,
+            client_id: expense.client_id || '',
             notes: expense.notes || '',
             category_id: expense.category_id || '',
             asset_account_id: (expense as any).asset_account_id || '',
@@ -539,6 +552,21 @@ export default function ExpenseTrackerTab() {
                                 className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0" />
                             <label htmlFor="billable" className="text-sm text-slate-300">Billable to client</label>
                         </div>
+                        {form.billable && (
+                            <div className="sm:col-span-2">
+                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Bill to client</label>
+                                <select
+                                    value={form.client_id}
+                                    onChange={(e) => setForm((f) => ({ ...f, client_id: e.target.value }))}
+                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white text-sm"
+                                >
+                                    <option value="">Select client</option>
+                                    {clients.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                         {receiptPreview && (
                             <div className="sm:col-span-2 lg:col-span-3">
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Scanned Receipt Attachment</label>

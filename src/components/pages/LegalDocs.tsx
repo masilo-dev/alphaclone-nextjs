@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle, Clock, Users } from 'lucide-react';
 import PublicNavigation from '@/components/PublicNavigation';
+import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 // ---------------------------------------------------------------------------
 // Shared Layout
@@ -130,7 +131,9 @@ export function PrivacyPolicy() {
                The data controller responsible for your personal information is:
             </p>
             <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
-               <p><strong className="text-white">Alphaclone Systems, LLC</strong></p>
+               <p><strong className="text-white">{COMPANY_LEGAL.legalName}</strong></p>
+               <p className="text-slate-300">{formatLegalAddress()}</p>
+               <p className="text-slate-400">{COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}</p>
                <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
                <p>Data Protection Officer (DPO): <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                <p>Website: <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">https://alphaclonesystems.com</a></p>

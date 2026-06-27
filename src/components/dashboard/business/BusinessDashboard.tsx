@@ -88,7 +88,7 @@ const QuotaManager = React.lazy(() => import('./QuotaManager'));
 const PagesTab = React.lazy(() => import('@/components/pages/PagesTab'));
 const ContactSubmissionsTab = React.lazy(() => import('../ContactSubmissionsTab'));
 const FormsHub = React.lazy(() => import('./FormsHub'));
-const CampaignBuilder = React.lazy(() => import('./CampaignBuilder'));
+const ZohoCampaignsHub = React.lazy(() => import('../zoho/ZohoCampaignsHub'));
 const FacebookIntegrationTab = React.lazy(() => import('../facebook/FacebookIntegrationTab'));
 const ExpenseTrackerTab = React.lazy(() => import('./ExpenseTrackerTab'));
 const WorkflowDashboard = React.lazy(() => import('../engine/WorkflowDashboard'));
@@ -743,7 +743,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/campaigns':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <CampaignBuilder userId={user.id} />
+                        <ZohoCampaignsHub userId={user.id} />
                     </React.Suspense>
                 );
             case '/dashboard/marketplace':

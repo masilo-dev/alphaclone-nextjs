@@ -1,6 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { getUnifiedContacts, type UnifiedContact } from '../lib/crm/unifiedContacts';
+import {
+    softDeleteContactById,
+    restoreContactById,
+    purgeContactById,
+} from '../lib/crm/softDeleteContact';
 
 export interface Contact {
     id: string;
@@ -255,22 +260,45 @@ export const contactService = {
         try {
             const tenantId = this.getTenantId();
             const { data: userData } = await supabase.auth.getUser();
-
-            const { error } = await supabase
-                .from('contacts')
-                .update({
-                    deleted_at: new Date().toISOString(),
-                    updated_by: userData.user?.id,
-                })
-                .eq('id', contactId)
-                .eq('tenant_id', tenantId);
-
-            if (error) throw error;
-
-            return { error: null };
+            return softDeleteContactById(supabase, tenantId, contactId, userData.user?.id);
         } catch (err: any) {
             console.error('Error deleting contact:', err);
             return { error: err.message };
+        }
+    },
+
+    async restoreContact(contactId: string): Promise<{ error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            return restoreContactById(supabase, tenantId, contactId);
+        } catch (err: any) {
+            return { error: err.message };
+        }
+    },
+
+    async purgeContact(contactId: string): Promise<{ error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            return purgeContactById(supabase, tenantId, contactId);
+        } catch (err: any) {
+            return { error: err.message };
+        }
+    },
+
+    async getDeletedContacts(): Promise<{ contacts: ContactWithCompany[]; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+            const { data, error } = await supabase
+                .from('contacts')
+                .select(`*, company:companies(id, name, industry, website)`)
+                .eq('tenant_id', tenantId)
+                .not('deleted_at', 'is', null)
+                .order('deleted_at', { ascending: false });
+
+            if (error) throw error;
+            return { contacts: (data || []).map((row: Record<string, unknown>) => this.mapContact(row)), error: null };
+        } catch (err: any) {
+            return { contacts: [], error: err.message };
         }
     },
 
@@ -280,16 +308,10 @@ export const contactService = {
             const tenantId = this.getTenantId();
             const { data: userData } = await supabase.auth.getUser();
             const uniqueIds = [...new Set(contactIds)];
-            const { error } = await supabase
-                .from('contacts')
-                .update({
-                    deleted_at: new Date().toISOString(),
-                    updated_by: userData.user?.id,
-                })
-                .in('id', uniqueIds)
-                .eq('tenant_id', tenantId);
-
-            if (error) throw error;
+            for (const id of uniqueIds) {
+                const result = await softDeleteContactById(supabase, tenantId, id, userData.user?.id);
+                if (result.error) throw new Error(result.error);
+            }
             return { error: null, count: uniqueIds.length };
         } catch (err: any) {
             console.error('Error bulk deleting contacts:', err);

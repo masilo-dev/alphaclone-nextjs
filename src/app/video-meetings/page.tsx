@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import MarketingRelatedLinks from '@/components/landing/MarketingRelatedLinks';
+import MarketingProductCta from '@/components/marketing/MarketingProductCta';
 import { buildBreadcrumbSchema } from '@/lib/seo/breadcrumbSchema';
 import { absoluteUrl } from '@/lib/siteUrl';
 
@@ -58,6 +59,7 @@ export default function VideoMeetingsPage() {
                 { label: 'CRM', href: '/crm' },
               ]}
             />
+            <MarketingProductCta />
           </section>
         </main>
       </MarketingLandingShell>

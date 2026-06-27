@@ -81,7 +81,7 @@ const faqSchema = {
             name: 'How much does AlphaClone cost?',
             acceptedAnswer: {
                 '@type': 'Answer',
-                text: 'AlphaClone starts at $15/month for Starter and has a Pro Video plan for teams that need integrated video meetings. Current plan details are shown on the pricing section of the site.',
+                text: 'AlphaClone starts at $15/month for Starter, with Pro and Enterprise tiers for growing teams. All plans include integrated video meetings. Current plan details are on the pricing page.',
             },
         },
     ],

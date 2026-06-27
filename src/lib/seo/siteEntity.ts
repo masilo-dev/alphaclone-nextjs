@@ -44,15 +44,39 @@ export function buildSiteNavigationSchema() {
 /** Registered legal entity details (Wyoming, USA). */
 export const COMPANY_LEGAL = {
   legalName: 'Alphaclone Systems, LLC',
+  displayName: 'AlphaClone Systems',
+  brandName: 'AlphaClone',
   entityType: 'Limited Liability Company - Domestic',
   filingId: '2026-002002581',
   jurisdiction: 'Wyoming, USA',
+  formedDate: '2026-06-10',
+  status: 'Active',
   street: '30 N Gould St',
   city: 'Sheridan',
   region: 'WY',
   postalCode: '82801',
   country: 'US',
 } as const;
+
+/** Single-line registered office address for footers and legal blocks. */
+export function formatLegalAddress(): string {
+  return `${COMPANY_LEGAL.street}, ${COMPANY_LEGAL.city}, ${COMPANY_LEGAL.region} ${COMPANY_LEGAL.postalCode}, USA`;
+}
+
+/** Copyright line for public footers. */
+export function formatCopyrightLine(year: number = new Date().getFullYear()): string {
+  return `© ${year} ${COMPANY_LEGAL.legalName}. All rights reserved.`;
+}
+
+/** Entity block for privacy policy / trust pages. */
+export function formatLegalEntityBlock(): string[] {
+  return [
+    COMPANY_LEGAL.legalName,
+    formatLegalAddress(),
+    `${COMPANY_LEGAL.jurisdiction} · Filing ID ${COMPANY_LEGAL.filingId}`,
+    `Formed ${COMPANY_LEGAL.formedDate} · Status: ${COMPANY_LEGAL.status}`,
+  ];
+}
 
 export function buildOrganizationEntitySchema() {
   return {

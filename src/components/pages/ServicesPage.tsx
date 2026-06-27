@@ -354,7 +354,7 @@ const ServicesPage: React.FC = () => {
                                 },
                                 {
                                     icon: Award,
-                                    title: 'Proven by Businesses Like Yours',
+                                    title: 'Built for Businesses Like Yours',
                                     desc: 'AlphaClone is designed for agencies, consultancies, freelancers, and professional service firms that need one operational workspace.',
                                 },
                             ].map((item, i) => (

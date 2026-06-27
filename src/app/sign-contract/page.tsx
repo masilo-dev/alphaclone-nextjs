@@ -19,7 +19,7 @@ export default async function Page({
     : resolvedSearchParams?.token;
 
   if (token) {
-    redirect(`/sign/${encodeURIComponent(token)}`);
+    redirect(`/contract/${encodeURIComponent(token)}`);
   }
 
   return (

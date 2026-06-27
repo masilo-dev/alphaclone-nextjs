@@ -45,7 +45,6 @@ const VideoExplainer = dynamic(() => import('./dashboard/VideoExplainer'), {
    ssr: false,
 });
 
-import { PLATFORM_CALENDLY_URL } from '@/constants';
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
 
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
@@ -121,7 +120,7 @@ const LandingPage = () => {
 
          <main className="relative z-10">
             {/* Hero Section */}
-            <section id="home" className="relative min-h-[90vh] flex flex-col items-center justify-center overflow-hidden pt-16 sm:pt-20">
+            <section id="home" className="relative min-h-0 lg:min-h-[90vh] flex flex-col items-center justify-start lg:justify-center overflow-hidden pt-24 sm:pt-28 lg:pt-20 pb-8 sm:pb-12">
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[600px] opacity-40 z-0">
                   <AIWorkerGraphic />
                </div>
@@ -130,28 +129,31 @@ const LandingPage = () => {
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
-                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-6 sm:py-12 lg:py-16 rounded-2xl bg-slate-950/40 border border-cyan-500/15 shadow-[0_0_80px_-20px_rgba(0,255,255,0.12)]"
+                  className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-8 pb-6 sm:py-12 lg:py-16 rounded-2xl bg-slate-950/40 border border-cyan-500/15 shadow-[0_0_80px_-20px_rgba(0,255,255,0.12)]"
                >
                   <motion.div
                      initial={{ opacity: 0, y: 20 }}
                      animate={{ opacity: 1, y: 0 }}
                      transition={{ duration: 0.5 }}
                   >
-                     {/* Brand pill */}
-                     <div className="inline-flex items-center gap-2.5 bg-cyan-500/10 border border-cyan-500/40 rounded-full px-5 py-2 mb-8">
-                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                        <span className="text-sm font-semibold text-cyan-300 tracking-wide uppercase">{OUTCOME_PROMISE.badge}</span>
+                     {/* Brand pill — short label on phone to avoid crowding under fixed nav */}
+                     <div className="inline-flex items-center gap-2 sm:gap-2.5 bg-cyan-500/10 border border-cyan-500/40 rounded-full px-4 py-1.5 sm:px-5 sm:py-2 mb-6 sm:mb-8 max-w-[calc(100vw-2.5rem)]">
+                        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+                        <span className="text-xs sm:text-sm font-semibold text-cyan-300 tracking-normal sm:tracking-wide sm:uppercase leading-snug">
+                           <span className="sm:hidden">{OUTCOME_PROMISE.badgeMobile}</span>
+                           <span className="hidden sm:inline uppercase">{OUTCOME_PROMISE.badge}</span>
+                        </span>
                      </div>
 
                      {/* Headline */}
-                     <h1 className="font-marketing-heading font-black text-white mb-6 tracking-tight">
+                     <h1 className="font-marketing-heading font-black text-white mb-4 sm:mb-6 tracking-tight">
                         {OUTCOME_PROMISE.headline}{' '}
                         <span className="text-cyan-400">{OUTCOME_PROMISE.headlineAccent}</span>
                      </h1>
                      <p className="text-base sm:text-lg md:text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
                         {OUTCOME_PROMISE.subhead}
                      </p>
-                     <p className="text-sm sm:text-base text-slate-400 mb-6 sm:mb-8 max-w-3xl mx-auto">
+                     <p className="hidden sm:block text-sm sm:text-base text-slate-400 mb-6 sm:mb-8 max-w-3xl mx-auto">
                         {OUTCOME_PROMISE.icp}
                      </p>
 
@@ -161,11 +163,11 @@ const LandingPage = () => {
                            onClick={() => router.push(BUSINESS_SIGNUP_HREF)}
                            className="h-14 px-8 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-xl shadow-cyan-500/20"
                         >
-                           Start 14-Day Trial
+                           Start free — 14 days, no card
                            <ArrowRight className="w-5 h-5 ml-2" />
                         </Button>
                         <button
-                           onClick={() => window.open(PLATFORM_CALENDLY_URL, '_blank', 'noopener,noreferrer')}
+                           onClick={() => router.push('/book-demo')}
                            className="h-14 px-8 text-lg font-medium text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
                         >
                            Book a Demo
@@ -218,7 +220,7 @@ const LandingPage = () => {
                                  Start Free Trial
                               </Button>
                               <button
-                                 onClick={() => window.open(PLATFORM_CALENDLY_URL, '_blank', 'noopener,noreferrer')}
+                                 onClick={() => router.push('/book-demo')}
                                  className="h-12 px-6 text-sm sm:text-base font-semibold text-slate-200 border border-slate-700 hover:border-slate-500 rounded-xl transition-all"
                               >
                                  Book a Demo

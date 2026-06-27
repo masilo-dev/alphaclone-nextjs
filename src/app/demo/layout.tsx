@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import { SITE_URL } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
   title: 'Product Demo | AlphaClone',
-  description: 'Interactive demo of AlphaClone: CRM, billing, contracts, scheduling, documents, and automation in one platform.',
+  description:
+    'Interactive demo of AlphaClone: CRM, billing, contracts, scheduling, documents, and automation in one platform.',
   alternates: { canonical: `${SITE_URL}/demo` },
   openGraph: {
     title: 'Product Demo | AlphaClone',
@@ -18,7 +21,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DemoLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function DemoLayout({ children }: { children: ReactNode }) {
+  return <MarketingLandingShell>{children}</MarketingLandingShell>;
 }
-

@@ -69,6 +69,9 @@ export async function GET(req: NextRequest) {
         'ZohoCRM.users.READ',
         // Books (finance)
         'ZohoBooks.fullaccess.all',
+        // Campaigns (native marketing module)
+        'ZohoCampaigns.campaign.ALL',
+        'ZohoCampaigns.contact.ALL',
     ];
 
     const authUrl = new URL(`${hosts.accounts}/oauth/v2/auth`);

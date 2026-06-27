@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { Play, ArrowRight, ShieldCheck, Zap, Globe, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function DemoPage() {
     return (
@@ -14,41 +13,7 @@ export default function DemoPage() {
             <div className="marketing-glow-hero" />
             <div className="absolute top-[40%] -right-20 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
             
-            {/* Header */}
-            <nav className="fixed w-full z-50 glass-nav pt-safe">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        <Link href="/" className="flex items-center gap-3 group">
-                            <div className="relative w-9 h-9 flex-shrink-0">
-                                <Image
-                                    src="/logo.png"
-                                    alt="AlphaClone Systems Logo"
-                                    fill
-                                    className="object-contain"
-                                    priority
-                                />
-                            </div>
-                            <span className="text-xl font-bold tracking-tight font-marketing-heading text-white">
-                                AlphaClone
-                            </span>
-                        </Link>
-                        
-                        <div className="flex items-center gap-4">
-                            <Link href="/register">
-                                <Button
-                                    size="sm"
-                                    className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-6 shadow-lg shadow-teal-500/20 transition-all hover:scale-105"
-                                >
-                                    Start Free Trial
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-                <div className="nav-glow-line w-full" />
-            </nav>
-
-            <main className="relative z-10 pt-32 pb-24 px-4">
+            <main className="relative z-10 py-8 pb-24 px-4">
                 <div className="max-w-6xl mx-auto">
                     {/* Hero Section */}
                     <div className="text-center mb-16">
@@ -139,7 +104,7 @@ export default function DemoPage() {
                     >
                         <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to see it in action?</h2>
                         <p className="text-slate-400 mb-10 max-w-xl mx-auto">
-                            Join high-performance teams who have already eliminated operational friction with AlphaClone.
+                            See how teams connect leads, delivery, and billing in one workspace — representative workflows from consultants and agencies.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                             <Link href="/register" className="w-full sm:w-auto">
@@ -147,7 +112,7 @@ export default function DemoPage() {
                                     Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>
                             </Link>
-                            <Link href="https://calendly.com/bonniealphaclonesystems/30min" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
+                            <Link href="/book-demo" className="w-full sm:w-auto">
                                 <Button size="lg" variant="outline" className="border-slate-700 hover:bg-slate-800 text-white px-12 h-14 w-full">
                                     Book a Demo
                                 </Button>

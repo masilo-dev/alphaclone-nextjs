@@ -6,12 +6,12 @@ import { OUTCOME_CASE_STUDIES } from '@/config/marketingOutcomes';
 import { ArrowRight } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Results & Workflow Stories | Alphaclone',
+  title: 'Results & Workflow Stories | AlphaClone Systems',
   description:
     'See how service businesses connect leads, delivery, contracts, and billing in one workspace — representative workflow stories by team type.',
   alternates: { canonical: `${SITE_URL}/results` },
   openGraph: {
-    title: 'Results & Workflow Stories | Alphaclone',
+    title: 'Results & Workflow Stories | AlphaClone Systems',
     description: 'Before-and-after workflows for consultants, agencies, and founders replacing fragmented SaaS stacks.',
     url: `${SITE_URL}/results`,
     type: 'website',

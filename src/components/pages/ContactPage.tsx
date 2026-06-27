@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
 import PublicNavigation from '../PublicNavigation';
+import MarketingFooter from '@/components/landing/MarketingFooter';
+import { formatLegalAddress } from '@/lib/seo/siteEntity';
 import { contactSchema } from '../../schemas/validation';
-import { PLATFORM_CALENDLY_URL } from '@/constants';
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
@@ -17,6 +19,7 @@ const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground
 });
 
 const ContactPage: React.FC = () => {
+    const router = useRouter();
     const [, setIsLoginOpen] = React.useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -101,7 +104,7 @@ const ContactPage: React.FC = () => {
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
                             <Button
-                                onClick={() => window.open(PLATFORM_CALENDLY_URL, '_blank')}
+                                onClick={() => router.push('/book-demo')}
                                 className="bg-teal-600 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight button-fill-hover"
                             >
                                 <span className="relative z-10">Book a Consultation</span>
@@ -157,8 +160,9 @@ const ContactPage: React.FC = () => {
                                 <div className="flex items-start gap-4">
                                     <MapPin className="w-6 h-6 text-teal-400 mt-1 flex-shrink-0" />
                                     <div>
-                                        <div className="font-semibold mb-1">Location</div>
-                                        <div className="text-slate-400">Global Remote Team</div>
+                                        <div className="font-semibold mb-1">Registered office</div>
+                                        <div className="text-slate-400">{formatLegalAddress()}</div>
+                                        <div className="text-slate-500 text-sm mt-1">Support is available by phone and WhatsApp — remote team, US-registered entity.</div>
                                     </div>
                                 </div>
                             </div>
@@ -234,6 +238,7 @@ const ContactPage: React.FC = () => {
                     </AnimateIn>
                 </div>
             </div>
+            <MarketingFooter />
         </div>
     );
 };

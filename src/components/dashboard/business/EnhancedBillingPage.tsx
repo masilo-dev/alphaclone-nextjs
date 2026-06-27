@@ -19,6 +19,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import type { EmailRecipient } from '../crm/emailRecipient';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
+import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -170,7 +171,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setRevenueData(sorted.length ? sorted : [{ date: 'Today', revenue: 0 }]);
     };
 
-    const [activeTab, setActiveTab] = useState<'invoices' | 'services'>('invoices');
+    const [activeTab, setActiveTab] = useState<'invoices' | 'recurring' | 'services'>('invoices');
 
     const filteredInvoices = invoices.filter(inv => {
         const matchesFilter = filter === 'all' || inv.status === filter;
@@ -220,6 +221,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     Invoices
                   </button>
                   <button 
+                    onClick={() => setActiveTab('recurring')}
+                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
+                  >
+                    Recurring
+                  </button>
+                  <button 
                     onClick={() => setActiveTab('services')}
                     className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
                   >
@@ -232,6 +239,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 <React.Suspense fallback={<div className="p-12 text-center text-slate-500">Loading Catalog...</div>}>
                     <ServicesCatalog />
                 </React.Suspense>
+            ) : activeTab === 'recurring' ? (
+                currentTenant?.id ? (
+                    <RecurringInvoicesPanel
+                        tenantId={currentTenant.id}
+                        clients={Object.entries(clientMap).map(([id, c]) => ({ id, name: c.name, email: c.email }))}
+                    />
+                ) : null
             ) : (
                 <>
             {/* Stats */}
@@ -465,6 +479,31 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         </span>
                                         <span className="text-xs text-slate-500 font-mono">ZOHO / OUTLOOK</span>
                                     </button>
+
+                                    {selectedInvoiceForOptions.clientId && currentTenant?.id && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    const res = await fetch(
+                                                        `/api/client-finance/portal-link/${selectedInvoiceForOptions.clientId}?tenantId=${encodeURIComponent(currentTenant.id)}`
+                                                    );
+                                                    const data = await res.json();
+                                                    if (!res.ok || !data.url) throw new Error(data.error || 'Failed');
+                                                    await navigator.clipboard.writeText(data.url);
+                                                    toast.success('Client finance portal link copied');
+                                                } catch (err) {
+                                                    toast.error(err instanceof Error ? err.message : 'Failed to copy portal link');
+                                                }
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <User className="w-5 h-5 text-purple-400" />
+                                                <span>Copy Client Finance Portal Link</span>
+                                            </span>
+                                            <span className="text-xs text-slate-500 font-mono">INVOICES + QUOTES</span>
+                                        </button>
+                                    )}
 
                                     <button
                                         onClick={async () => {

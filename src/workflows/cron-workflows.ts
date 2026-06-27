@@ -1,6 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import { createSupabaseAdminClient } from "@/lib/supabase-admin";
-import { cronService } from "@/services/cronService";
+import { processDueRecurringInvoices } from "@/services/finance/recurringInvoiceService";
 
 /**
  * Recurring Invoices Workflow
@@ -8,30 +7,17 @@ import { cronService } from "@/services/cronService";
 export async function processRecurringInvoices() {
     "use workflow";
 
-    const { recurringConfigs } = await fetchConfigs();
-    const today = new Date();
-
-    for (const config of recurringConfigs) {
-        await processSingleInvoice(config, today);
-    }
+    await processRecurringStep();
 }
 
-async function fetchConfigs() {
+async function processRecurringStep() {
     "use step";
-    const { data, error } = await supabase
-        .from('recurring_invoices')
-        .select('*')
-        .eq('active', true);
-    if (error) throw error;
-    return { recurringConfigs: data || [] };
-}
-
-async function processSingleInvoice(config: any, today: Date) {
-    "use step";
-    const shouldGenerate = cronService.shouldGenerateInvoice(config, today);
-    if (shouldGenerate) {
-        await cronService.generateInvoice(config);
+    const result = await processDueRecurringInvoices();
+    console.log(`[recurring-invoices] processed=${result.processed} errors=${result.errors.length}`);
+    if (result.errors.length) {
+        console.error('[recurring-invoices]', result.errors.join('; '));
     }
+    return result;
 }
 
 /**

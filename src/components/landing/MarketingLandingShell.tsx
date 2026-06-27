@@ -11,9 +11,9 @@ type MarketingLandingShellProps = {
 /** Shared nav + footer shell for indexable product landing pages. */
 export default function MarketingLandingShell({ children }: MarketingLandingShellProps) {
   return (
-    <div className="marketing-theme">
+    <div className="marketing-theme min-h-screen">
       <PublicNavigation onLoginClick={() => {}} />
-      {children}
+      <div className="pt-20">{children}</div>
       <MarketingFooter />
     </div>
   );

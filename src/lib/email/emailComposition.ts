@@ -1,6 +1,8 @@
+import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
+
 const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [
-  'Alphaclone Systems, LLC — a Wyoming registered company',
-  '30 N Gould St, Sheridan, WY 82801, USA',
+  `${COMPANY_LEGAL.legalName} — a Wyoming registered company`,
+  formatLegalAddress(),
   'alphaclonesystems.com',
   'Unsubscribe: {{{unsubscribe_url}}}',
   'Privacy: https://alphaclonesystems.com/privacy-policy',

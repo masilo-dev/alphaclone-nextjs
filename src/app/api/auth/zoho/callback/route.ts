@@ -163,6 +163,7 @@ export async function GET(req: NextRequest) {
             expiryDate: new Date(Date.now() + (data.expires_in || 3600) * 1000).toISOString(),
             mailApiHost: mailHost,
             crmApiHost: ZohoService.normalizeHost(hosts.crm),
+            campaignsApiHost: ZohoService.normalizeHost(hosts.campaigns),
             accountsServer: hosts.accounts,
             accountId: accountId,
             ...(booksOrgId ? { booksOrgId } : {}),

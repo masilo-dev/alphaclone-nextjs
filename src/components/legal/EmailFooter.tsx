@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 const wrapperStyle: CSSProperties = {
   fontFamily: 'Arial, Helvetica, sans-serif',
@@ -9,7 +10,8 @@ const wrapperStyle: CSSProperties = {
 };
 
 export const emailFooterText = [
-  'Alphaclone Systems, LLC',
+  COMPANY_LEGAL.legalName,
+  formatLegalAddress(),
   'alphaclonesystems.com',
   'Unsubscribe: {{{unsubscribe_url}}}',
   'Privacy Policy: https://alphaclonesystems.com/privacy-policy',
@@ -21,7 +23,8 @@ export default function EmailFooter({ marketing = false }: { marketing?: boolean
   return (
     <div style={wrapperStyle}>
       <div style={{ borderTop: '1px solid #334155', margin: '16px 0', width: '100%' }} />
-      <div>Alphaclone Systems, LLC</div>
+      <div>{COMPANY_LEGAL.legalName}</div>
+      <div>{formatLegalAddress()}</div>
       <div>
         <a href="https://alphaclonesystems.com" style={{ color: '#94a3b8', textDecoration: 'none' }}>
           alphaclonesystems.com

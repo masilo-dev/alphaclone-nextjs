@@ -27,6 +27,7 @@ export async function validateRecipient(
       .from('contacts')
       .select('id')
       .eq('tenant_id', tenantId)
+      .is('deleted_at', null)
       .ilike('email', normalizedEmail)
       .limit(1)
       .maybeSingle(),
@@ -34,6 +35,7 @@ export async function validateRecipient(
       .from('business_clients')
       .select('id')
       .eq('tenant_id', tenantId)
+      .eq('is_active', true)
       .ilike('email', normalizedEmail)
       .limit(1)
       .maybeSingle(),

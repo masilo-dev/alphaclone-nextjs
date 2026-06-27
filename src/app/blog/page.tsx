@@ -12,7 +12,7 @@ export default async function BlogPage() {
 
     return (
         <div className="min-h-screen bg-slate-950 text-white">
-            <div className="relative pt-32 pb-20 overflow-hidden">
+            <div className="relative py-8 pb-20 overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-teal-500/10 blur-[100px] rounded-full pointer-events-none" />
 
                 <div className="container mx-auto px-4 relative z-10">

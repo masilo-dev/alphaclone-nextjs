@@ -24,6 +24,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
     const [connecting, setConnecting] = useState(false);
     const [selectedRegion, setSelectedRegion] = useState('US');
     const [configuredRegion, setConfiguredRegion] = useState<string | null>(null);
+    const [campaignsReady, setCampaignsReady] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [testRecipient, setTestRecipient] = useState('');
 
@@ -42,6 +43,7 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
             const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
             const data = await res.json();
             setIsConnected(!!data.isConnected);
+            setCampaignsReady(!!data.campaignsReady);
             if (data.configuredRegion) {
                 setConfiguredRegion(data.configuredRegion);
             }
@@ -162,6 +164,9 @@ const ZohoIntegration: React.FC<ZohoIntegrationProps> = ({ user }) => {
                                 <div className="mt-2 text-xs font-semibold text-slate-400 flex items-center gap-1.5">
                                     <Globe className="w-3.5 h-3.5 text-teal-400" />
                                     <span>Active Datacenter: <strong className="text-teal-400 uppercase">{configuredRegion}</strong></span>
+                                    {campaignsReady && (
+                                        <span className="ml-2 px-2 py-0.5 rounded-lg bg-teal-500/10 text-teal-400 text-[10px] font-black uppercase">Campaigns</span>
+                                    )}
                                 </div>
                             )}
                         </div>

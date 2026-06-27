@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ZohoMailService } from '../../../../../services/zoho/ZohoMailService';
+import { ZohoCampaignsService } from '../../../../../services/zoho/ZohoCampaignsService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 function inferZohoRegionFromAccountsServer(value: string | undefined): string | null {
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
         }
 
         let mailReady = false;
+        let campaignsReady = false;
         try {
             const zohoMailService = new ZohoMailService(userId);
             const senderAddresses = await zohoMailService.getSenderAddresses();
@@ -43,9 +45,17 @@ export async function GET(req: NextRequest) {
             mailReady = false;
         }
 
+        try {
+            const zohoCampaignsService = new ZohoCampaignsService(userId);
+            campaignsReady = await zohoCampaignsService.checkCampaignsReady();
+        } catch {
+            campaignsReady = false;
+        }
+
         return NextResponse.json({
-            isConnected: mailReady,
+            isConnected: mailReady || campaignsReady,
             mailReady,
+            campaignsReady,
             baseConnected,
             configuredRegion,
         });

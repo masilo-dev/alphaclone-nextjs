@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import { SITE_URL } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
@@ -21,6 +23,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BookDemoLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function BookDemoLayout({ children }: { children: ReactNode }) {
+  return <MarketingLandingShell>{children}</MarketingLandingShell>;
 }

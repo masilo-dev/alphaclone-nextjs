@@ -13,15 +13,29 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { getMimeType } from '../../../utils/mimeTypes';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
+import { isValidEmail, validateEmailField } from '@/lib/email/isValidEmail';
+import EmailProviderSelector from '@/components/shared/EmailProviderSelector';
+import {
+  normalizeDeliveryProvider,
+  resolveAutoProvider,
+  type DeliveryEmailProvider,
+} from '@/lib/email/emailProviderOptions';
 
-interface ComposeEmailModalProps {
+export type EmailComposerProps = {
     isOpen: boolean;
     onClose: () => void;
     userId: string;
     initialTo?: string;
     initialSubject?: string;
     initialBody?: string;
-}
+    /** Skip CRM recipient gate — for inbox replies and direct sends */
+    skipCrmGate?: boolean;
+    entityType?: 'invoice' | 'contract' | 'document' | 'lead' | 'client' | 'direct';
+    entityId?: string;
+    attachments?: Array<{ id: string; name: string; size: number; data?: string }>;
+};
+
+interface ComposeEmailModalProps extends EmailComposerProps {}
 
 const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     isOpen,
@@ -29,7 +43,10 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     userId,
     initialTo = '',
     initialSubject = '',
-    initialBody = ''
+    initialBody = '',
+    skipCrmGate = false,
+    entityType = 'direct',
+    entityId,
 }) => {
     const { currentTenant } = useTenant();
     const [to, setTo] = useState(initialTo);
@@ -47,6 +64,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [from, setFrom] = useState('');
     const [clients, setClients] = useState<any[]>([]);
     const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
+    const [deliveryProvider, setDeliveryProvider] = useState<DeliveryEmailProvider>('auto');
+    const [workspaceDefault, setWorkspaceDefault] = useState<DeliveryEmailProvider>('auto');
+    const [providerOptions, setProviderOptions] = useState<
+        Array<{ id: DeliveryEmailProvider; label: string; connected: boolean; native?: boolean; campaigns?: boolean }>
+    >([]);
     const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -73,8 +95,9 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             Promise.all([
                 integrationsService.getUserIntegrations(userId),
                 fetch(`/api/integrations/status?tenantId=${encodeURIComponent(currentTenant.id)}`).then((r) => r.json().catch(() => ({}))),
-            ]).then(([{ integrations }, statusData]) => {
-                const emailTypes = ['microsoft', 'sendgrid', 'resend', 'brevo', 'zoho'];
+                fetch(`/api/settings/email-provider?tenantId=${encodeURIComponent(currentTenant.id)}`).then((r) => r.json().catch(() => ({}))),
+            ]).then(([{ integrations }, statusData, providerSettings]) => {
+                const emailTypes = ['microsoft', 'sendgrid', 'resend', 'brevo', 'zoho', 'gmail'];
                 const filtered = integrations.filter(i => i.enabled && emailTypes.includes(i.type));
 
                 const statusList = Array.isArray(statusData?.integrations) ? statusData.integrations : [];
@@ -92,14 +115,18 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 }
 
                 setAvailableProviders(filtered);
-                
-                // Prefer Microsoft, then Zoho/Brevo/Resend/SendGrid, then first available provider.
-                const microsoft = filtered.find(p => p.type === 'microsoft');
-                const zoho = filtered.find(p => p.type === 'zoho');
-                const brevo = filtered.find(p => p.type === 'brevo');
-                const resend = filtered.find(p => p.type === 'resend');
-                const sendgrid = filtered.find(p => p.type === 'sendgrid');
-                setSelectedProvider(microsoft || zoho || brevo || resend || sendgrid || filtered[0] || null);
+                const connectedList = (providerSettings.connectedProviders || []) as typeof providerOptions;
+                setProviderOptions(connectedList);
+
+                const tenantDefault = normalizeDeliveryProvider(providerSettings.defaultProvider);
+                setWorkspaceDefault(tenantDefault);
+                setDeliveryProvider(tenantDefault);
+
+                const connectedIds = connectedList.filter((p) => p.connected).map((p) => p.id);
+                const resolved = resolveAutoProvider(connectedIds, tenantDefault);
+                const pickType = tenantDefault === 'auto' ? resolved : tenantDefault;
+                const match = filtered.find((p) => p.type === pickType);
+                setSelectedProvider(match || filtered[0] || null);
             });
 
             // Fetch user's email for the fallback From field
@@ -121,6 +148,12 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             }
         }
     }, [selectedProvider]);
+
+    React.useEffect(() => {
+        if (deliveryProvider === 'auto') return;
+        const match = availableProviders.find((p) => p.type === deliveryProvider);
+        if (match) setSelectedProvider(match);
+    }, [deliveryProvider, availableProviders]);
 
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -247,8 +280,17 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     };
 
     const handleSend = async () => {
-        if (!to || !subject || !body) {
-            toast.error('Recipient, Subject, and Body are required');
+        const toError = validateEmailField(to);
+        if (toError) {
+            toast.error(toError);
+            return;
+        }
+        if (!subject.trim()) {
+            toast.error('Subject is required');
+            return;
+        }
+        if (!body.trim()) {
+            toast.error('Message body is required');
             return;
         }
 
@@ -259,6 +301,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
         setSending(true);
         try {
+            const connectedIds = providerOptions.filter((p) => p.connected).map((p) => p.id);
+            const resolvedType =
+                deliveryProvider === 'auto'
+                    ? resolveAutoProvider(connectedIds, workspaceDefault)
+                    : deliveryProvider;
+            const sendProvider = resolvedType === 'auto' ? selectedProvider?.type : resolvedType;
+
             const res = await fetch('/api/outreach/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -272,15 +321,19 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     autoSend: true,
                     consentGranted: true,
                     confidenceScore: 100,
-                    deliveryProviders: selectedProvider?.type ? [selectedProvider.type] : undefined,
-                    preferredProvider: selectedProvider?.type,
+                    directSend: skipCrmGate,
+                    skipCrmGate,
+                    entityType,
+                    entityId,
+                    deliveryProviders: sendProvider ? [sendProvider] : undefined,
+                    preferredProvider: sendProvider,
                     balanceByDailyLimit: false,
                 }),
             });
 
             const result = await res.json().catch(() => ({}));
             if (!res.ok || !result.success) {
-                throw new Error(result.error || 'Failed to send message');
+                throw new Error(result.error || 'Email could not be sent. Check your email provider settings.');
             }
             if (result.status === 'queued') {
                 throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry.');
@@ -395,25 +448,13 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                             </motion.div>
 
                             <div className="grid grid-cols-1 gap-6">
-                                {/* PROVIDER SELECTION */}
-                                {availableProviders.length > 0 && (
-                                    <div>
-                                        <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Email Provider</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {availableProviders.map(provider => (
-                                                <button
-                                                    key={provider.id}
-                                                    onClick={() => setSelectedProvider(provider)}
-                                                    className={`px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${selectedProvider?.id === provider.id
-                                                        ? 'bg-teal-600 text-white border-teal-500 shadow-lg shadow-teal-500/20'
-                                                        : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
-                                                        }`}
-                                                >
-                                                    {provider.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+                                {providerOptions.some((p) => p.connected) && (
+                                    <EmailProviderSelector
+                                        value={deliveryProvider}
+                                        onChange={setDeliveryProvider}
+                                        providers={providerOptions}
+                                        compact
+                                    />
                                 )}
 
                                 {/* FROM: SENDER */}

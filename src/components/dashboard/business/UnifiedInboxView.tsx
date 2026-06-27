@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
+  AlertTriangle,
   Loader2,
   Mail,
   PenSquare,
@@ -12,15 +13,20 @@ import {
   Reply,
   Search,
   Send,
+  UserPlus,
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { classifyEmailFromAddress, type EmailClassification } from '@/lib/email/classifyEmail';
 import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { refreshMicrosoftTokenIfNeeded, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { useZohoEmails } from '@/hooks/useZohoEmails';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
+import { businessClientService } from '@/services/businessClientService';
+import { contactService } from '@/services/contactService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import ComposeEmailModal from './ComposeEmailModal';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 import { parseEmailFromHeader } from '../crm/emailRecipient';
@@ -62,6 +68,7 @@ async function fetchProviderStatus(): Promise<{ microsoft: boolean; zoho: boolea
 
 export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewProps) {
   const { user } = useAuth();
+  const { currentTenant } = useTenant();
   const searchParams = useSearchParams();
 
   const urlProvider = searchParams?.get('provider');
@@ -78,6 +85,9 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
   const [composeDraft, setComposeDraft] = useState<ComposeState>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingBody, setLoadingBody] = useState(false);
+  const [emailClassification, setEmailClassification] = useState<EmailClassification>('Direct');
+  const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
+  const [creatingContact, setCreatingContact] = useState(false);
 
   const microsoft = useMicrosoftEmails(50, statusChecked && provider === 'microsoft');
   const zoho = useZohoEmails(50, statusChecked && provider === 'zoho');
@@ -189,6 +199,88 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
       cancelled = true;
     };
   }, [selectedEmail?.id, provider, zoho, selectedEmail]);
+
+  useEffect(() => {
+    if (!selectedEmail?.from) {
+      setSenderKnown(null);
+      setEmailClassification('Direct');
+      return;
+    }
+    const parsed = parseEmailFromHeader(selectedEmail.from);
+    if (!parsed.email) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const tenantId = currentTenant?.id;
+        const [{ clients }, { contacts }] = await Promise.all([
+          tenantId
+            ? businessClientService.getClients(tenantId, 1, 50, false, parsed.email)
+            : Promise.resolve({ clients: [] as Awaited<ReturnType<typeof businessClientService.getClients>>['clients'] }),
+          contactService.getContacts({ search: parsed.email }),
+        ]);
+        if (cancelled) return;
+        const isClient = (clients || []).some(
+          (c) => c.email?.toLowerCase() === parsed.email.toLowerCase()
+        );
+        const isLead = (contacts || []).some(
+          (c) => c.email?.toLowerCase() === parsed.email.toLowerCase()
+        );
+        setSenderKnown(isClient || isLead);
+        setEmailClassification(
+          classifyEmailFromAddress(selectedEmail.from, {
+            isKnownClient: isClient,
+            isKnownLead: isLead && !isClient,
+          })
+        );
+      } catch {
+        if (!cancelled) {
+          setSenderKnown(false);
+          setEmailClassification(classifyEmailFromAddress(selectedEmail.from));
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedEmail?.from, currentTenant?.id]);
+
+  const handleCreateContactFromSender = async () => {
+    if (!selectedEmail?.from) return;
+    const parsed = parseEmailFromHeader(selectedEmail.from);
+    if (!parsed.email) {
+      toast.error('Could not parse sender email.');
+      return;
+    }
+    setCreatingContact(true);
+    try {
+      const nameParts = (parsed.name || parsed.email.split('@')[0]).trim().split(/\s+/);
+      const firstName = nameParts[0] || 'Contact';
+      const lastName = nameParts.slice(1).join(' ') || 'Unknown';
+      const { contact, error } = await contactService.createContact({
+        firstName,
+        lastName,
+        email: parsed.email,
+        status: 'active',
+      });
+      if (error) throw new Error(error);
+      toast.success(`Added ${contact?.fullName || parsed.email} to CRM`);
+      setSenderKnown(true);
+      setEmailClassification('Lead');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create contact');
+    } finally {
+      setCreatingContact(false);
+    }
+  };
+
+  const classificationColors: Record<EmailClassification, string> = {
+    Marketing: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+    Lead: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
+    Client: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+    Unverified: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    Direct: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  };
 
   const openNewEmail = () => {
     setComposeDraft({});
@@ -461,6 +553,14 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 </button>
                 <div className="flex-1 min-w-0">
                   <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border mr-1.5 ${classificationColors[emailClassification]}`}
+                  >
+                    {emailClassification === 'Unverified' && (
+                      <AlertTriangle className="w-3 h-3" />
+                    )}
+                    {emailClassification}
+                  </span>
+                  <span
                     className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
                       provider === 'microsoft'
                         ? 'bg-blue-500/15 text-blue-300'
@@ -473,6 +573,24 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                     {selectedEmail.subject || '(no subject)'}
                   </h3>
                   <p className="text-xs text-slate-400 truncate">{selectedEmail.from}</p>
+                  {senderKnown === false && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>
+                      <button
+                        type="button"
+                        onClick={handleCreateContactFromSender}
+                        disabled={creatingContact}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 disabled:opacity-50"
+                      >
+                        {creatingContact ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <UserPlus className="w-3 h-3" />
+                        )}
+                        Create Contact
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -535,6 +653,8 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
           initialTo={composeDraft.to || ''}
           initialSubject={composeDraft.subject || ''}
           initialBody={composeDraft.body || ''}
+          skipCrmGate
+          entityType="direct"
         />
       )}
     </>

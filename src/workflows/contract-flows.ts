@@ -1,6 +1,7 @@
 import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceLifecycleWorkflow } from './invoice-lifecycle';
+import crypto from 'crypto';
 
 /**
  * Contract Signed Workflow
@@ -37,6 +38,7 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
 
   const amount = Number(contract.payment_amount || 0) || 1000;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const publicToken = crypto.randomUUID();
 
   const { data: invoice } = await supabase
     .from('business_invoices')
@@ -52,11 +54,27 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
       tax: 0,
       discount_amount: 0,
       total: amount,
-      line_items: [{ description: contract.title || 'Services per contract', quantity: 1, rate: amount, amount }],
+      is_public: true,
+      metadata: {
+        public_token: publicToken,
+        contract_id: contractId,
+        deal_id: contract.metadata?.deal_id,
+      },
       notes: `---METADATA---${JSON.stringify({ contract_id: contractId, deal_id: contract.metadata?.deal_id })}---METADATA---`,
     })
     .select()
     .single();
+
+  if (invoice?.id) {
+    await supabase.from('invoice_line_items').insert({
+      invoice_id: invoice.id,
+      tenant_id: tenantId,
+      description: contract.title || 'Services per contract',
+      quantity: 1,
+      unit_price: amount,
+      amount,
+    });
+  }
 
   return invoice;
 }

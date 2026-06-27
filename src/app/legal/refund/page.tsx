@@ -25,7 +25,7 @@ export default function Page() {
   return (
     <LegalPageShell
       title="Refund Policy"
-      lastUpdated="June 9, 2025"
+      lastUpdated="June 10, 2026"
       intro="This policy explains when refunds are available, how billing works, and how to request a refund."
       sections={sections}
       badge="Refunds"
