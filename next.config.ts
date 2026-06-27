@@ -15,7 +15,7 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', '@upstash/qstash', '@upstash/ratelimit', '@upstash/redis'],
+  serverExternalPackages: ['playwright-core', 'chromium-bidi', '@browserbasehq/sdk', 'puppeteer-core', 'jsdom', 'got', 'node-html-parser', 'robots-txt-guard', 'workflow', '@workflow/core', '@sendgrid/mail', '@sendgrid/helpers', '@upstash/qstash', '@upstash/ratelimit', '@upstash/redis', 'nodemailer'],
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -105,9 +105,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
+
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        dns: false,
+        child_process: false,
+        fs: false,
+        tls: false,
+      };
+    }
     // Explicitly mark playwright-core and its sub-dependencies as external
     const externalList = ['playwright-core', 'chromium-bidi'];
     if (config.externals) {
