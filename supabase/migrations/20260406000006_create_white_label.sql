@@ -15,16 +15,18 @@ CREATE TABLE IF NOT EXISTS white_label_configs (
 );
 
 -- Create indexes
-CREATE INDEX idx_white_label_configs_tenant_id ON white_label_configs(tenant_id);
-CREATE INDEX idx_white_label_configs_enabled ON white_label_configs(enabled);
+CREATE INDEX IF NOT EXISTS idx_white_label_configs_tenant_id ON white_label_configs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_white_label_configs_enabled ON white_label_configs(enabled);
 
 -- Add RLS policies
 ALTER TABLE white_label_configs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view white-label config for their tenant" ON white_label_configs;
 CREATE POLICY "Users can view white-label config for their tenant"
   ON white_label_configs FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can insert white-label config" ON white_label_configs;
 CREATE POLICY "Admins can insert white-label config"
   ON white_label_configs FOR INSERT
   WITH CHECK (
@@ -36,6 +38,7 @@ CREATE POLICY "Admins can insert white-label config"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update white-label config" ON white_label_configs;
 CREATE POLICY "Admins can update white-label config"
   ON white_label_configs FOR UPDATE
   USING (
@@ -47,6 +50,7 @@ CREATE POLICY "Admins can update white-label config"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete white-label config" ON white_label_configs;
 CREATE POLICY "Admins can delete white-label config"
   ON white_label_configs FOR DELETE
   USING (
@@ -59,6 +63,7 @@ CREATE POLICY "Admins can delete white-label config"
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_white_label_configs_updated_at ON white_label_configs;
 CREATE TRIGGER update_white_label_configs_updated_at
   BEFORE UPDATE ON white_label_configs
   FOR EACH ROW
@@ -70,6 +75,7 @@ VALUES ('white-label-assets', 'white-label-assets', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Add RLS policies for storage bucket
+DROP POLICY IF EXISTS "Users can upload white-label assets for their tenant" ON storage.objects;
 CREATE POLICY "Users can upload white-label assets for their tenant"
   ON storage.objects FOR INSERT
   WITH CHECK (
@@ -77,10 +83,12 @@ CREATE POLICY "Users can upload white-label assets for their tenant"
     AND (storage.foldername(name))[1] IN (SELECT tenant_id FROM users WHERE id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Public can view white-label assets" ON storage.objects;
 CREATE POLICY "Public can view white-label assets"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'white-label-assets');
 
+DROP POLICY IF EXISTS "Users can delete their white-label assets" ON storage.objects;
 CREATE POLICY "Users can delete their white-label assets"
   ON storage.objects FOR DELETE
   USING (

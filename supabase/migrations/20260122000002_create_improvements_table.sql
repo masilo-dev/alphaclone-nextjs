@@ -25,6 +25,7 @@ ALTER TABLE improvements ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 -- Admin can read all
+DROP POLICY IF EXISTS "Admins can view all improvements" ON improvements;
 CREATE POLICY "Admins can view all improvements"
   ON improvements FOR SELECT
   USING (
@@ -36,11 +37,13 @@ CREATE POLICY "Admins can view all improvements"
   );
 
 -- Anyone can insert (for anonymous submissions)
+DROP POLICY IF EXISTS "Anyone can submit improvements" ON improvements;
 CREATE POLICY "Anyone can submit improvements"
   ON improvements FOR INSERT
   WITH CHECK (true);
 
 -- Admin can update
+DROP POLICY IF EXISTS "Admins can update improvements" ON improvements;
 CREATE POLICY "Admins can update improvements"
   ON improvements FOR UPDATE
   USING (
@@ -66,6 +69,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS improvements_updated_at ON improvements;
 CREATE TRIGGER improvements_updated_at
   BEFORE UPDATE ON improvements
   FOR EACH ROW

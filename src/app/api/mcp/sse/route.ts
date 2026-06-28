@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
+import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
       .eq('api_key', apiKey);
 
     // Create a session record
+    const initialAiState = await getInitialBusinessAIStateForTenant(tenant_id);
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
     const { data: sessionData, error: sessionError } = await supabaseAdmin
       .from('mcp_sessions')
@@ -70,8 +71,8 @@ export async function GET(req: NextRequest) {
         expires_at: expiresAt,
         metadata: {
           client_label: 'sse-handshake-app',
-          business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
-          business_ai_state: DEFAULT_BUSINESS_AI_STATE,
+          business_ai_version: initialAiState.version,
+          business_ai_state: initialAiState,
         } 
       })
       .select('id')

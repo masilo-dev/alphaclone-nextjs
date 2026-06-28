@@ -61,12 +61,15 @@ DROP POLICY IF EXISTS "profiles_admin_all" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_tenant_admin_select_v2" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_tenant_admin_select_v3" ON public.profiles;
 
+DROP POLICY IF EXISTS "profiles_self_all" ON public.profiles;
 CREATE POLICY "profiles_self_all" ON public.profiles
 FOR ALL USING (id = auth.uid()) WITH CHECK (id = auth.uid());
 
+DROP POLICY IF EXISTS "profiles_admin_all" ON public.profiles;
 CREATE POLICY "profiles_admin_all" ON public.profiles
 FOR ALL USING (is_super_admin());
 
+DROP POLICY IF EXISTS "profiles_tenant_admin_select_v3" ON public.profiles;
 CREATE POLICY "profiles_tenant_admin_select_v3" ON public.profiles
 FOR SELECT USING (
   EXISTS (
@@ -89,11 +92,14 @@ DROP POLICY IF EXISTS "tenant_users_self_tenant_select" ON public.tenant_users;
 DROP POLICY IF EXISTS "tenant_users_self_select" ON public.tenant_users;
 DROP POLICY IF EXISTS "tenant_users_tenant_admin_all" ON public.tenant_users;
 
+DROP POLICY IF EXISTS "tenant_users_all_admin" ON public.tenant_users;
 CREATE POLICY "tenant_users_all_admin" ON public.tenant_users
 FOR ALL USING (is_super_admin());
 
+DROP POLICY IF EXISTS "tenant_users_self_select" ON public.tenant_users;
 CREATE POLICY "tenant_users_self_select" ON public.tenant_users
 FOR SELECT USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "tenant_users_tenant_admin_all" ON public.tenant_users;
 CREATE POLICY "tenant_users_tenant_admin_all" ON public.tenant_users
 FOR ALL USING (is_tenant_admin(tenant_id));

@@ -20,43 +20,47 @@ CREATE TABLE IF NOT EXISTS api_integrations (
 );
 
 -- Create indexes
-CREATE INDEX idx_api_integrations_category ON api_integrations(category);
-CREATE INDEX idx_api_integrations_featured ON api_integrations(featured);
-CREATE INDEX idx_api_integrations_published ON api_integrations(published);
-CREATE INDEX idx_api_integrations_rating ON api_integrations(rating DESC);
+CREATE INDEX IF NOT EXISTS idx_api_integrations_category ON api_integrations(category);
+CREATE INDEX IF NOT EXISTS idx_api_integrations_featured ON api_integrations(featured);
+CREATE INDEX IF NOT EXISTS idx_api_integrations_published ON api_integrations(published);
+CREATE INDEX IF NOT EXISTS idx_api_integrations_rating ON api_integrations(rating DESC);
 
 -- Add RLS policies
 ALTER TABLE api_integrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can view published integrations" ON api_integrations;
 CREATE POLICY "Anyone can view published integrations"
   ON api_integrations FOR SELECT
   USING (published = true);
 
+DROP POLICY IF EXISTS "Admins can insert integrations" ON api_integrations;
 CREATE POLICY "Admins can insert integrations"
   ON api_integrations FOR INSERT
   WITH CHECK (
     EXISTS (
-      SELECT 1 FROM users 
+      SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role IN ('admin')
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update integrations" ON api_integrations;
 CREATE POLICY "Admins can update integrations"
   ON api_integrations FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM users 
+      SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role IN ('admin')
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete integrations" ON api_integrations;
 CREATE POLICY "Admins can delete integrations"
   ON api_integrations FOR DELETE
   USING (
     EXISTS (
-      SELECT 1 FROM users 
+      SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role IN ('admin')
     )
@@ -77,46 +81,50 @@ CREATE TABLE IF NOT EXISTS tenant_api_installations (
 );
 
 -- Create indexes
-CREATE INDEX idx_tenant_api_installations_tenant_id ON tenant_api_installations(tenant_id);
-CREATE INDEX idx_tenant_api_installations_integration_id ON tenant_api_installations(integration_id);
-CREATE INDEX idx_tenant_api_installations_api_key ON tenant_api_installations(api_key);
-CREATE INDEX idx_tenant_api_installations_enabled ON tenant_api_installations(enabled);
+CREATE INDEX IF NOT EXISTS idx_tenant_api_installations_tenant_id ON tenant_api_installations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_api_installations_integration_id ON tenant_api_installations(integration_id);
+CREATE INDEX IF NOT EXISTS idx_tenant_api_installations_api_key ON tenant_api_installations(api_key);
+CREATE INDEX IF NOT EXISTS idx_tenant_api_installations_enabled ON tenant_api_installations(enabled);
 
 -- Add RLS policies
 ALTER TABLE tenant_api_installations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their tenant's installations" ON tenant_api_installations;
 CREATE POLICY "Users can view their tenant's installations"
   ON tenant_api_installations FOR SELECT
-  USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
+  USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can insert installations" ON tenant_api_installations;
 CREATE POLICY "Admins can insert installations"
   ON tenant_api_installations FOR INSERT
   WITH CHECK (
-    tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
+    tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
     AND EXISTS (
-      SELECT 1 FROM users 
+      SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role IN ('admin', 'tenant_admin')
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update installations" ON tenant_api_installations;
 CREATE POLICY "Admins can update installations"
   ON tenant_api_installations FOR UPDATE
   USING (
-    tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
+    tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
     AND EXISTS (
-      SELECT 1 FROM users 
+      SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role IN ('admin', 'tenant_admin')
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete installations" ON tenant_api_installations;
 CREATE POLICY "Admins can delete installations"
   ON tenant_api_installations FOR DELETE
   USING (
-    tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
+    tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
     AND EXISTS (
-      SELECT 1 FROM users 
+      SELECT 1 FROM profiles 
       WHERE id = auth.uid() 
       AND role IN ('admin', 'tenant_admin')
     )
@@ -135,18 +143,20 @@ CREATE TABLE IF NOT EXISTS api_usage_logs (
 );
 
 -- Create indexes
-CREATE INDEX idx_api_usage_logs_tenant_id ON api_usage_logs(tenant_id);
-CREATE INDEX idx_api_usage_logs_integration_id ON api_usage_logs(integration_id);
-CREATE INDEX idx_api_usage_logs_timestamp ON api_usage_logs(timestamp DESC);
-CREATE INDEX idx_api_usage_logs_status_code ON api_usage_logs(status_code);
+CREATE INDEX IF NOT EXISTS idx_api_usage_logs_tenant_id ON api_usage_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_api_usage_logs_integration_id ON api_usage_logs(integration_id);
+CREATE INDEX IF NOT EXISTS idx_api_usage_logs_timestamp ON api_usage_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_api_usage_logs_status_code ON api_usage_logs(status_code);
 
 -- Add RLS policies
 ALTER TABLE api_usage_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view their tenant's usage logs" ON api_usage_logs;
 CREATE POLICY "Users can view their tenant's usage logs"
   ON api_usage_logs FOR SELECT
-  USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
+  USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "System can insert usage logs" ON api_usage_logs;
 CREATE POLICY "System can insert usage logs"
   ON api_usage_logs FOR INSERT
   WITH CHECK (true);
@@ -163,40 +173,46 @@ CREATE TABLE IF NOT EXISTS api_ratings (
 );
 
 -- Create indexes
-CREATE INDEX idx_api_ratings_tenant_id ON api_ratings(tenant_id);
-CREATE INDEX idx_api_ratings_integration_id ON api_ratings(integration_id);
-CREATE INDEX idx_api_ratings_rating ON api_ratings(rating);
+CREATE INDEX IF NOT EXISTS idx_api_ratings_tenant_id ON api_ratings(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_api_ratings_integration_id ON api_ratings(integration_id);
+CREATE INDEX IF NOT EXISTS idx_api_ratings_rating ON api_ratings(rating);
 
 -- Add RLS policies
 ALTER TABLE api_ratings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view ratings" ON api_ratings;
 CREATE POLICY "Users can view ratings"
   ON api_ratings FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their ratings" ON api_ratings;
 CREATE POLICY "Users can insert their ratings"
   ON api_ratings FOR INSERT
   WITH CHECK (
-    tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
+    tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Users can update their ratings" ON api_ratings;
 CREATE POLICY "Users can update their ratings"
   ON api_ratings FOR UPDATE
   USING (
-    tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid())
+    tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
   );
 
 -- Add updated_at triggers
+DROP TRIGGER IF EXISTS update_api_integrations_updated_at ON api_integrations;
 CREATE TRIGGER update_api_integrations_updated_at
   BEFORE UPDATE ON api_integrations
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tenant_api_installations_updated_at ON tenant_api_installations;
 CREATE TRIGGER update_tenant_api_installations_updated_at
   BEFORE UPDATE ON tenant_api_installations
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_api_ratings_updated_at ON api_ratings;
 CREATE TRIGGER update_api_ratings_updated_at
   BEFORE UPDATE ON api_ratings
   FOR EACH ROW

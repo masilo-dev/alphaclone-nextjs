@@ -29,5 +29,5 @@ CREATE POLICY manage_public_shares ON public_shares
     ));
 
 -- Indexes for performance and expiration sweeps
-CREATE INDEX idx_public_shares_tenant ON public_shares(tenant_id);
-CREATE INDEX idx_public_shares_expires ON public_shares(expires_at);
+CREATE INDEX IF NOT EXISTS idx_public_shares_tenant ON public_shares(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_public_shares_expires ON public_shares(expires_at);

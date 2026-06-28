@@ -30,6 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_email_campaigns_created_at ON public.email_campai
 ALTER TABLE public.email_campaigns ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for email campaign access
+DROP POLICY IF EXISTS "Users can view their own tenant campaigns" ON public.email_campaigns;
 CREATE POLICY "Users can view their own tenant campaigns" ON public.email_campaigns
   FOR SELECT USING (
     auth.role() = 'authenticated' AND 
@@ -39,6 +40,7 @@ CREATE POLICY "Users can view their own tenant campaigns" ON public.email_campai
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert campaigns for their tenant" ON public.email_campaigns;
 CREATE POLICY "Users can insert campaigns for their tenant" ON public.email_campaigns
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
@@ -48,6 +50,7 @@ CREATE POLICY "Users can insert campaigns for their tenant" ON public.email_camp
     )
   );
 
+DROP POLICY IF EXISTS "Users can update campaigns for their tenant" ON public.email_campaigns;
 CREATE POLICY "Users can update campaigns for their tenant" ON public.email_campaigns
   FOR UPDATE USING (
     auth.role() = 'authenticated' AND 
@@ -57,6 +60,7 @@ CREATE POLICY "Users can update campaigns for their tenant" ON public.email_camp
     )
   );
 
+DROP POLICY IF EXISTS "Users can delete campaigns for their tenant" ON public.email_campaigns;
 CREATE POLICY "Users can delete campaigns for their tenant" ON public.email_campaigns
   FOR DELETE USING (
     auth.role() = 'authenticated' AND 
@@ -67,6 +71,7 @@ CREATE POLICY "Users can delete campaigns for their tenant" ON public.email_camp
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_email_campaigns_updated_at ON public.email_campaigns;
 CREATE TRIGGER update_email_campaigns_updated_at
   BEFORE UPDATE ON public.email_campaigns
   FOR EACH ROW

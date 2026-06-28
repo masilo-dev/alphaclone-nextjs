@@ -190,7 +190,8 @@ export async function POST(req: NextRequest) {
     headers.set('MCP-Protocol-Version', protocolVersion);
 
     if (ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
-      const { DEFAULT_BUSINESS_AI_STATE } = await import('@/services/mcp/businessAIState');
+      const { getInitialBusinessAIStateForTenant } = await import('@/lib/mcp/getInitialBusinessAIStateForTenant');
+      const initialAiState = await getInitialBusinessAIStateForTenant(tenantId);
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
       const { data: sessionRow, error: sessionError } = await supabaseAdmin
@@ -202,8 +203,8 @@ export async function POST(req: NextRequest) {
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
             protocol_version: protocolVersion,
-            business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
-            business_ai_state: DEFAULT_BUSINESS_AI_STATE,
+            business_ai_version: initialAiState.version,
+            business_ai_state: initialAiState,
           },
         })
         .select('id')
@@ -505,7 +506,6 @@ export async function POST(req: NextRequest) {
   // 5. Execute via SDK (lazy-load heavy MCPServer module for POST only)
   try {
     const { createMCPServer } = await import('@/services/mcp/MCPServer');
-    const { DEFAULT_BUSINESS_AI_STATE } = await import('@/services/mcp/businessAIState');
     const { StatelessTransport } = await import('@/services/mcp/StatelessTransport');
 
     const mcpServer = createMCPServer({
@@ -532,6 +532,8 @@ export async function POST(req: NextRequest) {
 
     // Generate session on initialize
     if (requestBody.method === 'initialize' && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      const { getInitialBusinessAIStateForTenant } = await import('@/lib/mcp/getInitialBusinessAIStateForTenant');
+      const initialAiState = await getInitialBusinessAIStateForTenant(tenantId);
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
       const { data: sessionRow } = await supabaseAdmin
@@ -543,8 +545,8 @@ export async function POST(req: NextRequest) {
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
-            business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
-            business_ai_state: DEFAULT_BUSINESS_AI_STATE,
+            business_ai_version: initialAiState.version,
+            business_ai_state: initialAiState,
           },
         })
         .select('id')

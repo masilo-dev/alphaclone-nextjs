@@ -28,6 +28,7 @@ alter table public.ingestion_events enable row level security;
 
 -- Single tenant-scoped policy covering all operations for tenant members.
 drop policy if exists "Tenant members manage ingestion events" on public.ingestion_events;
+DROP POLICY IF EXISTS "Tenant members manage ingestion events" ON public.ingestion_events;
 create policy "Tenant members manage ingestion events"
   on public.ingestion_events for all
   using (

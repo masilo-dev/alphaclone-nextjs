@@ -14,16 +14,18 @@ CREATE TABLE IF NOT EXISTS microsoft365_integrations (
 );
 
 -- Create indexes
-CREATE INDEX idx_microsoft365_tenant_id ON microsoft365_integrations(tenant_id);
-CREATE INDEX idx_microsoft365_enabled ON microsoft365_integrations(enabled);
+CREATE INDEX IF NOT EXISTS idx_microsoft365_tenant_id ON microsoft365_integrations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_microsoft365_enabled ON microsoft365_integrations(enabled);
 
 -- Add RLS policies
 ALTER TABLE microsoft365_integrations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view Microsoft 365 config for their tenant" ON microsoft365_integrations;
 CREATE POLICY "Users can view Microsoft 365 config for their tenant"
   ON microsoft365_integrations FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can insert Microsoft 365 config" ON microsoft365_integrations;
 CREATE POLICY "Admins can insert Microsoft 365 config"
   ON microsoft365_integrations FOR INSERT
   WITH CHECK (
@@ -35,6 +37,7 @@ CREATE POLICY "Admins can insert Microsoft 365 config"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update Microsoft 365 config" ON microsoft365_integrations;
 CREATE POLICY "Admins can update Microsoft 365 config"
   ON microsoft365_integrations FOR UPDATE
   USING (
@@ -46,6 +49,7 @@ CREATE POLICY "Admins can update Microsoft 365 config"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete Microsoft 365 config" ON microsoft365_integrations;
 CREATE POLICY "Admins can delete Microsoft 365 config"
   ON microsoft365_integrations FOR DELETE
   USING (
@@ -58,6 +62,7 @@ CREATE POLICY "Admins can delete Microsoft 365 config"
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_microsoft365_updated_at ON microsoft365_integrations;
 CREATE TRIGGER update_microsoft365_updated_at
   BEFORE UPDATE ON microsoft365_integrations
   FOR EACH ROW

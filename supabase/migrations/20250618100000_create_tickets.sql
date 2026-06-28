@@ -41,19 +41,23 @@ ALTER TABLE tickets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comments ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for tickets
+DROP POLICY IF EXISTS "Users can view tickets in their tenant" ON tickets;
 CREATE POLICY "Users can view tickets in their tenant"
     ON tickets FOR SELECT
     USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS "Users can create tickets in their tenant" ON tickets;
 CREATE POLICY "Users can create tickets in their tenant"
     ON tickets FOR INSERT
     WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS "Users can update tickets in their tenant" ON tickets;
 CREATE POLICY "Users can update tickets in their tenant"
     ON tickets FOR UPDATE
     USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 -- Create RLS policies for ticket comments
+DROP POLICY IF EXISTS "Users can view comments on tickets in their tenant" ON ticket_comments;
 CREATE POLICY "Users can view comments on tickets in their tenant"
     ON ticket_comments FOR SELECT
     USING (
@@ -64,12 +68,13 @@ CREATE POLICY "Users can view comments on tickets in their tenant"
         )
     );
 
+DROP POLICY IF EXISTS "Users can create comments on tickets in their tenant" ON ticket_comments;
 CREATE POLICY "Users can create comments on tickets in their tenant"
     ON ticket_comments FOR INSERT
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM tickets
-            WHERE tickets.id = NEW.ticket_id
+            WHERE tickets.id = ticket_id
             AND tickets.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
@@ -83,7 +88,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create trigger for updated_at
+DROP TRIGGER IF EXISTS update_tickets_updated_at ON tickets;
 CREATE TRIGGER update_tickets_updated_at
     BEFORE UPDATE ON tickets
     FOR EACH ROW

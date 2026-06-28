@@ -18,6 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_access_tokens_expires_at ON public.access_tokens(
 -- RLS: Only service role or admin can manage tokens
 ALTER TABLE public.access_tokens ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admin can manage access tokens" ON public.access_tokens;
 CREATE POLICY "Admin can manage access tokens" 
     ON public.access_tokens 
     USING (auth.jwt() ->> 'role' = 'service_role');

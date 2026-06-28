@@ -57,23 +57,28 @@ ALTER TABLE campaign_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE campaign_recipients ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies for marketing_campaigns
+DROP POLICY IF EXISTS "Users can view campaigns in their tenant" ON marketing_campaigns;
 CREATE POLICY "Users can view campaigns in their tenant"
     ON marketing_campaigns FOR SELECT
     USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS "Users can create campaigns in their tenant" ON marketing_campaigns;
 CREATE POLICY "Users can create campaigns in their tenant"
     ON marketing_campaigns FOR INSERT
     WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS "Users can update campaigns in their tenant" ON marketing_campaigns;
 CREATE POLICY "Users can update campaigns in their tenant"
     ON marketing_campaigns FOR UPDATE
     USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
+DROP POLICY IF EXISTS "Users can delete campaigns in their tenant" ON marketing_campaigns;
 CREATE POLICY "Users can delete campaigns in their tenant"
     ON marketing_campaigns FOR DELETE
     USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid);
 
 -- Create RLS policies for campaign_messages
+DROP POLICY IF EXISTS "Users can view campaign messages in their tenant" ON campaign_messages;
 CREATE POLICY "Users can view campaign messages in their tenant"
     ON campaign_messages FOR SELECT
     USING (
@@ -84,17 +89,19 @@ CREATE POLICY "Users can view campaign messages in their tenant"
         )
     );
 
+DROP POLICY IF EXISTS "Users can create campaign messages in their tenant" ON campaign_messages;
 CREATE POLICY "Users can create campaign messages in their tenant"
     ON campaign_messages FOR INSERT
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM marketing_campaigns
-            WHERE marketing_campaigns.id = NEW.campaign_id
+            WHERE marketing_campaigns.id = campaign_id
             AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
 
 -- Create RLS policies for campaign_recipients
+DROP POLICY IF EXISTS "Users can view campaign recipients in their tenant" ON campaign_recipients;
 CREATE POLICY "Users can view campaign recipients in their tenant"
     ON campaign_recipients FOR SELECT
     USING (
@@ -105,12 +112,13 @@ CREATE POLICY "Users can view campaign recipients in their tenant"
         )
     );
 
+DROP POLICY IF EXISTS "Users can create campaign recipients in their tenant" ON campaign_recipients;
 CREATE POLICY "Users can create campaign recipients in their tenant"
     ON campaign_recipients FOR INSERT
     WITH CHECK (
         EXISTS (
             SELECT 1 FROM marketing_campaigns
-            WHERE marketing_campaigns.id = NEW.campaign_id
+            WHERE marketing_campaigns.id = campaign_id
             AND marketing_campaigns.tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
         )
     );
@@ -125,6 +133,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Create trigger for updated_at
+DROP TRIGGER IF EXISTS update_marketing_campaigns_updated_at ON marketing_campaigns;
 CREATE TRIGGER update_marketing_campaigns_updated_at
     BEFORE UPDATE ON marketing_campaigns
     FOR EACH ROW

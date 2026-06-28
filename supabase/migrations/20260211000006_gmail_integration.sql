@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.gmail_sync_tokens (
 ALTER TABLE public.gmail_sync_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can manage their own gmail tokens" ON public.gmail_sync_tokens;
 CREATE POLICY "Users can manage their own gmail tokens"
     ON public.gmail_sync_tokens FOR ALL
     TO authenticated

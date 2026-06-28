@@ -2,6 +2,7 @@
 -- deals that belong to their tenant. Scoped through the deal -> tenant_users join
 -- so it works regardless of whether deal_products.tenant_id is populated.
 drop policy if exists "Tenant members manage deal products" on public.deal_products;
+DROP POLICY IF EXISTS "Tenant members manage deal products" ON public.deal_products;
 create policy "Tenant members manage deal products"
   on public.deal_products for all
   using (

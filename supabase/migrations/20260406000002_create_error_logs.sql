@@ -12,18 +12,20 @@ CREATE TABLE IF NOT EXISTS error_logs (
 );
 
 -- Create indexes for faster queries
-CREATE INDEX idx_error_logs_tenant_id ON error_logs(tenant_id);
-CREATE INDEX idx_error_logs_user_id ON error_logs(user_id);
-CREATE INDEX idx_error_logs_severity ON error_logs(severity);
-CREATE INDEX idx_error_logs_created_at ON error_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_error_logs_tenant_id ON error_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_error_logs_user_id ON error_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_error_logs_severity ON error_logs(severity);
+CREATE INDEX IF NOT EXISTS idx_error_logs_created_at ON error_logs(created_at DESC);
 
 -- Add RLS policies
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view error logs for their tenant" ON error_logs;
 CREATE POLICY "Users can view error logs for their tenant"
   ON error_logs FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "System can insert error logs" ON error_logs;
 CREATE POLICY "System can insert error logs"
   ON error_logs FOR INSERT
   WITH CHECK (true); -- Allow system to insert error logs
@@ -40,17 +42,19 @@ CREATE TABLE IF NOT EXISTS performance_logs (
 );
 
 -- Create indexes
-CREATE INDEX idx_performance_logs_tenant_id ON performance_logs(tenant_id);
-CREATE INDEX idx_performance_logs_metric ON performance_logs(metric);
-CREATE INDEX idx_performance_logs_created_at ON performance_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_performance_logs_tenant_id ON performance_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_performance_logs_metric ON performance_logs(metric);
+CREATE INDEX IF NOT EXISTS idx_performance_logs_created_at ON performance_logs(created_at DESC);
 
 -- Add RLS policies
 ALTER TABLE performance_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view performance logs for their tenant" ON performance_logs;
 CREATE POLICY "Users can view performance logs for their tenant"
   ON performance_logs FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "System can insert performance logs" ON performance_logs;
 CREATE POLICY "System can insert performance logs"
   ON performance_logs FOR INSERT
   WITH CHECK (true);
@@ -71,19 +75,21 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- Create indexes
-CREATE INDEX idx_audit_logs_tenant_id ON audit_logs(tenant_id);
-CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_action ON audit_logs(action);
-CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
-CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_id ON audit_logs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 
 -- Add RLS policies
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view audit logs for their tenant" ON audit_logs;
 CREATE POLICY "Users can view audit logs for their tenant"
   ON audit_logs FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "System can insert audit logs" ON audit_logs;
 CREATE POLICY "System can insert audit logs"
   ON audit_logs FOR INSERT
   WITH CHECK (true);

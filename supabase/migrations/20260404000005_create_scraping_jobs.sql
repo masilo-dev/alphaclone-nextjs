@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_scraping_jobs_started_at ON public.scraping_jobs(
 ALTER TABLE public.scraping_jobs ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for scraping jobs access
+DROP POLICY IF EXISTS "Users can view their own tenant scraping jobs" ON public.scraping_jobs;
 CREATE POLICY "Users can view their own tenant scraping jobs" ON public.scraping_jobs
   FOR SELECT USING (
     auth.role() = 'authenticated' AND 
@@ -28,6 +29,7 @@ CREATE POLICY "Users can view their own tenant scraping jobs" ON public.scraping
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert scraping jobs for their tenant" ON public.scraping_jobs;
 CREATE POLICY "Users can insert scraping jobs for their tenant" ON public.scraping_jobs
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
@@ -37,6 +39,7 @@ CREATE POLICY "Users can insert scraping jobs for their tenant" ON public.scrapi
     )
   );
 
+DROP POLICY IF EXISTS "Users can update scraping jobs for their tenant" ON public.scraping_jobs;
 CREATE POLICY "Users can update scraping jobs for their tenant" ON public.scraping_jobs
   FOR UPDATE USING (
     auth.role() = 'authenticated' AND 
@@ -47,6 +50,7 @@ CREATE POLICY "Users can update scraping jobs for their tenant" ON public.scrapi
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_scraping_jobs_updated_at ON public.scraping_jobs;
 CREATE TRIGGER update_scraping_jobs_updated_at
   BEFORE UPDATE ON public.scraping_jobs
   FOR EACH ROW

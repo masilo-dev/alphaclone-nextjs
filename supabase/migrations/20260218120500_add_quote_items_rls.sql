@@ -7,6 +7,7 @@ ALTER TABLE quote_items ENABLE ROW LEVEL SECURITY;
 -- However, for robustness, we can also check the parent quote ownership if tenant_id is missing on item?
 -- For now, let's enforce tenant_id check.
 
+DROP POLICY IF EXISTS "Tenant users can ALL quote_items" ON quote_items;
 CREATE POLICY "Tenant users can ALL quote_items" ON quote_items
 FOR ALL
 USING (

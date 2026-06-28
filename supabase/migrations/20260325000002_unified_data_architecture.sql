@@ -58,18 +58,18 @@ CREATE TABLE IF NOT EXISTS companies (
 );
 
 -- Indexes for companies
-CREATE INDEX idx_companies_tenant ON companies(tenant_id);
-CREATE INDEX idx_companies_domain ON companies(domain) WHERE domain IS NOT NULL;
-CREATE INDEX idx_companies_health_score ON companies(health_score DESC);
-CREATE INDEX idx_companies_lifecycle ON companies(lifecycle_stage);
-CREATE INDEX idx_companies_assigned ON companies(assigned_to) WHERE assigned_to IS NOT NULL;
-CREATE INDEX idx_companies_last_activity ON companies(last_activity_at DESC NULLS LAST);
-CREATE INDEX idx_companies_next_followup ON companies(next_followup_at) WHERE next_followup_at IS NOT NULL;
-CREATE INDEX idx_companies_tags ON companies USING GIN(tags);
-CREATE INDEX idx_companies_created ON companies(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_companies_tenant ON companies(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_companies_domain ON companies(domain) WHERE domain IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_companies_health_score ON companies(health_score DESC);
+CREATE INDEX IF NOT EXISTS idx_companies_lifecycle ON companies(lifecycle_stage);
+CREATE INDEX IF NOT EXISTS idx_companies_assigned ON companies(assigned_to) WHERE assigned_to IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_companies_last_activity ON companies(last_activity_at DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_companies_next_followup ON companies(next_followup_at) WHERE next_followup_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_companies_tags ON companies USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_companies_created ON companies(created_at DESC);
 
 -- Full-text search for companies
-CREATE INDEX idx_companies_search ON companies USING GIN(to_tsvector('english',
+CREATE INDEX IF NOT EXISTS idx_companies_search ON companies USING GIN(to_tsvector('english',
   coalesce(name, '') || ' ' ||
   coalesce(domain, '') || ' ' ||
   coalesce(industry, '')
@@ -134,20 +134,20 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 -- Indexes for contacts
 CREATE UNIQUE INDEX idx_contacts_email_tenant ON contacts(email, tenant_id) WHERE email IS NOT NULL;
-CREATE INDEX idx_contacts_tenant ON contacts(tenant_id);
-CREATE INDEX idx_contacts_company ON contacts(company_id) WHERE company_id IS NOT NULL;
-CREATE INDEX idx_contacts_full_name ON contacts(full_name);
-CREATE INDEX idx_contacts_lead_score ON contacts(lead_score DESC);
-CREATE INDEX idx_contacts_lifecycle ON contacts(lifecycle_stage);
-CREATE INDEX idx_contacts_status ON contacts(status);
-CREATE INDEX idx_contacts_assigned ON contacts(assigned_to) WHERE assigned_to IS NOT NULL;
-CREATE INDEX idx_contacts_last_activity ON contacts(last_activity_at DESC NULLS LAST);
-CREATE INDEX idx_contacts_next_followup ON contacts(next_followup_at) WHERE next_followup_at IS NOT NULL;
-CREATE INDEX idx_contacts_tags ON contacts USING GIN(tags);
-CREATE INDEX idx_contacts_created ON contacts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_contacts_tenant ON contacts(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_contacts_company ON contacts(company_id) WHERE company_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_contacts_full_name ON contacts(full_name);
+CREATE INDEX IF NOT EXISTS idx_contacts_lead_score ON contacts(lead_score DESC);
+CREATE INDEX IF NOT EXISTS idx_contacts_lifecycle ON contacts(lifecycle_stage);
+CREATE INDEX IF NOT EXISTS idx_contacts_status ON contacts(status);
+CREATE INDEX IF NOT EXISTS idx_contacts_assigned ON contacts(assigned_to) WHERE assigned_to IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_contacts_last_activity ON contacts(last_activity_at DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_contacts_next_followup ON contacts(next_followup_at) WHERE next_followup_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_contacts_tags ON contacts USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_contacts_created ON contacts(created_at DESC);
 
 -- Full-text search for contacts
-CREATE INDEX idx_contacts_search ON contacts USING GIN(to_tsvector('english',
+CREATE INDEX IF NOT EXISTS idx_contacts_search ON contacts USING GIN(to_tsvector('english',
   coalesce(first_name, '') || ' ' ||
   coalesce(last_name, '') || ' ' ||
   coalesce(email, '') || ' ' ||
@@ -207,21 +207,21 @@ CREATE TABLE IF NOT EXISTS opportunities (
 );
 
 -- Indexes for opportunities
-CREATE INDEX idx_opportunities_tenant ON opportunities(tenant_id);
-CREATE INDEX idx_opportunities_company ON opportunities(company_id);
-CREATE INDEX idx_opportunities_contact ON opportunities(primary_contact_id) WHERE primary_contact_id IS NOT NULL;
-CREATE INDEX idx_opportunities_stage ON opportunities(stage);
-CREATE INDEX idx_opportunities_owner ON opportunities(owner_id) WHERE owner_id IS NOT NULL;
-CREATE INDEX idx_opportunities_close_date ON opportunities(expected_close_date) WHERE expected_close_date IS NOT NULL;
-CREATE INDEX idx_opportunities_amount ON opportunities(amount DESC) WHERE amount IS NOT NULL;
-CREATE INDEX idx_opportunities_probability ON opportunities(probability DESC) WHERE probability IS NOT NULL;
-CREATE INDEX idx_opportunities_last_activity ON opportunities(last_activity_at DESC NULLS LAST);
-CREATE INDEX idx_opportunities_next_followup ON opportunities(next_followup_at) WHERE next_followup_at IS NOT NULL;
-CREATE INDEX idx_opportunities_tags ON opportunities USING GIN(tags);
-CREATE INDEX idx_opportunities_created ON opportunities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_opportunities_tenant ON opportunities(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_opportunities_company ON opportunities(company_id);
+CREATE INDEX IF NOT EXISTS idx_opportunities_contact ON opportunities(primary_contact_id) WHERE primary_contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_stage ON opportunities(stage);
+CREATE INDEX IF NOT EXISTS idx_opportunities_owner ON opportunities(owner_id) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_close_date ON opportunities(expected_close_date) WHERE expected_close_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_amount ON opportunities(amount DESC) WHERE amount IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_probability ON opportunities(probability DESC) WHERE probability IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_last_activity ON opportunities(last_activity_at DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_opportunities_next_followup ON opportunities(next_followup_at) WHERE next_followup_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_tags ON opportunities USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_opportunities_created ON opportunities(created_at DESC);
 
 -- Full-text search for opportunities
-CREATE INDEX idx_opportunities_search ON opportunities USING GIN(to_tsvector('english',
+CREATE INDEX IF NOT EXISTS idx_opportunities_search ON opportunities USING GIN(to_tsvector('english',
   coalesce(name, '') || ' ' ||
   coalesce(description, '')
 ));
@@ -278,27 +278,27 @@ CREATE TABLE IF NOT EXISTS activities (
 );
 
 -- Indexes for activities
-CREATE INDEX idx_activities_tenant ON activities(tenant_id);
-CREATE INDEX idx_activities_company ON activities(company_id) WHERE company_id IS NOT NULL;
-CREATE INDEX idx_activities_contact ON activities(contact_id) WHERE contact_id IS NOT NULL;
-CREATE INDEX idx_activities_opportunity ON activities(opportunity_id) WHERE opportunity_id IS NOT NULL;
-CREATE INDEX idx_activities_project ON activities(project_id) WHERE project_id IS NOT NULL;
-CREATE INDEX idx_activities_type ON activities(type);
-CREATE INDEX idx_activities_status ON activities(status);
-CREATE INDEX idx_activities_priority ON activities(priority);
-CREATE INDEX idx_activities_created_by ON activities(created_by) WHERE created_by IS NOT NULL;
-CREATE INDEX idx_activities_assigned_to ON activities(assigned_to) WHERE assigned_to IS NOT NULL;
-CREATE INDEX idx_activities_scheduled ON activities(scheduled_at) WHERE scheduled_at IS NOT NULL;
-CREATE INDEX idx_activities_due_date ON activities(due_date) WHERE due_date IS NOT NULL;
-CREATE INDEX idx_activities_created ON activities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activities_tenant ON activities(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_activities_company ON activities(company_id) WHERE company_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_contact ON activities(contact_id) WHERE contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_opportunity ON activities(opportunity_id) WHERE opportunity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_project ON activities(project_id) WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_type ON activities(type);
+CREATE INDEX IF NOT EXISTS idx_activities_status ON activities(status);
+CREATE INDEX IF NOT EXISTS idx_activities_priority ON activities(priority);
+CREATE INDEX IF NOT EXISTS idx_activities_created_by ON activities(created_by) WHERE created_by IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_assigned_to ON activities(assigned_to) WHERE assigned_to IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_scheduled ON activities(scheduled_at) WHERE scheduled_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_due_date ON activities(due_date) WHERE due_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_created ON activities(created_at DESC);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_activities_company_created ON activities(company_id, created_at DESC) WHERE company_id IS NOT NULL;
-CREATE INDEX idx_activities_contact_created ON activities(contact_id, created_at DESC) WHERE contact_id IS NOT NULL;
-CREATE INDEX idx_activities_assigned_status ON activities(assigned_to, status) WHERE assigned_to IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_company_created ON activities(company_id, created_at DESC) WHERE company_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_contact_created ON activities(contact_id, created_at DESC) WHERE contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_activities_assigned_status ON activities(assigned_to, status) WHERE assigned_to IS NOT NULL;
 
 -- Full-text search for activities
-CREATE INDEX idx_activities_search ON activities USING GIN(to_tsvector('english',
+CREATE INDEX IF NOT EXISTS idx_activities_search ON activities USING GIN(to_tsvector('english',
   coalesce(subject, '') || ' ' ||
   coalesce(description, '') || ' ' ||
   coalesce(outcome, '')
@@ -375,26 +375,26 @@ CREATE TABLE IF NOT EXISTS unified_messages (
 );
 
 -- Indexes for unified_messages
-CREATE INDEX idx_messages_tenant ON unified_messages(tenant_id);
-CREATE INDEX idx_messages_company ON unified_messages(company_id) WHERE company_id IS NOT NULL;
-CREATE INDEX idx_messages_contact ON unified_messages(contact_id) WHERE contact_id IS NOT NULL;
-CREATE INDEX idx_messages_opportunity ON unified_messages(opportunity_id) WHERE opportunity_id IS NOT NULL;
-CREATE INDEX idx_messages_source ON unified_messages(source);
-CREATE INDEX idx_messages_external_id ON unified_messages(source, external_id) WHERE external_id IS NOT NULL;
-CREATE INDEX idx_messages_thread ON unified_messages(thread_id) WHERE thread_id IS NOT NULL;
-CREATE INDEX idx_messages_direction ON unified_messages(direction);
-CREATE INDEX idx_messages_channel ON unified_messages(channel);
-CREATE INDEX idx_messages_folder ON unified_messages(folder);
-CREATE INDEX idx_messages_read ON unified_messages(read) WHERE read = false;
-CREATE INDEX idx_messages_needs_response ON unified_messages(needs_response) WHERE needs_response = true;
-CREATE INDEX idx_messages_received ON unified_messages(received_at DESC NULLS LAST);
-CREATE INDEX idx_messages_sent ON unified_messages(sent_at DESC NULLS LAST);
-CREATE INDEX idx_messages_search ON unified_messages USING GIN(search_vector);
-CREATE INDEX idx_messages_tags ON unified_messages USING GIN(tags);
+CREATE INDEX IF NOT EXISTS idx_messages_tenant ON unified_messages(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_messages_company ON unified_messages(company_id) WHERE company_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_contact ON unified_messages(contact_id) WHERE contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_opportunity ON unified_messages(opportunity_id) WHERE opportunity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_source ON unified_messages(source);
+CREATE INDEX IF NOT EXISTS idx_messages_external_id ON unified_messages(source, external_id) WHERE external_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_thread ON unified_messages(thread_id) WHERE thread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_direction ON unified_messages(direction);
+CREATE INDEX IF NOT EXISTS idx_messages_channel ON unified_messages(channel);
+CREATE INDEX IF NOT EXISTS idx_messages_folder ON unified_messages(folder);
+CREATE INDEX IF NOT EXISTS idx_messages_read ON unified_messages(read) WHERE read = false;
+CREATE INDEX IF NOT EXISTS idx_messages_needs_response ON unified_messages(needs_response) WHERE needs_response = true;
+CREATE INDEX IF NOT EXISTS idx_messages_received ON unified_messages(received_at DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_messages_sent ON unified_messages(sent_at DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_messages_search ON unified_messages USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_messages_tags ON unified_messages USING GIN(tags);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_messages_tenant_folder_received ON unified_messages(tenant_id, folder, received_at DESC);
-CREATE INDEX idx_messages_contact_received ON unified_messages(contact_id, received_at DESC) WHERE contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_tenant_folder_received ON unified_messages(tenant_id, folder, received_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_contact_received ON unified_messages(contact_id, received_at DESC) WHERE contact_id IS NOT NULL;
 
 -- ============================================================================
 -- 6. ROW LEVEL SECURITY (RLS)
@@ -403,24 +403,28 @@ CREATE INDEX idx_messages_contact_received ON unified_messages(contact_id, recei
 -- Companies RLS
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view their companies" ON companies;
 CREATE POLICY "Tenant users can view their companies"
   ON companies FOR SELECT
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can insert their companies" ON companies;
 CREATE POLICY "Tenant users can insert their companies"
   ON companies FOR INSERT
   WITH CHECK (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can update their companies" ON companies;
 CREATE POLICY "Tenant users can update their companies"
   ON companies FOR UPDATE
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can delete their companies" ON companies;
 CREATE POLICY "Tenant users can delete their companies"
   ON companies FOR DELETE
   USING (tenant_id IN (
@@ -430,24 +434,28 @@ CREATE POLICY "Tenant users can delete their companies"
 -- Contacts RLS
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view their contacts" ON contacts;
 CREATE POLICY "Tenant users can view their contacts"
   ON contacts FOR SELECT
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can insert their contacts" ON contacts;
 CREATE POLICY "Tenant users can insert their contacts"
   ON contacts FOR INSERT
   WITH CHECK (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can update their contacts" ON contacts;
 CREATE POLICY "Tenant users can update their contacts"
   ON contacts FOR UPDATE
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can delete their contacts" ON contacts;
 CREATE POLICY "Tenant users can delete their contacts"
   ON contacts FOR DELETE
   USING (tenant_id IN (
@@ -457,24 +465,28 @@ CREATE POLICY "Tenant users can delete their contacts"
 -- Opportunities RLS
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view their opportunities" ON opportunities;
 CREATE POLICY "Tenant users can view their opportunities"
   ON opportunities FOR SELECT
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can insert their opportunities" ON opportunities;
 CREATE POLICY "Tenant users can insert their opportunities"
   ON opportunities FOR INSERT
   WITH CHECK (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can update their opportunities" ON opportunities;
 CREATE POLICY "Tenant users can update their opportunities"
   ON opportunities FOR UPDATE
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can delete their opportunities" ON opportunities;
 CREATE POLICY "Tenant users can delete their opportunities"
   ON opportunities FOR DELETE
   USING (tenant_id IN (
@@ -484,24 +496,28 @@ CREATE POLICY "Tenant users can delete their opportunities"
 -- Activities RLS
 ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view their activities" ON activities;
 CREATE POLICY "Tenant users can view their activities"
   ON activities FOR SELECT
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can insert their activities" ON activities;
 CREATE POLICY "Tenant users can insert their activities"
   ON activities FOR INSERT
   WITH CHECK (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can update their activities" ON activities;
 CREATE POLICY "Tenant users can update their activities"
   ON activities FOR UPDATE
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can delete their activities" ON activities;
 CREATE POLICY "Tenant users can delete their activities"
   ON activities FOR DELETE
   USING (tenant_id IN (
@@ -511,24 +527,28 @@ CREATE POLICY "Tenant users can delete their activities"
 -- Unified Messages RLS
 ALTER TABLE unified_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view their messages" ON unified_messages;
 CREATE POLICY "Tenant users can view their messages"
   ON unified_messages FOR SELECT
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can insert their messages" ON unified_messages;
 CREATE POLICY "Tenant users can insert their messages"
   ON unified_messages FOR INSERT
   WITH CHECK (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can update their messages" ON unified_messages;
 CREATE POLICY "Tenant users can update their messages"
   ON unified_messages FOR UPDATE
   USING (tenant_id IN (
     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()
   ));
 
+DROP POLICY IF EXISTS "Tenant users can delete their messages" ON unified_messages;
 CREATE POLICY "Tenant users can delete their messages"
   ON unified_messages FOR DELETE
   USING (tenant_id IN (
@@ -548,21 +568,25 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_companies_updated_at ON companies;
 CREATE TRIGGER update_companies_updated_at
   BEFORE UPDATE ON companies
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_contacts_updated_at ON contacts;
 CREATE TRIGGER update_contacts_updated_at
   BEFORE UPDATE ON contacts
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_opportunities_updated_at ON opportunities;
 CREATE TRIGGER update_opportunities_updated_at
   BEFORE UPDATE ON opportunities
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_activities_updated_at ON activities;
 CREATE TRIGGER update_activities_updated_at
   BEFORE UPDATE ON activities
   FOR EACH ROW
@@ -582,6 +606,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_opp_stage_tracking ON opportunities;
 CREATE TRIGGER update_opp_stage_tracking
   BEFORE UPDATE ON opportunities
   FOR EACH ROW

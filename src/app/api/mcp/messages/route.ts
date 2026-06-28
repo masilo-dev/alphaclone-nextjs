@@ -3,7 +3,7 @@ import { createMCPServer } from '@/services/mcp/MCPServer';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { DEFAULT_BUSINESS_AI_STATE } from '@/services/mcp/businessAIState';
+import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
 import { StatelessTransport } from '@/services/mcp/StatelessTransport';
 
 export const dynamic = 'force-dynamic';
@@ -176,6 +176,8 @@ export async function POST(req: NextRequest) {
           }
         }
       });
+      const { getInitialBusinessAIStateForTenant } = await import('@/lib/mcp/getInitialBusinessAIStateForTenant');
+      const initialAiState = await getInitialBusinessAIStateForTenant(tenantId);
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hour session
       const { data: sessionRow } = await supabaseAdmin
         .from('mcp_sessions')
@@ -186,8 +188,8 @@ export async function POST(req: NextRequest) {
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-messages-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
-            business_ai_version: DEFAULT_BUSINESS_AI_STATE.version,
-            business_ai_state: DEFAULT_BUSINESS_AI_STATE,
+            business_ai_version: initialAiState.version,
+            business_ai_state: initialAiState,
           },
         })
         .select('id')

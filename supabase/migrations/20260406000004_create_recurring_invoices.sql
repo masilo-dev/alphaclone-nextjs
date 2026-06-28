@@ -14,17 +14,19 @@ CREATE TABLE IF NOT EXISTS recurring_invoices (
 );
 
 -- Create index for faster queries
-CREATE INDEX idx_recurring_invoices_tenant_id ON recurring_invoices(tenant_id);
-CREATE INDEX idx_recurring_invoices_active ON recurring_invoices(active);
-CREATE INDEX idx_recurring_invoices_start_date ON recurring_invoices(start_date);
+CREATE INDEX IF NOT EXISTS idx_recurring_invoices_tenant_id ON recurring_invoices(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_recurring_invoices_active ON recurring_invoices(active);
+CREATE INDEX IF NOT EXISTS idx_recurring_invoices_start_date ON recurring_invoices(start_date);
 
 -- Add RLS policies
 ALTER TABLE recurring_invoices ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view recurring invoices for their tenant" ON recurring_invoices;
 CREATE POLICY "Users can view recurring invoices for their tenant"
   ON recurring_invoices FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can insert recurring invoices" ON recurring_invoices;
 CREATE POLICY "Admins can insert recurring invoices"
   ON recurring_invoices FOR INSERT
   WITH CHECK (
@@ -36,6 +38,7 @@ CREATE POLICY "Admins can insert recurring invoices"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update recurring invoices" ON recurring_invoices;
 CREATE POLICY "Admins can update recurring invoices"
   ON recurring_invoices FOR UPDATE
   USING (
@@ -47,6 +50,7 @@ CREATE POLICY "Admins can update recurring invoices"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete recurring invoices" ON recurring_invoices;
 CREATE POLICY "Admins can delete recurring invoices"
   ON recurring_invoices FOR DELETE
   USING (
@@ -67,6 +71,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_recurring_invoices_updated_at ON recurring_invoices;
 CREATE TRIGGER update_recurring_invoices_updated_at
   BEFORE UPDATE ON recurring_invoices
   FOR EACH ROW

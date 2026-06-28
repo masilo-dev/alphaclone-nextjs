@@ -75,16 +75,19 @@ end;
 $$;
 
 drop trigger if exists trg_tenant_service_catalog_items_updated_at on public.tenant_service_catalog_items;
+DROP TRIGGER IF EXISTS trg_tenant_service_catalog_items_updated_at ON public.tenant_service_catalog_items;
 create trigger trg_tenant_service_catalog_items_updated_at
 before update on public.tenant_service_catalog_items
 for each row execute procedure public.set_tenant_pricing_updated_at();
 
 drop trigger if exists trg_tenant_service_bundles_updated_at on public.tenant_service_bundles;
+DROP TRIGGER IF EXISTS trg_tenant_service_bundles_updated_at ON public.tenant_service_bundles;
 create trigger trg_tenant_service_bundles_updated_at
 before update on public.tenant_service_bundles
 for each row execute procedure public.set_tenant_pricing_updated_at();
 
 drop trigger if exists trg_tenant_service_bundle_items_updated_at on public.tenant_service_bundle_items;
+DROP TRIGGER IF EXISTS trg_tenant_service_bundle_items_updated_at ON public.tenant_service_bundle_items;
 create trigger trg_tenant_service_bundle_items_updated_at
 before update on public.tenant_service_bundle_items
 for each row execute procedure public.set_tenant_pricing_updated_at();

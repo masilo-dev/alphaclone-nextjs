@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.google_calendar_tokens (
 ALTER TABLE public.google_calendar_tokens ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can manage their own calendar tokens" ON public.google_calendar_tokens;
 CREATE POLICY "Users can manage their own calendar tokens"
     ON public.google_calendar_tokens FOR ALL
     TO authenticated
