@@ -181,6 +181,7 @@ DROP POLICY IF EXISTS "Users can insert own logs" ON public.activity_logs;
 -- Single SELECT/UPDATE/DELETE policy: own rows OR rows inside user's tenants.
 -- This is safe during bootstrap because user_id = auth.uid() passes even
 -- before the tenant_users row exists.
+DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.activity_logs;
 CREATE POLICY "tenant_isolation_policy" ON public.activity_logs
 FOR ALL
 USING (
@@ -228,6 +229,7 @@ DROP POLICY IF EXISTS "tenant_isolation_policy"              ON public.login_ses
 -- Users can only see and write their own session rows.
 -- tenant_id intentionally excluded from USING so a session can be inserted
 -- during the bootstrap window (before tenant_users row exists).
+DROP POLICY IF EXISTS "Users can insert/update own sessions" ON public.login_sessions;
 CREATE POLICY "Users can insert/update own sessions" ON public.login_sessions
 FOR ALL
 USING    (user_id = auth.uid())

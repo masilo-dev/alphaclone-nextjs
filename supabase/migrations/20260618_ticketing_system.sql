@@ -140,6 +140,7 @@ AND (config->>'auto_reply_enabled') IS NULL;
 -- ============================================================
 -- Fix 5C: Create function for avg resolution time (uses unified tickets)
 -- ============================================================
+DROP FUNCTION IF EXISTS get_avg_ticket_resolution_time(UUID);
 CREATE OR REPLACE FUNCTION get_avg_ticket_resolution_time(p_tenant_id UUID)
 RETURNS TABLE(avg_hours NUMERIC) AS $$
 BEGIN

@@ -40,6 +40,7 @@ CREATE POLICY "Profiles are viewable by authenticated users"
     ON public.profiles FOR SELECT
     USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id);

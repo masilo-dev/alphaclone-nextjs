@@ -22,18 +22,22 @@ ALTER TABLE public.automation_tasks ENABLE ROW LEVEL SECURITY;
 
 -- Add RLS Policies
 -- Using a simpler policy linked to the profiles/tenants structure typical in this repo
+DROP POLICY IF EXISTS "Users can view tasks for their tenant" ON public.automation_tasks;
 CREATE POLICY "Users can view tasks for their tenant" 
     ON public.automation_tasks FOR SELECT 
     USING (tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Users can insert tasks for their tenant" ON public.automation_tasks;
 CREATE POLICY "Users can insert tasks for their tenant" 
     ON public.automation_tasks FOR INSERT 
     WITH CHECK (tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Users can update tasks for their tenant" ON public.automation_tasks;
 CREATE POLICY "Users can update tasks for their tenant" 
     ON public.automation_tasks FOR UPDATE 
     USING (tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Users can delete tasks for their tenant" ON public.automation_tasks;
 CREATE POLICY "Users can delete tasks for their tenant" 
     ON public.automation_tasks FOR DELETE 
     USING (tenant_id IN (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
@@ -42,6 +46,7 @@ CREATE POLICY "Users can delete tasks for their tenant"
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'set_automation_tasks_updated_at') THEN
+DROP TRIGGER IF EXISTS set_automation_tasks_updated_at ON public.automation_tasks;
         CREATE TRIGGER set_automation_tasks_updated_at
             BEFORE UPDATE ON public.automation_tasks
             FOR EACH ROW

@@ -33,18 +33,22 @@ CREATE TABLE IF NOT EXISTS public.onboarding_steps (
 -- Enable RLS
 ALTER TABLE public.onboarding_steps ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view onboarding_steps" ON public.onboarding_steps;
 CREATE POLICY "Tenant users can view onboarding_steps"
   ON public.onboarding_steps FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can insert onboarding_steps" ON public.onboarding_steps;
 CREATE POLICY "Tenant users can insert onboarding_steps"
   ON public.onboarding_steps FOR INSERT
   WITH CHECK (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can update onboarding_steps" ON public.onboarding_steps;
 CREATE POLICY "Tenant users can update onboarding_steps"
   ON public.onboarding_steps FOR UPDATE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can delete onboarding_steps" ON public.onboarding_steps;
 CREATE POLICY "Tenant users can delete onboarding_steps"
   ON public.onboarding_steps FOR DELETE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
@@ -69,18 +73,22 @@ CREATE TABLE IF NOT EXISTS public.onboarding_submissions (
 -- Enable RLS
 ALTER TABLE public.onboarding_submissions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view onboarding_submissions" ON public.onboarding_submissions;
 CREATE POLICY "Tenant users can view onboarding_submissions"
   ON public.onboarding_submissions FOR SELECT
   USING (contact_id IN (SELECT id FROM public.contacts WHERE tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())));
 
+DROP POLICY IF EXISTS "Tenant users can insert onboarding_submissions" ON public.onboarding_submissions;
 CREATE POLICY "Tenant users can insert onboarding_submissions"
   ON public.onboarding_submissions FOR INSERT
   WITH CHECK (contact_id IN (SELECT id FROM public.contacts WHERE tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())));
 
+DROP POLICY IF EXISTS "Tenant users can update onboarding_submissions" ON public.onboarding_submissions;
 CREATE POLICY "Tenant users can update onboarding_submissions"
   ON public.onboarding_submissions FOR UPDATE
   USING (contact_id IN (SELECT id FROM public.contacts WHERE tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())));
 
+DROP POLICY IF EXISTS "Tenant users can delete onboarding_submissions" ON public.onboarding_submissions;
 CREATE POLICY "Tenant users can delete onboarding_submissions"
   ON public.onboarding_submissions FOR DELETE
   USING (contact_id IN (SELECT id FROM public.contacts WHERE tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())));
@@ -106,14 +114,17 @@ CREATE TABLE IF NOT EXISTS public.cash_flow_projections (
 -- Enable RLS
 ALTER TABLE public.cash_flow_projections ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view cash_flow_projections" ON public.cash_flow_projections;
 CREATE POLICY "Tenant users can view cash_flow_projections"
   ON public.cash_flow_projections FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can insert cash_flow_projections" ON public.cash_flow_projections;
 CREATE POLICY "Tenant users can insert cash_flow_projections"
   ON public.cash_flow_projections FOR INSERT
   WITH CHECK (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can delete cash_flow_projections" ON public.cash_flow_projections;
 CREATE POLICY "Tenant users can delete cash_flow_projections"
   ON public.cash_flow_projections FOR DELETE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
@@ -141,18 +152,22 @@ CREATE TABLE IF NOT EXISTS public.vault_documents (
 -- Enable RLS
 ALTER TABLE public.vault_documents ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view vault_documents" ON public.vault_documents;
 CREATE POLICY "Tenant users can view vault_documents"
   ON public.vault_documents FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can insert vault_documents" ON public.vault_documents;
 CREATE POLICY "Tenant users can insert vault_documents"
   ON public.vault_documents FOR INSERT
   WITH CHECK (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can update vault_documents" ON public.vault_documents;
 CREATE POLICY "Tenant users can update vault_documents"
   ON public.vault_documents FOR UPDATE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can delete vault_documents" ON public.vault_documents;
 CREATE POLICY "Tenant users can delete vault_documents"
   ON public.vault_documents FOR DELETE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
@@ -182,18 +197,22 @@ CREATE TABLE IF NOT EXISTS public.tax_records (
 -- Enable RLS
 ALTER TABLE public.tax_records ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant users can view tax_records" ON public.tax_records;
 CREATE POLICY "Tenant users can view tax_records"
   ON public.tax_records FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can insert tax_records" ON public.tax_records;
 CREATE POLICY "Tenant users can insert tax_records"
   ON public.tax_records FOR INSERT
   WITH CHECK (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can update tax_records" ON public.tax_records;
 CREATE POLICY "Tenant users can update tax_records"
   ON public.tax_records FOR UPDATE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant users can delete tax_records" ON public.tax_records;
 CREATE POLICY "Tenant users can delete tax_records"
   ON public.tax_records FOR DELETE
   USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
@@ -202,21 +221,25 @@ CREATE INDEX IF NOT EXISTS idx_tax_records_tenant ON public.tax_records(tenant_i
 
 
 -- 7. Add Triggers for updated_at tracking
+DROP TRIGGER IF EXISTS update_onboarding_steps_updated_at ON onboarding_steps;
 CREATE TRIGGER update_onboarding_steps_updated_at
   BEFORE UPDATE ON onboarding_steps
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_onboarding_submissions_updated_at ON onboarding_submissions;
 CREATE TRIGGER update_onboarding_submissions_updated_at
   BEFORE UPDATE ON onboarding_submissions
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_vault_documents_updated_at ON vault_documents;
 CREATE TRIGGER update_vault_documents_updated_at
   BEFORE UPDATE ON vault_documents
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_tax_records_updated_at ON tax_records;
 CREATE TRIGGER update_tax_records_updated_at
   BEFORE UPDATE ON tax_records
   FOR EACH ROW

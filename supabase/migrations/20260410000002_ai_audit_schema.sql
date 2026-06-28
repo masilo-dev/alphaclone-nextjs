@@ -20,18 +20,20 @@ BEGIN
         );
 
         -- Add indexes for common queries
-        CREATE INDEX idx_audit_logs_user_id ON public.audit_logs(user_id);
-        CREATE INDEX idx_audit_logs_action ON public.audit_logs(action);
-        CREATE INDEX idx_audit_logs_created_at ON public.audit_logs(created_at);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at);
         
         -- Enable RLS
         ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
         -- Admin/Service Role Policy
+DROP POLICY IF EXISTS "Service role can do everything" ON public.audit_logs;
         CREATE POLICY "Service role can do everything" ON public.audit_logs
             FOR ALL USING (auth.role() = 'service_role');
             
         -- User visibility policy (can see their own logs)
+DROP POLICY IF EXISTS "Users can see their own audit logs" ON public.audit_logs;
         CREATE POLICY "Users can see their own audit logs" ON public.audit_logs
             FOR SELECT USING (auth.uid() = user_id);
     END IF;

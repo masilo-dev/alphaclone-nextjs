@@ -34,6 +34,7 @@ end;
 $$;
 
 drop trigger if exists trg_tenant_integrations_updated_at on public.tenant_integrations;
+DROP TRIGGER IF EXISTS trg_tenant_integrations_updated_at ON public.tenant_integrations;
 create trigger trg_tenant_integrations_updated_at
   before update on public.tenant_integrations
   for each row execute procedure public.set_tenant_integrations_updated_at();
@@ -42,6 +43,7 @@ create trigger trg_tenant_integrations_updated_at
 alter table public.tenant_integrations enable row level security;
 
 -- Tenant admins can read/write their own integrations
+DROP POLICY IF EXISTS "tenant_integrations_tenant_admin_all" ON public.tenant_integrations;
 create policy "tenant_integrations_tenant_admin_all"
   on public.tenant_integrations
   for all
@@ -61,6 +63,7 @@ create policy "tenant_integrations_tenant_admin_all"
   );
 
 -- System admins can read all
+DROP POLICY IF EXISTS "tenant_integrations_admin_read" ON public.tenant_integrations;
 create policy "tenant_integrations_admin_read"
   on public.tenant_integrations
   for select

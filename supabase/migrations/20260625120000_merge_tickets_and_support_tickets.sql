@@ -93,33 +93,46 @@ BEGIN
             sla_due_at,
             resolution_note,
             metadata,
+            created_by,
             created_at,
             updated_at
         )
         SELECT 
-            id,
-            tenant_id,
-            ticket_number,
-            title,
-            description,
-            status,
-            priority,
-            category,
-            source,
-            contact_id,
-            client_id,
-            assigned_to,
-            message_id,
-            first_response_at,
-            resolved_at,
-            closed_at,
-            sla_due_at,
-            resolution_note,
-            metadata,
-            created_at,
-            updated_at
-        FROM support_tickets
-        WHERE id NOT IN (SELECT id FROM tickets)
+            st.id,
+            st.tenant_id,
+            st.ticket_number,
+            st.title,
+            st.description,
+            st.status,
+            st.priority,
+            st.category,
+            st.source,
+            st.contact_id,
+            st.client_id,
+            st.assigned_to,
+            st.message_id,
+            st.first_response_at,
+            st.resolved_at,
+            st.closed_at,
+            st.sla_due_at,
+            st.resolution_note,
+            st.metadata,
+            COALESCE(
+                st.assigned_to,
+                (SELECT tu.user_id FROM public.tenant_users tu
+                 WHERE tu.tenant_id = st.tenant_id
+                 LIMIT 1)
+            ),
+            st.created_at,
+            st.updated_at
+        FROM support_tickets st
+        WHERE st.id NOT IN (SELECT id FROM tickets)
+          AND COALESCE(
+                st.assigned_to,
+                (SELECT tu.user_id FROM public.tenant_users tu
+                 WHERE tu.tenant_id = st.tenant_id
+                 LIMIT 1)
+          ) IS NOT NULL
         ON CONFLICT (id) DO NOTHING;
     END IF;
 END $$;
@@ -244,7 +257,7 @@ CREATE POLICY ticket_comments_delete_tenant_members
 CREATE OR REPLACE VIEW unified_tickets AS
 SELECT 
     t.*,
-    c.name as contact_name,
+    COALESCE(c.full_name, NULLIF(trim(concat_ws(' ', c.first_name, c.last_name)), '')) as contact_name,
     c.email as contact_email,
     cl.name as client_name,
     CASE 
@@ -254,7 +267,7 @@ SELECT
     END as ticket_type
 FROM tickets t
 LEFT JOIN contacts c ON c.id = t.contact_id
-LEFT JOIN clients cl ON cl.id = t.client_id;
+LEFT JOIN business_clients cl ON cl.id = t.client_id;
 
 -- Step 13: Create function to get ticket stats
 CREATE OR REPLACE FUNCTION get_ticket_stats(p_tenant_id UUID)

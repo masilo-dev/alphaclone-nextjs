@@ -20,17 +20,19 @@ UPDATE google_calendar_integrations SET tenant_id = (
 ) WHERE tenant_id IS NULL;
 
 -- Add indexes for performance
-CREATE INDEX idx_facebook_integrations_tenant ON facebook_integrations(tenant_id);
-CREATE INDEX idx_slack_integrations_tenant ON slack_integrations(tenant_id);
-CREATE INDEX idx_google_calendar_integrations_tenant ON google_calendar_integrations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_facebook_integrations_tenant ON facebook_integrations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_slack_integrations_tenant ON slack_integrations(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_google_calendar_integrations_tenant ON google_calendar_integrations(tenant_id);
 
 -- Drop old user-based policies and create tenant-based policies
 DROP POLICY IF EXISTS "Users can view own facebook integrations" ON facebook_integrations;
 DROP POLICY IF EXISTS "Users can manage own facebook integrations" ON facebook_integrations;
 
+DROP POLICY IF EXISTS "Users can view own tenant facebook integrations" ON facebook_integrations;
 CREATE POLICY "Users can view own tenant facebook integrations" ON facebook_integrations
   FOR SELECT USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
+DROP POLICY IF EXISTS "Users can manage own tenant facebook integrations" ON facebook_integrations;
 CREATE POLICY "Users can manage own tenant facebook integrations" ON facebook_integrations
   FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
@@ -38,9 +40,11 @@ CREATE POLICY "Users can manage own tenant facebook integrations" ON facebook_in
 DROP POLICY IF EXISTS "Users can view own slack integrations" ON slack_integrations;
 DROP POLICY IF EXISTS "Users can manage own slack integrations" ON slack_integrations;
 
+DROP POLICY IF EXISTS "Users can view own tenant slack integrations" ON slack_integrations;
 CREATE POLICY "Users can view own tenant slack integrations" ON slack_integrations
   FOR SELECT USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
+DROP POLICY IF EXISTS "Users can manage own tenant slack integrations" ON slack_integrations;
 CREATE POLICY "Users can manage own tenant slack integrations" ON slack_integrations
   FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
@@ -48,9 +52,11 @@ CREATE POLICY "Users can manage own tenant slack integrations" ON slack_integrat
 DROP POLICY IF EXISTS "Users can view own google calendar integrations" ON google_calendar_integrations;
 DROP POLICY IF EXISTS "Users can manage own google calendar integrations" ON google_calendar_integrations;
 
+DROP POLICY IF EXISTS "Users can view own tenant google calendar integrations" ON google_calendar_integrations;
 CREATE POLICY "Users can view own tenant google calendar integrations" ON google_calendar_integrations
   FOR SELECT USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
+DROP POLICY IF EXISTS "Users can manage own tenant google calendar integrations" ON google_calendar_integrations;
 CREATE POLICY "Users can manage own tenant google calendar integrations" ON google_calendar_integrations
   FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
 
@@ -66,15 +72,17 @@ BEGIN
     ) WHERE tenant_id IS NULL;
     
     -- Add index
-    CREATE INDEX idx_integrations_tenant ON integrations(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_integrations_tenant ON integrations(tenant_id);
     
     -- Update policies
     DROP POLICY IF EXISTS "Users can view own integrations" ON integrations;
     DROP POLICY IF EXISTS "Users can manage own integrations" ON integrations;
     
+DROP POLICY IF EXISTS "Users can view own tenant integrations" ON integrations;
     CREATE POLICY "Users can view own tenant integrations" ON integrations
       FOR SELECT USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
     
+DROP POLICY IF EXISTS "Users can manage own tenant integrations" ON integrations;
     CREATE POLICY "Users can manage own tenant integrations" ON integrations
       FOR ALL USING (tenant_id = current_setting('app.current_tenant_id')::UUID);
   END IF;

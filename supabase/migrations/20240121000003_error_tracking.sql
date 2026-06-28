@@ -53,6 +53,7 @@ ALTER TABLE failed_logins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE error_logs ENABLE ROW LEVEL SECURITY;
 
 -- Admins can view all failed logins
+DROP POLICY IF EXISTS "Admins can view all failed logins" ON failed_logins;
 CREATE POLICY "Admins can view all failed logins"
 ON failed_logins
 FOR SELECT
@@ -65,6 +66,7 @@ USING (
 );
 
 -- Admins can view all error logs
+DROP POLICY IF EXISTS "Admins can view all error logs" ON error_logs;
 CREATE POLICY "Admins can view all error logs"
 ON error_logs
 FOR SELECT
@@ -77,18 +79,21 @@ USING (
 );
 
 -- Users can view their own error logs
+DROP POLICY IF EXISTS "Users can view their own error logs" ON error_logs;
 CREATE POLICY "Users can view their own error logs"
 ON error_logs
 FOR SELECT
 USING (user_id = auth.uid());
 
 -- System can insert failed logins (no auth required for login failures)
+DROP POLICY IF EXISTS "System can insert failed logins" ON failed_logins;
 CREATE POLICY "System can insert failed logins"
 ON failed_logins
 FOR INSERT
 WITH CHECK (true);
 
 -- System can insert error logs
+DROP POLICY IF EXISTS "System can insert error logs" ON error_logs;
 CREATE POLICY "System can insert error logs"
 ON error_logs
 FOR INSERT

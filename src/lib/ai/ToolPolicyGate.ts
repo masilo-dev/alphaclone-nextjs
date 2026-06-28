@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { mcpStore } from '@/services/mcp/mcpStore';
 import type { BusinessAIAgentMode } from '@/services/mcp/businessAIState';
+import { resolveEffectiveAgentMode } from '@/lib/ai/resolveEffectiveAgentMode';
 
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
 export type PolicySource = 'bonnie' | 'mcp' | 'playbook';
@@ -126,7 +127,7 @@ export async function evaluateToolPolicy(params: {
   ]);
 
   const highRiskRequired = rulesRow?.high_risk_approval_required !== false;
-  const agentMode = aiState.agent_mode;
+  const agentMode = resolveEffectiveAgentMode(aiState.agent_mode, rulesRow);
 
   if (modeBlocksExecution(agentMode, riskClass)) {
     return {

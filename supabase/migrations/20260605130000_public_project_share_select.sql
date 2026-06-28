@@ -4,6 +4,7 @@
 -- This policy grants read access to a project strictly when it has been explicitly made public.
 
 drop policy if exists "Public projects are viewable by link" on public.projects;
+DROP POLICY IF EXISTS "Public projects are viewable by link" ON public.projects;
 create policy "Public projects are viewable by link"
   on public.projects
   for select

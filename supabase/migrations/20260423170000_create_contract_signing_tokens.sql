@@ -22,6 +22,7 @@ create index if not exists idx_contract_signing_tokens_lookup
 alter table public.contract_signing_tokens enable row level security;
 
 drop policy if exists "contract_signing_tokens_read_tenant_users" on public.contract_signing_tokens;
+DROP POLICY IF EXISTS "contract_signing_tokens_read_tenant_users" ON public.contract_signing_tokens;
 create policy "contract_signing_tokens_read_tenant_users"
   on public.contract_signing_tokens
   for select
@@ -35,6 +36,7 @@ create policy "contract_signing_tokens_read_tenant_users"
   );
 
 drop policy if exists "contract_signing_tokens_manage_tenant_admins" on public.contract_signing_tokens;
+DROP POLICY IF EXISTS "contract_signing_tokens_manage_tenant_admins" ON public.contract_signing_tokens;
 create policy "contract_signing_tokens_manage_tenant_admins"
   on public.contract_signing_tokens
   for all

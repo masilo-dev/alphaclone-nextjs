@@ -8,13 +8,23 @@ CREATE TABLE IF NOT EXISTS public.sms_opt_outs (
   UNIQUE (tenant_id, phone_number)
 );
 
+ALTER TABLE public.sms_opt_outs
+  ADD COLUMN IF NOT EXISTS phone_number TEXT,
+  ADD COLUMN IF NOT EXISTS keyword TEXT,
+  ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'sms';
+
+UPDATE public.sms_opt_outs
+SET phone_number = COALESCE(phone_number, phone)
+WHERE phone_number IS NULL AND phone IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_sms_opt_outs_tenant ON public.sms_opt_outs(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_sms_opt_outs_phone ON public.sms_opt_outs(phone_number);
+CREATE INDEX IF NOT EXISTS idx_sms_opt_outs_phone ON public.sms_opt_outs(COALESCE(phone_number, phone));
 
 ALTER TABLE public.sms_opt_outs ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
+DROP POLICY IF EXISTS "tenant_members_manage_sms_opt_outs" ON public.sms_opt_outs;
   CREATE POLICY "tenant_members_manage_sms_opt_outs" ON public.sms_opt_outs
     FOR ALL USING (
       tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())

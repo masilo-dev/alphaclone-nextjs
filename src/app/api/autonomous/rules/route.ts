@@ -64,6 +64,12 @@ export async function PUT(request: NextRequest) {
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    const autopilotOn = payload.auto_send_enabled && !payload.high_risk_approval_required;
+    if (autopilotOn) {
+      const { mcpStore } = await import('@/services/mcp/mcpStore');
+      await mcpStore.updateBusinessAIState(tenantId, access.user.id, { agent_mode: 'autonomous' });
+    }
+
     return NextResponse.json({ success: true, rules: data });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to update autonomous rules');

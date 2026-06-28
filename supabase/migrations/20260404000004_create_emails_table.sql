@@ -32,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_emails_sent_at ON public.emails(sent_at);
 ALTER TABLE public.emails ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for email access
+DROP POLICY IF EXISTS "Users can view their own tenant emails" ON public.emails;
 CREATE POLICY "Users can view their own tenant emails" ON public.emails
   FOR SELECT USING (
     auth.role() = 'authenticated' AND 
@@ -41,6 +42,7 @@ CREATE POLICY "Users can view their own tenant emails" ON public.emails
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert emails for their tenant" ON public.emails;
 CREATE POLICY "Users can insert emails for their tenant" ON public.emails
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
@@ -50,6 +52,7 @@ CREATE POLICY "Users can insert emails for their tenant" ON public.emails
     )
   );
 
+DROP POLICY IF EXISTS "Users can update emails for their tenant" ON public.emails;
 CREATE POLICY "Users can update emails for their tenant" ON public.emails
   FOR UPDATE USING (
     auth.role() = 'authenticated' AND 
@@ -59,6 +62,7 @@ CREATE POLICY "Users can update emails for their tenant" ON public.emails
     )
   );
 
+DROP POLICY IF EXISTS "Users can delete emails for their tenant" ON public.emails;
 CREATE POLICY "Users can delete emails for their tenant" ON public.emails
   FOR DELETE USING (
     auth.role() = 'authenticated' AND 
@@ -69,6 +73,7 @@ CREATE POLICY "Users can delete emails for their tenant" ON public.emails
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_emails_updated_at ON public.emails;
 CREATE TRIGGER update_emails_updated_at
   BEFORE UPDATE ON public.emails
   FOR EACH ROW

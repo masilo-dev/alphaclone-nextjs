@@ -16,6 +16,7 @@ create index if not exists idx_whatsapp_integrations_waba on public.whatsapp_int
 
 alter table public.whatsapp_integrations enable row level security;
 
+DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.whatsapp_integrations;
 create policy "tenant_isolation_policy" on public.whatsapp_integrations
 as permissive for all
 to public

@@ -24,6 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_security_logs_ip ON security_logs(ip_address);
 ALTER TABLE security_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Only admins can view all security logs
+DROP POLICY IF EXISTS "Admins can view all security logs" ON security_logs;
 CREATE POLICY "Admins can view all security logs"
 ON security_logs
 FOR SELECT
@@ -36,6 +37,7 @@ USING (
 );
 
 -- Policy: Tenant admins can only view their own tenant's logs
+DROP POLICY IF EXISTS "Tenant admins can view their tenant logs" ON security_logs;
 CREATE POLICY "Tenant admins can view their tenant logs"
 ON security_logs
 FOR SELECT
@@ -47,6 +49,7 @@ USING (
 );
 
 -- Policy: System can insert logs
+DROP POLICY IF EXISTS "System can insert security logs" ON security_logs;
 CREATE POLICY "System can insert security logs"
 ON security_logs
 FOR INSERT

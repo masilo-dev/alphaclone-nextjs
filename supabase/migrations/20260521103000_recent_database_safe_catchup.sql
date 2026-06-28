@@ -58,6 +58,7 @@ BEGIN
           AND tablename = 'push_subscriptions'
           AND policyname = 'Users can manage own subscriptions'
     ) THEN
+DROP POLICY IF EXISTS "Users can manage own subscriptions" ON public.push_subscriptions;
         CREATE POLICY "Users can manage own subscriptions"
             ON public.push_subscriptions
             FOR ALL

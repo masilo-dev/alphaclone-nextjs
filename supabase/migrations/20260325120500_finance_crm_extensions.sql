@@ -57,13 +57,23 @@ CREATE TABLE IF NOT EXISTS contacts (
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Existing deployments may have companies/contacts from an earlier schema
+ALTER TABLE companies
+    ADD COLUMN IF NOT EXISTS zoho_crm_id TEXT,
+    ADD COLUMN IF NOT EXISTS zoho_books_id TEXT;
+ALTER TABLE contacts
+    ADD COLUMN IF NOT EXISTS zoho_crm_id TEXT,
+    ADD COLUMN IF NOT EXISTS zoho_books_id TEXT;
+
 -- RLS for companies + contacts
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contacts  ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tenant_companies" ON companies;
 CREATE POLICY "tenant_companies" ON companies FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
+DROP POLICY IF EXISTS "tenant_contacts" ON contacts;
 CREATE POLICY "tenant_contacts" ON contacts FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
@@ -92,6 +102,7 @@ CREATE TABLE IF NOT EXISTS expense_categories (
 );
 
 ALTER TABLE expense_categories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_expense_categories" ON expense_categories;
 CREATE POLICY "tenant_expense_categories" ON expense_categories FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
@@ -136,6 +147,7 @@ CREATE TABLE IF NOT EXISTS expenses (
 );
 
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_expenses" ON expenses;
 CREATE POLICY "tenant_expenses" ON expenses FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
@@ -179,6 +191,7 @@ CREATE TABLE IF NOT EXISTS vendor_bills (
 );
 
 ALTER TABLE vendor_bills ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_vendor_bills" ON vendor_bills;
 CREATE POLICY "tenant_vendor_bills" ON vendor_bills FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
@@ -214,6 +227,7 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
 );
 
 ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_bank_accounts" ON bank_accounts;
 CREATE POLICY "tenant_bank_accounts" ON bank_accounts FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
@@ -246,6 +260,7 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
 );
 
 ALTER TABLE bank_transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "tenant_bank_transactions" ON bank_transactions;
 CREATE POLICY "tenant_bank_transactions" ON bank_transactions FOR ALL USING (
     tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid())
 );
@@ -266,10 +281,15 @@ BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$;
 
 DO $$ BEGIN
+DROP TRIGGER IF EXISTS trg_companies_updated ON companies;
     CREATE TRIGGER trg_companies_updated   BEFORE UPDATE ON companies        FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DROP TRIGGER IF EXISTS trg_contacts_updated ON contacts;
     CREATE TRIGGER trg_contacts_updated    BEFORE UPDATE ON contacts         FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DROP TRIGGER IF EXISTS trg_expenses_updated ON expenses;
     CREATE TRIGGER trg_expenses_updated    BEFORE UPDATE ON expenses         FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DROP TRIGGER IF EXISTS trg_vendor_bills_updated ON vendor_bills;
     CREATE TRIGGER trg_vendor_bills_updated BEFORE UPDATE ON vendor_bills    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+DROP TRIGGER IF EXISTS trg_bank_accounts_updated ON bank_accounts;
     CREATE TRIGGER trg_bank_accounts_updated BEFORE UPDATE ON bank_accounts  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

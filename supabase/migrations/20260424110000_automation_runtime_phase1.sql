@@ -70,6 +70,7 @@ alter table public.automation_run_steps enable row level security;
 alter table public.automation_approvals enable row level security;
 
 drop policy if exists "automation_runs_tenant_isolation_select" on public.automation_runs;
+DROP POLICY IF EXISTS "automation_runs_tenant_isolation_select" ON public.automation_runs;
 create policy "automation_runs_tenant_isolation_select"
   on public.automation_runs
   for select
@@ -82,6 +83,7 @@ create policy "automation_runs_tenant_isolation_select"
   );
 
 drop policy if exists "automation_runs_tenant_isolation_write" on public.automation_runs;
+DROP POLICY IF EXISTS "automation_runs_tenant_isolation_write" ON public.automation_runs;
 create policy "automation_runs_tenant_isolation_write"
   on public.automation_runs
   for all
@@ -101,6 +103,7 @@ create policy "automation_runs_tenant_isolation_write"
   );
 
 drop policy if exists "automation_run_steps_tenant_isolation" on public.automation_run_steps;
+DROP POLICY IF EXISTS "automation_run_steps_tenant_isolation" ON public.automation_run_steps;
 create policy "automation_run_steps_tenant_isolation"
   on public.automation_run_steps
   for all
@@ -120,6 +123,7 @@ create policy "automation_run_steps_tenant_isolation"
   );
 
 drop policy if exists "automation_approvals_tenant_isolation" on public.automation_approvals;
+DROP POLICY IF EXISTS "automation_approvals_tenant_isolation" ON public.automation_approvals;
 create policy "automation_approvals_tenant_isolation"
   on public.automation_approvals
   for all

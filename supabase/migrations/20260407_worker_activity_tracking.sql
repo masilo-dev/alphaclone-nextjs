@@ -89,9 +89,11 @@ GROUP BY tenant_id, user_id, DATE(session_start), app_name;
 ALTER TABLE public.worker_sessions ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "worker_sessions_tenant_isolation" ON public.worker_sessions;
 CREATE POLICY "worker_sessions_tenant_isolation" ON public.worker_sessions
     FOR ALL USING (tenant_id = (SELECT tenant_id FROM public.get_tenant_context()));
 
+DROP POLICY IF EXISTS "worker_sessions_admin_view_all" ON public.worker_sessions;
 CREATE POLICY "worker_sessions_admin_view_all" ON public.worker_sessions
     FOR SELECT USING (
         EXISTS (

@@ -21,14 +21,17 @@ CREATE INDEX IF NOT EXISTS idx_contact_submissions_email ON public.contact_submi
 ALTER TABLE public.contact_submissions ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for anyone to insert contact submissions
+DROP POLICY IF EXISTS "Anyone can insert contact submissions" ON public.contact_submissions;
 CREATE POLICY "Anyone can insert contact submissions" ON public.contact_submissions
   FOR INSERT WITH CHECK (true);
 
 -- Create policy for authenticated users to view contact submissions
+DROP POLICY IF EXISTS "Authenticated users can view contact submissions" ON public.contact_submissions;
 CREATE POLICY "Authenticated users can view contact submissions" ON public.contact_submissions
   FOR SELECT USING (auth.role() = 'authenticated');
 
 -- Create policy for authenticated users to update contact submissions
+DROP POLICY IF EXISTS "Authenticated users can update contact submissions" ON public.contact_submissions;
 CREATE POLICY "Authenticated users can update contact submissions" ON public.contact_submissions
   FOR UPDATE USING (auth.role() = 'authenticated');
 
@@ -41,6 +44,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_contact_submissions_updated_at ON public.contact_submissions;
 CREATE TRIGGER update_contact_submissions_updated_at
   BEFORE UPDATE ON public.contact_submissions
   FOR EACH ROW

@@ -21,6 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON public.email_logs(create
 ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for email logs access
+DROP POLICY IF EXISTS "Users can view their own tenant email logs" ON public.email_logs;
 CREATE POLICY "Users can view their own tenant email logs" ON public.email_logs
   FOR SELECT USING (
     auth.role() = 'authenticated' AND 
@@ -30,6 +31,7 @@ CREATE POLICY "Users can view their own tenant email logs" ON public.email_logs
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert email logs for their tenant" ON public.email_logs;
 CREATE POLICY "Users can insert email logs for their tenant" ON public.email_logs
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
@@ -40,6 +42,7 @@ CREATE POLICY "Users can insert email logs for their tenant" ON public.email_log
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_email_logs_updated_at ON public.email_logs;
 CREATE TRIGGER update_email_logs_updated_at
   BEFORE UPDATE ON public.email_logs
   FOR EACH ROW

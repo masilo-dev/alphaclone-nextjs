@@ -22,35 +22,39 @@ create index if not exists idx_pages_user_id on pages(user_id);
 -- RLS
 alter table pages enable row level security;
 
+DROP POLICY IF EXISTS "Tenant members can read their pages" ON pages;
 create policy "Tenant members can read their pages"
   on pages for select
   using (
     tenant_id in (
-      select tenant_id from user_tenants where user_id = auth.uid()
+      select tenant_id from tenant_users where user_id = auth.uid()
     )
   );
 
+DROP POLICY IF EXISTS "Tenant members can insert pages" ON pages;
 create policy "Tenant members can insert pages"
   on pages for insert
   with check (
     tenant_id in (
-      select tenant_id from user_tenants where user_id = auth.uid()
+      select tenant_id from tenant_users where user_id = auth.uid()
     )
   );
 
+DROP POLICY IF EXISTS "Tenant members can update their pages" ON pages;
 create policy "Tenant members can update their pages"
   on pages for update
   using (
     tenant_id in (
-      select tenant_id from user_tenants where user_id = auth.uid()
+      select tenant_id from tenant_users where user_id = auth.uid()
     )
   );
 
+DROP POLICY IF EXISTS "Tenant members can delete their pages" ON pages;
 create policy "Tenant members can delete their pages"
   on pages for delete
   using (
     tenant_id in (
-      select tenant_id from user_tenants where user_id = auth.uid()
+      select tenant_id from tenant_users where user_id = auth.uid()
     )
   );
 
@@ -64,6 +68,7 @@ end;
 $$;
 
 drop trigger if exists trg_pages_updated_at on pages;
+DROP TRIGGER IF EXISTS trg_pages_updated_at ON pages;
 create trigger trg_pages_updated_at
   before update on pages
   for each row execute function update_pages_updated_at();

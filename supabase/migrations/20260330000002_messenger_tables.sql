@@ -38,6 +38,7 @@ ALTER TABLE public.messenger_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messenger_messages ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Conversations
+DROP POLICY IF EXISTS "Users can view their tenant's messenger conversations" ON public.messenger_conversations;
 CREATE POLICY "Users can view their tenant's messenger conversations"
     ON public.messenger_conversations FOR SELECT
     USING (
@@ -49,6 +50,7 @@ CREATE POLICY "Users can view their tenant's messenger conversations"
     );
 
 -- RLS Policies for Messages
+DROP POLICY IF EXISTS "Users can view their tenant's messenger messages" ON public.messenger_messages;
 CREATE POLICY "Users can view their tenant's messenger messages"
     ON public.messenger_messages FOR SELECT
     USING (
@@ -69,6 +71,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_messenger_conversations_updated_at_trigger ON public.messenger_conversations;
 CREATE TRIGGER update_messenger_conversations_updated_at_trigger
     BEFORE UPDATE ON public.messenger_conversations
     FOR EACH ROW

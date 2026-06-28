@@ -14,17 +14,19 @@ CREATE TABLE IF NOT EXISTS sso_configs (
 );
 
 -- Create indexes
-CREATE INDEX idx_sso_configs_tenant_id ON sso_configs(tenant_id);
-CREATE INDEX idx_sso_configs_provider ON sso_configs(provider);
-CREATE INDEX idx_sso_configs_enabled ON sso_configs(enabled);
+CREATE INDEX IF NOT EXISTS idx_sso_configs_tenant_id ON sso_configs(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_sso_configs_provider ON sso_configs(provider);
+CREATE INDEX IF NOT EXISTS idx_sso_configs_enabled ON sso_configs(enabled);
 
 -- Add RLS policies
 ALTER TABLE sso_configs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view SSO config for their tenant" ON sso_configs;
 CREATE POLICY "Users can view SSO config for their tenant"
   ON sso_configs FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can insert SSO config" ON sso_configs;
 CREATE POLICY "Admins can insert SSO config"
   ON sso_configs FOR INSERT
   WITH CHECK (
@@ -36,6 +38,7 @@ CREATE POLICY "Admins can insert SSO config"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can update SSO config" ON sso_configs;
 CREATE POLICY "Admins can update SSO config"
   ON sso_configs FOR UPDATE
   USING (
@@ -47,6 +50,7 @@ CREATE POLICY "Admins can update SSO config"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can delete SSO config" ON sso_configs;
 CREATE POLICY "Admins can delete SSO config"
   ON sso_configs FOR DELETE
   USING (
@@ -70,17 +74,19 @@ CREATE TABLE IF NOT EXISTS saml_requests (
 );
 
 -- Create indexes
-CREATE INDEX idx_saml_requests_request_id ON saml_requests(request_id);
-CREATE INDEX idx_saml_requests_tenant_id ON saml_requests(tenant_id);
-CREATE INDEX idx_saml_requests_expires_at ON saml_requests(expires_at);
+CREATE INDEX IF NOT EXISTS idx_saml_requests_request_id ON saml_requests(request_id);
+CREATE INDEX IF NOT EXISTS idx_saml_requests_tenant_id ON saml_requests(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_saml_requests_expires_at ON saml_requests(expires_at);
 
 -- Add RLS policies
 ALTER TABLE saml_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "System can insert SAML requests" ON saml_requests;
 CREATE POLICY "System can insert SAML requests"
   ON saml_requests FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "System can view SAML requests" ON saml_requests;
 CREATE POLICY "System can view SAML requests"
   ON saml_requests FOR SELECT
   USING (true);
@@ -97,22 +103,25 @@ CREATE TABLE IF NOT EXISTS saml_responses (
 );
 
 -- Create indexes
-CREATE INDEX idx_saml_responses_request_id ON saml_responses(request_id);
-CREATE INDEX idx_saml_responses_tenant_id ON saml_responses(tenant_id);
-CREATE INDEX idx_saml_responses_user_id ON saml_responses(user_id);
+CREATE INDEX IF NOT EXISTS idx_saml_responses_request_id ON saml_responses(request_id);
+CREATE INDEX IF NOT EXISTS idx_saml_responses_tenant_id ON saml_responses(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_saml_responses_user_id ON saml_responses(user_id);
 
 -- Add RLS policies
 ALTER TABLE saml_responses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "System can insert SAML responses" ON saml_responses;
 CREATE POLICY "System can insert SAML responses"
   ON saml_responses FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can view SAML responses for their tenant" ON saml_responses;
 CREATE POLICY "Users can view SAML responses for their tenant"
   ON saml_responses FOR SELECT
   USING (tenant_id IN (SELECT tenant_id FROM users WHERE id = auth.uid()));
 
 -- Add updated_at trigger for sso_configs
+DROP TRIGGER IF EXISTS update_sso_configs_updated_at ON sso_configs;
 CREATE TRIGGER update_sso_configs_updated_at
   BEFORE UPDATE ON sso_configs
   FOR EACH ROW

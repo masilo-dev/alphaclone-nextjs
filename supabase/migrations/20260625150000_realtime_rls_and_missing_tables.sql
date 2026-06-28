@@ -9,24 +9,23 @@
 -- messages, messenger_conversations, messenger_messages,
 -- notifications, project_comments, projects, worker_sessions
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.audit_logs;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.automation_tasks;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.calendar_events;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.collaboration_documents;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.deals;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.events;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.meeting_chat_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.missed_calls;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.social_posts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.tickets;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.unified_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_presence;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.video_calls;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.whatsapp_messages;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.contracts;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.business_events;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.security_alerts;
+DO $$
+DECLARE
+  tbl text;
+BEGIN
+  FOREACH tbl IN ARRAY ARRAY[
+    'audit_logs', 'automation_tasks', 'calendar_events', 'collaboration_documents',
+    'deals', 'events', 'meeting_chat_messages', 'missed_calls', 'social_posts',
+    'tasks', 'tickets', 'unified_messages', 'user_presence', 'video_calls',
+    'whatsapp_messages', 'contracts', 'business_events', 'security_alerts'
+  ] LOOP
+    BEGIN
+      EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', tbl);
+    EXCEPTION WHEN duplicate_object THEN
+      NULL;
+    END;
+  END LOOP;
+END $$;
 
 -- ============================================================
 -- 2. RLS HARDENING
@@ -37,6 +36,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.security_alerts;
 -- authenticated users within the platform.
 ALTER TABLE public.system_trigger_templates ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Authenticated users can read trigger templates" ON public.system_trigger_templates;
 CREATE POLICY "Authenticated users can read trigger templates"
     ON public.system_trigger_templates
     FOR SELECT
@@ -50,6 +50,7 @@ CREATE POLICY "Authenticated users can read trigger templates"
 ALTER TABLE public.mcp_event_queue ENABLE ROW LEVEL SECURITY;
 
 -- Tenant users may enqueue their own events.
+DROP POLICY IF EXISTS "Tenants can insert own events" ON public.mcp_event_queue;
 CREATE POLICY "Tenants can insert own events"
     ON public.mcp_event_queue
     FOR INSERT
@@ -62,6 +63,7 @@ CREATE POLICY "Tenants can insert own events"
     );
 
 -- Tenant users can read their own queued events.
+DROP POLICY IF EXISTS "Tenants can read own events" ON public.mcp_event_queue;
 CREATE POLICY "Tenants can read own events"
     ON public.mcp_event_queue
     FOR SELECT
@@ -94,6 +96,7 @@ CREATE TABLE IF NOT EXISTS public.deal_stakeholders (
 
 ALTER TABLE public.deal_stakeholders ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant members manage stakeholders" ON public.deal_stakeholders;
 CREATE POLICY "Tenant members manage stakeholders"
     ON public.deal_stakeholders
     FOR ALL
@@ -112,7 +115,10 @@ CREATE POLICY "Tenant members manage stakeholders"
 CREATE INDEX IF NOT EXISTS idx_deal_stakeholders_tenant ON public.deal_stakeholders (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_deal_stakeholders_deal ON public.deal_stakeholders (deal_id);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.deal_stakeholders;
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.deal_stakeholders;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- 3b. sms_opt_outs — used by SMS campaign code
 CREATE TABLE IF NOT EXISTS public.sms_opt_outs (
@@ -126,6 +132,7 @@ CREATE TABLE IF NOT EXISTS public.sms_opt_outs (
 
 ALTER TABLE public.sms_opt_outs ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant members manage SMS opt-outs" ON public.sms_opt_outs;
 CREATE POLICY "Tenant members manage SMS opt-outs"
     ON public.sms_opt_outs
     FOR ALL
@@ -162,6 +169,7 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
 
 ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users manage own notification prefs" ON public.notification_preferences;
 CREATE POLICY "Users manage own notification prefs"
     ON public.notification_preferences
     FOR ALL
@@ -185,6 +193,7 @@ CREATE TABLE IF NOT EXISTS public.task_dependencies (
 
 ALTER TABLE public.task_dependencies ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenant members manage task dependencies" ON public.task_dependencies;
 CREATE POLICY "Tenant members manage task dependencies"
     ON public.task_dependencies
     FOR ALL
@@ -216,6 +225,7 @@ CREATE TABLE IF NOT EXISTS public.mcp_event_subscriptions (
 
 ALTER TABLE public.mcp_event_subscriptions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Tenants manage own MCP subscriptions" ON public.mcp_event_subscriptions;
 CREATE POLICY "Tenants manage own MCP subscriptions"
     ON public.mcp_event_subscriptions
     FOR ALL
@@ -239,10 +249,12 @@ CREATE INDEX IF NOT EXISTS idx_mcp_event_subs_expires ON public.mcp_event_subscr
 -- 4. UPDATED_AT TRIGGERS for new tables
 -- ============================================================
 
+DROP TRIGGER IF EXISTS set_deal_stakeholders_updated_at ON public.deal_stakeholders;
 CREATE TRIGGER set_deal_stakeholders_updated_at
     BEFORE UPDATE ON public.deal_stakeholders
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
+DROP TRIGGER IF EXISTS set_notification_preferences_updated_at ON public.notification_preferences;
 CREATE TRIGGER set_notification_preferences_updated_at
     BEFORE UPDATE ON public.notification_preferences
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();

@@ -76,10 +76,12 @@ alter table public.availability_schedules enable row level security;
 alter table public.bookings enable row level security;
 
 -- Types: Read public (for booking page), Write tenant_admin
+DROP POLICY IF EXISTS "Public can view active booking types" ON public.booking_types;
 create policy "Public can view active booking types"
   on public.booking_types for select
   using (true);
 
+DROP POLICY IF EXISTS "Tenants manage their own booking types" ON public.booking_types;
 create policy "Tenants manage their own booking types"
   on public.booking_types for all
   using (auth.uid() in (
@@ -87,10 +89,12 @@ create policy "Tenants manage their own booking types"
   ));
 
 -- Schedules: Read public (to check availability), Write tenant_admin
+DROP POLICY IF EXISTS "Public can view schedules" ON public.availability_schedules;
 create policy "Public can view schedules"
   on public.availability_schedules for select
   using (true);
 
+DROP POLICY IF EXISTS "Tenants manage their own schedules" ON public.availability_schedules;
 create policy "Tenants manage their own schedules"
   on public.availability_schedules for all
   using (auth.uid() in (
@@ -100,10 +104,12 @@ create policy "Tenants manage their own schedules"
 -- Bookings: 
 -- Public: create (insert) only
 -- Tenant: all access
+DROP POLICY IF EXISTS "Public can create bookings" ON public.bookings;
 create policy "Public can create bookings"
   on public.bookings for insert
   with check (true);
 
+DROP POLICY IF EXISTS "Tenants manage their own bookings" ON public.bookings;
 create policy "Tenants manage their own bookings"
   on public.bookings for all
   using (auth.uid() in (

@@ -20,6 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_twilio_integrations_tenant_id
 ALTER TABLE public.twilio_integrations ENABLE ROW LEVEL SECURITY;
 
 -- Service role (used by API routes) has full access
+DROP POLICY IF EXISTS "Service role full access to twilio_integrations" ON public.twilio_integrations;
 CREATE POLICY "Service role full access to twilio_integrations"
     ON public.twilio_integrations FOR ALL
     USING (true)
@@ -34,6 +35,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS twilio_integrations_updated_at_trigger ON public.twilio_integrations;
 CREATE TRIGGER twilio_integrations_updated_at_trigger
     BEFORE UPDATE ON public.twilio_integrations
     FOR EACH ROW

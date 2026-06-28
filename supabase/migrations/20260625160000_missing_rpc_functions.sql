@@ -2,6 +2,17 @@
 -- Missing RPC functions referenced in the codebase
 -- ============================================================
 
+CREATE TABLE IF NOT EXISTS public.usage_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    event_type VARCHAR(100) NOT NULL,
+    metric_name VARCHAR(100) NOT NULL DEFAULT 'generic',
+    increment_value INTEGER NOT NULL DEFAULT 1,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 1. get_accounts_receivable_aging
 --    Used by accounting/management API and Bonnie tools.
 CREATE OR REPLACE FUNCTION public.get_accounts_receivable_aging(p_tenant_id UUID)
@@ -67,10 +78,10 @@ AS $$
                 WHEN due_date >= CURRENT_DATE - 90      THEN '61-90 days'
                 ELSE                                         '90+ days'
             END AS bucket,
-            COALESCE(total_amount, 0) AS amount
+            COALESCE(total, 0) AS amount
         FROM public.vendor_bills
         WHERE tenant_id = p_tenant_id
-          AND status IN ('pending', 'overdue')
+          AND status IN ('open', 'partial', 'overdue')
     )
     SELECT bucket, COUNT(*), SUM(amount)
     FROM aged
@@ -90,6 +101,7 @@ GRANT EXECUTE ON FUNCTION public.get_accounts_payable_aging(UUID) TO authenticat
 
 -- 3. get_avg_ticket_resolution_time
 --    Support analytics — average hours to resolve a ticket.
+DROP FUNCTION IF EXISTS public.get_avg_ticket_resolution_time(UUID);
 CREATE OR REPLACE FUNCTION public.get_avg_ticket_resolution_time(p_tenant_id UUID)
 RETURNS NUMERIC
 LANGUAGE sql
@@ -149,9 +161,8 @@ LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-    INSERT INTO public.usage_events (tenant_id, event_type, quantity, created_at)
-    VALUES (p_tenant_id, p_metric, p_value, NOW())
-    ON CONFLICT DO NOTHING;
+    INSERT INTO public.usage_events (tenant_id, event_type, metric_name, increment_value, created_at)
+    VALUES (p_tenant_id, p_metric, p_metric, GREATEST(p_value::integer, 1), NOW());
 $$;
 
 GRANT EXECUTE ON FUNCTION public.track_tenant_usage(UUID, TEXT, NUMERIC) TO authenticated;
@@ -220,18 +231,18 @@ AS $$
     SELECT
         ws.user_id,
         COUNT(ws.id)                                                         AS sessions_count,
-        COALESCE(SUM(EXTRACT(EPOCH FROM (ws.ended_at - ws.started_at)) / 3600.0), 0) AS total_hours,
+        COALESCE(SUM(EXTRACT(EPOCH FROM (ws.session_end - ws.session_start)) / 3600.0), 0) AS total_hours,
         COALESCE((
             SELECT COUNT(*)
             FROM public.tasks t
             WHERE t.tenant_id   = p_tenant_id
-              AND t.assigned_to  = ws.user_id::TEXT
+              AND t.assigned_to::text = ws.user_id::text
               AND t.status       = 'completed'
               AND t.updated_at  BETWEEN p_from AND p_to
         ), 0) AS tasks_completed
     FROM public.worker_sessions ws
     WHERE ws.tenant_id  = p_tenant_id
-      AND ws.started_at BETWEEN p_from AND p_to
+      AND ws.session_start BETWEEN p_from AND p_to
     GROUP BY ws.user_id;
 $$;
 
@@ -394,13 +405,16 @@ ALTER TABLE public.plugins       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tenant_plugins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.plugin_logs    ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Everyone can read active plugins" ON public.plugins;
 CREATE POLICY "Everyone can read active plugins"
     ON public.plugins FOR SELECT TO authenticated USING (is_active = true);
 
+DROP POLICY IF EXISTS "Tenant members read own plugins" ON public.tenant_plugins;
 CREATE POLICY "Tenant members read own plugins"
     ON public.tenant_plugins FOR SELECT TO authenticated
     USING (tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid()));
 
+DROP POLICY IF EXISTS "Tenant members manage own plugin logs" ON public.plugin_logs;
 CREATE POLICY "Tenant members manage own plugin logs"
     ON public.plugin_logs FOR ALL TO authenticated
     USING (tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid()))

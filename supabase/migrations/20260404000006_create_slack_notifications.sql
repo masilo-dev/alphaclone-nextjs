@@ -22,6 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_slack_notifications_type ON public.slack_notifica
 ALTER TABLE public.slack_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for slack notifications access
+DROP POLICY IF EXISTS "Users can view their own tenant slack notifications" ON public.slack_notifications;
 CREATE POLICY "Users can view their own tenant slack notifications" ON public.slack_notifications
   FOR SELECT USING (
     auth.role() = 'authenticated' AND 
@@ -31,6 +32,7 @@ CREATE POLICY "Users can view their own tenant slack notifications" ON public.sl
     )
   );
 
+DROP POLICY IF EXISTS "Users can insert slack notifications for their tenant" ON public.slack_notifications;
 CREATE POLICY "Users can insert slack notifications for their tenant" ON public.slack_notifications
   FOR INSERT WITH CHECK (
     auth.role() = 'authenticated' AND 
@@ -40,6 +42,7 @@ CREATE POLICY "Users can insert slack notifications for their tenant" ON public.
     )
   );
 
+DROP POLICY IF EXISTS "Users can update slack notifications for their tenant" ON public.slack_notifications;
 CREATE POLICY "Users can update slack notifications for their tenant" ON public.slack_notifications
   FOR UPDATE USING (
     auth.role() = 'authenticated' AND 
@@ -50,6 +53,7 @@ CREATE POLICY "Users can update slack notifications for their tenant" ON public.
   );
 
 -- Add updated_at trigger
+DROP TRIGGER IF EXISTS update_slack_notifications_updated_at ON public.slack_notifications;
 CREATE TRIGGER update_slack_notifications_updated_at
   BEFORE UPDATE ON public.slack_notifications
   FOR EACH ROW

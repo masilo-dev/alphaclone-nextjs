@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.email_audit_log (
 
 ALTER TABLE public.email_audit_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tenant_email_audit_log" ON public.email_audit_log;
 CREATE POLICY "tenant_email_audit_log" ON public.email_audit_log
   FOR SELECT USING (tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid()));
 

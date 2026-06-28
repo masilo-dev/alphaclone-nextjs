@@ -2,6 +2,7 @@ ALTER TABLE public.mcp_sessions ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
+DROP POLICY IF EXISTS "tenant_members_manage_mcp_sessions" ON public.mcp_sessions;
   CREATE POLICY "tenant_members_manage_mcp_sessions" ON public.mcp_sessions
     FOR ALL USING (
       EXISTS (

@@ -12,6 +12,7 @@ create table if not exists public.push_subscriptions (
 alter table public.push_subscriptions enable row level security;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can manage own subscriptions" ON public.push_subscriptions;
 create policy "Users can manage own subscriptions"
   on public.push_subscriptions for all
   using (auth.uid() = user_id);

@@ -20,24 +20,28 @@ ALTER TABLE growth_agent_targets ENABLE ROW LEVEL SECURITY;
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'growth_agent_targets' AND policyname = 'Users can view their tenant''s growth agent targets') THEN
+DROP POLICY IF EXISTS "Users can view their tenant's growth agent targets" ON growth_agent_targets;
         CREATE POLICY "Users can view their tenant's growth agent targets" 
         ON growth_agent_targets FOR SELECT 
         USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'growth_agent_targets' AND policyname = 'Users can insert their tenant''s growth agent targets') THEN
+DROP POLICY IF EXISTS "Users can insert their tenant's growth agent targets" ON growth_agent_targets;
         CREATE POLICY "Users can insert their tenant's growth agent targets" 
         ON growth_agent_targets FOR INSERT 
         WITH CHECK (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'growth_agent_targets' AND policyname = 'Users can update their tenant''s growth agent targets') THEN
+DROP POLICY IF EXISTS "Users can update their tenant's growth agent targets" ON growth_agent_targets;
         CREATE POLICY "Users can update their tenant's growth agent targets" 
         ON growth_agent_targets FOR UPDATE 
         USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'growth_agent_targets' AND policyname = 'Users can delete their tenant''s growth agent targets') THEN
+DROP POLICY IF EXISTS "Users can delete their tenant's growth agent targets" ON growth_agent_targets;
         CREATE POLICY "Users can delete their tenant's growth agent targets" 
         ON growth_agent_targets FOR DELETE 
         USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
