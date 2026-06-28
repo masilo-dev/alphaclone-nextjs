@@ -63,7 +63,7 @@ export async function searchEmailContext(
   const [leadsRes, contactsRes, scraperRes, accountsRes] = await Promise.all([
     supabase
       .from('leads')
-      .select('id, contact_name, email, business_name, phone, status, lead_score')
+      .select('id, contact_name, email, business_name, phone, status, intelligence_score')
       .eq('tenant_id', tenantId)
       .or(
         domainPattern
@@ -93,7 +93,7 @@ export async function searchEmailContext(
       .limit(8),
     !isPersonalDomain(domain)
       ? supabase
-          .from('accounts')
+          .from('companies')
           .select('id, name, website, industry')
           .eq('tenant_id', tenantId)
           .ilike('website', `%${domain}%`)
@@ -110,7 +110,7 @@ export async function searchEmailContext(
       company: row.business_name,
       phone: row.phone,
       status: row.status,
-      score: row.lead_score,
+      score: row.intelligence_score != null ? Number(row.intelligence_score) : undefined,
       href: `/dashboard/leads?id=${row.id}`,
     });
   }

@@ -36,6 +36,17 @@ class PresenceService {
         );
     }
 
+    private isPresenceAuthError(error: { message?: string } | null | undefined): boolean {
+        const message = String(error?.message || '').toLowerCase();
+        return message.includes('not authorized to update this presence record');
+    }
+
+    private async resolvePresenceUserId(userId: string): Promise<string | null> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+        return user.id === userId ? userId : user.id;
+    }
+
     private markUnsupported(): void {
         this.presenceSupported = false;
         this.stopHeartbeat();
@@ -50,8 +61,11 @@ class PresenceService {
         }
 
         try {
+            const resolvedUserId = await this.resolvePresenceUserId(userId);
+            if (!resolvedUserId) return { error: null };
+
             const { error } = await supabase.rpc('update_user_presence', {
-                p_user_id: userId,
+                p_user_id: resolvedUserId,
                 p_status: status,
                 p_device_info: {
                     userAgent: navigator.userAgent,
@@ -60,7 +74,7 @@ class PresenceService {
             });
 
             if (error) {
-                if (this.isMissingRpc(error)) {
+                if (this.isMissingRpc(error) || this.isPresenceAuthError(error)) {
                     this.markUnsupported();
                     return { error: null };
                 }
@@ -68,8 +82,8 @@ class PresenceService {
             }
 
             this.presenceSupported = true;
-            this.activeUserId = userId;
-            this.startHeartbeat(userId);
+            this.activeUserId = resolvedUserId;
+            this.startHeartbeat(resolvedUserId);
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to initialize presence' };
@@ -102,7 +116,7 @@ class PresenceService {
                     p_device_info: null,
                 });
 
-                if (error && this.isMissingRpc(error)) {
+                if (error && (this.isMissingRpc(error) || this.isPresenceAuthError(error))) {
                     this.markUnsupported();
                 }
             } catch {
@@ -135,14 +149,17 @@ class PresenceService {
         }
 
         try {
+            const resolvedUserId = await this.resolvePresenceUserId(userId);
+            if (!resolvedUserId) return { error: null };
+
             const { error } = await supabase.rpc('update_user_presence', {
-                p_user_id: userId,
+                p_user_id: resolvedUserId,
                 p_status: status,
                 p_device_info: null,
             });
 
             if (error) {
-                if (this.isMissingRpc(error)) {
+                if (this.isMissingRpc(error) || this.isPresenceAuthError(error)) {
                     this.markUnsupported();
                     return { error: null };
                 }
@@ -150,6 +167,7 @@ class PresenceService {
             }
 
             this.presenceSupported = true;
+            this.activeUserId = resolvedUserId;
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Failed to update presence' };

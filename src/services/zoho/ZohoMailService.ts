@@ -1,6 +1,5 @@
 import { ZohoService } from './ZohoService';
 import { routeAIRequest } from '@/services/aiRouter';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { cleanAIJSONResponse } from '@/lib/utils';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 import { extractEmailAddress, formatMailFrom } from '@/lib/email/parseEmailHeader';
@@ -406,6 +405,7 @@ export class ZohoMailService extends ZohoService {
             const meta = messages.find(m => m.messageId === messageId);
             const subject = meta?.subject || 'No Subject';
             const sender = meta?.sender || 'Unknown';
+            const senderEmail = extractEmailAddress(sender);
 
             if (!content) return { status: 'ignored' };
 
@@ -431,7 +431,7 @@ export class ZohoMailService extends ZohoService {
                         direction: 'inbound',
                         externalId: messageId,
                         threadId: messageId,
-                        from: sender,
+                        from: senderEmail || sender,
                         to: `zoho:${this.userId}`,
                         subject,
                         text: content,
@@ -487,15 +487,17 @@ Rules:
             const data = JSON.parse(cleaned || '{"status":"ignored"}');
 
             if (data.status === 'qualified') {
-                const supabase = await createSupabaseServerClient();
+                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                const supabase = createSupabaseAdminClient();
                 const { data: log } = await supabase.from('zoho_auto_responder_logs').insert({
-                    user_id: this.userId, 
-                    message_id: messageId, 
-                    sender_email: sender, 
-                    original_subject: subject,
-                    triage_classification: 'qualified', 
-                    draft_reply: data.draft_reply, 
-                    triage_status: 'scheduled'
+                    user_id: this.userId,
+                    message_id: messageId,
+                    sender,
+                    sender_email: senderEmail || null,
+                    subject,
+                    triage_status: 'scheduled',
+                    draft_reply: data.draft_reply,
+                    ai_analysis: { classification: 'qualified' },
                 }).select().single();
 
                 if (log) {

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { Receiver } from '@upstash/qstash';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { Receiver } from '@upstash/qstash';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 const receiver = new Receiver({
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const zohoMail = new ZohoMailService(userId);
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabaseAdminClient();
 
     try {
         const normalizedSubject = String(originalSubject || '').trim() || 'Re: Conversation';

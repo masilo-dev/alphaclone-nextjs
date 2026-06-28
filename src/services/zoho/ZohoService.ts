@@ -31,9 +31,15 @@ export class ZohoAPIError extends Error {
     }
 }
 
+const ZOHO_CONFIG_CACHE_TTL_MS = 60_000;
+
 export class ZohoService {
     protected userId: string;
     protected encryptionSecret: string;
+    private configCache: ZohoConfig | null = null;
+    private configCachedAt = 0;
+    private tenantIdCache: string | null | undefined;
+    private tenantIdCachedAt = 0;
 
     constructor(userId: string) {
         this.userId = userId;
@@ -65,10 +71,24 @@ export class ZohoService {
         return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
     }
 
+    protected invalidateConfigCache(): void {
+        this.configCache = null;
+        this.configCachedAt = 0;
+        this.tenantIdCache = undefined;
+        this.tenantIdCachedAt = 0;
+    }
+
     /**
      * Get the stored Zoho configuration for the user
      */
     async getConfig(): Promise<ZohoConfig | null> {
+        if (
+            this.configCache &&
+            Date.now() - this.configCachedAt < ZOHO_CONFIG_CACHE_TTL_MS
+        ) {
+            return this.configCache;
+        }
+
         const supabase = this.getSupabaseClient();
         const { data, error } = await supabase
             .from('integrations')
@@ -100,10 +120,20 @@ export class ZohoService {
         config.campaignsApiHost = ZohoService.normalizeHost(config.campaignsApiHost);
         config.accountsServer = ZohoService.normalizeAccountsServer(config.accountsServer) || 'https://accounts.zoho.com';
 
-        return config as ZohoConfig;
+        const normalized = config as ZohoConfig;
+        this.configCache = normalized;
+        this.configCachedAt = Date.now();
+        return normalized;
     }
 
     protected async resolveTenantIdForIntegration(): Promise<string | null> {
+        if (
+            this.tenantIdCache !== undefined &&
+            Date.now() - this.tenantIdCachedAt < ZOHO_CONFIG_CACHE_TTL_MS
+        ) {
+            return this.tenantIdCache;
+        }
+
         const supabase = this.getSupabaseClient();
         const { data: existing } = await supabase
             .from('integrations')
@@ -113,7 +143,11 @@ export class ZohoService {
             .order('updated_at', { ascending: false })
             .limit(1)
             .maybeSingle();
-        if (existing?.tenant_id) return existing.tenant_id as string;
+        if (existing?.tenant_id) {
+            this.tenantIdCache = existing.tenant_id as string;
+            this.tenantIdCachedAt = Date.now();
+            return this.tenantIdCache;
+        }
 
         const { data: tenantMembership } = await supabase
             .from('tenant_users')
@@ -122,17 +156,24 @@ export class ZohoService {
             .order('joined_at', { ascending: true })
             .limit(1)
             .maybeSingle();
-        if (tenantMembership?.tenant_id) return tenantMembership.tenant_id as string;
+        if (tenantMembership?.tenant_id) {
+            this.tenantIdCache = tenantMembership.tenant_id as string;
+            this.tenantIdCachedAt = Date.now();
+            return this.tenantIdCache;
+        }
 
         const { data: profile } = await supabase
             .from('profiles')
             .select('tenant_id')
             .eq('id', this.userId)
             .maybeSingle();
-        return (profile?.tenant_id as string) || null;
+        this.tenantIdCache = (profile?.tenant_id as string) || null;
+        this.tenantIdCachedAt = Date.now();
+        return this.tenantIdCache;
     }
 
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
+        this.invalidateConfigCache();
         const currentConfig = await this.getConfig() || {};
         const newConfig = { ...currentConfig, ...config };
 
@@ -190,10 +231,13 @@ export class ZohoService {
         if (insertError) {
             throw new Error(`Failed to save Zoho integration config: ${insertError.message}`);
         }
+
+        this.invalidateConfigCache();
     }
 
     /** Disable cron/API use when Zoho revokes the refresh token. */
     protected async markRefreshTokenRevoked(reason: string): Promise<void> {
+        this.invalidateConfigCache();
         const supabase = this.getSupabaseClient();
         const { data: existing } = await supabase
             .from('integrations')
@@ -372,5 +416,6 @@ export class ZohoService {
             .delete()
             .eq('user_id', this.userId)
             .eq('type', 'zoho');
+        this.invalidateConfigCache();
     }
 }
