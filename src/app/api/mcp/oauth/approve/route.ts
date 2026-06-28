@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { isRedirectUriAllowed, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
 
 /**
  * MCP OAuth2 Approve Endpoint — UI-based authorization code issuance
@@ -54,16 +55,36 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No workspace found for your account' }, { status: 403 });
         }
 
-        // ── Ensure client exists (Auto-register dynamic AI agents) ──────────
         if (client_id) {
-            await supabaseAdmin
+            const { data: existingClient } = await supabaseAdmin
                 .from('mcp_oauth_clients')
-                .upsert({
-                    client_id,
-                    client_name: client_id.startsWith('177') ? 'Claude Desktop' : client_id,
-                    client_secret: 'dynamic',
-                    redirect_uris: [redirect_uri],
-                }, { onConflict: 'client_id' });
+                .select('client_id, redirect_uris, is_public')
+                .eq('client_id', client_id)
+                .maybeSingle();
+
+            if (existingClient?.redirect_uris?.length) {
+                if (!isRedirectUriAllowed(redirect_uri, existingClient.redirect_uris)) {
+                    return NextResponse.json(
+                        { error: 'redirect_uri is not registered for this client' },
+                        { status: 400 }
+                    );
+                }
+            } else if (!PLATFORM_MCP_OAUTH_CLIENT_IDS.has(client_id)) {
+                // Dynamic clients only — do not overwrite pre-registered platform redirect URIs
+                await supabaseAdmin
+                    .from('mcp_oauth_clients')
+                    .upsert(
+                        {
+                            client_id,
+                            client_name: client_id.startsWith('177') ? 'Claude Desktop' : client_id,
+                            client_secret: 'dynamic',
+                            redirect_uris: [redirect_uri],
+                            is_public: true,
+                            is_active: true,
+                        },
+                        { onConflict: 'client_id' }
+                    );
+            }
         }
 
         // ── Generate real single-use authorization code ────────────────────

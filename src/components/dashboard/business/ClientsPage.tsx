@@ -94,6 +94,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [newNoteTitle, setNewNoteTitle] = useState('');
     const [newNoteDescription, setNewNoteDescription] = useState('');
     const [noteSubmitting, setNoteSubmitting] = useState(false);
+    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+    const [showOutreachModal, setShowOutreachModal] = useState(false);
+    const [showOutreachPanel, setShowOutreachPanel] = useState(false);
+    const [page, setPage] = useState(1);
+    const [showArchived, setShowArchived] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
+
+    const searchParams = useSearchParams();
+    const stageParam = searchParams?.get('stage');
+    const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
+    const directoryParam = searchParams?.get('directory');
+    const PAGE_SIZE = 500;
 
     const loadClientTimeline = useCallback(async (clientId: string) => {
         setTimelineLoading(true);
@@ -144,20 +157,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             setNoteSubmitting(false);
         }
     };
-
-    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
-    const [showOutreachModal, setShowOutreachModal] = useState(false);
-    const [showOutreachPanel, setShowOutreachPanel] = useState(false);
-    const [page, setPage] = useState(1);
-    const [showArchived, setShowArchived] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const PAGE_SIZE = 500;
-
-    const searchParams = useSearchParams();
-    const stageParam = searchParams?.get('stage');
-    const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
-    const directoryParam = searchParams?.get('directory');
-    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
 
     const loadClients = useCallback(async (isInitial = true) => {
         if (!currentTenant) return;
@@ -270,19 +269,51 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 
     useEffect(() => {
-        filterClients();
+        let filtered = clients;
+        if (selectedStage !== 'all') {
+            filtered = filtered.filter((c) => c.salesStage === selectedStage);
+        }
+        setFilteredClients(filtered);
     }, [clients, selectedStage]);
 
-    const filterClients = () => {
-        let filtered = clients;
+    const totalClientValue = clients.reduce((sum, c) => sum + (c.value || 0), 0);
+    const activeClientsCount = clients.filter((c) => c.salesStage !== 'lost').length;
+    const customerCount = clients.filter((c) => c.salesStage === 'customer').length;
+    const prospectCount = clients.filter((c) => c.salesStage === 'prospect').length;
 
-        // Search and Archiving are now handled server-side in loadClients
-        if (selectedStage !== 'all') {
-            filtered = filtered.filter(c => c.salesStage === selectedStage);
-        }
-
-        setFilteredClients(filtered);
-    };
+    const contactStats = useMemo<ModuleStat[]>(
+        () => [
+            {
+                label: 'Total Contacts',
+                value: totalCount || clients.length,
+                sub: `${customerCount} customers`,
+                Icon: Users,
+                accent: 'teal',
+            },
+            {
+                label: 'Pipeline Value',
+                value: `$${totalClientValue.toLocaleString()}`,
+                sub: 'Combined contact value',
+                Icon: DollarSign,
+                accent: 'emerald',
+            },
+            {
+                label: 'Active',
+                value: activeClientsCount,
+                sub: 'Excluding lost',
+                Icon: UserCheck,
+                accent: 'blue',
+            },
+            {
+                label: 'Prospects',
+                value: prospectCount,
+                sub: `${clients.filter((c) => c.salesStage === 'lead').length} leads`,
+                Icon: Target,
+                accent: 'purple',
+            },
+        ],
+        [clients, totalCount, totalClientValue, activeClientsCount, customerCount, prospectCount]
+    );
 
     const handleAddClient = async (clientData: Partial<BusinessClient>) => {
         if (!currentTenant) return;
@@ -618,41 +649,6 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     // view, batch outreach). Mirrors the `fullCRM` feature flag in PLAN_PRICING.
     const tenantPlan = currentTenant?.subscription_plan || 'free';
     const isSoloOwner = tenantPlan === 'free';
-    const totalClientValue = clients.reduce((sum, c) => sum + (c.value || 0), 0);
-    const activeClientsCount = clients.filter(c => c.salesStage !== 'lost').length;
-    const customerCount = clients.filter(c => c.salesStage === 'customer').length;
-    const prospectCount = clients.filter(c => c.salesStage === 'prospect').length;
-
-    const contactStats = useMemo<ModuleStat[]>(() => [
-        {
-            label: 'Total Contacts',
-            value: totalCount || clients.length,
-            sub: `${customerCount} customers`,
-            Icon: Users,
-            accent: 'teal',
-        },
-        {
-            label: 'Pipeline Value',
-            value: `$${totalClientValue.toLocaleString()}`,
-            sub: 'Combined contact value',
-            Icon: DollarSign,
-            accent: 'emerald',
-        },
-        {
-            label: 'Active',
-            value: activeClientsCount,
-            sub: 'Excluding lost',
-            Icon: UserCheck,
-            accent: 'blue',
-        },
-        {
-            label: 'Prospects',
-            value: prospectCount,
-            sub: `${clients.filter(c => c.salesStage === 'lead').length} leads`,
-            Icon: Target,
-            accent: 'purple',
-        },
-    ], [clients, totalCount, totalClientValue, activeClientsCount, customerCount, prospectCount]);
 
     if (isSoloOwner) {
         return (

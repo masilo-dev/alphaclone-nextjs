@@ -4,6 +4,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
 import { notifyTenantOwners } from '@/lib/notifyTenantOwners';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -123,8 +125,46 @@ export async function POST(req: NextRequest) {
 
         // EMIT AUTOMATION EVENT + notify owner
         if (updatedContract) {
+            const origin = req.nextUrl.origin;
+            const admin = createSupabaseAdminClient();
+            const { data: tenantRow } = await admin
+                .from('tenants')
+                .select('name')
+                .eq('id', updatedContract.tenant_id)
+                .maybeSingle();
+            const workspaceName = tenantRow?.name || 'AlphaClone Systems';
+            const signerEmailForMail =
+                normalizedSignerEmail ||
+                String(updatedContract.client_email || updatedContract.signer_email || '').trim().toLowerCase();
+            const signerNameForMail =
+                normalizedSignerName ||
+                String(updatedContract.client_name || updatedContract.signer_name || 'Signer').trim();
+            const fullySigned = updatedContract.status === 'fully_signed';
+
+            if (
+                signerEmailForMail &&
+                (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed')
+            ) {
+                await sendEmailServer({
+                    tenantId: updatedContract.tenant_id,
+                    to: signerEmailForMail,
+                    subject: fullySigned
+                        ? `Fully signed: ${updatedContract.title}`
+                        : `Signed: ${updatedContract.title}`,
+                    html: contractEmailTemplates.signedConfirmation({
+                        recipientEmail: signerEmailForMail,
+                        tenantId: updatedContract.tenant_id,
+                        contractTitle: updatedContract.title,
+                        signerName: signerNameForMail,
+                        workspaceName,
+                        fullySigned,
+                    }),
+                    isPlatformNotification: true,
+                    skipFooter: true,
+                }).catch((err) => console.error('Contract signer confirmation email failed:', err));
+            }
+
             if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed') {
-                const origin = req.nextUrl.origin;
                 await notifyTenantOwners({
                     tenantId: updatedContract.tenant_id,
                     type: 'contract',
@@ -132,7 +172,7 @@ export async function POST(req: NextRequest) {
                         updatedContract.status === 'fully_signed'
                             ? `Contract fully signed: ${updatedContract.title}`
                             : `Client signed contract: ${updatedContract.title}`,
-                    message: `Contract "${updatedContract.title}" was signed by the client.`,
+                    message: `Contract "${updatedContract.title}" was signed by ${signerNameForMail}${signerEmailForMail ? ` (${signerEmailForMail})` : ''}.`,
                     link: `${origin}/dashboard/contracts`,
                     fallbackUserId: updatedContract.created_by || undefined,
                 }).catch((err) => console.error('Contract sign owner notify failed:', err));

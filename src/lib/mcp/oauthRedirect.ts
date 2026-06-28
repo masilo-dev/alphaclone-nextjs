@@ -29,3 +29,33 @@ export const CHATGPT_OAUTH_REDIRECT_URIS = [
   'https://chat.openai.com/connector_platform_oauth_redirect',
   'https://chat.openai.com/connector/oauth/*',
 ];
+
+/** Pre-registered OAuth clients for AI connectors (ChatGPT, Claude, Grok, Manus). */
+export const PLATFORM_MCP_OAUTH_CLIENT_IDS = new Set([
+  'chatgpt-connector',
+  'grok-connector',
+  'manus-ai',
+  '1778309945386-41bab8272f61',
+]);
+
+/**
+ * Browser OAuth connectors (ChatGPT, Claude.ai, etc.) send PKCE and expect a login +
+ * consent page — not the legacy MCP API-key form.
+ */
+export function shouldUseBrowserOAuthConsent(params: {
+  clientId: string;
+  codeChallenge: string | null;
+  isPublicClient?: boolean;
+}): boolean {
+  if (params.codeChallenge) return true;
+  if (PLATFORM_MCP_OAUTH_CLIENT_IDS.has(params.clientId)) return true;
+  return params.isPublicClient === true;
+}
+
+export function buildAuthorizePageUrl(origin: string, searchParams: URLSearchParams): string {
+  const url = new URL('/authorize', origin);
+  searchParams.forEach((value, key) => {
+    url.searchParams.set(key, value);
+  });
+  return url.toString();
+}

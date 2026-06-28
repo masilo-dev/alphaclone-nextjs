@@ -26,6 +26,16 @@ const CONTRACT_BODY_STYLES = `
   .contract-btn { display: inline-block; padding: 14px 28px; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
 `;
 
+export interface ContractSignedEmailData {
+    recipientEmail: string;
+    tenantId: string;
+    contractTitle: string;
+    signerName: string;
+    workspaceName: string;
+    fullySigned: boolean;
+    dashboardUrl?: string;
+}
+
 export const contractEmailTemplates = {
     signatureRequest(data: ContractEmailData): string {
         const content = `
@@ -46,6 +56,38 @@ export const contractEmailTemplates = {
         const bodyHtml = `<style>${CONTRACT_BODY_STYLES}</style>${content}`;
         return buildEmail({
             subject: `Contract: ${data.contractTitle}`,
+            bodyHtml,
+            tenantName: data.workspaceName,
+            tenantId: data.tenantId,
+            recipientEmail: data.recipientEmail,
+        });
+    },
+
+    /** Sent to the signer immediately after they sign. */
+    signedConfirmation(data: ContractSignedEmailData): string {
+        const statusLine = data.fullySigned
+            ? 'This contract is now fully executed — all required signatures are complete.'
+            : 'Your signature has been recorded. The business owner may still need to countersign.';
+
+        const content = `
+        <div class="contract-header">
+          <h1>Signature Confirmed</h1>
+        </div>
+        <p class="contract-text">Hello ${data.signerName || 'there'},</p>
+        <p class="contract-text">Thank you for signing <strong>${data.contractTitle}</strong> with <strong>${data.workspaceName}</strong>.</p>
+        <p class="contract-text">${statusLine}</p>
+        <div class="contract-card">
+          <div class="contract-row">Document <span class="contract-val">${data.contractTitle}</span></div>
+          <div class="contract-row">Signed by <span class="contract-val">${data.signerName}</span></div>
+          <div class="contract-row">Status <span class="contract-val">${data.fullySigned ? 'Fully signed' : 'Client signed'}</span></div>
+        </div>
+        <p class="contract-text" style="font-size:14px;color:#64748b;">Keep this email for your records. If you did not sign this document, contact ${data.workspaceName} immediately.</p>`;
+
+        const bodyHtml = `<style>${CONTRACT_BODY_STYLES}</style>${content}`;
+        return buildEmail({
+            subject: data.fullySigned
+                ? `Fully signed: ${data.contractTitle}`
+                : `Signed: ${data.contractTitle}`,
             bodyHtml,
             tenantName: data.workspaceName,
             tenantId: data.tenantId,
