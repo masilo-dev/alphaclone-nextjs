@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { contractEndDate, contractStartDate } from '@/lib/contracts/contractLifecycle';
 import { getStatsCache, setStatsCache } from '@/lib/dashboard/statsCache';
 import {
   DASHBOARD_COLORS,
@@ -94,7 +95,8 @@ async function safeRows<T extends Record<string, unknown>>(
   try {
     let q = supabase.from(table).select(select).eq('tenant_id', tenantId).limit(limit);
     if (extra) q = extra(q);
-    const { data } = await q;
+    const { data, error } = await q;
+    if (error) return [];
     return (data as unknown as T[]) || [];
   } catch {
     return [];
@@ -439,22 +441,38 @@ export const dashboardStatsService = {
       type?: string;
       value?: number;
       total_value?: number;
+      contract_value?: number;
       created_at: string;
       signed_at?: string;
       end_date?: string;
       start_date?: string;
+      payment_due_date?: string;
+      client_signed_at?: string;
       title?: string;
-    }>(supabase, 'contracts', 'status, type, value, total_value, created_at, signed_at, end_date, start_date, title', tenantId);
+    }>(
+      supabase,
+      'contracts',
+      'status, type, value, total_value, contract_value, created_at, signed_at, end_date, start_date, payment_due_date, client_signed_at, title',
+      tenantId,
+    );
 
-    const active = contracts.filter((c) => ['fully_signed', 'client_signed', 'sent', 'active'].includes(String(c.status))).length;
-    const expiringSoon = contracts.filter((c) => c.end_date && c.end_date >= now && c.end_date <= in30).length;
-    const totalValue = contracts.reduce((s, c) => s + Number(c.total_value || c.value || 0), 0);
+    const active = contracts.filter((c) => ['fully_signed', 'client_signed', 'sent', 'active', 'signed'].includes(String(c.status))).length;
+    const expiringSoon = contracts.filter((c) => {
+      const end = contractEndDate(c);
+      return !!end && end >= now && end <= in30;
+    }).length;
+    const totalValue = contracts.reduce(
+      (s, c) => s + Number(c.total_value || c.contract_value || c.value || 0),
+      0,
+    );
 
     let totalDays = 0;
     let durationCount = 0;
     contracts.forEach((c) => {
-      if (c.start_date && c.end_date) {
-        const days = (new Date(c.end_date).getTime() - new Date(c.start_date).getTime()) / 86_400_000;
+      const start = contractStartDate(c);
+      const end = contractEndDate(c);
+      if (start && end) {
+        const days = (new Date(end).getTime() - new Date(start).getTime()) / 86_400_000;
         if (days > 0) { totalDays += days; durationCount++; }
       }
     });
@@ -484,8 +502,11 @@ export const dashboardStatsService = {
       if (['fully_signed', 'client_signed', 'sent'].includes(s)) statusDonut.Active++;
       else if (s === 'draft') statusDonut.Draft++;
       else if (s === 'rejected') statusDonut.Terminated++;
-      else if (c.end_date && c.end_date < now) statusDonut.Expired++;
-      else statusDonut.Draft++;
+      else {
+        const end = contractEndDate(c);
+        if (end && end < now) statusDonut.Expired++;
+        else statusDonut.Draft++;
+      }
     });
 
     const signed = contracts.filter((c) => ['fully_signed', 'client_signed'].includes(String(c.status))).length;
@@ -737,8 +758,12 @@ export const dashboardStatsService = {
       safeRows<{ created_at: string }>(
         supabase, 'lead_outreach_log', 'created_at', tenantId, (q) => q.gte('created_at', since30), 150,
       ),
-      safeRows<{ status?: string; end_date?: string }>(
-        supabase, 'contracts', 'status, end_date', tenantId, undefined, 150,
+      safeRows<{
+        status?: string;
+        end_date?: string;
+        payment_due_date?: string;
+      }>(
+        supabase, 'contracts', 'status, end_date, payment_due_date', tenantId, undefined, 150,
       ),
       safeRows<{ status?: string }>(
         supabase, 'tasks', 'status', tenantId, undefined, 200,
@@ -771,7 +796,10 @@ export const dashboardStatsService = {
 
     const activeDeals = deals.filter((d) => !['closed_won', 'closed_lost'].includes(d.stage)).length;
     const emailsSent = outreach.length;
-    const expiringSoon = contracts.filter((c) => c.end_date && c.end_date >= now && c.end_date <= in30).length;
+    const expiringSoon = contracts.filter((c) => {
+      const end = contractEndDate(c);
+      return !!end && end >= now && end <= in30;
+    }).length;
     const openTasks = tasks.filter((t) => t.status !== 'completed').length;
     const overdueTasks = tasks.filter((t) => t.status === 'overdue').length;
     const scheduledPosts = socialPosts.filter(

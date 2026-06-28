@@ -1,5 +1,9 @@
 import { supabase } from '../lib/supabase';
 import { auditLoggingService } from './auditLoggingService';
+import {
+    contractEndDate,
+    SIGNED_CONTRACT_STATUSES,
+} from '@/lib/contracts/contractLifecycle';
 
 export interface Contract {
     id: string;
@@ -34,13 +38,19 @@ class ContractExpirationService {
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + daysAhead);
 
-            const { data: contracts } = await supabase
+            const { data: contracts, error } = await supabase
                 .from('contracts')
                 .select('*')
-                .eq('status', 'signed')
+                .in('status', [...SIGNED_CONTRACT_STATUSES])
+                .not('end_date', 'is', null)
                 .gte('end_date', today.toISOString())
                 .lte('end_date', futureDate.toISOString())
                 .order('end_date', { ascending: true });
+
+            if (error) {
+                console.error('Error fetching expiring contracts:', error.message);
+                return [];
+            }
 
             return contracts || [];
         } catch (error) {
@@ -58,10 +68,11 @@ class ContractExpirationService {
             const today = new Date();
 
             return contracts.map((contract: any) => {
-                const endDate = new Date(contract.end_date);
-                const daysUntilExpiration = Math.ceil(
-                    (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-                );
+                const resolvedEndDate = contractEndDate(contract);
+                const endDate = resolvedEndDate ? new Date(resolvedEndDate) : new Date(NaN);
+                const daysUntilExpiration = Number.isNaN(endDate.getTime())
+                    ? 0
+                    : Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                 let alertLevel: 'info' | 'warning' | 'urgent';
                 let recommendedAction: string;
@@ -166,13 +177,19 @@ class ContractExpirationService {
             const renewalWindow = new Date();
             renewalWindow.setDate(renewalWindow.getDate() + 30);
 
-            const { data: contracts } = await supabase
+            const { data: contracts, error } = await supabase
                 .from('contracts')
                 .select('*')
-                .eq('status', 'signed')
+                .in('status', [...SIGNED_CONTRACT_STATUSES])
                 .eq('auto_renew', true)
+                .not('end_date', 'is', null)
                 .gte('end_date', today.toISOString())
                 .lte('end_date', renewalWindow.toISOString());
+
+            if (error) {
+                console.error('Error processing auto-renewals:', error.message);
+                return { renewed: 0, errors: 0 };
+            }
 
             if (!contracts || contracts.length === 0) {
                 return { renewed: 0, errors: 0 };
@@ -213,8 +230,12 @@ class ContractExpirationService {
                 return { success: false, error: 'Contract not found' };
             }
 
-            // Calculate new end date (1 year from current end date by default)
-            const currentEndDate = new Date(contract.end_date);
+            const currentEndValue = contractEndDate(contract);
+            if (!currentEndValue) {
+                return { success: false, error: 'Contract has no end date' };
+            }
+
+            const currentEndDate = new Date(currentEndValue);
             const renewedEndDate = newEndDate || new Date(currentEndDate.setFullYear(currentEndDate.getFullYear() + 1));
 
             // Update contract
@@ -319,11 +340,11 @@ class ContractExpirationService {
             const in90Days = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
 
             const [total, exp30, exp60, exp90, autoRenew] = await Promise.all([
-                supabase.from('contracts').select('id', { count: 'exact' }).eq('status', 'signed'),
-                supabase.from('contracts').select('id', { count: 'exact' }).eq('status', 'signed').lte('end_date', in30Days.toISOString()),
-                supabase.from('contracts').select('id', { count: 'exact' }).eq('status', 'signed').lte('end_date', in60Days.toISOString()),
-                supabase.from('contracts').select('id', { count: 'exact' }).eq('status', 'signed').lte('end_date', in90Days.toISOString()),
-                supabase.from('contracts').select('id', { count: 'exact' }).eq('status', 'signed').eq('auto_renew', true),
+                supabase.from('contracts').select('id', { count: 'exact', head: true }).in('status', [...SIGNED_CONTRACT_STATUSES]),
+                supabase.from('contracts').select('id', { count: 'exact', head: true }).in('status', [...SIGNED_CONTRACT_STATUSES]).lte('end_date', in30Days.toISOString()),
+                supabase.from('contracts').select('id', { count: 'exact', head: true }).in('status', [...SIGNED_CONTRACT_STATUSES]).lte('end_date', in60Days.toISOString()),
+                supabase.from('contracts').select('id', { count: 'exact', head: true }).in('status', [...SIGNED_CONTRACT_STATUSES]).lte('end_date', in90Days.toISOString()),
+                supabase.from('contracts').select('id', { count: 'exact', head: true }).in('status', [...SIGNED_CONTRACT_STATUSES]).eq('auto_renew', true),
             ]);
 
             return {

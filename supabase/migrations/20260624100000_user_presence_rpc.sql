@@ -40,7 +40,11 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    IF auth.uid() IS NULL OR auth.uid() <> p_user_id THEN
+    IF auth.uid() IS NULL THEN
+        RETURN;
+    END IF;
+
+    IF auth.uid() <> p_user_id THEN
         RAISE EXCEPTION 'Not authorized to update this presence record';
     END IF;
 
