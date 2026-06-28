@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { isRedirectUriAllowed } from '@/lib/mcp/oauthRedirect';
+import { isRedirectUriAllowed, shouldUseBrowserOAuthConsent, buildAuthorizePageUrl } from '@/lib/mcp/oauthRedirect';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -284,16 +284,44 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     return oauthError(redirectUri, 'invalid_request', 'client_id and redirect_uri are required', state);
   }
 
-  // No API key → serve the HTML consent form (browser OAuth flow)
-  if (!apiKey) {
-    return serveConsentPage({ responseType, clientId, redirectUri, state, codeChallenge, codeChallengeMethod, scope });
-  }
-
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
     return oauthError(redirectUri, 'server_error', 'Server configuration error', state);
   }
 
   const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+
+  const { data: client } = await supabase
+    .from('mcp_oauth_clients')
+    .select('client_id, redirect_uris, is_public')
+    .eq('client_id', clientId)
+    .maybeSingle();
+
+  if (client) {
+    const allowedRedirects: string[] = client.redirect_uris || [];
+    if (!isRedirectUriAllowed(redirectUri, allowedRedirects)) {
+      console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
+      return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
+    }
+  }
+
+  // ChatGPT / Claude / other PKCE connectors → login + consent UI (not API-key form)
+  if (
+    !apiKey &&
+    shouldUseBrowserOAuthConsent({
+      clientId,
+      codeChallenge,
+      isPublicClient: client?.is_public,
+    })
+  ) {
+    const origin = new URL(req.url).origin;
+    const authorizeUrl = buildAuthorizePageUrl(origin, new URL(req.url).searchParams);
+    return Response.redirect(authorizeUrl, 302);
+  }
+
+  // No API key → serve the HTML consent form (legacy MCP API-key flow)
+  if (!apiKey) {
+    return serveConsentPage({ responseType, clientId, redirectUri, state, codeChallenge, codeChallengeMethod, scope });
+  }
 
   // Validate API key → resolve tenant + user
   const { data: keyData, error: keyError } = await supabase
@@ -310,23 +338,6 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       error: 'Invalid or expired API key. Please check your key and try again.',
     });
   }
-
-  // Validate client_id (skip strict check for public/well-known clients)
-  const { data: client } = await supabase
-    .from('mcp_oauth_clients')
-    .select('client_id, redirect_uris, is_public')
-    .eq('client_id', clientId)
-    .maybeSingle();
-
-  // For unknown clients, allow if is_public OR if client_id matches redirect_uri domain pattern
-  if (client) {
-    const allowedRedirects: string[] = client.redirect_uris || [];
-    if (!isRedirectUriAllowed(redirectUri, allowedRedirects)) {
-      console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
-      return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
-    }
-  }
-  // If client not found in DB, proceed anyway — the API key already proved identity
 
   // Generate single-use auth code
   const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;

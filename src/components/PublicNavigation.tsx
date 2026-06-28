@@ -11,7 +11,6 @@ import {
   CheckSquare,
   ChevronDown,
   FileText,
-  Globe2,
   HelpCircle,
   Layers,
   Mail,
@@ -56,6 +55,8 @@ const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=start
 const LOGIN_HREF = '/auth/login';
 
 const DESKTOP_PRIMARY_LINKS: NavLink[] = [
+  { label: 'Home', path: '/' },
+  { label: 'About', path: '/about' },
   { label: 'Services', path: '/services' },
   { label: 'Pricing', path: '/pricing' },
   { label: 'Results', path: '/results' },
@@ -100,7 +101,6 @@ const MORE_DROPDOWN_GROUPS: NavDropdownGroup[] = [
   {
     label: 'Company',
     items: [
-      { label: 'About', path: '/about', description: 'Our story and mission', icon: Globe2 },
       { label: 'Search', path: '/search', description: 'Find pages and content', icon: Search },
     ],
   },
@@ -111,7 +111,6 @@ const MORE_PATHS = new Set([
   '/ai-agents',
   '/ecosystem',
   '/who-we-serve',
-  '/about',
   '/search',
 ]);
 
@@ -286,10 +285,7 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
     </div>
   );
 
-  const primaryMobileItems: NavLink[] = [
-    ...(pathname !== '/' ? [{ label: 'Home', path: '/' } as NavLink] : []),
-    ...DESKTOP_PRIMARY_LINKS,
-  ];
+  const primaryMobileItems: NavLink[] = DESKTOP_PRIMARY_LINKS;
 
   return (
     <nav className="fixed w-full z-[120] pt-safe transition-all duration-300 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/50">
@@ -300,10 +296,10 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
           }`}
         >
           {/* Left cluster: logo + nav links */}
-          <div className="hidden lg:flex items-center min-w-0 flex-1">
+          <div className="hidden lg:flex items-center min-w-0 flex-1 gap-0">
             <Link
               href="/"
-              className="flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0"
+              className="flex items-center gap-3 flex-shrink-0 pr-2 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0"
             >
               <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
                 <img
@@ -326,10 +322,14 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
               <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
             </Link>
 
-            <div className="flex items-center gap-0.5 ml-8 xl:ml-10 min-w-0">
+            <div className="flex items-center gap-0.5 ml-6 pl-4 border-l border-slate-800/60 min-w-0">
               {DESKTOP_PRIMARY_LINKS.map((item) => {
-                const linkClass = `inline-flex items-center h-10 px-2.5 xl:px-3 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
-                  isActive(item.path) ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
+                const active =
+                  item.path === '/'
+                    ? pathname === '/'
+                    : isActive(item.path);
+                const linkClass = `inline-flex items-center h-10 px-2 xl:px-2.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                  active ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
                 }`;
                 if (item.externalUrl) {
                   return (

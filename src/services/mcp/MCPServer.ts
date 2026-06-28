@@ -4939,6 +4939,8 @@ class AlphaCloneMCPServer {
               action: String(action).slice(0, 100),
               entity_type: String(entity_type).slice(0, 50),
               entity_id: entity_id || null,
+              resource_type: String(entity_type).slice(0, 50),
+              resource_id: entity_id || null,
               new_values: newValues,
             })
             .select('id, action, entity_type, created_at')

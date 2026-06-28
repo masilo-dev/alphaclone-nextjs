@@ -121,7 +121,7 @@ function AuthorizeContent() {
 
                 <h1 className="text-2xl font-bold mb-2">Authorize Connection</h1>
                 <p className="text-slate-400 mb-2">
-                    An AI Assistant (Claude) is requesting access to your AlphaClone workspace to perform automated tasks on your behalf.
+                    An AI assistant (ChatGPT, Claude, or another connector) is requesting access to your AlphaClone workspace.
                 </p>
 
                 {codeChallenge && (
@@ -132,7 +132,7 @@ function AuthorizeContent() {
                 )}
 
                 <div className="text-left bg-slate-800/40 rounded-xl p-4 mb-6 text-sm space-y-2">
-                    <p className="text-slate-300 font-medium">This will allow Claude to:</p>
+                    <p className="text-slate-300 font-medium">This will allow the connector to:</p>
                     <ul className="text-slate-400 space-y-1 list-disc list-inside">
                         <li>Read your CRM, deals, and contacts</li>
                         <li>Manage tasks and projects on your behalf</li>
