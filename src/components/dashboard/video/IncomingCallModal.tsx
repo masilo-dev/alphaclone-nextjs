@@ -17,6 +17,10 @@ interface CallSignal {
     roomId: string; // The database ID of the call
 }
 
+/** Hosted ringtone (public/sounds/ringtone.mp3 is not shipped). */
+const INCOMING_CALL_RINGTONE_URL =
+    'https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3';
+
 const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName }) => {
     const router = useRouter();
     const [incomingCall, setIncomingCall] = useState<CallSignal | null>(null);
@@ -39,10 +43,6 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
 
                     if (signal.type === 'call:ringing') {
                         setIncomingCall(signal);
-                        // Play Ringtone
-                        if (audioRef.current) {
-                            audioRef.current.play().catch(e => console.error('Error playing ringtone:', e));
-                        }
                     }
                 }
             )
@@ -59,6 +59,17 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
             }
         };
     }, [userId]);
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+        if (incomingCall) {
+            void audio.play().catch((e) => console.error('Error playing ringtone:', e));
+            return;
+        }
+        audio.pause();
+        audio.currentTime = 0;
+    }, [incomingCall]);
 
     const handleAnswer = () => {
         if (!incomingCall) return;
@@ -87,12 +98,11 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
         toast('Call declined', { icon: '📴' });
     };
 
-    if (!incomingCall) return <audio ref={audioRef} src="/sounds/ringtone.mp3" loop hidden />;
-
     return (
+        <>
+            <audio ref={audioRef} src={INCOMING_CALL_RINGTONE_URL} loop preload="none" hidden />
+            {incomingCall ? (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-            {/* Ringtone Audio Element */}
-            <audio ref={audioRef} src="/sounds/ringtone.mp3" loop hidden />
 
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl shadow-teal-500/20 w-full max-w-sm p-8 text-center relative overflow-hidden">
                 {/* Background Animation */}
@@ -136,6 +146,8 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({ userId, userName 
                 </div>
             </div>
         </div>
+            ) : null}
+        </>
     );
 };
 

@@ -1263,6 +1263,26 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'create_social_post_with_media',
+    description:
+      'One-step upload and post for Claude/Manus: attach image or video (base64) and publish or schedule a social post.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        caption: { type: 'string' },
+        file_name: { type: 'string' },
+        mime_type: { type: 'string', description: 'image/png, video/mp4, etc.' },
+        file_base64: { type: 'string' },
+        platforms: { type: 'array', items: { type: 'string' } },
+        publish_now: { type: 'boolean' },
+        scheduled_at: { type: 'string' },
+        page_id: { type: 'string' },
+      },
+      required: ['caption', 'file_name', 'mime_type', 'file_base64'],
+    },
+  },
+  {
     name: 'upload_document',
     description: 'Upload a document or file (PDF, Docx, Text) into the native AlphaClone Document Hub. Includes automated cyber-security scanning. Does not return a public/external link unless create_public_link is explicitly true.',
     inputSchema: {

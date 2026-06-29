@@ -8,6 +8,18 @@ import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 
 async function renderInvoicePdf(invoice: any): Promise<Buffer> {
   const items = Array.isArray(invoice.items) ? invoice.items : [];
+  const bankLines = [
+    invoice.bank_name ? `Bank: ${invoice.bank_name}` : null,
+    invoice.account_number ? `Account: ${invoice.account_number}` : null,
+    invoice.branch_code ? `Branch: ${invoice.branch_code}` : null,
+    invoice.swift_code ? `SWIFT: ${invoice.swift_code}` : null,
+    invoice.payment_reference ? `Reference: ${invoice.payment_reference}` : null,
+    invoice.bank_details ? String(invoice.bank_details) : null,
+    invoice.payment_link ? `Pay online: ${invoice.payment_link}` : null,
+  ].filter(Boolean);
+  const bankBlock = bankLines.length
+    ? `<div style="margin-top:20px;font-size:12px;"><strong>Payment details</strong><br/>${bankLines.join('<br/>')}</div>`
+    : '';
   const rows = items.map((item: any) => {
     const qty = Number(item.quantity || 0);
     const unit = Number(item.unitPrice || 0);
@@ -49,7 +61,8 @@ async function renderInvoicePdf(invoice: any): Promise<Buffer> {
         </thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="total">Total: ${Number(invoice.total || 0).toFixed(2)} ${invoice.currency || 'USD'}</p>
+      <p class="total">Total: ${Number(invoice.total || invoice.total_amount || 0).toFixed(2)} ${invoice.currency || 'USD'}</p>
+      ${bankBlock}
     </body>
   </html>`;
 

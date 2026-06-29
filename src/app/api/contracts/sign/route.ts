@@ -3,7 +3,6 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
-import { notifyTenantOwners } from '@/lib/notifyTenantOwners';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
 
@@ -165,17 +164,16 @@ export async function POST(req: NextRequest) {
             }
 
             if (updatedContract.status === 'fully_signed' || updatedContract.status === 'client_signed') {
-                await notifyTenantOwners({
+                const { onContractSignedSideEffects } = await import('@/services/contractNotificationService');
+                await onContractSignedSideEffects({
                     tenantId: updatedContract.tenant_id,
-                    type: 'contract',
-                    title:
-                        updatedContract.status === 'fully_signed'
-                            ? `Contract fully signed: ${updatedContract.title}`
-                            : `Client signed contract: ${updatedContract.title}`,
-                    message: `Contract "${updatedContract.title}" was signed by ${signerNameForMail}${signerEmailForMail ? ` (${signerEmailForMail})` : ''}.`,
-                    link: `${origin}/dashboard/contracts`,
-                    fallbackUserId: updatedContract.created_by || undefined,
-                }).catch((err) => console.error('Contract sign owner notify failed:', err));
+                    contractId: updatedContract.id,
+                    title: updatedContract.title,
+                    clientId: updatedContract.client_id,
+                    clientName: signerNameForMail,
+                    dealId: updatedContract.deal_id,
+                    createdBy: updatedContract.created_by,
+                }).catch((err) => console.error('Contract signed side effects failed:', err));
             }
             if (updatedContract.status === 'fully_signed') {
                 const { emitBusinessEvent } = await import('@/lib/automation/emit-event');

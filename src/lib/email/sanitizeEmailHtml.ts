@@ -1,6 +1,7 @@
 'use client';
 
 import DOMPurify from 'dompurify';
+import { rewriteExternalEmailImageSources } from '@/lib/email/proxyImageUrl';
 
 const CID_IMAGE_PLACEHOLDER =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
@@ -29,7 +30,7 @@ export function sanitizeEmailHtml(rawHtml?: string) {
   const html = String(rawHtml || '').trim();
   if (!html) return '';
 
-  return DOMPurify.sanitize(replaceCidImageSources(html), {
+  return DOMPurify.sanitize(rewriteExternalEmailImageSources(replaceCidImageSources(html)), {
     USE_PROFILES: { html: true },
   });
 }

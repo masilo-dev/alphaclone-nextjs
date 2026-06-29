@@ -78,19 +78,26 @@ export async function generatePnLStatement(
   const fromIso = from as string;
   const toIso = to as string;
 
-  // 1. Fetch Revenue (Paid Invoices)
+  // 1. Fetch Revenue (Paid Invoices) — use paid_at with fallback to updated_at
   const { data: invoices, error: invError } = await supabase
     .from('business_invoices')
     .select('*')
     .eq('tenant_id', tenantId)
-    .gte('created_at', fromIso)
-    .lte('created_at', toIso) as { data: any[] | null, error: any };
+    .eq('status', 'paid') as { data: any[] | null; error: any };
 
   if (invError) throw new Error(`Revenue query failed: ${invError.message}`);
 
   const invoiceRows = (invoices || []) as Array<Record<string, any>>;
-  const paidInvoices = invoiceRows.filter((i) => String(i.status || i.payment_status || '').toLowerCase() === 'paid');
-  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + normalizeMoney(i.total ?? i.total_amount ?? i.amount), 0);
+  const paidInvoices = invoiceRows.filter((i) => {
+    const paidAt = i.paid_at || i.updated_at;
+    if (!paidAt) return false;
+    const paidTime = new Date(paidAt).getTime();
+    return paidTime >= new Date(fromIso).getTime() && paidTime <= new Date(toIso).getTime();
+  });
+  const totalRevenue = paidInvoices.reduce(
+    (sum: number, i: any) => sum + normalizeMoney(i.total ?? i.total_amount ?? i.amount),
+    0
+  );
 
   const outstandingInvoices = invoiceRows.filter((i) => {
     const status = String(i.status || i.payment_status || '').toLowerCase();
@@ -101,7 +108,7 @@ export async function generatePnLStatement(
   // Group revenue by month
   const revenueByMonthMap = new Map<string, number>();
   paidInvoices.forEach((i: any) => {
-    const invoiceDate = normalizeDate(i.created_at || i.issue_date || i.invoice_date || i.date);
+    const invoiceDate = normalizeDate(i.paid_at || i.updated_at || i.created_at);
     const month = invoiceDate ? invoiceDate.substring(0, 7) : 'unknown';
     revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + normalizeMoney(i.total ?? i.total_amount ?? i.amount));
   });

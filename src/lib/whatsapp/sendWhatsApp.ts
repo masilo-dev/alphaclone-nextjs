@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 
 export type SendWhatsAppErrorCode =
   | 'NOT_CONFIGURED'
@@ -48,8 +49,13 @@ export async function sendWhatsAppMessage(params: {
   metadata?: Record<string, unknown>;
 }): Promise<SendWhatsAppResult> {
   const supabase = createSupabaseAdminClient();
+  const allowTenantEmoji = params.metadata?.allowEmoji === true;
+  const skipQuality = params.metadata?.skipBonnieQualityCheck === true;
+  const outboundMessage = skipQuality
+    ? params.message
+    : sanitizeBonnieOutboundText(params.message, { allowEmoji: allowTenantEmoji }).clean;
   const cleanTo = cleanPhone(params.phone);
-  if (!params.tenantId || !cleanTo || !params.message.trim()) {
+  if (!params.tenantId || !cleanTo || !outboundMessage.trim()) {
     return {
       success: false,
       provider: 'meta-whatsapp',
@@ -105,7 +111,7 @@ export async function sendWhatsAppMessage(params: {
         type: 'text',
         text: {
           preview_url: false,
-          body: params.message,
+          body: outboundMessage,
         },
       }),
     });
@@ -146,7 +152,7 @@ export async function sendWhatsAppMessage(params: {
       phone_number: cleanTo,
       direction: 'outbound',
       message_type: 'text',
-      body: params.message,
+      body: outboundMessage,
       contact_id: contact?.id || null,
       client_id: params.clientId || null,
       status: 'sent',
@@ -161,7 +167,7 @@ export async function sendWhatsAppMessage(params: {
       lead_id: params.clientId || params.contactId || null,
       phone_number: cleanTo,
       status: 'sent',
-      message_content: params.message,
+      message_content: outboundMessage,
       sent_at: new Date().toISOString(),
     });
 

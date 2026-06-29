@@ -4,6 +4,8 @@ import { isEmailSuppressed } from '@/lib/email/suppression';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { sendWhatsAppMessage, isWhatsAppConfigured } from '@/lib/whatsapp/sendWhatsApp';
+import { blocksBonnieSend, campaignQualityCheck } from '@/lib/bonnie/bonnieBannedLanguage';
+import { bonnieErrorMessage, BONNIE_KNOWN_ERRORS } from '@/lib/bonnie/bonnieError';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
 type ProviderConfig = {
@@ -174,6 +176,16 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             (c.html_content as string) ||
             (c.content as string) ||
             'Empty email body';
+
+        const campaignQuality = campaignQualityCheck(bodySource);
+        if (blocksBonnieSend(campaignQuality.score)) {
+            const err = BONNIE_KNOWN_ERRORS.campaign_quality_failed(
+                campaignQuality.score,
+                campaignQuality.warnings
+            );
+            return { success: false, error: bonnieErrorMessage(err) };
+        }
+
         const campaignFromEmail = String(c.from_email || 'notifications@alphaclonesystems.com');
         const campaignFromName = String(c.from_name || 'AlphaClone Systems');
         const replyTo = (c.reply_to as string) || undefined;

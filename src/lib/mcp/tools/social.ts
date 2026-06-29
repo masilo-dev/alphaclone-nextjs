@@ -205,3 +205,102 @@ registerTool('social', {
     return data;
   },
 });
+
+// 5. upload_media_asset — images/videos for social posts (Claude, Manus, Bonnie)
+registerTool('social', {
+  name: 'upload_media_asset',
+  description:
+    'Upload an image or video to workspace media storage. Returns media_asset id and public_url for use with create_social_post (media_asset_ids) or schedule_social_post (asset_id).',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    file_name: z.string(),
+    mime_type: z.string(),
+    file_base64: z.string(),
+    alt_text: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      file_name: { type: 'string', description: 'Original file name with extension' },
+      mime_type: { type: 'string', description: 'MIME type such as image/png or video/mp4' },
+      file_base64: { type: 'string', description: 'Base64 file data (raw or data:*;base64,...)' },
+      alt_text: { type: 'string' },
+      tags: { type: 'array', items: { type: 'string' } },
+    },
+    required: ['tenant_id', 'file_name', 'mime_type', 'file_base64'],
+  },
+  handler: async (args, ctx) => {
+    const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
+    return uploadMediaAsset({
+      tenantId: args.tenant_id,
+      userId: ctx.userId || args.tenant_id,
+      fileName: args.file_name,
+      mimeType: args.mime_type,
+      fileBase64: args.file_base64,
+      altText: args.alt_text,
+      tags: args.tags,
+    });
+  },
+});
+
+// 6. create_social_post_with_media — one-step upload + publish for agents
+registerTool('social', {
+  name: 'create_social_post_with_media',
+  description:
+    'Upload image/video and create or publish a social post in one call. Use for Claude/Manus when attaching media. Supports Facebook immediate publish or schedule/store for other platforms.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    caption: z.string(),
+    file_name: z.string(),
+    mime_type: z.string(),
+    file_base64: z.string(),
+    platforms: z.array(z.string()).optional(),
+    publish_now: z.boolean().optional(),
+    scheduled_at: z.string().optional(),
+    page_id: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      caption: { type: 'string' },
+      file_name: { type: 'string' },
+      mime_type: { type: 'string' },
+      file_base64: { type: 'string' },
+      platforms: { type: 'array', items: { type: 'string' }, description: 'facebook, linkedin, instagram, x, tiktok' },
+      publish_now: { type: 'boolean' },
+      scheduled_at: { type: 'string', format: 'date-time' },
+      page_id: { type: 'string' },
+    },
+    required: ['tenant_id', 'caption', 'file_name', 'mime_type', 'file_base64'],
+  },
+  handler: async (args, ctx) => {
+    const userId = ctx.userId;
+    if (!userId) throw new Error('user_id is required');
+
+    const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
+    const asset = await uploadMediaAsset({
+      tenantId: args.tenant_id,
+      userId,
+      fileName: args.file_name,
+      mimeType: args.mime_type,
+      fileBase64: args.file_base64,
+      tags: ['agent-composite-post'],
+    });
+
+    const { createMCPServer } = await import('@/services/mcp/MCPServer');
+    const server = createMCPServer({ tenantId: args.tenant_id, userId });
+    return server.runTool('create_social_post', {
+      tenant_id: args.tenant_id,
+      user_id: userId,
+      caption: args.caption,
+      media_asset_ids: [asset.id],
+      platforms: args.platforms || ['facebook'],
+      publish_now: args.publish_now ?? false,
+      scheduled_at: args.scheduled_at,
+      page_id: args.page_id,
+    });
+  },
+});

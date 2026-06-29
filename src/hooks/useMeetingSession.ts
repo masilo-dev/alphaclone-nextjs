@@ -41,6 +41,13 @@ function writeActiveMeetingCallId(scopeKey: string, callId: string | null): void
     window.localStorage.removeItem(activeCallStorageKey(scopeKey));
 }
 
+function clearStoredMeetingSession(scopeKey: string): void {
+    writeActiveMeetingCallId(scopeKey, null);
+    writeMinimizedPreference(scopeKey, false);
+}
+
+const JOINABLE_MEETING_STATUSES = new Set(['scheduled', 'active']);
+
 export function useMeetingSession(scopeKey = 'global') {
     const [activeMeetingCallId, setActiveMeetingCallIdState] = useState<string | null>(() => readActiveMeetingCallId(scopeKey));
     const [isMeetingMinimized, setIsMeetingMinimizedState] = useState<boolean>(() => readMinimizedPreference(scopeKey));
@@ -63,15 +70,67 @@ export function useMeetingSession(scopeKey = 'global') {
         setIsMeetingMinimizedState(readMinimizedPreference(scopeKey));
     }, [scopeKey]);
 
+    useEffect(() => {
+        const callId = readActiveMeetingCallId(scopeKey);
+        if (!callId) {
+            return;
+        }
+
+        let cancelled = false;
+
+        void (async () => {
+            try {
+                const res = await fetch(
+                    `/api/meetings/by-id/${encodeURIComponent(callId)}/status`,
+                    { credentials: 'include' }
+                );
+
+                if (cancelled) {
+                    return;
+                }
+
+                if (!res.ok) {
+                    clearStoredMeetingSession(scopeKey);
+                    setActiveMeetingCallIdState(null);
+                    setIsMeetingMinimizedState(false);
+                    return;
+                }
+
+                const data = await res.json() as {
+                    status?: string;
+                    timeExceeded?: boolean;
+                };
+
+                const isJoinable =
+                    Boolean(data.status) &&
+                    JOINABLE_MEETING_STATUSES.has(data.status!) &&
+                    !data.timeExceeded;
+
+                if (!isJoinable) {
+                    clearStoredMeetingSession(scopeKey);
+                    setActiveMeetingCallIdState(null);
+                    setIsMeetingMinimizedState(false);
+                }
+            } catch {
+                // Keep the stored session on transient network errors.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [scopeKey]);
+
     const startMeeting = useCallback((callId: string) => {
         setActiveMeetingCallId(callId);
         setIsMeetingMinimized(false);
     }, [setActiveMeetingCallId, setIsMeetingMinimized]);
 
     const endMeeting = useCallback(() => {
-        setActiveMeetingCallId(null);
-        setIsMeetingMinimized(false);
-    }, [setActiveMeetingCallId, setIsMeetingMinimized]);
+        clearStoredMeetingSession(scopeKey);
+        setActiveMeetingCallIdState(null);
+        setIsMeetingMinimizedState(false);
+    }, [scopeKey]);
 
     const toggleMeetingMinimized = useCallback(() => {
         setIsMeetingMinimized((prev) => !prev);

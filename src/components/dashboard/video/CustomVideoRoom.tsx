@@ -481,6 +481,15 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const handleLiveKitLeave = useCallback(() => {
+        void finalizeMeetingDb();
+    }, [finalizeMeetingDb]);
+
+    const handleLiveKitFatalError = useCallback((message: string) => {
+        setLiveKitError(message);
+        toast.error('Secure video connection failed. Please retry.');
+    }, []);
+
     if (liveKitSession) {
         return (
             <LiveKitStage
@@ -491,11 +500,8 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 formatElapsed={formatTime}
                 requestHardStop={false}
                 onHardStopConsumed={() => undefined}
-                onLeave={() => void finalizeMeetingDb()}
-                onFatalError={(message) => {
-                    setLiveKitError(message);
-                    toast.error('Secure video connection failed. Please retry.');
-                }}
+                onLeave={handleLiveKitLeave}
+                onFatalError={handleLiveKitFatalError}
             />
         );
     }

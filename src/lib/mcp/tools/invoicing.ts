@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
 
 // 1. get_invoices
 registerTool('invoicing', {
@@ -38,13 +39,19 @@ registerTool('invoicing', {
 // 2. create_invoice
 registerTool('invoicing', {
   name: 'create_invoice',
-  description: 'Create a new invoice.',
+  description: 'Create a new invoice. Generates a Stripe payment link when Connect is active.',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     client_id: z.string().uuid(),
     amount: z.number().positive(),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']).optional().default('draft'),
     due_date: z.string().optional(),
+    bank_name: z.string().optional(),
+    account_number: z.string().optional(),
+    branch_code: z.string().optional(),
+    swift_code: z.string().optional(),
+    payment_reference: z.string().optional(),
+    bank_details: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -54,26 +61,56 @@ registerTool('invoicing', {
       amount: { type: 'number', description: 'Total invoice amount' },
       status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'], default: 'draft' },
       due_date: { type: 'string', format: 'date-time' },
+      bank_name: { type: 'string' },
+      account_number: { type: 'string' },
+      branch_code: { type: 'string' },
+      swift_code: { type: 'string' },
+      payment_reference: { type: 'string' },
+      bank_details: { type: 'string' },
     },
     required: ['tenant_id', 'client_id', 'amount'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+    const issueDate = new Date().toISOString().slice(0, 10);
+    const dueDate =
+      args.due_date?.slice(0, 10) ||
+      new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     const { data, error } = await supabase
       .from('business_invoices')
       .insert({
         tenant_id: args.tenant_id,
         client_id: args.client_id,
+        total: args.amount,
         total_amount: args.amount,
+        subtotal: args.amount,
         status: args.status,
-        due_date: args.due_date || null,
+        due_date: dueDate,
+        issue_date: issueDate,
         invoice_number: `INV-${Date.now().toString().slice(-6)}`,
+        bank_name: args.bank_name || null,
+        account_number: args.account_number || null,
+        branch_code: args.branch_code || null,
+        swift_code: args.swift_code || null,
+        payment_reference: args.payment_reference || null,
+        bank_details: args.bank_details || null,
       })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+
+    const payment = await ensureInvoicePaymentLink({
+      tenantId: args.tenant_id,
+      invoiceId: data.id,
+    });
+
+    return {
+      ...data,
+      payment_link: payment.payment_link,
+      stripe_connected: payment.stripe_connected,
+    };
   },
 });
 
@@ -113,7 +150,131 @@ registerTool('invoicing', {
   },
 });
 
-// 4. get_inventory_items
+const bankFieldsSchema = z.object({
+  bank_name: z.string().optional(),
+  account_number: z.string().optional(),
+  branch_code: z.string().optional(),
+  swift_code: z.string().optional(),
+  payment_reference: z.string().optional(),
+  bank_details: z.string().optional(),
+});
+
+// 4. update_invoice
+registerTool('invoicing', {
+  name: 'update_invoice',
+  description: 'Update invoice fields including bank payment details.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    invoice_id: z.string().uuid(),
+    ...bankFieldsSchema.shape,
+    amount: z.number().positive().optional(),
+    due_date: z.string().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      invoice_id: { type: 'string', format: 'uuid' },
+      bank_name: { type: 'string' },
+      account_number: { type: 'string' },
+      branch_code: { type: 'string' },
+      swift_code: { type: 'string' },
+      payment_reference: { type: 'string' },
+      bank_details: { type: 'string' },
+      amount: { type: 'number' },
+      due_date: { type: 'string', format: 'date-time' },
+    },
+    required: ['tenant_id', 'invoice_id'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (args.amount !== undefined) patch.total_amount = args.amount;
+    if (args.due_date !== undefined) patch.due_date = args.due_date;
+    if (args.bank_name !== undefined) patch.bank_name = args.bank_name;
+    if (args.account_number !== undefined) patch.account_number = args.account_number;
+    if (args.branch_code !== undefined) patch.branch_code = args.branch_code;
+    if (args.swift_code !== undefined) patch.swift_code = args.swift_code;
+    if (args.payment_reference !== undefined) patch.payment_reference = args.payment_reference;
+    if (args.bank_details !== undefined) patch.bank_details = args.bank_details;
+
+    const { data, error } = await supabase
+      .from('business_invoices')
+      .update(patch)
+      .eq('id', args.invoice_id)
+      .eq('tenant_id', args.tenant_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+});
+
+// 5. send_invoice
+registerTool('invoicing', {
+  name: 'send_invoice',
+  description: 'Send an invoice email to the client with tracking pixel and optional payment link.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    invoice_id: z.string().uuid(),
+    recipient_email: z.string().email().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      invoice_id: { type: 'string', format: 'uuid' },
+      recipient_email: { type: 'string', format: 'email' },
+    },
+    required: ['tenant_id', 'invoice_id'],
+  },
+  handler: async (args, ctx) => {
+    const supabase = createSupabaseAdminClient();
+    const { data: invoice, error } = await supabase
+      .from('business_invoices')
+      .select('*, client:business_clients(email, name)')
+      .eq('id', args.invoice_id)
+      .eq('tenant_id', args.tenant_id)
+      .single();
+
+    if (error || !invoice) throw new Error('Invoice not found');
+
+    const toEmail =
+      args.recipient_email ||
+      (invoice as any).client?.email ||
+      (invoice as any).client_email;
+    if (!toEmail) throw new Error('Recipient email is required');
+
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+    const res = await fetch(`${origin}/api/invoices/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tenantId: args.tenant_id,
+        invoiceId: args.invoice_id,
+        recipientEmail: toEmail,
+        userId: ctx.userId,
+      }),
+    });
+    const payload = await res.json();
+    if (!res.ok || payload.error) {
+      throw new Error(payload.error || 'Failed to send invoice');
+    }
+
+    return {
+      sent: true,
+      sent_to: toEmail,
+      sent_at: new Date().toISOString(),
+      opened: Boolean(invoice.viewed_at),
+      opened_at: invoice.viewed_at || null,
+      payment_link: invoice.payment_link || null,
+      ...payload,
+    };
+  },
+});
+
+// 6. get_inventory_items
 registerTool('invoicing', {
   name: 'get_inventory_items',
   description: 'Retrieve inventory items for stock management.',

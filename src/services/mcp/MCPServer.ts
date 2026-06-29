@@ -34,6 +34,11 @@ import {
   type PortalEventInput,
 } from '../adapters/businessAdapters';
 import { ZohoMailService } from '../zoho/ZohoMailService';
+import { ZohoAuthExpiredError } from '../zoho/ZohoService';
+import { prepareSocialPostContent } from '../../lib/content/sanitizePostContent';
+import { checkCampaignLanguage, blocksBonnieSend, campaignQualityCheck, sanitizePost } from '../../lib/bonnie/bonnieBannedLanguage';
+import { checkChartOfAccountsConfigured } from '../../lib/accounting/chartOfAccountsGuard';
+import { onLeadCreated } from '../../lib/leads/leadOnCreated';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
@@ -2062,6 +2067,12 @@ class AlphaCloneMCPServer {
               'on_new_lead_created',
               { lead_id: data?.id || null, business_name: data?.business_name || primaryName, source: resolvedSource }
             );
+            void onLeadCreated({
+              tenantId: tenant_id,
+              userId: owner_id,
+              leadId: data?.id,
+              businessName: data?.business_name || primaryName,
+            }).catch((err) => console.error('[create_lead] onLeadCreated failed:', err));
             result = {
               content: [
                 {
@@ -2600,7 +2611,15 @@ class AlphaCloneMCPServer {
           if (rErr) throw supabaseErrorToMcpClientError('create_bulk_email_campaign', rErr.message);
 
           let actionText = `Email campaign draft "${campaignName}" created successfully for ${recipients.length} recipients. You can view/send it from the dashboard.`;
-          
+          const campaignQuality = campaignQualityCheck(String(body_html || ''));
+          const languageWarnings = campaignQuality.warnings;
+
+          if (publish_now && blocksBonnieSend(campaignQuality.score)) {
+            throw new Error(
+              `Campaign quality score ${campaignQuality.score}/100 — rewrite before send. Issues: ${languageWarnings.join('; ')}`
+            );
+          }
+
           if (publish_now) {
              actionText = `Campaign "${campaignName}" created and queued to send to ${recipients.length} recipients with provider balancing.`;
              const sendResult = await sendScheduledCampaignServer(campaign.id);
@@ -2610,7 +2629,11 @@ class AlphaCloneMCPServer {
              actionText = `Campaign "${campaignName}" created and sent to ${recipients.length} recipients.`;
           }
 
-          result = { content: [{ type: 'text', text: actionText }] };
+          result = { content: [{ type: 'text', text: JSON.stringify({
+            message: actionText,
+            campaign_id: campaign.id,
+            ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
+          }, null, 2) }] };
           break;
         }
 
@@ -2622,12 +2645,20 @@ class AlphaCloneMCPServer {
 
           const { data: campaign, error: campaignErr } = await supabaseAdmin
             .from('email_campaigns')
-            .select('id, name, status, tenant_id, total_recipients')
+            .select('id, name, status, tenant_id, total_recipients, metadata')
             .eq('tenant_id', tenant_id)
             .eq('id', campaignId)
             .single();
           if (campaignErr || !campaign) {
             throw supabaseErrorToMcpClientError('queue_email_campaign_send', campaignErr?.message || 'Campaign not found');
+          }
+
+          const campaignBody = String((campaign as any)?.metadata?.bodyHtml || '');
+          const preSendQuality = campaignQualityCheck(campaignBody);
+          if (blocksBonnieSend(preSendQuality.score)) {
+            throw new Error(
+              `Campaign quality score ${preSendQuality.score}/100 — rewrite before send. Issues: ${preSendQuality.warnings.join('; ')}`
+            );
           }
 
           await supabaseAdmin
@@ -2641,6 +2672,8 @@ class AlphaCloneMCPServer {
             throw new Error(sendResult.error || 'Campaign send failed');
           }
 
+          const languageWarnings = preSendQuality.warnings;
+
           result = {
             content: [{ type: 'text', text: JSON.stringify({
               campaign_id: campaignId,
@@ -2648,6 +2681,8 @@ class AlphaCloneMCPServer {
               status: 'sent',
               total_recipients: campaign.total_recipients || 0,
               provider_routing: 'AlphaClone used connected providers through sendEmail fallback.',
+              quality_score: preSendQuality.score,
+              ...(languageWarnings.length ? { language_warnings: languageWarnings } : {}),
             }, null, 2) }],
           };
           break;
@@ -2848,7 +2883,23 @@ class AlphaCloneMCPServer {
             .select('id, invoice_number, status, total, due_date, bank_details, mobile_payment_details')
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_invoice', error.message);
-          result = { content: [{ type: 'text', text: `Invoice created: ${JSON.stringify(data)}` }] };
+
+          const { ensureInvoicePaymentLink } = await import('@/lib/invoicing/invoicePaymentLink');
+          const payment = await ensureInvoicePaymentLink({
+            tenantId: tenant_id,
+            invoiceId: data.id,
+          });
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                ...data,
+                payment_link: payment.payment_link,
+                stripe_connected: payment.stripe_connected,
+              }, null, 2),
+            }],
+          };
           break;
         }
 
@@ -3291,6 +3342,41 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'create_social_post_with_media': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const { caption, file_name, mime_type, file_base64, platforms, publish_now, scheduled_at, page_id } = a;
+          if (!caption || !file_name || !mime_type || !file_base64) {
+            throw new Error('caption, file_name, mime_type, and file_base64 are required');
+          }
+          const uploadRes = await this.executeToolInternal(
+            'upload_media_asset',
+            { tenant_id, user_id, file_name, mime_type, file_base64, tags: ['agent-composite-post'] },
+            traceId,
+            supabaseAdmin
+          );
+          const uploadText = uploadRes.content?.[0]?.text || '';
+          const assetMatch = uploadText.match(/\{[\s\S]*\}/);
+          const asset = assetMatch ? JSON.parse(assetMatch[0]) : null;
+          if (!asset?.id) throw new Error('Media upload failed');
+          return this.executeToolInternal(
+            'create_social_post',
+            {
+              tenant_id,
+              user_id,
+              caption,
+              media_asset_ids: [asset.id],
+              platforms: platforms || ['facebook'],
+              publish_now: publish_now ?? false,
+              scheduled_at,
+              page_id,
+            },
+            traceId,
+            supabaseAdmin
+          );
+        }
+
         case 'create_social_post':
         case 'create_post': {
           const a = args as Record<string, any>;
@@ -3314,7 +3400,9 @@ class AlphaCloneMCPServer {
             media_base64_data = [],
             auto_refine_with_context = true,
           } = a;
-          const cleanCaption = cleanProfessionalContent(caption || '');
+          const postPrep = prepareSocialPostContent(cleanProfessionalContent(caption || ''), link_url);
+          const cleanCaption = postPrep.content;
+          const postCtaWarning = postPrep.warning;
           if (!cleanCaption) throw new Error('caption is required');
           if (publish_now && !isSocialPublishEnabled()) {
             throw new Error('Publishing disabled');
@@ -3333,15 +3421,18 @@ class AlphaCloneMCPServer {
                 .replace(/google analytics/gi, 'Sovereign client metrics')
                 .replace(/google api/gi, 'Sovereign mapping APIs');
             } else if (!lower.includes('maps') && !lower.includes('gis') && !lower.includes('openstreetmap') && !lower.includes('here')) {
-              finalCaption += '\n\n🌍 100% Google-Free sovereign local business lead harvesting powered by OpenStreetMap & HERE maps routing.';
+              finalCaption += '\n\n100% Google-Free sovereign local business lead harvesting powered by OpenStreetMap & HERE maps routing.';
             }
             
             // 3. Solopreneur starting pricing value hook
             const hasPricing = lower.includes('$15') || lower.includes('trial') || lower.includes('risk-free');
             if (!hasPricing) {
-              finalCaption += '\n\n🚀 Kickstart your B2B lead pipelines with our zero-risk 14-day trial. Pricing starts at just $15/month.';
+              finalCaption += '\n\nKickstart your B2B lead pipelines with our zero-risk 14-day trial. Pricing starts at just $15/month.';
             }
           }
+
+          const postSanitized = sanitizePost(finalCaption);
+          finalCaption = postSanitized.clean;
 
           // B. Direct base64 Multimedia Ingestion
           const uploadedAssetUrls: string[] = [];
@@ -3569,7 +3660,9 @@ class AlphaCloneMCPServer {
                   task: taskResult,
                   page: hasFacebook ? { page_id: resolvedPageId, page_name: integration?.page_name || null } : null,
                   refinement: auto_refine_with_context !== false ? 'applied brand context' : 'skipped',
-                  logged_run: { agent: detectedAgent, status: 'completed' }
+                  logged_run: { agent: detectedAgent, status: 'completed' },
+                  has_cta: postPrep.has_cta,
+                  ...(postCtaWarning ? { warning: postCtaWarning } : {}),
                 })}`,
               },
             ],
@@ -3730,6 +3823,9 @@ class AlphaCloneMCPServer {
           if (typeof text !== 'string' || !text.trim()) {
             throw new Error('text is required');
           }
+          const liPostPrep = prepareSocialPostContent(cleanProfessionalContent(text), a.link_url);
+          const sanitizedLinkedInText = liPostPrep.content;
+          if (!sanitizedLinkedInText) throw new Error('text is required');
           if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
             throw new Error('scheduled_at is required when publish_now is false');
           }
@@ -3834,7 +3930,7 @@ class AlphaCloneMCPServer {
                 {
                   tenant_id,
                   user_id,
-                  caption: text.trim(),
+                  caption: sanitizedLinkedInText,
                   platforms: ['linkedin'],
                   media_urls: mergedMediaUrls,
                   status: 'scheduled',
@@ -3876,7 +3972,7 @@ class AlphaCloneMCPServer {
               supabaseAdmin,
               tenant_id,
               user_id,
-              text.trim(),
+              sanitizedLinkedInText,
               7
             );
             if (duplicate) {
@@ -3890,7 +3986,7 @@ class AlphaCloneMCPServer {
               {
                 tenant_id,
                 user_id,
-                caption: text.trim(),
+                caption: sanitizedLinkedInText,
                 platforms: ['linkedin'],
                 media_urls: mergedMediaUrls,
                 status: 'publishing',
@@ -4121,7 +4217,7 @@ class AlphaCloneMCPServer {
               {
                 tenant_id,
                 user_id,
-                caption: text.trim(),
+                caption: sanitizedLinkedInText,
                 platforms: ['linkedin'],
                 media_urls: mergedMediaUrls,
                 status: 'scheduled',
@@ -5717,13 +5813,17 @@ class AlphaCloneMCPServer {
           try {
             const a = args as Record<string, any>;
             const tenant_id = this.requireTenant(a);
+            const coaCheck = await checkChartOfAccountsConfigured(tenant_id);
             const period = (a.period || 'monthly') as 'monthly' | 'quarterly' | 'yearly';
             const from_date = a.from_date ? String(a.from_date) : undefined;
             const to_date = a.to_date ? String(a.to_date) : undefined;
 
             const statement = await generatePnLStatement(tenant_id, period, from_date, to_date);
+            const payload = coaCheck.setup_required
+              ? { ...statement, setup_required: true, message: coaCheck.message }
+              : statement;
             
-            result = { content: [{ type: 'text', text: JSON.stringify(statement, null, 2) }] };
+            result = { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
           } catch (err: any) {
             console.error('[MCP get_pnl_statement] Error:', err);
             return {
@@ -6063,6 +6163,7 @@ class AlphaCloneMCPServer {
         }
 
         case 'get_zoho_mail_messages': {
+          try {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
@@ -6087,10 +6188,18 @@ class AlphaCloneMCPServer {
           }
 
           result = { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
+          } catch (err: any) {
+            if (err instanceof ZohoAuthExpiredError) {
+              result = { content: [{ type: 'text', text: JSON.stringify({ zoho_auth_error: true, action: 'Reconnect Zoho in Settings', message: err.message }, null, 2) }] };
+            } else {
+              throw err;
+            }
+          }
           break;
         }
 
         case 'get_zoho_mail_thread': {
+          try {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
@@ -6099,10 +6208,18 @@ class AlphaCloneMCPServer {
           const zoho = new ZohoMailService(user_id);
           const messages = await zoho.getThread(threadId);
           result = { content: [{ type: 'text', text: JSON.stringify({ tenant_id, thread_id: threadId, messages }, null, 2) }] };
+          } catch (err: any) {
+            if (err instanceof ZohoAuthExpiredError) {
+              result = { content: [{ type: 'text', text: JSON.stringify({ zoho_auth_error: true, action: 'Reconnect Zoho in Settings', message: err.message }, null, 2) }] };
+            } else {
+              throw err;
+            }
+          }
           break;
         }
 
         case 'reply_to_zoho_mail': {
+          try {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
@@ -6158,6 +6275,13 @@ class AlphaCloneMCPServer {
             matched_contact: matchedContact,
             suggested_action: matchedContact ? null : { type: 'create_lead', email: matchEmail || null },
           }, null, 2) }] };
+          } catch (err: any) {
+            if (err instanceof ZohoAuthExpiredError) {
+              result = { content: [{ type: 'text', text: JSON.stringify({ zoho_auth_error: true, action: 'Reconnect Zoho in Settings', message: err.message }, null, 2) }] };
+            } else {
+              throw err;
+            }
+          }
           break;
         }
 
@@ -7495,6 +7619,7 @@ Return ONLY a JSON array of 60 objects:
         case 'get_balance_sheet': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const coaCheck = await checkChartOfAccountsConfigured(tenant_id);
           const asOf = a.as_of_date ? new Date(a.as_of_date).toISOString() : new Date().toISOString();
           const [bsInvRes, bsExpRes] = await Promise.all([
             supabaseAdmin.from('business_invoices').select('total_amount, status').eq('tenant_id', tenant_id).lte('created_at', asOf),
@@ -7514,6 +7639,7 @@ Return ONLY a JSON array of 60 objects:
                 assets: { cash_and_equivalents: bsTotalRevenue - bsTotalExp, accounts_receivable: bsAR, total_assets: bsTotalRevenue - bsTotalExp + bsAR },
                 liabilities: { accounts_payable: bsPendingExp, total_liabilities: bsPendingExp },
                 equity: { retained_earnings: bsTotalRevenue - bsTotalExp - bsPendingExp, total_equity: bsTotalRevenue - bsTotalExp - bsPendingExp },
+                ...(coaCheck.setup_required ? { setup_required: true, message: coaCheck.message } : {}),
               }, null, 2),
             }],
           };
@@ -7576,17 +7702,34 @@ Return ONLY a JSON array of 60 objects:
           const { project_id: pdId } = a;
           if (!pdId) throw new Error('project_id is required');
           const milestonesLoad = await loadProjectMilestonesOrFallback(supabaseAdmin, tenant_id, pdId);
-          const [pdProjRes, pdTasksRes] = await Promise.all([
-            supabaseAdmin.from('projects').select('id, name, description, status, current_stage, progress, due_date, owner_id, owner_name, team, created_at, updated_at').eq('id', pdId).eq('tenant_id', tenant_id).single(),
+          const [pdProjRes, pdBizProjRes, pdTasksRes] = await Promise.all([
+            supabaseAdmin.from('projects').select('id, name, description, status, current_stage, progress, due_date, owner_id, owner_name, team, created_at, updated_at').eq('id', pdId).eq('tenant_id', tenant_id).maybeSingle(),
+            supabaseAdmin.from('business_projects').select('id, name, description, status, due_date, client_id, created_at, updated_at').eq('id', pdId).eq('tenant_id', tenant_id).maybeSingle(),
             supabaseAdmin.from('tasks').select('id, title, status, priority, assigned_to, due_date, completed_at').eq('related_to_project', pdId).eq('tenant_id', tenant_id).order('due_date', { ascending: true }),
           ]);
-          if (pdProjRes.error) throw supabaseErrorToMcpClientError('get_project_details', pdProjRes.error.message);
+          const project = pdBizProjRes.data || pdProjRes.data;
+          if (!project) throw supabaseErrorToMcpClientError('get_project_details', 'Project not found');
+          const clientId = (project as any).client_id;
+          const [clientRes, dealsRes, invoicesRes, contractsRes] = await Promise.all([
+            clientId
+              ? supabaseAdmin.from('business_clients').select('id, name, email, company').eq('id', clientId).eq('tenant_id', tenant_id).maybeSingle()
+              : Promise.resolve({ data: null }),
+            clientId
+              ? supabaseAdmin.from('deals').select('id, title, stage, value').eq('client_id', clientId).eq('tenant_id', tenant_id)
+              : supabaseAdmin.from('deals').select('id, title, stage, value').eq('project_id', pdId).eq('tenant_id', tenant_id),
+            supabaseAdmin.from('business_invoices').select('id, invoice_number, status, total_amount').eq('project_id', pdId).eq('tenant_id', tenant_id),
+            supabaseAdmin.from('contracts').select('id, title, status').eq('project_id', pdId).eq('tenant_id', tenant_id),
+          ]);
           const pdTasks = pdTasksRes.data || [];
           result = {
             content: [{
               type: 'text',
               text: JSON.stringify({
-                project: pdProjRes.data,
+                project,
+                linked_client: clientRes.data || null,
+                linked_deals: dealsRes.data || [],
+                linked_invoices: invoicesRes.data || [],
+                linked_contracts: contractsRes.data || [],
                 task_summary: { total: pdTasks.length, completed: pdTasks.filter((t: any) => t.status === 'completed').length, in_progress: pdTasks.filter((t: any) => t.status === 'in_progress').length, overdue: pdTasks.filter((t: any) => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed').length },
                 tasks: pdTasks,
                 milestones: milestonesLoad.milestones,

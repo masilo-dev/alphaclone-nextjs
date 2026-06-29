@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { projectService } from './projectService';
 
 export interface Milestone {
     id: string;
@@ -91,6 +92,25 @@ export const milestoneService = {
                 updatedAt: data.updated_at
             };
 
+            void projectService.recalculateProjectProgress(projectId).catch((err) =>
+                console.error('Failed to recalculate project progress:', err)
+            );
+            void import('@/lib/calendar/nativeCalendarSync')
+                .then(async ({ getProjectCalendarContext, syncMilestoneToNativeCalendar }) => {
+                    const ctx = await getProjectCalendarContext(projectId);
+                    if (!ctx) return;
+                    await syncMilestoneToNativeCalendar(ctx.tenantId, ctx.userId, {
+                        id: data.id,
+                        name: data.name,
+                        description: data.description,
+                        due_date: data.due_date,
+                        status: data.status,
+                        project_id: projectId,
+                        client_id: ctx.clientId,
+                    });
+                })
+                .catch((err) => console.error('[milestoneService] native calendar sync failed:', err));
+
             return { milestone: newMilestone, error: null };
         } catch (err: any) {
             console.error('Error creating milestone:', err);
@@ -128,12 +148,43 @@ export const milestoneService = {
             delete updateData.updatedAt;
             delete updateData.completedAt; // handled above
 
+            const { data: existing, error: fetchError } = await supabase
+                .from('project_milestones')
+                .select('project_id, name, description, due_date, status')
+                .eq('id', milestoneId)
+                .single();
+
+            if (fetchError) throw fetchError;
+
             const { error } = await supabase
                 .from('project_milestones')
                 .update(updateData)
                 .eq('id', milestoneId);
 
             if (error) throw error;
+
+            if (existing?.project_id) {
+                void projectService.recalculateProjectProgress(existing.project_id).catch((err) =>
+                    console.error('Failed to recalculate project progress:', err)
+                );
+                void import('@/lib/calendar/nativeCalendarSync')
+                    .then(async ({ getProjectCalendarContext, syncMilestoneToNativeCalendar }) => {
+                        const ctx = await getProjectCalendarContext(existing.project_id);
+                        if (!ctx) return;
+                        const status = (updates.status ?? existing.status) as string;
+                        const dueDate = updates.dueDate ?? existing.due_date;
+                        await syncMilestoneToNativeCalendar(ctx.tenantId, ctx.userId, {
+                            id: milestoneId,
+                            name: updates.name ?? existing.name,
+                            description: updates.description ?? existing.description,
+                            due_date: dueDate,
+                            status,
+                            project_id: existing.project_id,
+                            client_id: ctx.clientId,
+                        });
+                    })
+                    .catch((err) => console.error('[milestoneService] native calendar sync failed:', err));
+            }
 
             return { error: null };
         } catch (err: any) {
@@ -147,12 +198,24 @@ export const milestoneService = {
      */
     async deleteMilestone(milestoneId: string): Promise<{ error: string | null }> {
         try {
+            const { data: existing } = await supabase
+                .from('project_milestones')
+                .select('project_id')
+                .eq('id', milestoneId)
+                .maybeSingle();
+
             const { error } = await supabase
                 .from('project_milestones')
                 .delete()
                 .eq('id', milestoneId);
 
             if (error) throw error;
+
+            if (existing?.project_id) {
+                void projectService.recalculateProjectProgress(existing.project_id).catch((err) =>
+                    console.error('Failed to recalculate project progress:', err)
+                );
+            }
 
             return { error: null };
         } catch (err: any) {
