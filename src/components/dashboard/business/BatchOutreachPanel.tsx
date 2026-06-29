@@ -43,7 +43,7 @@ export const BatchOutreachPanel: React.FC<BatchOutreachPanelProps> = ({ isOpen, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center sm:items-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="w-full sm:max-w-lg bg-slate-900 border-t sm:border border-slate-800 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-full duration-500">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">

@@ -1013,7 +1013,7 @@ export default function SocialCommandCenter() {
                         animate={{ y: 0 }}
                         exit={{ y: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                        className="fixed inset-0 bg-slate-950 z-[100] flex flex-col pb-safe"
+                        className="fixed inset-0 bg-slate-950 z-[1100] flex flex-col pb-safe"
                     >
                         {/* Header bar */}
                         <div className="h-14 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between">
@@ -1339,7 +1339,7 @@ export default function SocialCommandCenter() {
                     <>
                         {/* Overlay backdrop */}
                         <div 
-                            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[90]"
+                            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1100]"
                             onClick={() => setSelectedPost(null)}
                         />
                         {/* Bottom sheet */}
@@ -1348,7 +1348,7 @@ export default function SocialCommandCenter() {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 24, stiffness: 220 }}
-                            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-slate-900 rounded-t-[32px] border-t border-white/10 z-[100] flex flex-col pb-safe"
+                            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-slate-900 rounded-t-[32px] border-t border-white/10 z-[1110] flex flex-col pb-safe"
                         >
                             {/* Drag handle */}
                             <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto my-3 flex-shrink-0" />

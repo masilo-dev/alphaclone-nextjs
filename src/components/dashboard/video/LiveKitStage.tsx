@@ -1,26 +1,47 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Room, RoomEvent, Track, type LocalTrack, type RemoteTrack } from 'livekit-client';
-import { Mic, MicOff, PhoneOff, ShieldCheck, Video as VideoIcon, VideoOff, Wifi } from 'lucide-react';
+import { Room, RoomEvent, Track, type RemoteTrack, type Participant, type Track as LiveKitTrack } from 'livekit-client';
+import {
+    Mic,
+    MicOff,
+    Monitor,
+    MonitorOff,
+    Copy,
+    Check,
+    PhoneOff,
+    ShieldCheck,
+    Video as VideoIcon,
+    VideoOff,
+    Wifi,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 
-type VideoTile = { key: string; track: LocalTrack | RemoteTrack; label: string };
+type VideoTile = { key: string; track: LiveKitTrack; label: string };
 
 export type LiveKitStageProps = {
     url: string;
     token: string;
     displayName: string;
+    callId?: string;
     secondsElapsed: number;
     formatElapsed: (seconds: number) => string;
     requestHardStop: boolean;
     onHardStopConsumed: () => void;
     onLeave: () => void;
     onFatalError: (message: string) => void;
-    /** Fired once the session is visually ready (video tiles) so the parent can hide any bridging UI. */
     onBridgeReady?: () => void;
 };
 
-function VideoTileView({ track, label }: { track: LocalTrack | RemoteTrack; label: string }) {
+function VideoTileView({
+    track,
+    label,
+    isScreenShare = false,
+}: {
+    track: LiveKitTrack;
+    label: string;
+    isScreenShare?: boolean;
+}) {
     const ref = useRef<HTMLVideoElement | null>(null);
 
     useEffect(() => {
@@ -33,9 +54,20 @@ function VideoTileView({ track, label }: { track: LocalTrack | RemoteTrack; labe
     }, [track]);
 
     return (
-        <div className="relative rounded-3xl overflow-hidden bg-slate-900 ring-1 ring-white/5 shadow-2xl min-h-[120px]">
-            <video ref={ref} className="w-full h-full object-cover aspect-video bg-slate-950" playsInline autoPlay muted />
+        <div
+            className={`relative overflow-hidden bg-slate-900 ring-1 ring-white/5 shadow-2xl min-h-[120px] ${
+                isScreenShare ? 'rounded-2xl h-full' : 'rounded-3xl'
+            }`}
+        >
+            <video
+                ref={ref}
+                className={`w-full h-full bg-slate-950 ${isScreenShare ? 'object-contain' : 'object-cover aspect-video'}`}
+                playsInline
+                autoPlay
+                muted={!isScreenShare}
+            />
             <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+                {isScreenShare && <Monitor className="w-3.5 h-3.5 text-emerald-300" />}
                 <span className="text-xs font-semibold text-white">{label}</span>
             </div>
         </div>
@@ -46,6 +78,7 @@ export default function LiveKitStage({
     url,
     token,
     displayName,
+    callId,
     secondsElapsed,
     formatElapsed,
     requestHardStop,
@@ -56,9 +89,12 @@ export default function LiveKitStage({
 }: LiveKitStageProps) {
     const roomRef = useRef<Room | null>(null);
     const audioElementsRef = useRef<HTMLAudioElement[]>([]);
-    const [tiles, setTiles] = useState<VideoTile[]>([]);
+    const [cameraTiles, setCameraTiles] = useState<VideoTile[]>([]);
+    const [screenTiles, setScreenTiles] = useState<VideoTile[]>([]);
     const [micEnabled, setMicEnabled] = useState(true);
     const [camEnabled, setCamEnabled] = useState(true);
+    const [screenSharing, setScreenSharing] = useState(false);
+    const [linkCopied, setLinkCopied] = useState(false);
     const leavingRef = useRef(false);
     const bridgeOnceRef = useRef(false);
     const onFatalErrorRef = useRef(onFatalError);
@@ -71,28 +107,48 @@ export default function LiveKitStage({
     useEffect(() => {
         onBridgeReadyRef.current = onBridgeReady;
     }, [onBridgeReady]);
+
     const [showConnectionLayer, setShowConnectionLayer] = useState(true);
     const [connectionState, setConnectionState] = useState('connecting');
     const [connectionQuality, setConnectionQuality] = useState('unknown');
 
     const rebuildTiles = useCallback(
         (room: Room) => {
-            const next: VideoTile[] = [];
-            room.localParticipant.videoTrackPublications.forEach((pub) => {
-                const t = pub.track;
-                if (t && t.kind === Track.Kind.Video) {
-                    next.push({ key: `local-${pub.trackSid}`, track: t, label: `${displayName} (You)` });
-                }
-            });
-            room.remoteParticipants.forEach((p) => {
-                p.videoTrackPublications.forEach((pub) => {
+            const cameras: VideoTile[] = [];
+            const screens: VideoTile[] = [];
+
+            const collectFromParticipant = (participant: Participant, isLocal: boolean) => {
+                participant.videoTrackPublications.forEach((pub) => {
                     const t = pub.track;
-                    if (pub.isSubscribed && t && t.kind === Track.Kind.Video) {
-                        next.push({ key: `${p.identity}-${pub.trackSid}`, track: t, label: p.name || p.identity });
+                    if (!t || t.kind !== Track.Kind.Video) return;
+                    if (!isLocal && !pub.isSubscribed) return;
+
+                    const label = isLocal
+                        ? `${displayName} (You)`
+                        : participant.name || participant.identity;
+
+                    if (pub.source === Track.Source.ScreenShare) {
+                        screens.push({
+                            key: `${participant.identity}-screen-${pub.trackSid}`,
+                            track: t,
+                            label: isLocal ? 'Your screen' : `${label}'s screen`,
+                        });
+                    } else if (pub.source === Track.Source.Camera) {
+                        cameras.push({
+                            key: `${participant.identity}-cam-${pub.trackSid}`,
+                            track: t,
+                            label,
+                        });
                     }
                 });
-            });
-            setTiles(next);
+            };
+
+            collectFromParticipant(room.localParticipant, true);
+            room.remoteParticipants.forEach((p) => collectFromParticipant(p, false));
+
+            setScreenTiles(screens);
+            setCameraTiles(cameras);
+            setScreenSharing(room.localParticipant.isScreenShareEnabled);
         },
         [displayName]
     );
@@ -170,7 +226,7 @@ export default function LiveKitStage({
                 rebuildTiles(room);
             } catch (e) {
                 if (!cancelled) {
-                    onFatalError(e instanceof Error ? e.message : 'connection_failed');
+                    onFatalErrorRef.current(e instanceof Error ? e.message : 'connection_failed');
                 }
             }
         })();
@@ -179,7 +235,7 @@ export default function LiveKitStage({
             cancelled = true;
             void disconnect();
         };
-    }, [url, token, rebuildTiles, onFatalError, disconnect]);
+    }, [url, token, rebuildTiles, disconnect]);
 
     const signalBridgeReady = useCallback(() => {
         if (bridgeOnceRef.current) return;
@@ -189,10 +245,10 @@ export default function LiveKitStage({
     }, []);
 
     useEffect(() => {
-        if (tiles.length > 0) {
+        if (cameraTiles.length > 0 || screenTiles.length > 0) {
             signalBridgeReady();
         }
-    }, [tiles.length, signalBridgeReady]);
+    }, [cameraTiles.length, screenTiles.length, signalBridgeReady]);
 
     useEffect(() => {
         const t = window.setTimeout(() => signalBridgeReady(), 12000);
@@ -212,12 +268,12 @@ export default function LiveKitStage({
     }, [requestHardStop, disconnect, onLeave, onHardStopConsumed]);
 
     const gridClass = useMemo(() => {
-        const n = tiles.length;
+        const n = cameraTiles.length;
         if (n <= 1) return 'grid-cols-1';
         if (n === 2) return 'grid-cols-2';
         if (n <= 4) return 'grid-cols-2';
         return 'grid-cols-2 lg:grid-cols-3';
-    }, [tiles.length]);
+    }, [cameraTiles.length]);
 
     const handleEnd = async () => {
         if (leavingRef.current) return;
@@ -242,42 +298,96 @@ export default function LiveKitStage({
         setCamEnabled(next);
     };
 
+    const toggleScreenShare = async () => {
+        const room = roomRef.current;
+        if (!room) return;
+        try {
+            const next = !room.localParticipant.isScreenShareEnabled;
+            await room.localParticipant.setScreenShareEnabled(next);
+            setScreenSharing(next);
+            rebuildTiles(room);
+            if (next) {
+                toast.success('Screen sharing started');
+            }
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Screen sharing failed';
+            if (/cancel|abort/i.test(message)) {
+                toast.error('Screen share cancelled');
+            } else if (/not supported|NotSupported/i.test(message)) {
+                toast.error('Screen sharing is not supported on this device or browser');
+            } else {
+                toast.error('Could not share screen. Try Chrome or Edge on desktop.');
+            }
+            setScreenSharing(false);
+        }
+    };
+
+    const copyInviteLink = async () => {
+        try {
+            const link = callId
+                ? `${window.location.origin}/meet/${callId}`
+                : window.location.href;
+            await navigator.clipboard.writeText(link);
+            setLinkCopied(true);
+            toast.success('Meeting link copied');
+            setTimeout(() => setLinkCopied(false), 2000);
+        } catch {
+            toast.error('Failed to copy link');
+        }
+    };
+
+    const primaryScreen = screenTiles[0];
+
     return (
-        <div className="fixed inset-0 bg-slate-950 z-[100] text-white flex flex-col overflow-hidden select-none">
-            <header className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-6 flex items-center justify-between pointer-events-none">
+        <div className="fixed inset-0 bg-slate-950 z-[1100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+            <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-16 sm:h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-4 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">
-                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
-                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
-                        <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
-                            REC • {formatElapsed(secondsElapsed)}
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl">
+                        <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-white/90">
+                            {formatElapsed(secondsElapsed)}
                         </span>
                     </div>
-                    <div className="flex items-end gap-0.5 h-3">
-                        <div className="w-0.5 h-full bg-teal-500 rounded-full" />
-                        <div className="w-0.5 h-4/5 bg-teal-500 rounded-full" />
-                        <div className="w-0.5 h-3/5 bg-teal-500 rounded-full" />
-                    </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 pointer-events-auto">
-                    <div className="flex items-center gap-2 bg-emerald-500/10 backdrop-blur-md border border-emerald-400/20 px-3 py-2 rounded-2xl">
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <div className="hidden sm:flex items-center gap-2 bg-emerald-500/10 backdrop-blur-md border border-emerald-400/20 px-3 py-2 rounded-2xl">
                         <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                        <span className="text-xs font-black uppercase text-emerald-100">Secure Alpha Room</span>
+                        <span className="text-xs font-black uppercase text-emerald-100">Secure room</span>
                     </div>
-                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-3 py-2 rounded-2xl">
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-2xl">
                         <Wifi className="w-4 h-4 text-teal-300" />
-                        <span className="text-xs font-semibold text-white/80 capitalize">
+                        <span className="text-[10px] sm:text-xs font-semibold text-white/80 capitalize hidden sm:inline">
                             {connectionState} · {connectionQuality}
                         </span>
                     </div>
                 </div>
             </header>
 
-            <main className="flex-1 relative mt-16 mb-28 overflow-hidden p-4 sm:p-6">
-                {tiles.length === 0 ? (
+            <main className="flex-1 relative mt-14 sm:mt-16 mb-28 overflow-hidden p-3 sm:p-6">
+                {primaryScreen ? (
+                    <div className="flex h-full flex-col gap-3">
+                        <div className="flex-1 min-h-0">
+                            <VideoTileView
+                                track={primaryScreen.track}
+                                label={primaryScreen.label}
+                                isScreenShare
+                            />
+                        </div>
+                        {cameraTiles.length > 0 && (
+                            <div className="flex shrink-0 gap-2 h-24 sm:h-28 overflow-x-auto pb-1">
+                                {cameraTiles.map((t) => (
+                                    <div key={t.key} className="h-full w-36 sm:w-44 shrink-0">
+                                        <VideoTileView track={t.track} label={t.label} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ) : cameraTiles.length === 0 ? (
                     <div className="flex h-full min-h-[200px] items-center justify-center bg-slate-950" aria-hidden />
                 ) : (
                     <div className={`grid gap-3 sm:gap-6 w-full h-full ${gridClass}`}>
-                        {tiles.map((t) => (
+                        {cameraTiles.map((t) => (
                             <VideoTileView key={t.key} track={t.track} label={t.label} />
                         ))}
                     </div>
@@ -302,44 +412,80 @@ export default function LiveKitStage({
                 </div>
             ) : null}
 
-            <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-8 pointer-events-none">
+            <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pointer-events-none">
                 <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
-                <div className="relative max-w-md mx-auto flex items-center justify-center gap-6 pointer-events-auto bg-slate-950/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-4 ring-1 ring-white/10">
-                    <button
-                        type="button"
+                <div className="relative max-w-2xl mx-auto flex items-center justify-center gap-3 sm:gap-5 pointer-events-auto bg-slate-950/40 backdrop-blur-2xl border border-white/5 rounded-3xl p-3 sm:p-4 ring-1 ring-white/10">
+                    <ControlBtn
                         onClick={() => void toggleMic()}
-                        className={`flex flex-col items-center gap-1 ${!micEnabled ? 'text-red-400' : 'text-slate-200'}`}
-                        title={micEnabled ? 'Mute' : 'Unmute'}
-                    >
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 border border-white/10">
-                            {micEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                        </span>
-                        <span className="text-xs font-medium text-slate-400">Audio</span>
-                    </button>
-                    <button
-                        type="button"
+                        active={!micEnabled}
+                        label={micEnabled ? 'Mute' : 'Unmute'}
+                        icon={micEnabled ? Mic : MicOff}
+                    />
+                    <ControlBtn
                         onClick={() => void toggleCam()}
-                        className={`flex flex-col items-center gap-1 ${!camEnabled ? 'text-red-400' : 'text-slate-200'}`}
-                        title={camEnabled ? 'Stop video' : 'Start video'}
-                    >
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/80 border border-white/10">
-                            {camEnabled ? <VideoIcon className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                        </span>
-                        <span className="text-xs font-medium text-slate-400">Video</span>
-                    </button>
-                    <button
-                        type="button"
+                        active={!camEnabled}
+                        label={camEnabled ? 'Video' : 'Start'}
+                        icon={camEnabled ? VideoIcon : VideoOff}
+                    />
+                    <ControlBtn
+                        onClick={() => void toggleScreenShare()}
+                        highlight={screenSharing}
+                        label={screenSharing ? 'Stop' : 'Share'}
+                        icon={screenSharing ? MonitorOff : Monitor}
+                    />
+                    <ControlBtn
+                        onClick={() => void copyInviteLink()}
+                        label={linkCopied ? 'Copied' : 'Invite'}
+                        icon={linkCopied ? Check : Copy}
+                    />
+                    <ControlBtn
                         onClick={() => void handleEnd()}
-                        className="flex flex-col items-center gap-1 text-white"
-                        title="End call"
-                    >
-                        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/40">
-                            <PhoneOff className="w-5 h-5" />
-                        </span>
-                        <span className="text-xs font-medium text-slate-400">End</span>
-                    </button>
+                        danger
+                        label="End"
+                        icon={PhoneOff}
+                    />
                 </div>
             </div>
         </div>
+    );
+}
+
+function ControlBtn({
+    onClick,
+    active,
+    highlight,
+    danger,
+    label,
+    icon: Icon,
+}: {
+    onClick: () => void;
+    active?: boolean;
+    highlight?: boolean;
+    danger?: boolean;
+    label: string;
+    icon: React.ElementType;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="flex flex-col items-center gap-1 min-w-[52px]"
+            title={label}
+        >
+            <span
+                className={`flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border transition-colors ${
+                    danger
+                        ? 'bg-red-600 hover:bg-red-500 border-red-500/50 shadow-lg shadow-red-900/40 text-white'
+                        : highlight
+                          ? 'bg-teal-600 border-teal-400/50 text-white'
+                          : active
+                            ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                            : 'bg-slate-800/80 border-white/10 text-slate-200 hover:bg-slate-700'
+                }`}
+            >
+                <Icon className="w-5 h-5" />
+            </span>
+            <span className="text-[10px] sm:text-xs font-medium text-slate-400">{label}</span>
+        </button>
     );
 }

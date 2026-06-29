@@ -778,7 +778,8 @@ class AlphaCloneMCPServer {
   private requireProfileUser(args: Record<string, any>): string {
     if (this.ctx?.userId) {
       const r = args.user_id;
-      if (r != null && r !== '' && typeof r === 'string' && r !== this.ctx.userId) {
+      const rTrimmed = typeof r === 'string' ? r.trim() : r;
+      if (rTrimmed != null && rTrimmed !== '' && typeof rTrimmed === 'string' && rTrimmed !== this.ctx.userId) {
         throw new Error('user_id does not match this MCP connection.');
       }
       return this.ctx.userId;
@@ -977,6 +978,14 @@ class AlphaCloneMCPServer {
     supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>
   ): Promise<any> {
     const supabase = supabaseAdmin;
+
+    if (this.ctx?.tenantId && this.ctx?.userId) {
+      const { forceSessionArgs } = await import('@/lib/mcp/sanitizeToolSchema');
+      args = forceSessionArgs(args || {}, {
+        tenantId: this.ctx.tenantId,
+        userId: this.ctx.userId,
+      });
+    }
 
     const tenantIdForPolicy = (args?.tenant_id && String(args.tenant_id).trim()) || this.ctx?.tenantId || '';
     const userIdForPolicy = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');

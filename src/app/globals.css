@@ -1244,7 +1244,7 @@ html.pwa-standalone .pwa-page-title {
 .ac-module-header-sticky {
   position: sticky;
   top: 0;
-  z-index: 1020;
+  z-index: 20;
   background: color-mix(in srgb, #020617 95%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid rgba(51, 65, 85, 0.6);

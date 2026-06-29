@@ -1,3 +1,4 @@
+import { forceSessionArgs } from '@/lib/mcp/sanitizeToolSchema';
 import { initializeRegistry, executeTool, hasTool } from '@/lib/mcp/tool-registry';
 import { BONNIE_CUSTOM_TOOLS } from '@/lib/bonnie/bonnieToolCatalog';
 import { evaluateToolPolicy } from '@/lib/ai/ToolPolicyGate';
@@ -66,7 +67,7 @@ export async function executeSingleBonnieTool(params: {
 }): Promise<BonnieToolResult> {
   const { tenantId, userId, skipPolicy = false, policySource = 'bonnie', instruction } = params;
   const tool = String(params.tool || '').trim();
-  const args = { ...(params.args || {}) };
+  const args = forceSessionArgs({ ...(params.args || {}) }, { tenantId, userId });
 
   initializeRegistry();
 
@@ -129,14 +130,8 @@ export async function executeSingleBonnieTool(params: {
       const { executeCustomTool } = await import('@/lib/bonnie/bonnieCustomTools');
       toolResult = await executeCustomTool(tool, tenantId, userId, args);
     } else {
-      const mergedArgs = {
-        ...args,
-        tenant_id: args.tenant_id || tenantId,
-        user_id: args.user_id || userId,
-      };
-
       if (hasTool(tool)) {
-        const result = await executeTool(tenantId, userId, tool, mergedArgs);
+        const result = await executeTool(tenantId, userId, tool, args);
         const text = extractToolText(result);
         toolResult = {
           tool,
@@ -148,7 +143,7 @@ export async function executeSingleBonnieTool(params: {
         const { mcpServerTools } = await resolveBonnieToolSets();
         if (mcpServerTools.includes(tool)) {
           const { executeBonnieMcpTool } = await import('@/lib/bonnie/bonnieMcpBridge');
-          const result = await executeBonnieMcpTool(tool, mergedArgs, tenantId, userId);
+          const result = await executeBonnieMcpTool(tool, args, tenantId, userId);
           const text = extractToolText(result);
           toolResult = {
             tool,

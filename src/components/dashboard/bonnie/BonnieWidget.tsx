@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain, Play, Pause, RefreshCw, X,
-  CheckCircle2, AlertCircle, Clock, Sun, BookOpen
+  CheckCircle2, AlertCircle, Clock, Sun
 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
@@ -24,6 +23,7 @@ export default function BonnieWidget() {
   const activeModule = resolveBonnieModuleFromPath(pathname || '');
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const [isOpen, setIsOpen] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
   const [rules, setRules] = useState<BonnieRule | null>(null);
   const [logs, setLogs] = useState<BonnieLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -262,7 +262,7 @@ export default function BonnieWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-4 w-96 overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl md:w-[420px]"
+            className="mb-4 flex max-h-[min(85dvh,680px)] w-[min(100vw-2rem,420px)] flex-col overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl"
           >
             {/* Header */}
             <div className="relative flex items-center justify-between border-b border-slate-800 bg-slate-950/60 p-4">
@@ -338,56 +338,65 @@ export default function BonnieWidget() {
               </div>
             </div>
 
-            <div className="border-b border-slate-800 bg-slate-950/20 p-4">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden border-b border-slate-800/80">
               {hasUnreadBrief && morningBrief && (
-                <div className="mb-3 rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-teal-500/5 p-3">
-                  <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">
-                    <Sun className="h-3.5 w-3.5" />
-                    Morning briefing
+                <div className="shrink-0 border-b border-slate-800/60 p-3">
+                  <div className="rounded-xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-teal-500/5 p-3">
+                    <div className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">
+                      <Sun className="h-3.5 w-3.5" />
+                      Morning briefing
+                    </div>
+                    <p className="text-sm leading-relaxed text-slate-200">{morningBrief.summary}</p>
+                    {morningBrief.attentionItems.length > 0 && (
+                      <ul className="mt-2 space-y-1 text-xs text-slate-400">
+                        {morningBrief.attentionItems.slice(0, 3).map((item) => (
+                          <li key={item}>• {item}</li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-200">{morningBrief.summary}</p>
-                  {morningBrief.attentionItems.length > 0 && (
-                    <ul className="mt-2 space-y-1 text-xs text-slate-400">
-                      {morningBrief.attentionItems.slice(0, 4).map((item) => (
-                        <li key={item}>• {item}</li>
-                      ))}
-                    </ul>
-                  )}
                 </div>
               )}
               {pendingCount > 0 && (
-                <div className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-                  {pendingCount} action{pendingCount === 1 ? '' : 's'} need your approval
+                <div className="shrink-0 border-b border-slate-800/60 px-3 py-2">
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    {pendingCount} action{pendingCount === 1 ? '' : 's'} need your approval
+                  </div>
                 </div>
               )}
-              <BonnieChatPanel
-                compact
-                streaming
-                storageKey={tenantId ? `bonnie_chat_${tenantId}` : undefined}
-                placeholder={`Ask Bonnie about ${moduleHint.label.toLowerCase()}…`}
-                introMessage={`I'm Bonnie AI — your in-platform agent for ${moduleHint.label}. Tell me what to do and I'll execute it. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
-                onSend={handleBonnieMessage}
-                onStreamSend={handleBonnieStream}
-                onResolveApproval={handleResolveApproval}
-                tenantId={tenantId}
-                pathname={pathname || undefined}
-              />
-              <Link
-                href="/dashboard/help"
-                className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 hover:text-teal-400 transition-colors"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                Platform guide & glossary
-              </Link>
+              <div className="min-h-0 flex-1 p-2">
+                <BonnieChatPanel
+                  compact
+                  streaming
+                  storageKey={tenantId ? `bonnie_chat_${tenantId}` : undefined}
+                  placeholder={`Ask Bonnie about ${moduleHint.label.toLowerCase()}…`}
+                  introMessage={`I'm Bonnie AI — your in-platform agent for ${moduleHint.label}. Tell me what to do and I'll execute it. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
+                  onSend={handleBonnieMessage}
+                  onStreamSend={handleBonnieStream}
+                  onResolveApproval={handleResolveApproval}
+                  tenantId={tenantId}
+                  pathname={pathname || undefined}
+                />
+              </div>
             </div>
 
-            {/* Activity Feed / Logs Container */}
-            <div className="p-4">
-              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                Activity History
-              </h4>
-
-              <div className="h-44 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/80 p-3 scrollbar-thin scrollbar-thumb-slate-800">
+            {/* Activity Feed — collapsed by default so chat input stays visible */}
+            <div className="shrink-0 border-t border-slate-800/80">
+              <button
+                type="button"
+                onClick={() => setShowActivity((v) => !v)}
+                className="flex w-full items-center justify-between px-4 py-2.5 text-left hover:bg-slate-800/40 transition-colors"
+              >
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Activity History
+                </h4>
+                <span className="text-[10px] font-semibold text-teal-400">
+                  {showActivity ? 'Hide' : 'Show'}
+                </span>
+              </button>
+              {showActivity && (
+              <div className="px-4 pb-4">
+              <div className="h-36 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/80 p-3 scrollbar-thin scrollbar-thumb-slate-800">
                 {isLoading ? (
                   <div className="flex h-full flex-col items-center justify-center text-slate-500 gap-2">
                     <RefreshCw className="h-5 w-5 animate-spin text-teal-500" />
@@ -436,6 +445,8 @@ export default function BonnieWidget() {
                   </div>
                 )}
               </div>
+              </div>
+              )}
             </div>
           </motion.div>
         )}

@@ -24,7 +24,6 @@ import {
     RefreshCw,
     MessageCircle,
     X,
-    Minimize2,
 } from 'lucide-react';
 import IncomingCallModal from '../video/IncomingCallModal';
 import { DashboardAccountMenu } from '../DashboardAccountMenu';
@@ -35,7 +34,7 @@ import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
-import { loadMeetingForJoin, startClientVideoCall, type PlatformMeetingProvider } from '@/services/instantMeetingService';
+import { startClientVideoCall } from '@/services/instantMeetingService';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -74,8 +73,6 @@ import DocumentHub from '../../documents/DocumentHub';
 // Accounting Components - Lazy loaded to prevent module resolution issues
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 const MailTab = React.lazy(() => import('../MailTab'));
-const CustomVideoRoom = React.lazy(() => import('../video/CustomVideoRoom'));
-const MicrosoftMeetingEmbed = React.lazy(() => import('../video/MicrosoftMeetingEmbed'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const UnifiedInboxView = React.lazy(() => import('./UnifiedInboxView'));
@@ -262,38 +259,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const {
         activeMeetingCallId,
-        isMeetingMinimized,
         startMeeting,
-        endMeeting,
-        setIsMeetingMinimized,
-        toggleMeetingMinimized,
     } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
-    const [activeMeetingProvider, setActiveMeetingProvider] = useState<PlatformMeetingProvider | null>(null);
-    const [activeMeetingJoinUrl, setActiveMeetingJoinUrl] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!activeMeetingCallId) {
-            setActiveMeetingProvider(null);
-            setActiveMeetingJoinUrl(null);
-            return;
+        if (activeMeetingCallId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/meet/')) {
+            router.replace(`/meet/${activeMeetingCallId}`);
         }
-
-        let cancelled = false;
-        void loadMeetingForJoin(activeMeetingCallId).then(({ provider, joinUrl, error }) => {
-            if (cancelled) return;
-            if (error) {
-                toast.error(error);
-                endMeeting();
-                return;
-            }
-            setActiveMeetingProvider(provider);
-            setActiveMeetingJoinUrl(joinUrl);
-        });
-
-        return () => {
-            cancelled = true;
-        };
-    }, [activeMeetingCallId, endMeeting]);
+    }, [activeMeetingCallId, router]);
     React.useEffect(() => {
         if (typeof window !== 'undefined') {
             // Keep sidebar expanded by default on tablet and desktop so navigation labels stay visible.
@@ -356,6 +329,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Explicitly typed handlers
     const handleJoinCall = (callId: string) => {
         startMeeting(callId);
+        router.push(`/meet/${callId}`);
     };
     const handleInitiateCallToClient = async (clientId: string) => {
         const toastId = toast.loading('Initiating secure call...');
@@ -1145,12 +1119,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         )}
                         {activeMeetingCallId && (
                             <button
-                                onClick={() => setIsMeetingMinimized(false)}
+                                onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
                                 className="inline-flex items-center gap-1.5 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-2.5 py-1 rounded-full text-[11px] font-medium hover:bg-teal-500/20 transition-colors"
                                 title="Return to active meeting"
                             >
                                 <Video className="w-3.5 h-3.5" />
-                                <span className="hidden lg:inline">{isMeetingMinimized ? 'Meeting' : 'Live'}</span>
+                                <span className="hidden lg:inline">Live meeting</span>
                             </button>
                         )}
 
@@ -1215,36 +1189,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 />
             )}
 
-            {activeMeetingCallId && (
-                <React.Suspense fallback={null}>
-                    {!isMeetingMinimized && (
-                        <button
-                            onClick={() => setIsMeetingMinimized(true)}
-                            className="fixed top-20 right-4 z-[130] inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-xs font-semibold text-slate-100 hover:bg-slate-800 transition-colors"
-                            title="Run meeting in background"
-                        >
-                            <Minimize2 className="w-3.5 h-3.5" />
-                            Background mode
-                        </button>
-                    )}
-                    {activeMeetingProvider === 'teams' && activeMeetingJoinUrl ? (
-                        <div className="fixed inset-0 z-[120] bg-slate-950">
-                            <MicrosoftMeetingEmbed
-                                meetingLink={activeMeetingJoinUrl}
-                                displayName={user.name || user.email || 'Host'}
-                            />
-                        </div>
-                    ) : (
-                        <CustomVideoRoom
-                            user={user}
-                            callId={activeMeetingCallId}
-                            onLeave={endMeeting}
-                            isMinimized={isMeetingMinimized}
-                            onToggleMinimize={toggleMeetingMinimized}
-                        />
-                    )}
-                </React.Suspense>
-            )}
 
             {/* Mobile Bottom Navigation */}
             <BottomNav

@@ -1234,14 +1234,14 @@ ${parentContext}Return only the comment text.`;
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowComposeSheet(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100]"
             />
             <motion.div
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-x-0 bottom-0 bg-slate-900 rounded-t-[32px] z-[70] max-h-[92vh] overflow-y-auto no-scrollbar border-t border-slate-800"
+              className="fixed inset-x-0 bottom-0 bg-slate-900 rounded-t-[32px] z-[1110] max-h-[92vh] overflow-y-auto no-scrollbar border-t border-slate-800"
             >
               <div className="sticky top-0 bg-slate-900 pt-4 pb-2 px-6 flex items-center justify-between border-b border-slate-800/50 z-10">
                 <div className="w-12 h-1.5 bg-slate-800 rounded-full mx-auto absolute top-2 left-1/2 -translate-x-1/2" />

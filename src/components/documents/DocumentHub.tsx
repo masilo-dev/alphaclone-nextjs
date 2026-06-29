@@ -745,7 +745,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     if (viewMode !== 'list' && selectedFile) {
         const isPdf = selectedFile.file_type === 'application/pdf';
         return (
-            <div className="fixed inset-0 z-[100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
+            <div className="fixed inset-0 z-[1100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl gap-3">
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -1140,7 +1140,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         
         {/* AI Designer Interface */}
         {viewMode === 'designer' && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
+            <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
                 <div className="w-full max-w-3xl bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
                     <div className="p-8 border-b border-white/5 bg-gradient-to-br from-violet-600/20 to-transparent">
                         <div className="flex items-center justify-between mb-8">

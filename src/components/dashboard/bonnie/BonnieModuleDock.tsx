@@ -77,7 +77,7 @@ export default function BonnieModuleDock() {
   };
 
   return (
-    <div className="flex h-full min-h-[480px] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16]">
+    <div className="flex h-full min-h-[420px] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16]">
       <div className="flex items-center gap-2 border-b border-slate-800 px-3 py-2.5">
         <Brain className="h-4 w-4 text-teal-400" />
         <div className="min-w-0 flex-1">

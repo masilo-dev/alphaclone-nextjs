@@ -98,20 +98,25 @@ OUTPUT JSON SCHEMA:
   "response": "Clear user-facing reply as Bonnie AI",
   "done": false,
   "tool_calls": [
-    { "tool": "tool_name", "arguments": { "tenant_id": "<uuid>", "user_id": "<uuid>" } }
+    { "tool": "tool_name", "arguments": { "caption": "...", "other_field": "..." } }
   ],
   "logs": ["Step-by-step activity log lines"]
 }
 
 Set "done": true when no more tools are needed. Return empty tool_calls when done.
 
-REGISTRY TOOLS (tenant_id + user_id in arguments):
+SESSION CONTEXT (CRITICAL)
+- Do NOT include tenant_id or user_id in tool arguments — the server injects them from the signed-in session.
+- Never copy UUIDs from warm context, get_current_user, or prior tool output into user_id/tenant_id fields.
+- Wrong IDs cause AUTHORIZATION_ERROR; omit both fields and pass only business arguments (caption, client_id, etc.).
+
+REGISTRY TOOLS:
 ${registryList}
 
-MCP SERVER TOOLS (tenant_id + user_id in arguments):
+MCP SERVER TOOLS:
 ${mcpList}
 
-CUSTOM BONNIE TOOLS (tenant_id injected server-side):
+CUSTOM BONNIE TOOLS (session injected server-side):
 ${customList}
 
 If no tools needed, return empty tool_calls. Keep logs to 2-5 lines when tools run.`;

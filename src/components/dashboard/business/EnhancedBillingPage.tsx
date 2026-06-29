@@ -391,14 +391,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             animate={{ opacity: 0.7 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setIsOptionsOpen(false)}
-                            className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm"
+                            className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm"
                         />
                         <motion.div
                             initial={{ y: '100%' }}
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                            className="fixed inset-x-0 bottom-0 z-[150] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
+                            className="fixed inset-x-0 bottom-0 z-[1110] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
                         >
                             <div className="flex justify-center py-3 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
                                 <div className="w-12 h-1 bg-white/20 rounded-full" />
@@ -525,6 +525,50 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         </span>
                                         <span className="text-xs text-slate-500 font-mono">EMAIL DISPATCH</span>
                                     </button>
+
+                                    {selectedInvoiceForOptions.status !== 'paid' ? (
+                                        <button
+                                            onClick={async () => {
+                                                const toastId = toast.loading('Updating payment status...');
+                                                const { error } = await businessInvoiceService.markAsPaid(selectedInvoiceForOptions.id);
+                                                if (error) {
+                                                    toast.error(error, { id: toastId });
+                                                    return;
+                                                }
+                                                toast.success('Invoice marked as paid', { id: toastId });
+                                                setIsOptionsOpen(false);
+                                                void loadInvoices();
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all text-left text-sm text-emerald-200"
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <CheckCircle className="w-5 h-5 text-emerald-400" />
+                                                <span>Mark as Paid</span>
+                                            </span>
+                                            <span className="text-xs text-emerald-500/80 font-mono">MANUAL UPDATE</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={async () => {
+                                                const toastId = toast.loading('Updating payment status...');
+                                                const { error } = await businessInvoiceService.updateInvoice(selectedInvoiceForOptions.id, { status: 'sent' });
+                                                if (error) {
+                                                    toast.error(error, { id: toastId });
+                                                    return;
+                                                }
+                                                toast.success('Invoice marked as unpaid', { id: toastId });
+                                                setIsOptionsOpen(false);
+                                                void loadInvoices();
+                                            }}
+                                            className="w-full flex items-center justify-between p-4 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-2xl transition-all text-left text-sm text-amber-200"
+                                        >
+                                            <span className="flex items-center gap-3">
+                                                <Clock className="w-5 h-5 text-amber-400" />
+                                                <span>Mark as Unpaid</span>
+                                            </span>
+                                            <span className="text-xs text-amber-500/80 font-mono">MANUAL UPDATE</span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -535,7 +579,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* PDF Preview Modal */}
             <AnimatePresence>
                 {showPDFPreview && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[200] flex flex-col p-4">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/90 backdrop-blur-md z-[1100] flex flex-col p-4">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-white font-black uppercase tracking-widest text-sm">Invoice Preview</h3>
                             <button onClick={() => setShowPDFPreview(null)} className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white"><X size={20} /></button>

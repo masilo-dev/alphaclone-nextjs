@@ -1579,7 +1579,7 @@ Return only the comment text.`;
 
             {/* Video Editor Modal */}
             {editingAsset && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
                     <div className="w-full max-w-4xl max-h-[90vh]">
                         <VideoEditor 
                             source={editingAsset.public_url}

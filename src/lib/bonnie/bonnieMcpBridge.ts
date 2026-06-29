@@ -1,3 +1,4 @@
+import { forceSessionArgs } from '@/lib/mcp/sanitizeToolSchema';
 import { BONNIE_MCP_SERVER_TOOLS } from './bonnieToolCatalog';
 
 const MCP_TOOL_SET = new Set<string>(BONNIE_MCP_SERVER_TOOLS);
@@ -12,11 +13,7 @@ export async function executeBonnieMcpTool(
   tenantId: string,
   userId: string
 ): Promise<{ content?: Array<{ text?: string }>; isError?: boolean }> {
-  const merged = {
-    ...args,
-    tenant_id: args.tenant_id || tenantId,
-    user_id: args.user_id || userId,
-  };
+  const merged = forceSessionArgs(args, { tenantId, userId });
 
   const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
   initializeRegistry();

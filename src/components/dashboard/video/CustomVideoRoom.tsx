@@ -496,6 +496,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 url={liveKitSession.url}
                 token={liveKitSession.token}
                 displayName={user.name || 'Guest'}
+                callId={callId}
                 secondsElapsed={secondsElapsed}
                 formatElapsed={formatTime}
                 requestHardStop={false}
@@ -513,7 +514,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl">
                         <h2 className="text-white text-2xl font-bold mb-2">Ready to join meeting</h2>
                         <p className="text-slate-400 text-sm mb-5">
-                            Complete a quick device check, then join. You can minimize and continue working in the dashboard.
+                            Complete a quick device check, then join the full-screen meeting room. You can share your screen once connected.
                         </p>
                         {preJoinError && (
                             <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
@@ -607,7 +608,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-950 z-[100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div className="fixed inset-0 bg-slate-950 z-[1100] text-white flex flex-col overflow-hidden select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             {/* Immersive Header */}
             <header className="absolute top-[env(safe-area-inset-top)] left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-black/70 to-transparent z-[110] px-3 sm:px-6 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-4 pointer-events-auto">

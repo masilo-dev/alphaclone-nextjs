@@ -146,7 +146,7 @@ export const ENTERPRISE = {
     moduleLayout: {
         summaryGrid: 'grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6',
         sectionGap: 'space-y-4 md:space-y-6',
-        stickyHeader: 'sticky top-0 z-[1020] bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/60',
+        stickyHeader: 'sticky top-0 z-20 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/60',
     },
     dataTable: {
         cellPadding: 'px-2 py-3',
@@ -158,5 +158,8 @@ export const ENTERPRISE = {
     drawer: {
         mobileMaxHeight: 'max-h-[85vh]',
         desktopWidth: 'w-[min(100vw,28rem)]',
+        /** Overlay + panel z-index — keep above sticky hub headers (z-20) and bottom nav (z-50) */
+        overlayZ: 'z-[1100]',
+        panelZ: 'z-[1110]',
     },
 } as const;

@@ -47,3 +47,14 @@ export function mergeSessionArgs(
 
   return merged;
 }
+
+/** In-dashboard Bonnie: always bind tenant/user from the signed-in session. */
+export function forceSessionArgs(
+  args: Record<string, unknown>,
+  ctx: { tenantId: string; userId: string }
+): Record<string, unknown> {
+  const merged = { ...args };
+  if (ctx.tenantId) merged.tenant_id = ctx.tenantId;
+  if (ctx.userId) merged.user_id = ctx.userId;
+  return merged;
+}
