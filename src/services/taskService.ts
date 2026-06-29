@@ -306,6 +306,31 @@ export const taskService = {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
             }
 
+            if (data.due_date) {
+                void import('@/lib/calendar/taskCalendarSync')
+                    .then(({ syncTaskToAllCalendars }) =>
+                        syncTaskToAllCalendars(tenantId, userId, {
+                            id: data.id,
+                            title: data.title,
+                            description: data.description,
+                            due_date: data.due_date,
+                            priority: data.priority,
+                            google_calendar_event_id: data.google_calendar_event_id,
+                            status: data.status,
+                            related_to_project: data.related_to_project,
+                        })
+                    )
+                    .then(async ({ eventId }) => {
+                        if (eventId && eventId !== data.google_calendar_event_id) {
+                            await supabase
+                                .from('tasks')
+                                .update({ google_calendar_event_id: eventId })
+                                .eq('id', data.id);
+                        }
+                    })
+                    .catch((err) => console.error('[taskService] calendar sync failed:', err));
+            }
+
             // Notify assigned user
             if (taskData.assignedTo && taskData.assignedTo !== userId) {
                 await notificationService.sendPlatformNotification({
@@ -456,6 +481,34 @@ export const taskService = {
             // Trigger project progress recalculation if linked to a project
             if (data.related_to_project) {
                 projectService.recalculateProjectProgress(data.related_to_project).catch(err => console.error('Failed to update project progress:', err));
+            }
+
+            if (updates.dueDate !== undefined || updates.status !== undefined) {
+                const { data: { user: syncUser } } = await supabase.auth.getUser();
+                if (syncUser?.id) {
+                    void import('@/lib/calendar/taskCalendarSync')
+                        .then(({ syncTaskToAllCalendars }) =>
+                            syncTaskToAllCalendars(tenantId, syncUser.id, {
+                                id: data.id,
+                                title: data.title,
+                                description: data.description,
+                                due_date: data.due_date,
+                                priority: data.priority,
+                                google_calendar_event_id: data.google_calendar_event_id,
+                                status: data.status,
+                                related_to_project: data.related_to_project,
+                            })
+                        )
+                        .then(async ({ eventId }) => {
+                            if (eventId && eventId !== data.google_calendar_event_id) {
+                                await supabase
+                                    .from('tasks')
+                                    .update({ google_calendar_event_id: eventId })
+                                    .eq('id', data.id);
+                            }
+                        })
+                        .catch((err) => console.error('[taskService] calendar sync failed:', err));
+                }
             }
 
             // Notify assigned user of status change if someone else updated it

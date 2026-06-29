@@ -39,10 +39,12 @@ const dashboardNetworkOnly = networkOnlyRetryOrError;
 const nextAssetNetworkOnly = networkOnlyRetryOrError;
 
 // Drop Serwist defaults that cache deployment-scoped URLs (stale dpl_* breaks after deploy).
+// Also skip image-extension rules: SW fetch() is governed by connect-src, not img-src.
 const deploymentSafeDefaultCache = defaultCache.filter((rule) => {
     if (rule.matcher instanceof RegExp) {
         const src = rule.matcher.source;
         if (src.includes("_next\\/image") || src.includes("_next/image")) return false;
+        if (/\\\.(?:png|jpe?g|gif|svg|ico|webp)/i.test(src)) return false;
     }
     return true;
 });

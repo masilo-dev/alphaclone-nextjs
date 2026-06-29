@@ -397,7 +397,7 @@ export const projectService = {
             }
 
             const { error, data } = await updateQuery
-                .select('owner_id, name')
+                .select('owner_id, name, due_date, client_id, status, description')
                 .single();
 
             if (error) {
@@ -417,6 +417,21 @@ export const projectService = {
                     projectName: data.name,
                     updatedFields: changedFields
                 }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
+            }
+
+            if (updates.dueDate !== undefined && tenantId && data?.owner_id) {
+                void import('@/lib/calendar/nativeCalendarSync')
+                    .then(({ syncProjectToNativeCalendar }) =>
+                        syncProjectToNativeCalendar(tenantId, data.owner_id, {
+                            id: projectId,
+                            name: data.name,
+                            description: data.description,
+                            due_date: data.due_date,
+                            status: data.status,
+                            client_id: data.client_id,
+                        })
+                    )
+                    .catch((err) => console.error('[projectService] native calendar sync failed:', err));
             }
 
             return { error: null };
@@ -454,10 +469,24 @@ export const projectService = {
     },
 
     /**
-     * Recalculate project progress based on completed tasks
+     * Recalculate project progress from milestones (preferred) or completed tasks.
      */
     async recalculateProjectProgress(projectId: string): Promise<{ progress: number; error: string | null }> {
         try {
+            const { data: milestones, error: milestoneError } = await supabase
+                .from('project_milestones')
+                .select('status')
+                .eq('project_id', projectId);
+
+            if (milestoneError) throw milestoneError;
+
+            if (milestones && milestones.length > 0) {
+                const completed = milestones.filter((m: { status: string }) => m.status === 'completed').length;
+                const progress = Math.round((completed / milestones.length) * 100);
+                await this.updateProject(projectId, { progress });
+                return { progress, error: null };
+            }
+
             const { data: tasks, error } = await supabase
                 .from('tasks')
                 .select('status')
@@ -466,13 +495,12 @@ export const projectService = {
             if (error) throw error;
 
             if (!tasks || tasks.length === 0) {
+                await this.updateProject(projectId, { progress: 0 });
                 return { progress: 0, error: null };
             }
 
-            const completedTasks = tasks.filter((t: any) => t.status === 'completed').length;
+            const completedTasks = tasks.filter((t: { status: string }) => t.status === 'completed').length;
             const progress = Math.round((completedTasks / tasks.length) * 100);
-
-            // Update the project with the new progress
             await this.updateProject(projectId, { progress });
 
             return { progress, error: null };

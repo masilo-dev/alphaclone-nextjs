@@ -119,6 +119,11 @@ async function createContract(tenantId: string, config: any, supabase: any) {
 
     if (error) throw error;
 
+    const { notifyContractCreated } = await import('@/services/contractNotificationService');
+    await notifyContractCreated(tenantId, contract.id, contract.title).catch((err) =>
+      console.error('[createContract] notify failed:', err)
+    );
+
     return {
       success: true,
       data: contract,
@@ -374,8 +379,17 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
 
     const { runId } = await start(contractLifecycleWorkflow, [{ contractId, tenantId }]);
 
+    const sentAt = new Date().toISOString();
+    const { notifyContractSent } = await import('@/services/contractNotificationService');
+    await notifyContractSent(tenantId, contractId, contract.title, recipientEmail, actorUserId).catch(
+      (err) => console.error('[sendContract] notify failed:', err)
+    );
+
     return {
       success: true,
+      sent: true,
+      sent_to: recipientEmail,
+      sent_at: sentAt,
       message: 'Contract sent successfully',
       signingUrl,
       runId

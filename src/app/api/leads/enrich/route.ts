@@ -36,6 +36,17 @@ export async function POST(req: NextRequest) {
       address: lead.address,
     });
 
+    let nexusEnrichment: Record<string, unknown> | null = null;
+    try {
+      const { AlphaNexus } = await import('@/lib/social/alphaNexus');
+      const nexus = new AlphaNexus(tenantId);
+      nexusEnrichment = (await nexus.executeSystemAction('lead_enrichment', {
+        lead_id: leadId,
+      })) as Record<string, unknown>;
+    } catch (nexusErr) {
+      console.warn('[leads/enrich] nexus enrichment skipped:', nexusErr);
+    }
+
     const verification = {
       score: scored.totalScore,
       tier: scored.tier,
@@ -57,7 +68,7 @@ export async function POST(req: NextRequest) {
       .eq('id', leadId)
       .eq('tenant_id', tenantId);
 
-    return NextResponse.json({ success: true, verification, leadId });
+    return NextResponse.json({ success: true, verification, leadId, nexus_enrichment: nexusEnrichment });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message || 'Enrichment failed' }, { status: 500 });
   }

@@ -61,6 +61,16 @@ export default function LiveKitStage({
     const [camEnabled, setCamEnabled] = useState(true);
     const leavingRef = useRef(false);
     const bridgeOnceRef = useRef(false);
+    const onFatalErrorRef = useRef(onFatalError);
+    const onBridgeReadyRef = useRef(onBridgeReady);
+
+    useEffect(() => {
+        onFatalErrorRef.current = onFatalError;
+    }, [onFatalError]);
+
+    useEffect(() => {
+        onBridgeReadyRef.current = onBridgeReady;
+    }, [onBridgeReady]);
     const [showConnectionLayer, setShowConnectionLayer] = useState(true);
     const [connectionState, setConnectionState] = useState('connecting');
     const [connectionQuality, setConnectionQuality] = useState('unknown');
@@ -175,8 +185,8 @@ export default function LiveKitStage({
         if (bridgeOnceRef.current) return;
         bridgeOnceRef.current = true;
         setShowConnectionLayer(false);
-        onBridgeReady?.();
-    }, [onBridgeReady]);
+        onBridgeReadyRef.current?.();
+    }, []);
 
     useEffect(() => {
         if (tiles.length > 0) {

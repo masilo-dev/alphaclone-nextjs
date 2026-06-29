@@ -381,6 +381,11 @@ class ContractExpirationService {
             const { sent, errors: notifErrors } = await this.sendExpirationNotifications();
             console.log(`Sent ${sent} expiration notifications`);
 
+            // 1b. Draft contract reminders (24h / 72h)
+            const { processContractDraftReminders } = await import('@/services/contractNotificationService');
+            const draftReminders = await processContractDraftReminders();
+            console.log(`Sent ${draftReminders.notified} draft contract reminders`);
+
             // 2. Process auto-renewals
             const { renewed, errors: renewalErrors } = await this.processAutoRenewals();
             console.log(`Processed ${renewed} auto-renewals`);

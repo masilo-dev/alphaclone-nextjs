@@ -16,6 +16,7 @@ export const BONNIE_REGISTRY_TOOLS = [
   'create_email_sequence', 'enroll_contact_in_sequence', 'create_bulk_email_batch', 'get_batch_job_status',
   // Social
   'get_social_accounts', 'get_linkedin_identities', 'schedule_social_post', 'get_scheduled_posts',
+  'upload_media_asset', 'create_social_post_with_media',
   'publish_facebook_reel', 'publish_facebook_multi_photo',
   // WhatsApp (registry subset — full send via MCP)
   // Contracts
@@ -47,6 +48,7 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'create_bulk_email_campaign', 'queue_email_campaign_send', 'send_bulk_email_campaign',
   // Social publish
   'create_social_post', 'create_post', 'create_linkedin_post', 'create_post_with_ai_image',
+  'upload_media_asset',
   // WhatsApp
   'send_whatsapp_message', 'get_whatsapp_status', 'enable_whatsapp_chatbot', 'disable_whatsapp_chatbot',
   'set_lead_auto_outreach', 'set_outreach_rate_limits',
@@ -134,9 +136,9 @@ export const BONNIE_MODULE_HINTS: Record<
       'generate_outreach_draft',
     ],
     examples: [
-      'Find plumbers in Austin and qualify hot leads only',
+      'Find plumbers in Austin (discovery only — find_and_qualify_leads)',
+      'Enrich existing lead Acme Corp with more data (nexus_lead_enrichment)',
       'Score my CRM leads for dental clinics — min score 50',
-      'Remember I only want SMB owners, no franchises',
       'List hot leads',
     ],
   },
@@ -157,8 +159,12 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   social: {
     label: 'Social media',
-    tools: ['create_social_post', 'create_linkedin_post', 'schedule_social_post', 'publish_facebook_reel', 'search_facebook_leads'],
-    examples: ['Post to LinkedIn about our new service', 'Search Facebook leads inside the platform'],
+    tools: ['upload_media_asset', 'create_social_post_with_media', 'create_social_post', 'create_linkedin_post', 'schedule_social_post', 'publish_facebook_reel', 'search_facebook_leads'],
+    examples: [
+      'Post this image to Facebook with caption …',
+      'Upload media and publish a LinkedIn post about our new service',
+      'Search Facebook leads inside the platform',
+    ],
   },
   mail: {
     label: 'Mail',

@@ -22,7 +22,8 @@
     "migrate:check": "node scripts/check-migrations.js",
     "api:sweep-errors": "node scripts/sweep-api-errors.mjs",
     "guidance:compact": "node scripts/compact-guidance.mjs",
-    "pentest": "node scripts/platform-pentest.mjs"
+    "pentest": "node scripts/platform-pentest.mjs",
+    "validate:mcp": "./node_modules/.bin/tsx scripts/validate-bonnie-mcp-tools.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.0",
@@ -194,6 +195,7 @@
     "prettier": "^3.6.2",
     "supabase": "^2.76.6",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5.9.3",
     "ws": "^8.19.0"
   },

@@ -9,6 +9,7 @@ import { buildMemoryContextBlock } from '@/services/nexusMemoryService';
 import { buildBonnieTenantDataRulesBlock } from './bonnieTenantDataRules';
 import { BONNIE_ANTI_HEDGE_INSTRUCTION } from './bonnieResponseSanitizer';
 import { BONNIE_MAX_AGENT_ROUNDS } from './bonnieAgentConfig';
+import { BONNIE_CORE_SYSTEM_PROMPT, BONNIE_REACT_LOOP } from './bonnieCorePrompt';
 
 export {
   BONNIE_REGISTRY_TOOLS,
@@ -52,14 +53,14 @@ ${activeSkill.body.slice(0, 2500)}
 
   const tenantDataBlock = tenantId ? buildBonnieTenantDataRulesBlock(tenantId) : '';
 
-  return `You are Bonnie — the always-on AI operations agent for AlphaClone Systems.
+  return `${BONNIE_CORE_SYSTEM_PROMPT}
+
+${BONNIE_REACT_LOOP}
 ${tenantDataBlock}
-IDENTITY & BRANDING (DeepCode / DeepChat equivalent — Bonnie-branded)
-- You are the in-platform agent: users talk to you like DeepChat, and you execute work like DeepCode.
+
+PLATFORM EXECUTION (in-dashboard agent — Bonnie-branded)
 - Present yourself ONLY as "Bonnie" or "Bonnie AI" — never mention DeepSeek, OpenAI, Claude, or other model vendors.
 - Think step-by-step, run tools iteratively until the user's task is complete (up to ${BONNIE_MAX_AGENT_ROUNDS} rounds).
-- You are confident, precise, and action-oriented. No emojis. Professional business tone.
-- You operate across EVERY dashboard module: CRM, leads, deals, tasks, invoices, accounting, email campaigns, social, WhatsApp, mail, tickets, calendar, contracts, meetings, and automation.
 
 CURRENT MODULE CONTEXT: ${moduleHint.label}
 Preferred tools for this area: ${moduleHint.tools.join(', ')}

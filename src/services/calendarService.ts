@@ -71,18 +71,17 @@ export const calendarService = {
 
         // 5. Projects Query (Deadlines)
         let projectsQuery = supabase
-            .from('business_projects')
+            .from('projects')
             .select('*')
             .eq('tenant_id', tenantId)
             .not('due_date', 'is', null)
             .neq('status', 'completed');
 
         // 6. Milestones Query (Project Milestones)
-        // Since milestones are child of projects, we fetch those with due dates
         let milestonesQuery = supabase
             .from('project_milestones')
-            .select('*, business_projects!inner(*)')
-            .eq('business_projects.tenant_id', tenantId)
+            .select('*, projects!inner(tenant_id, client_id, name)')
+            .eq('projects.tenant_id', tenantId)
             .not('due_date', 'is', null)
             .neq('status', 'completed');
 
@@ -180,9 +179,9 @@ export const calendarService = {
         // Map Projects to Events
         const projectEvents: CalendarEvent[] = (projectsRes.data || []).map((p: any) => ({
             id: `project_${p.id}`,
-            user_id: userId,
+            user_id: p.owner_id || userId,
             title: `Project Deadline: ${p.name}`,
-            description: `Category: ${p.category} - Health: ${p.health}`,
+            description: p.description || `Category: ${p.category || 'General'}`,
             start_time: p.due_date,
             end_time: p.due_date,
             type: 'project',
@@ -191,6 +190,7 @@ export const calendarService = {
             reminder_minutes: 60,
             metadata: { projectId: p.id, health: p.health, budget: p.budget },
             related_entity_id: p.id,
+            related_to_lead: undefined,
             created_at: p.created_at,
             updated_at: p.updated_at
         }));
@@ -207,19 +207,30 @@ export const calendarService = {
             color: '#ec4899', // Pink
             is_all_day: true,
             reminder_minutes: 0,
-            metadata: { milestoneId: m.id, projectId: m.project_id },
+            metadata: { milestoneId: m.id, projectId: m.project_id, clientId: m.projects?.client_id },
             related_entity_id: m.id,
+            related_to_lead: undefined,
             created_at: m.created_at,
             updated_at: m.updated_at
         }));
 
+        const nativeSyncedKeys = new Set(
+            events
+                .filter((e) => e.related_entity_id && ['task', 'project', 'milestone'].includes(e.type))
+                .map((e) => `${e.type}:${e.related_entity_id}`)
+        );
+
+        const dedupedTaskEvents = taskEvents.filter((e) => !nativeSyncedKeys.has(`task:${e.related_entity_id}`));
+        const dedupedProjectEvents = projectEvents.filter((e) => !nativeSyncedKeys.has(`project:${e.related_entity_id}`));
+        const dedupedMilestoneEvents = milestoneEvents.filter((e) => !nativeSyncedKeys.has(`milestone:${e.related_entity_id}`));
+
         const combinedEvents = [
             ...events,
-            ...taskEvents,
+            ...dedupedTaskEvents,
             ...invoiceEvents,
             ...contractEvents,
-            ...projectEvents,
-            ...milestoneEvents
+            ...dedupedProjectEvents,
+            ...dedupedMilestoneEvents
         ];
         combinedEvents.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 

@@ -7,6 +7,7 @@ import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk
 import { validateRecipient } from '@/lib/email/validateRecipient';
 import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
+import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
 
 export type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
 
@@ -34,6 +35,8 @@ export interface EmailPayload {
   skipFooter?: boolean;
   /** Skip CRM recipient membership check (inbox replies, document send) */
   skipRecipientGate?: boolean;
+  /** Skip Bonnie v2.0 outbound language sanitization (platform/system mail) */
+  skipBonnieQualityCheck?: boolean;
 }
 
 export interface SendEmailResult {
@@ -251,19 +254,26 @@ export async function sendEmail(
 
     const normalizedSubject = normalizeEmailSubject(payload.subject);
     const shouldAppendFooter = !payload.skipFooter;
-    const normalizedHtml = payload.html
+    const applyBonnieSanitizer = !payload.isPlatformNotification && !payload.skipBonnieQualityCheck;
+    const sanitizedHtmlSource = applyBonnieSanitizer && payload.html
+      ? sanitizeBonnieOutboundText(String(payload.html)).clean
+      : payload.html;
+    const sanitizedTextSource = applyBonnieSanitizer && payload.text
+      ? sanitizeBonnieOutboundText(String(payload.text)).clean
+      : payload.text;
+    const normalizedHtml = sanitizedHtmlSource
       ? (shouldAppendFooter
-        ? ensureFooter(sanitizeHtml(String(payload.html), {
+        ? ensureFooter(sanitizeHtml(String(sanitizedHtmlSource), {
           allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }), { unsubscribeUrl })
-        : sanitizeHtml(String(payload.html), {
+        : sanitizeHtml(String(sanitizedHtmlSource), {
           allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }))
       : undefined;
-    const normalizedText = payload.text
-      ? (shouldAppendFooter ? ensureFooter(payload.text, { unsubscribeUrl }) : payload.text)
+    const normalizedText = sanitizedTextSource
+      ? (shouldAppendFooter ? ensureFooter(sanitizedTextSource, { unsubscribeUrl }) : sanitizedTextSource)
       : undefined;
 
     const configs = await resolveProviderConfigs({

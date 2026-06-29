@@ -121,6 +121,30 @@ export const googleCalendarService = {
         return await response.json();
     },
 
+    async updateEvent(userId: string, eventId: string, event: Record<string, unknown>) {
+        const tokens = await this.getTokens(userId);
+        if (!tokens) throw new Error('Not connected to Google Calendar');
+
+        const response = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(eventId)}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${tokens.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(event),
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to update event');
+        }
+
+        return await response.json();
+    },
+
     async deleteEvent(userId: string, eventId: string) {
         const tokens = await this.getTokens(userId);
         if (!tokens) throw new Error('Not connected to Google Calendar');

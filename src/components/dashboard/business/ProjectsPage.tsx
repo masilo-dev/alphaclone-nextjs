@@ -332,6 +332,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                         currentUser={user}
                         onClose={() => setViewingProject(null)}
                         onEdit={setEditingProject}
+                        onProgressChange={(projectId, progress) => {
+                            setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, progress } : p)));
+                            setViewingProject((prev) => (prev?.id === projectId ? { ...prev, progress } : prev));
+                        }}
                     />
                 )}
             </AnimatePresence>
@@ -806,6 +810,7 @@ interface ProjectDetailsDrawerProps {
     currentUser: User;
     onClose: () => void;
     onEdit: (project: BusinessProject) => void;
+    onProgressChange?: (projectId: string, progress: number) => void;
 }
 
 const DEFAULT_MILESTONE_LABELS = [
@@ -818,8 +823,9 @@ const DEFAULT_MILESTONE_LABELS = [
     'Production Launch & Handover',
 ];
 
-const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, tenantId, currentUser, onClose, onEdit }) => {
+const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, tenantId, currentUser, onClose, onEdit, onProgressChange }) => {
     const router = useRouter();
+    const [progress, setProgress] = useState(project.progress || 0);
     const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
     const [milestonesLoading, setMilestonesLoading] = useState(true);
     const [sharing, setSharing] = useState(false);
@@ -838,6 +844,10 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
     const [postingComment, setPostingComment] = useState(false);
     const [clientEmail, setClientEmail] = useState('');
     const [clientName, setClientName] = useState('');
+
+    useEffect(() => {
+        setProgress(project.progress || 0);
+    }, [project.id, project.progress]);
 
     const handleShareWithClient = async () => {
         setSharing(true);
@@ -897,7 +907,12 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 }
                 if (!cancelled) setMilestones(created);
             }
-            if (!cancelled) setMilestonesLoading(false);
+            if (!cancelled) {
+                const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
+                setProgress(recalculated);
+                onProgressChange?.(project.id, recalculated);
+                setMilestonesLoading(false);
+            }
         };
         loadMilestones();
         return () => { cancelled = true; };
@@ -958,12 +973,16 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
             // Revert on failure
             setMilestones(prev => prev.map(m => m.id === id ? { ...m, checked: !nextChecked } : m));
             import('react-hot-toast').then(({ toast }) => toast.error('Failed to update milestone'));
+            return;
         }
+        const { progress: recalculated } = await projectService.recalculateProjectProgress(project.id);
+        setProgress(recalculated);
+        onProgressChange?.(project.id, recalculated);
     };
 
     const radius = 36;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - ((project.progress || 0) / 100) * circumference;
+    const strokeDashoffset = circumference - ((progress || 0) / 100) * circumference;
 
     const teamList = project.team && project.team.length > 0 ? project.team : [];
 
@@ -1102,7 +1121,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                 <circle cx="48" cy="48" r={radius} className="stroke-violet-500 transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
-                                {project.progress || 0}%
+                                {progress || 0}%
                             </div>
                         </div>
 
@@ -1126,12 +1145,12 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                     <div className="space-y-1.5">
                         <div className="flex justify-between text-xs font-semibold text-slate-400 uppercase tracking-wider">
                             <span>Completeness</span>
-                            <span>{project.progress || 0}%</span>
+                            <span>{progress || 0}%</span>
                         </div>
                         <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
                                 className="h-full bg-gradient-to-r from-teal-500 to-indigo-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${project.progress || 0}%` }}
+                                style={{ width: `${progress || 0}%` }}
                             />
                         </div>
                     </div>

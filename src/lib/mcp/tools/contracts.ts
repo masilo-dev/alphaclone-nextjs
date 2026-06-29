@@ -3,6 +3,7 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { AppUrls } from '@/lib/urls';
+import { notifyContractCreated, notifyContractSent } from '@/services/contractNotificationService';
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -77,6 +78,11 @@ registerTool('contracts', {
       .single();
 
     if (error) throw error;
+
+    await notifyContractCreated(args.tenant_id, data.id, data.title).catch((err) =>
+      console.error('[create_contract] notify failed:', err)
+    );
+
     return data;
   },
 });
@@ -249,10 +255,30 @@ registerTool('contracts', {
       throw new Error(result.error || 'Failed to send contract');
     }
 
+    const { data: contractRow } = await supabase
+      .from('contracts')
+      .select('title')
+      .eq('id', args.contract_id)
+      .eq('tenant_id', args.tenant_id)
+      .maybeSingle();
+
+    const sentAt = new Date().toISOString();
+    await notifyContractSent(
+      args.tenant_id,
+      args.contract_id,
+      contractRow?.title || 'Contract',
+      toEmail,
+      userId
+    ).catch((err) => console.error('[send_contract] notify failed:', err));
+
     return {
+      sent: true,
+      sent_to: toEmail,
+      sent_at: sentAt,
       status: 'sent',
       message: 'Contract successfully sent to client',
       recipient: toEmail,
+      signing_url: result.signingUrl,
     };
   },
 });
