@@ -16,7 +16,7 @@ import {
   ChevronDown, ArrowRight, Download, Share2, Trash2,
   Copy, Edit, Trash, Eye, MoreVertical, LayoutGrid,
   List, RefreshCw, Cpu, Layers, Code, ShieldCheck,
-  Edit2, ListChecks, FileCheck, Video, DollarSign, User as UserIcon, Minimize2
+  Edit2, ListChecks, FileCheck, Video, DollarSign, User as UserIcon
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -112,7 +112,6 @@ const MailTab = React.lazy(() => import('./dashboard/MailTab'));
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
 const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
-const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
 const ProjectsPage = React.lazy(() => import('./dashboard/business/ProjectsPage'));
 const ContractDashboard = React.lazy(() => import('./contracts/ContractDashboard'));
 const AccountingDashboard = React.lazy(() => import('./dashboard/accounting/AccountingDashboard'));
@@ -250,12 +249,14 @@ const Dashboard: React.FC<DashboardProps> = ({
   });
   const {
     activeMeetingCallId,
-    isMeetingMinimized,
     startMeeting,
-    endMeeting,
-    setIsMeetingMinimized,
-    toggleMeetingMinimized,
   } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
+
+  useEffect(() => {
+    if (activeMeetingCallId && typeof window !== 'undefined' && !window.location.pathname.startsWith('/meet/')) {
+      router.replace(`/meet/${activeMeetingCallId}`);
+    }
+  }, [activeMeetingCallId, router]);
 
   // -- PERSISTENT VIDEO CALL STATE --
   // Note: Video calls now use dedicated pages (/meet/[id])
@@ -271,6 +272,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleJoinCall = (callId: string) => {
     startMeeting(callId);
+    router.push(`/meet/${callId}`);
   };
 
 
@@ -1930,12 +1932,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center gap-2 sm:gap-3">
                 {activeMeetingCallId && (
                   <button
-                    onClick={() => setIsMeetingMinimized(false)}
+                    onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
                     className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
                     title="Return to active meeting"
                   >
                     <Video className="w-3.5 h-3.5" />
-                    {isMeetingMinimized ? 'Return to Meeting' : 'Meeting Active'}
+                    Return to Meeting
                   </button>
                 )}
                 {activeBgTasksCount > 0 && (
@@ -2086,27 +2088,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         onClose={() => setIsVoiceActive(false)} 
       />
 
-      {activeMeetingCallId && (
-        <React.Suspense fallback={null}>
-          {!isMeetingMinimized && (
-            <button
-              onClick={() => setIsMeetingMinimized(true)}
-              className="fixed top-20 right-4 z-[130] inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-xs font-semibold text-slate-100 hover:bg-slate-800 transition-colors"
-              title="Run meeting in background"
-            >
-              <Minimize2 className="w-3.5 h-3.5" />
-              Background mode
-            </button>
-          )}
-          <CustomVideoRoom
-            user={user}
-            callId={activeMeetingCallId}
-            onLeave={endMeeting}
-            isMinimized={isMeetingMinimized}
-            onToggleMinimize={toggleMeetingMinimized}
-          />
-        </React.Suspense>
-      )}
 
       <ProductTour
         isOpen={showProductTour}

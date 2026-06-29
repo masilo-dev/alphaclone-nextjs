@@ -232,10 +232,11 @@ registerTool('social', {
     required: ['tenant_id', 'file_name', 'mime_type', 'file_base64'],
   },
   handler: async (args, ctx) => {
+    if (!ctx.userId) throw new Error('user_id is required');
     const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
     return uploadMediaAsset({
       tenantId: args.tenant_id,
-      userId: ctx.userId || args.tenant_id,
+      userId: ctx.userId,
       fileName: args.file_name,
       mimeType: args.mime_type,
       fileBase64: args.file_base64,

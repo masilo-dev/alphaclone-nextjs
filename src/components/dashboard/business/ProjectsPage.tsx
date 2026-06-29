@@ -650,7 +650,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
     }, [initialData]);
 
     return (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center z-[1100] p-0 sm:p-4 overflow-y-auto">
             <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-[2rem] p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-violet-500/10 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
@@ -1082,7 +1082,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[115]"
+                className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100]"
             />
 
             {/* Sheet */}
@@ -1091,7 +1091,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-3xl md:rounded-2xl bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[120] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-3xl md:rounded-2xl bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[1110] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
             >
                 {/* Drag Handle Indicator */}
                 <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto my-3 md:hidden" />
@@ -1309,7 +1309,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 </div>
 
                 {/* Sticky Action Footer */}
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md px-6 py-4 border-t border-white/10 z-[125] flex gap-3 items-center justify-end">
+                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md px-6 py-4 border-t border-white/10 z-10 flex gap-3 items-center justify-end">
                     <button
                         onClick={handleShareWithClient}
                         disabled={sharing}

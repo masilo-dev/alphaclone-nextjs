@@ -212,7 +212,7 @@ const VoiceCaptureFAB: React.FC<VoiceCaptureFABProps> = ({ onCapture, isActive: 
     }
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center pb-24 px-4 sm:items-center sm:pb-0">
+        <div className="fixed inset-0 z-[1100] flex items-end justify-center pb-24 px-4 sm:items-center sm:pb-0">
             <div className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsActive(false)} />
 
             <div className="relative w-full max-w-sm bg-slate-950 border border-teal-500/30 rounded-[2.5rem] p-8 shadow-[0_0_100px_-20px_rgba(20,184,166,0.5)] overflow-hidden animate-in zoom-in-95 duration-200">

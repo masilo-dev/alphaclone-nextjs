@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles } from 'lucide-react';
+import { X, DollarSign, FileText, CheckCircle, Edit3, Save, Download, PenLine, Copy, List, Plus, Users, Search, CheckCircle2, Send, Mail, AlertCircle, Building2, ChevronDown, Sparkles, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input } from '../ui/UIComponents';
 import { Project } from '../../types';
@@ -384,10 +384,10 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
     return (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="w-full max-w-4xl bg-slate-900 rounded-2xl border border-slate-800 shadow-2xl my-8">
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+            <div className="flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                <div className="flex shrink-0 items-center justify-between border-b border-slate-800 p-6">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                             <DollarSign className="w-6 h-6 text-teal-400" />
@@ -404,7 +404,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     </button>
                 </div>
 
-                <div className="p-6 max-h-[70vh] overflow-y-auto">
+                <div className="min-h-0 flex-1 overflow-y-auto p-6">
                     {/* STEP 1: Edit Details */}
                     {step === 'edit' && (
                         <div className="space-y-6">
@@ -1089,19 +1089,29 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between p-6 border-t border-slate-800 bg-slate-900/50">
+                {/* Footer — always visible */}
+                <div className="flex shrink-0 items-center justify-between border-t border-slate-800 bg-slate-900/95 p-4 sm:p-6 backdrop-blur-sm">
                     <div className="text-sm text-slate-400">
                         Total: <span className="text-white font-bold">${calculateTotal().toFixed(2)}</span>
                     </div>
                     <div className="flex gap-3">
                         {step === 'edit' && (
-                            <Button
-                                variant="outline"
-                                onClick={handleClose}
-                            >
-                                Cancel
-                            </Button>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={handleClose}
+                                >
+                                    Cancel
+                                </Button>
+                                <Button
+                                    onClick={() => setStep('preview')}
+                                    disabled={!selectedClientId || !dueDate || calculateTotal() <= 0}
+                                    className="flex items-center gap-2"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                    Preview Invoice
+                                </Button>
+                            </>
                         )}
                         {step === 'preview' && (
                             <Button

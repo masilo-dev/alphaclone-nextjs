@@ -328,7 +328,7 @@ export default function BonnieChatPanel({
   return (
     <div
       className={`flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16] ${
-        compact ? 'h-[280px]' : 'h-full min-h-[360px]'
+        compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
       }`}
     >
       {!compact && messages.length > 1 && (

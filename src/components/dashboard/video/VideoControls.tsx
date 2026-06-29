@@ -243,7 +243,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                         />
                     </div>
 
-                    {/* Share Section - Hidden on Mobile main bar to satisfy "not a lot of button" requirement */}
+                    {/* Share + invite — desktop main bar; mobile uses More menu */}
                     {!isMobile && (
                         <>
                             <div className="w-px h-10 bg-white/10" />
@@ -252,6 +252,11 @@ const VideoControls: React.FC<VideoControlsProps> = ({
                                 highlight={isScreenSharing}
                                 icon={isScreenSharing ? MonitorOff : Monitor}
                                 label={isScreenSharing ? "Stop Share" : "Share"}
+                            />
+                            <ControlButton
+                                onClick={handleCopyLink}
+                                icon={copied ? Check : Copy}
+                                label={copied ? "Copied" : "Invite"}
                             />
                         </>
                     )}

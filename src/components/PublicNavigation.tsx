@@ -295,34 +295,34 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
             isScrolled && !mobileMenuOpen ? 'h-16 lg:h-20' : 'h-20'
           }`}
         >
-          {/* Left cluster: logo + nav links */}
-          <div className="hidden lg:flex items-center min-w-0 flex-1 gap-0">
-            <Link
-              href="/"
-              className="flex items-center gap-3 flex-shrink-0 pr-2 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0"
-            >
-              <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
-                <img
-                  src="/logo.png"
-                  alt="AlphaClone Systems Logo"
-                  width={36}
-                  height={36}
-                  className="object-contain max-h-full max-w-full"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    const fallback = document.createElement('div');
-                    fallback.className =
-                      'w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/20';
-                    fallback.innerHTML =
-                      '<span class="text-slate-950 font-black text-lg">AS</span>';
-                    e.currentTarget.parentElement?.appendChild(fallback);
-                  }}
-                />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
-            </Link>
+          {/* Desktop logo — left only */}
+          <Link
+            href="/"
+            className="hidden lg:flex items-center gap-3 flex-shrink-0 transition-transform transition-opacity duration-300 pointer-events-auto opacity-100 translate-y-0"
+          >
+            <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
+              <img
+                src="/logo.png"
+                alt="AlphaClone Systems Logo"
+                width={36}
+                height={36}
+                className="object-contain max-h-full max-w-full"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = document.createElement('div');
+                  fallback.className =
+                    'w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/20';
+                  fallback.innerHTML =
+                    '<span class="text-slate-950 font-black text-lg">AS</span>';
+                  e.currentTarget.parentElement?.appendChild(fallback);
+                }}
+              />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">AlphaClone</span>
+          </Link>
 
-            <div className="flex items-center gap-0.5 ml-6 pl-4 border-l border-slate-800/60 min-w-0">
+          {/* Desktop nav — spaced well to the right of the brand */}
+          <div className="hidden lg:flex items-center gap-0.5 ml-auto mr-10 xl:mr-16 min-w-0">
               {DESKTOP_PRIMARY_LINKS.map((item) => {
                 const active =
                   item.path === '/'
@@ -405,7 +405,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                   />
                 )}
               </div>
-            </div>
           </div>
 
           {/* Mobile logo (when desktop nav hidden) */}

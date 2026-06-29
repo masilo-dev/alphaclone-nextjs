@@ -19,7 +19,7 @@ const SheetOverlay = React.forwardRef<
   <SheetPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-[200] bg-slate-950/70 backdrop-blur-sm transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
+      'fixed inset-0 z-[1100] bg-slate-950/80 backdrop-blur-sm transition-opacity data-[state=closed]:opacity-0 data-[state=open]:opacity-100',
       className
     )}
     {...props}
@@ -49,7 +49,7 @@ const SheetContent = React.forwardRef<
     <SheetPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed z-[210] flex flex-col gap-4 border-slate-800 bg-slate-950 shadow-xl transition-transform duration-300 ease-out data-[state=closed]:duration-200 overflow-y-auto ac-scroll-full',
+        'fixed z-[1110] flex flex-col gap-4 border-slate-800 bg-slate-950 shadow-xl transition-transform duration-300 ease-out data-[state=closed]:duration-200 overflow-hidden ac-scroll-full',
         sheetSideClasses[side],
         side === 'bottom' || side === 'top' ? 'p-4 pt-6 pb-safe' : 'p-6',
         className

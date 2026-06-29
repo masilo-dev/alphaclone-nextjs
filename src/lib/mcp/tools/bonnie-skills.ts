@@ -87,7 +87,7 @@ registerTool('bonnie-skills', {
         isError: true,
       };
     }
-    const userId = args.user_id || ctx.userId;
+    const userId = ctx.userId || args.user_id;
     await mcpStore.updateBusinessAIState(args.tenant_id, userId, {
       memory_summary: `[Active skill: ${skill.name}] ${skill.description}`.slice(0, 480),
     });

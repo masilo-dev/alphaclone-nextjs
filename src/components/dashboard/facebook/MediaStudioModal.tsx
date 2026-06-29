@@ -323,7 +323,7 @@ export default function MediaStudioModal({ file, onClose, onApply }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/70 p-4">
       <div className="w-full max-w-5xl rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
           <div>

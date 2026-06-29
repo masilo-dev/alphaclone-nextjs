@@ -3,10 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTenant } from '@/contexts/TenantContext';
 import CustomVideoRoom from '@/components/dashboard/video/CustomVideoRoom';
 import MicrosoftMeetingEmbed from '@/components/dashboard/video/MicrosoftMeetingEmbed';
 import { dailyService } from '@/services/dailyService';
 import { resolveMeetingJoinUrl, resolveMeetingProvider } from '@/services/instantMeetingService';
+import { useMeetingSession } from '@/hooks/useMeetingSession';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -14,6 +16,9 @@ export default function MeetPage() {
     const params = useParams();
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
+    const { currentTenant } = useTenant();
+    const meetingScopeKey = `${user?.id || 'guest'}:${currentTenant?.id || 'no-tenant'}`;
+    const { endMeeting } = useMeetingSession(meetingScopeKey);
     const [roomUrl, setRoomUrl] = useState<string | null>(null);
     const [meetingProvider, setMeetingProvider] = useState<'daily' | 'teams' | 'jitsi'>('daily');
     const [error, setError] = useState<string | null>(null);
@@ -328,7 +333,10 @@ export default function MeetPage() {
                     user={user || guestUser}
                     roomUrl={roomUrl}
                     callId={callId!}
-                    onLeave={() => router.push(user ? '/dashboard' : '/')}
+                    onLeave={() => {
+                        endMeeting();
+                        router.push(user ? '/dashboard' : '/');
+                    }}
                 />
             )}
             {roomUrl && meetingProvider === 'teams' && (

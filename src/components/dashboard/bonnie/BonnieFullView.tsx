@@ -435,7 +435,7 @@ export default function BonnieFullView() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-[420px]">
+          <div className="flex-1 min-h-0">
             <BonnieChatPanel
               streaming
               storageKey={tenantId ? `bonnie_chat_full_${tenantId}` : undefined}

@@ -186,7 +186,7 @@ registerTool('bonnie-orchestrate', {
   },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
-    const userId = args.user_id || ctx.userId;
+    const userId = ctx.userId || args.user_id;
 
     const { data: runRow, error: runInsertError } = await supabase
       .from('nexus_orchestration_runs')

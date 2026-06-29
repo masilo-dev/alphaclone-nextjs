@@ -1473,7 +1473,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {showSendModal && (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
                     <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                         <h3 className="text-lg font-semibold text-white">Send Contract by Email</h3>

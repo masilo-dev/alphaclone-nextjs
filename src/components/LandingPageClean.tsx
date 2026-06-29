@@ -60,9 +60,9 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
          {/* Navigation */}
          <nav className="fixed top-0 left-0 right-0 z-[100] bg-slate-950/80 backdrop-blur-xl border-b border-slate-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-               <div className="flex justify-between items-center h-20">
+               <div className="flex items-center h-20">
                   {/* Logo */}
-                  <div className="flex items-center gap-3 cursor-pointer group">
+                  <div className="flex items-center gap-3 cursor-pointer group flex-shrink-0">
                      <div className="relative w-9 h-9 flex-shrink-0 flex items-center justify-center">
                         <img
                            src="/logo.png"
@@ -77,8 +77,8 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                      </span>
                   </div>
 
-                  {/* Desktop Navigation */}
-                  <div className="hidden md:flex items-center gap-8">
+                  {/* Desktop Navigation — spaced right of brand */}
+                  <div className="hidden md:flex items-center gap-8 ml-auto mr-10 lg:mr-16">
                      <button
                         onClick={() => document.getElementById('impact')?.scrollIntoView({ behavior: 'smooth' })}
                         className="text-slate-300 hover:text-white transition-colors"
@@ -102,7 +102,7 @@ const LandingPageClean = ({ onLogin }: { onLogin?: () => void }) => {
                   {/* Mobile Menu Button */}
                   <button
                      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                     className="md:hidden text-slate-300 hover:text-white"
+                     className="md:hidden ml-auto text-slate-300 hover:text-white"
                   >
                      {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                   </button>
