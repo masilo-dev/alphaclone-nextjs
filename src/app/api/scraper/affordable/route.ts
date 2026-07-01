@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { requireAuthenticatedUser, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { freePlacesService } from '@/services/freePlacesService';
 import { apolloService } from '@/services/apolloService';
@@ -223,6 +223,12 @@ export async function POST(request: Request) {
     }
     const { action, domain, email, query, location, tenant_id, first_name, last_name, organization_name, linkedin_url } = parsed.data;
 
+    if (tenant_id) {
+      await requireTenantAccess(tenant_id);
+    } else {
+      await requireAuthenticatedUser();
+    }
+
     let results: any = {};
 
     switch (action) {
@@ -378,6 +384,6 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     console.error('[AffordableScraper] Fatal error:', error);
-    return clientErrorResponse(error, { request, scope: 'scraper/affordable.POST' });
+    return routeErrorResponse(error, undefined, request);
   }
 }

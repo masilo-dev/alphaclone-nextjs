@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabase';
-import { v4 as uuidv4 } from 'uuid';
+import { generateMcpApiKey, hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export class MCPAuthService {
   /**
@@ -31,6 +31,18 @@ export class MCPAuthService {
         return { token: existingToken };
       }
 
+      const { data: byHashOnly } = await supabase
+        .from('mcp_api_keys')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', userId)
+        .not('api_key_hash', 'is', null)
+        .maybeSingle();
+
+      if (byHashOnly?.id) {
+        return { token: null, error: 'MCP key exists but cannot be retrieved. Rotate to generate a new key.' };
+      }
+
       return await this.rotateToken(tenantId, userId);
     } catch (err) {
       return { token: null, error: String(err) };
@@ -48,7 +60,8 @@ export class MCPAuthService {
       return { token: null, error: 'User must be signed in.' };
     }
     try {
-      const newToken = `ac_mcp_${uuidv4().replace(/-/g, '')}`;
+      const newToken = generateMcpApiKey();
+      const keyHash = hashMcpApiKey(newToken);
 
       const { data, error } = await supabase
         .from('mcp_api_keys')
@@ -57,6 +70,7 @@ export class MCPAuthService {
             tenant_id: tenantId,
             user_id: userId,
             api_key: newToken,
+            api_key_hash: keyHash,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'tenant_id,user_id' }
@@ -81,20 +95,34 @@ export class MCPAuthService {
     token: string
   ): Promise<{ tenantId: string | null; userId: string | null; error?: string }> {
     try {
-      const { data, error } = await supabase
+      const keyHash = hashMcpApiKey(token);
+      const { data: byHash } = await supabase
         .from('mcp_api_keys')
         .select('tenant_id, user_id')
-        .eq('api_key', token)
-        .single();
+        .eq('api_key_hash', keyHash)
+        .maybeSingle();
 
-      if (error || !data) {
+      const data = byHash || (await supabase
+        .from('mcp_api_keys')
+        .select('tenant_id, user_id, id')
+        .eq('api_key', token)
+        .maybeSingle()).data;
+
+      if (!data) {
         return { tenantId: null, userId: null, error: 'Invalid or expired MCP connection token' };
+      }
+
+      if (!byHash && 'id' in data && data.id) {
+        await supabase
+          .from('mcp_api_keys')
+          .update({ api_key_hash: keyHash, api_key: null, updated_at: new Date().toISOString() })
+          .eq('id', data.id);
       }
 
       supabase
         .from('mcp_api_keys')
         .update({ last_used_at: new Date().toISOString() })
-        .eq('api_key', token)
+        .eq('api_key_hash', keyHash)
         .then();
 
       return { tenantId: data.tenant_id, userId: data.user_id };

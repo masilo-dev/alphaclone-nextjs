@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { slackService } from '@/services/slackService';
 
@@ -16,9 +17,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!code) {
+    if (!code || !state) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=missing_code`
+      );
+    }
+
+    const stateData = parseOAuthState<{ tenantId: string; userId: string }>(state);
+    if (!stateData?.tenantId || !stateData?.userId) {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=invalid_state`
       );
     }
 
@@ -55,11 +63,8 @@ export async function GET(request: NextRequest) {
 
     const teamData = await teamInfo.json();
 
-    // Save integration to database
     const supabase = createSupabaseAdminClient();
-    
-    // Get tenant from state or use default
-    const tenantId = state || 'default';
+    const tenantId = stateData.tenantId;
 
     const { error: dbError } = await supabase
       .from('slack_integrations')

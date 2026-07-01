@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
+import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 
 export interface AuthResult {
   tenant_id: string;
@@ -279,13 +280,9 @@ export async function validateMCPAuthApp(
   }
 
   // ── 2. Fallback to API Key ───────────────────────────────────────────────
-  const { data: keyData, error: keyError } = await supabaseAdmin
-    .from('mcp_api_keys')
-    .select('tenant_id, user_id, scopes')
-    .eq('api_key', token)
-    .maybeSingle();
+  const keyData = await lookupMcpApiKey(supabaseAdmin, token);
 
-  if (keyError || !keyData) {
+  if (!keyData) {
     return {
       error: 'Unauthorized',
       status: 401,
@@ -304,7 +301,7 @@ export async function validateMCPAuthApp(
         wwwAuthenticate: createWWWAuthenticateHeader(
           'insufficient_scope',
           `Missing required scopes: ${scopeValidation.missing?.join(', ')}`,
-          keyData.scopes
+          keyData.scopes ?? undefined
         ),
       };
     }

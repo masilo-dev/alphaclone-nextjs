@@ -4,6 +4,7 @@ import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
+import { signInvoiceTrackToken } from '@/lib/security/signedToken';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 
 async function renderInvoicePdf(invoice: any): Promise<Buffer> {
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
 
     // Build tracking pixel URL (base64url encoded invoice ID)
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
-    const trackingToken = Buffer.from(invoiceId).toString('base64url');
+    const trackingToken = signInvoiceTrackToken(invoiceId);
     const trackingPixelUrl = `${appUrl}/api/invoices/track/${trackingToken}`;
 
     const emailResponse = await fetch(`${req.nextUrl.origin}/api/email/send`, {

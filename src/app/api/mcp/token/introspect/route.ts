@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { isProduction } from '@/lib/security/productionGuard';
+import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -79,8 +81,7 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     const { data: apiKeyData } = await supabase
       .from('mcp_api_keys')
       .select('tenant_id')
-      .eq('api_key', token)
-      .eq('is_active', true)
+      .or(`api_key.eq.${token},api_key_hash.eq.${hashMcpApiKey(token)}`)
       .maybeSingle();
 
     if (apiKeyData) {
@@ -88,9 +89,11 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     }
   }
 
-  // Allow unauthenticated introspection for development
-  // In production, you may want to enforce authentication
-  return { isAuthenticated: true, clientId: 'public' };
+  if (isProduction()) {
+    return { isAuthenticated: false, error: 'invalid_client' };
+  }
+
+  return { isAuthenticated: true, clientId: 'development' };
 }
 
 export async function POST(req: NextRequest) {

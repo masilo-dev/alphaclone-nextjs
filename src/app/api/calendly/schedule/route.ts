@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import { calendlyService } from '@/services/calendlyService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
@@ -16,6 +16,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
         }
 
+        const { user } = await requireAuthenticatedUser();
+        if (user.id !== userId) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         // 1. Verify user exists and has a tenant
         const supabase = createSupabaseAdminClient();
         const { data: profile } = await supabase
@@ -28,17 +33,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
         }
 
-        // 2. Execute scheduling via service
-        // Note: The service gets config from tenant settings in the DB or local context
-        // Since this is a server route, we might need to pass the config explicitly 
-        // if calendlyService.getConfig relies on localStorage.
-        // Let's check calendlyService.ts again.
-        
         const booking = await calendlyService.scheduleMeeting(eventTypeUri, inviteeDetails, profile.tenant_id);
 
         return NextResponse.json({ success: true, booking });
-    } catch (error: any) {
+    } catch (error) {
         console.error('[API] Calendly Schedule Error:', error);
-        return clientErrorResponse(error, { request: req, scope: 'calendly/schedule' });
+        return routeErrorResponse(error, undefined, req);
     }
 }

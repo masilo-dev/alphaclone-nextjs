@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
 import { parseOAuthState } from '@/lib/oauth/oauthState';
+import { isProduction } from '@/lib/security/productionGuard';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
         if (parsedState) {
             region = typeof parsedState.region === 'string' && parsedState.region ? parsedState.region : 'US';
             userId = typeof parsedState.state === 'string' ? parsedState.state : '';
-        } else {
+        } else if (!isProduction()) {
             try {
                 const legacy = JSON.parse(stateStr);
                 region = typeof legacy?.region === 'string' && legacy.region ? legacy.region : 'US';

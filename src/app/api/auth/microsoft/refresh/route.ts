@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
+import { stripOAuthTokens } from '@/lib/security/productionGuard';
 
 export const runtime = 'nodejs';
+
+function publicConnection(row: Record<string, unknown> | null) {
+  return stripOAuthTokens(row);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +22,6 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const fallbackRefreshToken = typeof body?.refreshToken === 'string' ? body.refreshToken : '';
     const forceRefresh = body?.force === true;
 
     const admin = createSupabaseAdminClient();
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest) {
       throw connectionError;
     }
 
-    const refreshToken = connection?.refresh_token || fallbackRefreshToken;
+    const refreshToken = connection?.refresh_token;
     if (!refreshToken) {
       return NextResponse.json({ error: 'No Microsoft refresh token available.' }, { status: 400 });
     }
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         refreshed: false,
-        connection,
+        connection: publicConnection(connection as Record<string, unknown>),
       });
     }
 
@@ -108,7 +112,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       refreshed: true,
-      connection: updatedConnection,
+      connection: publicConnection(updatedConnection as Record<string, unknown>),
     });
   } catch (err: unknown) {
     console.error('[Microsoft Refresh] Error:', err);

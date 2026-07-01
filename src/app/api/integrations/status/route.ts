@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 import {
   getFacebookIntegrationWithToken,
@@ -13,10 +12,6 @@ import { getLinkedInIntegrationWithToken } from '@/services/linkedin/linkedinInt
 import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export async function GET(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId') || searchParams.get('tenant_id');
@@ -24,6 +19,8 @@ export async function GET(req: NextRequest) {
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
     }
+
+    const { user } = await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
     
@@ -47,9 +44,9 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString()
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Integration status check error:', error);
-    return clientErrorResponse(error, { request: req, scope: 'integrations/status' });
+    return routeErrorResponse(error, undefined, req);
   }
 }
 

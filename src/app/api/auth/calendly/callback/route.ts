@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import {
@@ -22,13 +23,24 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
     }
 
-    let tenantId: string;
-    try {
-        const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
-        tenantId = decodedState.tenantId;
-    } catch (e) {
+    const stateData = parseOAuthState<{ tenantId: string; userId: string }>(state);
+    if (!stateData?.tenantId || !stateData?.userId) {
         return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
     }
+
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data: member } = await supabaseAdmin
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', stateData.userId)
+        .eq('tenant_id', stateData.tenantId)
+        .maybeSingle();
+
+    if (!member?.tenant_id) {
+        return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
+    }
+
+    const tenantId = stateData.tenantId;
 
     const clientId = ENV.VITE_CALENDLY_CLIENT_ID;
     const clientSecret = ENV.CALENDLY_CLIENT_SECRET;
@@ -69,9 +81,6 @@ export async function GET(req: NextRequest) {
         const userData = await userResponse.json();
         const userUri = userData.resource.uri;
         const schedulingUrl = userData.resource.scheduling_url;
-
-        // Save to Supabase using admin client to bypass RLS
-        const supabaseAdmin = createSupabaseAdminClient();
 
         // Get current settings first to preserve others
         const { data: tenant, error: fetchError } = await supabaseAdmin

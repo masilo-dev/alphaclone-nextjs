@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { upsertFacebookIntegration } from '@/services/facebook/facebookIntegrationService';
 import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
@@ -63,6 +64,14 @@ export async function GET(req: NextRequest) {
     const stateData = parseOAuthState<FacebookOAuthState>(state);
     if (!stateData?.userId) {
         return redirectOAuthEarly(appUrl, 'invalid_state');
+    }
+
+    const supabaseServer = await createSupabaseServerClient();
+    const {
+        data: { user },
+    } = await supabaseServer.auth.getUser();
+    if (!user || user.id !== stateData.userId) {
+        return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'session_mismatch' });
     }
 
     const appId = process.env.FACEBOOK_APP_ID!;

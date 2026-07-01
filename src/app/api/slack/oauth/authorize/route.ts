@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { encodeOAuthState } from '@/lib/oauth/oauthState';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const tenantId = searchParams.get('tenant_id') || searchParams.get('tenantId');
 
@@ -36,7 +48,14 @@ export async function GET(request: NextRequest) {
     ].join(','));
     
     authUrl.searchParams.set('redirect_uri', process.env.SLACK_REDIRECT_URI);
-    authUrl.searchParams.set('state', tenantId);
+    authUrl.searchParams.set(
+      'state',
+      encodeOAuthState({
+        tenantId,
+        userId: user.id,
+        ts: Date.now(),
+      }),
+    );
     authUrl.searchParams.set('user_scope', [
       'channels:read',
       'users:read',
