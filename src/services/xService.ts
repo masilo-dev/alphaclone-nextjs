@@ -1,4 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  decryptIntegrationToken,
+  encryptIntegrationToken,
+} from '@/lib/integration/integrationTokenCrypto';
 import crypto from 'crypto';
 
 export interface XIntegration {
@@ -19,6 +23,59 @@ export interface XTweet {
     text: string;
     media_ids?: string[];
     reply_settings?: 'everyone' | 'following' | 'mentionedUsers';
+}
+
+async function readXSecrets(admin: ReturnType<typeof createSupabaseAdminClient>, integrationId: string) {
+  const { data } = await admin
+    .from('x_integration_secrets')
+    .select('access_token_encrypted, refresh_token_encrypted, oauth1_access_token_encrypted, oauth1_token_secret_encrypted')
+    .eq('integration_id', integrationId)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    access_token: data.access_token_encrypted ? await decryptIntegrationToken(String(data.access_token_encrypted)) : '',
+    refresh_token: data.refresh_token_encrypted ? await decryptIntegrationToken(String(data.refresh_token_encrypted)) : undefined,
+    oauth1_access_token: data.oauth1_access_token_encrypted ? await decryptIntegrationToken(String(data.oauth1_access_token_encrypted)) : undefined,
+    oauth1_token_secret: data.oauth1_token_secret_encrypted ? await decryptIntegrationToken(String(data.oauth1_token_secret_encrypted)) : undefined,
+  };
+}
+
+async function writeXSecrets(
+  admin: ReturnType<typeof createSupabaseAdminClient>,
+  integrationId: string,
+  tokens: Partial<Pick<XIntegration, 'access_token' | 'refresh_token' | 'oauth1_access_token' | 'oauth1_token_secret'>>
+) {
+  const payload: Record<string, string> = { integration_id: integrationId, updated_at: new Date().toISOString() };
+  if (tokens.access_token) payload.access_token_encrypted = await encryptIntegrationToken(tokens.access_token);
+  if (tokens.refresh_token) payload.refresh_token_encrypted = await encryptIntegrationToken(tokens.refresh_token);
+  if (tokens.oauth1_access_token) payload.oauth1_access_token_encrypted = await encryptIntegrationToken(tokens.oauth1_access_token);
+  if (tokens.oauth1_token_secret) payload.oauth1_token_secret_encrypted = await encryptIntegrationToken(tokens.oauth1_token_secret);
+  await admin.from('x_integration_secrets').upsert(payload, { onConflict: 'integration_id' });
+}
+
+async function hydrateXIntegration(row: Record<string, unknown>): Promise<XIntegration> {
+  const admin = createSupabaseAdminClient();
+  const id = String(row.id);
+  const secrets = await readXSecrets(admin, id);
+  if (secrets) {
+    return { ...(row as unknown as XIntegration), ...secrets };
+  }
+  const legacy = row as unknown as XIntegration;
+  if (legacy.access_token || legacy.refresh_token || legacy.oauth1_access_token) {
+    await writeXSecrets(admin, id, {
+      access_token: legacy.access_token,
+      refresh_token: legacy.refresh_token,
+      oauth1_access_token: legacy.oauth1_access_token,
+      oauth1_token_secret: legacy.oauth1_token_secret,
+    });
+    await admin.from('x_integrations').update({
+      access_token: null,
+      refresh_token: null,
+      oauth1_access_token: null,
+      oauth1_token_secret: null,
+    }).eq('id', id);
+  }
+  return legacy;
 }
 
 // ── OAuth 1.0a helpers (required for v1.1 media upload) ──────────────────────
@@ -94,21 +151,21 @@ async function refreshXAccessToken(integration: XIntegration): Promise<XIntegrat
 
     const tokens = await tokenResponse.json();
     const updated: Partial<XIntegration> = {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token || integration.refresh_token,
         expires_at: new Date(Date.now() + (tokens.expires_in || 7200) * 1000).toISOString(),
         scopes: typeof tokens.scope === 'string' ? tokens.scope.split(' ').filter(Boolean) : integration.scopes,
     };
 
     const supabase = createSupabaseAdminClient();
-    const { data } = await supabase
-        .from('x_integrations')
-        .update({ ...updated, updated_at: new Date().toISOString() })
-        .eq('tenant_id', integration.tenant_id)
-        .select('*')
-        .single();
+    await supabase.from('x_integrations').update({ ...updated, access_token: null, refresh_token: null, updated_at: new Date().toISOString() }).eq('tenant_id', integration.tenant_id);
+    const { data: row } = await supabase.from('x_integrations').select('*').eq('tenant_id', integration.tenant_id).single();
+    if (row?.id) {
+      await writeXSecrets(supabase, String(row.id), {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || integration.refresh_token,
+      });
+    }
 
-    return (data as XIntegration) || { ...integration, ...updated };
+    return hydrateXIntegration({ ...integration, ...updated, access_token: tokens.access_token, refresh_token: tokens.refresh_token || integration.refresh_token });
 }
 
 export const xService = {
@@ -132,7 +189,7 @@ export const xService = {
         
         const { data, error } = await supabase
             .from('x_integrations')
-            .select('*')
+            .select('id, tenant_id, user_id, x_user_id, x_username, expires_at, scopes, updated_at, access_token, refresh_token, oauth1_access_token, oauth1_token_secret')
             .eq('tenant_id', tenantId)
             .single();
         
@@ -140,8 +197,8 @@ export const xService = {
             console.error('Error fetching X integration:', error);
             return null;
         }
-        
-        return data as XIntegration | null;
+        if (!data) return null;
+        return hydrateXIntegration(data);
     },
 
     /**
@@ -149,22 +206,36 @@ export const xService = {
      */
     async saveXIntegration(integration: Partial<XIntegration>) {
         const supabase = createSupabaseAdminClient();
+        const { access_token, refresh_token, oauth1_access_token, oauth1_token_secret, ...safeRow } = integration;
         
         const { data, error } = await supabase
             .from('x_integrations')
             .upsert({
-                ...integration,
+                ...safeRow,
+                access_token: null,
+                refresh_token: null,
+                oauth1_access_token: null,
+                oauth1_token_secret: null,
                 updated_at: new Date().toISOString()
             })
-            .select()
+            .select('id, tenant_id, user_id, x_user_id, x_username, expires_at, scopes')
             .single();
         
         if (error) {
             console.error('Error saving X integration:', error);
             throw error;
         }
+
+        if (data?.id) {
+          await writeXSecrets(supabase, String(data.id), {
+            access_token: access_token || '',
+            refresh_token,
+            oauth1_access_token,
+            oauth1_token_secret,
+          });
+        }
         
-        return data;
+        return hydrateXIntegration({ ...data, access_token, refresh_token, oauth1_access_token, oauth1_token_secret });
     },
 
     /**

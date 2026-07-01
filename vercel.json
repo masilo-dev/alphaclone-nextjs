@@ -55,6 +55,10 @@
       "schedule": "0 6 * * *"
     },
     {
+      "path": "/api/cron/integration-token-health",
+      "schedule": "30 6 * * *"
+    },
+    {
       "path": "/api/cron/sync-zoho-inbox",
       "schedule": "*/5 * * * *"
     }

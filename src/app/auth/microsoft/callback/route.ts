@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { getMicrosoftRedirectUri } from '@/config/microsoft';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { upsertMicrosoftConnection } from '@/services/microsoft/microsoftConnectionService';
 
 function getAppUrl(req: NextRequest) {
   return (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclonesystems.com').replace(
@@ -114,22 +115,14 @@ export async function GET(req: NextRequest) {
       ? new Date(Date.now() + Number(tokenPayload.expires_in) * 1000).toISOString()
       : null;
 
-    const { error: upsertError } = await supabaseAdmin.from('microsoft_connections').upsert(
-      {
-        user_id: userId,
-        access_token: tokenPayload.access_token,
-        refresh_token: tokenPayload.refresh_token,
-        token_expiry: expiresAt,
-        microsoft_email: profile.mail || profile.userPrincipalName || null,
-        display_name: profile.displayName || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' }
-    );
-
-    if (upsertError) {
-      throw upsertError;
-    }
+    await upsertMicrosoftConnection({
+      userId,
+      accessToken: tokenPayload.access_token,
+      refreshToken: tokenPayload.refresh_token ?? null,
+      tokenExpiry: expiresAt,
+      microsoftEmail: profile.mail || profile.userPrincipalName || null,
+      displayName: profile.displayName || null,
+    });
 
     return redirectWithStatus(appUrl, returnTo, 'connected');
   } catch (err: unknown) {

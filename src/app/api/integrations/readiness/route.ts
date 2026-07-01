@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const facebookPromise = supabase
       .from('facebook_integrations')
-      .select('id, page_id, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token')
+      .select('id, page_id, is_active, metadata, updated_at, expires_at')
       .eq('tenant_id', tenantId);
 
     const mcpKeysPromise = supabase

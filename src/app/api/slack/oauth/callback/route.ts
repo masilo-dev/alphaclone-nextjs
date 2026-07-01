@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseOAuthState } from '@/lib/oauth/oauthState';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { slackService } from '@/services/slackService';
+import { upsertSlackIntegration } from '@/services/slack/slackIntegrationService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,28 +61,22 @@ export async function GET(request: NextRequest) {
     });
 
     const teamData = await teamInfo.json();
-
-    const supabase = createSupabaseAdminClient();
     const tenantId = stateData.tenantId;
 
-    const { error: dbError } = await supabase
-      .from('slack_integrations')
-      .upsert({
-        tenant_id: tenantId,
-        team_id: tokenData.team.id,
-        team_name: teamData.team?.name || tokenData.team.name,
-        bot_user_id: tokenData.bot_user_id,
-        bot_access_token: tokenData.access_token,
-        user_access_token: tokenData.authed_user?.access_token,
-        webhook_url: tokenData.incoming_webhook?.url,
-        default_channel: tokenData.incoming_webhook?.channel_id,
-        scope: tokenData.scope,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      });
+    const { integrationId, error: saveError } = await upsertSlackIntegration({
+      tenantId,
+      teamId: tokenData.team.id,
+      teamName: teamData.team?.name || tokenData.team.name,
+      botUserId: tokenData.bot_user_id,
+      botAccessToken: tokenData.access_token,
+      userAccessToken: tokenData.authed_user?.access_token ?? null,
+      webhookUrl: tokenData.incoming_webhook?.url ?? null,
+      defaultChannel: tokenData.incoming_webhook?.channel_id,
+      scope: tokenData.scope,
+    });
 
-    if (dbError) {
-      console.error('[Slack OAuth] Database error:', dbError);
+    if (!integrationId || saveError) {
+      console.error('[Slack OAuth] Database error:', saveError);
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=database_error`
       );

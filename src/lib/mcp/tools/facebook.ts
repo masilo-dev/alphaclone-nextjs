@@ -2,11 +2,35 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  getFacebookIntegrationWithToken,
+  upsertFacebookIntegration,
+} from '@/services/facebook/facebookIntegrationService';
+
+const SAFE_INTEGRATION_COLUMNS =
+  'id, page_id, page_name, expires_at, is_active, connected_at, updated_at, metadata';
+
+async function resolveFacebookPageForTenant(tenantId: string, pageId?: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getFacebookIntegrationWithToken(admin, {
+    tenantId,
+    pageId,
+    requireActive: true,
+  });
+  if (!integration) {
+    throw new Error('No connected Facebook Page found. Please connect a page first.');
+  }
+  return {
+    page_id: integration.page_id,
+    page_name: integration.page_name,
+    page_access_token: integration.pageAccessToken,
+  };
+}
 
 // ── get_facebook_token ────────────────────────────────────────────────────────
 registerTool('facebook', {
   name: 'get_facebook_token',
-  description: 'Retrieve stored Facebook Page Access Tokens and page info for the tenant.',
+  description: 'Retrieve connected Facebook Page metadata for the tenant (tokens are never returned).',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     page_id: z.string().optional(),
@@ -22,9 +46,10 @@ registerTool('facebook', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     let query = supabase
-      .from('facebook_tokens')
-      .select('id, page_id, page_name, token_expires_at, scopes, created_at')
-      .eq('tenant_id', args.tenant_id);
+      .from('facebook_integrations')
+      .select(SAFE_INTEGRATION_COLUMNS)
+      .eq('tenant_id', args.tenant_id)
+      .eq('is_active', true);
     if (args.page_id) query = query.eq('page_id', args.page_id);
     const { data, error } = await query;
     if (error) throw error;
@@ -35,7 +60,7 @@ registerTool('facebook', {
 // ── store_facebook_token ──────────────────────────────────────────────────────
 registerTool('facebook', {
   name: 'store_facebook_token',
-  description: 'Store or update a Facebook Page Access Token for publishing.',
+  description: 'Store or update a Facebook Page Access Token for publishing (encrypted at rest).',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     user_id: z.string().uuid(),
@@ -59,27 +84,29 @@ registerTool('facebook', {
     required: ['tenant_id', 'user_id', 'page_id', 'page_access_token'],
   },
   handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { data: existing } = await supabase
-      .from('facebook_tokens').select('id')
-      .eq('tenant_id', args.tenant_id).eq('page_id', args.page_id).maybeSingle();
-
-    const payload = {
-      user_id: args.user_id,
-      page_name: args.page_name || null,
-      page_access_token: args.page_access_token,
-      token_expires_at: args.token_expires_at || null,
-      scopes: args.scopes || null,
-    };
-
-    if (existing) {
-      const { data, error } = await supabase.from('facebook_tokens')
-        .update(payload).eq('id', existing.id).select().single();
-      if (error) throw error;
-      return data;
+    const result = await upsertFacebookIntegration({
+      userId: args.user_id,
+      tenantId: args.tenant_id,
+      pageId: args.page_id,
+      pageName: args.page_name || null,
+      pageAccessToken: args.page_access_token,
+      userAccessToken: args.page_access_token,
+      appScopedUserId: args.user_id,
+      expiresAt: args.token_expires_at || null,
+      metadata: {
+        scopes: args.scopes || [],
+        source: 'mcp_store_facebook_token',
+      },
+    });
+    if (!result.integrationId) {
+      throw new Error(result.error || 'Failed to store Facebook integration');
     }
-    const { data, error } = await supabase.from('facebook_tokens')
-      .insert({ tenant_id: args.tenant_id, page_id: args.page_id, ...payload }).select().single();
+    const admin = createSupabaseAdminClient();
+    const { data, error } = await admin
+      .from('facebook_integrations')
+      .select(SAFE_INTEGRATION_COLUMNS)
+      .eq('id', result.integrationId)
+      .single();
     if (error) throw error;
     return data;
   },
@@ -117,16 +144,10 @@ registerTool('facebook', {
     required: ['tenant_id'],
   },
   handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-
-    // Get page token
-    let query = supabase.from('facebook_tokens')
-      .select('page_id, page_name, page_access_token')
-      .eq('tenant_id', args.tenant_id);
-    if (args.page_id) query = query.eq('page_id', args.page_id);
-    const { data: tokens, error: tokErr } = await query.limit(1);
-    if (tokErr || !tokens?.length) throw new Error('No connected Facebook Page found. Please connect a page first.');
-    const { page_id, page_name, page_access_token } = tokens[0];
+    const { page_id, page_name, page_access_token } = await resolveFacebookPageForTenant(
+      args.tenant_id,
+      args.page_id
+    );
 
     if (!args.video_url && !args.video_base64) {
       throw new Error('Either video_url or video_base64 is required to publish a Reel.');
@@ -294,16 +315,10 @@ registerTool('facebook', {
     required: ['tenant_id', 'caption', 'photos'],
   },
   handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-
-    // Get page token
-    let query = supabase.from('facebook_tokens')
-      .select('page_id, page_name, page_access_token')
-      .eq('tenant_id', args.tenant_id);
-    if (args.page_id) query = query.eq('page_id', args.page_id);
-    const { data: tokens, error: tokErr } = await query.limit(1);
-    if (tokErr || !tokens?.length) throw new Error('No connected Facebook Page found. Please connect a page first.');
-    const { page_id, page_name, page_access_token } = tokens[0];
+    const { page_id, page_name, page_access_token } = await resolveFacebookPageForTenant(
+      args.tenant_id,
+      args.page_id
+    );
 
     // Step 1: Upload each photo as an unpublished photo to get media fbids
     const attachedMediaIds: Array<{ media_fbid: string }> = [];

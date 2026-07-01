@@ -1,71 +1,14 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { refreshMicrosoftAccessToken } from '@/services/microsoft/microsoftConnectionService';
 
 const graphBase = 'https://graph.microsoft.com/v1.0';
 
 async function ensureMicrosoftAccessToken(userId: string) {
   const supabase = createSupabaseAdminClient();
-  const { data: connection, error } = await supabase
-    .from('microsoft_connections')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!connection?.access_token) {
-    throw new Error('No Microsoft 365 connection found for this user.');
-  }
-
-  const expiresAt = connection.token_expiry ? new Date(connection.token_expiry).getTime() : 0;
-  if (expiresAt && Date.now() + 5 * 60 * 1000 >= expiresAt) {
-    const clientId = process.env.AZURE_CLIENT_ID;
-    const clientSecret = process.env.AZURE_CLIENT_SECRET;
-    if (!clientId || !clientSecret) {
-      return connection.access_token;
-    }
-
-    const params = new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: 'refresh_token',
-      refresh_token: connection.refresh_token,
-    });
-
-    const refreshResponse = await fetch(
-      'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      }
-    );
-    const payload = await refreshResponse.json();
-    if (!refreshResponse.ok) {
-      throw new Error(payload.error_description || 'Failed to refresh Microsoft access token.');
-    }
-
-    const updatedExpiry = payload.expires_in
-      ? new Date(Date.now() + Number(payload.expires_in) * 1000).toISOString()
-      : connection.token_expiry;
-
-    const { data: updated, error: updateError } = await supabase
-      .from('microsoft_connections')
-      .update({
-        access_token: payload.access_token,
-        refresh_token: payload.refresh_token || connection.refresh_token,
-        token_expiry: updatedExpiry,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-      .select('*')
-      .single();
-
-    if (updateError) throw updateError;
-    return updated.access_token as string;
-  }
-
-  return connection.access_token as string;
+  const { accessToken } = await refreshMicrosoftAccessToken(supabase, userId);
+  return accessToken;
 }
 
 async function graphRequest(userId: string, path: string, init?: RequestInit) {

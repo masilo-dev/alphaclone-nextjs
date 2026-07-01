@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { upsertHubSpotIntegration } from '@/services/hubspot/hubspotIntegrationService';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-    // Use standardized appUrl
     const appUrl = (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclonesystems.com').replace(/\/$/, '');
 
     if (!code || !stateNonce) {
@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
     try {
         const supabaseAdmin = createSupabaseAdminClient();
 
-        // 1. Verify and consume the state nonce and get the code_verifier
         const { data: stateData, error: stateError } = await supabaseAdmin
             .from('oauth_states')
             .delete()
@@ -37,15 +36,11 @@ export async function GET(req: NextRequest) {
             throw new Error('Code verifier not found in state data');
         }
 
-        // 2. Exchange authorization code for tokens
         const clientId = ENV.HUBSPOT_CLIENT_ID;
         const clientSecret = ENV.HUBSPOT_CLIENT_SECRET;
         const redirectUri = ENV.HUBSPOT_REDIRECT_URI;
-        const tokenEndpoint = 'https://api.hubapi.com/oauth/v1/token';
 
-        console.log(`[HubSpot Callback] Exchanging code for tokens at: ${tokenEndpoint}`);
-
-        const tokenResponse = await fetch(tokenEndpoint, {
+        const tokenResponse = await fetch('https://api.hubapi.com/oauth/v1/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -65,28 +60,14 @@ export async function GET(req: NextRequest) {
             throw new Error(tokens.message || tokens.error_description || 'Failed to exchange token');
         }
 
-        const { access_token, refresh_token, expires_in } = tokens;
-        const expiresAt = new Date(Date.now() + (expires_in || 1800) * 1000).toISOString();
+        const expiresAt = new Date(Date.now() + (tokens.expires_in || 1800) * 1000).toISOString();
 
-        // 3. Save to integrations table
-        const { error: integrationError } = await supabaseAdmin
-            .from('integrations')
-            .upsert({
-                user_id: userId,
-                type: 'hubspot',
-                name: 'HubSpot',
-                enabled: true,
-                config: {
-                    accessToken: access_token,
-                    refreshToken: refresh_token,
-                    expiryDate: expiresAt,
-                    lastSync: new Date().toISOString()
-                }
-            }, {
-                onConflict: 'user_id,type'
-            });
-
-        if (integrationError) throw integrationError;
+        await upsertHubSpotIntegration({
+            userId,
+            accessToken: tokens.access_token,
+            refreshToken: tokens.refresh_token ?? null,
+            expiryDate: expiresAt,
+        });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=connected`);
     } catch (err: unknown) {

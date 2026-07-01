@@ -5,10 +5,16 @@ import { requireTenantAccess } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { integrationActionSchema } from '@/schemas/validation';
+import { upsertSlackIntegration, getSlackIntegrationWithSecrets } from '@/services/slack/slackIntegrationService';
 import {
   getFacebookIntegrationWithToken,
   upsertFacebookIntegration,
 } from '@/services/facebook/facebookIntegrationService';
+import { upsertHubSpotIntegration, getValidHubSpotAccessToken } from '@/services/hubspot/hubspotIntegrationService';
+import {
+  upsertGoogleCalendarTokens,
+  getGoogleCalendarTokens,
+} from '@/services/google/googleCalendarIntegrationService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -42,13 +48,13 @@ export async function POST(req: NextRequest) {
         result = await handleTwilioAction(tenantId, action, config, supabase);
         break;
       case 'google_calendar':
-        result = await handleGoogleCalendarAction(tenantId, action, config, supabase);
+        result = await handleGoogleCalendarAction(tenantId, action, config, supabase, user.id);
         break;
       case 'stripe':
         result = await handleStripeAction(tenantId, action, config, supabase);
         break;
       case 'hubspot':
-        result = await handleHubSpotAction(tenantId, action, config, supabase);
+        result = await handleHubSpotAction(tenantId, action, config, supabase, user.id);
         break;
       case 'sendgrid':
         result = await handleSendGridAction(tenantId, action, config, supabase);
@@ -68,87 +74,73 @@ export async function POST(req: NextRequest) {
 async function handleSlackAction(tenantId: string, action: string, config: any, supabase: any) {
   try {
     switch (action) {
-      case 'connect':
-        // Save Slack integration
-        const { data, error } = await supabase
-          .from('slack_integrations')
-          .upsert({
-            tenant_id: tenantId,
-            team_id: config.teamId,
-            team_name: config.teamName,
-            bot_user_id: config.botUserId,
-            bot_access_token: config.botAccessToken,
-            webhook_url: config.webhookUrl,
-            default_channel: config.defaultChannel || '#general',
-            is_active: true,
-            connected_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+      case 'connect': {
+        const saveResult = await upsertSlackIntegration({
+          tenantId,
+          teamId: config.teamId,
+          teamName: config.teamName,
+          botUserId: config.botUserId,
+          botAccessToken: config.botAccessToken,
+          webhookUrl: config.webhookUrl,
+          defaultChannel: config.defaultChannel || '#general',
+        });
+        if (!saveResult.integrationId) throw new Error(saveResult.error || 'Failed to save Slack integration');
 
-        if (error) throw error;
+        const integration = await getSlackIntegrationWithSecrets(supabase, tenantId);
+        const testResult = await testSlackIntegration(integration?.webhookUrl || config.webhookUrl);
 
-        // Test the integration
-        const testResult = await testSlackIntegration(config.webhookUrl);
-        
-        return { 
-          success: true, 
-          data: { integration: data, test: testResult },
-          message: 'Slack integration connected successfully'
+        return {
+          success: true,
+          data: { integration, test: testResult },
+          message: 'Slack integration connected successfully',
         };
+      }
 
-      case 'send_message':
-        // Send message to Slack
-        const slackIntegration = await supabase
-          .from('slack_integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .single();
-
-        if (!slackIntegration.data) {
+      case 'send_message': {
+        const integration = await getSlackIntegrationWithSecrets(supabase, tenantId);
+        if (!integration?.webhookUrl) {
           return { success: false, error: 'Slack integration not found' };
         }
 
         const messagePayload = {
           text: config.message,
           blocks: config.blocks || [],
-          channel: config.channel || slackIntegration.data.default_channel
+          channel: config.channel || integration.default_channel,
         };
 
-        const response = await fetch(slackIntegration.data.webhook_url, {
+        const response = await fetch(integration.webhookUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(messagePayload)
+          body: JSON.stringify(messagePayload),
         });
 
         const result = await response.json();
 
-        // Log the message
         await supabase.from('slack_message_logs').insert({
           tenant_id: tenantId,
-          channel: config.channel || slackIntegration.data.default_channel,
+          channel: config.channel || integration.default_channel,
           message_text: config.message,
           status: response.ok ? 'sent' : 'failed',
-          metadata: { payload: messagePayload, response: result }
+          metadata: { payload: messagePayload, response: result },
         });
 
-        return { 
-          success: response.ok, 
+        return {
+          success: response.ok,
           data: result,
-          message: response.ok ? 'Message sent successfully' : 'Failed to send message'
+          message: response.ok ? 'Message sent successfully' : 'Failed to send message',
         };
+      }
 
-      case 'disconnect':
-        // Disconnect Slack integration
+      case 'disconnect': {
         const { error: disconnectError } = await supabase
           .from('slack_integrations')
-          .update({ is_active: false })
+          .update({ is_active: false, updated_at: new Date().toISOString() })
           .eq('tenant_id', tenantId);
 
         if (disconnectError) throw disconnectError;
 
         return { success: true, message: 'Slack integration disconnected' };
+      }
 
       default:
         return { success: false, error: 'Unsupported Slack action' };
@@ -324,44 +316,29 @@ async function handleTwilioAction(tenantId: string, action: string, config: any,
   }
 }
 
-async function handleGoogleCalendarAction(tenantId: string, action: string, config: any, supabase: any) {
+async function handleGoogleCalendarAction(tenantId: string, action: string, config: any, supabase: any, userId: string) {
   try {
     switch (action) {
-      case 'connect':
-        // Save Google Calendar integration
-        const { data, error } = await supabase
-          .from('google_calendar_tokens')
-          .upsert({
-            tenant_id: tenantId,
-            access_token: config.accessToken,
-            refresh_token: config.refreshToken,
-            expires_at: config.expiresAt,
-            is_active: true
-          })
-          .select()
-          .single();
+      case 'connect': {
+        await upsertGoogleCalendarTokens({
+          userId,
+          accessToken: config.accessToken,
+          refreshToken: config.refreshToken || null,
+          expiresAt: config.expiresAt,
+        });
 
-        if (error) throw error;
-
-        // Test the integration
         const testResult = await testGoogleCalendarIntegration(config.accessToken);
-        
-        return { 
-          success: true, 
-          data: { integration: data, test: testResult },
-          message: 'Google Calendar integration connected successfully'
+
+        return {
+          success: true,
+          data: { userId, test: testResult },
+          message: 'Google Calendar integration connected successfully',
         };
+      }
 
-      case 'sync_events':
-        // Sync calendar events
-        const calendarIntegration = await supabase
-          .from('google_calendar_tokens')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .single();
-
-        if (!calendarIntegration.data) {
+      case 'sync_events': {
+        const tokens = await getGoogleCalendarTokens(supabase, userId);
+        if (!tokens.accessToken) {
           return { success: false, error: 'Google Calendar integration not found' };
         }
 
@@ -369,29 +346,31 @@ async function handleGoogleCalendarAction(tenantId: string, action: string, conf
           'https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=10',
           {
             headers: {
-              'Authorization': `Bearer ${calendarIntegration.data.access_token}`
-            }
+              Authorization: `Bearer ${tokens.accessToken}`,
+            },
           }
         );
-        
+
         const eventsData = await eventsResponse.json();
 
-        return { 
-          success: eventsResponse.ok, 
+        return {
+          success: eventsResponse.ok,
           data: eventsData,
-          message: eventsResponse.ok ? 'Events synced successfully' : 'Failed to sync events'
+          message: eventsResponse.ok ? 'Events synced successfully' : 'Failed to sync events',
         };
+      }
 
-      case 'disconnect':
-        // Disconnect Google Calendar integration
+      case 'disconnect': {
+        await supabase.from('google_calendar_secrets').delete().eq('user_id', userId);
         const { error: disconnectError } = await supabase
           .from('google_calendar_tokens')
-          .update({ is_active: false })
-          .eq('tenant_id', tenantId);
+          .delete()
+          .eq('user_id', userId);
 
         if (disconnectError) throw disconnectError;
 
         return { success: true, message: 'Google Calendar integration disconnected' };
+      }
 
       default:
         return { success: false, error: 'Unsupported Google Calendar action' };
@@ -459,65 +438,59 @@ async function handleStripeAction(tenantId: string, action: string, config: any,
   }
 }
 
-async function handleHubSpotAction(tenantId: string, action: string, config: any, supabase: any) {
+async function handleHubSpotAction(tenantId: string, action: string, config: any, supabase: any, userId: string) {
   try {
     switch (action) {
-      case 'connect':
-        // Save HubSpot integration
-        const { data, error } = await supabase
-          .from('integrations')
-          .upsert({
-            tenant_id: tenantId,
-            type: 'hubspot',
-            name: 'HubSpot CRM',
-            config: {
-              access_token: config.accessToken,
-              refresh_token: config.refreshToken,
-              portal_id: config.portalId
-            },
-            enabled: true
-          })
-          .select()
-          .single();
+      case 'connect': {
+        await upsertHubSpotIntegration({
+          userId,
+          tenantId,
+          accessToken: config.accessToken,
+          refreshToken: config.refreshToken || null,
+          expiryDate: config.expiresAt || config.expiryDate || null,
+          portalId: config.portalId || null,
+        });
 
-        if (error) throw error;
-
-        return { 
-          success: true, 
-          data: data,
-          message: 'HubSpot integration connected successfully'
+        return {
+          success: true,
+          message: 'HubSpot integration connected successfully',
         };
+      }
 
-      case 'sync_contacts':
-        // Sync contacts from HubSpot
-        const hubspotIntegration = await supabase
-          .from('integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('type', 'hubspot')
-          .eq('enabled', true)
-          .single();
-
-        if (!hubspotIntegration.data) {
-          return { success: false, error: 'HubSpot integration not found' };
-        }
+      case 'sync_contacts': {
+        const accessToken = await getValidHubSpotAccessToken(supabase, userId);
 
         const contactsResponse = await fetch(
           'https://api.hubapi.com/crm/v3/objects/contacts?limit=10',
           {
             headers: {
-              'Authorization': `Bearer ${hubspotIntegration.data.config.access_token}`
-            }
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
         );
-        
+
         const contactsData = await contactsResponse.json();
 
-        return { 
-          success: contactsResponse.ok, 
+        return {
+          success: contactsResponse.ok,
           data: contactsData,
-          message: contactsResponse.ok ? 'Contacts synced successfully' : 'Failed to sync contacts'
+          message: contactsResponse.ok ? 'Contacts synced successfully' : 'Failed to sync contacts',
         };
+      }
+
+      case 'disconnect': {
+        const { error: disconnectError } = await supabase
+          .from('integrations')
+          .update({ enabled: false })
+          .eq('user_id', userId)
+          .eq('type', 'hubspot');
+
+        if (disconnectError) throw disconnectError;
+
+        await supabase.from('hubspot_integration_secrets').delete().eq('user_id', userId);
+
+        return { success: true, message: 'HubSpot integration disconnected' };
+      }
 
       default:
         return { success: false, error: 'Unsupported HubSpot action' };

@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import {
+  getMicrosoftTokens,
+  refreshMicrosoftAccessToken,
+} from '@/services/microsoft/microsoftConnectionService';
 
 const GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 
@@ -19,45 +23,50 @@ function createAdminClient() {
 
 async function refreshMicrosoftConnection(connection: MicrosoftServerConnection) {
   const supabase = createAdminClient();
-  const { data: refreshResult, error: refreshError } = await supabase.functions.invoke('microsoft-token-refresh', {
-    body: { userId: connection.user_id },
-  });
-
-  if (refreshError) throw refreshError;
-  if (refreshResult?.connection) return refreshResult.connection as MicrosoftServerConnection;
-
-  const { data, error } = await supabase
-    .from('microsoft_connections')
-    .select('*')
-    .eq('user_id', connection.user_id)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data || connection) as MicrosoftServerConnection;
+  await refreshMicrosoftAccessToken(supabase, connection.user_id, { force: true });
+  const { connection: updated } = await getMicrosoftTokens(supabase, connection.user_id);
+  if (!updated) return connection;
+  const tokens = await getMicrosoftTokens(supabase, connection.user_id);
+  return {
+    id: updated.user_id,
+    user_id: updated.user_id,
+    token_expiry: updated.token_expiry,
+    microsoft_email: updated.microsoft_email,
+    display_name: updated.display_name,
+    access_token: tokens.accessToken || '',
+    refresh_token: tokens.refreshToken || '',
+  } as MicrosoftServerConnection;
 }
 
 async function getValidConnection(userId: string) {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from('microsoft_connections')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
+  const { accessToken, refreshToken, connection } = await getMicrosoftTokens(supabase, userId);
 
-  if (error) throw error;
-  if (!data) return null;
+  if (!connection) return null;
 
-  const connection = data as MicrosoftServerConnection;
   const expiresAt = connection.token_expiry ? new Date(connection.token_expiry).getTime() : NaN;
   const needsRefresh =
     !connection.token_expiry ||
     Number.isNaN(expiresAt) ||
     Date.now() + 5 * 60 * 1000 >= expiresAt;
   if (needsRefresh) {
-    return refreshMicrosoftConnection(connection);
+    return refreshMicrosoftConnection({
+      ...connection,
+      id: connection.user_id,
+      access_token: accessToken || '',
+      refresh_token: refreshToken || '',
+    } as MicrosoftServerConnection);
   }
 
-  return connection;
+  return {
+    id: connection.user_id,
+    user_id: connection.user_id,
+    token_expiry: connection.token_expiry,
+    microsoft_email: connection.microsoft_email,
+    display_name: connection.display_name,
+    access_token: accessToken || '',
+    refresh_token: refreshToken || '',
+  } as MicrosoftServerConnection;
 }
 
 async function graphRequest<T = any>(

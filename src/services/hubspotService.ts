@@ -1,4 +1,10 @@
 import { supabase } from '../lib/supabase';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  getHubSpotTokens,
+  getValidHubSpotAccessToken,
+  refreshHubSpotAccessToken,
+} from '@/services/hubspot/hubspotIntegrationService';
 
 export interface HubSpotContact {
     id: string;
@@ -57,73 +63,31 @@ export const hubspotService = {
      * Get HubSpot integration tokens for a user
      */
     async getTokens(userId: string) {
-        const { data, error } = await supabase
-            .from('integrations')
-            .select('config')
-            .eq('user_id', userId)
-            .eq('type', 'hubspot')
-            .single();
-
-        if (error || !data) return null;
-        return data.config;
+        const admin = createSupabaseAdminClient();
+        const tokens = await getHubSpotTokens(admin, userId);
+        if (!tokens) return null;
+        return {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiryDate: tokens.expiryDate,
+            portalId: tokens.portalId,
+        };
     },
 
     /**
      * Refresh HubSpot access token
      */
-    async refreshAccessToken(userId: string, refreshToken: string) {
-        try {
-            const response = await fetch('https://api.hubapi.com/oauth/v1/token', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    grant_type: 'refresh_token',
-                    client_id: process.env.HUBSPOT_CLIENT_ID!,
-                    client_secret: process.env.HUBSPOT_CLIENT_SECRET!,
-                    refresh_token: refreshToken
-                })
-            });
-
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.message || 'Failed to refresh token');
-
-            const expiresAt = new Date(Date.now() + (data.expires_in || 1800) * 1000).toISOString();
-
-            await supabase
-                .from('integrations')
-                .update({
-                    config: {
-                        accessToken: data.access_token,
-                        refreshToken: data.refresh_token || refreshToken,
-                        expiryDate: expiresAt,
-                        lastSync: new Date().toISOString()
-                    }
-                })
-                .eq('user_id', userId)
-                .eq('type', 'hubspot');
-
-            return data.access_token;
-        } catch (error) {
-            console.error('HubSpot Token Refresh Error:', error);
-            throw error;
-        }
+    async refreshAccessToken(userId: string, _refreshToken?: string) {
+        const admin = createSupabaseAdminClient();
+        return refreshHubSpotAccessToken(admin, userId);
     },
 
     /**
      * Get valid access token (refreshes if needed)
      */
     async getValidToken(userId: string) {
-        const config = await this.getTokens(userId);
-        if (!config) throw new Error('HubSpot integration not found');
-
-        const now = new Date();
-        const expiry = new Date(config.expiryDate);
-
-        if (now >= expiry) {
-            return await this.refreshAccessToken(userId, config.refreshToken);
-        }
-
-        return config.accessToken;
+        const admin = createSupabaseAdminClient();
+        return getValidHubSpotAccessToken(admin, userId);
     },
 
     /**
