@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
 
 type InstagramOAuthState = {
@@ -35,11 +37,17 @@ export async function GET(req: NextRequest) {
   if (error) return redirectError(appUrl, error);
   if (!code || !state) return redirectError(appUrl, 'missing_params');
 
-  let stateData: InstagramOAuthState;
-  try {
-    stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-  } catch {
+  const stateData = parseOAuthState<InstagramOAuthState>(state);
+  if (!stateData?.userId) {
     return redirectError(appUrl, 'invalid_state');
+  }
+
+  const supabaseServer = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabaseServer.auth.getUser();
+  if (!user || user.id !== stateData.userId) {
+    return redirectError(appUrl, 'session_mismatch');
   }
 
   const appId = process.env.FACEBOOK_APP_ID!;

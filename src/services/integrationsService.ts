@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { encryptIntegrationConfig } from '@/lib/integration/integrationTokenCrypto';
 
 export interface IntegrationConfig {
     id: string;
@@ -41,13 +42,14 @@ export const integrationsService = {
         userId: string
     ): Promise<{ integration: IntegrationConfig | null; error: string | null }> {
         try {
+            const encryptedConfig = await encryptIntegrationConfig(config);
             const { data, error } = await supabase
                 .from('integrations')
                 .upsert({
                     type,
                     name: this.getIntegrationName(type),
                     enabled: true,
-                    config,
+                    config: encryptedConfig,
                     user_id: userId,
                 }, {
                     onConflict: 'type,user_id',

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import {
     getCalendlyContacts,
@@ -15,6 +16,8 @@ export async function GET(req: Request) {
         if (!tenantId) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
+
+        await requireTenantAccess(tenantId);
 
         const supabase = createSupabaseAdminClient();
         const { data: tenant, error } = await supabase
@@ -34,9 +37,9 @@ export async function GET(req: Request) {
 
         const contacts = await getCalendlyContacts(tenantId, config);
         return NextResponse.json({ contacts, count: contacts.length });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[Calendly Contacts GET]', err);
-        return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+        return routeErrorResponse(err, undefined, req);
     }
 }
 
@@ -50,6 +53,8 @@ export async function POST(req: Request) {
         if (!tenantId) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
+
+        await requireTenantAccess(tenantId);
 
         const supabase = createSupabaseAdminClient();
         const { data: tenant, error } = await supabase
@@ -69,8 +74,8 @@ export async function POST(req: Request) {
 
         const result = await syncCRMClientsToCalendlyContacts(tenantId, config);
         return NextResponse.json({ success: true, ...result });
-    } catch (err: any) {
+    } catch (err) {
         console.error('[Calendly Contacts POST]', err);
-        return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+        return routeErrorResponse(err, undefined, req);
     }
 }

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { ENV } from '@/config/env';
+import { isProduction } from '@/lib/security/productionGuard';
 
 const STATE_TTL_MS = 10 * 60 * 1000;
 
@@ -10,6 +11,9 @@ function getStateSecret(): string {
     process.env.ZOHO_ENCRYPTION_SECRET ||
     '';
   if (secret.length !== 32) {
+    if (isProduction()) {
+      throw new Error('OAuth state requires a 32-character OAUTH_STATE_SECRET or ENCRYPTION_SECRET in production');
+    }
     throw new Error('OAuth state requires a 32-character OAUTH_STATE_SECRET or ENCRYPTION_SECRET');
   }
   return secret;
@@ -17,17 +21,13 @@ function getStateSecret(): string {
 
 export function encodeOAuthState<T extends Record<string, unknown>>(payload: T & { ts: number }): string {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  try {
-    const sig = createHmac('sha256', getStateSecret()).update(body).digest('base64url');
-    return `${body}.${sig}`;
-  } catch {
-    return body;
-  }
+  const sig = createHmac('sha256', getStateSecret()).update(body).digest('base64url');
+  return `${body}.${sig}`;
 }
 
 export function decodeOAuthState<T extends Record<string, unknown>>(state: string): (T & { ts: number }) | null {
   const dot = state.indexOf('.');
-  if (dot <= 0) return decodeLegacyOAuthState<T>(state);
+  if (dot <= 0) return isProduction() ? null : decodeLegacyOAuthState<T>(state);
   const body = state.slice(0, dot);
   const sig = state.slice(dot + 1);
   if (!body || !sig) return null;
@@ -37,10 +37,10 @@ export function decodeOAuthState<T extends Record<string, unknown>>(state: strin
     const sigBuf = Buffer.from(sig);
     const expectedBuf = Buffer.from(expected);
     if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
-      return null;
+      return isProduction() ? null : decodeLegacyOAuthState<T>(state);
     }
   } catch {
-    return decodeLegacyOAuthState<T>(state);
+    return isProduction() ? null : decodeLegacyOAuthState<T>(state);
   }
 
   try {
@@ -54,6 +54,7 @@ export function decodeOAuthState<T extends Record<string, unknown>>(state: strin
 }
 
 export function decodeLegacyOAuthState<T extends Record<string, unknown>>(state: string): (T & { ts: number }) | null {
+  if (isProduction()) return null;
   try {
     const data = JSON.parse(Buffer.from(state, 'base64url').toString()) as T & { ts: number };
     if (typeof data.ts !== 'number') {
@@ -77,5 +78,5 @@ export function decodeLegacyOAuthState<T extends Record<string, unknown>>(state:
 }
 
 export function parseOAuthState<T extends Record<string, unknown>>(state: string): (T & { ts: number }) | null {
-  return decodeOAuthState<T>(state) ?? decodeLegacyOAuthState<T>(state);
+  return decodeOAuthState<T>(state) ?? (isProduction() ? null : decodeLegacyOAuthState<T>(state));
 }

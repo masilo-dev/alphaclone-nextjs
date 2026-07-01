@@ -1,9 +1,31 @@
+import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { isProduction } from '@/lib/security/productionGuard';
 
 const supabaseAdmin = createSupabaseAdminClient();
 
 export async function POST(req: Request) {
+    if (isProduction()) {
+        const expected = process.env.DAILY_WEBHOOK_SECRET;
+        if (!expected) {
+            return NextResponse.json({ error: 'Webhook verification not configured' }, { status: 503 });
+        }
+        const secret = req.headers.get('x-daily-webhook-secret');
+        if (!secret) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+        try {
+            const a = Buffer.from(secret);
+            const b = Buffer.from(expected);
+            if (a.length !== b.length || !timingSafeEqual(a, b)) {
+                return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+            }
+        } catch {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+    }
+
     try {
         const body = await req.json();
 

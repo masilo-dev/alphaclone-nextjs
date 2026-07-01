@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { denyIfWebhookVerificationMissing } from '@/lib/security/webhookVerify';
 import crypto from 'crypto';
 import {
     findTenantByCalendlyUserUri,
@@ -10,6 +11,9 @@ import {
 } from '@/lib/calendly/syncToNative';
 
 export async function POST(req: Request) {
+    const denied = denyIfWebhookVerificationMissing('calendly', !!process.env.CALENDLY_WEBHOOK_SIGNING_KEY);
+    if (denied) return denied;
+
     try {
         const body = await req.text();
         const signature = req.headers.get('calendly-webhook-signature');

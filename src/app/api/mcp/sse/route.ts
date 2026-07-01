@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { touchMcpApiKeyLastUsed } from '@/lib/security/mcpApiKeyLookup';
 import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
 
 export const dynamic = 'force-dynamic';
@@ -55,10 +56,7 @@ export async function GET(req: NextRequest) {
     console.log(`[MCP SSE GET] Connection attempt for tenant: ${tenant_id}`);
 
     // Update last used timestamp (fire and forget)
-    void supabaseAdmin
-      .from('mcp_api_keys')
-      .update({ last_used_at: new Date().toISOString() })
-      .eq('api_key', apiKey);
+    void touchMcpApiKeyLastUsed(supabaseAdmin, apiKey, tenant_id, user_id);
 
     // Create a session record
     const initialAiState = await getInitialBusinessAIStateForTenant(tenant_id);
@@ -83,7 +81,7 @@ export async function GET(req: NextRequest) {
         // We continue anyway, as basic SSE might still work for some clients
     }
 
-    const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages?api_key=${encodeURIComponent(apiKey)}`;
+    const endpointUrl = `${getBaseUrl(req)}/api/mcp/messages`;
 
     const stream = new ReadableStream({
       start(controller) {

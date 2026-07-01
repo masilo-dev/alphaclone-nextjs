@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { isProduction } from '@/lib/security/productionGuard';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { Receiver } from '@upstash/qstash';
@@ -11,10 +12,14 @@ const receiver = new Receiver({
 });
 
 export async function POST(req: NextRequest) {
-    // 1. Verify QStash signature (Optional but recommended for security)
     const signature = req.headers.get('upstash-signature');
+    const signingKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
+    if (isProduction() && (!signature || !signingKey)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     let data: any;
-    if (signature && process.env.QSTASH_CURRENT_SIGNING_KEY) {
+    if (signature && signingKey) {
         const body = await req.text();
         const isValid = await receiver.verify({
             signature,

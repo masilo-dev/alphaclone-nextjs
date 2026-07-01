@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { encodeOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 
@@ -35,8 +36,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL(`/dashboard/settings?tab=booking&error=calendly_not_configured`, req.url));
     }
 
-    // Create state to keep track of tenantId
-    const state = Buffer.from(JSON.stringify({ tenantId })).toString('base64');
+    const state = encodeOAuthState({
+        tenantId,
+        userId: user.id,
+        ts: Date.now(),
+    });
 
     const authUrl = `https://auth.calendly.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
 
