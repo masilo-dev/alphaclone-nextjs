@@ -18,7 +18,10 @@ import {
   parseLinkedInUgcPostUrn,
   updateSocialPostLinkedInUrnWithRetry,
 } from '../../lib/social/linkedinPublishHelpers';
+import { loadMcpLinkedInIntegration } from '../../lib/linkedin/mcpLinkedIn';
+import { linkedInFetch } from '../../lib/linkedin/linkedinClient';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
+import { getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
@@ -631,7 +634,7 @@ type FacebookIntegrationIdentity = {
   page_id: string;
   page_name: string | null;
   is_active: boolean;
-  page_access_token: string | null;
+  pageAccessToken: string | null;
   metadata: Record<string, unknown> | null;
   updated_at?: string | null;
 };
@@ -642,7 +645,7 @@ function canPublishFacebookPage(identity: FacebookIntegrationIdentity): boolean 
     : [];
   const hasTaskPermission =
     tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
-  return !!identity.page_access_token && identity.is_active && !identity?.metadata?.no_pages && hasTaskPermission;
+  return !!identity.pageAccessToken && identity.is_active && !identity?.metadata?.no_pages && hasTaskPermission;
 }
 
 function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]): FacebookIntegrationIdentity | null {
@@ -800,10 +803,40 @@ class AlphaCloneMCPServer {
     activeOnly = true
   ): Promise<FacebookIntegrationIdentity[]> {
     const supabaseAdmin = createSupabaseAdminClient();
+
+    const resolveTokens = async (
+      rows: Array<{
+        page_id: string;
+        page_name: string | null;
+        is_active: boolean;
+        metadata: Record<string, unknown> | null;
+        updated_at?: string | null;
+        id: string;
+        expires_at: string | null;
+        page_access_token?: string | null;
+        user_access_token?: string | null;
+      }>
+    ): Promise<FacebookIntegrationIdentity[]> => {
+      const resolved: FacebookIntegrationIdentity[] = [];
+      for (const row of rows) {
+        const tokens = await getFacebookTokens(supabaseAdmin, row);
+        resolved.push({
+          page_id: row.page_id,
+          page_name: row.page_name,
+          is_active: row.is_active,
+          pageAccessToken: tokens.pageAccessToken,
+          metadata: row.metadata,
+          updated_at: row.updated_at,
+        });
+      }
+      return resolved;
+    };
+
+    const selectCols =
+      'id, page_id, page_name, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token';
+
     // 1. Try to query with tenant_id + user_id
-    let query = supabaseAdmin
-      .from('facebook_integrations')
-      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    let query = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
       query = query.eq('is_active', true);
@@ -817,13 +850,11 @@ class AlphaCloneMCPServer {
       .eq('user_id', userId);
 
     if (!tenantError && tenantRows && tenantRows.length > 0) {
-      return tenantRows as FacebookIntegrationIdentity[];
+      return resolveTokens(tenantRows as Parameters<typeof resolveTokens>[0]);
     }
 
     // 2. Fallback: Query with user_id only (in case tenant_id mismatch/missing in connection flow)
-    let fallbackQuery = supabaseAdmin
-      .from('facebook_integrations')
-      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    let fallbackQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
       fallbackQuery = fallbackQuery.eq('is_active', true);
@@ -837,13 +868,11 @@ class AlphaCloneMCPServer {
 
     if (!userError && userRows && userRows.length > 0) {
       console.log(`[Facebook Fallback] Found ${userRows.length} integrations by user_id ${userId} (tenant_id mismatch)`);
-      return userRows as FacebookIntegrationIdentity[];
+      return resolveTokens(userRows as Parameters<typeof resolveTokens>[0]);
     }
 
     // 3. Last fallback: Query by tenant_id only (no user_id filter)
-    let tenantOnlyQuery = supabaseAdmin
-      .from('facebook_integrations')
-      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    let tenantOnlyQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
 
     if (activeOnly) {
       tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
@@ -857,7 +886,7 @@ class AlphaCloneMCPServer {
 
     if (!tenantOnlyError && tenantOnlyRows && tenantOnlyRows.length > 0) {
       console.log(`[Facebook Fallback] Found ${tenantOnlyRows.length} integrations by tenant_id ${tenantId} (user_id mismatch)`);
-      return tenantOnlyRows as FacebookIntegrationIdentity[];
+      return resolveTokens(tenantOnlyRows as Parameters<typeof resolveTokens>[0]);
     }
 
     return [];
@@ -3261,7 +3290,7 @@ class AlphaCloneMCPServer {
                ? ((page as any).metadata.page_tasks as string[])
                : [];
             const hasTaskPermission = tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
-            const canPost = !!page.page_access_token && page.is_active && !(page as any)?.metadata?.no_pages && hasTaskPermission;
+            const canPost = !!page.pageAccessToken && page.is_active && !(page as any)?.metadata?.no_pages && hasTaskPermission;
             return {
               page_id: page.page_id,
               page_name: page.page_name,
@@ -3288,7 +3317,7 @@ class AlphaCloneMCPServer {
             ? (integration.metadata.page_tasks as unknown[]).map((task) => String(task))
             : [];
           const canCreateContent = tasks.includes('CREATE_CONTENT') || tasks.includes('MANAGE') || tasks.includes('ADVERTISE');
-          const hasPageToken = Boolean(integration.page_access_token);
+          const hasPageToken = Boolean(integration.pageAccessToken);
           result = { content: [{ type: 'text', text: JSON.stringify({
             page_id: pageId,
             page_name: integration.page_name,
@@ -3321,9 +3350,9 @@ class AlphaCloneMCPServer {
           try { user_id = this.requireProfileUser(a); } catch {}
           const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
-          if (!integration?.page_access_token) throw new Error('No Facebook Page token found for insights.');
+          if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for insights.');
           const metrics = ['post_impressions', 'post_impressions_unique', 'post_engaged_users', 'post_clicks'].join(',');
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.page_access_token)}`);
+          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`);
           const fb = await resp.json();
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook insights unavailable');
           result = { content: [{ type: 'text', text: JSON.stringify({ post_id: postId, insights: fb.data || [] }, null, 2) }] };
@@ -3341,9 +3370,9 @@ class AlphaCloneMCPServer {
           try { user_id = this.requireProfileUser(a); } catch {}
           const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
-          if (!integration?.page_access_token) throw new Error('No Facebook Page token found for delete.');
+          if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for delete.');
           pageId = integration.page_id;
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.page_access_token)}`, { method: 'DELETE' });
+          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`, { method: 'DELETE' });
           const fb = await resp.json().catch(() => ({}));
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook delete failed');
           await supabaseAdmin.from('facebook_page_posts').delete().eq('fb_post_id', postId).eq('page_id', pageId);
@@ -3540,7 +3569,7 @@ class AlphaCloneMCPServer {
           const firstMediaUrl = mergedMediaUrls.length > 0 ? mergedMediaUrls[0] : null;
           const isVideoMedia = !!firstMediaUrl && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
 
-          if (hasFacebook && (!integration?.page_access_token || integration?.metadata?.no_pages || !canPublishFacebookPage(integration))) {
+          if (hasFacebook && (!integration?.pageAccessToken || integration?.metadata?.no_pages || !canPublishFacebookPage(integration))) {
             throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
           }
 
@@ -3550,11 +3579,11 @@ class AlphaCloneMCPServer {
           const assuredIntegration = hasFacebook ? integration : null;
 
           if (publish_now && hasFacebook) {
-            if (!assuredIntegration?.page_access_token) {
+            if (!assuredIntegration?.pageAccessToken) {
               throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
             }
             const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
-            graph.searchParams.set('access_token', assuredIntegration.page_access_token);
+            graph.searchParams.set('access_token', assuredIntegration.pageAccessToken);
             const body = new URLSearchParams();
             if (firstMediaUrl) {
               if (isVideoMedia) {
@@ -3700,7 +3729,7 @@ class AlphaCloneMCPServer {
             if (integration?.page_id) resolvedPageId = integration.page_id;
           }
 
-          if (!resolvedPageId || !integration?.page_access_token) {
+          if (!resolvedPageId || !integration?.pageAccessToken) {
             throw new Error('No connected Facebook pages with comment permissions were found.');
           }
 
@@ -3711,7 +3740,7 @@ class AlphaCloneMCPServer {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 message: message.trim(),
-                access_token: integration.page_access_token,
+                access_token: integration.pageAccessToken,
               }),
             }
           );
@@ -3759,7 +3788,9 @@ class AlphaCloneMCPServer {
             .eq('tenant_id', tenant_id)
             .eq('type', 'organization');
 
-          if (orgError) throw supabaseErrorToMcpClientError('get_linkedin_identities', orgError.message);
+          if (orgError && orgError.code !== '42P01') {
+            throw supabaseErrorToMcpClientError('get_linkedin_identities', orgError.message);
+          }
 
           const identities: any[] = [];
 
@@ -3775,8 +3806,21 @@ class AlphaCloneMCPServer {
             });
           }
 
-          if (orgIdentities && orgIdentities.length > 0) {
-            for (const org of orgIdentities) {
+          const orgRows =
+            orgIdentities && orgIdentities.length > 0
+              ? orgIdentities
+              : (Array.isArray((li as any)?.metadata?.company_pages)
+                  ? (li as any).metadata.company_pages
+                  : []
+                ).map((page: Record<string, unknown>) => ({
+                  linkedin_organization_id: String(page.id || ''),
+                  author_urn: `urn:li:organization:${String(page.id || '')}`,
+                  can_post: true,
+                  name: page.name || null,
+                }));
+
+          if (orgRows.length > 0) {
+            for (const org of orgRows) {
               identities.push({
                 type: 'organization',
                 linkedin_organization_id: org.linkedin_organization_id,
@@ -3839,14 +3883,7 @@ class AlphaCloneMCPServer {
             throw new Error('scheduled_at is required when publish_now is false');
           }
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_post', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) {
             throwLinkedInError('LINKEDIN_NOT_CONNECTED', 'LinkedIn is not connected for this workspace/user.');
           }
@@ -4491,14 +4528,7 @@ class AlphaCloneMCPServer {
               : null;
           if (!post_urn) throw new Error('post_urn is required');
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token, scopes')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_post_stats', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const socialActionRes = await fetch(`https://api.linkedin.com/v2/socialActions/${encodeURIComponent(post_urn)}`, {
@@ -4583,14 +4613,7 @@ class AlphaCloneMCPServer {
           const limitCommentsPerPost = Math.min(Math.max(Number(a.limit_comments_per_post || 30), 1), 100);
           const requestedPostUrn = typeof a.post_urn === 'string' && a.post_urn.trim() ? a.post_urn.trim() : '';
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('capture_linkedin_comment_leads', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           let postsQuery = supabaseAdmin
@@ -4704,14 +4727,7 @@ class AlphaCloneMCPServer {
           if (typeof post_urn !== 'string' || !post_urn.trim()) throw new Error('post_urn is required');
           if (typeof text !== 'string' || !text.trim()) throw new Error('text is required');
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('linkedin_person_urn, access_token, scopes')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_comment', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const resp = await fetch('https://api.linkedin.com/v2/socialActions/' + encodeURIComponent(post_urn) + '/comments', {
@@ -4743,14 +4759,7 @@ class AlphaCloneMCPServer {
             throw new Error('reaction_type must be one of: LIKE, PRAISE, MAYBE, EMPATHY, INTEREST, APPRECIATION');
           }
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('linkedin_person_urn, access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_reaction', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const resp = await fetch('https://api.linkedin.com/v2/reactions', {
@@ -4778,14 +4787,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           const { name, description, start_time, end_time, timezone = 'UTC', event_type = 'ONLINE', online_url, linkedin_organization_id } = a;
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_event', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const payload = {
@@ -4819,14 +4821,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token, scopes')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_accounts', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           // Check for r_ads scope
@@ -4901,14 +4896,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           const { ad_account_id, status } = a;
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_campaigns', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const statusFilter = status ? `(status:(values:LIST(${status})))` : '';
@@ -4933,14 +4921,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_member_profile', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const resp = await fetch('https://api.linkedin.com/v2/userinfo', {

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
+import { upsertFacebookIntegration } from '@/services/facebook/facebookIntegrationService';
+import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
 
 const ALLOWED_FB_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
 
@@ -57,10 +60,8 @@ export async function GET(req: NextRequest) {
         return redirectOAuthEarly(appUrl, 'missing_params');
     }
 
-    let stateData: FacebookOAuthState;
-    try {
-        stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-    } catch {
+    const stateData = parseOAuthState<FacebookOAuthState>(state);
+    if (!stateData?.userId) {
         return redirectOAuthEarly(appUrl, 'invalid_state');
     }
 
@@ -131,6 +132,10 @@ export async function GET(req: NextRequest) {
         return redirectOAuthComplete(appUrl, stateData, { ok: false, fbError: 'profile_failed' });
     }
 
+    const expiresAt = longLivedData.expires_in
+        ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
+        : null;
+
     let upsertFailures = 0;
 
     if (pages.length > 0) {
@@ -141,19 +146,15 @@ export async function GET(req: NextRequest) {
                 page.tasks.includes('CREATE_CONTENT')
             );
 
-            const { error: upErr } = await supabase.from('facebook_integrations').upsert({
-                user_id: stateData.userId,
-                tenant_id: resolvedTenantId,
-                page_id: String(page.id),
-                page_name: page.name,
-                page_access_token: page.access_token,
-                user_access_token: userToken,
-                app_scoped_user_id: fbUserId,
-                is_active: true,
-                connected_at: new Date().toISOString(),
-                expires_at: longLivedData.expires_in
-                    ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
-                    : null,
+            const fbResult = await upsertFacebookIntegration({
+                userId: stateData.userId,
+                tenantId: resolvedTenantId,
+                pageId: String(page.id),
+                pageName: page.name,
+                pageAccessToken: page.access_token || null,
+                userAccessToken: userToken,
+                appScopedUserId: fbUserId,
+                expiresAt,
                 metadata: {
                     fb_name: profileData.name,
                     fb_email: profileData.email || null,
@@ -164,59 +165,51 @@ export async function GET(req: NextRequest) {
                     scope_mode: stateData.scopeMode || 'publishing',
                     requested_scopes: stateData.requestedScopes || [],
                 },
-            }, { onConflict: 'user_id,page_id' });
-            if (upErr) {
-                console.error('[Facebook Callback] facebook_integrations upsert failed:', upErr);
+            });
+            if (!fbResult.integrationId) {
+                console.error('[Facebook Callback] facebook_integrations upsert failed:', fbResult.error);
                 upsertFailures += 1;
             }
 
-            // --- INSTAGRAM INTEGRATION LOGIC ---
             if (page.instagram_business_account?.id) {
                 const igId = page.instagram_business_account.id;
                 const igRes = await fetch(
                     `https://graph.facebook.com/v19.0/${igId}?fields=username,name,profile_picture_url,followers_count,media_count&access_token=${page.access_token}`
                 );
                 const igData = await igRes.json();
-                
-                if (!igData.error) {
-                    const { error: igErr } = await supabase.from('instagram_integrations').upsert({
-                        user_id: stateData.userId,
-                        tenant_id: resolvedTenantId,
-                        instagram_account_id: igId,
-                        username: igData.username || null,
-                        account_name: igData.name || null,
-                        profile_picture_url: igData.profile_picture_url || null,
-                        facebook_page_id: String(page.id),
-                        facebook_page_name: page.name,
-                        followers_count: igData.followers_count || 0,
-                        media_count: igData.media_count || 0,
-                        page_access_token: page.access_token, // Needed to act on behalf of IG account
-                        is_active: true,
-                        connected_at: new Date().toISOString(),
-                        expires_at: longLivedData.expires_in
-                            ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
-                            : null,
-                    }, { onConflict: 'user_id,instagram_account_id' });
 
-                    if (igErr) {
-                        console.error('[Facebook Callback] instagram_integrations upsert failed:', igErr);
+                if (!igData.error && page.access_token) {
+                    const igResult = await upsertInstagramIntegration({
+                        userId: stateData.userId,
+                        tenantId: resolvedTenantId,
+                        instagramAccountId: igId,
+                        username: igData.username || null,
+                        accountName: igData.name || null,
+                        profilePictureUrl: igData.profile_picture_url || null,
+                        facebookPageId: String(page.id),
+                        facebookPageName: page.name,
+                        pageAccessToken: page.access_token,
+                        followersCount: igData.followers_count || 0,
+                        mediaCount: igData.media_count || 0,
+                        expiresAt,
+                    });
+                    if (!igResult.integrationId) {
+                        console.error('[Facebook Callback] instagram_integrations upsert failed:', igResult.error);
                     }
                 }
             }
-            // --- END INSTAGRAM LOGIC ---
         }
     } else {
         console.warn('[Facebook Callback] No pages returned for user:', stateData.userId);
-        const { error: upErr } = await supabase.from('facebook_integrations').upsert({
-            user_id: stateData.userId,
-            tenant_id: resolvedTenantId,
-            page_id: fbUserId,
-            page_name: profileData.name || 'Facebook profile',
-            page_access_token: null,
-            user_access_token: userToken,
-            app_scoped_user_id: fbUserId,
-            is_active: true,
-            connected_at: new Date().toISOString(),
+        const fbResult = await upsertFacebookIntegration({
+            userId: stateData.userId,
+            tenantId: resolvedTenantId,
+            pageId: fbUserId,
+            pageName: profileData.name || 'Facebook profile',
+            pageAccessToken: null,
+            userAccessToken: userToken,
+            appScopedUserId: fbUserId,
+            expiresAt,
             metadata: {
                 fb_name: profileData.name,
                 no_pages: true,
@@ -224,9 +217,9 @@ export async function GET(req: NextRequest) {
                 scope_mode: stateData.scopeMode || 'publishing',
                 requested_scopes: stateData.requestedScopes || [],
             },
-        }, { onConflict: 'user_id,page_id' });
-        if (upErr) {
-            console.error('[Facebook Callback] facebook_integrations upsert (no pages) failed:', upErr);
+        });
+        if (!fbResult.integrationId) {
+            console.error('[Facebook Callback] facebook_integrations upsert (no pages) failed:', fbResult.error);
             upsertFailures += 1;
         }
     }

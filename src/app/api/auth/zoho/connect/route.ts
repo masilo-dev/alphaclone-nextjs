@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { encodeOAuthState } from '@/lib/oauth/oauthState';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -81,7 +82,14 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.append('prompt', 'consent');
     authUrl.searchParams.append('scope', scopes.join(' '));
     authUrl.searchParams.append('redirect_uri', redirectUri);
-    authUrl.searchParams.append('state', JSON.stringify({ region, state: identityState }));
+    authUrl.searchParams.append(
+        'state',
+        encodeOAuthState({
+            region,
+            state: identityState,
+            ts: Date.now(),
+        })
+    );
 
     return NextResponse.redirect(authUrl.toString());
     } catch (err) {

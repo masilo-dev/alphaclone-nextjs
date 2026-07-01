@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
 
@@ -99,18 +100,13 @@ export async function POST(req: NextRequest) {
 
                 // Find the page integration to get the access token
                 const supabaseAdmin = createSupabaseAdminClient();
-                const { data: integration } = await supabaseAdmin
-                    .from('facebook_integrations')
-                    .select('page_access_token, user_id, tenant_id')
-                    .eq('page_id', pageId)
-                    .eq('is_active', true)
-                    .single();
+                const integration = await getFacebookIntegrationWithToken(supabaseAdmin, { pageId });
 
-                if (!integration?.page_access_token) continue;
+                if (!integration?.pageAccessToken) continue;
 
                 // Fetch lead details from Graph API
                 const leadRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${integration.page_access_token}&fields=id,created_time,field_data,ad_id,form_id`
+                    `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${integration.pageAccessToken}&fields=id,created_time,field_data,ad_id,form_id`
                 );
                 const leadData = await leadRes.json();
 

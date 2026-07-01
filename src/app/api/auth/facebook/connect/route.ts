@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { encodeOAuthState } from '@/lib/oauth/oauthState';
 
 export async function GET(req: NextRequest) {
     try {
@@ -58,16 +59,14 @@ export async function GET(req: NextRequest) {
         }
     }
 
-    const state = Buffer.from(
-        JSON.stringify({
-            userId: user.id,
-            tenantId: tenantIdParam,
-            ts: Date.now(),
-            returnTo,
-            scopeMode,
-            requestedScopes,
-        })
-    ).toString('base64url');
+    const state = encodeOAuthState({
+        userId: user.id,
+        tenantId: tenantIdParam,
+        ts: Date.now(),
+        returnTo,
+        scopeMode,
+        requestedScopes,
+    });
 
     const authUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');
     authUrl.searchParams.set('client_id', appId);

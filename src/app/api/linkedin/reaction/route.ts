@@ -2,32 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-
-function normalizeScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .flatMap((value) => String(value).split(/[,\s]+/))
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(/[,\s]+/)
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
-}
-
-function isLikelyPermissionError(payload: Record<string, unknown>) {
-  const message = String(payload?.message || payload?.error_description || payload?.serviceErrorCode || '');
-  return (
-    message.toLowerCase().includes('permission') ||
-    message.toLowerCase().includes('scope') ||
-    message.toLowerCase().includes('access denied') ||
-    message.toLowerCase().includes('not enough')
-  );
-}
+import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
+import {
+  getLinkedInIntegrationWithToken,
+  markLinkedInIntegrationInactive,
+  normalizeLinkedInScopes,
+} from '@/services/linkedin/linkedinIntegrationService';
 
 const ALLOWED_REACTIONS = new Set([
   'LIKE',
@@ -82,56 +62,50 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    let query = admin
-      .from('linkedin_integrations')
-      .select('linkedin_member_id, access_token, linkedin_person_urn, scopes')
-      .eq('tenant_id', tenantId)
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1);
-    if (linkedinMemberId) query = query.eq('linkedin_member_id', linkedinMemberId);
-    const { data: li, error: liError } = await query.maybeSingle();
+    const integration = await getLinkedInIntegrationWithToken(admin, {
+      tenantId,
+      userId: user.id,
+      linkedinMemberId: linkedinMemberId || null,
+    });
 
-    if (liError || !li?.access_token || !li?.linkedin_person_urn) {
+    if (!integration?.accessToken || !integration.linkedin_person_urn) {
       return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });
     }
 
-    const scopes = normalizeScopes(li.scopes);
+    const scopes = normalizeLinkedInScopes(integration.scopes);
     if (!scopes.includes('w_member_social')) {
       return NextResponse.json({ error: 'Missing LinkedIn scope: w_member_social' }, { status: 400 });
     }
 
-    const res = await fetch(`https://api.linkedin.com/v2/reactions?actor=${encodeURIComponent(li.linkedin_person_urn)}&q=entity`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${li.access_token}`,
-        'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
-      },
-      body: JSON.stringify({
-        root: postUrn,
-        reactionType,
-      }),
-    });
-
-    const raw = await res.text();
-    let parsed: Record<string, unknown> = {};
     try {
-      parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-    } catch {
-      parsed = {};
-    }
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403 || isLikelyPermissionError(parsed)) {
-        return NextResponse.json({
-          success: true,
-          warning: 'LinkedIn reaction permission is unavailable for this connection. Reconnect and approve all requested LinkedIn permissions.',
-        });
+      await linkedInFetch(
+        `https://api.linkedin.com/v2/reactions?actor=${encodeURIComponent(integration.linkedin_person_urn)}&q=entity`,
+        integration.accessToken,
+        {
+          method: 'POST',
+          body: JSON.stringify({ root: postUrn, reactionType }),
+        }
+      );
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      if (err instanceof LinkedInApiError) {
+        if (err.code === 'TOKEN_EXPIRED') {
+          await markLinkedInIntegrationInactive(admin, integration.id, 'token_expired_on_reaction');
+          return NextResponse.json({ error: 'LinkedIn token expired. Reconnect your account.' }, { status: 401 });
+        }
+        if (err.code === 'FORBIDDEN') {
+          return NextResponse.json({
+            success: true,
+            warning: 'LinkedIn reaction permission is unavailable for this connection. Reconnect and approve all requested LinkedIn permissions.',
+          });
+        }
+        if (err.code === 'RATE_LIMITED') {
+          return NextResponse.json({ error: 'LinkedIn rate limit reached.' }, { status: 429 });
+        }
+        return NextResponse.json({ error: err.message }, { status: 502 });
       }
-      return NextResponse.json({ error: raw || `LinkedIn API error (${res.status})` }, { status: 502 });
+      throw err;
     }
-
-    return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'linkedin/reaction.POST' });
   }

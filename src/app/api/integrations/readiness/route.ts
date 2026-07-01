@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 
 function isMissingTableError(error: unknown): boolean {
   const code = (error as { code?: string })?.code;
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     const facebookPromise = supabase
       .from('facebook_integrations')
-      .select('id, page_id, is_active, page_access_token, metadata, updated_at')
+      .select('id, page_id, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token')
       .eq('tenant_id', tenantId);
 
     const mcpKeysPromise = supabase
@@ -48,9 +49,12 @@ export async function GET(request: NextRequest) {
           })()
       : mcpKeysResult.data || [];
 
-    const activeFacebook = facebookRows.filter(
-      (row: any) => row.is_active && row.page_access_token && !row.metadata?.no_pages
-    );
+    const activeFacebook: typeof facebookRows = [];
+    for (const row of facebookRows) {
+      if (!row.is_active || row.metadata?.no_pages) continue;
+      const tokens = await getFacebookTokens(supabase, row);
+      if (tokens.pageAccessToken) activeFacebook.push(row);
+    }
     const activeMcpKeys = mcpKeyRows.filter((row: any) => row.is_active);
 
     const readinessScore = [

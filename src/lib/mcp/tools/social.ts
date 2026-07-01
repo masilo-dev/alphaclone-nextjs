@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { extractCompanyPagesFromMetadata } from '@/services/linkedin/linkedinIntegrationService';
 
 // 1. get_social_accounts
 registerTool('social', {
@@ -65,7 +66,7 @@ registerTool('social', {
       .eq('tenant_id', args.tenant_id)
       .eq('type', 'organization');
 
-    if (orgError) throw orgError;
+    if (orgError && orgError.code !== '42P01') throw orgError;
 
     const identities: any[] = [];
 
@@ -81,8 +82,18 @@ registerTool('social', {
       });
     }
 
-    if (orgIdentities && orgIdentities.length > 0) {
-      for (const org of orgIdentities) {
+    const orgRows =
+      orgIdentities && orgIdentities.length > 0
+        ? orgIdentities
+        : extractCompanyPagesFromMetadata(personIdentity?.metadata).map((page) => ({
+            linkedin_organization_id: page.id,
+            author_urn: `urn:li:organization:${page.id}`,
+            can_post: true,
+            name: page.name,
+          }));
+
+    if (orgRows.length > 0) {
+      for (const org of orgRows) {
         identities.push({
           type: 'organization',
           linkedin_organization_id: org.linkedin_organization_id,

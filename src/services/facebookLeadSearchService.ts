@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 export type FacebookLeadSearchResult = {
   local: Array<Record<string, unknown>>;
@@ -31,24 +32,17 @@ export async function searchFacebookLeads(
 
   const graphLeads: Array<Record<string, unknown>> = [];
   if (q.length >= 2) {
-    const { data: integration } = await admin
-      .from('facebook_integrations')
-      .select('page_id, page_access_token, page_name')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .not('page_access_token', 'is', null)
-      .limit(1)
-      .maybeSingle();
+    const integration = await getFacebookIntegrationWithToken(admin, { tenantId });
 
-    if (integration?.page_access_token && integration.page_id) {
+    if (integration?.pageAccessToken && integration.page_id) {
       try {
         const formsRes = await fetch(
-          `https://graph.facebook.com/v19.0/${integration.page_id}/leadgen_forms?fields=id,name&limit=10&access_token=${integration.page_access_token}`
+          `https://graph.facebook.com/v19.0/${integration.page_id}/leadgen_forms?fields=id,name&limit=10&access_token=${integration.pageAccessToken}`
         );
         const formsData = await formsRes.json();
         for (const form of (formsData?.data || []).slice(0, 3)) {
           const leadsRes = await fetch(
-            `https://graph.facebook.com/v19.0/${form.id}/leads?fields=id,created_time,field_data&limit=25&access_token=${integration.page_access_token}`
+            `https://graph.facebook.com/v19.0/${form.id}/leads?fields=id,created_time,field_data&limit=25&access_token=${integration.pageAccessToken}`
           );
           const leadsData = await leadsRes.json();
           for (const lead of leadsData?.data || []) {

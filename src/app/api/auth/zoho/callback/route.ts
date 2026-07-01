@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -81,13 +82,18 @@ export async function GET(req: NextRequest) {
     try {
         let region = 'US';
         let userId = '';
-        try {
-            const parsedState = JSON.parse(stateStr);
-            region = typeof parsedState?.region === 'string' && parsedState.region ? parsedState.region : 'US';
-            userId = typeof parsedState?.state === 'string' ? parsedState.state : '';
-        } catch {
-            // Backward compatibility: some legacy flows store only userId in state.
-            userId = stateStr;
+        const parsedState = parseOAuthState<{ region?: string; state?: string }>(stateStr);
+        if (parsedState) {
+            region = typeof parsedState.region === 'string' && parsedState.region ? parsedState.region : 'US';
+            userId = typeof parsedState.state === 'string' ? parsedState.state : '';
+        } else {
+            try {
+                const legacy = JSON.parse(stateStr);
+                region = typeof legacy?.region === 'string' && legacy.region ? legacy.region : 'US';
+                userId = typeof legacy?.state === 'string' ? legacy.state : '';
+            } catch {
+                userId = stateStr;
+            }
         }
         if (!userId || typeof userId !== 'string') {
             throw new Error('Invalid OAuth state payload');

@@ -8,6 +8,7 @@ import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationRe
 import { freePlacesService } from '@/services/freePlacesService';
 import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadsManagementSchema } from '@/schemas/validation';
+import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -170,20 +171,15 @@ async function searchOpenStreetMapLeads(location: string, businessType: string, 
 
 async function searchFacebookLeads(tenantId: string, businessType: string, limit: number, filters: any, supabase: any) {
   try {
-    // Get Facebook integration
-    const { data: integration } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
+    const integration = await getFacebookIntegration(supabase, { tenantId });
 
     if (!integration) {
       return [];
     }
 
+    const tokens = await getFacebookTokens(supabase, integration);
     const leads = [];
-    const token = integration.user_access_token || integration.page_access_token;
+    const token = tokens.userAccessToken || tokens.pageAccessToken;
     if (!token) return [];
 
     // Search for Facebook pages related to business type
