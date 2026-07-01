@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function POST(req: NextRequest) {
     try {
@@ -8,6 +8,8 @@ export async function POST(req: NextRequest) {
         if (!campaignId || !tenantId) {
             return NextResponse.json({ error: 'Missing campaignId or tenantId' }, { status: 400 });
         }
+
+        await requireTenantAccess(tenantId);
 
         return NextResponse.json(
             {

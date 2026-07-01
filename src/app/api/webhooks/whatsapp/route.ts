@@ -1,42 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'crypto';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
+import { ENV } from '@/config/env';
+
+const CANONICAL_WEBHOOK = '/api/webhooks/facebook/whatsapp';
+
+function verifyMetaSignature(rawBody: string, signatureHeader: string | null): boolean {
+  const appSecret = ENV.FACEBOOK_APP_SECRET;
+  if (!appSecret || !signatureHeader?.startsWith('sha256=')) return false;
+  const expected = createHmac('sha256', appSecret).update(rawBody).digest('hex');
+  const received = signatureHeader.slice('sha256='.length);
+  try {
+    const a = Buffer.from(expected);
+    const b = Buffer.from(received);
+    return a.length === b.length && timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Resolve tenant ID from WhatsApp webhook payload.
  * Uses phone_number_id from the webhook to look up the correct tenant's integration.
  */
-async function resolveTenantFromWebhook(admin: any, value: any): Promise<string | null> {
+async function resolveTenantFromWebhook(admin: ReturnType<typeof createAdminSupabaseClientOrThrow>, value: Record<string, unknown>): Promise<string | null> {
   try {
-    // Get the phone number ID from the webhook payload
-    const phoneNumberId = value?.metadata?.phone_number_id;
+    const phoneNumberId = String(value?.metadata && typeof value.metadata === 'object'
+      ? (value.metadata as Record<string, unknown>).phone_number_id
+      : '').trim();
 
     if (phoneNumberId) {
-      // Look up integration by phone number ID in settings
       const { data: integration } = await admin
-        .from('integrations')
+        .from('whatsapp_integrations')
         .select('tenant_id')
-        .eq('type', 'whatsapp')
-        .contains('settings', { phone_number_id: phoneNumberId })
+        .eq('phone_number_id', phoneNumberId)
+        .eq('is_active', true)
         .maybeSingle();
 
       if (integration?.tenant_id) {
         return integration.tenant_id;
       }
-    }
-
-    // Fallback: try to find any active WhatsApp integration
-    // This is a last resort and should be improved with proper phone number mapping
-    const { data: fallbackIntegration } = await admin
-      .from('integrations')
-      .select('tenant_id')
-      .eq('type', 'whatsapp')
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle();
-
-    if (fallbackIntegration?.tenant_id) {
-      console.warn('[WhatsApp Webhook] Using fallback tenant resolution - consider adding phone_number_id mapping');
-      return fallbackIntegration.tenant_id;
     }
 
     return null;
@@ -71,13 +74,18 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/webhooks/whatsapp
- * Receives incoming message events from Meta WhatsApp Cloud API.
- * Creates support tickets from inbound messages.
+ * @deprecated Use /api/webhooks/facebook/whatsapp — this handler remains for backward-compatible Meta URLs.
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log('[WhatsApp Webhook] Incoming payload:', JSON.stringify(body, null, 2));
+    const rawBody = await request.text();
+    if (!verifyMetaSignature(rawBody, request.headers.get('x-hub-signature-256'))) {
+      console.warn(`[WhatsApp Webhook] Invalid signature — configure Meta to use ${CANONICAL_WEBHOOK}`);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
+    }
+
+    const body = JSON.parse(rawBody);
+    console.log('[WhatsApp Webhook] Incoming event received (legacy path)');
 
     const admin = createAdminSupabaseClientOrThrow();
 
@@ -159,11 +167,14 @@ export async function POST(request: NextRequest) {
           .insert({
             tenant_id: tenantId,
             phone_number: fromPhone,
+            chat_id: fromPhone,
             contact_id: contactId,
             client_id: clientId,
             direction: 'inbound',
-            message_body: messageBody,
-            message_id: messageId,
+            body: messageBody,
+            message_type: 'text',
+            provider_message_id: messageId,
+            provider: 'meta-whatsapp',
             received_at: timestamp,
             status: 'received',
           })
@@ -199,30 +210,16 @@ export async function POST(request: NextRequest) {
         const autoReplyEnabled = integration?.settings?.auto_reply_enabled !== false;
 
         if (autoReplyEnabled) {
-          // Send auto-reply via WhatsApp Cloud API
-          const whatsappToken = process.env.WHATSAPP_ACCESS_TOKEN;
-          const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-
-          if (whatsappToken && phoneNumberId) {
-            const autoReplyBody = `Hi ${senderName}! 👋\n\nThanks for reaching out to AlphaClone Systems. I'm Bonnie, your AI business assistant.\n\nI've noted your message and created a support ticket. Our team will follow up within 24 hours.\n\nIn the meantime, feel free to:\n• Ask about pricing (Starter $15/mo, Pro $45/mo, Enterprise $80/mo)\n• Request a demo at alphaclonesystems.com\n• Ask about features\n\nBonnie | AlphaClone Systems`;
-
-            await fetch(
-              `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${whatsappToken}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  messaging_product: 'whatsapp',
-                  to: fromPhone,
-                  type: 'text',
-                  text: { body: autoReplyBody },
-                }),
-              }
-            );
-          }
+          const { sendWhatsAppMessage } = await import('@/lib/whatsapp/sendWhatsApp');
+          const autoReplyBody = `Hi ${senderName}! Thanks for reaching out. We've received your message and will follow up shortly.`;
+          await sendWhatsAppMessage({
+            tenantId,
+            phone: fromPhone,
+            message: autoReplyBody,
+            contactId,
+            clientId,
+            metadata: { source: 'webhook_auto_reply' },
+          });
         }
 
         // 5. Create in-app notification for Alpha

@@ -19,20 +19,20 @@ export async function userOnboardingWorkflow({ userId, tenantId }: { userId: str
   "use workflow";
 
   await setupWorkspace(userId, tenantId);
-  await sendWelcome(userId);
+  await sendWelcome(userId, tenantId);
 
   await sleep('1d');
-  await sendGuide(userId);
+  await sendGuide(userId, tenantId);
 
   await sleep('3d');
   const usage = await checkUsage(tenantId);
 
   if (!usage.hasCoreActivation) {
-    await sendNudge(userId, usage);
+    await sendNudge(userId, tenantId, usage);
   }
 
   await sleep('7d');
-  await weekOneCheckin(userId, usage);
+  await weekOneCheckin(userId, tenantId, usage);
 }
 
 async function setupWorkspace(userId: string, tenantId: string) {
@@ -63,14 +63,14 @@ async function setupWorkspace(userId: string, tenantId: string) {
   }
 }
 
-async function sendWelcome(userId: string) {
+async function sendWelcome(userId: string, tenantId: string) {
   "use step";
-  await sendLifecycleEmail(userId, 'Welcome Email', {}, true);
+  await sendLifecycleEmail(userId, tenantId, 'Welcome Email', {}, true);
 }
 
-async function sendGuide(userId: string) {
+async function sendGuide(userId: string, tenantId: string) {
   "use step";
-  await sendLifecycleEmail(userId, 'Morning Briefing', {
+  await sendLifecycleEmail(userId, tenantId, 'Morning Briefing', {
     dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
     focusArea: 'Complete one activation step and one revenue step today.',
   });
@@ -105,6 +105,7 @@ async function checkUsage(tenantId: string) {
 
 async function sendNudge(
   userId: string,
+  tenantId: string,
   usage: { invoiceCount: number; leadCount: number; dealCount: number; socialCount: number }
 ) {
   "use step";
@@ -115,7 +116,7 @@ async function sendNudge(
     usage.socialCount === 0 ? 'scheduling your first post' :
     'sending your first invoice';
 
-  await sendLifecycleEmail(userId, 'Stay In Touch', {
+  await sendLifecycleEmail(userId, tenantId, 'Stay In Touch', {
     dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
     focusArea: `You are one action away from momentum. Start with ${lowestSignalArea}.`,
   });
@@ -123,11 +124,12 @@ async function sendNudge(
 
 async function weekOneCheckin(
   userId: string,
+  tenantId: string,
   usage: { invoiceCount: number; leadCount: number; dealCount: number; socialCount: number; hasCoreActivation: boolean }
 ) {
   "use step";
 
-  await sendLifecycleEmail(userId, usage.hasCoreActivation ? 'AI and Leads Status' : 'Daily Motivation', {
+  await sendLifecycleEmail(userId, tenantId, usage.hasCoreActivation ? 'AI and Leads Status' : 'Daily Motivation', {
     dashboardUrl: `${defaultDashboardUrl()}/dashboard/business`,
     focusArea: usage.hasCoreActivation
       ? `Week-one snapshot: ${usage.leadCount} leads, ${usage.dealCount} deals, ${usage.invoiceCount} invoices, ${usage.socialCount} social posts.`
@@ -155,14 +157,26 @@ async function getUserContext(userId: string): Promise<UserContext | null> {
 
 async function sendLifecycleEmail(
   userId: string,
+  tenantId: string,
   templateName: string,
   variables: Record<string, string | number>,
   skipIfWelcomeAlreadySent = false
 ) {
+  const supabase = createSupabaseAdminClient();
+  const membership = await supabase
+    .from('tenant_users')
+    .select('tenant_id')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (membership.error || !membership.data) {
+    console.warn('[userOnboardingWorkflow] skipped email — user not in tenant:', templateName);
+    return;
+  }
+
   const user = await getUserContext(userId);
   if (!user) return;
 
-  const supabase = createSupabaseAdminClient();
   const result = await sendPlatformTemplateEmail(supabase, {
     templateName,
     to: user.email,

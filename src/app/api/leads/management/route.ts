@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { leadFindingWorkflow } from '@/workflows/lead-finding';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { freePlacesService } from '@/services/freePlacesService';
 import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadsManagementSchema } from '@/schemas/validation';
+import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 
 export async function POST(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
     const payload = await req.json();
     const parsed = leadsManagementSchema.safeParse(payload);
@@ -21,6 +17,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
     }
     const { tenantId, action, config } = parsed.data;
+
+    await requireTenantAccess(tenantId);
 
     const supabase = createSupabaseAdminClient();
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
@@ -45,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: unknown) {
     console.error('Lead management error:', error);
-    return clientErrorResponse(error, { request: req, scope: 'leads/management.POST' });
+    return routeErrorResponse(error, undefined, req);
   }
 }
 
@@ -170,20 +168,15 @@ async function searchOpenStreetMapLeads(location: string, businessType: string, 
 
 async function searchFacebookLeads(tenantId: string, businessType: string, limit: number, filters: any, supabase: any) {
   try {
-    // Get Facebook integration
-    const { data: integration } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
+    const integration = await getFacebookIntegration(supabase, { tenantId });
 
     if (!integration) {
       return [];
     }
 
+    const tokens = await getFacebookTokens(supabase, integration);
     const leads = [];
-    const token = integration.user_access_token || integration.page_access_token;
+    const token = tokens.userAccessToken || tokens.pageAccessToken;
     if (!token) return [];
 
     // Search for Facebook pages related to business type

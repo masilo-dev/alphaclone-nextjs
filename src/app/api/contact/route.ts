@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
           subject: `Website contact: ${subject || 'General inquiry'}`,
           text: `From: ${name} <${email}>\nCompany: ${company || '—'}\n\n${message}`,
           templateName: 'websiteContact',
+          // Internal notification — must bypass the CRM recipient gate or it is
+          // silently blocked when the sales inbox isn't a lead/contact record.
+          isPlatformNotification: true,
         });
       } catch (notifyErr) {
         console.error('Contact form sales notification failed:', notifyErr);

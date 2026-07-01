@@ -283,20 +283,27 @@ function LoginContent() {
                                 toast.error(`Subscription setup failed: ${errorMsg}`, { id: 'trial' });
                             }
 
-                            // 3. Welcome Email (Fire and forget, non-blocking)
+                            // 3. Welcome email — authenticated user path only (no arbitrary recipient)
                             try {
-                                fetch('/api/email/welcome', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        email: newUser.email,
-                                        name: name,
-                                        trial_ends_at: trialEndDate,
-                                        workspace_name: businessName
-                                    })
-                                })
-                                .then(() => console.log('Welcome email triggered'))
-                                .catch(err => console.warn('Welcome email trigger failed:', err));
+                                const { supabase } = await import('@/lib/supabase');
+                                const { data: { session } } = await supabase.auth.getSession();
+                                if (session?.access_token) {
+                                    void fetch(`${window.location.origin}/api/email/platform-transactional`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            Authorization: `Bearer ${session.access_token}`,
+                                        },
+                                        body: JSON.stringify({
+                                            templateName: 'Welcome Email',
+                                            variables: {
+                                                name,
+                                                trial_ends_at: trialEndDate.toLocaleDateString(),
+                                                workspace_name: businessName,
+                                            },
+                                        }),
+                                    }).catch((err) => console.warn('Welcome email trigger failed:', err));
+                                }
                             } catch (emailErr) {
                                 console.warn('Failed to start welcome email network call:', emailErr);
                             }

@@ -78,14 +78,21 @@ export function DataTable() {
     async function fetchDeals() {
       try {
         const supabase = createSupabaseBrowserClient();
+        // Data source: `deals` table with client name joined from business_clients
+        // (was `business_deals`, a non-existent table that silently returned nothing).
         const { data: deals } = await supabase
-          .from('business_deals')
-          .select('id, name, stage, value, client_name, created_at')
+          .from('deals')
+          .select('id, name, stage, value, created_at, client:contact_id (name)')
           .eq('tenant_id', tenantId)
           .order('created_at', { ascending: false })
           .limit(50);
 
-        setData(deals || []);
+        setData(
+          (deals || []).map((d: any) => ({
+            ...d,
+            client_name: d.client?.name || undefined,
+          }))
+        );
       } catch (err) {
         console.error('Failed to fetch deals:', err);
       } finally {

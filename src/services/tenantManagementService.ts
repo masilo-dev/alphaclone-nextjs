@@ -1,5 +1,3 @@
-import { supabase } from '../lib/supabase';
-
 export interface TenantInfo {
     id: string;
     name: string;
@@ -20,6 +18,9 @@ export const tenantManagementService = {
             const res = await fetch('/api/admin/tenants');
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
+                if (res.status === 403) {
+                    return { tenants: [], error: 'Forbidden — platform super-admin access required' };
+                }
                 return { tenants: [], error: data.error || 'Failed to fetch tenants' };
             }
             return { tenants: data.tenants || [], error: null };
@@ -31,61 +32,40 @@ export const tenantManagementService = {
     },
 
     /**
-     * Get tenant details with user list
+     * Get tenant details with user list (platform super admin — server-side)
      */
     async getTenantDetails(tenantId: string): Promise<{ tenant: any; error: string | null }> {
         try {
-            const { data: tenant, error: tenantError } = await supabase
-                .from('tenants')
-                .select('*')
-                .eq('id', tenantId)
-                .single();
-
-            if (tenantError) throw tenantError;
-
-            const { data: users, error: usersError } = await supabase
-                .from('tenant_users')
-                .select(`
-                    *,
-                    user:user_id (
-                        id,
-                        email,
-                        name,
-                        avatar
-                    )
-                `)
-                .eq('tenant_id', tenantId);
-
-            if (usersError) throw usersError;
-
-            return {
-                tenant: {
-                    ...tenant,
-                    users: users || []
-                },
-                error: null
-            };
-        } catch (err: any) {
+            const res = await fetch(`/api/admin/tenants/${encodeURIComponent(tenantId)}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return { tenant: null, error: data.error || 'Failed to fetch tenant details' };
+            }
+            return { tenant: data.tenant || null, error: null };
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch tenant details';
             console.error('Error fetching tenant details:', err);
-            return { tenant: null, error: err.message };
+            return { tenant: null, error: message };
         }
     },
 
     /**
-     * Update tenant status
+     * Update tenant status (platform super admin — server-side)
      */
     async updateTenantStatus(tenantId: string, status: string): Promise<{ error: string | null }> {
         try {
-            const { error } = await supabase
-                .from('tenants')
-                .update({ status })
-                .eq('id', tenantId);
-
-            if (error) throw error;
+            const res = await fetch('/api/admin/tenants', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, status }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to update tenant status' };
             return { error: null };
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Failed to update tenant status';
             console.error('Error updating tenant status:', err);
-            return { error: err.message };
+            return { error: message };
         }
     },
 

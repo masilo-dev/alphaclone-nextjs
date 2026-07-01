@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
+import { encodeLinkedInOAuthState, type LinkedInOAuthState } from '@/lib/linkedin/oauthState';
 
 const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/linkedin',
@@ -8,35 +9,18 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-type LinkedInOAuthState = {
-  userId: string;
-  tenantId?: string | null;
-  returnTo?: string | null;
-  ts: number;
-};
-
+/** Minimum scopes + business page (org) + ads/events products used by MCP */
 const LINKEDIN_REQUESTED_SCOPES = [
   'openid',
   'profile',
   'email',
-  // Member posting
   'w_member_social',
-  'r_profile_basicinfo',
-  'r_verify',
-  'r_basicprofile',
-  'r_1st_connections_size',
-  // Organization / company page posting & analytics
   'w_organization_social',
   'r_organization_social',
   'r_organization_admin',
-  'rw_organization_admin',
-  // Events (org calendar posts)
-  'rw_events',
-  'r_events',
-  // Ads reporting (MCP ads tools)
   'r_ads',
   'r_ads_reporting',
-  'rw_ads',
+  'rw_events',
 ] as const;
 
 export async function GET(req: NextRequest) {
@@ -86,7 +70,7 @@ export async function GET(req: NextRequest) {
       returnTo,
       ts: Date.now(),
     };
-    const state = Buffer.from(JSON.stringify(statePayload)).toString('base64url');
+    const state = encodeLinkedInOAuthState(statePayload);
 
     const forceReauth = req.nextUrl.searchParams.get('force_reauth') === '1';
 
@@ -97,7 +81,6 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.set('scope', LINKEDIN_REQUESTED_SCOPES.join(' '));
     authUrl.searchParams.set('prompt', 'consent');
     if (forceReauth) {
-      // Ask LinkedIn to avoid silent reuse where possible.
       authUrl.searchParams.set('force_login', 'true');
     }
     authUrl.searchParams.set('state', state);

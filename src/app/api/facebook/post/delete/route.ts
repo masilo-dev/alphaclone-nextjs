@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 export const runtime = 'nodejs';
 
@@ -13,22 +15,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'pageId and postId are required' }, { status: 400 });
   }
 
-  const { data: integration } = await supabase
-    .from('facebook_integrations')
-    .select('page_access_token, metadata')
-    .eq('user_id', user.id)
-    .eq('page_id', pageId)
-    .eq('is_active', true)
-    .single();
+  const admin = createSupabaseAdminClient();
+  const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
-  if (!integration?.page_access_token || integration?.metadata?.no_pages) {
+  if (!integration?.pageAccessToken || integration?.metadata?.no_pages) {
     return NextResponse.json({
       error: 'Facebook Page token missing. Reconnect with advanced Page permissions.',
       action: 'reconnect',
     }, { status: 400 });
   }
 
-  const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.page_access_token)}`;
+  const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`;
   const res = await fetch(url, { method: 'DELETE' });
   const data = await res.json().catch(() => ({}));
 

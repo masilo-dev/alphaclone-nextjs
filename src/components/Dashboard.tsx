@@ -351,15 +351,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isVoiceActive, setIsVoiceActive] = useState(false);
 
   // -- ISOLATION LOGIC --
-  // Super Admin: sees ALL data across ALL tenants
-  // Tenant Admin: sees all data within their tenant
+  // Platform super admin: sees all projects within the active tenant context
+  // Tenant admin: sees all data within their tenant
   // Client: sees only their own data
   const filteredProjects = useMemo(() => isPlatformAdminRole(user.role)
-    ? (projects || []) // Platform super admin sees everything
+    ? (projects || []) // Platform admin sees all in current tenant
     : (projects || []).filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
 
   const filteredMessages = useMemo(() => isPlatformAdminRole(user.role)
-    ? (messages || []) // Platform super admin sees everything
+    ? (messages || []) // Platform admin sees all in current tenant
     : (messages || []).filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
 
   const filteredInvoices = useMemo(() => (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'

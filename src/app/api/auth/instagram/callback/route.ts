@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
 
 type InstagramOAuthState = {
   userId: string;
@@ -34,11 +37,17 @@ export async function GET(req: NextRequest) {
   if (error) return redirectError(appUrl, error);
   if (!code || !state) return redirectError(appUrl, 'missing_params');
 
-  let stateData: InstagramOAuthState;
-  try {
-    stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-  } catch {
+  const stateData = parseOAuthState<InstagramOAuthState>(state);
+  if (!stateData?.userId) {
     return redirectError(appUrl, 'invalid_state');
+  }
+
+  const supabaseServer = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabaseServer.auth.getUser();
+  if (!user || user.id !== stateData.userId) {
+    return redirectError(appUrl, 'session_mismatch');
   }
 
   const appId = process.env.FACEBOOK_APP_ID!;
@@ -131,38 +140,25 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
-    const { error: upErr } = await supabase
-      .from('instagram_integrations')
-      .upsert(
-        {
-          user_id: stateData.userId,
-          tenant_id: resolvedTenantId,
-          instagram_account_id: String(igData.id),
-          username: igData.username || null,
-          account_name: igData.name || page.name || null,
-          profile_picture_url: igData.profile_picture_url || null,
-          facebook_page_id: String(page.id),
-          facebook_page_name: page.name || null,
-          page_access_token: page.access_token,
-          user_access_token: userToken,
-          app_scoped_user_id: fbUserId,
-          followers_count: igData.followers_count ?? null,
-          media_count: igData.media_count ?? null,
-          is_active: true,
-          connected_at: new Date().toISOString(),
-          expires_at: longLivedData.expires_in
-            ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
-            : null,
-          metadata: {
-            fb_name: profileData.name,
-            page_count: pages.length,
-          },
-        },
-        { onConflict: 'user_id,instagram_account_id' },
-      );
+    const igResult = await upsertInstagramIntegration({
+      userId: stateData.userId,
+      tenantId: resolvedTenantId,
+      instagramAccountId: String(igData.id),
+      username: igData.username || null,
+      accountName: igData.name || page.name || null,
+      profilePictureUrl: igData.profile_picture_url || null,
+      facebookPageId: String(page.id),
+      facebookPageName: page.name || '',
+      pageAccessToken: page.access_token,
+      followersCount: igData.followers_count ?? 0,
+      mediaCount: igData.media_count ?? 0,
+      expiresAt: longLivedData.expires_in
+        ? new Date(Date.now() + longLivedData.expires_in * 1000).toISOString()
+        : null,
+    });
 
-    if (upErr) {
-      console.error('[Instagram Callback] instagram_integrations upsert failed:', upErr);
+    if (igResult.error) {
+      console.error('[Instagram Callback] instagram_integrations upsert failed:', igResult.error);
     } else {
       connectedCount++;
     }

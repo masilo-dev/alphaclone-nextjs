@@ -198,11 +198,13 @@ Discovery: GET /.well-known/oauth-authorization-server
 
 ## Pricing
 
-| Plan | Price | Users | Storage | AI Requests/month | Features |
-|---|---|---|---|---|---|
-| Starter | $15/mo | Up to 3 | 5 GB | 100 | CRM, Invoicing, Tasks, Basic AI |
-| Pro | $45/mo | Up to 10 | 25 GB | 1,000 | All Starter + Growth Agent, Email, Contracts, Video |
-| Enterprise | $80/mo | Unlimited | 100 GB | Unlimited | All Pro + White-Label, Priority Support, MCP Access, Custom Integrations |
+| Plan | Price | Users | Storage | Features |
+|---|---|---|---|---|
+| Starter | $15/mo ($144/yr) | Up to 25 | 25 GB | CRM, invoicing, contracts + e-sign, 1-hour video meetings, scheduling, automations |
+| Pro | $45/mo ($432/yr) | Unlimited | 100 GB | All Starter + Bonnie AI sales assistant, unlimited meetings, API access, custom domain |
+| Enterprise | $80/mo ($768/yr) | Unlimited | 500 GB | All Pro + advanced AI limits, priority infrastructure, dedicated onboarding, SLA support |
+
+All plans include a 14-day free trial — no credit card required.
 
 ---
 

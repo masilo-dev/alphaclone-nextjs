@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+import { ensureFooter, normalizeEmailSubject, buildAttachmentNoticeHtml, insertBeforeEmailFooter } from '@/lib/email/emailComposition';
 import { buildUnsubscribeUrl, isUnsubscribed } from '@/lib/email/unsubscribe';
 import { isEmailSuppressed } from '@/lib/email/suppression';
 import { logEmailSend } from '@/lib/emailLogger';
@@ -261,7 +261,12 @@ export async function sendEmail(
     const sanitizedTextSource = applyBonnieSanitizer && payload.text
       ? sanitizeBonnieOutboundText(String(payload.text)).clean
       : payload.text;
-    const normalizedHtml = sanitizedHtmlSource
+
+    const attachmentNames = (payload.attachments || [])
+      .map((a) => String(a.filename || '').trim())
+      .filter(Boolean);
+
+    let normalizedHtml = sanitizedHtmlSource
       ? (shouldAppendFooter
         ? ensureFooter(sanitizeHtml(String(sanitizedHtmlSource), {
           allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
@@ -272,9 +277,22 @@ export async function sendEmail(
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }))
       : undefined;
-    const normalizedText = sanitizedTextSource
+
+    if (normalizedHtml && attachmentNames.length > 0) {
+      normalizedHtml = insertBeforeEmailFooter(
+        normalizedHtml,
+        buildAttachmentNoticeHtml(attachmentNames)
+      );
+    }
+
+    let normalizedText = sanitizedTextSource
       ? (shouldAppendFooter ? ensureFooter(sanitizedTextSource, { unsubscribeUrl }) : sanitizedTextSource)
       : undefined;
+
+    if (normalizedText && attachmentNames.length > 0) {
+      const attachmentLines = ['Attachments:', ...attachmentNames.map((name) => `- ${name}`)].join('\n');
+      normalizedText = insertBeforeEmailFooter(normalizedText, attachmentLines);
+    }
 
     const configs = await resolveProviderConfigs({
       tenantId,

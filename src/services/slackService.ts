@@ -1,4 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import {
+  getSlackIntegrationWithSecrets,
+  upsertSlackIntegration,
+} from '@/services/slack/slackIntegrationService';
 
 export interface SlackConfig {
   teamId: string;
@@ -45,51 +49,35 @@ export const slackService = {
    */
   async getSlackIntegration(tenantId: string) {
     const supabase = createSupabaseAdminClient();
-    
-    const { data, error } = await supabase
-      .from('slack_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching Slack integration:', error);
-      return null;
-    }
-    
-    return data;
+    return getSlackIntegrationWithSecrets(supabase, tenantId);
   },
 
   /**
    * Save Slack integration for a tenant
    */
   async saveSlackIntegration(tenantId: string, config: SlackConfig) {
+    const result = await upsertSlackIntegration({
+      tenantId,
+      teamId: config.teamId,
+      teamName: config.teamName,
+      botUserId: config.botUserId,
+      botAccessToken: config.botAccessToken,
+      webhookUrl: config.webhookUrl,
+      defaultChannel: config.defaultChannel,
+    });
+
+    if (!result.integrationId) {
+      return { data: null, error: { message: result.error || 'Failed to save' } };
+    }
+
     const supabase = createSupabaseAdminClient();
-    
     const { data, error } = await supabase
       .from('slack_integrations')
-      .upsert({
-        tenant_id: tenantId,
-        team_id: config.teamId,
-        team_name: config.teamName,
-        bot_user_id: config.botUserId,
-        bot_access_token: config.botAccessToken,
-        webhook_url: config.webhookUrl,
-        default_channel: config.defaultChannel || '#general',
-        is_active: true,
-        connected_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .select()
+      .select('id, tenant_id, team_id, team_name, default_channel, is_active')
+      .eq('id', result.integrationId)
       .single();
-    
-    if (error) {
-      console.error('Error saving Slack integration:', error);
-      return { data: null, error };
-    }
-    
-    return { data, error: null };
+
+    return { data, error };
   },
 
   /**
@@ -102,7 +90,7 @@ export const slackService = {
       throw new Error('Slack integration not found for this tenant');
     }
 
-    if (!integration.webhook_url) {
+    if (!integration?.webhookUrl) {
       throw new Error('Slack webhook URL not configured');
     }
 
@@ -114,7 +102,7 @@ export const slackService = {
     };
 
     try {
-      const response = await fetch(integration.webhook_url, {
+      const response = await fetch(integration.webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

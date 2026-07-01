@@ -1,6 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { TOTP } from 'otplib';
 import QRCode from 'qrcode';
+import {
+  decryptIntegrationToken,
+  encryptIntegrationToken,
+  isEncryptedToken,
+} from '@/lib/integration/integrationTokenCrypto';
 
 export interface TwoFactorAuth {
     enabled: boolean;
@@ -25,15 +30,17 @@ export const authSecurityService = {
             const secret = this.generateSecret();
             const qrCode = await this.generateQRCode(userEmail, secret);
             const backupCodes = this.generateBackupCodes();
+            const encryptedSecret = await encryptIntegrationToken(secret);
+            const encryptedBackupCodes = await encryptIntegrationToken(JSON.stringify(backupCodes));
 
-            // Store secret in database
+            // Store secret in database (encrypted at rest)
             const { error } = await supabase
                 .from('user_security')
                 .upsert({
                     user_id: userId,
                     two_factor_enabled: true,
-                    two_factor_secret: secret,
-                    backup_codes: backupCodes,
+                    two_factor_secret: encryptedSecret,
+                    backup_codes: encryptedBackupCodes,
                     updated_at: new Date().toISOString(),
                 });
 
@@ -65,16 +72,29 @@ export const authSecurityService = {
                 return { valid: false, error: '2FA not configured' };
             }
 
-            // Verify TOTP code (in production, use 'otplib')
-            const isValid = await this.verifyTOTP(data.two_factor_secret, code);
+            const storedSecret = await decryptIntegrationToken(String(data.two_factor_secret || ''));
+            const isValid = await this.verifyTOTP(storedSecret, code);
+
+            let backupCodes: string[] = [];
+            if (Array.isArray(data.backup_codes)) {
+              backupCodes = data.backup_codes;
+            } else if (typeof data.backup_codes === 'string') {
+              try {
+                const decrypted = await decryptIntegrationToken(data.backup_codes);
+                backupCodes = isEncryptedToken(data.backup_codes)
+                  ? JSON.parse(decrypted)
+                  : JSON.parse(data.backup_codes);
+              } catch {
+                backupCodes = [];
+              }
+            }
 
             // Check backup codes if TOTP fails
-            if (!isValid && data.backup_codes?.includes(code)) {
-                // Remove used backup code
-                const updatedCodes = data.backup_codes.filter((c: string) => c !== code);
+            if (!isValid && backupCodes.includes(code)) {
+                const updatedCodes = backupCodes.filter((c: string) => c !== code);
                 await supabase
                     .from('user_security')
-                    .update({ backup_codes: updatedCodes })
+                    .update({ backup_codes: await encryptIntegrationToken(JSON.stringify(updatedCodes)) })
                     .eq('user_id', userId);
                 return { valid: true, error: null };
             }

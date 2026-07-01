@@ -5,6 +5,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed } from '@/lib/api/operationResult';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -49,15 +50,9 @@ async function createFacebookPost(tenantId: string, config: any, supabase: any) 
   try {
     const { pageId, message, imageUrl, link, scheduledTime } = config;
 
-    // Get Facebook integration
-    const { data: integration, error } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
+    const integration = await getFacebookIntegrationWithToken(supabase, { tenantId, pageId });
 
-    if (error || !integration) {
+    if (!integration?.pageAccessToken) {
       return { success: false, error: 'Facebook integration not found' };
     }
 
@@ -72,7 +67,7 @@ async function createFacebookPost(tenantId: string, config: any, supabase: any) 
 
     // Make API call to Facebook
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/${pageId}/feed?access_token=${integration.page_access_token}`,
+      `https://graph.facebook.com/v18.0/${pageId}/feed?access_token=${integration.pageAccessToken}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -114,17 +109,13 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
   try {
     const { pageId, action: pageAction, pageData } = config;
 
-    // Get Facebook integration
-    const { data: integration, error } = await supabase
-      .from('facebook_integrations')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .single();
+    const integration = await getFacebookIntegrationWithToken(supabase, { tenantId, pageId });
 
-    if (error || !integration) {
+    if (!integration?.pageAccessToken) {
       return { success: false, error: 'Facebook integration not found' };
     }
+
+    const pageAccessToken = integration.pageAccessToken;
 
     let result;
 
@@ -132,7 +123,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_page_info':
         // Get page information
         const pageInfoResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}?access_token=${integration.page_access_token}&fields=id,name,username,followers_count,talking_about_count,website,phone,about,category`
+          `https://graph.facebook.com/v18.0/${pageId}?access_token=${pageAccessToken}&fields=id,name,username,followers_count,talking_about_count,website,phone,about,category`
         );
         result = await pageInfoResponse.json();
         break;
@@ -140,7 +131,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'update_page_info':
         // Update page information
         const updateResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}?access_token=${integration.page_access_token}`,
+          `https://graph.facebook.com/v18.0/${pageId}?access_token=${pageAccessToken}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -153,7 +144,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_page_insights':
         // Get page insights
         const insightsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}/insights?access_token=${integration.page_access_token}&metric=page_impressions,page_engaged_users,page_fan_adds,page_fan_removes&period=day`
+          `https://graph.facebook.com/v18.0/${pageId}/insights?access_token=${pageAccessToken}&metric=page_impressions,page_engaged_users,page_fan_adds,page_fan_removes&period=day`
         );
         result = await insightsResponse.json();
         break;
@@ -161,7 +152,7 @@ async function manageFacebookPage(tenantId: string, config: any, supabase: any) 
       case 'get_posts':
         // Get page posts
         const postsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${pageId}/posts?access_token=${integration.page_access_token}&fields=id,message,created_time,likes.summary(true),comments.summary(true),shares&limit=10`
+          `https://graph.facebook.com/v18.0/${pageId}/posts?access_token=${pageAccessToken}&fields=id,message,created_time,likes.summary(true),comments.summary(true),shares&limit=10`
         );
         result = await postsResponse.json();
         break;

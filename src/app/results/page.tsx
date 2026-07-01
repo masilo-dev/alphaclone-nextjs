@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description:
     'See how service businesses connect leads, delivery, contracts, and billing in one workspace — representative workflow stories by team type.',
   alternates: { canonical: `${SITE_URL}/results` },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'Results & Workflow Stories | AlphaClone Systems',
     description: 'Before-and-after workflows for consultants, agencies, and founders replacing fragmented SaaS stacks.',
     url: `${SITE_URL}/results`,

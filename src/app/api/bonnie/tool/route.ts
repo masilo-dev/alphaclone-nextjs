@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
+import { assertBonnieDirectToolAllowed } from '@/lib/security/bonnieToolAllowlist';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { user } = await requireTenantAccess(tenantId);
+    assertBonnieDirectToolAllowed(String(tool));
     const result = await executeSingleBonnieTool({
       tenantId,
       userId: user.id,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { encodeOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 /**
@@ -59,13 +60,11 @@ export async function GET(req: NextRequest) {
       'instagram_manage_insights',
     ].join(',');
 
-    const state = Buffer.from(
-      JSON.stringify({
-        userId: user.id,
-        tenantId: tenantIdParam,
-        ts: Date.now(),
-      }),
-    ).toString('base64url');
+    const state = encodeOAuthState({
+      userId: user.id,
+      tenantId: tenantIdParam,
+      ts: Date.now(),
+    });
 
     const authUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');
     authUrl.searchParams.set('client_id', appId);

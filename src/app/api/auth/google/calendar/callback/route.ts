@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { upsertGoogleCalendarTokens } from '@/services/google/googleCalendarIntegrationService';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -56,19 +57,12 @@ export async function GET(req: NextRequest) {
         const expiresAt = new Date(Date.now() + secondsToExpiry * 1000).toISOString();
 
         // 3. Save tokens
-        const { error: upsertError } = await supabaseAdmin
-            .from('google_calendar_tokens')
-            .upsert({
-                user_id: userId,
-                access_token,
-                refresh_token,
-                expires_at: expiresAt,
-                last_synced_at: new Date().toISOString(),
-            }, {
-                onConflict: 'user_id',
-            });
-
-        if (upsertError) throw upsertError;
+        await upsertGoogleCalendarTokens({
+            userId,
+            accessToken: access_token,
+            refreshToken: refresh_token ?? null,
+            expiresAt,
+        });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?calendar=connected`);
     } catch (err) {

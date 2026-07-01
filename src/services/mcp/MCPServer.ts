@@ -18,7 +18,10 @@ import {
   parseLinkedInUgcPostUrn,
   updateSocialPostLinkedInUrnWithRetry,
 } from '../../lib/social/linkedinPublishHelpers';
+import { loadMcpLinkedInIntegration } from '../../lib/linkedin/mcpLinkedIn';
+import { linkedInFetch } from '../../lib/linkedin/linkedinClient';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
+import { getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
 import { auditLoggingService } from '../auditLoggingService';
 import { sendScheduledCampaignServer } from '../../lib/server/sendScheduledCampaignServer';
@@ -42,6 +45,7 @@ import { onLeadCreated } from '../../lib/leads/leadOnCreated';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
+import { insertBeforeEmailFooter } from '../../lib/email/emailComposition';
 import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
 import {
   cancelRun,
@@ -84,6 +88,8 @@ import { taskAutomationService } from '../automation/taskAutomationService';
 import { sendWhatsAppMessage } from '../../lib/whatsapp/sendWhatsApp';
 import { mcpStore } from './mcpStore';
 import { routeAIRequest } from '../aiRouter';
+import { resolveMcpEmailRecipient } from '../../lib/email/resolveMcpEmailRecipient';
+import { resolveEmailAttachmentsFromFileIds } from '../../lib/files/resolveEmailAttachments';
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -104,6 +110,40 @@ async function generateContractDraftText(contractType: string, clientName: strin
   }
 
   return response.content;
+}
+
+async function processContractDraftJob(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  contractId: string,
+  tenantId: string,
+  contractType: string,
+  clientName: string,
+  keyTerms?: string
+) {
+  try {
+    const contractContent = await generateContractDraftText(contractType, clientName, keyTerms);
+    const draftAttribution = 'Claude (via AlphaClone MCP generate_contract_draft)';
+    const draftedContract = appendContractDisclaimer(contractContent, draftAttribution);
+    await supabaseAdmin
+      .from('contracts')
+      .update({
+        content: draftedContract,
+        status: 'draft',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', contractId)
+      .eq('tenant_id', tenantId);
+  } catch (err: any) {
+    await supabaseAdmin
+      .from('contracts')
+      .update({
+        status: 'draft',
+        content: `Generation failed: ${err?.message || 'Unknown error'}. Edit manually in Contracts.`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', contractId)
+      .eq('tenant_id', tenantId);
+  }
 }
 
 async function loadProjectMilestonesOrFallback(
@@ -266,17 +306,15 @@ async function resolveMcpEmailSignature(
 }
 
 function appendSignatureToEmail(input: { html?: unknown; text?: unknown }, signature: string) {
-  const footer = "Sent through AlphaClone Systems. This message and any attached documents were sent from the sender's AlphaClone workspace.";
-  // Bug #5 fix: when signature is empty, only append the footer (no double blank line before it)
   const sigBlock = signature ? `${signature}\n\n` : '';
-  const textSignature = `${sigBlock}--\n${footer}`;
+  const textSignature = signature ? `${sigBlock}--\n${signature}` : '';
   const htmlSigBlock = signature ? `${signature.replace(/\n/g, '<br>')}<br><br>` : '';
-  const htmlSignature = `${htmlSigBlock}<small style="color:#64748b">${footer}</small>`;
+  const htmlSignature = signature ? `${htmlSigBlock}<p style="margin:0;color:#64748b;font-size:12px;">--</p>` : '';
 
   return {
-    html: input.html ? `${String(input.html)}<br><br>${htmlSignature}` : undefined,
-    text: input.text ? `${String(input.text)}\n\n${textSignature}` : undefined,
-    fallbackText: `Please see the attached document.\n\n${textSignature}`,
+    html: input.html && signature ? `${String(input.html)}<br><br>${htmlSignature}` : (input.html ? String(input.html) : undefined),
+    text: input.text && signature ? `${String(input.text)}\n\n${textSignature}` : (input.text ? String(input.text) : undefined),
+    fallbackText: signature ? `Please see the attached document.\n\n${textSignature}` : 'Please see the attached document.',
   };
 }
 
@@ -306,9 +344,12 @@ function appendDocumentLinksToEmail(
     '</ul>',
   ].join('');
 
+  const htmlBase = input.html ? String(input.html) : '';
+  const textBase = input.text ? String(input.text) : '';
+
   return {
-    html: input.html ? `${String(input.html)}<br><br>${htmlLinks}` : undefined,
-    text: input.text ? `${String(input.text)}\n\n${textLinks}` : undefined,
+    html: htmlBase ? insertBeforeEmailFooter(htmlBase, htmlLinks) : undefined,
+    text: textBase ? insertBeforeEmailFooter(textBase, textLinks) : undefined,
     fallbackText: `${input.fallbackText || 'Please review the linked documents.'}\n\n${textLinks}`,
   };
 }
@@ -631,7 +672,7 @@ type FacebookIntegrationIdentity = {
   page_id: string;
   page_name: string | null;
   is_active: boolean;
-  page_access_token: string | null;
+  pageAccessToken: string | null;
   metadata: Record<string, unknown> | null;
   updated_at?: string | null;
 };
@@ -642,7 +683,7 @@ function canPublishFacebookPage(identity: FacebookIntegrationIdentity): boolean 
     : [];
   const hasTaskPermission =
     tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
-  return !!identity.page_access_token && identity.is_active && !identity?.metadata?.no_pages && hasTaskPermission;
+  return !!identity.pageAccessToken && identity.is_active && !identity?.metadata?.no_pages && hasTaskPermission;
 }
 
 function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]): FacebookIntegrationIdentity | null {
@@ -748,16 +789,7 @@ class AlphaCloneMCPServer {
   /** Workspace scope for this HTTP connection (from MCP API key). */
   private requireTenant(args: Record<string, any>): string {
     if (this.ctx?.tenantId) {
-      const r = args.tenant_id;
-      // Bug #4 fix: trim the incoming tenant_id before comparing so whitespace
-      // differences (e.g. trailing newline from some MCP clients) don't cause
-      // a spurious mismatch error.
-      const rTrimmed = typeof r === 'string' ? r.trim() : r;
-      if (rTrimmed != null && rTrimmed !== '' && rTrimmed !== this.ctx.tenantId) {
-        throw new Error(
-          'tenant_id does not match this MCP connection. Omit tenant_id when using your personal MCP URL; the server scopes to your workspace automatically.'
-        );
-      }
+      // Session-scoped MCP: always use connection tenant; ignore echoed tenant_id from agents.
       return this.ctx.tenantId;
     }
     const t = args.tenant_id;
@@ -800,10 +832,40 @@ class AlphaCloneMCPServer {
     activeOnly = true
   ): Promise<FacebookIntegrationIdentity[]> {
     const supabaseAdmin = createSupabaseAdminClient();
+
+    const resolveTokens = async (
+      rows: Array<{
+        page_id: string;
+        page_name: string | null;
+        is_active: boolean;
+        metadata: Record<string, unknown> | null;
+        updated_at?: string | null;
+        id: string;
+        expires_at: string | null;
+        page_access_token?: string | null;
+        user_access_token?: string | null;
+      }>
+    ): Promise<FacebookIntegrationIdentity[]> => {
+      const resolved: FacebookIntegrationIdentity[] = [];
+      for (const row of rows) {
+        const tokens = await getFacebookTokens(supabaseAdmin, row);
+        resolved.push({
+          page_id: row.page_id,
+          page_name: row.page_name,
+          is_active: row.is_active,
+          pageAccessToken: tokens.pageAccessToken,
+          metadata: row.metadata,
+          updated_at: row.updated_at,
+        });
+      }
+      return resolved;
+    };
+
+    const selectCols =
+      'id, page_id, page_name, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token';
+
     // 1. Try to query with tenant_id + user_id
-    let query = supabaseAdmin
-      .from('facebook_integrations')
-      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    let query = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
       query = query.eq('is_active', true);
@@ -817,13 +879,11 @@ class AlphaCloneMCPServer {
       .eq('user_id', userId);
 
     if (!tenantError && tenantRows && tenantRows.length > 0) {
-      return tenantRows as FacebookIntegrationIdentity[];
+      return resolveTokens(tenantRows as Parameters<typeof resolveTokens>[0]);
     }
 
     // 2. Fallback: Query with user_id only (in case tenant_id mismatch/missing in connection flow)
-    let fallbackQuery = supabaseAdmin
-      .from('facebook_integrations')
-      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    let fallbackQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
       fallbackQuery = fallbackQuery.eq('is_active', true);
@@ -837,13 +897,11 @@ class AlphaCloneMCPServer {
 
     if (!userError && userRows && userRows.length > 0) {
       console.log(`[Facebook Fallback] Found ${userRows.length} integrations by user_id ${userId} (tenant_id mismatch)`);
-      return userRows as FacebookIntegrationIdentity[];
+      return resolveTokens(userRows as Parameters<typeof resolveTokens>[0]);
     }
 
     // 3. Last fallback: Query by tenant_id only (no user_id filter)
-    let tenantOnlyQuery = supabaseAdmin
-      .from('facebook_integrations')
-      .select('page_id, page_name, is_active, page_access_token, metadata, updated_at');
+    let tenantOnlyQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
 
     if (activeOnly) {
       tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
@@ -857,7 +915,7 @@ class AlphaCloneMCPServer {
 
     if (!tenantOnlyError && tenantOnlyRows && tenantOnlyRows.length > 0) {
       console.log(`[Facebook Fallback] Found ${tenantOnlyRows.length} integrations by tenant_id ${tenantId} (user_id mismatch)`);
-      return tenantOnlyRows as FacebookIntegrationIdentity[];
+      return resolveTokens(tenantOnlyRows as Parameters<typeof resolveTokens>[0]);
     }
 
     return [];
@@ -2761,9 +2819,32 @@ class AlphaCloneMCPServer {
             throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
           }
           
-          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 20);
+          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 50);
+          const CHUNK_SIZE = 3;
+          const ASYNC_THRESHOLD = 5;
+
+          if (combinedIds.length > ASYNC_THRESHOLD) {
+            await enqueueMcpEvent(supabaseAdmin, tenant_id, user_id, 'send_batch_outreach', {
+              lead_ids,
+              client_ids,
+              tone,
+              custom_context,
+              delivery_provider,
+              language_mode: batchLanguage.code,
+            });
+            result = {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  status: 'queued',
+                  message: `Batch outreach queued for ${combinedIds.length} recipients (chunks of ${CHUNK_SIZE}). Poll get_email_campaign_stats or dashboard outreach log for delivery.`,
+                  recipient_count: combinedIds.length,
+                }, null, 2),
+              }],
+            };
+            break;
+          }
           
-          // Fetch the leads/clients
           const [{ data: leads }, { data: clients }] = await Promise.all([
             supabaseAdmin.from('leads').select('*').in('id', combinedIds).eq('tenant_id', tenant_id),
             supabaseAdmin.from('business_clients').select('*').in('id', combinedIds).eq('tenant_id', tenant_id)
@@ -2775,13 +2856,14 @@ class AlphaCloneMCPServer {
             throw new Error('No valid leads or clients found for the provided IDs');
           }
 
-          // Use the same professional prompt style as the dashboard
-          const results = await Promise.all(allEntities.map(async (entity) => {
+          const results: Array<Record<string, unknown>> = [];
+          for (let i = 0; i < allEntities.length; i += CHUNK_SIZE) {
+            const chunk = allEntities.slice(i, i + CHUNK_SIZE);
+            const chunkResults = await Promise.all(chunk.map(async (entity) => {
              const email = entity.email || (entity as any).emails?.[0];
              if (!email) return { name: entity.business_name || entity.name, status: 'failed', error: 'No email found' };
              
              try {
-                // 1. Generate personalized message
                 const prompt = `Generate a highly personalized, professional B2B outreach email for ${entity.business_name || entity.name}.
                 Industry: ${entity.industry || 'Business'}.
                 Target Tone: ${tone}.
@@ -2801,7 +2883,7 @@ class AlphaCloneMCPServer {
                 - NO emojis.
                 - Clear CTA.`;
                 
-                const aiRes = await routeAutonomousTask('social_caption', prompt); // Reuse caption task for short professional outreach
+                const aiRes = await routeAutonomousTask('social_caption', prompt);
                 
                 const emailResult = await sendEmailServer({
                   tenantId: tenant_id,
@@ -2815,7 +2897,6 @@ class AlphaCloneMCPServer {
                 });
                 if (!emailResult.success) throw new Error(emailResult.error || 'Outreach email failed');
 
-                // 3. Log the outreach
                 await supabaseAdmin.from('lead_outreach_log').insert({
                   tenant_id,
                   user_id,
@@ -2831,7 +2912,9 @@ class AlphaCloneMCPServer {
              } catch (err: any) {
                 return { name: entity.business_name || entity.name, status: 'failed', error: err.message };
              }
-          }));
+            }));
+            results.push(...chunkResults);
+          }
           
           result = { 
             content: [{ 
@@ -3261,7 +3344,7 @@ class AlphaCloneMCPServer {
                ? ((page as any).metadata.page_tasks as string[])
                : [];
             const hasTaskPermission = tasks.includes('MANAGE') || tasks.includes('CREATE_CONTENT') || tasks.includes('ADVERTISE');
-            const canPost = !!page.page_access_token && page.is_active && !(page as any)?.metadata?.no_pages && hasTaskPermission;
+            const canPost = !!page.pageAccessToken && page.is_active && !(page as any)?.metadata?.no_pages && hasTaskPermission;
             return {
               page_id: page.page_id,
               page_name: page.page_name,
@@ -3288,7 +3371,7 @@ class AlphaCloneMCPServer {
             ? (integration.metadata.page_tasks as unknown[]).map((task) => String(task))
             : [];
           const canCreateContent = tasks.includes('CREATE_CONTENT') || tasks.includes('MANAGE') || tasks.includes('ADVERTISE');
-          const hasPageToken = Boolean(integration.page_access_token);
+          const hasPageToken = Boolean(integration.pageAccessToken);
           result = { content: [{ type: 'text', text: JSON.stringify({
             page_id: pageId,
             page_name: integration.page_name,
@@ -3321,9 +3404,9 @@ class AlphaCloneMCPServer {
           try { user_id = this.requireProfileUser(a); } catch {}
           const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
-          if (!integration?.page_access_token) throw new Error('No Facebook Page token found for insights.');
+          if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for insights.');
           const metrics = ['post_impressions', 'post_impressions_unique', 'post_engaged_users', 'post_clicks'].join(',');
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.page_access_token)}`);
+          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`);
           const fb = await resp.json();
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook insights unavailable');
           result = { content: [{ type: 'text', text: JSON.stringify({ post_id: postId, insights: fb.data || [] }, null, 2) }] };
@@ -3341,9 +3424,9 @@ class AlphaCloneMCPServer {
           try { user_id = this.requireProfileUser(a); } catch {}
           const rows = await this.getFacebookIntegrations(tenant_id, user_id, pageId || undefined, true);
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
-          if (!integration?.page_access_token) throw new Error('No Facebook Page token found for delete.');
+          if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for delete.');
           pageId = integration.page_id;
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.page_access_token)}`, { method: 'DELETE' });
+          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`, { method: 'DELETE' });
           const fb = await resp.json().catch(() => ({}));
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook delete failed');
           await supabaseAdmin.from('facebook_page_posts').delete().eq('fb_post_id', postId).eq('page_id', pageId);
@@ -3540,7 +3623,7 @@ class AlphaCloneMCPServer {
           const firstMediaUrl = mergedMediaUrls.length > 0 ? mergedMediaUrls[0] : null;
           const isVideoMedia = !!firstMediaUrl && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
 
-          if (hasFacebook && (!integration?.page_access_token || integration?.metadata?.no_pages || !canPublishFacebookPage(integration))) {
+          if (hasFacebook && (!integration?.pageAccessToken || integration?.metadata?.no_pages || !canPublishFacebookPage(integration))) {
             throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
           }
 
@@ -3550,11 +3633,11 @@ class AlphaCloneMCPServer {
           const assuredIntegration = hasFacebook ? integration : null;
 
           if (publish_now && hasFacebook) {
-            if (!assuredIntegration?.page_access_token) {
+            if (!assuredIntegration?.pageAccessToken) {
               throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
             }
             const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
-            graph.searchParams.set('access_token', assuredIntegration.page_access_token);
+            graph.searchParams.set('access_token', assuredIntegration.pageAccessToken);
             const body = new URLSearchParams();
             if (firstMediaUrl) {
               if (isVideoMedia) {
@@ -3700,7 +3783,7 @@ class AlphaCloneMCPServer {
             if (integration?.page_id) resolvedPageId = integration.page_id;
           }
 
-          if (!resolvedPageId || !integration?.page_access_token) {
+          if (!resolvedPageId || !integration?.pageAccessToken) {
             throw new Error('No connected Facebook pages with comment permissions were found.');
           }
 
@@ -3711,7 +3794,7 @@ class AlphaCloneMCPServer {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 message: message.trim(),
-                access_token: integration.page_access_token,
+                access_token: integration.pageAccessToken,
               }),
             }
           );
@@ -3759,7 +3842,9 @@ class AlphaCloneMCPServer {
             .eq('tenant_id', tenant_id)
             .eq('type', 'organization');
 
-          if (orgError) throw supabaseErrorToMcpClientError('get_linkedin_identities', orgError.message);
+          if (orgError && orgError.code !== '42P01') {
+            throw supabaseErrorToMcpClientError('get_linkedin_identities', orgError.message);
+          }
 
           const identities: any[] = [];
 
@@ -3775,8 +3860,21 @@ class AlphaCloneMCPServer {
             });
           }
 
-          if (orgIdentities && orgIdentities.length > 0) {
-            for (const org of orgIdentities) {
+          const orgRows =
+            orgIdentities && orgIdentities.length > 0
+              ? orgIdentities
+              : (Array.isArray((li as any)?.metadata?.company_pages)
+                  ? (li as any).metadata.company_pages
+                  : []
+                ).map((page: Record<string, unknown>) => ({
+                  linkedin_organization_id: String(page.id || ''),
+                  author_urn: `urn:li:organization:${String(page.id || '')}`,
+                  can_post: true,
+                  name: page.name || null,
+                }));
+
+          if (orgRows.length > 0) {
+            for (const org of orgRows) {
               identities.push({
                 type: 'organization',
                 linkedin_organization_id: org.linkedin_organization_id,
@@ -3839,14 +3937,7 @@ class AlphaCloneMCPServer {
             throw new Error('scheduled_at is required when publish_now is false');
           }
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('linkedin_member_id, linkedin_person_urn, access_token, scopes, metadata')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_post', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) {
             throwLinkedInError('LINKEDIN_NOT_CONNECTED', 'LinkedIn is not connected for this workspace/user.');
           }
@@ -4491,14 +4582,7 @@ class AlphaCloneMCPServer {
               : null;
           if (!post_urn) throw new Error('post_urn is required');
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token, scopes')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_post_stats', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const socialActionRes = await fetch(`https://api.linkedin.com/v2/socialActions/${encodeURIComponent(post_urn)}`, {
@@ -4583,14 +4667,7 @@ class AlphaCloneMCPServer {
           const limitCommentsPerPost = Math.min(Math.max(Number(a.limit_comments_per_post || 30), 1), 100);
           const requestedPostUrn = typeof a.post_urn === 'string' && a.post_urn.trim() ? a.post_urn.trim() : '';
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('capture_linkedin_comment_leads', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           let postsQuery = supabaseAdmin
@@ -4704,14 +4781,7 @@ class AlphaCloneMCPServer {
           if (typeof post_urn !== 'string' || !post_urn.trim()) throw new Error('post_urn is required');
           if (typeof text !== 'string' || !text.trim()) throw new Error('text is required');
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('linkedin_person_urn, access_token, scopes')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_comment', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const resp = await fetch('https://api.linkedin.com/v2/socialActions/' + encodeURIComponent(post_urn) + '/comments', {
@@ -4743,14 +4813,7 @@ class AlphaCloneMCPServer {
             throw new Error('reaction_type must be one of: LIKE, PRAISE, MAYBE, EMPATHY, INTEREST, APPRECIATION');
           }
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('linkedin_person_urn, access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_reaction', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const resp = await fetch('https://api.linkedin.com/v2/reactions', {
@@ -4778,14 +4841,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           const { name, description, start_time, end_time, timezone = 'UTC', event_type = 'ONLINE', online_url, linkedin_organization_id } = a;
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('create_linkedin_event', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const payload = {
@@ -4819,14 +4875,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token, scopes')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_accounts', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           // Check for r_ads scope
@@ -4901,14 +4950,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           const { ad_account_id, status } = a;
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_ad_campaigns', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const statusFilter = status ? `(status:(values:LIST(${status})))` : '';
@@ -4933,14 +4975,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
 
-          const { data: li, error: liErr } = await supabaseAdmin
-            .from('linkedin_integrations')
-            .select('access_token')
-            .eq('tenant_id', tenant_id)
-            .eq('user_id', user_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (liErr) throw supabaseErrorToMcpClientError('get_linkedin_member_profile', liErr.message);
+          const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');
 
           const resp = await fetch('https://api.linkedin.com/v2/userinfo', {
@@ -5156,44 +5191,52 @@ class AlphaCloneMCPServer {
               'Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.'
             );
           }
+          if (!contract_type || !client_name) {
+            throw new Error('contract_type and client_name are required');
+          }
 
-          const contractContent = await generateContractDraftText(contract_type, client_name, key_terms);
-          const draftAttribution = 'Claude (via AlphaClone MCP generate_contract_draft)';
-          const draftedContract = appendContractDisclaimer(contractContent, draftAttribution);
-
-          // Attempt to save to contracts table
-          const { data, error } = await supabase
+          const { data: jobRow, error: insertError } = await supabase
             .from('contracts')
             .insert({
               tenant_id,
               title: `${contract_type}: ${client_name}`,
-              content: draftedContract,
+              content: 'Generating draft…',
               status: 'draft',
-              type: contract_type.toLowerCase().replace(/\s+/g, '_'),
+              type: String(contract_type).toLowerCase().replace(/\s+/g, '_'),
+              metadata: { generation_status: 'processing', client_name, key_terms: key_terms || null },
             })
             .select('id, title, status')
             .single();
 
-          if (error) {
-            // Return the draft even if save fails
-            result = {
-              content: [{
-                type: 'text',
-                text: `Contract draft generated for ${client_name} (could not be saved automatically â€” open Contracts in the app to save):\n\n${draftedContract}`,
-              }],
-            };
-          } else {
-            result = {
-              content: [{
-                type: 'text',
-                text: `Contract draft saved!\nID: ${data.id}\nTitle: ${data.title}\nStatus: draft â€” ready for your review in the Contracts section.\n\nPreview:\n${draftedContract.substring(0, 400)}...`,
-              }],
-            };
+          if (insertError || !jobRow?.id) {
+            throw new Error(insertError?.message || 'Could not create contract draft job');
           }
+
+          void processContractDraftJob(
+            supabaseAdmin,
+            jobRow.id,
+            tenant_id,
+            String(contract_type),
+            String(client_name),
+            key_terms ? String(key_terms) : undefined
+          );
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                job_id: jobRow.id,
+                contract_id: jobRow.id,
+                status: 'processing',
+                title: jobRow.title,
+                message: 'Contract draft generation started. Poll get_contract_versions or open Contracts; draft text appears when ready (usually under 60s).',
+              }, null, 2),
+            }],
+          };
           break;
         }
 
-        // â”€â”€ save_contract â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // save_contract
         case 'save_contract': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
@@ -5357,11 +5400,17 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
-          const to = String(a.to || '').trim();
           const subject = String(a.subject || '').trim();
-          if (!to || !subject) throw new Error('to and subject are required');
+          if (!subject) throw new Error('subject is required');
 
-          // Normalise attachments from the MCP schema (content_type -> contentType)
+          const recipient = await resolveMcpEmailRecipient(supabaseAdmin, tenant_id, {
+            to: a.to,
+            lead_id: a.lead_id,
+            client_id: a.client_id,
+            contact_id: a.contact_id,
+          });
+          const to = recipient.email;
+
           const rawAttachments = Array.isArray(a.attachments) ? a.attachments : [];
           const attachments = rawAttachments
             .filter((att: any) => att && typeof att.filename === 'string' && typeof att.content === 'string')
@@ -5381,113 +5430,13 @@ class AlphaCloneMCPServer {
           const publicDocumentLinks: Array<{ name: string; url: string; expiresAt: string }> = [];
 
           if (documentFileIds.length > 0) {
-            const resolvedFiles: Array<{ id: string; storage_path: string; original_filename: string; file_type: string }> = [];
-
-            // 1. Try querying workspace_files first
-            let workspaceFilesRows: any[] | null = null;
-            try {
-              const { data, error } = await supabaseAdmin
-                .from('workspace_files')
-                .select('id, storage_url, file_name, file_type')
-                .eq('tenant_id', tenant_id)
-                .in('id', documentFileIds);
-              if (!error && data && data.length > 0) {
-                workspaceFilesRows = data;
-              }
-            } catch (err) {
-              console.error('Error querying workspace_files table, falling back to file_uploads:', err);
-            }
-
-            if (workspaceFilesRows && workspaceFilesRows.length > 0) {
-              for (const file of workspaceFilesRows) {
-                resolvedFiles.push({
-                  id: file.id,
-                  storage_path: file.storage_url || '',
-                  original_filename: file.file_name || 'AlphaClone document',
-                  file_type: file.file_type || 'application/octet-stream',
-                });
-              }
-            } else {
-              // 2. Fallback to file_uploads
-              const { data: fileRows, error: fileError } = await supabaseAdmin
-                .from('file_uploads')
-                .select('id, storage_path, original_filename, file_type')
-                .eq('tenant_id', tenant_id)
-                .in('id', documentFileIds);
-              if (fileError) throw supabaseErrorToMcpClientError('send_transactional_email', fileError.message);
-
-              for (const file of fileRows || []) {
-                resolvedFiles.push({
-                  id: file.id,
-                  storage_path: file.storage_path || '',
-                  original_filename: file.original_filename || 'AlphaClone document',
-                  file_type: file.file_type || 'application/octet-stream',
-                });
-              }
-            }
-
-            // 3. Process resolved files (download or share link)
-            for (const file of resolvedFiles) {
-              const name = String(file.original_filename);
-              if (includePublicDocumentLinks) {
-                let shareUrl = '';
-                let shareExpiresAt = '';
-                if (file.storage_path.startsWith('http://') || file.storage_path.startsWith('https://')) {
-                  shareUrl = file.storage_path;
-                  shareExpiresAt = new Date(Date.now() + publicLinkExpiresHours * 3600000).toISOString();
-                } else {
-                  const share = await publicShareService.createShare({
-                    tenantId: tenant_id,
-                    bucket: 'uploads',
-                    filePath: String(file.storage_path),
-                    originalName: name,
-                    createdBy: user_id,
-                    expiresInHours: publicLinkExpiresHours,
-                  });
-                  shareUrl = share.url;
-                  shareExpiresAt = share.expiresAt;
-                }
-                publicDocumentLinks.push({ name, url: shareUrl, expiresAt: shareExpiresAt });
-              } else {
-                let fileBuffer: Buffer | null = null;
-                let downloadErrorMsg: string | null = null;
-
-                if (file.storage_path.startsWith('http://') || file.storage_path.startsWith('https://')) {
-                  try {
-                    const response = await fetch(file.storage_path);
-                    if (!response.ok) {
-                      throw new Error(`Fetch failed with status ${response.status}`);
-                    }
-                    const arrayBuffer = await response.arrayBuffer();
-                    fileBuffer = Buffer.from(arrayBuffer);
-                  } catch (fetchErr: any) {
-                    downloadErrorMsg = fetchErr.message || String(fetchErr);
-                  }
-                } else {
-                  const { data: blob, error: downloadError } = await supabaseAdmin.storage
-                    .from('uploads')
-                    .download(String(file.storage_path));
-                  if (downloadError || !blob) {
-                    downloadErrorMsg = downloadError?.message || 'Download returned empty data';
-                  } else {
-                    const arrayBuffer = await blob.arrayBuffer();
-                    fileBuffer = Buffer.from(arrayBuffer);
-                  }
-                }
-
-                if (!fileBuffer) {
-                  throw supabaseErrorToMcpClientError(
-                    'send_transactional_email',
-                    downloadErrorMsg || `Could not attach ${name}`
-                  );
-                }
-
-                attachments.push({
-                  filename: name,
-                  content: fileBuffer.toString('base64'),
-                  contentType: String(file.file_type),
-                });
-              }
+            const resolved = await resolveEmailAttachmentsFromFileIds(tenant_id, documentFileIds);
+            for (const att of resolved) {
+              attachments.push({
+                filename: att.filename,
+                content: att.content,
+                contentType: String(att.content_type || att.contentType || 'application/octet-stream'),
+              });
             }
           }
 
@@ -5512,6 +5461,9 @@ class AlphaCloneMCPServer {
           result = { content: [{ type: 'text', text: JSON.stringify({
             provider: sendResult.provider,
             id: sendResult.emailId,
+            to,
+            recipient_source: recipient.source,
+            recipient_record_id: recipient.recordId,
             attachments_sent: attachments.length,
             document_file_ids_used: documentFileIds,
             public_document_links_created: publicDocumentLinks.length,
@@ -6702,6 +6654,20 @@ Return ONLY a JSON array of 60 objects:
           // 1. Generate Image if not provided
           if (!imageUrl) {
             if (!image_prompt) throw new Error('image_prompt is required if provided_image_url is omitted');
+            const wantsOpenAi = image_provider !== 'xai';
+            if (wantsOpenAi && !process.env.OPENAI_API_KEY) {
+              result = {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    error: 'OPENAI_BILLING_NOT_CONFIGURED',
+                    message: 'OpenAI image generation is unavailable — OPENAI_API_KEY is missing or OpenAI billing is inactive. Retry with image_provider "xai", pass provided_image_url, or activate OpenAI billing in platform settings.',
+                    action_required: true,
+                  }, null, 2),
+                }],
+              };
+              break;
+            }
             try {
               // Try primary provider
               let img = await aiGenerationService.generateImage(userId, 'admin', image_prompt, '1024x1024', image_provider as any);
@@ -6714,12 +6680,16 @@ Return ONLY a JSON array of 60 objects:
               }
 
               if (!img.success || !img.url) {
+                const billingIssue = String(img.error || '').toLowerCase().includes('billing')
+                  || String(img.error || '').toLowerCase().includes('openai');
                 result = {
                   content: [{
                     type: 'text',
                     text: JSON.stringify({
-                      error: 'IMAGE_GENERATION_FAILED',
-                      message: `Could not generate an image for this post. Both AI image providers failed. Reason: ${img.error || 'Unknown'}. Please retry with a different image_prompt, or provide a provided_image_url instead.`,
+                      error: billingIssue ? 'OPENAI_BILLING_LIMIT' : 'IMAGE_GENERATION_FAILED',
+                      message: billingIssue
+                        ? `OpenAI billing limit reached or inactive: ${img.error}. Activate billing, use image_provider "xai", or pass provided_image_url.`
+                        : `Could not generate an image for this post. Both AI image providers failed. Reason: ${img.error || 'Unknown'}. Please retry with a different image_prompt, or provide a provided_image_url instead.`,
                       action_required: true,
                     }, null, 2),
                   }],
@@ -7283,29 +7253,6 @@ Return ONLY a JSON array of 60 objects:
           result = { content: [{ type: 'text', text: JSON.stringify(userResults, null, 2) }] };
           break;
         }
-
-        case 'send_batch_outreach': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { lead_ids, tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
-          
-          if (!Array.isArray(lead_ids) || lead_ids.length === 0) {
-            throw new Error('lead_ids must be a non-empty array of UUIDs');
-          }
-
-          // Trigger autonomous task for bulk outreach
-          const prompt = `Perform bulk outreach for the following leads:\nIDs: ${lead_ids.join(', ')}\nTone: ${tone}\nContext: ${custom_context}\nProvider: ${delivery_provider}`;
-          
-          const taskResult = await routeAutonomousTask(
-            'strategy',
-            prompt,
-            'You are a high-performing Business Development Representative. Generate professional outreach messages. No emojis. No decorative symbols.'
-          );
-
-          result = { content: [{ type: 'text', text: JSON.stringify({ success: true, response: taskResult.content, status: 'completed' }, null, 2) }] };
-          break;
-        }
-
 
         case 'get_projects': {
           const a = args as Record<string, any>;

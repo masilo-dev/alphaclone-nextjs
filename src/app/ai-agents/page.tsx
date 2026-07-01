@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     'DeepSeek',
   ],
   alternates: { canonical: absoluteUrl('/ai-agents') },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'AlphaClone AI Agents',
     description: 'Automate business workflows with AlphaClone AI agents powered by DeepSeek V3/R1.',
     url: absoluteUrl('/ai-agents'),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { isProduction } from '@/lib/security/productionGuard';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
 
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
 
     const signature = req.headers.get('x-twilio-signature');
     const authToken = process.env.TWILIO_AUTH_TOKEN || '';
+    if (isProduction() && (!signature || !authToken)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     if (signature && authToken) {
       const ok = validateTwilioSignature(payload, getRawUrl(req), signature, authToken);
       if (!ok) return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { integrationEmailProviderDeleteSchema, integrationEmailProviderSchema } from '@/schemas/validation';
+import { maskIntegrationConfig } from '@/lib/security/productionGuard';
+import { encryptIntegrationConfig } from '@/lib/integration/integrationTokenCrypto';
 
 type ProviderType = 'sendgrid' | 'resend' | 'brevo' | 'custom_smtp';
 
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       connected: !!data?.enabled,
-      config: data?.config || null,
+      config: maskIntegrationConfig((data?.config || null) as Record<string, unknown> | null),
       webhookUrl: webhookToken ? getWebhookUrl(provider, webhookToken) : '',
     });
   } catch (error) {
@@ -98,13 +100,7 @@ export async function POST(request: NextRequest) {
     const existingConfig = (existing?.config || {}) as Record<string, unknown>;
     const webhookToken = String(existingConfig.webhookToken || createWebhookToken());
 
-    const payload = {
-      tenant_id: tenantId,
-      user_id: tenantCtx.user.id,
-      type: provider,
-      name: getProviderName(provider),
-      enabled: true,
-      config: {
+    const encryptedConfig = await encryptIntegrationConfig({
         ...existingConfig,
         apiKey,
         api_key: apiKey,
@@ -123,7 +119,15 @@ export async function POST(request: NextRequest) {
           imapUser,
           imapPass
         } : {})
-      },
+      });
+
+    const payload = {
+      tenant_id: tenantId,
+      user_id: tenantCtx.user.id,
+      type: provider,
+      name: getProviderName(provider),
+      enabled: true,
+      config: encryptedConfig,
     };
 
     const firstTry = await supabase

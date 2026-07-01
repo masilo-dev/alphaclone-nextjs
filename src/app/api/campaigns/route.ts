@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export async function GET(req: NextRequest) {
@@ -10,6 +11,8 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
+        await requireTenantAccess(tenantId);
+
         const supabase = createSupabaseAdminClient();
         const { data, error } = await supabase
             .from('email_campaigns')
@@ -19,14 +22,21 @@ export async function GET(req: NextRequest) {
 
         if (error) throw error;
         return NextResponse.json({ campaigns: data || [] });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        return routeErrorResponse(err, undefined, req);
     }
 }
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
+
+        if (!body.tenant_id) {
+            return NextResponse.json({ error: 'Missing tenant_id' }, { status: 400 });
+        }
+
+        const { user } = await requireTenantAccess(body.tenant_id);
+
         const supabase = createSupabaseAdminClient();
 
         const { data, error } = await supabase
@@ -41,7 +51,7 @@ export async function POST(req: NextRequest) {
                 scheduled_at: body.scheduled_at,
                 segment_filter: body.segment_filter || {},
                 status: body.scheduled_at ? 'scheduled' : 'draft',
-                created_by: body.created_by,
+                created_by: user.id,
                 total_recipients: 0,
                 total_sent: 0,
                 total_delivered: 0,
@@ -55,8 +65,8 @@ export async function POST(req: NextRequest) {
 
         if (error) throw error;
         return NextResponse.json({ campaign: data });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        return routeErrorResponse(err, undefined, req);
     }
 }
 
@@ -70,6 +80,8 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Missing id or tenantId' }, { status: 400 });
         }
 
+        await requireTenantAccess(tenantId);
+
         const supabase = createSupabaseAdminClient();
         const { error } = await supabase
             .from('email_campaigns')
@@ -79,7 +91,7 @@ export async function DELETE(req: NextRequest) {
 
         if (error) throw error;
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err) {
+        return routeErrorResponse(err, undefined, req);
     }
 }

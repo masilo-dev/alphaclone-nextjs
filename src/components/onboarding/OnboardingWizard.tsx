@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, ChevronRight, Users, FolderPlus, Settings, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
@@ -69,6 +69,37 @@ export function OnboardingWizard() {
         name: '',
         description: '',
     });
+
+    // Persist partial progress: a refresh mid-onboarding must not lose entered data
+    const draftKey = user?.id ? `onboarding_draft_${user.id}` : null;
+
+    useEffect(() => {
+        if (!draftKey) return;
+        try {
+            const raw = localStorage.getItem(draftKey);
+            if (!raw) return;
+            const draft = JSON.parse(raw);
+            if (typeof draft.currentStep === 'number') setCurrentStep(draft.currentStep);
+            if (draft.profileData) setProfileData(draft.profileData);
+            if (Array.isArray(draft.teamInvites)) setTeamInvites(draft.teamInvites);
+            if (draft.projectData) setProjectData(draft.projectData);
+        } catch {
+            // Corrupt draft — start fresh
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [draftKey]);
+
+    useEffect(() => {
+        if (!draftKey) return;
+        try {
+            localStorage.setItem(
+                draftKey,
+                JSON.stringify({ currentStep, profileData, teamInvites, projectData })
+            );
+        } catch {
+            // Storage full/unavailable — non-fatal
+        }
+    }, [draftKey, currentStep, profileData, teamInvites, projectData]);
 
     const markStepComplete = (stepIndex: number) => {
         const newSteps = [...steps];
@@ -212,6 +243,9 @@ export function OnboardingWizard() {
 
     const completeOnboarding = async () => {
         try {
+            if (draftKey) {
+                try { localStorage.removeItem(draftKey); } catch { /* non-fatal */ }
+            }
             // Mark onboarding as complete
             await supabase
                 .from('profiles')

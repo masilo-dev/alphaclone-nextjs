@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 
-// 1×1 transparent GIF binary
+import { verifyInvoiceTrackToken } from '@/lib/security/signedToken';
 const TRANSPARENT_GIF = Buffer.from(
   'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
   'base64'
@@ -30,18 +30,9 @@ export async function GET(
     const { token } = await context.params;
     if (!token) return gifResponse;
 
-    // Decode invoice ID from base64url token
-    let invoiceId: string;
-    try {
-      invoiceId = Buffer.from(token, 'base64url').toString('utf8');
-    } catch {
-      // Invalid token — return pixel silently
-      return gifResponse;
-    }
-
-    // Validate it looks like a UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(invoiceId)) return gifResponse;
+    // Decode invoice ID from signed token (legacy base64url still accepted)
+    const invoiceId = verifyInvoiceTrackToken(token);
+    if (!invoiceId) return gifResponse;
 
     const admin = createSupabaseAdminClient();
     const now = new Date().toISOString();

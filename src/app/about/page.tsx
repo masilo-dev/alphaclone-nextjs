@@ -18,13 +18,13 @@ export const metadata: Metadata = {
         'small business operations software',
     ],
     alternates: { canonical: absoluteUrl('/about') },
-    openGraph: {
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
         url: absoluteUrl('/about'),
         type: 'website',
     },
-    twitter: {
+    twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'CRM, invoicing, scheduling, contracts, messaging, and operations in one connected platform.',

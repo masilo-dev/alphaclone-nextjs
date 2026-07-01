@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     'email notifications',
   ],
   alternates: { canonical: absoluteUrl('/project-management') },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'AlphaClone Project Management',
     description: 'Manage tasks, milestones, and delivery workflows in AlphaClone with email notifications via Zoho, Outlook, and Gmail.',
     url: absoluteUrl('/project-management'),

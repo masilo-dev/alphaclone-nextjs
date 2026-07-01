@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { denyIfInboxTestDisabled } from '@/lib/security/productionGuard';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 
 export async function POST(req: NextRequest) {
+  const denied = denyIfInboxTestDisabled();
+  if (denied) return denied;
+
   try {
     const body = await req.json();
     console.log('[UnifiedInboxFacebookWebhook] Received payload:', JSON.stringify(body));

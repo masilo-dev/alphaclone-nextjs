@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import { saveCalendlyIntegration } from '@/services/calendly/calendlyIntegrationService';
 import {
     pullAndSyncCalendlyEvents,
     registerCalendlyWebhook,
@@ -22,13 +24,24 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
     }
 
-    let tenantId: string;
-    try {
-        const decodedState = JSON.parse(Buffer.from(state, 'base64').toString());
-        tenantId = decodedState.tenantId;
-    } catch (e) {
+    const stateData = parseOAuthState<{ tenantId: string; userId: string }>(state);
+    if (!stateData?.tenantId || !stateData?.userId) {
         return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
     }
+
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data: member } = await supabaseAdmin
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', stateData.userId)
+        .eq('tenant_id', stateData.tenantId)
+        .maybeSingle();
+
+    if (!member?.tenant_id) {
+        return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
+    }
+
+    const tenantId = stateData.tenantId;
 
     const clientId = ENV.VITE_CALENDLY_CLIENT_ID;
     const clientSecret = ENV.CALENDLY_CLIENT_SECRET;
@@ -70,20 +83,7 @@ export async function GET(req: NextRequest) {
         const userUri = userData.resource.uri;
         const schedulingUrl = userData.resource.scheduling_url;
 
-        // Save to Supabase using admin client to bypass RLS
-        const supabaseAdmin = createSupabaseAdminClient();
-
-        // Get current settings first to preserve others
-        const { data: tenant, error: fetchError } = await supabaseAdmin
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenantId)
-            .single();
-
-        if (fetchError || !tenant) {
-            throw new Error('Tenant not found');
-        }
-
+        // Tenant row verified above; tokens stored in calendly_integration_secrets.
         const appOrigin = (ENV.NEXT_PUBLIC_APP_URL || new URL(req.url).origin).replace(/\/$/, '');
         const webhookUrl = `${appOrigin}/api/webhooks/calendly`;
         const webhookSubscriptionUri = await registerCalendlyWebhook(
@@ -92,8 +92,8 @@ export async function GET(req: NextRequest) {
             webhookUrl
         );
 
-        const calendlyConfig = {
-            enabled: true,
+        const calendlyConfig = await saveCalendlyIntegration({
+            tenantId,
             accessToken: tokens.access_token,
             refreshToken: tokens.refresh_token,
             expiresAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
@@ -101,19 +101,7 @@ export async function GET(req: NextRequest) {
             eventUrl: schedulingUrl,
             webhookSubscriptionUri: webhookSubscriptionUri || undefined,
             webhookUrl,
-        };
-
-        const updatedSettings = {
-            ...tenant.settings,
-            calendly: calendlyConfig,
-        };
-
-        const { error: updateError } = await supabaseAdmin
-            .from('tenants')
-            .update({ settings: updatedSettings })
-            .eq('id', tenantId);
-
-        if (updateError) throw updateError;
+        });
 
         const hostUserId = await resolveTenantHostUser(tenantId);
         if (hostUserId) {

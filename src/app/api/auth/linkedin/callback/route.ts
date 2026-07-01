@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
-import { normalizeLinkedInScopes } from '@/lib/social/linkedinIdentityHelpers';
+import { linkedInFetch } from '@/lib/linkedin/linkedinClient';
+import { parseLinkedInOAuthState, type LinkedInOAuthState } from '@/lib/linkedin/oauthState';
+import {
+  fetchLinkedInCompanyPages,
+  normalizeLinkedInScopes,
+  upsertLinkedInIntegration,
+} from '@/services/linkedin/linkedinIntegrationService';
 
 const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/linkedin',
@@ -10,53 +16,7 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-type LinkedInOAuthState = {
-  userId: string;
-  tenantId?: string | null;
-  returnTo?: string | null;
-  ts: number;
-};
-
 const LINKEDIN_REQUIRED_SCOPES = ['w_member_social', 'w_organization_social'] as const;
-
-type LinkedInCompanyPage = {
-  id: string;
-  name: string | null;
-  vanityName: string | null;
-  logoUrl: string | null;
-};
-
-async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInCompanyPage[]> {
-  const url =
-    'https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&projection=(elements*(organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))))';
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'X-Restli-Protocol-Version': '2.0.0',
-    },
-  });
-
-  if (!res.ok) {
-    return [];
-  }
-
-  const payload = await res.json().catch(() => ({}));
-  const elements = Array.isArray(payload?.elements) ? payload.elements : [];
-  return elements
-    .map((entry: any) => {
-      const target = entry?.['organizationalTarget~'];
-      const streams = target?.logoV2?.['original~']?.elements;
-      const firstStream = Array.isArray(streams) ? streams[0] : null;
-      const firstIdentifier = Array.isArray(firstStream?.identifiers) ? firstStream.identifiers[0] : null;
-      return {
-        id: target?.id ? String(target.id) : '',
-        name: target?.localizedName ? String(target.localizedName) : null,
-        vanityName: target?.vanityName ? String(target.vanityName) : null,
-        logoUrl: firstIdentifier?.identifier ? String(firstIdentifier.identifier) : null,
-      } as LinkedInCompanyPage;
-    })
-    .filter((page: LinkedInCompanyPage) => Boolean(page.id));
-}
 
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
   const path =
@@ -87,10 +47,8 @@ export async function GET(req: NextRequest) {
     return buildRedirect(appUrl, null, { ok: false, errorCode: 'missing_params' });
   }
 
-  let stateData: LinkedInOAuthState;
-  try {
-    stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-  } catch {
+  const stateData = parseLinkedInOAuthState(state);
+  if (!stateData) {
     return buildRedirect(appUrl, null, { ok: false, errorCode: 'invalid_state' });
   }
 
@@ -124,7 +82,7 @@ export async function GET(req: NextRequest) {
     });
     const tokenData = await tokenRes.json();
     if (!tokenRes.ok || !tokenData?.access_token) {
-      console.error('[linkedin/callback] token exchange failed:', tokenData);
+      console.error('[linkedin/callback] token exchange failed:', tokenRes.status, tokenData?.error);
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'token_exchange_failed' });
     }
 
@@ -139,14 +97,17 @@ export async function GET(req: NextRequest) {
     const hasMemberWriteScope = scopes.includes('w_member_social');
     const hasOrgWriteScope = scopes.includes('w_organization_social');
     const hasWriteScope = hasMemberWriteScope || hasOrgWriteScope;
-    const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope.toLowerCase()));
+    const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope));
 
-    const profileRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    const profileRes = await linkedInFetch(
+      'https://api.linkedin.com/v2/userinfo',
+      accessToken,
+      { method: 'GET' },
+      { restli: false, retries: 1 }
+    );
     const profileData = await profileRes.json();
     if (!profileRes.ok || !profileData?.sub) {
-      console.error('[linkedin/callback] userinfo failed:', profileData);
+      console.error('[linkedin/callback] userinfo failed:', profileRes.status);
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'profile_failed' });
     }
 
@@ -182,32 +143,34 @@ export async function GET(req: NextRequest) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'tenant_not_found' });
     }
 
-    const { error: upsertError } = await admin.from('linkedin_integrations').upsert(
-      {
-        tenant_id: resolvedTenantId,
-        user_id: stateData.userId,
-        linkedin_member_id: memberId,
-        linkedin_person_urn: personUrn,
-        access_token: accessToken,
-        token_expires_at: tokenExpiresAt,
-        scopes,
-        is_active: hasWriteScope,
-        metadata: {
-          provider: 'linkedin_oauth_connector',
-          name: profileData.name || null,
-          email: profileData.email || null,
-          picture: profileData.picture || null,
-          company_pages: companyPages,
-          company_pages_count: companyPages.length,
-          write_scope_granted: hasWriteScope,
-          missing_required_scopes: missingScopes,
-        },
-        updated_at: new Date().toISOString(),
+    const upsertResult = await upsertLinkedInIntegration({
+      tenantId: resolvedTenantId,
+      userId: stateData.userId,
+      linkedinMemberId: memberId,
+      linkedinPersonUrn: personUrn,
+      accessToken,
+      tokenExpiresAt,
+      scopes,
+      isActive: hasWriteScope,
+      metadata: {
+        provider: 'linkedin_oauth_connector',
+        name: profileData.name || null,
+        email: profileData.email || null,
+        picture: profileData.picture || null,
+        headline: profileData.locale || null,
+        public_profile_url: profileData.profile
+          ? String(profileData.profile)
+          : companyPages[0]?.vanityName
+            ? `https://www.linkedin.com/company/${companyPages[0].vanityName}`
+            : null,
+        company_pages: companyPages,
+        company_pages_count: companyPages.length,
+        write_scope_granted: hasWriteScope,
+        missing_required_scopes: missingScopes,
       },
-      { onConflict: 'tenant_id,user_id,linkedin_member_id' }
-    );
-    if (upsertError) {
-      console.error('[linkedin/callback] integration upsert failed:', upsertError);
+    });
+    if (upsertResult.error || !upsertResult.integrationId) {
+      console.error('[linkedin/callback] integration upsert failed:', upsertResult.error);
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
     }
 
@@ -243,6 +206,7 @@ export async function GET(req: NextRequest) {
     if (!hasMemberWriteScope && !hasOrgWriteScope) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'missing_write_permissions' });
     }
+
     await admin.from('tenant_integrations').upsert(
       {
         tenant_id: resolvedTenantId,
@@ -250,7 +214,7 @@ export async function GET(req: NextRequest) {
         status: 'connected',
         connected_at: new Date().toISOString(),
         configured_by: stateData.userId,
-        metadata: { member_id: memberId },
+        metadata: { member_id: memberId, company_pages_count: companyPages.length },
       },
       { onConflict: 'tenant_id,integration_id' }
     );

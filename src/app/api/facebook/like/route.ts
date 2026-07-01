@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 type LikeRequestBody = {
     pageId: string;
@@ -47,15 +49,10 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const { data: integration } = await supabase
-        .from('facebook_integrations')
-        .select('page_access_token')
-        .eq('user_id', user.id)
-        .eq('page_id', pageId)
-        .eq('is_active', true)
-        .single();
+    const admin = createSupabaseAdminClient();
+    const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
-    const token = integration?.page_access_token;
+    const token = integration?.pageAccessToken;
     if (!token) {
         return NextResponse.json(
             {

@@ -213,29 +213,8 @@ export const authService = {
                 avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${validated.email}`,
             };
 
-            // Welcome email when Supabase returns a session immediately (no email-confirm gate).
-            // Otherwise triggerPlatformWelcomeIfNeeded runs after first SIGNED_IN (e.g. email link).
-            if (typeof window !== 'undefined' && data.session?.access_token) {
-                try {
-                    const welcomeRes = await fetch(`${window.location.origin}/api/email/platform-transactional`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Authorization: `Bearer ${data.session.access_token}`,
-                        },
-                        body: JSON.stringify({
-                            templateName: 'Welcome Email',
-                            variables: { name: validated.name, email: validated.email },
-                        }),
-                    });
-                    if (!welcomeRes.ok) {
-                        console.error('Welcome email failed:', await welcomeRes.text().catch(() => welcomeRes.status));
-                    }
-                } catch (err) {
-                    console.error('Failed to trigger welcome email:', err);
-                }
-            }
-
+            // Welcome email is sent after workspace provisioning on the login/register page,
+            // or via auth/callback for email-confirmation signups — not here (avoids duplicates).
             return { user, error: null };
         } catch (err: any) {
             if (err.name === 'ZodError') {

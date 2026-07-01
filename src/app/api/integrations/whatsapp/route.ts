@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { upsertWhatsAppIntegration } from '@/services/whatsapp/whatsappIntegrationService';
 
 const META_GRAPH_VERSION = 'v18.0';
 const APP_WEBHOOK_PATH = '/api/webhooks/facebook/whatsapp';
@@ -95,37 +96,37 @@ export async function POST(request: NextRequest) {
     // Build the absolute webhook URL for this deployment
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL ||
-      process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'https://alphaclonesystems.com';
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://alphaclonesystems.com');
     const webhookUrl = `${baseUrl}${APP_WEBHOOK_PATH}`;
 
     // 1. Auto-register webhook with Meta — no manual Meta Dashboard step needed
     const webhookResult = await subscribePhoneToWebhook(phoneNumberId.trim(), accessToken.trim(), webhookUrl);
 
-    // 2. Upsert integration record (even if webhook sub fails, store credentials)
+    const upsertResult = await upsertWhatsAppIntegration({
+      tenantId,
+      userId: tenantCtx.user.id,
+      wabaId: wabaId.trim(),
+      phoneNumberId: phoneNumberId.trim(),
+      accessToken: accessToken.trim(),
+      webhookVerified: webhookResult.success,
+      metadata: {
+        alias: alias || 'Meta WhatsApp API',
+        webhook_url: webhookUrl,
+        webhook_subscribed_at: webhookResult.success ? new Date().toISOString() : null,
+        webhook_error: webhookResult.error || null,
+        updated_at: new Date().toISOString(),
+      },
+    });
+
+    if (!upsertResult.integrationId) {
+      return NextResponse.json({ error: upsertResult.error || 'Failed to save integration' }, { status: 500 });
+    }
+
     const { data, error } = await supabase
       .from('whatsapp_integrations')
-      .upsert(
-        {
-          tenant_id: tenantId,
-          user_id: tenantCtx.user.id,
-          waba_id: wabaId.trim(),
-          phone_number_id: phoneNumberId.trim(),
-          access_token: accessToken.trim(),
-          is_active: true,
-          webhook_verified: webhookResult.success,
-          metadata: {
-            alias: alias || 'Meta WhatsApp API',
-            webhook_url: webhookUrl,
-            webhook_subscribed_at: webhookResult.success ? new Date().toISOString() : null,
-            webhook_error: webhookResult.error || null,
-            updated_at: new Date().toISOString(),
-          },
-        },
-        { onConflict: 'tenant_id,waba_id' }
-      )
-      .select()
+      .select('*')
+      .eq('id', upsertResult.integrationId)
       .single();
 
     if (error) {

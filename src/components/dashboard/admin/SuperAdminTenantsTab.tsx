@@ -5,6 +5,8 @@ import {
     Eye,
     Trash2,
     MapPin,
+    PauseCircle,
+    PlayCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { tenantManagementService, TenantInfo } from '../../../services/tenantManagementService';
@@ -26,9 +28,15 @@ const SuperAdminTenantsTab: React.FC = () => {
         setLoading(true);
         const { tenants: data, error } = await tenantManagementService.getAllTenants();
         if (error) {
-            toast.error(`Error loading tenants: ${error}`);
+            if (error.toLowerCase().includes('forbidden') || error.toLowerCase().includes('unauthorized')) {
+                toast.error('Platform super-admin access required.');
+            } else {
+                toast.error(`Error loading tenants: ${error}`);
+            }
+            setTenants([]);
+        } else {
+            setTenants(data);
         }
-        setTenants(data);
         setLoading(false);
     }, []);
 
@@ -52,6 +60,20 @@ const SuperAdminTenantsTab: React.FC = () => {
         } else {
             toast.error(`Error deleting tenant: ${error}`);
         }
+    }, []);
+
+    const handleToggleStatus = useCallback(async (tenant: TenantInfo) => {
+        const nextStatus = tenant.status === 'active' || tenant.status === 'trial' ? 'suspended' : 'active';
+        const label = nextStatus === 'suspended' ? 'suspend' : 'reactivate';
+        if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} "${tenant.name}"?`)) return;
+
+        const { error } = await tenantManagementService.updateTenantStatus(tenant.id, nextStatus);
+        if (error) {
+            toast.error(error);
+            return;
+        }
+        setTenants((prev) => prev.map((t) => (t.id === tenant.id ? { ...t, status: nextStatus } : t)));
+        toast.success(`Tenant ${nextStatus === 'suspended' ? 'suspended' : 'reactivated'}`);
     }, []);
 
     const filteredTenants = tenants.filter(t =>
@@ -118,6 +140,16 @@ const SuperAdminTenantsTab: React.FC = () => {
                     </button>
                     <button
                         type="button"
+                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(t); }}
+                        className="px-2 py-1.5 rounded-lg border border-white/10 text-slate-300 text-xs font-bold hover:bg-white/5"
+                        title={t.status === 'suspended' ? 'Reactivate tenant' : 'Suspend tenant'}
+                    >
+                        {t.status === 'suspended'
+                            ? <PlayCircle className="w-3.5 h-3.5 inline text-emerald-400" />
+                            : <PauseCircle className="w-3.5 h-3.5 inline text-amber-400" />}
+                    </button>
+                    <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); handleDeleteTenant(t.id, t.name); }}
                         className="p-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10"
                     >
@@ -126,7 +158,7 @@ const SuperAdminTenantsTab: React.FC = () => {
                 </div>
             ),
         },
-    ], [handleDeleteTenant, handleViewLogs]);
+    ], [handleDeleteTenant, handleViewLogs, handleToggleStatus]);
 
     const tenantStats = useMemo(() => [
         { label: 'Total tenants', value: tenants.length, sub: `${filteredTenants.length} shown`, Icon: Building2, accent: 'teal' as const },

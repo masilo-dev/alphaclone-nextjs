@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { slackService } from '@/services/slackService';
+import { parseOAuthState } from '@/lib/oauth/oauthState';
+import { upsertSlackIntegration } from '@/services/slack/slackIntegrationService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,9 +16,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!code) {
+    if (!code || !state) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=missing_code`
+      );
+    }
+
+    const stateData = parseOAuthState<{ tenantId: string; userId: string }>(state);
+    if (!stateData?.tenantId || !stateData?.userId) {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=invalid_state`
       );
     }
 
@@ -54,31 +61,22 @@ export async function GET(request: NextRequest) {
     });
 
     const teamData = await teamInfo.json();
+    const tenantId = stateData.tenantId;
 
-    // Save integration to database
-    const supabase = createSupabaseAdminClient();
-    
-    // Get tenant from state or use default
-    const tenantId = state || 'default';
+    const { integrationId, error: saveError } = await upsertSlackIntegration({
+      tenantId,
+      teamId: tokenData.team.id,
+      teamName: teamData.team?.name || tokenData.team.name,
+      botUserId: tokenData.bot_user_id,
+      botAccessToken: tokenData.access_token,
+      userAccessToken: tokenData.authed_user?.access_token ?? null,
+      webhookUrl: tokenData.incoming_webhook?.url ?? null,
+      defaultChannel: tokenData.incoming_webhook?.channel_id,
+      scope: tokenData.scope,
+    });
 
-    const { error: dbError } = await supabase
-      .from('slack_integrations')
-      .upsert({
-        tenant_id: tenantId,
-        team_id: tokenData.team.id,
-        team_name: teamData.team?.name || tokenData.team.name,
-        bot_user_id: tokenData.bot_user_id,
-        bot_access_token: tokenData.access_token,
-        user_access_token: tokenData.authed_user?.access_token,
-        webhook_url: tokenData.incoming_webhook?.url,
-        default_channel: tokenData.incoming_webhook?.channel_id,
-        scope: tokenData.scope,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      });
-
-    if (dbError) {
-      console.error('[Slack OAuth] Database error:', dbError);
+    if (!integrationId || saveError) {
+      console.error('[Slack OAuth] Database error:', saveError);
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/integrations?error=database_error`
       );

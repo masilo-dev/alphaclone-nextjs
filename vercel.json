@@ -43,7 +43,27 @@
       "schedule": "0 7 * * *"
     },
     {
+      "path": "/api/cron/linkedin-token-health",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/meta-token-health",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/zoho-token-health",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/integration-token-health",
+      "schedule": "30 6 * * *"
+    },
+    {
       "path": "/api/cron/sync-zoho-inbox",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-mcp-event-queue",
       "schedule": "*/5 * * * *"
     }
   ]

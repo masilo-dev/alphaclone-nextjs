@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { extractCompanyPagesFromMetadata } from '@/services/linkedin/linkedinIntegrationService';
 
 // 1. get_social_accounts
 registerTool('social', {
@@ -65,7 +66,7 @@ registerTool('social', {
       .eq('tenant_id', args.tenant_id)
       .eq('type', 'organization');
 
-    if (orgError) throw orgError;
+    if (orgError && orgError.code !== '42P01') throw orgError;
 
     const identities: any[] = [];
 
@@ -81,8 +82,18 @@ registerTool('social', {
       });
     }
 
-    if (orgIdentities && orgIdentities.length > 0) {
-      for (const org of orgIdentities) {
+    const orgRows =
+      orgIdentities && orgIdentities.length > 0
+        ? orgIdentities
+        : extractCompanyPagesFromMetadata(personIdentity?.metadata).map((page) => ({
+            linkedin_organization_id: page.id,
+            author_urn: `urn:li:organization:${page.id}`,
+            can_post: true,
+            name: page.name,
+          }));
+
+    if (orgRows.length > 0) {
+      for (const org of orgRows) {
         identities.push({
           type: 'organization',
           linkedin_organization_id: org.linkedin_organization_id,
@@ -124,21 +135,27 @@ registerTool('social', {
   },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const row: Record<string, unknown> = {
+      tenant_id: args.tenant_id,
+      platform: args.platform,
+      content: args.content,
+      asset_id: args.asset_id || null,
+      scheduled_at: args.scheduled_at,
+      status: 'pending',
+    };
+    if (ctx.userId) row.user_id = ctx.userId;
+
     const { data, error } = await supabase
       .from('scheduled_posts')
-      .insert({
-        tenant_id: args.tenant_id,
-        user_id: ctx.userId || null,
-        platform: args.platform,
-        content: args.content,
-        asset_id: args.asset_id || null,
-        scheduled_at: args.scheduled_at,
-        status: 'pending',
-      })
+      .insert(row)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(
+        `schedule_social_post failed: ${error.message}. Tip: use create_social_post with scheduled_at as an alternative.`
+      );
+    }
     return data;
   },
 });

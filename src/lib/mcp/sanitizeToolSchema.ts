@@ -29,19 +29,17 @@ export function mergeSessionArgs(
 ): Record<string, unknown> {
   const merged = { ...args };
 
+  // Session-scoped MCP: ignore client-supplied tenant/user IDs and bind from auth.
+  // Prevents AUTHORIZATION_ERROR when agents echo tenant_id from stale tool schemas.
   if (ctx.tenantId) {
-    const incoming = String(merged.tenant_id || '').trim();
-    if (incoming && incoming !== ctx.tenantId) {
-      throw new Error('tenant_id does not match authenticated workspace');
-    }
+    delete merged.tenant_id;
+    delete merged.tenantId;
     merged.tenant_id = ctx.tenantId;
   }
 
   if (ctx.userId) {
-    const incoming = String(merged.user_id || '').trim();
-    if (incoming && incoming !== ctx.userId) {
-      throw new Error('user_id does not match authenticated user');
-    }
+    delete merged.user_id;
+    delete merged.userId;
     merged.user_id = ctx.userId;
   }
 
