@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'Gmail',
   ],
   alternates: { canonical: absoluteUrl('/lead-management') },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'AlphaClone Lead Management',
     description: 'Capture, qualify, and convert leads using AlphaClone with integrated email outreach via Zoho, Outlook, and Gmail.',
     url: absoluteUrl('/lead-management'),

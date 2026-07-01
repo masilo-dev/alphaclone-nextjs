@@ -14,13 +14,13 @@ export const metadata: Metadata = {
         'AI growth agent pricing',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/pricing' },
-    openGraph: {
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Pricing | AlphaClone Business OS — From $15/month',
         description: 'One unified AI Business OS starting at $15/month. 14-day free trial, no credit card required.',
         url: 'https://alphaclonesystems.com/pricing',
         type: 'website',
     },
-    twitter: {
+    twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'Pricing | AlphaClone Business OS — From $15/month',
         description: 'One unified AI Business OS from $15/month. CRM, finance, contracts, meetings, and AI-assisted workflows with a 14-day free trial.',

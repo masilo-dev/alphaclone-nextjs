@@ -20,25 +20,18 @@ import {
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { useTenant } from '@/contexts/TenantContext';
 
+// Data source: `business_invoices` (status = 'paid') — same table the
+// get_revenue_summary MCP tool reads, so the widget and Bonnie always agree.
+// (Was legacy `invoices` table, which drifted from MCP revenue numbers.)
 interface ChartData {
   month: string;
   revenue: number;
 }
 
-const DEFAULT_CHART_DATA: ChartData[] = [
-  { month: 'Jan', revenue: 45000 },
-  { month: 'Feb', revenue: 52000 },
-  { month: 'Mar', revenue: 49000 },
-  { month: 'Apr', revenue: 63000 },
-  { month: 'May', revenue: 58000 },
-  { month: 'Jun', revenue: 71000 },
-  { month: 'Jul', revenue: 85000 },
-];
-
 export function RevenueChart() {
   const { currentTenant, isLoading: tenantLoading } = useTenant();
   const tenantId = currentTenant?.id;
-  const [data, setData] = useState<ChartData[]>(DEFAULT_CHART_DATA);
+  const [data, setData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const bgCard = useColorModeValue('white', 'gray.800');
@@ -56,8 +49,8 @@ export function RevenueChart() {
         
         // Fetch last 6 months of paid invoices
         const { data: invoices } = await supabase
-          .from('invoices')
-          .select('amount, created_at, status')
+          .from('business_invoices')
+          .select('total, created_at, status')
           .eq('tenant_id', tenantId)
           .eq('status', 'paid');
 
@@ -69,7 +62,7 @@ export function RevenueChart() {
           invoices.forEach((inv: any) => {
             const date = new Date(inv.created_at);
             const key = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().substring(2)}`;
-            monthlyMap[key] = (monthlyMap[key] || 0) + Number(inv.amount || 0);
+            monthlyMap[key] = (monthlyMap[key] || 0) + Number(inv.total || 0);
           });
 
           const formatted = Object.keys(monthlyMap).map((month) => ({
@@ -77,17 +70,15 @@ export function RevenueChart() {
             revenue: monthlyMap[month],
           }));
 
-          if (formatted.length >= 2) {
-            setData(formatted.sort((a, b) => {
-              const parseDate = (str: string) => {
-                const parts = str.split(' ');
-                const mIdx = monthNames.indexOf(parts[0]);
-                const y = parseInt(parts[1], 10);
-                return new Date(y + 2000, mIdx, 1).getTime();
-              };
-              return parseDate(a.month) - parseDate(b.month);
-            }));
-          }
+          setData(formatted.sort((a, b) => {
+            const parseDate = (str: string) => {
+              const parts = str.split(' ');
+              const mIdx = monthNames.indexOf(parts[0]);
+              const y = parseInt(parts[1], 10);
+              return new Date(y + 2000, mIdx, 1).getTime();
+            };
+            return parseDate(a.month) - parseDate(b.month);
+          }));
         }
       } catch (err) {
         console.error('Error fetching revenue chart data:', err);
@@ -129,14 +120,21 @@ export function RevenueChart() {
     >
       <Box mb={4}>
         <Heading size="sm" color={textColor} mb={1}>
-          Revenue Trend
+          Revenue Trend (USD)
         </Heading>
         <Text fontSize="xs" color="gray.500">
-          Monthly income growth overview
+          Paid invoices per month — last 6 months
         </Text>
       </Box>
 
       <Box flex={1} minH={0}>
+        {data.length === 0 ? (
+          <Box display="flex" alignItems="center" justifyContent="center" h="100%">
+            <Text fontSize="sm" color="gray.500" textAlign="center">
+              No paid invoices yet — revenue appears here the moment your first invoice is paid.
+            </Text>
+          </Box>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
@@ -180,6 +178,7 @@ export function RevenueChart() {
             />
           </AreaChart>
         </ResponsiveContainer>
+        )}
       </Box>
     </Box>
   );

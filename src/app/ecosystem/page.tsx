@@ -15,13 +15,13 @@ export const metadata: Metadata = {
         'revenue operations platform',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/ecosystem' },
-    openGraph: {
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'The AlphaClone Ecosystem | Unified Business OS Architecture',
         description: 'Integrated modules for CRM, operations, revenue workflows, agreements, meetings, and analytics in one AlphaClone workspace.',
         url: 'https://alphaclonesystems.com/ecosystem',
         type: 'website',
     },
-    twitter: {
+    twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'The AlphaClone Ecosystem | Unified Business OS',
         description: 'Nine integrated modules. One unified platform. Explore the full AlphaClone Business OS architecture.',

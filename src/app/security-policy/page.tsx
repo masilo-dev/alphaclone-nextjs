@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     'AlphaClone data security',
   ],
   alternates: { canonical: 'https://alphaclonesystems.com/security-policy' },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'Security Policy | AlphaClone Systems',
     description: 'Security and vulnerability reporting information for AlphaClone.',
     url: 'https://alphaclonesystems.com/security-policy',

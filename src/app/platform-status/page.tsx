@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     'AlphaClone incident status',
   ],
   alternates: { canonical: 'https://alphaclonesystems.com/platform-status' },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'Platform Status | AlphaClone Systems',
     description:
       'Service health and reliability information for AlphaClone Systems.',

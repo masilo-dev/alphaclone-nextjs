@@ -43,43 +43,57 @@ registerTool('deals', {
 // 2. create_deal
 registerTool('deals', {
   name: 'create_deal',
-  description: 'Create a new deal in the pipeline.',
+  description: 'Create a new deal in the pipeline. Accepts title or name; value and stage default to 0 and qualified.',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
-    title: z.string(),
-    value: z.number().nonnegative(),
-    stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']),
+    user_id: z.string().uuid().optional(),
+    title: z.string().optional(),
+    name: z.string().optional(),
+    value: z.number().nonnegative().optional(),
+    stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']).optional(),
     contact_id: z.string().uuid().optional(),
+    client_id: z.string().uuid().optional(),
     expected_close_date: z.string().optional(),
+    description: z.string().optional(),
+  }).refine((data) => Boolean(String(data.title || data.name || '').trim()), {
+    message: 'title or name is required',
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-      title: { type: 'string', description: 'Name/title of the deal' },
-      value: { type: 'number', description: 'Value of the deal' },
-      stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] },
+      name: { type: 'string', description: 'Deal name/title (alias: title)' },
+      title: { type: 'string', description: 'Deal name/title (alias: name)' },
+      value: { type: 'number', description: 'Value of the deal (default 0)' },
+      stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'], description: 'Default: qualified' },
       contact_id: { type: 'string', format: 'uuid' },
+      client_id: { type: 'string', format: 'uuid', description: 'CRM client UUID (alias for contact_id)' },
       expected_close_date: { type: 'string', format: 'date-time' },
+      description: { type: 'string' },
     },
-    required: ['tenant_id', 'title', 'value', 'stage'],
+    required: ['name'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const dealName = String(args.title || args.name || '').trim();
+    const contactId = args.contact_id || args.client_id || null;
     const { data, error } = await supabase
       .from('deals')
       .insert({
         tenant_id: args.tenant_id,
-        name: args.title,
-        value: args.value,
-        stage: args.stage,
-        contact_id: args.contact_id || null,
+        name: dealName,
+        value: args.value ?? 0,
+        stage: args.stage || 'qualified',
+        contact_id: contactId,
+        owner_id: ctx.userId || args.user_id || null,
         expected_close_date: args.expected_close_date || null,
+        description: args.description || null,
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(`create_deal failed: ${error.message}`);
+    }
     return data;
   },
 });

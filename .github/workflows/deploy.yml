@@ -70,7 +70,7 @@ jobs:
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     environment:
       name: production
-      url: https://alphaclone.tech
+      url: https://alphaclonesystems.com
 
     steps:
       - name: Checkout code
@@ -167,7 +167,7 @@ jobs:
 
       - name: Check production health
         run: |
-          url="https://alphaclone.tech"
+          url="https://alphaclonesystems.com"
 
           echo "Running health checks on: $url"
 
@@ -192,7 +192,7 @@ jobs:
 
       - name: Performance check
         run: |
-          url="https://alphaclone.tech"
+          url="https://alphaclonesystems.com"
 
           # Measure response time
           response_time=$(curl -o /dev/null -s -w "%{time_total}\n" "$url")

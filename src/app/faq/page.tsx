@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description:
     'Answers about outcomes, fit, and trust for service businesses — plus features, integrations, and comparisons to HubSpot, QuickBooks, and Salesforce.',
   alternates: { canonical: `${SITE_URL}/faq` },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'FAQ | AlphaClone Systems',
     description:
       'Why teams use AlphaClone to connect leads, delivery, and billing — and how it compares to fragmented SaaS stacks.',

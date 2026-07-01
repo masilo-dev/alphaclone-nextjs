@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     description: 'Exercise your California privacy rights under the CCPA. Opt out of the sale or sharing of your personal information, and manage your privacy choices with AlphaClone Systems.',
     keywords: ['CCPA opt out', 'do not sell my data', 'California privacy rights', 'privacy choices', 'AlphaClone privacy'],
     alternates: { canonical: 'https://alphaclonesystems.com/privacy-choices' },
-    openGraph: {
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Your Privacy Choices | AlphaClone Systems',
         description: 'Manage your California privacy rights and opt out of data sharing under the CCPA.',
         url: 'https://alphaclonesystems.com/privacy-choices',

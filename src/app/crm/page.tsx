@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     'Gmail',
   ],
   alternates: { canonical: absoluteUrl('/crm') },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'AlphaClone CRM | Business CRM Platform',
     description: 'Manage pipeline, contacts, and deal execution in AlphaClone CRM with integrated email via Zoho, Outlook, and Gmail.',
     url: absoluteUrl('/crm'),

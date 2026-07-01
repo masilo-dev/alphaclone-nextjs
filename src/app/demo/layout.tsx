@@ -8,13 +8,13 @@ export const metadata: Metadata = {
   description:
     'Interactive demo of AlphaClone: CRM, billing, contracts, scheduling, documents, and automation in one platform.',
   alternates: { canonical: `${SITE_URL}/demo` },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'Product Demo | AlphaClone',
     description: 'Explore AlphaClone in an interactive demo.',
     url: `${SITE_URL}/demo`,
     type: 'website',
   },
-  twitter: {
+  twitter: { images: ['/twitter-image'],
     card: 'summary_large_image',
     title: 'Product Demo | AlphaClone',
     description: 'Explore AlphaClone in an interactive demo.',

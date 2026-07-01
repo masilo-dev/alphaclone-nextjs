@@ -18,24 +18,51 @@ export async function resolveEmailAttachmentsFromFileIds(
 
   const supabase = createSupabaseAdminClient();
   let rows: Record<string, unknown>[] = [];
-  const fileUploads = await supabase
-    .from('file_uploads')
-    .select('*')
+
+  const workspaceFiles = await supabase
+    .from('workspace_files')
+    .select('id, storage_url, file_name, file_type')
     .eq('tenant_id', tenantId)
     .in('id', ids);
 
-  if (!fileUploads.error && fileUploads.data?.length) {
-    rows = fileUploads.data as Record<string, unknown>[];
-  } else {
-    const documents = await supabase
-      .from('documents')
+  if (!workspaceFiles.error && workspaceFiles.data?.length) {
+    rows = workspaceFiles.data.map((file: { id: string; file_name: string | null; storage_url: string | null; file_type: string | null }) => ({
+      id: file.id,
+      original_filename: file.file_name,
+      storage_path: file.storage_url,
+      file_type: file.file_type,
+      bucket: 'uploads',
+    })) as Record<string, unknown>[];
+  }
+
+  const resolvedIds = new Set(rows.map((row) => String(row.id)));
+  const remainingIds = ids.filter((id) => !resolvedIds.has(id));
+
+  if (remainingIds.length > 0) {
+    const fileUploads = await supabase
+      .from('file_uploads')
       .select('*')
       .eq('tenant_id', tenantId)
-      .in('id', ids);
-    if (documents.error) {
-      throw new Error(fileUploads.error?.message || documents.error.message);
+      .in('id', remainingIds);
+
+    if (!fileUploads.error && fileUploads.data?.length) {
+      rows = [...rows, ...(fileUploads.data as Record<string, unknown>[])];
+    } else {
+      const stillMissing = remainingIds.filter(
+        (id) => !rows.some((row) => String(row.id) === id)
+      );
+      if (stillMissing.length > 0) {
+        const documents = await supabase
+          .from('documents')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .in('id', stillMissing);
+        if (documents.error) {
+          throw new Error(fileUploads.error?.message || documents.error.message);
+        }
+        rows = [...rows, ...((documents.data || []) as Record<string, unknown>[])];
+      }
     }
-    rows = (documents.data || []) as Record<string, unknown>[];
   }
 
   const attachments: EmailAttachment[] = [];

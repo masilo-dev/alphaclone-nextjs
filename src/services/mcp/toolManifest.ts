@@ -564,14 +564,16 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_deal',
-    description: 'Create a new deal in the CRM pipeline from a qualified lead.',
+    description: 'Create a new deal in the CRM pipeline. Accepts name or title; value defaults to 0, stage defaults to qualified. Workspace resolved from MCP session.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        name: { type: 'string', description: 'Deal name/title' },
-        value: { type: 'number', description: 'Estimated deal value in USD' },
+        name: { type: 'string', description: 'Deal name/title (alias: title)' },
+        title: { type: 'string', description: 'Deal name/title (alias: name)' },
+        value: { type: 'number', description: 'Estimated deal value in USD (default 0)' },
         stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
+        contact_id: { type: 'string', description: 'Optional contact UUID' },
+        client_id: { type: 'string', description: 'Optional CRM client UUID' },
         description: { type: 'string' },
       },
       required: ['name'],
@@ -1940,13 +1942,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'send_transactional_email',
-    description: 'Send a transactional email using the caller user scoped provider configuration. Supports base64 file attachments for sending PDFs and documents. For Claude, Manus, Grok, and other MCP clients: send documents as attachments/native email by default; do not create or include external document links unless the user explicitly asks. If no stored sender signature exists, ask the user for email_signature before sending.',
+    description: 'Send a transactional email using the caller user scoped provider configuration. Pass `to` OR lead_id/contact_id/client_id to resolve the recipient from CRM records. Attach files via base64 attachments[] (preferred) or document_file_ids (resolved to base64 attachments). Workspace/user are resolved from your MCP session — do not pass tenant_id.',
     inputSchema: {
       type: 'object',
       properties: {
-        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
-        user_id: { type: 'string' },
-        to: { type: 'string' },
+        to: { type: 'string', description: 'Recipient email (optional if lead_id, contact_id, or client_id is provided)' },
+        lead_id: { type: 'string', description: 'Resolve recipient email from a lead record' },
+        contact_id: { type: 'string', description: 'Resolve recipient email from a contact record' },
+        client_id: { type: 'string', description: 'Resolve recipient email from a business client record' },
         subject: { type: 'string' },
         html: { type: 'string' },
         text: { type: 'string' },
@@ -1956,7 +1959,7 @@ export const MCP_TOOLS = [
         document_file_ids: {
           type: 'array',
           items: { type: 'string' },
-          description: 'Optional AlphaClone Document Hub file_uploads IDs. By default these are attached directly to the email.',
+          description: 'Document Hub / workspace_files / file_uploads IDs — converted to base64 email attachments automatically.',
         },
         include_public_document_links: {
           type: 'boolean',

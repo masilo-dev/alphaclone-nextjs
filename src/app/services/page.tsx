@@ -19,13 +19,13 @@ export const metadata: Metadata = {
         'Data Sovereignty',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/services' },
-    openGraph: {
+    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Operating System | AlphaClone Unified AI Business OS',
         description: 'Run AI sales workflows, CRM, projects, invoicing, contracts, and meetings from one operating backbone.',
         url: 'https://alphaclonesystems.com/services',
         type: 'website',
     },
-    twitter: {
+    twitter: { images: ['/twitter-image'],
         card: 'summary_large_image',
         title: 'Operating System | AlphaClone Unified AI Business OS',
         description: 'One workspace for AI sales workflows, CRM, projects, invoicing, contracts, and meetings. Starting at $15/month.',
