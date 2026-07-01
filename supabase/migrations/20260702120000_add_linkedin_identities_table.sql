@@ -1,9 +1,39 @@
+-- Ensure all required columns exist on public.linkedin_identities
+ALTER TABLE public.linkedin_identities
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS author_urn TEXT,
+  ADD COLUMN IF NOT EXISTS type TEXT,
+  ADD COLUMN IF NOT EXISTS linkedin_organization_id TEXT,
+  ADD COLUMN IF NOT EXISTS name TEXT,
+  ADD COLUMN IF NOT EXISTS vanity_name TEXT,
+  ADD COLUMN IF NOT EXISTS logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS can_post BOOLEAN DEFAULT true,
+  ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS integration_id UUID,
+  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- Cast author_urn to TEXT if it was stored as JSONB (from older migration)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'linkedin_identities'
+      AND column_name = 'author_urn'
+      AND data_type IN ('json', 'jsonb')
+  ) THEN
+    ALTER TABLE public.linkedin_identities
+      ALTER COLUMN author_urn TYPE text USING author_urn::text;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS public.linkedin_identities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
   type TEXT NOT NULL DEFAULT 'organization',
-  linkedin_organization_id TEXT NOT NULL,
+  linkedin_organization_id TEXT,
   author_urn TEXT NOT NULL,
   name TEXT,
   vanity_name TEXT,
@@ -11,8 +41,7 @@ CREATE TABLE IF NOT EXISTS public.linkedin_identities (
   can_post BOOLEAN NOT NULL DEFAULT true,
   metadata JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT linkedin_identities_type_check CHECK (type = 'organization')
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS linkedin_identities_tenant_user_type_org_key
@@ -66,46 +95,7 @@ CREATE POLICY linkedin_identities_update_tenant_members
     )
   );
 
-INSERT INTO public.linkedin_identities (
-  tenant_id,
-  user_id,
-  type,
-  linkedin_organization_id,
-  author_urn,
-  name,
-  vanity_name,
-  logo_url,
-  can_post,
-  metadata,
-  updated_at
-)
-SELECT
-  li.tenant_id,
-  li.user_id,
-  'organization',
-  page->>'id',
-  'urn:li:organization:' || page->>'id',
-  NULLIF(page->>'name', ''),
-  NULLIF(page->>'vanityName', ''),
-  NULLIF(page->>'logoUrl', ''),
-  COALESCE(li.scopes @> ARRAY['w_organization_social']::text[], false),
-  jsonb_build_object(
-    'source', 'linkedin_integrations.metadata.company_pages',
-    'integration_id', li.id,
-    'member_id', li.linkedin_member_id
-  ),
-  NOW()
-FROM public.linkedin_integrations li
-CROSS JOIN LATERAL jsonb_array_elements(COALESCE(li.metadata->'company_pages', '[]'::jsonb)) AS page
-WHERE page ? 'id'
-ON CONFLICT (tenant_id, user_id, type, linkedin_organization_id)
-DO UPDATE SET
-  author_urn = EXCLUDED.author_urn,
-  name = EXCLUDED.name,
-  vanity_name = EXCLUDED.vanity_name,
-  logo_url = EXCLUDED.logo_url,
-  can_post = EXCLUDED.can_post,
-  metadata = EXCLUDED.metadata,
-  updated_at = NOW();
+-- Backfill is handled at runtime via the LinkedIn OAuth callback.
+-- No bulk INSERT needed here as the table starts empty and rows are populated on connect.
 
 NOTIFY pgrst, 'reload schema';
