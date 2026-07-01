@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 import {
     sendPlatformTemplateEmail,
     USER_INITIATED_PLATFORM_TEMPLATES,
@@ -30,6 +31,9 @@ function createUserClient(accessToken: string) {
  */
 export async function POST(req: NextRequest) {
     try {
+        const limited = await rateLimitMiddleware(req, rateLimitConfigs.auth.verifyEmail);
+        if (limited) return limited;
+
         const body = await req.json();
         const templateName = String(body?.templateName ?? '');
         const variables = (body?.variables ?? {}) as Record<string, string | number>;
@@ -76,11 +80,12 @@ export async function POST(req: NextRequest) {
             'there';
 
         const mergedVars: Record<string, string | number> = {
+            ...variables,
             name,
             email: normalizedEmail,
             dashboardUrl: defaultDashboardUrl(),
-            ...variables,
         };
+        delete mergedVars.to;
 
         const result = await sendPlatformTemplateEmail(admin, {
             templateName,

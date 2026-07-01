@@ -26,6 +26,14 @@ function parseRpcPayload(data: unknown): RpcRow | null {
     return null;
 }
 
+export async function getTenantAiUnitsStatus(
+    admin: SupabaseClient,
+    tenantId: string,
+    plan: string | null | undefined
+): Promise<TenantAiUnitsConsumeResult> {
+    return consumeTenantAiUnits(admin, tenantId, plan, 0);
+}
+
 export async function consumeTenantAiUnits(
     admin: SupabaseClient,
     tenantId: string,

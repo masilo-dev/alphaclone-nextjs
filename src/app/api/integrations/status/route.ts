@@ -9,6 +9,7 @@ import {
 import { getWhatsAppIntegrationWithToken } from '@/services/whatsapp/whatsappIntegrationService';
 import { getInstagramIntegrationWithToken } from '@/services/instagram/instagramIntegrationService';
 import { getLinkedInIntegrationWithToken } from '@/services/linkedin/linkedinIntegrationService';
+import { getSlackIntegrationWithSecrets } from '@/services/slack/slackIntegrationService';
 import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export async function GET(req: NextRequest) {
@@ -152,45 +153,44 @@ async function checkAllIntegrations(tenantId: string, userId: string, supabase: 
 }
 
 async function checkSlackIntegration(tenantId: string, supabase: any) {
-  const { data: integration, error } = await supabase
-    .from('slack_integrations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .single();
+  const integration = await getSlackIntegrationWithSecrets(supabase, tenantId);
 
-  if (error || !integration) {
+  if (!integration) {
     return {
       status: 'not_connected',
       percentage: 0,
       issues: ['Slack integration not connected'],
       actions: ['Connect Slack workspace'],
-      connected: false
+      connected: false,
+      reconnectRequired: false,
     };
   }
 
   const issues = [];
   const actions = [];
   let percentage = 0;
+  let reconnectRequired = false;
 
-  // Check required fields
   if (!integration.team_id) {
     issues.push('Team ID missing');
     actions.push('Reconnect Slack to get Team ID');
+    reconnectRequired = true;
   } else {
     percentage += 25;
   }
 
-  if (!integration.bot_access_token) {
+  if (!integration.botAccessToken) {
     issues.push('Bot access token missing');
-    actions.push('Reconnect Slack to get bot access token');
+    actions.push('Reconnect Slack to refresh bot access token');
+    reconnectRequired = true;
   } else {
     percentage += 25;
   }
 
-  if (!integration.webhook_url) {
+  if (!integration.webhookUrl) {
     issues.push('Webhook URL missing');
-    actions.push('Configure webhook URL');
+    actions.push('Configure webhook URL or reconnect Slack');
+    reconnectRequired = true;
   } else {
     percentage += 25;
   }
@@ -203,9 +203,9 @@ async function checkSlackIntegration(tenantId: string, supabase: any) {
   }
 
   // Test webhook if available
-  if (integration.webhook_url && percentage === 100) {
+  if (integration.webhookUrl && percentage === 100) {
     try {
-      const testResponse = await fetch(integration.webhook_url, {
+      const testResponse = await fetch(integration.webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -238,6 +238,7 @@ async function checkSlackIntegration(tenantId: string, supabase: any) {
     issues,
     actions,
     connected: true,
+    reconnectRequired,
     lastChecked: new Date().toISOString()
   };
 }

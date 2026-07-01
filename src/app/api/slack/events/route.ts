@@ -89,7 +89,7 @@ async function handleMentionEvent(event: any) {
   }
 
   // Send help message when bot is mentioned
-  await slackService.sendMessage(integration, channel, {
+  await slackService.sendMessage(integration.tenant_id, channel, {
     text: `👋 Hi <@${user}>! I'm AlphaClone bot. Use \`/alphaclone help\` to see available commands.`,
     blocks: [
       {

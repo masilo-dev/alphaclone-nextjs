@@ -31,44 +31,10 @@ export async function refreshCalendlyToken(
   tenantId: string,
   config: CalendlyTenantConfig
 ): Promise<CalendlyTenantConfig> {
-  if (!config.refreshToken || !config.expiresAt) return config;
-  if (new Date(config.expiresAt).getTime() >= Date.now() + 5 * 60_000) return config;
-
-  const clientId = ENV.VITE_CALENDLY_CLIENT_ID || '';
-  const clientSecret = ENV.CALENDLY_CLIENT_SECRET || '';
-  const tokenRes = await fetch('https://auth.calendly.com/oauth/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      // OAuth 2.1 / Calendly refresh token rotation requires Basic Auth header
-      'Authorization': `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: config.refreshToken,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    throw new Error('Calendly token expired and refresh failed. Please reconnect.');
-  }
-
-  const tokens = await tokenRes.json();
-  const updated: CalendlyTenantConfig = {
-    ...config,
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token || config.refreshToken,
-    expiresAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
-  };
-
-  const supabase = createSupabaseAdminClient();
-  const { data: tenant } = await supabase.from('tenants').select('settings').eq('id', tenantId).single();
-  if (tenant) {
-    const settings = { ...(tenant.settings || {}), calendly: { ...(tenant.settings?.calendly || {}), ...updated } };
-    await supabase.from('tenants').update({ settings }).eq('id', tenantId);
-  }
-
-  return updated;
+  const admin = createSupabaseAdminClient();
+  const { refreshCalendlyTokenIfNeeded } = await import('@/services/calendly/calendlyIntegrationService');
+  const refreshed = await refreshCalendlyTokenIfNeeded(admin, tenantId);
+  return refreshed || config;
 }
 
 export async function resolveTenantHostUser(tenantId: string): Promise<string | null> {

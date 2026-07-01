@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { BookOpen, CheckCircle2, Loader2, Mic, MicOff, Send, Wrench, XCircle } from 'lucide-react';
+import { BookOpen, CheckCircle2, Loader2, Mic, MicOff, Send, Wrench, XCircle, Zap } from 'lucide-react';
 import BonnieApprovalCard from './BonnieApprovalCard';
 import { bonnieService } from '@/services/bonnieService';
 
@@ -62,6 +62,14 @@ type BonnieChatSendResult = {
   error?: boolean;
   tools?: BonnieToolStep[];
   approval?: BonniePendingApproval;
+};
+
+type BonnieAiQuota = {
+  used: number;
+  limit: number;
+  remaining: number;
+  percentUsed: number;
+  resetsAt: string;
 };
 
 type BonnieChatPanelProps = {
@@ -127,6 +135,7 @@ export default function BonnieChatPanel({
   const [sending, setSending] = useState(false);
   const [agentPhase, setAgentPhase] = useState<'idle' | 'thinking' | 'executing' | 'responding'>('idle');
   const [listening, setListening] = useState(false);
+  const [aiQuota, setAiQuota] = useState<BonnieAiQuota | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -218,6 +227,36 @@ export default function BonnieChatPanel({
     if (!storageKey || typeof window === 'undefined') return;
     sessionStorage.setItem(storageKey, JSON.stringify(messages.slice(-40)));
   }, [messages, storageKey]);
+
+  useEffect(() => {
+    if (!tenantId) {
+      setAiQuota(null);
+      return;
+    }
+    let cancelled = false;
+    const loadQuota = async () => {
+      try {
+        const res = await fetch(`/api/bonnie/quota?tenantId=${encodeURIComponent(tenantId)}`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setAiQuota({
+            used: Number(data.used ?? 0),
+            limit: Number(data.limit ?? 0),
+            remaining: Number(data.remaining ?? 0),
+            percentUsed: Number(data.percentUsed ?? 0),
+            resetsAt: String(data.resetsAt || ''),
+          });
+        }
+      } catch {
+        // quota display is optional
+      }
+    };
+    void loadQuota();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, sending]);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -454,6 +493,39 @@ export default function BonnieChatPanel({
       </div>
 
       <div className="shrink-0 border-t border-slate-800 bg-slate-950/80 p-3">
+        {tenantId && aiQuota && (
+          <div className="mb-2 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-2">
+            <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
+              <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-400">
+                <Zap className="h-3 w-3 text-teal-400" />
+                Daily AI quota
+              </span>
+              <span
+                className={
+                  aiQuota.percentUsed >= 90
+                    ? 'text-rose-400'
+                    : aiQuota.percentUsed >= 75
+                      ? 'text-amber-400'
+                      : 'text-teal-400'
+                }
+              >
+                {aiQuota.remaining.toLocaleString()} / {aiQuota.limit.toLocaleString()} left
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-slate-800">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  aiQuota.percentUsed >= 90
+                    ? 'bg-rose-500'
+                    : aiQuota.percentUsed >= 75
+                      ? 'bg-amber-500'
+                      : 'bg-teal-500'
+                }`}
+                style={{ width: `${Math.min(100, aiQuota.percentUsed)}%` }}
+              />
+            </div>
+          </div>
+        )}
         <Link
           href="/dashboard/help"
           className="mb-2 inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-teal-400 transition-colors"

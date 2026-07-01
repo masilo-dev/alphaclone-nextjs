@@ -45,6 +45,7 @@ import { onLeadCreated } from '../../lib/leads/leadOnCreated';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
+import { insertBeforeEmailFooter } from '../../lib/email/emailComposition';
 import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
 import {
   cancelRun,
@@ -269,17 +270,15 @@ async function resolveMcpEmailSignature(
 }
 
 function appendSignatureToEmail(input: { html?: unknown; text?: unknown }, signature: string) {
-  const footer = "Sent through AlphaClone Systems. This message and any attached documents were sent from the sender's AlphaClone workspace.";
-  // Bug #5 fix: when signature is empty, only append the footer (no double blank line before it)
   const sigBlock = signature ? `${signature}\n\n` : '';
-  const textSignature = `${sigBlock}--\n${footer}`;
+  const textSignature = signature ? `${sigBlock}--\n${signature}` : '';
   const htmlSigBlock = signature ? `${signature.replace(/\n/g, '<br>')}<br><br>` : '';
-  const htmlSignature = `${htmlSigBlock}<small style="color:#64748b">${footer}</small>`;
+  const htmlSignature = signature ? `${htmlSigBlock}<p style="margin:0;color:#64748b;font-size:12px;">--</p>` : '';
 
   return {
-    html: input.html ? `${String(input.html)}<br><br>${htmlSignature}` : undefined,
-    text: input.text ? `${String(input.text)}\n\n${textSignature}` : undefined,
-    fallbackText: `Please see the attached document.\n\n${textSignature}`,
+    html: input.html && signature ? `${String(input.html)}<br><br>${htmlSignature}` : (input.html ? String(input.html) : undefined),
+    text: input.text && signature ? `${String(input.text)}\n\n${textSignature}` : (input.text ? String(input.text) : undefined),
+    fallbackText: signature ? `Please see the attached document.\n\n${textSignature}` : 'Please see the attached document.',
   };
 }
 
@@ -309,9 +308,12 @@ function appendDocumentLinksToEmail(
     '</ul>',
   ].join('');
 
+  const htmlBase = input.html ? String(input.html) : '';
+  const textBase = input.text ? String(input.text) : '';
+
   return {
-    html: input.html ? `${String(input.html)}<br><br>${htmlLinks}` : undefined,
-    text: input.text ? `${String(input.text)}\n\n${textLinks}` : undefined,
+    html: htmlBase ? insertBeforeEmailFooter(htmlBase, htmlLinks) : undefined,
+    text: textBase ? insertBeforeEmailFooter(textBase, textLinks) : undefined,
     fallbackText: `${input.fallbackText || 'Please review the linked documents.'}\n\n${textLinks}`,
   };
 }
