@@ -1,0 +1,3968 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "AlphaClone",
+    "subtitle": "Business OS for CRM and ops",
+    "description": "AlphaClone helps teams manage CRM, finance, projects, messaging, social publishing, and AI workflows from one business operating system with MCP-powered automation.",
+    "category": "BUSINESS"
+  },
+  "tools": {
+    "accounting_snapshot": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "activate_skill_for_session": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "add_task_dependency": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "ai_business_readiness_score": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "analyze_document_intelligence": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "analyze_workspace_document_url": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "approve_dream_update": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "auto_create_lead_from_message": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "automate_expense_entry": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "autonomous_reply": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "award_points": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "backfill_contact_phone_country_codes": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "book_calendar_meeting": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "business_memory_graph": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "campaign_brief": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "campaign_diagnose": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "cancel_meeting": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Can delete, cancel, overwrite, or revoke workspace data."
+      }
+    },
+    "cancel_run": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Can delete, cancel, overwrite, or revoke workspace data."
+      }
+    },
+    "capture_linkedin_comment_leads": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "client_pulse": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "create_bank_account": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_bulk_email_batch": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_bulk_email_campaign": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_business_event": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_client": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_client_portal_event": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_contact": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_contract": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_contract_template": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_contract_version": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_deal": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_email_sequence": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_expense": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_in_app_notification": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_invoice": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_journal_entry": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_lead": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_linkedin_comment": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "create_linkedin_event": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "create_linkedin_post": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "create_linkedin_reaction": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "create_meeting": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_post": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_post_with_ai_image": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_project": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_project_task": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_quote": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_reconciliation_session": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_social_post": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_social_post_with_media": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "create_subscription_checkout": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "create_task": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_tasks_batch": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_ticket": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "create_vendor_bill": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "deal_to_cash_flow": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "define_outcome": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "delete_contact": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Can delete, cancel, overwrite, or revoke workspace data."
+      }
+    },
+    "delete_facebook_post": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "disable_whatsapp_chatbot": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "document_qa": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "document_url_qa": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "draft_reply": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "enable_lead_auto_outreach": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "enable_whatsapp_chatbot": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "enroll_contact_in_sequence": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "escalate_ticket": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "evaluate_business_ai_readiness": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "execute_strategic_intelligence": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "export_to_google_workspace": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "find_and_qualify_leads": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_business_report": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_contract_draft": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_contract_signing_token": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_expense_report": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_grok_video": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_market_authority_report": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_outreach_draft": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "generate_viral_video_script": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "get_account_overview": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_accounts_payable_aging": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_accounts_receivable_aging": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_api_health": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_automation_health": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_balance_sheet": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_bank_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_batch_job_status": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_business_ai_state": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_business_events": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_business_snapshot": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_calendly_status": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_cash_flow_statement": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_chatbot_conversations": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_chatbot_performance": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_chatbot_persona": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_client_by_id": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_client_email_history": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_client_history": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_clients": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_contact_activity": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_contacts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_contract_approvals": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_contract_templates": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_contract_versions": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_contracts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_current_user": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_dashboard_stats": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_deals": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_documents": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_dream_sessions": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_email_campaign_delivery_status": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_email_campaign_stats": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_expenses": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_facebook_identities": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_facebook_page_capabilities": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_facebook_post_insights": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_facebook_token": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_failure_report": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_file_download_url": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_finance_snapshot": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_gamification_leaderboard": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_inventory_items": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_invoice_line_items": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_invoices": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_leads": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_linkedin_ad_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_linkedin_ad_campaigns": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_linkedin_identities": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_linkedin_member_profile": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_linkedin_post_stats": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_linkedin_posts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_meetings": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_momentum_score": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_nexus_memory": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_orchestration_history": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_pipeline_summary": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_pnl_statement": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_post_analytics": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_project_details": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_project_milestones": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_project_summary": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_project_tasks": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_project_timeline": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_projects": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_quotes": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_recent_messages": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_reconciliation_sessions": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_revenue_summary": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_run_status": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_scheduled_posts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_scraper_leads": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_sequence_stats": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_social_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_strategic_plan": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_tasks": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_tenant_messages": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_throughput_report": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_ticket_stats": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_tickets": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_user_points": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_vendor_bills": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_whatsapp_status": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_workspace_widgets": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_x_profile": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_x_timeline": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_zoho_mail_messages": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "get_zoho_mail_thread": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "gmail_get_thread": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "gmail_list_threads": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "gmail_send_email": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "kickoff_project_automation": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "list_event_subscriptions": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "list_files": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "list_playbooks": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "list_skills": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "load_skill": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "log_contact_activity": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "mark_message_read": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_connection_diagnostic": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_create_chat": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_create_event": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_create_meeting": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_create_task": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_calendar": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_chats": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_contacts": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_emails": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_joined_teams": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_tasks": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_team_channels": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_get_teams_messages": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_send_channel_message": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_send_chat_message": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_send_email": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "microsoft_upload_file": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "move_deal_stage": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_calendar_nexus": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_content_synthesis": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_contract_drafter": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_design_audit": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_email_triage": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_invoice_chasing": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_lead_enrichment": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_market_pulse": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_meeting_intelligence": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_month_end_close": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_onboarding_flow": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_payroll_sync": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_project_architect": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_sales_campaign": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_strategic_orchestrator": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "nexus_support_triage": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "onboard_user_automation": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "orchestrate_meeting_workflow": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "orchestrate_task": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "owner_autopilot_queue": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "parse_lead_criteria": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "plan_social_calendar": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "post_x_tweet": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "predict_deal_win_probability": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "publish_facebook_multi_photo": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "publish_facebook_reel": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "qualify_crm_leads": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "queue_email_campaign_send": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "read_url_content": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "recommend_next_steps": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "reconcile_outreach_vs_logs": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "reconcile_payment": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "reorder_widgets": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "reply_to_x_tweet": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "reply_to_zoho_mail": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "request_contract_approval": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "retry_run_step": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "revenue_recovery_agent": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "review_contract_approval": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "run_autonomous_scan": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "run_chief_of_staff_routine": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "run_mcp_agent_workflow": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "run_playbook": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "run_strategic_pnl_audit": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "save_contract": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "schedule_social_automation": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "schedule_social_post": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "score_deal": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "search_clients": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "search_contacts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "search_documents": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "search_facebook_leads": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "search_x_tweets": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "search_x_users": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "segment_clients_by_criteria": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "send_batch_outreach": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_bulk_email_campaign": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_contract": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_document_to_claude": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_invoice": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_message": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "send_project_email": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_quote": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_receipt": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_task_email": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_tenant_message": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "send_transactional_email": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_whatsapp_message": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "send_x_dm": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "set_chatbot_handoff_rules": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "set_outreach_limits": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "set_task_recurrence": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "solo_owner_operator_brief": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "solo_owner_time_savings_meter": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "solo_owner_value_map": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "start_contract_lifecycle": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "start_email_campaign": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "start_invoice_lifecycle": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "start_lead_campaign": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "start_lead_nurture": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "store_facebook_token": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "subscribe_events": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "summarize_ticket": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "summarize_workspace": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "sync_all_inboxes": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "sync_calendly_events": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "task_create": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "task_delete": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "task_get_results": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "task_list": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "task_pause": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "task_resume": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "toggle_widget_visibility": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "train_chatbot": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "trigger_bonnie_dream": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "trigger_deal_automation": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "trust_ledger": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "unsubscribe_event": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Can send, publish, cancel, or delete an irreversible external action."
+      }
+    },
+    "update_business_ai_state": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_chatbot_persona": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_client": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_client_metadata": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_client_status_batch": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_contact": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_contract_status": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_deal": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_inventory_stock": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_invoice": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_invoice_status": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_lead": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_lead_status": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_project": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_project_status": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_project_task": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_quote": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_task": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "update_ticket": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "upload_document": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "upload_media_asset": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "upsert_nexus_memory": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "verify_invoice_sent": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "verify_lead_created": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "verify_outreach_delivery": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "verify_social_post_published": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "voice_action_router": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "write_audit_log": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "write_task_note": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates private workspace data, so it is not read-only.",
+        "open_world_justification": "Operates only on private workspace data and does not publish externally.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    },
+    "x_connection_diagnostic": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Mutates data or triggers an action, so it is not read-only.",
+        "open_world_justification": "Can change state in an external third-party system or public channel.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything irreversibly."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "Summarize the workspace health and key metrics.",
+      "user_prompt": "Give me a quick business snapshot for my workspace.",
+      "file_attachment_urls": null,
+      "tools_triggered": "get_business_snapshot",
+      "expected_output": "Returns an overview of business health, key counts, and relevant operational signals.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Show connected LinkedIn identities before posting.",
+      "user_prompt": "Show my LinkedIn identities and company pages.",
+      "file_attachment_urls": null,
+      "tools_triggered": "get_linkedin_identities",
+      "expected_output": "Returns the personal identity and any connected organization identities with posting availability.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Draft a LinkedIn company-page post.",
+      "user_prompt": "Create a LinkedIn post for our company page about our new service launch.",
+      "file_attachment_urls": null,
+      "tools_triggered": "create_linkedin_post",
+      "expected_output": "Creates or publishes the LinkedIn post using the selected company identity.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Generate and send an invoice.",
+      "user_prompt": "Create an invoice for Acme Corp and send it to the client.",
+      "file_attachment_urls": null,
+      "tools_triggered": "send_invoice",
+      "expected_output": "Generates the invoice and sends the client-facing invoice flow.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Prepare a contract for signature.",
+      "user_prompt": "Create a contract and send it for signature.",
+      "file_attachment_urls": null,
+      "tools_triggered": "send_contract",
+      "expected_output": "Creates the contract and sends it through the external signing workflow.",
+      "expected_output_url": null
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "Do not trigger for unrelated weather requests.",
+      "user_prompt": "What is the weather in Zurich tomorrow?",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not be invoked because the request is outside the business workspace domain.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not trigger for coding help.",
+      "user_prompt": "Write me a Python binary search implementation.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not be invoked because the request is unrelated to the business operating system tools.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Do not trigger for restaurant reservations.",
+      "user_prompt": "Book a table for two at an Italian restaurant tonight.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should not be invoked because the request is outside the supported workflows.",
+      "expected_output_url": null
+    }
+  ]
+}

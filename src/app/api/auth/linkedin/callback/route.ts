@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
+import { normalizeLinkedInScopes } from '@/lib/social/linkedinIdentityHelpers';
 
 const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/linkedin',
@@ -16,27 +17,7 @@ type LinkedInOAuthState = {
   ts: number;
 };
 
-const LINKEDIN_REQUIRED_SCOPES = [
-  // Keep activation tied to posting capability.
-  'w_member_social',
-  'w_organization_social',
-] as const;
-
-function normalizeScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .flatMap((value) => String(value).split(/[,\s]+/))
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(/[,\s]+/)
-      .map((s) => s.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
-}
+const LINKEDIN_REQUIRED_SCOPES = ['w_member_social', 'w_organization_social'] as const;
 
 type LinkedInCompanyPage = {
   id: string;
@@ -154,7 +135,7 @@ export async function GET(req: NextRequest) {
       tokenData.granted_scopes,
       tokenData.grantedScopes,
     ];
-    const scopes = Array.from(new Set(scopeCandidates.flatMap((raw) => normalizeScopes(raw))));
+    const scopes = Array.from(new Set(scopeCandidates.flatMap((raw) => normalizeLinkedInScopes(raw))));
     const hasMemberWriteScope = scopes.includes('w_member_social');
     const hasOrgWriteScope = scopes.includes('w_organization_social');
     const hasWriteScope = hasMemberWriteScope || hasOrgWriteScope;
@@ -228,6 +209,35 @@ export async function GET(req: NextRequest) {
     if (upsertError) {
       console.error('[linkedin/callback] integration upsert failed:', upsertError);
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
+    }
+
+    if (hasOrgWriteScope && companyPages.length > 0) {
+      const organizationRows = companyPages.map((page) => ({
+        tenant_id: resolvedTenantId,
+        user_id: stateData.userId,
+        type: 'organization' as const,
+        linkedin_organization_id: page.id,
+        author_urn: `urn:li:organization:${page.id}`,
+        name: page.name,
+        vanity_name: page.vanityName,
+        logo_url: page.logoUrl,
+        can_post: true,
+        metadata: {
+          source: 'linkedin_oauth_connector',
+          member_id: memberId,
+          company_page: page,
+          scopes,
+        },
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: orgUpsertError } = await admin
+        .from('linkedin_identities')
+        .upsert(organizationRows, { onConflict: 'tenant_id,user_id,type,linkedin_organization_id' });
+      if (orgUpsertError) {
+        console.error('[linkedin/callback] organization identity upsert failed:', orgUpsertError);
+        return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
+      }
     }
 
     if (!hasMemberWriteScope && !hasOrgWriteScope) {
