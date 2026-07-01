@@ -266,7 +266,8 @@ export default function LinkedInManagementTab() {
 
   const hasWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
-    return normalizeScopes(scopes).includes('w_member_social');
+    const normalized = normalizeScopes(scopes);
+    return normalized.includes('w_member_social') || normalized.includes('w_organization_social');
   }, [integrations, selectedLinkedInMemberId]);
   const selectedIntegration = useMemo(
     () => integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId) || null,

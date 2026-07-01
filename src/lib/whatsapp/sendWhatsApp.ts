@@ -1,6 +1,10 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
+import {
+  getWhatsAppIntegrationWithToken,
+  getWhatsAppIntegration,
+} from '@/services/whatsapp/whatsappIntegrationService';
 
 export type SendWhatsAppErrorCode =
   | 'NOT_CONFIGURED'
@@ -32,11 +36,11 @@ export async function isWhatsAppConfigured(tenantId: string): Promise<boolean> {
     .eq('tenant_id', tenantId)
     .eq('is_active', true)
     .not('phone_number_id', 'is', null)
-    .not('access_token', 'is', null)
     .limit(1)
     .maybeSingle();
 
-  return !!data;
+  if (data) return true;
+  return false;
 }
 
 export async function sendWhatsAppMessage(params: {
@@ -69,21 +73,24 @@ export async function sendWhatsAppMessage(params: {
   let accessToken = ENV.WHATSAPP_ACCESS_TOKEN;
   let activeIntegrationId: string | null = params.integrationId || null;
 
-  const { data: waIntegration } = await supabase
-    .from('whatsapp_integrations')
-    .select('id, phone_number_id, access_token')
-    .eq('tenant_id', params.tenantId)
-    .eq('is_active', true)
-    .not('phone_number_id', 'is', null)
-    .not('access_token', 'is', null)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const waIntegration = params.integrationId
+    ? await getWhatsAppIntegrationWithToken(supabase, {
+        tenantId: params.tenantId,
+        integrationId: params.integrationId,
+      })
+    : await getWhatsAppIntegrationWithToken(supabase, { tenantId: params.tenantId });
 
   if (waIntegration) {
     phoneNumberId = waIntegration.phone_number_id;
-    accessToken = waIntegration.access_token;
+    accessToken = waIntegration.accessToken;
     activeIntegrationId = waIntegration.id;
+  } else if (params.integrationId) {
+    const row = await getWhatsAppIntegration(supabase, {
+      tenantId: params.tenantId,
+      integrationId: params.integrationId,
+      requireActive: false,
+    });
+    if (row?.phone_number_id) phoneNumberId = row.phone_number_id;
   }
 
   if (!phoneNumberId || !accessToken) {
@@ -179,6 +186,92 @@ export async function sendWhatsAppMessage(params: {
       provider: 'meta-whatsapp',
       code: 'NETWORK_ERROR',
       error: err?.message || 'Meta WhatsApp send failed',
+    };
+  }
+}
+
+export async function sendWhatsAppTemplate(params: {
+  tenantId: string;
+  phone: string;
+  templateName: string;
+  languageCode?: string;
+  components?: Record<string, unknown>[];
+  integrationId?: string;
+}): Promise<SendWhatsAppResult> {
+  const supabase = createSupabaseAdminClient();
+  const cleanTo = cleanPhone(params.phone);
+  if (!params.tenantId || !cleanTo || !params.templateName.trim()) {
+    return {
+      success: false,
+      provider: 'meta-whatsapp',
+      code: 'VALIDATION_ERROR',
+      error: 'tenantId, phone, and templateName are required',
+    };
+  }
+
+  const waIntegration = params.integrationId
+    ? await getWhatsAppIntegrationWithToken(supabase, {
+        tenantId: params.tenantId,
+        integrationId: params.integrationId,
+      })
+    : await getWhatsAppIntegrationWithToken(supabase, { tenantId: params.tenantId });
+
+  let phoneNumberId = ENV.WHATSAPP_PHONE_NUMBER_ID;
+  let accessToken = ENV.WHATSAPP_ACCESS_TOKEN;
+  if (waIntegration) {
+    phoneNumberId = waIntegration.phone_number_id;
+    accessToken = waIntegration.accessToken;
+  }
+
+  if (!phoneNumberId || !accessToken) {
+    return {
+      success: false,
+      provider: 'meta-whatsapp',
+      code: 'NOT_CONFIGURED',
+      error: 'WhatsApp integration is not configured',
+    };
+  }
+
+  try {
+    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: cleanTo,
+        type: 'template',
+        template: {
+          name: params.templateName,
+          language: { code: params.languageCode || 'en_US' },
+          components: params.components || [],
+        },
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      return {
+        success: false,
+        provider: 'meta-whatsapp',
+        code: 'META_API_ERROR',
+        error: result.error?.message || 'Template send failed',
+      };
+    }
+    return {
+      success: true,
+      provider: 'meta-whatsapp',
+      messageId: result.messages?.[0]?.id,
+      to: cleanTo,
+    };
+  } catch (err: unknown) {
+    return {
+      success: false,
+      provider: 'meta-whatsapp',
+      code: 'NETWORK_ERROR',
+      error: err instanceof Error ? err.message : 'Template send failed',
     };
   }
 }

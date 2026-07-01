@@ -5,6 +5,10 @@ import { requireTenantAccess } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { integrationActionSchema } from '@/schemas/validation';
+import {
+  getFacebookIntegrationWithToken,
+  upsertFacebookIntegration,
+} from '@/services/facebook/facebookIntegrationService';
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest) {
         result = await handleSlackAction(tenantId, action, config, supabase);
         break;
       case 'facebook':
-        result = await handleFacebookAction(tenantId, action, config, supabase);
+        result = await handleFacebookAction(tenantId, action, config, supabase, user.id);
         break;
       case 'twilio':
         result = await handleTwilioAction(tenantId, action, config, supabase);
@@ -154,52 +158,44 @@ async function handleSlackAction(tenantId: string, action: string, config: any, 
   }
 }
 
-async function handleFacebookAction(tenantId: string, action: string, config: any, supabase: any) {
+async function handleFacebookAction(tenantId: string, action: string, config: any, supabase: any, userId: string) {
   try {
     switch (action) {
-      case 'connect':
-        // Save Facebook integration
-        const { data, error } = await supabase
-          .from('facebook_integrations')
-          .upsert({
-            tenant_id: tenantId,
-            page_id: config.pageId,
-            page_name: config.pageName,
-            page_access_token: config.pageAccessToken,
-            user_access_token: config.userAccessToken,
-            app_scoped_user_id: config.appScopedUserId,
-            is_active: true,
-            connected_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+      case 'connect': {
+        const fbResult = await upsertFacebookIntegration({
+          userId,
+          tenantId,
+          pageId: config.pageId,
+          pageName: config.pageName,
+          pageAccessToken: config.pageAccessToken,
+          userAccessToken: config.userAccessToken,
+          appScopedUserId: config.appScopedUserId,
+          expiresAt: config.expiresAt || null,
+          metadata: config.metadata || {},
+        });
 
-        if (error) throw error;
+        if (!fbResult.integrationId) {
+          throw new Error(fbResult.error || 'Facebook integration upsert failed');
+        }
 
-        // Test the integration by fetching page info
         const testResult = await testFacebookIntegration(config.pageAccessToken);
-        
-        return { 
-          success: true, 
-          data: { integration: data, test: testResult },
-          message: 'Facebook integration connected successfully'
+
+        return {
+          success: true,
+          data: { integrationId: fbResult.integrationId, test: testResult },
+          message: 'Facebook integration connected successfully',
         };
+      }
 
-      case 'get_leads':
-        // Get Facebook leads
-        const facebookIntegration = await supabase
-          .from('facebook_integrations')
-          .select('*')
-          .eq('tenant_id', tenantId)
-          .eq('is_active', true)
-          .single();
+      case 'get_leads': {
+        const integration = await getFacebookIntegrationWithToken(supabase, { tenantId });
 
-        if (!facebookIntegration.data) {
+        if (!integration?.pageAccessToken) {
           return { success: false, error: 'Facebook integration not found' };
         }
 
         const leadsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${facebookIntegration.data.page_id}/leadgen_forms?access_token=${facebookIntegration.data.page_access_token}`
+          `https://graph.facebook.com/v18.0/${integration.page_id}/leadgen_forms?access_token=${integration.pageAccessToken}`
         );
         
         const leadsData = await leadsResponse.json();
@@ -209,6 +205,7 @@ async function handleFacebookAction(tenantId: string, action: string, config: an
           data: leadsData,
           message: leadsResponse.ok ? 'Leads retrieved successfully' : 'Failed to retrieve leads'
         };
+      }
 
       case 'disconnect':
         // Disconnect Facebook integration

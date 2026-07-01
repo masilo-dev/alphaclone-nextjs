@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
+import { linkedInFetch } from '@/lib/linkedin/linkedinClient';
+import {
+  extractCompanyPagesFromMetadata,
+  getLinkedInIntegrationWithToken,
+} from '@/services/linkedin/linkedinIntegrationService';
 
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
     let lastError: unknown = null;
@@ -37,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const { data: integration } = await supabase
         .from('facebook_integrations')
-        .select('page_access_token, user_access_token, page_name')
+        .select('id, page_id, page_name, tenant_id, page_access_token, user_access_token, expires_at')
         .eq('user_id', user.id)
         .eq('page_id', pageId)
         .eq('is_active', true)
@@ -47,11 +53,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Facebook page not connected. Please reconnect your Facebook account.' }, { status: 400 });
     }
 
-    // IMPORTANT: Posting to a Facebook Page REQUIRES the Page Access Token.
-    // Using the User Access Token will always fail with the permissions error:
-    // "requires pages_read_engagement and pages_manage_posts".
-    // The Page Access Token is obtained during the OAuth callback via /me/accounts.
-    const token = integration.page_access_token;
+    const admin = createSupabaseAdminClient();
+    const { getFacebookTokens } = await import('@/services/facebook/facebookIntegrationService');
+    const tokens = await getFacebookTokens(admin, integration);
+    const token = tokens.pageAccessToken;
 
     if (!token) {
         return NextResponse.json({
@@ -169,77 +174,75 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    // Also post to LinkedIn if connected
-    const { data: linkedinIntegration } = await supabase
-        .from('linkedin_integrations')
-        .select('access_token, organization_id')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
-
-    if (linkedinIntegration?.access_token) {
+    // Mirror to first connected LinkedIn company page when available (personal + org business pages)
+    if (integration.tenant_id) {
         try {
-            const liBody: Record<string, any> = {
-                author: `urn:li:organization:${linkedinIntegration.organization_id}`,
-                lifecycleState: 'PUBLISHED',
-                specificContent: {
-                    'com.linkedin.ugc.ShareContent': {
-                        shareCommentary: {
-                            text: message,
-                        },
-                        shareMediaCategory: imageUrl ? 'IMAGE' : 'NONE',
-                    },
-                },
-                visibility: {
-                    'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
-                },
-            };
-
-            if (imageUrl) {
-                // Register image upload first
-                const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${linkedinIntegration.access_token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        registerUploadRequest: {
-                            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-                            owner: `urn:li:organization:${linkedinIntegration.organization_id}`,
-                            serviceRelationships: [{
-                                relationshipType: 'OWNER',
-                                identifier: 'urn:li:userGeneratedContent',
-                            }],
-                        },
-                    }),
-                });
-                const registerData = await registerRes.json();
-                const uploadUrl = registerData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
-                if (uploadUrl) {
-                    // Upload image
-                    const imageRes = await fetch(imageUrl);
-                    const imageBlob = await imageRes.blob();
-                    await fetch(uploadUrl, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'image/jpeg' },
-                        body: imageBlob,
-                    });
-                    liBody.specificContent['com.linkedin.ugc.ShareContent'].media = [{
-                        status: 'READY',
-                        media: registerData.value.asset,
-                    }];
-                }
-            }
-
-            await fetch('https://api.linkedin.com/v2/ugcPosts', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${linkedinIntegration.access_token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(liBody),
+            const admin = createSupabaseAdminClient();
+            const linkedinIntegration = await getLinkedInIntegrationWithToken(admin, {
+                tenantId: integration.tenant_id,
+                userId: user.id,
             });
+            const companyPages = extractCompanyPagesFromMetadata(linkedinIntegration?.metadata);
+            const organizationId = companyPages[0]?.id;
+            if (linkedinIntegration?.accessToken && organizationId) {
+                const authorUrn = `urn:li:organization:${organizationId}`;
+                const liBody: Record<string, unknown> = {
+                    author: authorUrn,
+                    lifecycleState: 'PUBLISHED',
+                    specificContent: {
+                        'com.linkedin.ugc.ShareContent': {
+                            shareCommentary: { text: message },
+                            shareMediaCategory: imageUrl ? 'IMAGE' : 'NONE',
+                            media: [],
+                        },
+                    },
+                    visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
+                };
+
+                if (imageUrl) {
+                    const registerRes = await linkedInFetch(
+                        'https://api.linkedin.com/v2/assets?action=registerUpload',
+                        linkedinIntegration.accessToken,
+                        {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                registerUploadRequest: {
+                                    recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                                    owner: authorUrn,
+                                    serviceRelationships: [{
+                                        relationshipType: 'OWNER',
+                                        identifier: 'urn:li:userGeneratedContent',
+                                    }],
+                                },
+                            }),
+                        }
+                    );
+                    const registerData = await registerRes.json();
+                    const uploadUrl =
+                        registerData?.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+                    const asset = registerData?.value?.asset;
+                    if (uploadUrl && asset) {
+                        const imageRes = await fetch(imageUrl);
+                        const imageBlob = await imageRes.blob();
+                        await fetch(uploadUrl, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'image/jpeg' },
+                            body: imageBlob,
+                        });
+                        (liBody.specificContent as Record<string, unknown>)['com.linkedin.ugc.ShareContent'] = {
+                            ...(liBody.specificContent as Record<string, Record<string, unknown>>)['com.linkedin.ugc.ShareContent'],
+                            shareMediaCategory: 'IMAGE',
+                            media: [{ status: 'READY', media: asset }],
+                        };
+                    }
+                }
+
+                await linkedInFetch(
+                    'https://api.linkedin.com/v2/ugcPosts',
+                    linkedinIntegration.accessToken,
+                    { method: 'POST', body: JSON.stringify(liBody) }
+                );
+            }
         } catch (liErr) {
             console.error('LinkedIn posting failed:', liErr);
         }

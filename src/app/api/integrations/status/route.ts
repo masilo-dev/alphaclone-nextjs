@@ -3,6 +3,14 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
+import {
+  getFacebookIntegrationWithToken,
+  getFacebookIntegration,
+} from '@/services/facebook/facebookIntegrationService';
+import { getWhatsAppIntegrationWithToken } from '@/services/whatsapp/whatsappIntegrationService';
+import { getInstagramIntegrationWithToken } from '@/services/instagram/instagramIntegrationService';
+import { getLinkedInIntegrationWithToken } from '@/services/linkedin/linkedinIntegrationService';
+import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export async function GET(req: NextRequest) {
   const authClient = await createSupabaseServerClient();
@@ -56,6 +64,21 @@ async function checkAllIntegrations(tenantId: string, userId: string, supabase: 
       name: 'Facebook',
       type: 'facebook',
       checkFunction: checkFacebookIntegration
+    },
+    {
+      name: 'Instagram',
+      type: 'instagram',
+      checkFunction: checkInstagramIntegration
+    },
+    {
+      name: 'LinkedIn',
+      type: 'linkedin',
+      checkFunction: checkLinkedInIntegration
+    },
+    {
+      name: 'WhatsApp',
+      type: 'whatsapp',
+      checkFunction: checkWhatsAppIntegration
     },
     {
       name: 'Twilio',
@@ -222,15 +245,14 @@ async function checkSlackIntegration(tenantId: string, supabase: any) {
   };
 }
 
-async function checkFacebookIntegration(tenantId: string, supabase: any) {
-  const { data: integration, error } = await supabase
-    .from('facebook_integrations')
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .eq('is_active', true)
-    .single();
+async function checkFacebookIntegration(tenantId: string, supabase: any, userId: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getFacebookIntegration(admin, { tenantId, requireActive: true });
+  const withToken = integration
+    ? await getFacebookIntegrationWithToken(admin, { tenantId, pageId: integration.page_id })
+    : null;
 
-  if (error || !integration) {
+  if (!integration || !withToken) {
     return {
       status: 'not_connected',
       percentage: 0,
@@ -240,48 +262,240 @@ async function checkFacebookIntegration(tenantId: string, supabase: any) {
     };
   }
 
-  const issues = [];
-  const actions = [];
+  const issues: string[] = [];
+  const actions: string[] = [];
   let percentage = 0;
+  const encryptionConfigured = Boolean(getIntegrationEncryptionSecret());
 
-  // Check required fields
-  if (!integration.page_id) {
+  if (integration.page_id) percentage += 25;
+  else {
     issues.push('Page ID missing');
     actions.push('Reconnect Facebook to get Page ID');
-  } else {
-    percentage += 33;
   }
 
-  if (!integration.page_access_token) {
-    issues.push('Page access token missing');
-    actions.push('Reconnect Facebook to get page access token');
-  } else {
-    percentage += 33;
+  if (withToken.pageAccessToken) percentage += 35;
+  else {
+    issues.push('Page access token missing or expired');
+    actions.push('Reconnect Facebook to refresh page token');
   }
 
-  if (!integration.user_access_token) {
-    issues.push('User access token missing');
-    actions.push('Reconnect Facebook to get user access token');
+  if (integration.metadata && !(integration.metadata as { no_pages?: boolean }).no_pages) {
+    percentage += 20;
+  } else if ((integration.metadata as { no_pages?: boolean })?.no_pages) {
+    issues.push('No Facebook Pages linked');
+    actions.push('Grant pages_show_list and connect a Page');
   } else {
-    percentage += 34;
+    percentage += 20;
   }
 
-  // Test API access if tokens are available
-  if (integration.page_access_token && percentage === 100) {
+  if (encryptionConfigured) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars) in production');
+  }
+
+  if (withToken.pageAccessToken && percentage >= 80) {
     try {
       const testResponse = await fetch(
-        `https://graph.facebook.com/v18.0/${integration.page_id}?access_token=${integration.page_access_token}&fields=id,name`
+        `https://graph.facebook.com/v19.0/${integration.page_id}?fields=id,name&access_token=${encodeURIComponent(withToken.pageAccessToken)}`
       );
-
       if (!testResponse.ok) {
         issues.push('Facebook API access failed');
         actions.push('Reconnect Facebook page');
-        percentage -= 34;
+        percentage = Math.max(0, percentage - 35);
+      } else {
+        percentage = 100;
       }
-    } catch (error) {
+    } catch {
       issues.push('Facebook API unreachable');
       actions.push('Check Facebook API permissions');
-      percentage -= 34;
+      percentage = Math.max(0, percentage - 35);
+    }
+  }
+
+  void userId;
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkInstagramIntegration(tenantId: string, _supabase: any, userId: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getInstagramIntegrationWithToken(admin, { tenantId, userId });
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['Instagram integration not connected'],
+      actions: ['Connect Facebook to link Instagram Business account'],
+      connected: false
+    };
+  }
+
+  const issues: string[] = [];
+  const actions: string[] = [];
+  let percentage = 0;
+
+  if (integration.instagram_account_id) percentage += 30;
+  if (integration.username) percentage += 20;
+  if (integration.pageAccessToken) percentage += 30;
+  else {
+    issues.push('Instagram page token missing');
+    actions.push('Reconnect Facebook/Instagram');
+  }
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars)');
+  }
+
+  if (integration.pageAccessToken && percentage >= 80) {
+    try {
+      const res = await fetch(
+        `https://graph.facebook.com/v19.0/${integration.instagram_account_id}?fields=id,username&access_token=${encodeURIComponent(integration.pageAccessToken)}`
+      );
+      if (res.ok) percentage = 100;
+      else {
+        issues.push('Instagram API check failed');
+        actions.push('Reconnect Instagram via Facebook OAuth');
+        percentage = Math.max(0, percentage - 30);
+      }
+    } catch {
+      issues.push('Instagram API unreachable');
+      percentage = Math.max(0, percentage - 30);
+    }
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkLinkedInIntegration(tenantId: string, _supabase: any, userId: string) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getLinkedInIntegrationWithToken(admin, { tenantId, userId });
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['LinkedIn integration not connected'],
+      actions: ['Connect LinkedIn account'],
+      connected: false
+    };
+  }
+
+  const issues: string[] = [];
+  const actions: string[] = [];
+  let percentage = 0;
+  const scopes = Array.isArray(integration.scopes) ? integration.scopes : [];
+
+  if (integration.linkedin_member_id) percentage += 25;
+  if (integration.accessToken) percentage += 35;
+  else {
+    issues.push('LinkedIn access token missing');
+    actions.push('Reconnect LinkedIn');
+  }
+  if (scopes.some((s) => ['w_member_social', 'w_organization_social'].includes(String(s)))) {
+    percentage += 20;
+  } else {
+    issues.push('Publishing scopes not granted');
+    actions.push('Reconnect LinkedIn with social publishing scopes');
+  }
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars)');
+  }
+
+  if (integration.accessToken && percentage >= 80) {
+    try {
+      const res = await fetch('https://api.linkedin.com/v2/userinfo', {
+        headers: { Authorization: `Bearer ${integration.accessToken}` },
+      });
+      if (res.ok) percentage = 100;
+      else {
+        issues.push('LinkedIn API check failed');
+        actions.push('Reconnect LinkedIn');
+        percentage = Math.max(0, percentage - 35);
+      }
+    } catch {
+      issues.push('LinkedIn API unreachable');
+      percentage = Math.max(0, percentage - 35);
+    }
+  }
+
+  return {
+    status: percentage === 100 ? 'working' : 'needs_attention',
+    percentage,
+    issues,
+    actions,
+    connected: true,
+    lastChecked: new Date().toISOString()
+  };
+}
+
+async function checkWhatsAppIntegration(tenantId: string, _supabase: any) {
+  const admin = createSupabaseAdminClient();
+  const integration = await getWhatsAppIntegrationWithToken(admin, { tenantId });
+
+  if (!integration) {
+    return {
+      status: 'not_connected',
+      percentage: 0,
+      issues: ['WhatsApp integration not connected'],
+      actions: ['Add WhatsApp Business credentials under Integrations'],
+      connected: false
+    };
+  }
+
+  const issues: string[] = [];
+  const actions: string[] = [];
+  let percentage = 0;
+
+  if (integration.waba_id) percentage += 20;
+  if (integration.phone_number_id) percentage += 25;
+  if (integration.accessToken) percentage += 25;
+  else {
+    issues.push('WhatsApp access token missing');
+    actions.push('Reconnect WhatsApp credentials');
+  }
+  if (integration.webhook_verified) percentage += 10;
+  else {
+    issues.push('Webhook not verified with Meta');
+    actions.push('Re-save WhatsApp integration to auto-subscribe webhook');
+  }
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ENCRYPTION_SECRET not configured');
+    actions.push('Set ENCRYPTION_SECRET (32 chars)');
+  }
+
+  if (integration.accessToken && percentage >= 70) {
+    try {
+      const res = await fetch(
+        `https://graph.facebook.com/v18.0/${integration.phone_number_id}?fields=id&access_token=${encodeURIComponent(integration.accessToken)}`
+      );
+      if (res.ok) percentage = 100;
+      else {
+        issues.push('WhatsApp API check failed');
+        actions.push('Refresh Meta Cloud API token');
+        percentage = Math.max(0, percentage - 25);
+      }
+    } catch {
+      issues.push('WhatsApp API unreachable');
+      percentage = Math.max(0, percentage - 25);
     }
   }
 
@@ -769,22 +983,28 @@ async function checkZohoIntegration(_tenantId: string, supabase: any, userId: st
   const actions = [];
   let percentage = 0;
 
-  if (hasRefreshToken) percentage += 40;
+  if (hasRefreshToken) percentage += 30;
   else {
     issues.push('Refresh token missing');
     actions.push('Reconnect Zoho account');
   }
 
-  if (hasMailHost) percentage += 30;
+  if (hasMailHost) percentage += 25;
   else {
     issues.push('Mail API host missing');
     actions.push('Reconnect Zoho account');
   }
 
-  if (hasAccountsServer) percentage += 30;
+  if (hasAccountsServer) percentage += 25;
   else {
     issues.push('Accounts server missing');
     actions.push('Reconnect Zoho account');
+  }
+
+  if (getIntegrationEncryptionSecret()) percentage += 20;
+  else {
+    issues.push('ZOHO_ENCRYPTION_SECRET / ENCRYPTION_SECRET not configured');
+    actions.push('Set encryption secret (32 chars)');
   }
 
   return {

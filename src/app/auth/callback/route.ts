@@ -98,52 +98,50 @@ export async function GET(request: Request) {
                 }
 
                 if (provider === 'linkedin_oidc') {
+                    // Login via Supabase OIDC only — do not store short-lived provider_token as integration credential.
+                    // Full posting scopes + encrypted tokens come from /api/auth/linkedin/connect.
                     try {
-                        const providerToken = (session as any).provider_token as string | undefined
-                        if (providerToken) {
-                            const identities = Array.isArray(user.identities) ? user.identities : []
-                            const linkedInIdentity = identities.find((identity: any) => identity?.provider === 'linkedin_oidc')
-                            const memberId =
-                                linkedInIdentity?.identity_data?.sub ||
-                                linkedInIdentity?.id ||
-                                (user.user_metadata?.sub as string | undefined)
+                        const identities = Array.isArray(user.identities) ? user.identities : []
+                        const linkedInIdentity = identities.find((identity: any) => identity?.provider === 'linkedin_oidc')
+                        const memberId =
+                            linkedInIdentity?.identity_data?.sub ||
+                            linkedInIdentity?.id ||
+                            (user.user_metadata?.sub as string | undefined)
 
-                            if (memberId) {
-                                const personUrn = `urn:li:person:${memberId}`
-                                const scopeRaw = (user.user_metadata?.provider_scopes as string | undefined) || ''
-                                const scopes = scopeRaw
-                                    .split(' ')
-                                    .map((s) => s.trim())
-                                    .filter(Boolean)
+                        if (memberId) {
+                            const resolvedTenantId = tenantId || (user.user_metadata?.tenant_id as string | undefined)
+                            if (resolvedTenantId) {
+                                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
+                                const admin = createSupabaseAdminClient()
+                                const { data: existing } = await admin
+                                    .from('linkedin_integrations')
+                                    .select('id, metadata')
+                                    .eq('tenant_id', resolvedTenantId)
+                                    .eq('user_id', user.id)
+                                    .eq('linkedin_member_id', String(memberId))
+                                    .maybeSingle()
 
-                                const resolvedTenantId = tenantId || user.user_metadata?.tenant_id as string | undefined;
-                                if (resolvedTenantId) {
-                                    await supabase
+                                if (existing?.id) {
+                                    const metadata =
+                                        existing.metadata && typeof existing.metadata === 'object'
+                                            ? { ...(existing.metadata as Record<string, unknown>) }
+                                            : {}
+                                    await admin
                                         .from('linkedin_integrations')
-                                        .upsert(
-                                            {
-                                                tenant_id: resolvedTenantId,
-                                                user_id: user.id,
-                                                linkedin_member_id: memberId,
-                                                linkedin_person_urn: personUrn,
-                                                access_token: providerToken,
-                                                token_expires_at: session.expires_at
-                                                    ? new Date(session.expires_at * 1000).toISOString()
-                                                    : null,
-                                                scopes,
-                                                is_active: true,
-                                                metadata: {
-                                                    provider: 'linkedin_oidc',
-                                                },
-                                                updated_at: new Date().toISOString(),
+                                        .update({
+                                            metadata: {
+                                                ...metadata,
+                                                last_login_via: 'linkedin_oidc',
+                                                last_login_at: new Date().toISOString(),
                                             },
-                                            { onConflict: 'tenant_id,user_id,linkedin_member_id' }
-                                        )
+                                            updated_at: new Date().toISOString(),
+                                        })
+                                        .eq('id', existing.id)
                                 }
                             }
                         }
                     } catch (linkedinErr) {
-                        console.error('[auth/callback] LinkedIn integration sync error:', linkedinErr)
+                        console.error('[auth/callback] LinkedIn login metadata sync error:', linkedinErr)
                     }
                 }
 

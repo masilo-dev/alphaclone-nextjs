@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
+import { getLinkedInIntegrationWithToken, markLinkedInIntegrationInactive } from '@/services/linkedin/linkedinIntegrationService';
 
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
@@ -66,40 +68,56 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    let query = admin
-      .from('linkedin_integrations')
-      .select('access_token')
-      .eq('tenant_id', tenantId)
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1);
-    if (linkedinMemberId) query = query.eq('linkedin_member_id', linkedinMemberId);
-    const { data: li, error: liError } = await query.maybeSingle();
+    const integration = await getLinkedInIntegrationWithToken(admin, {
+      tenantId,
+      userId: user.id,
+      linkedinMemberId: linkedinMemberId || null,
+    });
 
-    if (liError || !li?.access_token) {
-      return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });
+    if (!integration?.accessToken) {
+      return NextResponse.json(
+        { error: 'LinkedIn is not connected or token expired. Reconnect from Business → LinkedIn.' },
+        { status: 400 }
+      );
     }
 
     const socialActionUrl = `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}`;
-    const socialActionRes = await fetch(socialActionUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${li.access_token}`,
-        'Content-Type': 'application/json',
-        'X-Restli-Protocol-Version': '2.0.0',
-      },
-    });
-
-    const payload = (await socialActionRes.json().catch(() => ({}))) as Record<string, any>;
-    if (!socialActionRes.ok) {
-      return NextResponse.json({ success: true, likesCount: 0, commentsCount: 0 });
+    try {
+      const socialActionRes = await linkedInFetch(socialActionUrl, integration.accessToken, { method: 'GET' });
+      const payload = (await socialActionRes.json().catch(() => ({}))) as Record<string, any>;
+      return NextResponse.json({
+        success: true,
+        likesCount: extractLikesCount(payload),
+        commentsCount: extractCommentsCount(payload),
+      });
+    } catch (err) {
+      if (err instanceof LinkedInApiError) {
+        if (err.code === 'TOKEN_EXPIRED') {
+          await markLinkedInIntegrationInactive(admin, integration.id, 'token_expired_on_engagement');
+          return NextResponse.json(
+            { error: 'LinkedIn token expired. Reconnect your account.', code: 'LINKEDIN_TOKEN_EXPIRED' },
+            { status: 401 }
+          );
+        }
+        if (err.code === 'FORBIDDEN') {
+          return NextResponse.json(
+            {
+              error: 'LinkedIn permission denied for engagement stats. Reconnect and approve all requested permissions.',
+              code: 'LINKEDIN_FORBIDDEN',
+            },
+            { status: 403 }
+          );
+        }
+        if (err.status === 404) {
+          return NextResponse.json({ error: 'LinkedIn post not found.', code: 'LINKEDIN_NOT_FOUND' }, { status: 404 });
+        }
+        if (err.code === 'RATE_LIMITED') {
+          return NextResponse.json({ error: 'LinkedIn rate limit reached. Try again shortly.', code: 'LINKEDIN_RATE_LIMIT' }, { status: 429 });
+        }
+        return NextResponse.json({ error: err.message, code: 'LINKEDIN_API_ERROR' }, { status: 502 });
+      }
+      throw err;
     }
-
-    return NextResponse.json({
-      success: true,
-      likesCount: extractLikesCount(payload),
-      commentsCount: extractCommentsCount(payload),
-    });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'linkedin/engagement.POST' });
   }

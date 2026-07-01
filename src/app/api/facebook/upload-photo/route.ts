@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
+import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
 
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 2): Promise<Response> {
     let lastError: unknown = null;
@@ -78,15 +80,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'File must be an image or video' }, { status: 400 });
     }
 
-    const { data: integration } = await supabase
-        .from('facebook_integrations')
-        .select('page_access_token')
-        .eq('user_id', user.id)
-        .eq('page_id', pageId)
-        .eq('is_active', true)
-        .single();
+    const admin = createSupabaseAdminClient();
+    const integration = await getFacebookIntegrationWithToken(admin, { userId: user.id, pageId });
 
-    if (!integration?.page_access_token) {
+    if (!integration?.pageAccessToken) {
         return NextResponse.json({
             error: 'Page Access Token missing. Please reconnect your Facebook account.',
             action: 'reconnect',
@@ -103,7 +100,7 @@ export async function POST(req: NextRequest) {
             fbForm.append('caption', message.trim());
         }
     }
-    fbForm.append('access_token', integration.page_access_token);
+    fbForm.append('access_token', integration.pageAccessToken);
     if (isVideo && coverFrame && coverFrame.type.startsWith('image/')) {
         fbForm.append('thumb', coverFrame);
     }

@@ -2,22 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-
-function normalizeScopes(raw: unknown): string[] {
-  if (Array.isArray(raw)) {
-    return raw
-      .flatMap((value) => String(value).split(/[,\s]+/))
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  if (typeof raw === 'string') {
-    return raw
-      .split(/[,\s]+/)
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-  }
-  return [];
-}
+import { linkedInFetch } from '@/lib/linkedin/linkedinClient';
+import {
+  getLinkedInIntegrationWithToken,
+  normalizeLinkedInScopes,
+} from '@/services/linkedin/linkedinIntegrationService';
 
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
@@ -68,26 +57,23 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
-    let integrationQuery = admin
-      .from('linkedin_integrations')
-      .select('access_token, scopes')
-      .eq('tenant_id', tenantId)
-      .eq('user_id', user.id)
-      .eq('is_active', true)
-      .limit(1);
+    const integration = await getLinkedInIntegrationWithToken(admin, {
+      tenantId,
+      userId: user.id,
+      linkedinMemberId: linkedinMemberId || null,
+    });
 
-    if (linkedinMemberId) {
-      integrationQuery = integrationQuery.eq('linkedin_member_id', linkedinMemberId);
-    }
-
-    const { data: integration, error: integrationError } = await integrationQuery.maybeSingle();
-    if (integrationError || !integration?.access_token) {
+    if (!integration?.accessToken) {
       return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });
     }
 
-    const scopes = normalizeScopes(integration.scopes);
-    if (!scopes.includes('w_member_social')) {
-      return NextResponse.json({ error: 'Missing LinkedIn scope: w_member_social' }, { status: 400 });
+    const scopes = normalizeLinkedInScopes(integration.scopes);
+    const canRead =
+      scopes.includes('w_member_social') ||
+      scopes.includes('w_organization_social') ||
+      scopes.includes('r_organization_social');
+    if (!canRead) {
+      return NextResponse.json({ error: 'Missing LinkedIn scopes for comment inbox.' }, { status: 400 });
     }
 
     let postsQuery = admin
@@ -114,30 +100,25 @@ export async function POST(req: NextRequest) {
       const postUrn = String(post.linkedin_post_urn || '').trim();
       if (!postUrn) continue;
 
-      const url = `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}/comments?count=50`;
-      const commentRes = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${integration.access_token}`,
-          'Content-Type': 'application/json',
-          'X-Restli-Protocol-Version': '2.0.0',
-        },
-      });
+      try {
+        const url = `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}/comments?count=50`;
+        const commentRes = await linkedInFetch(url, integration.accessToken, { method: 'GET' }, { retries: 1 });
+        const commentJson = await commentRes.json().catch(() => ({}));
+        const elements = Array.isArray(commentJson?.elements) ? commentJson.elements : [];
 
-      if (!commentRes.ok) continue;
-      const commentJson = await commentRes.json().catch(() => ({}));
-      const elements = Array.isArray(commentJson?.elements) ? commentJson.elements : [];
-
-      for (const element of elements) {
-        items.push({
-          postId: String(post.id),
-          postUrn,
-          postCaption: String(post.caption || ''),
-          commentUrn: String(element?.id || element?.urn || ''),
-          commentText: String(element?.message?.text || ''),
-          actor: String(element?.actor || ''),
-          createdAt: typeof element?.created?.time === 'number' ? element.created.time : null,
-        });
+        for (const element of elements) {
+          items.push({
+            postId: String(post.id),
+            postUrn,
+            postCaption: String(post.caption || ''),
+            commentUrn: String(element?.id || element?.urn || ''),
+            commentText: String(element?.message?.text || ''),
+            actor: String(element?.actor || ''),
+            createdAt: typeof element?.created?.time === 'number' ? element.created.time : null,
+          });
+        }
+      } catch {
+        continue;
       }
     }
 
