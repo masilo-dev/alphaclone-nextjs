@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     'DeepSeek',
   ],
   alternates: { canonical: absoluteUrl('/claude-manus-integrations') },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'AlphaClone Claude and Manus Integrations',
     description: 'Connect Claude, Manus, and DeepSeek workflows to AlphaClone business operations.',
     url: absoluteUrl('/claude-manus-integrations'),

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     'AlphaClone enterprise trust',
   ],
   alternates: { canonical: 'https://alphaclonesystems.com/compliance' },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'Compliance Overview | AlphaClone Systems',
     description: 'Compliance and governance overview for AlphaClone.',
     url: 'https://alphaclonesystems.com/compliance',

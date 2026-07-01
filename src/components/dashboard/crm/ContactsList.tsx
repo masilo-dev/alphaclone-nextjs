@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Search, Filter, Plus, Mail, Phone, Building2, MoreHorizontal,
     User, Edit, Trash2, RefreshCw, Download, X, CheckCircle,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { contactService, type ContactWithCompany } from '@/services/contactService';
 import { tenantService } from '@/services/tenancy/TenantService';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 type ContactStatus = 'active' | 'inactive' | 'unsubscribed' | 'bounced';
 
@@ -38,6 +39,9 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
     const [bulkDeleting, setBulkDeleting] = useState(false);
+    const listRef = useRef<HTMLDivElement>(null);
+    const [visibleCount, setVisibleCount] = useState(40);
+    const loadMoreContacts = useCallback(() => setVisibleCount((c) => c + 30), []);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -106,7 +110,12 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
 
     useEffect(() => {
         setSelectedIds([]);
+        setVisibleCount(40);
     }, [searchQuery, statusFilter]);
+
+    useInfiniteScroll(listRef, loadMoreContacts, {
+        enabled: filteredContacts.length > visibleCount,
+    });
 
     const handleDeleteContact = async (contactId: string) => {
         try {
@@ -170,13 +179,18 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
         return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
+    // Skeleton rows match the final card height (~88px) so resolving doesn't shift layout
     if (loading && contacts.length === 0) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <RefreshCw className="w-8 h-8 animate-spin text-blue-400" />
+            <div className="space-y-3">
+                {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-[88px] bg-slate-800/60 border border-slate-700/50 rounded-lg animate-pulse" />
+                ))}
             </div>
         );
     }
+
+    const visibleContacts = filteredContacts.slice(0, visibleCount);
 
     return (
         <div className="space-y-6">
@@ -275,7 +289,9 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
             {filteredContacts.length === 0 ? (
                 <div className="text-center py-16 bg-slate-800/50 rounded-lg border border-slate-700">
                     <User className="w-12 h-12 mx-auto text-slate-600 mb-4" />
-                    <p className="text-slate-400">No contacts found</p>
+                    <p className="text-slate-400">
+                        {searchQuery || statusFilter !== 'all' ? 'No contacts match these filters' : 'No contacts yet'}
+                    </p>
                     <p className="text-sm text-slate-500 mt-1">
                         {searchQuery || statusFilter !== 'all' ? 'Try adjusting your filters' : 'Add your first contact to get started'}
                     </p>
@@ -288,7 +304,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                     </button>
                 </div>
             ) : (
-                <div className="space-y-3">
+                <div ref={listRef} className="space-y-3 ac-scroll-full">
                     <div className="flex items-center justify-between px-1">
                         <button
                             type="button"
@@ -314,7 +330,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                             </button>
                         )}
                     </div>
-                    {filteredContacts.map((contact) => {
+                    {visibleContacts.map((contact) => {
                         const status = STATUS_CONFIG[contact.status] || STATUS_CONFIG.active;
                         const isSelected = selectedIds.includes(contact.id);
                         return (
@@ -406,6 +422,15 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                             </div>
                         );
                     })}
+                    {filteredContacts.length > visibleCount && (
+                        <button
+                            type="button"
+                            onClick={loadMoreContacts}
+                            className="w-full py-3 text-sm text-slate-400 hover:text-white bg-slate-800/50 border border-slate-700 rounded-lg transition-colors"
+                        >
+                            Showing {visibleCount} of {filteredContacts.length} — scroll or tap to load more
+                        </button>
+                    )}
                 </div>
             )}
 

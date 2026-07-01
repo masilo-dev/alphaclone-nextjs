@@ -303,6 +303,52 @@ async function main() {
   results.push(await run('get_balance_sheet', { ...base }));
   results.push(await run('get_revenue_summary', { ...base }));
 
+  // 9. Known bug-fix regression tools (non-destructive / dry-run where possible)
+  results.push(
+    await run('create_deal', {
+      ...base,
+      name: `MCP Bugfix Deal ${Date.now()}`,
+      value: 100,
+      stage: 'qualified',
+    })
+  );
+  results.push(
+    await run('schedule_social_post', {
+      ...base,
+      platform: 'linkedin',
+      content: 'MCP validation scheduled post — no publish.',
+      scheduled_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+    })
+  );
+  results.push(
+    await run('generate_contract_draft', {
+      ...base,
+      contract_type: 'Service Agreement',
+      client_name: 'MCP Validation Client',
+      key_terms: 'Standard SaaS terms, 12-month term.',
+    })
+  );
+  if (clientId) {
+    results.push({
+      tool: 'send_transactional_email',
+      ok: false,
+      skipped: true,
+      error: 'Skipped — would send live email; client_id recipient resolution covered by resolveMcpEmailRecipient unit path',
+    });
+  }
+  results.push({
+    tool: 'send_batch_outreach',
+    ok: false,
+    skipped: true,
+    error: 'Skipped — would send live outreach emails',
+  });
+  results.push({
+    tool: 'create_post_with_ai_image',
+    ok: false,
+    skipped: true,
+    error: 'Skipped — requires OpenAI/xAI billing; billing guard tested at handler level',
+  });
+
   // Report
   const passed = results.filter((r) => r.ok).length;
   const failed = results.filter((r) => !r.ok && !r.skipped).length;

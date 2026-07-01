@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   UserPlus, Search, X, Phone, Mail, Building,
   MessageCircle, Clock,
@@ -40,6 +40,7 @@ import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -1354,6 +1355,21 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const crmListRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(50);
+  const loadMoreEntities = useCallback(() => setVisibleCount((c) => c + 40), []);
+  // Realtime transparency: recently changed record IDs get a brief row flash
+  const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
+  const flashRecord = useCallback((id: string) => {
+    setFlashIds((prev) => new Set(prev).add(id));
+    setTimeout(() => {
+      setFlashIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 2500);
+  }, []);
 
   const [presenceMap, setPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
   const [teamsPresenceMap, setTeamsPresenceMap] = useState<Record<string, 'online' | 'away' | 'busy' | 'offline'>>({});
@@ -1407,6 +1423,36 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       unsubscribe();
     };
   }, []);
+
+  // Realtime: visibly update the leads list when records change (no silent updates)
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+    const channel = supabase
+      .channel(`crm-leads-${currentTenant.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads', filter: `tenant_id=eq.${currentTenant.id}` },
+        (payload: any) => {
+          const row = payload.new || payload.old;
+          if (payload.eventType === 'INSERT' && payload.new) {
+            setLeads((prev) => {
+              if (prev.some((l) => l.id === payload.new.id)) return prev;
+              return [{ ...payload.new, name: payload.new.business_name || payload.new.name || 'Lead' } as Lead, ...prev];
+            });
+            flashRecord(payload.new.id);
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            setLeads((prev) => prev.map((l) => (l.id === payload.new.id ? { ...l, ...payload.new } : l)));
+            flashRecord(payload.new.id);
+          } else if (payload.eventType === 'DELETE' && row?.id) {
+            setLeads((prev) => prev.filter((l) => l.id !== row.id));
+          }
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentTenant?.id, flashRecord]);
 
   useEffect(() => {
     if (isTeamsConnected && currentTenant?.id) {
@@ -1555,7 +1601,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
 
   useEffect(() => {
     setSelectedKeys(new Set());
-  }, [subView, leadsView, filter, accountFilter]);
+    setVisibleCount(50);
+  }, [subView, leadsView, filter, accountFilter, search]);
 
   const toggleEntitySelection = useCallback((entity: CRMEntity) => {
     const key = entityKey(entity);
@@ -1893,6 +1940,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       ? filteredKanbanLeads.map((l) => entityKey({ type: 'lead', id: l.id }))
       : filteredEntities.map(entityKey);
 
+  useInfiniteScroll(crmListRef, loadMoreEntities, {
+    enabled: leadsView === 'list' && filteredEntities.length > visibleCount,
+  });
+  const visibleEntities = filteredEntities.slice(0, visibleCount);
+
   const allBulkSelected =
     bulkSelectTargetKeys.length > 0 && bulkSelectTargetKeys.every((k) => selectedKeys.has(k));
 
@@ -2094,7 +2146,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           </>
         )}
       >
-      <div className={`flex-1 ac-scroll-full bg-slate-950 ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
+      <div ref={crmListRef} className={`flex-1 ac-scroll-full bg-slate-950 ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
         {!loading && subView === 'leads' && leadsView === 'board' ? (
           <LeadKanban
             leads={filteredKanbanLeads}
@@ -2121,11 +2173,14 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           <>
             {/* Mobile View - Card List */}
             <ResponsiveTableMobile className="md:hidden">
-              {filteredEntities.map(entity => (
+              {visibleEntities.map(entity => (
                 <MobileDataCard
                   key={entity.id}
                   onClick={() => setSelectedEntity(entity)}
-                  className={selectedKeys.has(entityKey(entity)) ? 'ring-1 ring-teal-500/50' : undefined}
+                  className={[
+                    selectedKeys.has(entityKey(entity)) ? 'ring-1 ring-teal-500/50' : '',
+                    flashIds.has(entity.id) ? 'animate-pulse bg-teal-500/10' : '',
+                  ].filter(Boolean).join(' ') || undefined}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <button
@@ -2155,9 +2210,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             {/* Desktop View - Table List */}
             <ResponsiveTableDesktop className="hidden md:block">
               <div className="divide-y divide-white/5">
-                {filteredEntities.map(entity => (
+                {visibleEntities.map(entity => (
+                  <div key={entity.id} className={flashIds.has(entity.id) ? 'bg-teal-500/10 transition-colors duration-1000' : 'transition-colors duration-1000'}>
                   <SwipeableRow
-                    key={entity.id}
                     entity={entity}
                     status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
                     isTeamsConnected={isTeamsConnected}
@@ -2168,9 +2223,19 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     isSelected={selectedKeys.has(entityKey(entity))}
                     onToggleSelect={toggleEntitySelection}
                   />
+                  </div>
                 ))}
               </div>
             </ResponsiveTableDesktop>
+            {filteredEntities.length > visibleCount && (
+              <button
+                type="button"
+                onClick={loadMoreEntities}
+                className="w-full py-3 text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white bg-slate-900/40 border-t border-white/5 transition-colors"
+              >
+                {t('Showing')} {visibleCount} / {filteredEntities.length} — {t('scroll to load more')}
+              </button>
+            )}
           </>
         )}
       </div>

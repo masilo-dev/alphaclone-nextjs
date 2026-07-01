@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     'team collaboration video',
   ],
   alternates: { canonical: absoluteUrl('/video-meetings') },
-  openGraph: {
+  openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
     title: 'AlphaClone Video Meetings',
     description: 'Integrated video meetings linked with CRM and operations.',
     url: absoluteUrl('/video-meetings'),

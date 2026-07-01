@@ -61,6 +61,10 @@
     {
       "path": "/api/cron/sync-zoho-inbox",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-mcp-event-queue",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

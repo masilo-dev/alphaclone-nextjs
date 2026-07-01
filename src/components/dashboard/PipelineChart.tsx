@@ -21,26 +21,20 @@ import {
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser';
 import { useTenant } from '@/contexts/TenantContext';
 
+// Data source: `deals` table (same source as the get_pipeline_summary MCP tool and DealsTab).
+// Previously queried non-existent `business_deals`, silently showing demo data.
 interface PipelineData {
   stage: string;
   value: number;
   count: number;
 }
 
-const DEFAULT_PIPELINE_DATA: PipelineData[] = [
-  { stage: 'Lead', value: 25000, count: 5 },
-  { stage: 'Contacted', value: 42000, count: 8 },
-  { stage: 'Proposal', value: 78000, count: 6 },
-  { stage: 'Negotiation', value: 55000, count: 3 },
-  { stage: 'Won', value: 124500, count: 12 },
-];
-
 const COLORS = ['#3182ce', '#4299e1', '#63b3ed', '#805ad5', '#319795'];
 
 export function PipelineChart() {
   const { currentTenant, isLoading: tenantLoading } = useTenant();
   const tenantId = currentTenant?.id;
-  const [data, setData] = useState<PipelineData[]>(DEFAULT_PIPELINE_DATA);
+  const [data, setData] = useState<PipelineData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const bgCard = useColorModeValue('white', 'gray.800');
@@ -57,7 +51,7 @@ export function PipelineChart() {
         const supabase = createSupabaseBrowserClient();
 
         const { data: deals } = await supabase
-          .from('business_deals')
+          .from('deals')
           .select('stage, value')
           .eq('tenant_id', tenantId);
 
@@ -125,14 +119,21 @@ export function PipelineChart() {
     >
       <Box mb={4}>
         <Heading size="sm" color={textColor} mb={1}>
-          Deals Pipeline Value
+          Deals Pipeline Value (USD)
         </Heading>
         <Text fontSize="xs" color="gray.500">
-          Distribution of pipeline value by stage
+          Open + closed deal value by stage — all time
         </Text>
       </Box>
 
       <Box flex={1} minH={0}>
+        {data.length === 0 ? (
+          <Box display="flex" alignItems="center" justifyContent="center" h="100%">
+            <Text fontSize="sm" color="gray.500" textAlign="center">
+              No deals in the pipeline yet — create your first deal and watch it climb.
+            </Text>
+          </Box>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -170,6 +171,7 @@ export function PipelineChart() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </Box>
     </Box>
   );

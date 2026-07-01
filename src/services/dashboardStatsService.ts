@@ -177,8 +177,9 @@ export const dashboardStatsService = {
         supabase, 'business_clients', 'id, is_active, created_at', tenantId,
         (q) => q.eq('is_active', true),
       ),
+      // Data source: `deals` table (was non-existent `business_deals` — stats silently zeroed)
       safeRows<{ stage: string; value?: number; source?: string; lead_source?: string; created_at: string; actual_close_date?: string }>(
-        supabase, 'business_deals', 'stage, value, source, lead_source, created_at, actual_close_date', tenantId,
+        supabase, 'deals', 'stage, value, source, lead_source, created_at, actual_close_date', tenantId,
       ),
       safeRows<{ source?: string; created_at: string }>(
         supabase, 'leads', 'source, created_at', tenantId,
@@ -753,7 +754,7 @@ export const dashboardStatsService = {
         client_name?: string;
       }>(supabase, 'business_invoices', 'total, status, created_at, paid_at, client_name', tenantId, undefined, 250),
       safeRows<{ stage: string; created_at: string }>(
-        supabase, 'business_deals', 'stage, created_at', tenantId, undefined, 200,
+        supabase, 'deals', 'stage, created_at', tenantId, undefined, 200,
       ),
       safeRows<{ created_at: string }>(
         supabase, 'lead_outreach_log', 'created_at', tenantId, (q) => q.gte('created_at', since30), 150,

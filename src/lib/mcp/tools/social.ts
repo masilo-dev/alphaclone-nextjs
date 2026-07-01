@@ -135,21 +135,27 @@ registerTool('social', {
   },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const row: Record<string, unknown> = {
+      tenant_id: args.tenant_id,
+      platform: args.platform,
+      content: args.content,
+      asset_id: args.asset_id || null,
+      scheduled_at: args.scheduled_at,
+      status: 'pending',
+    };
+    if (ctx.userId) row.user_id = ctx.userId;
+
     const { data, error } = await supabase
       .from('scheduled_posts')
-      .insert({
-        tenant_id: args.tenant_id,
-        user_id: ctx.userId || null,
-        platform: args.platform,
-        content: args.content,
-        asset_id: args.asset_id || null,
-        scheduled_at: args.scheduled_at,
-        status: 'pending',
-      })
+      .insert(row)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new Error(
+        `schedule_social_post failed: ${error.message}. Tip: use create_social_post with scheduled_at as an alternative.`
+      );
+    }
     return data;
   },
 });

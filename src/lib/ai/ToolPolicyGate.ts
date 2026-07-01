@@ -18,6 +18,7 @@ const SEND_TOOLS = new Set([
   'send_email',
   'send_invoice',
   'send_transactional_email',
+  'send_batch_outreach',
   'send_whatsapp_message',
   'queue_email_campaign_send',
   'send_campaign',
