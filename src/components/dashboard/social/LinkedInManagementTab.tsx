@@ -175,12 +175,19 @@ export default function LinkedInManagementTab() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [showComposeSheet, setShowComposeSheet] = useState(false);
   const [capturingLead, setCapturingLead] = useState<Record<string, boolean>>({});
+  const [orgIdentities, setOrgIdentities] = useState<Array<{
+    linkedin_organization_id: string;
+    name: string | null;
+    vanity_name: string | null;
+    logo_url: string | null;
+  }>>([]);
+  const [refreshingCompanyPages, setRefreshingCompanyPages] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
     setLoading(true);
     setSchemaWarning(null);
-    const [postsRes, liRes] = await Promise.all([
+    const [postsRes, liRes, orgRes] = await Promise.all([
       loadLinkedInPostsWithSchemaFallback(currentTenant.id),
       supabase
         .from('linkedin_integrations')
@@ -188,6 +195,11 @@ export default function LinkedInManagementTab() {
         .eq('tenant_id', currentTenant.id)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }),
+      supabase
+        .from('linkedin_identities')
+        .select('linkedin_organization_id,name,vanity_name,logo_url')
+        .eq('tenant_id', currentTenant.id)
+        .eq('type', 'organization'),
     ]);
 
     if (postsRes.error) {
@@ -229,6 +241,27 @@ export default function LinkedInManagementTab() {
       setIntegrations(rows);
       if (rows[0] && !selectedLinkedInMemberId) setSelectedLinkedInMemberId(rows[0].linkedin_member_id);
     }
+
+    if (!orgRes.error && Array.isArray(orgRes.data)) {
+      setOrgIdentities(
+        orgRes.data
+          .filter((row: { linkedin_organization_id?: string | null }) => row.linkedin_organization_id)
+          .map((row: {
+            linkedin_organization_id: string;
+            name: string | null;
+            vanity_name: string | null;
+            logo_url: string | null;
+          }) => ({
+            linkedin_organization_id: String(row.linkedin_organization_id),
+            name: row.name ?? null,
+            vanity_name: row.vanity_name ?? null,
+            logo_url: row.logo_url ?? null,
+          }))
+      );
+    } else {
+      setOrgIdentities([]);
+    }
+
     setLoading(false);
   }, [currentTenant?.id, user?.id, selectedLinkedInMemberId]);
 
@@ -274,10 +307,29 @@ export default function LinkedInManagementTab() {
     [integrations, selectedLinkedInMemberId]
   );
   const canComposeLinkedIn = !!currentTenant?.id && !!selectedLinkedInMemberId && !!selectedIntegration?.is_active && hasWriteScope;
-  const companyPages = useMemo(
-    () => (Array.isArray(selectedIntegration?.metadata?.company_pages) ? selectedIntegration?.metadata?.company_pages || [] : []),
-    [selectedIntegration]
-  );
+  const companyPages = useMemo(() => {
+    const fromMetadata = Array.isArray(selectedIntegration?.metadata?.company_pages)
+      ? selectedIntegration?.metadata?.company_pages || []
+      : [];
+    const merged = new Map<string, { id: string; name: string | null; vanityName: string | null; logoUrl: string | null }>();
+    for (const page of fromMetadata) {
+      if (page?.id) merged.set(page.id, page);
+    }
+    for (const org of orgIdentities) {
+      merged.set(org.linkedin_organization_id, {
+        id: org.linkedin_organization_id,
+        name: org.name,
+        vanityName: org.vanity_name,
+        logoUrl: org.logo_url,
+      });
+    }
+    return Array.from(merged.values());
+  }, [selectedIntegration, orgIdentities]);
+  const hasOrganizationReadScope = useMemo(() => {
+    const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
+    const normalized = normalizeScopes(scopes);
+    return normalized.includes('r_organization_admin') || normalized.includes('r_organization_social');
+  }, [integrations, selectedLinkedInMemberId]);
   const hasOrganizationWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     return normalizeScopes(scopes).includes('w_organization_social');
@@ -301,6 +353,36 @@ export default function LinkedInManagementTab() {
       if (error) toast.error(error);
     } catch {
       toast.error('Failed to start LinkedIn connection');
+    }
+  };
+
+  const handleRefreshCompanyPages = async () => {
+    if (!currentTenant?.id || !selectedLinkedInMemberId) return;
+    setRefreshingCompanyPages(true);
+    try {
+      const res = await fetch('/api/linkedin/refresh-pages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          linkedinMemberId: selectedLinkedInMemberId,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        toast.error(data?.error || 'Could not load company pages from LinkedIn');
+        return;
+      }
+      toast.success(
+        data.companyPagesCount > 0
+          ? `Found ${data.companyPagesCount} company page(s)`
+          : 'No company pages returned — see notice below'
+      );
+      await loadData();
+    } catch {
+      toast.error('Failed to refresh company pages');
+    } finally {
+      setRefreshingCompanyPages(false);
     }
   };
 
@@ -930,6 +1012,39 @@ ${parentContext}Return only the comment text.`;
             <button onClick={handleConnectLinkedIn} className="mt-2 text-xs font-bold underline hover:text-white">
               Reconnect LinkedIn (includes LinkedIn login + 2FA if enabled)
             </button>
+          </div>
+        </div>
+      )}
+
+      {selectedIntegration?.is_active && companyPages.length === 0 && (
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-200 text-sm">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
+          <div className="flex-1 space-y-2">
+            <p className="font-semibold text-white">Company page not listed</p>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              AlphaClone only shows LinkedIn company pages returned by LinkedIn&apos;s API for your account.
+              {!hasOrganizationReadScope
+                ? ' Your current connection is missing organization permissions — reconnect and approve company page access.'
+                : ' If you are a Content Admin (not Super Admin) on the page, use Refresh company pages after this update, or reconnect LinkedIn.'}
+            </p>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => void handleRefreshCompanyPages()}
+                disabled={refreshingCompanyPages}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-teal-500 disabled:opacity-50"
+              >
+                {refreshingCompanyPages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                Refresh company pages
+              </button>
+              <button
+                type="button"
+                onClick={handleConnectLinkedIn}
+                className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-700"
+              >
+                Reconnect LinkedIn
+              </button>
+            </div>
           </div>
         </div>
       )}

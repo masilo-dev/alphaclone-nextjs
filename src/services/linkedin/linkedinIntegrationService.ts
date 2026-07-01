@@ -11,6 +11,139 @@ export type LinkedInCompanyPage = {
   logoUrl: string | null;
 };
 
+/** Roles that can post to or administer a LinkedIn company page (queried separately — API filters one role per call). */
+const LINKEDIN_COMPANY_PAGE_ROLES = [
+  'ADMINISTRATOR',
+  'CONTENT_ADMINISTRATOR',
+  'DIRECT_SPONSORED_CONTENT_POSTER',
+  'CURATOR',
+  'RECRUITING_POSTER',
+] as const;
+
+function parseOrganizationAclElements(elements: unknown[]): LinkedInCompanyPage[] {
+  return elements
+    .map((entry) => {
+      const row = entry as Record<string, unknown>;
+      const target = row?.['organizationalTarget~'] as Record<string, unknown> | undefined;
+      const logoV2 = target?.logoV2 as Record<string, unknown> | undefined;
+      const original = logoV2?.['original~'] as Record<string, unknown> | undefined;
+      const streams = original?.elements;
+      const firstStream = Array.isArray(streams) ? streams[0] : null;
+      const identifiers = (firstStream as Record<string, unknown> | null)?.identifiers;
+      const firstIdentifier = Array.isArray(identifiers) ? identifiers[0] : null;
+      return {
+        id: target?.id ? String(target.id) : '',
+        name: target?.localizedName ? String(target.localizedName) : null,
+        vanityName: target?.vanityName ? String(target.vanityName) : null,
+        logoUrl:
+          firstIdentifier && typeof (firstIdentifier as Record<string, unknown>).identifier === 'string'
+            ? String((firstIdentifier as Record<string, unknown>).identifier)
+            : null,
+      } as LinkedInCompanyPage;
+    })
+    .filter((page: LinkedInCompanyPage) => Boolean(page.id));
+}
+
+async function fetchLinkedInCompanyPagesForRole(
+  accessToken: string,
+  role?: string
+): Promise<LinkedInCompanyPage[]> {
+  const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
+  const url =
+    `https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&state=APPROVED${roleParam}` +
+    '&projection=(elements*(organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))))';
+  const res = await linkedInFetch(url, accessToken, { method: 'GET' });
+  const payload = await res.json().catch(() => ({}));
+  const elements = Array.isArray(payload?.elements) ? payload.elements : [];
+  return parseOrganizationAclElements(elements);
+}
+
+export async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInCompanyPage[]> {
+  const byId = new Map<string, LinkedInCompanyPage>();
+
+  for (const role of LINKEDIN_COMPANY_PAGE_ROLES) {
+    try {
+      const pages = await fetchLinkedInCompanyPagesForRole(accessToken, role);
+      for (const page of pages) byId.set(page.id, page);
+    } catch (err) {
+      console.warn('[linkedin] organizationAcls role fetch failed:', role, err);
+    }
+  }
+
+  if (byId.size === 0) {
+    try {
+      const pages = await fetchLinkedInCompanyPagesForRole(accessToken);
+      for (const page of pages) byId.set(page.id, page);
+    } catch (err) {
+      console.warn('[linkedin] organizationAcls unfiltered fetch failed:', err);
+    }
+  }
+
+  return Array.from(byId.values());
+}
+
+export async function refreshLinkedInCompanyPages(params: {
+  tenantId: string;
+  userId: string;
+  linkedinMemberId?: string | null;
+}): Promise<{ companyPages: LinkedInCompanyPage[]; scopes: string[]; error?: string }> {
+  const admin = createSupabaseAdminClient();
+  const integration = await getLinkedInIntegrationWithToken(admin, {
+    tenantId: params.tenantId,
+    userId: params.userId,
+    linkedinMemberId: params.linkedinMemberId,
+  });
+  if (!integration?.accessToken) {
+    return { companyPages: [], scopes: [], error: 'LinkedIn is not connected or token expired' };
+  }
+
+  const scopes = normalizeLinkedInScopes(integration.scopes);
+  if (!scopes.includes('r_organization_admin') && !scopes.includes('r_organization_social')) {
+    return {
+      companyPages: [],
+      scopes,
+      error: 'Reconnect LinkedIn and approve company page permissions (organization scopes).',
+    };
+  }
+
+  const companyPages = await fetchLinkedInCompanyPages(integration.accessToken);
+  const metadata =
+    integration.metadata && typeof integration.metadata === 'object'
+      ? { ...(integration.metadata as Record<string, unknown>) }
+      : {};
+
+  await admin
+    .from('linkedin_integrations')
+    .update({
+      metadata: {
+        ...metadata,
+        company_pages: companyPages,
+        company_pages_count: companyPages.length,
+        company_pages_refreshed_at: new Date().toISOString(),
+      },
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', integration.id);
+
+  await syncLinkedInIdentities(admin, {
+    tenantId: params.tenantId,
+    integrationId: integration.id,
+    personUrn: integration.linkedin_person_urn,
+    linkedinMemberId: integration.linkedin_member_id,
+    scopes,
+    companyPages,
+    profile: {
+      name: typeof metadata.name === 'string' ? metadata.name : null,
+      picture: typeof metadata.picture === 'string' ? metadata.picture : null,
+      email: typeof metadata.email === 'string' ? metadata.email : null,
+    },
+  }).catch((err) => {
+    console.error('[linkedin] refresh identities failed:', err);
+  });
+
+  return { companyPages, scopes };
+}
+
 export type LinkedInIntegrationRow = {
   id: string;
   tenant_id: string;
@@ -217,35 +350,6 @@ export async function getLinkedInIntegrationWithToken(
   const accessToken = await getLinkedInAccessToken(admin, row);
   if (!accessToken) return null;
   return { ...row, accessToken };
-}
-
-export async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInCompanyPage[]> {
-  const url =
-    'https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&projection=(elements*(organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))))';
-  const res = await linkedInFetch(url, accessToken, { method: 'GET' });
-  if (!res.ok) return [];
-  const payload = await res.json().catch(() => ({}));
-  const elements = Array.isArray(payload?.elements) ? payload.elements : [];
-  return elements
-    .map((entry: Record<string, unknown>) => {
-      const target = entry?.['organizationalTarget~'] as Record<string, unknown> | undefined;
-      const logoV2 = target?.logoV2 as Record<string, unknown> | undefined;
-      const original = logoV2?.['original~'] as Record<string, unknown> | undefined;
-      const streams = original?.elements;
-      const firstStream = Array.isArray(streams) ? streams[0] : null;
-      const identifiers = (firstStream as Record<string, unknown> | null)?.identifiers;
-      const firstIdentifier = Array.isArray(identifiers) ? identifiers[0] : null;
-      return {
-        id: target?.id ? String(target.id) : '',
-        name: target?.localizedName ? String(target.localizedName) : null,
-        vanityName: target?.vanityName ? String(target.vanityName) : null,
-        logoUrl:
-          firstIdentifier && typeof (firstIdentifier as Record<string, unknown>).identifier === 'string'
-            ? String((firstIdentifier as Record<string, unknown>).identifier)
-            : null,
-      } as LinkedInCompanyPage;
-    })
-    .filter((page: LinkedInCompanyPage) => Boolean(page.id));
 }
 
 export async function syncLinkedInIdentities(
