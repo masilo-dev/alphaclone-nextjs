@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Auto reply test
-      await whatsAppChatbotService.maybeAutoReplyMeta(tenantId, from, text);
+      await whatsAppChatbotService.maybeAutoReply(tenantId, from, text);
 
       return NextResponse.json({ success: true, messageId: message.id });
     }

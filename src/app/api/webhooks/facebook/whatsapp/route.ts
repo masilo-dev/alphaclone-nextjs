@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { ENV } from '@/config/env';
+import { persistInboundWhatsAppMessage } from '@/lib/whatsapp/webhookProcessing';
 
 const VERIFY_TOKEN = ENV.FACEBOOK_VERIFY_TOKEN;
 const APP_SECRET = ENV.FACEBOOK_APP_SECRET;
@@ -134,63 +135,30 @@ export async function POST(req: NextRequest) {
 
                             if (!waIntegration?.tenant_id) continue;
 
-                            await supabaseAdmin.from('whatsapp_messages').upsert({
-                                tenant_id: waIntegration.tenant_id,
-                                integration_id: waIntegration.id,
-                                provider: 'meta-whatsapp',
-                                provider_message_id: message.id,
-                                chat_id: message.from,
-                                phone_number: String(message.from || '').replace(/[^0-9]/g, ''),
-                                direction: 'inbound',
-                                message_type: message.type || 'text',
-                                body: message.text?.body || `[WhatsApp ${message.type || 'message'}]`,
-                                media: {
-                                    image: message.image || null,
-                                    video: message.video || null,
-                                    audio: message.audio || null,
-                                    document: message.document || null,
-                                },
-                                status: 'received',
-                                sent_by: 'contact',
-                                raw_payload: message,
-                                metadata: { wabaId, phoneNumberId },
-                                received_at: new Date().toISOString()
-                            }, { onConflict: 'tenant_id,provider_message_id' });
-
-                            // Sync message to universal inbox
                             try {
-                                const { captureUnifiedMessageFromWebhook } = await import('@/services/intelligence/signalCaptureAdminService');
-                                await captureUnifiedMessageFromWebhook({
+                                await persistInboundWhatsAppMessage({
                                     supabase: supabaseAdmin as any,
                                     tenantId: waIntegration.tenant_id,
-                                    source: 'whatsapp',
-                                    channel: 'chat',
-                                    direction: 'inbound',
-                                    externalId: message.id,
-                                    threadId: message.from,
+                                    integrationId: waIntegration.id,
+                                    provider: 'meta',
+                                    providerMessageId: message.id,
+                                    chatId: message.from,
                                     from: message.from,
                                     to: phoneNumberId || wabaId,
-                                    subject: null,
-                                    text: message.text?.body || `[WhatsApp ${message.type || 'message'}]`,
-                                    html: null,
+                                    messageType: message.type || 'text',
+                                    body: message.text?.body || `[WhatsApp ${message.type || 'message'}]`,
+                                    media: {
+                                        image: message.image || null,
+                                        video: message.video || null,
+                                        audio: message.audio || null,
+                                        document: message.document || null,
+                                    },
+                                    rawPayload: message,
+                                    metadata: { wabaId, phoneNumberId },
                                     receivedAt: new Date().toISOString(),
-                                    metadata: { provider: 'meta-whatsapp' },
                                 });
-                            } catch (captureErr) {
-                                console.error('[Facebook/WhatsApp Webhook] Signal capture error:', captureErr);
-                            }
-
-                            // Trigger AI chatbot auto-reply
-                            try {
-                                const { whatsAppChatbotService } = await import('@/services/whatsapp/WhatsAppChatbotService');
-                                await whatsAppChatbotService.maybeAutoReplyMeta(
-                                    waIntegration.tenant_id,
-                                    message.from,
-                                    message.text?.body || '',
-                                    waIntegration.id
-                                );
-                            } catch (chatbotErr) {
-                                console.error('[Facebook/WhatsApp Webhook] Chatbot auto-reply error:', chatbotErr);
+                            } catch (messageErr) {
+                                console.error('[Facebook/WhatsApp Webhook] Message processing error:', messageErr);
                             }
                         }
                     }

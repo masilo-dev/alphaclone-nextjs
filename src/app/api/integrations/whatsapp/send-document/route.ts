@@ -1,79 +1,212 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-
-/**
- * POST /api/integrations/whatsapp/send-document
- *
- * Send a quote, invoice, or any document to a WhatsApp contact directly from
- * the Alphaclone platform. Supports sending:
- *  - A plain text message (type: 'text')
- *  - A PDF/document via public URL (type: 'document')
- *  - An image via public URL (type: 'image')
- *
- * Each tenant uses their OWN credentials — fully multi-tenant isolated.
- * No cross-tenant data exposure.
- */
+import { ENV } from '@/config/env';
+import { getZernioClient, getTenantZernioSettings } from '@/lib/zernio/client';
+import {
+  getActiveWhatsAppIntegration,
+  getWhatsAppAccessToken,
+  getWhatsAppIntegrationProvider,
+  type WhatsAppProvider,
+} from '@/services/whatsapp/whatsappIntegrationService';
 
 const META_GRAPH_VERSION = 'v18.0';
+
+function cleanPhone(phone: string): string {
+  return String(phone || '').replace(/[^0-9]/g, '');
+}
+
+async function resolveProvider(
+  tenantId: string
+): Promise<{ provider: WhatsAppProvider; integrationId: string | null; phoneNumberId: string | null; accessToken: string | null }> {
+  const supabase = createSupabaseAdminClient();
+  const active = await getActiveWhatsAppIntegration(supabase, tenantId);
+  const provider = getWhatsAppIntegrationProvider(active);
+
+  if (provider === 'zernio') {
+    return {
+      provider,
+      integrationId: active?.id || null,
+      phoneNumberId: null,
+      accessToken: null,
+    };
+  }
+
+  const token = active ? await getWhatsAppAccessToken(supabase, active) : null;
+  return {
+    provider,
+    integrationId: active?.id || null,
+    phoneNumberId: active?.phone_number_id || ENV.WHATSAPP_PHONE_NUMBER_ID || null,
+    accessToken: token || ENV.WHATSAPP_ACCESS_TOKEN || null,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
       tenantId,
-      phone,           // recipient phone number (digits only, e.g. "27821234567")
-      messageType,     // 'text' | 'document' | 'image'
-      message,         // body text or caption
-      documentUrl,     // public URL to PDF/document file (for type: 'document' | 'image')
-      documentName,    // filename shown in WhatsApp (e.g. "Invoice_001.pdf")
-      referenceType,   // 'quote' | 'invoice' | 'custom' (for logging)
-      referenceId,     // ID of the quote/invoice record
+      phone,
+      messageType,
+      message,
+      documentUrl,
+      documentName,
+      referenceType,
+      referenceId,
     } = body;
 
     if (!tenantId || !phone || !message) {
-      return NextResponse.json(
-        { error: 'tenantId, phone, and message are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'tenantId, phone, and message are required' }, { status: 400 });
     }
 
     await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
+    const cleanTo = cleanPhone(phone);
+    const providerState = await resolveProvider(tenantId);
+    const type = messageType || 'text';
 
-    // 1. Resolve tenant's WhatsApp integration credentials
-    const { data: integration, error: intErr } = await supabase
-      .from('whatsapp_integrations')
-      .select('id, phone_number_id, access_token')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .not('phone_number_id', 'is', null)
-      .not('access_token', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    if (providerState.provider === 'zernio') {
+      const tenantSettings = await getTenantZernioSettings(tenantId);
+      const accountId = tenantSettings?.whatsappAccountId?.trim() || null;
+      if (!accountId) {
+        return NextResponse.json(
+          { error: 'Zernio WhatsApp is not configured. Add a WhatsApp account ID in tenant Zernio settings.' },
+          { status: 503 }
+        );
+      }
 
-    if (intErr || !integration) {
-      return NextResponse.json(
-        {
-          error: 'No active WhatsApp integration found. Please connect your Meta WhatsApp Business number in Integration Settings.',
+      const zernio = getZernioClient();
+      const conversationLookup = await zernio.messages.listInboxConversations({
+        query: {
+          accountId,
+          limit: 100,
+          sortOrder: 'desc',
         },
+      });
+      const conversationId =
+        (conversationLookup.data || []).find((item) => String(item.participantId || '').replace(/[^0-9]/g, '') === cleanTo)?.id || null;
+
+      if (conversationId) {
+        const response =
+          type === 'document' && documentUrl
+            ? await zernio.messages.sendInboxMessage({
+                path: { conversationId },
+                body: {
+                  accountId,
+                  attachmentUrl: documentUrl,
+                  attachmentType: 'file',
+                  message,
+                },
+              })
+            : type === 'image' && documentUrl
+              ? await zernio.messages.sendInboxMessage({
+                  path: { conversationId },
+                  body: {
+                    accountId,
+                    attachmentUrl: documentUrl,
+                    attachmentType: 'image',
+                    message,
+                  },
+                })
+              : await zernio.messages.sendInboxMessage({
+                  path: { conversationId },
+                  body: {
+                    accountId,
+                    message: documentUrl ? `${message}\n\n${documentUrl}` : message,
+                  },
+                });
+
+        const messageId = response.data?.messageId || `wa_doc_${Date.now()}`;
+        await supabase.from('whatsapp_messages').insert({
+          tenant_id: tenantId,
+          integration_id: providerState.integrationId,
+          provider: 'zernio-whatsapp',
+          provider_message_id: messageId,
+          chat_id: cleanTo,
+          phone_number: cleanTo,
+          direction: 'outbound',
+          message_type: type,
+          body: message,
+          status: 'sent',
+          sent_by: 'human',
+          needs_response: false,
+          sent_at: new Date().toISOString(),
+          metadata: {
+            provider: 'zernio-whatsapp',
+            reference_type: referenceType || 'custom',
+            reference_id: referenceId || null,
+            document_url: documentUrl || null,
+            document_name: documentName || null,
+            zernio_account_id: accountId,
+            zernio_conversation_id: conversationId,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          provider: 'zernio-whatsapp',
+          messageId,
+          to: cleanTo,
+          type,
+        });
+      }
+
+      const response = await zernio.messages.createInboxConversation({
+        body: {
+          accountId,
+          participantId: cleanTo,
+          message: message,
+        },
+      });
+
+      const messageId = response.data?.messageId || `wa_doc_${Date.now()}`;
+      await supabase.from('whatsapp_messages').insert({
+        tenant_id: tenantId,
+        integration_id: providerState.integrationId,
+        provider: 'zernio-whatsapp',
+        provider_message_id: messageId,
+        chat_id: cleanTo,
+        phone_number: cleanTo,
+        direction: 'outbound',
+        message_type: type,
+        body: message,
+        status: 'sent',
+        sent_by: 'human',
+        needs_response: false,
+        sent_at: new Date().toISOString(),
+        metadata: {
+          provider: 'zernio-whatsapp',
+          reference_type: referenceType || 'custom',
+          reference_id: referenceId || null,
+          document_url: documentUrl || null,
+          document_name: documentName || null,
+          zernio_account_id: accountId,
+          zernio_conversation_id: response.data?.conversationId || null,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        provider: 'zernio-whatsapp',
+        messageId,
+        to: cleanTo,
+        type,
+      });
+    }
+
+    if (!providerState.phoneNumberId || !providerState.accessToken) {
+      return NextResponse.json(
+        { error: 'No active WhatsApp integration found. Please connect Meta WhatsApp in Integration Settings.' },
         { status: 404 }
       );
     }
 
-    const { phone_number_id, access_token } = integration;
-    const cleanPhone = String(phone).replace(/[^0-9]/g, '');
-
-    // 2. Build Meta Graph API payload based on message type
     let metaPayload: Record<string, any>;
     const basePayload = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
-      to: cleanPhone,
+      to: cleanTo,
     };
-
-    const type = messageType || 'text';
 
     if (type === 'document' && documentUrl) {
       metaPayload = {
@@ -95,7 +228,6 @@ export async function POST(request: NextRequest) {
         },
       };
     } else {
-      // Default: text message
       metaPayload = {
         ...basePayload,
         type: 'text',
@@ -106,13 +238,12 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // 3. Send via Meta Cloud API
     const metaRes = await fetch(
-      `https://graph.facebook.com/${META_GRAPH_VERSION}/${phone_number_id}/messages`,
+      `https://graph.facebook.com/${META_GRAPH_VERSION}/${providerState.phoneNumberId}/messages`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${access_token}`,
+          Authorization: `Bearer ${providerState.accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(metaPayload),
@@ -130,14 +261,13 @@ export async function POST(request: NextRequest) {
 
     const metaMessageId = metaData.messages?.[0]?.id;
 
-    // 4. Log sent message in whatsapp_messages table
     await supabase.from('whatsapp_messages').insert({
       tenant_id: tenantId,
-      integration_id: integration.id,
+      integration_id: providerState.integrationId,
       provider: 'meta-whatsapp',
       provider_message_id: metaMessageId || `wa_doc_${Date.now()}`,
-      chat_id: cleanPhone,
-      phone_number: cleanPhone,
+      chat_id: cleanTo,
+      phone_number: cleanTo,
       direction: 'outbound',
       message_type: type,
       body: message,
@@ -157,7 +287,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       messageId: metaMessageId,
-      to: cleanPhone,
+      to: cleanTo,
       type,
     });
   } catch (error) {

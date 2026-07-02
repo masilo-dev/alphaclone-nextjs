@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { upsertWhatsAppIntegration } from '@/services/whatsapp/whatsappIntegrationService';
+import { getTenantZernioSettings } from '@/lib/zernio/client';
 
 const META_GRAPH_VERSION = 'v18.0';
 const APP_WEBHOOK_PATH = '/api/webhooks/facebook/whatsapp';
@@ -70,6 +71,7 @@ export async function GET(request: NextRequest) {
       ...item,
       access_token: item.access_token ? `••••${item.access_token.slice(-4)}` : null,
       alias: item.metadata?.alias || 'Meta WhatsApp',
+      provider: item.metadata?.provider || 'meta',
     }));
 
     return NextResponse.json({ success: true, integrations });
@@ -81,17 +83,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { tenantId, wabaId, phoneNumberId, accessToken, alias } = body;
-
-    if (!tenantId || !wabaId || !phoneNumberId || !accessToken) {
-      return NextResponse.json(
-        { error: 'tenantId, wabaId, phoneNumberId, and accessToken are required' },
-        { status: 400 }
-      );
-    }
+    const { tenantId, wabaId, phoneNumberId, accessToken, alias, provider } = body;
+    const selectedProvider = String(provider || 'meta').toLowerCase() === 'zernio' ? 'zernio' : 'meta';
 
     const tenantCtx = await requireTenantAccess(tenantId);
     const supabase = createSupabaseAdminClient();
+    const { data: tenantRow, error: tenantError } = await supabase
+      .from('tenants')
+      .select('settings')
+      .eq('id', tenantId)
+      .maybeSingle();
+
+    if (tenantError) {
+      return NextResponse.json({ error: tenantError.message }, { status: 500 });
+    }
 
     // Build the absolute webhook URL for this deployment
     const baseUrl =
@@ -100,24 +105,85 @@ export async function POST(request: NextRequest) {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://alphaclonesystems.com');
     const webhookUrl = `${baseUrl}${APP_WEBHOOK_PATH}`;
 
-    // 1. Auto-register webhook with Meta — no manual Meta Dashboard step needed
-    const webhookResult = await subscribePhoneToWebhook(phoneNumberId.trim(), accessToken.trim(), webhookUrl);
+    let upsertResult: { integrationId: string | null; error?: string };
 
-    const upsertResult = await upsertWhatsAppIntegration({
-      tenantId,
-      userId: tenantCtx.user.id,
-      wabaId: wabaId.trim(),
-      phoneNumberId: phoneNumberId.trim(),
-      accessToken: accessToken.trim(),
-      webhookVerified: webhookResult.success,
-      metadata: {
-        alias: alias || 'Meta WhatsApp API',
-        webhook_url: webhookUrl,
-        webhook_subscribed_at: webhookResult.success ? new Date().toISOString() : null,
-        webhook_error: webhookResult.error || null,
-        updated_at: new Date().toISOString(),
-      },
-    });
+    if (selectedProvider === 'zernio') {
+      const zernioSettings = (tenantRow?.settings as any)?.zernio || (await getTenantZernioSettings(tenantId));
+      const whatsappAccountId = zernioSettings?.whatsappAccountId?.trim();
+
+      if (!whatsappAccountId) {
+        return NextResponse.json(
+          { error: 'Add a WhatsApp account ID to your tenant Zernio settings before selecting Zernio.' },
+          { status: 400 }
+        );
+      }
+
+      upsertResult = await upsertWhatsAppIntegration({
+        tenantId,
+        userId: tenantCtx.user.id,
+        wabaId: whatsappAccountId,
+        phoneNumberId: null,
+        accessToken: null,
+        webhookVerified: true,
+        provider: 'zernio',
+        metadata: {
+          provider: 'zernio',
+          alias: alias || 'Zernio WhatsApp',
+          whatsapp_account_id: whatsappAccountId,
+          webhook_url: webhookUrl,
+          updated_at: new Date().toISOString(),
+        },
+      });
+    } else {
+      if (!wabaId || !phoneNumberId || !accessToken) {
+        return NextResponse.json(
+          { error: 'tenantId, wabaId, phoneNumberId, and accessToken are required for Meta WhatsApp' },
+          { status: 400 }
+        );
+      }
+
+      // 1. Auto-register webhook with Meta — no manual Meta Dashboard step needed
+      const webhookResult = await subscribePhoneToWebhook(phoneNumberId.trim(), accessToken.trim(), webhookUrl);
+
+      upsertResult = await upsertWhatsAppIntegration({
+        tenantId,
+        userId: tenantCtx.user.id,
+        wabaId: wabaId.trim(),
+        phoneNumberId: phoneNumberId.trim(),
+        accessToken: accessToken.trim(),
+        webhookVerified: webhookResult.success,
+        provider: 'meta',
+        metadata: {
+          provider: 'meta',
+          alias: alias || 'Meta WhatsApp API',
+          webhook_url: webhookUrl,
+          webhook_subscribed_at: webhookResult.success ? new Date().toISOString() : null,
+          webhook_error: webhookResult.error || null,
+          updated_at: new Date().toISOString(),
+        },
+      });
+
+      if (!upsertResult.integrationId) {
+        return NextResponse.json({ error: upsertResult.error || 'Failed to save integration' }, { status: 500 });
+      }
+
+      const { data, error } = await supabase
+        .from('whatsapp_integrations')
+        .select('*')
+        .eq('id', upsertResult.integrationId)
+        .single();
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        integration: data,
+        webhookSubscribed: true,
+        webhookWarning: null,
+      });
+    }
 
     if (!upsertResult.integrationId) {
       return NextResponse.json({ error: upsertResult.error || 'Failed to save integration' }, { status: 500 });
@@ -136,8 +202,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       integration: data,
-      webhookSubscribed: webhookResult.success,
-      webhookWarning: webhookResult.success ? null : `Webhook auto-subscribe failed: ${webhookResult.error}. You may need to subscribe manually in the Meta Developer Portal.`,
+      webhookSubscribed: selectedProvider === 'zernio',
+      webhookWarning: selectedProvider === 'zernio' ? null : null,
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to save WhatsApp integration', request);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -164,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     const {
       grant_type,
-      client_id,
+      client_id: rawClientId,
       client_secret,
       code,
       redirect_uri,
@@ -172,6 +173,7 @@ export async function POST(req: NextRequest) {
       refresh_token,
       resource, // RFC 8707 Resource Indicator
     } = body;
+    const client_id = normalizeMcpClientId(rawClientId) ?? rawClientId;
 
     console.log('[MCP Token] grant_type:', grant_type, 'client_id:', client_id);
 
@@ -191,6 +193,7 @@ export async function POST(req: NextRequest) {
     // Expected resource identifier for this MCP server
     const baseUrl = getBaseUrl(req);
     const expectedResource = `${baseUrl}/api/mcp`;
+    const normalizedResource = normalizeMcpResourceUrl(resource);
 
     // Authenticate the client (required for confidential clients)
     const clientAuth = await authenticateClient(req, client_id, client_secret, supabase);
@@ -212,10 +215,10 @@ export async function POST(req: NextRequest) {
       // For public clients, client_id matching is relaxed
 
       // RFC 8707: Validate resource indicator if provided
-      if (resource && resource !== expectedResource) {
+      if (resource && !isMcpResourceEquivalent(resource, expectedResource)) {
         console.warn('[MCP Token] Invalid resource indicator:', {
           expected: expectedResource,
-          received: resource,
+          received: normalizedResource || resource,
         });
         return tokenError(
           'invalid_target', 
@@ -265,7 +268,8 @@ export async function POST(req: NextRequest) {
 
       // Verify client_id (if code was issued to a specific client)
       // For confidential clients, strict matching is required
-      if (authCode.client_id && client_id && authCode.client_id !== client_id) {
+      const storedClientId = normalizeMcpClientId(authCode.client_id) ?? authCode.client_id;
+      if (storedClientId && client_id && storedClientId !== client_id) {
         console.warn('[MCP Token] client_id mismatch. Code client:', authCode.client_id, 'Request client:', client_id);
         return tokenError(
           'invalid_client',
@@ -276,7 +280,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Confidential clients MUST authenticate and match the code's client
-      if (!clientAuth.client?.is_public && authCode.client_id && (!client_id || authCode.client_id !== client_id)) {
+      if (!clientAuth.client?.is_public && storedClientId && (!client_id || storedClientId !== client_id)) {
         console.warn('[MCP Token] Confidential client must authenticate with matching client_id');
         return tokenError(
           'invalid_client',
@@ -372,7 +376,7 @@ export async function POST(req: NextRequest) {
         .insert({
           access_token: accessToken,
           refresh_token: refreshToken,
-          client_id: authCode.client_id || client_id || null,
+          client_id: storedClientId || client_id || null,
           user_id: authCode.user_id,
           tenant_id: authCode.tenant_id,
           scopes: authCode.scopes || ['read', 'write'],
@@ -408,10 +412,10 @@ export async function POST(req: NextRequest) {
       if (!refresh_token) return tokenError('invalid_request', 'refresh_token is required');
 
       // RFC 8707: Validate resource indicator if provided
-      if (resource && resource !== expectedResource) {
+      if (resource && !isMcpResourceEquivalent(resource, expectedResource)) {
         console.warn('[MCP Token] Invalid resource indicator on refresh:', {
           expected: expectedResource,
-          received: resource,
+          received: normalizedResource || resource,
         });
         return tokenError(
           'invalid_target',
@@ -445,7 +449,7 @@ export async function POST(req: NextRequest) {
       await supabase.from('mcp_oauth_tokens').insert({
         access_token: newAccessToken,
         refresh_token: newRefreshToken,
-        client_id: session.client_id,
+        client_id: normalizeMcpClientId(session.client_id) ?? session.client_id,
         user_id: session.user_id,
         tenant_id: session.tenant_id,
         scopes: session.scopes,
@@ -466,10 +470,10 @@ export async function POST(req: NextRequest) {
     // ── 3. CLIENT CREDENTIALS FLOW (Legacy / API-key agents) ──────────────
     if (grant_type === 'client_credentials') {
       // RFC 8707: Validate resource indicator if provided
-      if (resource && resource !== expectedResource) {
+      if (resource && !isMcpResourceEquivalent(resource, expectedResource)) {
         console.warn('[MCP Token] Invalid resource indicator on client_credentials:', {
           expected: expectedResource,
-          received: resource,
+          received: normalizedResource || resource,
         });
         return tokenError(
           'invalid_target',

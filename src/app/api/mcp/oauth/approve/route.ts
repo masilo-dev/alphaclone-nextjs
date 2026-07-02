@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { isRedirectUriAllowed, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
+import {
+    isRedirectUriAllowed,
+    normalizeMcpClientId,
+    PLATFORM_MCP_OAUTH_CLIENT_IDS,
+} from '@/lib/mcp/oauthRedirect';
 
 /**
  * MCP OAuth2 Approve Endpoint — UI-based authorization code issuance
@@ -25,13 +29,14 @@ export async function POST(req: Request) {
         const body = await req.json();
         const {
             user_id,
-            client_id,
+            client_id: rawClientId,
             redirect_uri,
             state,
             code_challenge,
             code_challenge_method,
             scope = 'read write',
         } = body;
+        const client_id = normalizeMcpClientId(rawClientId) ?? rawClientId;
 
         if (!user_id || !redirect_uri) {
             return NextResponse.json({ error: 'Missing required parameters: user_id, redirect_uri' }, { status: 400 });

@@ -18,6 +18,8 @@ export type WhatsAppIntegrationRow = {
   metadata: Record<string, unknown> | null;
 };
 
+export type WhatsAppProvider = 'meta' | 'zernio';
+
 const SAFE_COLUMNS =
   'id, tenant_id, user_id, waba_id, phone_number_id, is_active, webhook_verified, metadata, created_at, updated_at';
 
@@ -87,14 +89,41 @@ export async function getWhatsAppIntegrationWithToken(
   return { ...row, accessToken };
 }
 
+export function getWhatsAppIntegrationProvider(
+  integration: Pick<WhatsAppIntegrationRow, 'metadata'> | null | undefined
+): WhatsAppProvider {
+  const provider = String(integration?.metadata?.provider || '').toLowerCase();
+  return provider === 'zernio' ? 'zernio' : 'meta';
+}
+
+export async function getActiveWhatsAppIntegration(
+  admin: SupabaseClient,
+  tenantId: string,
+  provider?: WhatsAppProvider
+): Promise<WhatsAppIntegrationRow | null> {
+  let queryBuilder = admin
+    .from('whatsapp_integrations')
+    .select(SAFE_COLUMNS)
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
+
+  const { data, error } = await queryBuilder;
+  if (error || !data?.length) return null;
+  const rows = data as WhatsAppIntegrationRow[];
+  if (!provider) return rows[0] || null;
+  return rows.find((row) => getWhatsAppIntegrationProvider(row) === provider) || null;
+}
+
 export async function upsertWhatsAppIntegration(params: {
   tenantId: string;
   userId: string;
   wabaId: string;
-  phoneNumberId: string;
-  accessToken: string;
+  phoneNumberId?: string | null;
+  accessToken?: string | null;
   webhookVerified: boolean;
   metadata: Record<string, unknown>;
+  provider?: WhatsAppProvider;
 }): Promise<{ integrationId: string | null; error?: string }> {
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
@@ -104,11 +133,14 @@ export async function upsertWhatsAppIntegration(params: {
         tenant_id: params.tenantId,
         user_id: params.userId,
         waba_id: params.wabaId,
-        phone_number_id: params.phoneNumberId,
+        phone_number_id: params.phoneNumberId || null,
         access_token: null,
         is_active: true,
         webhook_verified: params.webhookVerified,
-        metadata: params.metadata,
+        metadata: {
+          ...(params.metadata || {}),
+          provider: params.provider || params.metadata?.provider || 'meta',
+        },
       },
       { onConflict: 'tenant_id,waba_id' }
     )
@@ -116,7 +148,9 @@ export async function upsertWhatsAppIntegration(params: {
     .single();
 
   if (error || !data?.id) return { integrationId: null, error: error?.message || 'upsert failed' };
-  await writeToken(admin, String(data.id), params.accessToken);
+  if (params.accessToken) {
+    await writeToken(admin, String(data.id), params.accessToken);
+  }
   return { integrationId: String(data.id) };
 }
 
@@ -173,6 +207,7 @@ export async function runWhatsAppTokenHealthCheck(limit = 50): Promise<{
   let deactivated = 0;
   for (const row of rows || []) {
     const integration = row as WhatsAppIntegrationRow;
+    if (getWhatsAppIntegrationProvider(integration) === 'zernio') continue;
     const token = await getWhatsAppAccessToken(admin, integration);
     if (!token) continue;
     try {

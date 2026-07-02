@@ -1,7 +1,12 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { isRedirectUriAllowed, shouldUseBrowserOAuthConsent, buildAuthorizePageUrl } from '@/lib/mcp/oauthRedirect';
+import {
+  buildAuthorizePageUrl,
+  isRedirectUriAllowed,
+  normalizeMcpClientId,
+  shouldUseBrowserOAuthConsent,
+} from '@/lib/mcp/oauthRedirect';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -270,7 +275,8 @@ function serveConsentPage(params: {
 async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const { searchParams } = new URL(req.url);
   const responseType        = searchParams.get('response_type') ?? 'code';
-  const clientId            = searchParams.get('client_id') ?? '';
+  const rawClientId         = searchParams.get('client_id') ?? '';
+  const clientId            = normalizeMcpClientId(rawClientId) ?? rawClientId;
   const redirectUri         = searchParams.get('redirect_uri') ?? '';
   const state               = searchParams.get('state');
   const codeChallenge       = searchParams.get('code_challenge');

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
+import { normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
 
 export interface AuthResult {
   tenant_id: string;
@@ -66,7 +67,7 @@ function validateResource(
     }
   };
 
-  const normalizedTokenResource = normalizeUrl(tokenResource);
+  const normalizedTokenResource = normalizeUrl(normalizeMcpResourceUrl(tokenResource) || tokenResource);
   const normalizedRequestUrl = normalizeUrl(requestUrl);
 
   // Check exact match

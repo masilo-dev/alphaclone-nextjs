@@ -3,9 +3,9 @@ import { aiService } from '../ai/aiService';
 
 export class WhatsAppChatbotService {
   /**
-   * Check if chatbot is enabled and auto-reply via Meta WhatsApp Cloud API
+   * Check if chatbot is enabled and auto-reply via the configured WhatsApp provider
    */
-  async maybeAutoReplyMeta(tenantId: string, phone: string, messageText: string, integrationId?: string) {
+  async maybeAutoReply(tenantId: string, phone: string, messageText: string, integrationId?: string) {
     const supabase = createSupabaseAdminClient();
     const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
     if (!tenantId || !cleanPhone || !messageText.trim()) return;
@@ -42,7 +42,7 @@ export class WhatsAppChatbotService {
       message: replyText,
       integrationId,
       contactId: client?.id || null,
-      metadata: { source: 'auto_outreach', provider: 'meta-whatsapp' },
+      metadata: { source: 'auto_outreach' },
     });
 
     if (sendResult.success) {
@@ -50,6 +50,10 @@ export class WhatsAppChatbotService {
     } else {
       console.error(`[WhatsAppChatbot] Failed to send AI auto-reply to ${cleanPhone}:`, sendResult.error);
     }
+  }
+
+  async maybeAutoReplyMeta(tenantId: string, phone: string, messageText: string, integrationId?: string) {
+    return this.maybeAutoReply(tenantId, phone, messageText, integrationId);
   }
 
   async generateReply(
