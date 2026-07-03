@@ -9,6 +9,7 @@ const DELTA_STYLES: Record<DeltaColor, string> = {
   amber: 'text-dashboard-amber',
   red: 'text-dashboard-red',
   blue: 'text-dashboard-blue',
+  teal: 'text-teal-400',
 };
 
 interface MetricCardProps {

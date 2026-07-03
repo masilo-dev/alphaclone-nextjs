@@ -1,4 +1,4 @@
-export type DeltaColor = 'green' | 'amber' | 'red' | 'blue';
+export type DeltaColor = 'green' | 'amber' | 'red' | 'blue' | 'teal';
 export type DeltaDir = 'up' | 'down';
 
 export interface DashboardMetric {
