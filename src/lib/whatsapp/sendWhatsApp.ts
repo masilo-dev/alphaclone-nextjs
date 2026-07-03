@@ -246,7 +246,7 @@ async function findZernioConversationId(params: {
     },
   });
 
-  const match = (data || []).find((conversation) => {
+  const match = (data || []).find((conversation: { participantId?: string; id?: string }) => {
     const participantId = String(conversation.participantId || '').replace(/[^0-9]/g, '');
     return participantId === params.phone;
   });
