@@ -64,6 +64,10 @@ export const DASHBOARD_COLORS = {
   redBg: '#FCEBEB',
   blue: '#378ADD',
   blueBg: '#E6F1FB',
+  teal: '#0d9488',
+  indigo: '#6366f1',
+  violet: '#7c3aed',
+  slate: '#64748b',
 } as const;
 
 export const MODULE_COLORS: Record<string, string> = {
