@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         },
       });
       const conversationId =
-        (conversationLookup.data || []).find((item) => String(item.participantId || '').replace(/[^0-9]/g, '') === cleanTo)?.id || null;
+        (conversationLookup.data || []).find((item: { participantId?: string; id?: string }) => String(item.participantId || '').replace(/[^0-9]/g, '') === cleanTo)?.id || null;
 
       if (conversationId) {
         const response =
