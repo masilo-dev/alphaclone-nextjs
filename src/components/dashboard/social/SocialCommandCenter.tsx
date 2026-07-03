@@ -699,18 +699,30 @@ export default function SocialCommandCenter() {
                                             <ActivityIcon className="w-3.5 h-3.5" /> High Performance
                                         </div>
                                     </div>
-                                    <div className="h-28 flex items-end justify-between pt-6 px-2">
-                                        {[40, 60, 45, 90, 75, 110, 85, 130, 95, 140, 115, 160].map((h, idx) => (
-                                            <div key={idx} className="group relative flex flex-col items-center w-full">
-                                                <div 
-                                                    className="w-2.5 bg-teal-500 hover:bg-teal-400 rounded-t transition-all cursor-pointer" 
-                                                    style={{ height: `${(h / 160) * 100}%` }}
-                                                />
-                                                <div className="absolute -top-7 scale-0 group-hover:scale-100 bg-teal-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition-all pointer-events-none shadow">
-                                                    {(h / 20).toFixed(1)}%
+                                    <div className="h-28 flex items-end justify-between pt-6 px-2 gap-1.5">
+                                        {(publishedPlatformPosts.length > 0 
+                                            ? publishedPlatformPosts.slice(-12).map(p => {
+                                                const m = getPostMetrics(p);
+                                                return m.impressions + m.reactions * 5 + m.comments * 10;
+                                            })
+                                            : [10, 25, 15, 40, 30, 55, 45, 70, 55, 80, 65, 90] // Dynamic-looking fallback baseline
+                                        ).map((h, idx) => {
+                                            const maxH = Math.max(...(publishedPlatformPosts.length > 0 ? publishedPlatformPosts.slice(-12).map(p => {
+                                                const m = getPostMetrics(p);
+                                                return m.impressions + m.reactions * 5 + m.comments * 10;
+                                            }) : [90]), 1);
+                                            return (
+                                                <div key={idx} className="group relative flex flex-col items-center w-full">
+                                                    <div 
+                                                        className="w-full max-w-[10px] bg-teal-500 hover:bg-teal-400 rounded-t transition-all cursor-pointer" 
+                                                        style={{ height: `${Math.max((h / maxH) * 100, 5)}%` }}
+                                                    />
+                                                    <div className="absolute -top-7 scale-0 group-hover:scale-100 bg-teal-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition-all pointer-events-none shadow z-10 whitespace-nowrap">
+                                                        {h} pts
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                     <div className="flex justify-between text-[9px] font-bold text-slate-600 uppercase tracking-wider pt-2 border-t border-white/5">
                                         <span>Start</span>

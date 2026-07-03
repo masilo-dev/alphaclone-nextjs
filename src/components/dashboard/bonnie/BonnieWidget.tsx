@@ -262,7 +262,7 @@ export default function BonnieWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-4 flex max-h-[min(85dvh,680px)] w-[min(100vw-2rem,420px)] flex-col overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl"
+            className="mb-4 flex max-h-[min(85dvh,680px)] w-[min(100vw-2rem,360px)] 2xl:w-[400px] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-slate-900/90 text-white shadow-2xl backdrop-blur-2xl"
           >
             {/* Header */}
             <div className="relative flex items-center justify-between border-b border-slate-800 bg-slate-950/60 p-4">

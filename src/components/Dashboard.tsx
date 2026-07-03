@@ -93,6 +93,7 @@ import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
 
 const BusinessDashboard = React.lazy(() => import('./dashboard/business/BusinessDashboard'));
+const BusinessHomeDashboard = React.lazy(() => import('./dashboard/BusinessHomeDashboard'));
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
 const CRMTab = React.lazy(() => import('./dashboard/CRMTab'));
@@ -1603,7 +1604,9 @@ const Dashboard: React.FC<DashboardProps> = ({
         if (location === '/dashboard' || location === '/dashboard/business') {
           return (
             <div data-tour="dashboard-overview">
-              <OverviewDashboard />
+              <React.Suspense fallback={<TabSkeleton />}>
+                <BusinessHomeDashboard />
+              </React.Suspense>
             </div>
           );
         }

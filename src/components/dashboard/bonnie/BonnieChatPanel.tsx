@@ -366,7 +366,7 @@ export default function BonnieChatPanel({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16] ${
+      className={`flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-950/80 backdrop-blur-md ${
         compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
       }`}
     >
@@ -494,11 +494,11 @@ export default function BonnieChatPanel({
 
       <div className="shrink-0 border-t border-slate-800 bg-slate-950/80 p-3">
         {tenantId && aiQuota && (
-          <div className="mb-2 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-2">
-            <div className="mb-1 flex items-center justify-between gap-2 text-[10px]">
-              <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-400">
+          <div className="mb-2 rounded-xl border border-white/5 bg-slate-900 px-2.5 py-2 shadow-sm">
+            <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px]">
+              <span className="flex items-center gap-1 font-black uppercase tracking-widest text-slate-500">
                 <Zap className="h-3 w-3 text-teal-400" />
-                Daily AI quota
+                AI Priority Layer
               </span>
               <span
                 className={

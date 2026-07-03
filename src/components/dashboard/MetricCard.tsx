@@ -37,7 +37,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        'bg-surface-1 rounded-lg p-4 border border-slate-800/40 flex flex-col justify-between',
+        'bg-slate-900 rounded-xl p-4 border border-white/5 hover:border-teal-500/20 transition-colors flex flex-col justify-between',
         ENTERPRISE.metricCard.minHeight,
         className
       )}
@@ -50,7 +50,7 @@ export function MetricCard({
         <span
           className={cn(
             ENTERPRISE.metricCard.valueSize,
-            'font-bold text-teal-400 leading-none tabular-nums block'
+            'font-black text-white leading-none tabular-nums block tracking-tight'
           )}
         >
           {value}
@@ -62,7 +62,9 @@ export function MetricCard({
               <span
                 className={cn(
                   ENTERPRISE.metricCard.trendSize,
-                  'font-medium tabular-nums',
+                  'font-bold tabular-nums px-1.5 py-0.5 rounded-md',
+                  deltaDir === 'up'   ? 'bg-emerald-500/10 text-emerald-400' :
+                  deltaDir === 'down' ? 'bg-red-500/10 text-red-400' :
                   DELTA_STYLES[deltaColor]
                 )}
               >
@@ -85,7 +87,7 @@ export function MetricCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        'bg-surface-1 rounded-lg p-4 border border-slate-800/40 ac-skeleton-pulse',
+        'bg-slate-900 rounded-xl p-4 border border-white/5 ac-skeleton-pulse',
         ENTERPRISE.metricCard.minHeight,
         className
       )}
