@@ -575,6 +575,8 @@ export const dashboardStatsService = {
     });
     const signatureVelocity = sigDeals.length > 0 ? Math.round(totalSigDays / sigDeals.length) : 0;
 
+    const feed = await fetchActivityFeed(supabase, tenantId, ['contract'], DASHBOARD_COLORS.blue);
+
     return {
       metrics: [
         { label: 'Active contracts', value: active },
