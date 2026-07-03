@@ -28,7 +28,7 @@ const compact = (n: number) =>
 const pctChange = (curr: number, prev: number) =>
   prev === 0 ? (curr > 0 ? 100 : 0) : Math.round(((curr - prev) / prev) * 100);
 
-const safeQuery = async <T>(
+const safeQuery = async <T = unknown>(
   fn: () => PromiseLike<{ data: T | null; count?: number | null; error: any }>
 ): Promise<{ data: T | null; count: number }> => {
   try {
