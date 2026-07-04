@@ -152,7 +152,11 @@ export function StandardStatCard({
             styles.iconBg,
             styles.iconColor
           )}>
-            {typeof icon === 'function' ? React.createElement(icon as React.ElementType, { className: 'w-4 h-4' }) : icon}
+            {/* forwardRef components (e.g. Lucide) have typeof === 'object', not 'function'.
+                Use React.isValidElement to distinguish pre-rendered JSX from a component type. */}
+            {React.isValidElement(icon)
+              ? icon
+              : React.createElement(icon as React.ElementType, { className: 'w-4 h-4' })}
           </div>
         )}
       </div>

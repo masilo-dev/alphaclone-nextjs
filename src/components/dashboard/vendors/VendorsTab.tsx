@@ -26,7 +26,7 @@ export default function VendorsTab() {
     setLoading(true);
     const { data, error } = await supabase
       .from('vendor_bills')
-      .select('vendor_name, total_amount, status, due_date, created_at')
+      .select('vendor_id, total_amount, status, due_date, created_at, contacts(first_name, last_name)')
       .eq('tenant_id', currentTenant.id)
       .order('created_at', { ascending: false })
       .limit(500);
@@ -39,8 +39,11 @@ export default function VendorsTab() {
     }
 
     const map = new Map<string, VendorRow>();
-    for (const row of data || []) {
-      const name = String(row.vendor_name || 'Unknown vendor').trim();
+    for (const row of (data as any[]) || []) {
+      const contact = row.contacts as { first_name?: string; last_name?: string } | null;
+      const name = contact
+        ? [contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unknown vendor'
+        : 'Unknown vendor';
       const existing = map.get(name) || {
         vendor_name: name,
         bill_count: 0,
