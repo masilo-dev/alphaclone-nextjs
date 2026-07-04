@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, CheckCircle2, Eye, MousePointerClick } from 'lucide-react';
 import {
   emailCampaignService,
   type EmailCampaign,
   type CampaignRecipient,
 } from '@/services/emailCampaignService';
+import { StandardStatCard, StandardStatusBadge, resolveStatusVariant, type CardTheme } from '@/components/ui/design-system';
 
 interface EmailCampaignAnalyticsProps {
   campaign: EmailCampaign;
@@ -74,16 +75,16 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
   }
 
   const statCards = [
-    { label: 'Sent', value: campaign.totalSent, color: 'text-teal-400' },
-    { label: 'Delivered', value: campaign.totalDelivered, color: 'text-cyan-400' },
-    { label: 'Opened', value: campaign.totalOpened, color: 'text-violet-400' },
-    { label: 'Clicked', value: campaign.totalClicked, color: 'text-teal-300' },
+    { label: 'Sent', value: campaign.totalSent, theme: 'blue' as CardTheme, icon: Mail },
+    { label: 'Delivered', value: campaign.totalDelivered, theme: 'emerald' as CardTheme, icon: CheckCircle2 },
+    { label: 'Opened', value: campaign.totalOpened, theme: 'purple' as CardTheme, icon: Eye },
+    { label: 'Clicked', value: campaign.totalClicked, theme: 'amber' as CardTheme, icon: MousePointerClick },
   ];
 
   const rateCards = [
-    { label: 'Open Rate', value: `${(rates?.openRate ?? 0).toFixed(1)}%`, color: 'text-violet-400' },
-    { label: 'Click Rate', value: `${(rates?.clickRate ?? 0).toFixed(1)}%`, color: 'text-teal-400' },
-    { label: 'Bounce Rate', value: `${(rates?.bounceRate ?? 0).toFixed(1)}%`, color: 'text-red-400' },
+    { label: 'Open Rate', value: `${(rates?.openRate ?? 0).toFixed(1)}%`, theme: 'purple' as CardTheme },
+    { label: 'Click Rate', value: `${(rates?.clickRate ?? 0).toFixed(1)}%`, theme: 'amber' as CardTheme },
+    { label: 'Bounce Rate', value: `${(rates?.bounceRate ?? 0).toFixed(1)}%`, theme: 'rose' as CardTheme },
   ];
 
   return (
@@ -104,19 +105,26 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {statCards.map((s) => (
-          <div key={s.label} className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-            <div className="text-xs text-slate-500 mb-1">{s.label}</div>
-            <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
-          </div>
+          <StandardStatCard
+            key={s.label}
+            label={s.label}
+            value={s.value.toLocaleString()}
+            themeColor={s.theme}
+            icon={s.icon}
+            interactive={false}
+          />
         ))}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         {rateCards.map((s) => (
-          <div key={s.label} className="bg-slate-900 border border-white/5 rounded-2xl p-4 text-center">
-            <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-slate-500 mt-1">{s.label}</div>
-          </div>
+          <StandardStatCard
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            themeColor={s.theme}
+            interactive={false}
+          />
         ))}
       </div>
 
@@ -166,17 +174,7 @@ const EmailCampaignAnalytics: React.FC<EmailCampaignAnalyticsProps> = ({
                     {abVariant ? (
                       <span className="text-[10px] font-bold text-violet-400">{abVariant}</span>
                     ) : null}
-                    <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
-                      ['delivered', 'opened', 'clicked', 'sent'].includes(r.status)
-                        ? 'bg-teal-500/10 text-teal-400'
-                        : r.status === 'bounced' || r.status === 'failed'
-                          ? 'bg-red-500/10 text-red-400'
-                          : 'bg-slate-500/10 text-slate-400'
-                    }`}
-                  >
-                    {r.status}
-                    </span>
+                    <StandardStatusBadge variant={resolveStatusVariant(r.status)}>{r.status}</StandardStatusBadge>
                   </div>
                 </div>
               );})

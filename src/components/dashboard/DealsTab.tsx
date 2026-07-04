@@ -23,7 +23,7 @@ import EmptyState from '../ui/EmptyState';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
-import { StatusBadge, dealStatusVariant } from '../ui/StatusBadge';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import {
   getDealStageProgress,
@@ -956,7 +956,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                       <span className="text-[13px] font-bold text-white block">{deal.name}</span>
                     </td>
                     <td className="p-4">
-                      <StatusBadge variant={dealStatusVariant(deal.stage)}>{deal.stage.replace('_', ' ')}</StatusBadge>
+                      <StandardStatusBadge variant={resolveStatusVariant(deal.stage)}>{deal.stage.replace('_', ' ')}</StandardStatusBadge>
                     </td>
                     <td className="p-4">
                       <span className="text-[13px] font-black text-teal-400">${(deal.value || 0).toLocaleString()}</span>

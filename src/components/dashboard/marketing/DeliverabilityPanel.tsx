@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ShieldAlert, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
 
 export default function DeliverabilityPanel() {
   const { currentTenant } = useTenant();
@@ -53,15 +54,18 @@ export default function DeliverabilityPanel() {
       </div>
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: 'Total sent', value: stats.sent, color: 'text-teal-400' },
-          { label: 'Bounce rate', value: `${bounceRate}%`, color: 'text-red-400' },
-          { label: 'Unsubscribes', value: stats.unsubscribed, color: 'text-slate-400' },
-          { label: 'Suppressed', value: stats.suppressed, color: 'text-violet-400' },
+          { label: 'Total sent', value: stats.sent, theme: 'teal' as CardTheme },
+          { label: 'Bounce rate', value: `${bounceRate}%`, theme: 'rose' as CardTheme },
+          { label: 'Unsubscribes', value: stats.unsubscribed, theme: 'orange' as CardTheme },
+          { label: 'Suppressed', value: stats.suppressed, theme: 'purple' as CardTheme },
         ].map((s) => (
-          <div key={s.label} className="bg-slate-950 rounded-xl p-3 border border-white/5">
-            <div className="text-xs text-slate-500">{s.label}</div>
-            <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
-          </div>
+          <StandardStatCard
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            themeColor={s.theme}
+            interactive={false}
+          />
         ))}
       </div>
       {Number(bounceRate) > 2 && (

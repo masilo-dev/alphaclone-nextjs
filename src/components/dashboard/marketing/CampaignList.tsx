@@ -11,14 +11,7 @@ import toast from 'react-hot-toast';
 import CampaignBuilder from './CampaignBuilder';
 import CampaignAnalytics from './CampaignAnalytics';
 
-const STATUS_STYLES: Record<string, { dot: string; badge: string; label: string }> = {
-    draft:      { dot: 'bg-slate-500', badge: 'bg-slate-500/15 text-slate-400 border border-slate-500/10', label: 'Draft' },
-    scheduled:  { dot: 'bg-blue-400', badge: 'bg-blue-500/10 text-blue-400 border border-blue-500/10', label: 'Scheduled' },
-    sending:    { dot: 'bg-yellow-400 animate-pulse', badge: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/10', label: 'Sending' },
-    completed:  { dot: 'bg-emerald-500', badge: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/10', label: 'Completed' },
-    failed:     { dot: 'bg-red-500', badge: 'bg-red-500/15 text-red-400 border border-red-500/10', label: 'Failed' },
-    cancelled:  { dot: 'bg-slate-500', badge: 'bg-slate-800 text-slate-400 border border-transparent', label: 'Cancelled' },
-};
+import { StandardStatCard, StandardStatusBadge, resolveStatusVariant, type CardTheme } from '@/components/ui/design-system';
 
 const CampaignList: React.FC = () => {
     const { currentTenant } = useTenant();
@@ -117,14 +110,18 @@ const CampaignList: React.FC = () => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
                 {[
-                    { label: 'Total Sent', value: totalSent.toLocaleString(), color: 'text-blue-400' },
-                    { label: 'Open Rate', value: `${avgOpenRate}%`, color: 'text-emerald-400' },
-                    { label: 'Active', value: campaigns.filter(c => c.status === 'sending' || c.status === 'scheduled').length.toString(), color: 'text-yellow-400' },
+                    { label: 'Total Sent', value: totalSent.toLocaleString(), theme: 'blue' as CardTheme, icon: Mail },
+                    { label: 'Open Rate', value: `${avgOpenRate}%`, theme: 'emerald' as CardTheme, icon: BarChart3 },
+                    { label: 'Active', value: campaigns.filter(c => c.status === 'sending' || c.status === 'scheduled').length.toLocaleString(), theme: 'amber' as CardTheme, icon: Send },
                 ].map(s => (
-                    <div key={s.label} className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-                        <div className="text-xs text-slate-500 mb-1">{s.label}</div>
-                        <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-                    </div>
+                    <StandardStatCard
+                        key={s.label}
+                        label={s.label}
+                        value={s.value}
+                        themeColor={s.theme}
+                        icon={s.icon}
+                        interactive={false}
+                    />
                 ))}
             </div>
 
@@ -177,7 +174,6 @@ const CampaignList: React.FC = () => {
             ) : (
                 <div className="space-y-3">
                     {filtered.map(campaign => {
-                        const style = STATUS_STYLES[campaign.status] || STATUS_STYLES.draft;
                         const openRate = campaign.total_sent > 0 ? Math.round((campaign.total_opened / campaign.total_sent) * 100) : 0;
 
                         return (
@@ -189,10 +185,9 @@ const CampaignList: React.FC = () => {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-semibold text-white text-sm truncate">{campaign.name}</h3>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-1 ${style.badge}`}>
-                                                <span className={`w-1 h-1 rounded-full ${style.dot}`} />
-                                                {style.label}
-                                            </span>
+                                            <StandardStatusBadge variant={resolveStatusVariant(campaign.status)}>
+                                                {campaign.status}
+                                            </StandardStatusBadge>
                                         </div>
                                         <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
                                             <span>Subject: {campaign.subject}</span>

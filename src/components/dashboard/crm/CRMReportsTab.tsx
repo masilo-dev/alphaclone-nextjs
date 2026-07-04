@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Loader2, Download } from 'lucide-react';
+import { Loader2, Download, Users, TrendingUp, BarChart3 } from 'lucide-react';
 import { dealService } from '@/services/dealService';
 import { leadService } from '@/services/leadService';
+import { StandardStatCard } from '@/components/ui/design-system';
 
 const COLORS = ['#14b8a6', '#06b6d4', '#8b5cf6', '#f87171', '#64748b'];
 
@@ -52,14 +53,18 @@ export default function CRMReportsTab() {
     <div className="p-4 space-y-6 overflow-y-auto pb-24">
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total Leads', value: leadStats.total },
-          { label: 'Qualified', value: leadStats.qualified },
-          { label: 'Conversion %', value: `${leadStats.conversion}%` },
+          { label: 'Total Leads', value: leadStats.total, icon: Users, theme: 'teal' as const },
+          { label: 'Qualified', value: leadStats.qualified, icon: TrendingUp, theme: 'emerald' as const },
+          { label: 'Conversion %', value: `${leadStats.conversion}%`, icon: BarChart3, theme: 'blue' as const },
         ].map((s) => (
-          <div key={s.label} className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-            <div className="text-xs text-slate-500">{s.label}</div>
-            <div className="text-2xl font-bold text-teal-400">{s.value}</div>
-          </div>
+          <StandardStatCard
+            key={s.label}
+            label={s.label}
+            value={s.value}
+            themeColor={s.theme}
+            icon={s.icon}
+            interactive={false}
+          />
         ))}
       </div>
 

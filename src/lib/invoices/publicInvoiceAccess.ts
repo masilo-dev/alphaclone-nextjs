@@ -1,5 +1,3 @@
-import 'server-only';
-
 import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppUrls } from '@/lib/urls';

@@ -6,9 +6,9 @@ import {
   TrendingUp, TrendingDown, FileText, ChevronRight,
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw,
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { format, parseISO } from 'date-fns';
+import { StandardStatCard, StandardLineChart, type CardTheme } from '@/components/ui/design-system';
 
 type DateRange = '7d' | '30d' | '90d';
 type ChartMetric = 'revenue' | 'projects';
@@ -30,20 +30,6 @@ const METRIC_COLORS = {
   projects: '#8b5cf6',
 } as const;
 
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; value: number; color: string }>; label?: string }) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-slate-800 border border-white/10 rounded-xl px-3 py-2">
-      <div className="text-[11px] text-slate-400 mb-1">{label}</div>
-      {payload.map((p) => (
-        <div key={p.dataKey} className="text-[13px] font-bold" style={{ color: p.color }}>
-          {p.dataKey === 'revenue' ? `$${p.value.toLocaleString()}` : p.value.toLocaleString()}
-        </div>
-      ))}
-    </div>
-  );
-};
-
 function formatChartLabel(dateStr: string): string {
   try {
     return format(parseISO(dateStr), 'MMM d');
@@ -58,34 +44,34 @@ function buildKpiChips(stats: AnalyticsData) {
     {
       label: 'Revenue',
       value: `$${stats.revenue.total.toLocaleString()}`,
-      delta: trend,
-      positive: trend >= 0,
+      delta: trend >= 0 ? `+${trend.toFixed(1)}%` : `${trend.toFixed(1)}%`,
+      deltaDir: (trend >= 0 ? 'up' : 'down') as 'up' | 'down',
+      theme: 'teal' as CardTheme,
       href: '/dashboard/business/reports',
-      display: `${Math.abs(trend).toFixed(1)}%`,
     },
     {
       label: 'Active Projects',
       value: String(stats.projects.active),
-      delta: stats.projects.completed,
-      positive: true,
+      delta: `${stats.projects.completed} completed`,
+      deltaDir: 'none' as const,
+      theme: 'purple' as CardTheme,
       href: '/dashboard/business/projects',
-      display: `${stats.projects.completed} completed`,
     },
     {
       label: 'Clients',
       value: String(stats.users.clients),
-      delta: stats.users.growth,
-      positive: stats.users.growth >= 0,
+      delta: stats.users.growth >= 0 ? `+${stats.users.growth.toFixed(1)}%` : `${stats.users.growth.toFixed(1)}%`,
+      deltaDir: (stats.users.growth >= 0 ? 'up' : 'down') as 'up' | 'down',
+      theme: 'blue' as CardTheme,
       href: '/dashboard/contacts',
-      display: `${Math.abs(stats.users.growth).toFixed(1)}%`,
     },
     {
       label: 'On-Time Delivery',
       value: `${stats.performance.onTimeDelivery}%`,
-      delta: stats.performance.clientSatisfaction,
-      positive: stats.performance.onTimeDelivery >= 80,
+      delta: `${stats.performance.clientSatisfaction}/5 sat`,
+      deltaDir: 'none' as const,
+      theme: 'amber' as CardTheme,
       href: '/dashboard/performance',
-      display: `${stats.performance.clientSatisfaction}/5 satisfaction`,
     },
   ];
 }
@@ -118,6 +104,8 @@ const AnalyticsTab: React.FC = () => {
       month: formatChartLabel(p.date),
       revenue: p.revenue,
       projects: proj?.count ?? 0,
+      label: formatChartLabel(p.date),
+      value: metric === 'revenue' ? p.revenue : (proj?.count ?? 0)
     };
   }) ?? [];
 
@@ -157,23 +145,22 @@ const AnalyticsTab: React.FC = () => {
 
       <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
         {kpiChips.map((kpi) => (
-          <button
+          <StandardStatCard
             key={kpi.label}
+            label={kpi.label}
+            value={kpi.value}
+            delta={kpi.delta}
+            deltaDir={kpi.deltaDir}
+            themeColor={kpi.theme}
             onClick={() => router.push(kpi.href)}
-            className="flex-shrink-0 min-w-[140px] bg-slate-900 border border-white/5 rounded-2xl p-4 text-left hover:border-teal-500/30 transition-colors"
-          >
-            <div className="text-[24px] font-bold text-white">{kpi.value}</div>
-            <div className="text-[11px] text-slate-500 mt-0.5 mb-2">{kpi.label}</div>
-            <div className={`flex items-center gap-1 text-[13px] font-bold ${kpi.positive ? 'text-teal-400' : 'text-red-400'}`}>
-              {kpi.positive ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-              {kpi.display}
-            </div>
-          </button>
+            className="flex-shrink-0 min-w-[170px]"
+            comparisonText=""
+          />
         ))}
       </div>
 
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-        <div className="flex gap-1.5 mb-4">
+      <div className="space-y-4">
+        <div className="flex gap-1.5">
           {(['revenue', 'projects'] as ChartMetric[]).map((m) => (
             <button
               key={m}
@@ -188,25 +175,15 @@ const AnalyticsTab: React.FC = () => {
             </button>
           ))}
         </div>
-        {chartData.length === 0 ? (
-          <div className="h-[200px] flex items-center justify-center text-slate-500 text-sm">
-            No data for this period yet
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={chartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="analyticsGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={METRIC_COLORS[metric]} stopOpacity={0.3} />
-                  <stop offset="95%" stopColor={METRIC_COLORS[metric]} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Area type="monotone" dataKey={metric} stroke={METRIC_COLORS[metric]} strokeWidth={2} fill="url(#analyticsGrad)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
+        <StandardLineChart
+          data={chartData}
+          xKey="label"
+          yKey="value"
+          name={metric}
+          color={metric === 'revenue' ? '#14b8a6' : '#8b5cf6'}
+          valuePrefix={metric === 'revenue' ? '$' : ''}
+          height={200}
+        />
       </div>
 
       <div>

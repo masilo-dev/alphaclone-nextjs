@@ -22,6 +22,7 @@ import { useCurrency } from '../../../hooks/useCurrency';
 import { useTenant } from '@/contexts/TenantContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from '../../ui/ChartContainer';
+import { StandardStatCard } from '@/components/ui/design-system';
 
 const BusinessPerformanceDashboard: React.FC = () => {
   const { currentTenant: tenant } = useTenant();
@@ -135,147 +136,40 @@ const BusinessPerformanceDashboard: React.FC = () => {
         </button>
       </div>
 
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-      >
-        {/* Revenue Today */}
-        <motion.div variants={item}>
-          <Card className="p-6 relative overflow-hidden group border-slate-800 bg-slate-900/40 backdrop-blur-md">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <DollarSign className="w-12 h-12 text-emerald-400" />
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-medium text-slate-300">Revenue Today</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{formatCurrency(data?.revenue?.thisMonth ?? 0)}</span>
-                <span className="text-xs text-slate-400 mb-1">This Month</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Trend</span>
-                <span className={`font-mono font-bold ${(data?.revenue?.trend ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {(data?.revenue?.trend ?? 0) >= 0 ? '+' : ''}{(data?.revenue?.trend ?? 0).toFixed(1)}%
-                </span>
-              </div>
-              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-4 overflow-hidden">
-                <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.min(Math.abs(data?.revenue?.trend ?? 0) * 10, 100)}%` }} />
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Social Engagement */}
-        <motion.div variants={item}>
-          <Card className="p-6 relative overflow-hidden group border-slate-800 bg-slate-900/40 backdrop-blur-md">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Share2 className="w-12 h-12 text-purple-400" />
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
-                <Share2 className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-medium text-slate-300">Social Summary</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">12.4K</span>
-                <div className="flex items-center gap-1 text-teal-400 text-xs font-bold mb-1">
-                  <TrendingUp className="w-3 h-3" /> 14%
-                </div>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Impressions</span>
-                <span className="text-purple-400 font-bold">Live</span>
-              </div>
-              <div className="flex gap-1 mt-4">
-                {[40, 70, 45, 90, 65, 80, 50].map((h, i) => (
-                  <div key={i} className="flex-1 bg-purple-500/20 rounded-t-sm self-end" style={{ height: `${h}%` }} />
-                ))}
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Finance Snapshot */}
-        <motion.div variants={item}>
-          <Card className="p-6 relative overflow-hidden group border-slate-800 bg-slate-900/40 backdrop-blur-md">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <DollarSign className="w-12 h-12 text-teal-400" />
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-teal-500/10 text-teal-400">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-medium text-slate-300">Finance</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{formatCurrency(data?.revenue?.thisMonth ?? 0)}</span>
-                <span className="text-xs text-teal-400 font-bold mb-1">+{(data?.revenue?.trend ?? 0).toFixed(1)}%</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">Monthly Revenue</span>
-                <span className="text-slate-400">Paid Invoices</span>
-              </div>
-              <div className="mt-4 pt-4 border-t border-slate-800/50 flex justify-between">
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Burn</p>
-                  <p className="text-xs text-red-400 font-mono">-$2.4k</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Net</p>
-                  <p className="text-xs text-teal-400 font-mono">+$8.1k</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-
-        {/* Automation Health */}
-        <motion.div variants={item}>
-          <Card className="p-6 relative overflow-hidden group border-slate-800 bg-slate-900/40 backdrop-blur-md">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Zap className="w-12 h-12 text-yellow-400" />
-            </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-yellow-500/10 text-yellow-400">
-                <Zap className="w-5 h-5" />
-              </div>
-              <h3 className="text-sm font-medium text-slate-300">Automation</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-end">
-                <span className="text-2xl font-bold text-white">{(data?.businessOS?.automation?.successRate ?? 0).toFixed(1)}%</span>
-                <span className="text-xs text-yellow-400 font-bold mb-1">Health</span>
-              </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500">{data?.businessOS?.automation?.totalRuns ?? 0} Runs (24h)</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-green-400">Active</span>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <div className="flex-1 bg-slate-800 rounded-lg p-2 text-center">
-                   <p className="text-[10px] text-slate-500 font-bold uppercase">Success</p>
-                   <p className="text-xs text-white font-mono">{data?.businessOS?.automation?.statusCounts?.completed ?? 0}</p>
-                </div>
-                <div className="flex-1 bg-slate-800 rounded-lg p-2 text-center">
-                   <p className="text-[10px] text-slate-500 font-bold uppercase">Fail</p>
-                   <p className="text-xs text-red-400 font-mono">{data?.businessOS?.automation?.statusCounts?.failed ?? 0}</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-      </motion.div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StandardStatCard
+          label="Revenue Today"
+          value={formatCurrency(data?.revenue?.thisMonth ?? 0)}
+          themeColor="emerald"
+          icon={DollarSign}
+          interactive={false}
+          comparisonText={`Trend: ${(data?.revenue?.trend ?? 0) >= 0 ? '+' : ''}${(data?.revenue?.trend ?? 0).toFixed(1)}%`}
+        />
+        <StandardStatCard
+          label="Social Summary"
+          value="12.4K"
+          themeColor="purple"
+          icon={Share2}
+          interactive={false}
+          comparisonText="Impressions · +14%"
+        />
+        <StandardStatCard
+          label="Finance"
+          value={formatCurrency(data?.revenue?.thisMonth ?? 0)}
+          themeColor="teal"
+          icon={DollarSign}
+          interactive={false}
+          comparisonText={`+${(data?.revenue?.trend ?? 0).toFixed(1)}% Monthly Revenue`}
+        />
+        <StandardStatCard
+          label="Automation"
+          value={`${(data?.businessOS?.automation?.successRate ?? 0).toFixed(1)}%`}
+          themeColor="amber"
+          icon={Zap}
+          interactive={false}
+          comparisonText={`${data?.businessOS?.automation?.totalRuns ?? 0} Runs (24h)`}
+        />
+      </div>
 
       {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

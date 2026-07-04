@@ -9,6 +9,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
+import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
 
 interface CashFlowProjection {
   id: string;
@@ -200,42 +201,39 @@ export default function CashFlowForecastTab() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Total Liquidity */}
-        <div className="bg-gradient-to-br from-teal-500/10 to-emerald-500/10 border border-teal-500/20 rounded-3xl p-5 relative overflow-hidden">
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Ending Treasury Cash</span>
-          <div className="text-2xl font-black text-teal-400 font-mono mt-1">${endingCash.toLocaleString()}</div>
-          <span className="text-[10px] text-slate-500 mt-1 block">Starting base: $25,000</span>
-        </div>
-
-        {/* Expected Inflows */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-5">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-black uppercase tracking-wider">Inbound Revenue</span>
-            <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-black text-emerald-400 font-mono mt-1">+${totalInflow.toLocaleString()}</div>
-          <span className="text-[10px] text-slate-500 mt-1 block">Pipeline receivables</span>
-        </div>
-
-        {/* Expected Outflows */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-5">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-black uppercase tracking-wider">Outbound Commitments</span>
-            <ArrowDownRight className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="text-2xl font-black text-rose-400 font-mono mt-1">-${totalOutflow.toLocaleString()}</div>
-          <span className="text-[10px] text-slate-500 mt-1 block">Payables & upcoming bills</span>
-        </div>
-
-        {/* Liquidity Runway Ratio */}
-        <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-5">
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Delta Ratio</span>
-          <div className={`text-2xl font-black font-mono mt-1 ${endingCash >= startingCash ? 'text-teal-400' : 'text-amber-400'}`}>
-            {totalOutflow > 0 ? ((totalInflow / totalOutflow) * 100).toFixed(0) : '100'}%
-          </div>
-          <span className="text-[10px] text-slate-500 mt-1 block">Revenue vs expense safety</span>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StandardStatCard
+          label="Ending Treasury Cash"
+          value={`$${endingCash.toLocaleString()}`}
+          themeColor="teal"
+          icon={DollarSign}
+          interactive={false}
+          comparisonText="Starting base: $25,000"
+        />
+        <StandardStatCard
+          label="Inbound Revenue"
+          value={`+$${totalInflow.toLocaleString()}`}
+          themeColor="emerald"
+          icon={ArrowUpRight}
+          interactive={false}
+          comparisonText="Pipeline receivables"
+        />
+        <StandardStatCard
+          label="Outbound Commitments"
+          value={`-$${totalOutflow.toLocaleString()}`}
+          themeColor="rose"
+          icon={ArrowDownRight}
+          interactive={false}
+          comparisonText="Payables & upcoming bills"
+        />
+        <StandardStatCard
+          label="Net Delta Ratio"
+          value={`${totalOutflow > 0 ? ((totalInflow / totalOutflow) * 100).toFixed(0) : '100'}%`}
+          themeColor={endingCash >= startingCash ? 'teal' : 'amber'}
+          icon={TrendingUp}
+          interactive={false}
+          comparisonText="Revenue vs expense safety"
+        />
       </div>
 
       {/* SVG Chart Section */}

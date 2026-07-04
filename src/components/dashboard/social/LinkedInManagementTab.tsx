@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 
 type LinkedInStatusFilter = 'all' | 'published' | 'scheduled' | 'failed' | 'cancelled';
 
@@ -1194,9 +1195,9 @@ ${parentContext}Return only the comment text.`;
                             Duplicate
                           </span>
                         )}
-                        <span className={`text-xs font-bold px-3 py-1 rounded border uppercase tracking-tighter w-fit ${STATUS_BADGE[post.status] || STATUS_BADGE.draft}`}>
+                        <StandardStatusBadge variant={resolveStatusVariant(post.status)}>
                           {post.status}
-                        </span>
+                        </StandardStatusBadge>
                       </div>
                       
                       <div className="flex-1 min-w-0">

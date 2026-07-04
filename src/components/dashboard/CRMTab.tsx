@@ -31,6 +31,7 @@ import { showActionNextSteps } from '../common/showActionNextSteps';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
+import { StandardStatusBadge, resolveStatusVariant, SocialPlatformIcon } from '@/components/ui/design-system';
 import { leadService } from '../../services/leadService';
 import { businessClientService } from '../../services/businessClientService';
 import { contactService } from '../../services/contactService';
@@ -222,8 +223,9 @@ const SwipeableRow: React.FC<{
               </span>
             )}
             {entity.source && (
-              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md capitalize flex-shrink-0 ${sourceColors[entity.source.toLowerCase()] || 'bg-slate-800 text-slate-400'}`}>
-                {entity.source}
+              <span className="flex items-center gap-1 shrink-0">
+                <SocialPlatformIcon platform={entity.source} size="sm" />
+                <StandardStatusBadge variant="neutral">{entity.source}</StandardStatusBadge>
               </span>
             )}
           </div>
@@ -277,9 +279,7 @@ const SwipeableRow: React.FC<{
             {entity.value ? `$${entity.value.toLocaleString()}` : ''}
           </span>
           <div className="flex items-center gap-1.5">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${statusColors[entity.status] || 'bg-slate-800 text-slate-300'}`}>
-              {entity.status}
-            </span>
+            <StandardStatusBadge variant={resolveStatusVariant(entity.status)}>{entity.status}</StandardStatusBadge>
             <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 transition-colors" />
           </div>
         </div>
@@ -394,12 +394,11 @@ const LeadDetail: React.FC<{
           </div>
           <h2 className="text-xl font-bold text-white text-center mt-2">{name || lead.name}</h2>
           <div className="flex items-center gap-2">
-            <span className={`text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${statusColors[lead.status]}`}>
-              {lead.status}
-            </span>
+            <StandardStatusBadge variant={resolveStatusVariant(lead.status)}>{lead.status}</StandardStatusBadge>
             {lead.source && (
-              <span className={`text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${sourceColors[lead.source.toLowerCase()] || 'bg-slate-800 text-slate-400'}`}>
-                {lead.source}
+              <span className="flex items-center gap-1">
+                <SocialPlatformIcon platform={lead.source} size="sm" />
+                <StandardStatusBadge variant="neutral">{lead.source}</StandardStatusBadge>
               </span>
             )}
           </div>
@@ -721,9 +720,7 @@ const Client360Detail: React.FC<{
           </div>
           <h2 className="text-xl font-bold text-white text-center mt-2">{name || client.name}</h2>
           <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span className={`text-[11px] font-bold px-3 py-1 rounded-full border capitalize ${statusColors[salesStage]}`}>
-              {salesStage}
-            </span>
+            <StandardStatusBadge variant={resolveStatusVariant(salesStage)}>{salesStage}</StandardStatusBadge>
             {(industry || client.industry) && (
               <span className="text-[11px] font-bold px-3 py-1 rounded-full border border-slate-700 bg-slate-900/60 text-slate-400 capitalize">
                 {industry || client.industry}

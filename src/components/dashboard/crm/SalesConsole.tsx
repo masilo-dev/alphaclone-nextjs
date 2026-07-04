@@ -9,6 +9,7 @@ import { dealService } from '@/services/dealService';
 import { taskService } from '@/services/taskService';
 import { forecastingService } from '@/services/forecastingService';
 import { RevenueLeakagePanel } from './RevenueLeakagePanel';
+import { StandardStatCard } from '@/components/ui/design-system';
 
 export default function SalesConsole() {
   const router = useRouter();
@@ -77,10 +78,10 @@ export default function SalesConsole() {
   }
 
   const kpis = [
-    { label: 'Hot Leads', value: stats.hotLeads, icon: Users, href: '/dashboard/leads', color: 'text-teal-400' },
-    { label: 'Open Deals', value: stats.openDeals, icon: Target, href: '/dashboard/deals', color: 'text-cyan-400' },
-    { label: 'Pipeline', value: `$${stats.pipelineValue.toLocaleString()}`, icon: DollarSign, href: '/dashboard/deals', color: 'text-violet-400' },
-    { label: 'Tasks Due', value: stats.tasksDue, icon: CheckSquare, href: '/dashboard/tasks', color: 'text-teal-300' },
+    { label: 'Hot Leads', value: stats.hotLeads, icon: Users, href: '/dashboard/leads', theme: 'teal' },
+    { label: 'Open Deals', value: stats.openDeals, icon: Target, href: '/dashboard/deals', theme: 'blue' },
+    { label: 'Pipeline', value: `$${stats.pipelineValue.toLocaleString()}`, icon: DollarSign, href: '/dashboard/deals', theme: 'purple' },
+    { label: 'Tasks Due', value: stats.tasksDue, icon: CheckSquare, href: '/dashboard/tasks', theme: 'amber' },
   ];
 
   return (
@@ -88,15 +89,15 @@ export default function SalesConsole() {
       <RevenueLeakagePanel leakageOnly heading="Revenue leaks & next moves" />
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {kpis.map((k) => (
-          <button
+          <StandardStatCard
             key={k.label}
+            label={k.label}
+            value={k.value}
+            themeColor={k.theme as any}
+            icon={k.icon}
+            interactive={true}
             onClick={() => router.push(k.href)}
-            className="bg-slate-900 border border-white/5 rounded-2xl p-4 text-left hover:border-teal-500/30 transition-colors"
-          >
-            <k.icon className={`w-5 h-5 ${k.color} mb-2`} />
-            <div className="text-xl font-bold text-white">{k.value}</div>
-            <div className="text-xs text-slate-500">{k.label}</div>
-          </button>
+          />
         ))}
       </div>
 

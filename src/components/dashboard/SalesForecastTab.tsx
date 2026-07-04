@@ -9,6 +9,7 @@ import { dealService, PipelineStats } from '../../services/dealService';
 import { ChartContainer } from '../ui/ChartContainer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/hooks/useCurrency';
+import { StandardStatCard } from '@/components/ui/design-system';
 
 const SalesForecastTab = () => {
     const { user } = useAuth();
@@ -84,41 +85,38 @@ const SalesForecastTab = () => {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-slate-900 border-slate-800 p-4">
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="p-2 bg-green-500/10 rounded-lg text-green-400"><DollarSign className="w-5 h-5" /></div>
-                        <span className="text-xs text-green-400 flex items-center gap-1">+12.5% <TrendingUp className="w-3 h-3" /></span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">{format(summary?.totalWeightedPipeline || 0)}</div>
-                    <div className="text-xs text-slate-500">Weighted Pipeline</div>
-                </Card>
-
-                <Card className="bg-slate-900 border-slate-800 p-4">
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Target className="w-5 h-5" /></div>
-                        <span className="text-xs text-slate-400">{(summary?.achievementRate ?? 0).toFixed(1)}% to Goal</span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">{format(summary?.totalForecastedRevenue || 0)}</div>
-                    <div className="text-xs text-slate-500">Revenue Target</div>
-                </Card>
-
-                <Card className="bg-slate-900 border-slate-800 p-4">
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400"><TrendingUp className="w-5 h-5" /></div>
-                        <span className="text-xs text-green-400 flex items-center gap-1">Live <TrendingUp className="w-3 h-3" /></span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">{winRate.toFixed(1)}%</div>
-                    <div className="text-xs text-slate-500">Win Rate</div>
-                </Card>
-
-                <Card className="bg-slate-900 border-slate-800 p-4">
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="p-2 bg-rose-500/10 rounded-lg text-rose-400"><TrendingDown className="w-5 h-5" /></div>
-                        <span className="text-xs text-rose-400 flex items-center gap-1">Unknown <TrendingDown className="w-3 h-3" /></span>
-                    </div>
-                    <div className="text-2xl font-bold text-white">{summary?.expectedWins || 0}</div>
-                    <div className="text-xs text-slate-500">Expected Wins</div>
-                </Card>
+                <StandardStatCard
+                    label="Weighted Pipeline"
+                    value={format(summary?.totalWeightedPipeline || 0)}
+                    themeColor="emerald"
+                    icon={DollarSign}
+                    interactive={false}
+                    comparisonText="+12.5% growth"
+                />
+                <StandardStatCard
+                    label="Revenue Target"
+                    value={format(summary?.totalForecastedRevenue || 0)}
+                    themeColor="blue"
+                    icon={Target}
+                    interactive={false}
+                    comparisonText={`${(summary?.achievementRate ?? 0).toFixed(1)}% to Goal`}
+                />
+                <StandardStatCard
+                    label="Win Rate"
+                    value={`${winRate.toFixed(1)}%`}
+                    themeColor="purple"
+                    icon={TrendingUp}
+                    interactive={false}
+                    comparisonText="Live metric"
+                />
+                <StandardStatCard
+                    label="Expected Wins"
+                    value={summary?.expectedWins || 0}
+                    themeColor="rose"
+                    icon={TrendingDown}
+                    interactive={false}
+                    comparisonText="This quarter"
+                />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

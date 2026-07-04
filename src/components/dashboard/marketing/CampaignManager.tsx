@@ -1,29 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Plus, Send, Pause, Play, Trash2, BarChart3, Mail, Calendar, Users, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Plus, Send, Pause, Play, Trash2, BarChart3, Mail, Calendar, Users, X, ChevronDown, ChevronUp, CheckCircle2, Eye, MousePointerClick, AlertCircle } from 'lucide-react';
 import { emailCampaignService, type EmailCampaign } from '@/services/emailCampaignService';
 import { useAuth } from '@/contexts/AuthContext';
+import { StandardStatCard, StandardStatusBadge, resolveStatusVariant, type CardTheme } from '@/components/ui/design-system';
 
 type CampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled';
-
-const STATUS_COLORS: Record<CampaignStatus, string> = {
-    draft: 'bg-gray-500',
-    scheduled: 'bg-blue-500',
-    sending: 'bg-yellow-500',
-    sent: 'bg-green-500',
-    paused: 'bg-orange-500',
-    cancelled: 'bg-red-500',
-};
-
-const STATUS_LABELS: Record<CampaignStatus, string> = {
-    draft: 'Draft',
-    scheduled: 'Scheduled',
-    sending: 'Sending',
-    sent: 'Sent',
-    paused: 'Paused',
-    cancelled: 'Cancelled',
-};
 
 interface CampaignStats {
     totalRecipients: number;
@@ -330,9 +313,9 @@ export default function CampaignManager() {
                                             <h3 className="text-sm font-semibold text-white truncate">
                                                 {campaign.name}
                                             </h3>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full text-white ${STATUS_COLORS[campaign.status]}`}>
-                                                {STATUS_LABELS[campaign.status]}
-                                            </span>
+                                            <StandardStatusBadge variant={resolveStatusVariant(campaign.status)}>
+                                                {campaign.status}
+                                            </StandardStatusBadge>
                                         </div>
                                         <p className="text-sm text-slate-300 mb-2">
                                             Subject: {campaign.subject}
@@ -500,40 +483,61 @@ export default function CampaignManager() {
                         </div>
 
                         <div className="grid grid-cols-3 gap-4 mb-6">
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-white">{campaignStats.totalRecipients.toLocaleString()}</div>
-                                <div className="text-xs text-slate-400 mt-1">Total Recipients</div>
-                            </div>
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-green-400">{campaignStats.totalSent.toLocaleString()}</div>
-                                <div className="text-xs text-slate-400 mt-1">Sent</div>
-                            </div>
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-blue-400">{campaignStats.totalDelivered.toLocaleString()}</div>
-                                <div className="text-xs text-slate-400 mt-1">Delivered</div>
-                            </div>
+                            <StandardStatCard
+                                label="Total Recipients"
+                                value={campaignStats.totalRecipients.toLocaleString()}
+                                themeColor="teal"
+                                icon={Users}
+                                interactive={false}
+                            />
+                            <StandardStatCard
+                                label="Sent"
+                                value={campaignStats.totalSent.toLocaleString()}
+                                themeColor="blue"
+                                icon={Send}
+                                interactive={false}
+                            />
+                            <StandardStatCard
+                                label="Delivered"
+                                value={campaignStats.totalDelivered.toLocaleString()}
+                                themeColor="emerald"
+                                icon={CheckCircle2}
+                                interactive={false}
+                            />
                         </div>
 
-                        <div className="grid grid-cols-4 gap-4 mb-6">
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-yellow-400">{formatRate(campaignStats.openRate)}</div>
-                                <div className="text-xs text-slate-400 mt-1">Open Rate</div>
-                                <div className="text-xs text-slate-500">{campaignStats.totalOpened.toLocaleString()} opens</div>
-                            </div>
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-purple-400">{formatRate(campaignStats.clickRate)}</div>
-                                <div className="text-xs text-slate-400 mt-1">Click Rate</div>
-                                <div className="text-xs text-slate-500">{campaignStats.totalClicked.toLocaleString()} clicks</div>
-                            </div>
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-red-400">{formatRate(campaignStats.bounceRate)}</div>
-                                <div className="text-xs text-slate-400 mt-1">Bounce Rate</div>
-                                <div className="text-xs text-slate-500">{campaignStats.totalBounced.toLocaleString()} bounced</div>
-                            </div>
-                            <div className="bg-slate-900 rounded-lg p-4 text-center">
-                                <div className="text-2xl font-bold text-orange-400">{campaignStats.totalUnsubscribed.toLocaleString()}</div>
-                                <div className="text-xs text-slate-400 mt-1">Unsubscribes</div>
-                            </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <StandardStatCard
+                                label="Open Rate"
+                                value={formatRate(campaignStats.openRate)}
+                                themeColor="purple"
+                                icon={Eye}
+                                interactive={false}
+                                comparisonText={`${campaignStats.totalOpened.toLocaleString()} opens`}
+                            />
+                            <StandardStatCard
+                                label="Click Rate"
+                                value={formatRate(campaignStats.clickRate)}
+                                themeColor="amber"
+                                icon={MousePointerClick}
+                                interactive={false}
+                                comparisonText={`${campaignStats.totalClicked.toLocaleString()} clicks`}
+                            />
+                            <StandardStatCard
+                                label="Bounce Rate"
+                                value={formatRate(campaignStats.bounceRate)}
+                                themeColor="rose"
+                                icon={AlertCircle}
+                                interactive={false}
+                                comparisonText={`${campaignStats.totalBounced.toLocaleString()} bounced`}
+                            />
+                            <StandardStatCard
+                                label="Unsubscribes"
+                                value={campaignStats.totalUnsubscribed.toLocaleString()}
+                                themeColor="orange"
+                                icon={X}
+                                interactive={false}
+                            />
                         </div>
 
                         <div className="text-xs text-slate-500 text-center">

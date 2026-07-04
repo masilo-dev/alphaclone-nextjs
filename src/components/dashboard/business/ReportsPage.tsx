@@ -21,6 +21,7 @@ import {
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { WrapChart } from '@/lib/chartWrapper';
+import { StandardStatCard, StandardLineChart, StandardDonutChart, type CardTheme } from '@/components/ui/design-system';
 
 interface ReportsPageProps {
     user: User;
@@ -276,29 +277,33 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
 
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <MetricCard
+                <StandardStatCard
                     label="Total Revenue"
                     value={`$${stats.totalRevenue.toLocaleString()}`}
                     icon={DollarSign}
-                    color="text-teal-400"
+                    themeColor="teal"
+                    interactive={false}
                 />
-                <MetricCard
+                <StandardStatCard
                     label="Total Clients"
                     value={stats.totalClients.toString()}
                     icon={Users}
-                    color="text-violet-400"
+                    themeColor="purple"
+                    interactive={false}
                 />
-                <MetricCard
+                <StandardStatCard
                     label="Active Projects"
                     value={stats.activeProjects.toString()}
                     icon={Briefcase}
-                    color="text-blue-400"
+                    themeColor="blue"
+                    interactive={false}
                 />
-                <MetricCard
+                <StandardStatCard
                     label="Completed"
                     value={stats.completedProjects.toString()}
                     icon={TrendingUp}
-                    color="text-green-400"
+                    themeColor="emerald"
+                    interactive={false}
                 />
             </div>
 
@@ -333,23 +338,18 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 bg-slate-900/50 border border-slate-800 rounded-2xl p-5">
                         <h4 className="text-sm font-semibold text-slate-200 mb-3">Score Trend</h4>
-                        <WrapChart height={220}>
-                            <LineChart
-                                data={intelligencePoints.map((point) => ({
-                                    ...point,
-                                    date: new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                                }))}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                <XAxis dataKey="date" stroke="#94a3b8" />
-                                <YAxis stroke="#94a3b8" domain={[0, 100]} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
-                                    labelStyle={{ color: '#94a3b8' }}
-                                />
-                                <Line type="monotone" dataKey="score" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 3 }} activeDot={{ r: 5 }} />
-                            </LineChart>
-                        </WrapChart>
+                        <StandardLineChart
+                            data={intelligencePoints.map((point) => ({
+                                ...point,
+                                label: new Date(point.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                                value: point.score,
+                            }))}
+                            xKey="label"
+                            yKey="value"
+                            name="Score"
+                            color="#2dd4bf"
+                            height={220}
+                        />
                     </div>
                     <div className="space-y-3">
                         <ModuleIntelligenceCard
@@ -390,12 +390,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <h3 className="text-lg font-bold mb-4">Revenue & Expenses</h3>
                     <WrapChart height={300}>
                         <BarChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} vertical={false} />
                             <XAxis dataKey="month" stroke="#94a3b8" />
                             <YAxis stroke="#94a3b8" />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
-                                labelStyle={{ color: '#94a3b8' }}
+                                contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
+                                labelStyle={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold' }}
+                                itemStyle={{ color: '#fff', fontSize: '12px' }}
                             />
                             <Legend />
                             <Bar dataKey="revenue" fill="#2dd4bf" name="Revenue" radius={[4, 4, 0, 0]} />
@@ -407,25 +408,14 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Client Distribution */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Client Distribution</h3>
-                    <WrapChart height={300}>
-                        <PieChart>
-                            <Pie
-                                data={clientData}
-                                cx="50%"
-                                cy="50%"
-                                labelLine={false}
-                                label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                                outerRadius={100}
-                                fill="#8884d8"
-                                dataKey="value"
-                            >
-                                {clientData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                ))}
-                            </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }} />
-                        </PieChart>
-                    </WrapChart>
+                    <StandardDonutChart
+                        data={clientData.map((entry, index) => ({
+                            name: entry.name,
+                            value: entry.value,
+                            color: COLORS[index % COLORS.length]
+                        }))}
+                        height={300}
+                    />
                 </div>
 
                 {/* Project Status */}
@@ -433,12 +423,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                     <h3 className="text-lg font-bold mb-4">Project Status</h3>
                     <WrapChart height={300}>
                         <BarChart data={projectData} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} vertical={false} />
                             <XAxis type="number" stroke="#94a3b8" />
                             <YAxis dataKey="name" type="category" stroke="#94a3b8" width={100} />
                             <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
-                                labelStyle={{ color: '#94a3b8' }}
+                                contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', backdropFilter: 'blur(8px)' }}
+                                labelStyle={{ color: '#64748b', fontSize: '10px', fontWeight: 'bold' }}
+                                itemStyle={{ color: '#fff', fontSize: '12px' }}
                             />
                             <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
                         </BarChart>
@@ -448,34 +439,23 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                 {/* Revenue Trend */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-lg font-bold mb-4">Revenue Trend</h3>
-                    <WrapChart height={300}>
-                        <LineChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                            <XAxis dataKey="month" stroke="#94a3b8" />
-                            <YAxis stroke="#94a3b8" />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '12px' }}
-                                labelStyle={{ color: '#94a3b8' }}
-                            />
-                            <Line type="monotone" dataKey="revenue" stroke="#2dd4bf" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                        </LineChart>
-                    </WrapChart>
+                    <StandardLineChart
+                        data={revenueData.map((d) => ({
+                            ...d,
+                            label: d.month,
+                            value: d.revenue
+                        }))}
+                        xKey="label"
+                        yKey="value"
+                        name="Revenue"
+                        color="#2dd4bf"
+                        valuePrefix="$"
+                        height={300}
+                    />
                 </div>
             </div>
         </div>
     );
 };
-
-const MetricCard = ({ label, value, icon: Icon, color }: any) => (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center gap-3 mb-2">
-            <div className={`p-2.5 rounded-xl bg-slate-950 border border-slate-800 ${color}`}>
-                <Icon className="w-5 h-5" />
-            </div>
-            <p className="text-sm font-medium text-slate-400">{label}</p>
-        </div>
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
-    </div>
-);
 
 export default ReportsPage;

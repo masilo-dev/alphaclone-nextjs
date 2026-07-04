@@ -5,6 +5,7 @@ import {
     X, Eye, MousePointerClick, Mail, CheckCircle2, AlertCircle, Loader2
 } from 'lucide-react';
 import { campaignService, Campaign, CampaignRecipient } from '@/services/campaignService';
+import { StandardStatCard, StandardStatusBadge, resolveStatusVariant, type CardTheme } from '@/components/ui/design-system';
 
 interface CampaignAnalyticsProps {
     campaign: Campaign;
@@ -62,29 +63,36 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                    { label: 'Total Sent', value: analytics?.sent || 0, color: 'text-blue-400' },
-                    { label: 'Delivered', value: analytics?.delivered || 0, color: 'text-emerald-400' },
-                    { label: 'Opened', value: analytics?.opened || 0, color: 'text-purple-400' },
-                    { label: 'Clicked', value: analytics?.clicked || 0, color: 'text-yellow-400' },
+                    { label: 'Total Sent', value: analytics?.sent || 0, theme: 'blue' as CardTheme, icon: Mail },
+                    { label: 'Delivered', value: analytics?.delivered || 0, theme: 'emerald' as CardTheme, icon: CheckCircle2 },
+                    { label: 'Opened', value: analytics?.opened || 0, theme: 'purple' as CardTheme, icon: Eye },
+                    { label: 'Clicked', value: analytics?.clicked || 0, theme: 'amber' as CardTheme, icon: MousePointerClick },
                 ].map(s => (
-                    <div key={s.label} className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-                        <div className="text-xs text-slate-500 mb-1">{s.label}</div>
-                        <div className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</div>
-                    </div>
+                    <StandardStatCard
+                        key={s.label}
+                        label={s.label}
+                        value={s.value.toLocaleString()}
+                        themeColor={s.theme}
+                        icon={s.icon}
+                        interactive={false}
+                    />
                 ))}
             </div>
 
             {/* Rates */}
             <div className="grid grid-cols-3 gap-3">
                 {[
-                    { label: 'Open Rate', value: `${analytics?.openRate || 0}%`, color: 'text-purple-400' },
-                    { label: 'Click Rate', value: `${analytics?.clickRate || 0}%`, color: 'text-yellow-400' },
-                    { label: 'Delivery Rate', value: `${analytics?.deliveryRate || 0}%`, color: 'text-emerald-400' },
+                    { label: 'Open Rate', value: `${analytics?.openRate || 0}%`, theme: 'purple' as CardTheme },
+                    { label: 'Click Rate', value: `${analytics?.clickRate || 0}%`, theme: 'amber' as CardTheme },
+                    { label: 'Delivery Rate', value: `${analytics?.deliveryRate || 0}%`, theme: 'emerald' as CardTheme },
                 ].map(s => (
-                    <div key={s.label} className="bg-slate-900 border border-white/5 rounded-2xl p-4 text-center">
-                        <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
-                        <div className="text-xs text-slate-500 mt-1">{s.label}</div>
-                    </div>
+                    <StandardStatCard
+                        key={s.label}
+                        label={s.label}
+                        value={s.value}
+                        themeColor={s.theme}
+                        interactive={false}
+                    />
                 ))}
             </div>
 
@@ -117,14 +125,7 @@ const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({ campaign, onClose
                                     <span className="text-white">{r.email}</span>
                                     {r.name && <span className="text-slate-500 ml-2">({r.name})</span>}
                                 </div>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                                    r.status === 'delivered' || r.status === 'opened' || r.status === 'clicked' ? 'bg-emerald-500/10 text-emerald-400' :
-                                    r.status === 'bounced' || r.status === 'failed' ? 'bg-red-500/10 text-red-400' :
-                                    r.status === 'sent' ? 'bg-blue-500/10 text-blue-400' :
-                                    'bg-slate-500/10 text-slate-400'
-                                }`}>
-                                    {r.status}
-                                </span>
+                                <StandardStatusBadge variant={resolveStatusVariant(r.status)}>{r.status}</StandardStatusBadge>
                             </div>
                         ))}
                     </div>

@@ -6,8 +6,10 @@ import { Card, Button } from '../../ui/UIComponents';
 import { 
     DollarSign, ArrowUpRight, ArrowDownRight, FileText, Activity, Upload, 
     CheckCircle2, Calendar, ShieldCheck, ChevronDown, TrendingUp, Wallet, 
-    ArrowRight, Clock, Plus, Filter, MoreHorizontal, Receipt
+    ArrowRight, Clock, Plus, Filter, MoreHorizontal, Receipt,
+    AlertTriangle, CreditCard, Landmark, RefreshCcw
 } from 'lucide-react';
+import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
 import { supabase } from '../../../lib/supabase';
 import ReceiptUploadModal from './ReceiptUploadModal';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
@@ -247,15 +249,19 @@ export default function AccountingDashboard() {
 
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
                 {[
-                    { label: 'Open Bills', value: stats.openBills, accent: 'text-amber-300' },
-                    { label: 'Overdue Bills', value: stats.overdueBills, accent: 'text-rose-300' },
-                    { label: 'Unreconciled', value: stats.unreconciledTransactions, accent: 'text-sky-300' },
-                    { label: 'Bank Accounts', value: stats.activeBankAccounts, accent: 'text-emerald-300' },
+                    { label: 'Open Bills', value: stats.openBills, theme: 'amber' as CardTheme, icon: FileText },
+                    { label: 'Overdue Bills', value: stats.overdueBills, theme: 'rose' as CardTheme, icon: AlertTriangle },
+                    { label: 'Unreconciled', value: stats.unreconciledTransactions, theme: 'blue' as CardTheme, icon: RefreshCcw },
+                    { label: 'Bank Accounts', value: stats.activeBankAccounts, theme: 'emerald' as CardTheme, icon: Landmark },
                 ].map((item) => (
-                    <Card key={item.label} className="bg-slate-950/70 border border-white/5 rounded-2xl p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">{item.label}</p>
-                        <p className={`mt-2 text-2xl font-black ${item.accent}`}>{item.value}</p>
-                    </Card>
+                    <StandardStatCard
+                        key={item.label}
+                        label={item.label}
+                        value={item.value}
+                        themeColor={item.theme}
+                        icon={item.icon}
+                        interactive={false}
+                    />
                 ))}
             </div>
 
@@ -275,18 +281,27 @@ export default function AccountingDashboard() {
             {activeTab === 'overview' && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <Card className="p-6 bg-slate-900/40 border-white/5">
-                            <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Available Cash</p>
-                            <h3 className="text-2xl font-black text-white">${stats.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-                        </Card>
-                        <Card className="p-6 bg-slate-900/40 border-white/5">
-                            <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Revenue (MTD)</p>
-                            <h3 className="text-2xl font-black text-teal-400">${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-                        </Card>
-                        <Card className="p-6 bg-slate-900/40 border-white/5">
-                            <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">Expenses (MTD)</p>
-                            <h3 className="text-2xl font-black text-rose-400">${stats.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
-                        </Card>
+                        <StandardStatCard
+                            label="Available Cash"
+                            value={`$${stats.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                            themeColor="teal"
+                            icon={Landmark}
+                            interactive={false}
+                        />
+                        <StandardStatCard
+                            label="Revenue (MTD)"
+                            value={`$${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                            themeColor="emerald"
+                            icon={TrendingUp}
+                            interactive={false}
+                        />
+                        <StandardStatCard
+                            label="Expenses (MTD)"
+                            value={`$${stats.totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                            themeColor="rose"
+                            icon={CreditCard}
+                            interactive={false}
+                        />
                     </div>
 
                     {/* Responsive Ledger List */}

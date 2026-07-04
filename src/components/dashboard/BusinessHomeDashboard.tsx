@@ -2,10 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  DollarSign, Users, Mail, Target, CheckCircle2,
-  TrendingUp, TrendingDown, Share2,
-  Brain, BarChart2, Activity, ChevronRight,
-  Linkedin, Facebook, Twitter, Instagram, Music2,
+  DollarSign, Users, Mail, CheckCircle2,
+  Share2, Brain, BarChart2, Activity,
   Circle, Clock, Globe,
 } from 'lucide-react';
 import {
@@ -17,6 +15,12 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { subDays, format } from 'date-fns';
+import {
+  StandardStatCard,
+  StandardStatusBadge,
+  resolveStatusVariant,
+  SocialPlatformIcon,
+} from '@/components/ui/design-system';
 
 /* ─── helpers ─────────────────────────────────────── */
 const compact = (n: number) =>
@@ -49,7 +53,7 @@ interface HomeStats {
 }
 
 interface PipelineStage { stage: string; count: number; color: string }
-interface SocialAccount  { platform: string; followers: number; growth: number; icon: React.ReactNode; color: string }
+interface SocialAccount  { platform: string; followers: number; growth: number }
 interface ActivityItem   { id: string; description: string; created_at: string; iconColor: string }
 interface Task           { id: string; title: string; priority: string; due_date: string | null }
 interface ChartPoint     { date: string; thisMonth: number; lastMonth: number }
@@ -74,50 +78,6 @@ const AGENTS = [
   { name: 'Social Media Agent', desc: 'Scheduling posts',    color: 'text-violet-400', bg: 'bg-violet-500/10' },
   { name: 'Sales Assistant',    desc: 'Qualifying leads',    color: 'text-amber-400',  bg: 'bg-amber-500/10' },
 ];
-
-const PLATFORM_META: Record<string, { icon: React.ReactNode; color: string }> = {
-  linkedin:  { icon: <Linkedin  className="w-5 h-5" />, color: 'text-sky-400'    },
-  facebook:  { icon: <Facebook  className="w-5 h-5" />, color: 'text-blue-500'   },
-  instagram: { icon: <Instagram className="w-5 h-5" />, color: 'text-pink-400'   },
-  x:         { icon: <Twitter   className="w-5 h-5" />, color: 'text-slate-200'  },
-  tiktok:    { icon: <Music2    className="w-5 h-5" />, color: 'text-rose-400'   },
-};
-
-const PRIORITY_CLASS: Record<string, string> = {
-  high:   'bg-red-500/10 text-red-400 border border-red-500/20',
-  medium: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
-  low:    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-};
-
-/* ─── sub-components ──────────────────────────────── */
-function StatCard({ label, value, delta, iconBg, Icon, href }: {
-  label: string; value: string; delta: number;
-  iconBg: string; Icon: React.ElementType; href: string;
-}) {
-  const router = useRouter();
-  const up = delta >= 0;
-  return (
-    <button
-      onClick={() => router.push(href)}
-      className="group text-left bg-slate-900 border border-white/5 rounded-2xl p-5 hover:border-teal-500/30 transition-all space-y-3"
-    >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
-          <Icon className="w-5 h-5 text-white" />
-        </div>
-        <ChevronRight className="w-4 h-4 text-slate-700 group-hover:text-teal-400 transition-colors" />
-      </div>
-      <div>
-        <p className="text-2xl font-black text-white tracking-tight">{value}</p>
-        <p className="text-xs text-slate-500 mt-0.5">{label}</p>
-      </div>
-      <div className={`flex items-center gap-1 text-xs font-bold ${up ? 'text-emerald-400' : 'text-red-400'}`}>
-        {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-        {up ? '+' : ''}{delta}% vs last 30 days
-      </div>
-    </button>
-  );
-}
 
 /* ─── main ────────────────────────────────────────── */
 export default function BusinessHomeDashboard() {
@@ -235,10 +195,11 @@ export default function BusinessHomeDashboard() {
         .select('platform, followers_count, followers_growth')
         .eq('tenant_id', tid).limit(5)
     );
-    setSocial(((socRows as any[]) || []).map((r: any) => {
-      const meta = PLATFORM_META[r.platform?.toLowerCase()] ?? { icon: <Globe className="w-5 h-5" />, color: 'text-slate-400' };
-      return { platform: r.platform, followers: r.followers_count || 0, growth: r.followers_growth || 0, ...meta };
-    }));
+    setSocial(((socRows as any[]) || []).map((r: any) => ({
+      platform: r.platform,
+      followers: r.followers_count || 0,
+      growth: r.followers_growth || 0,
+    })));
 
     /* ── tasks ── */
     const { data: taskRows } = await safeQuery(() =>
@@ -293,18 +254,18 @@ export default function BusinessHomeDashboard() {
 
       {/* ── 5 Stat Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-        <StatCard label="Total Revenue"    value={`R${compact(stats.revenue)}`}      delta={pctChange(stats.revenue,      stats.revenuePrev)}      Icon={DollarSign}    iconBg="bg-violet-600" href="/dashboard/finance" />
-        <StatCard label="New Leads"        value={compact(stats.leads)}              delta={pctChange(stats.leads,        stats.leadsPrev)}        Icon={Users}         iconBg="bg-blue-600"   href="/dashboard/crm" />
-        <StatCard label="Email Sent"       value={compact(stats.emailsSent)}         delta={pctChange(stats.emailsSent,   stats.emailsSentPrev)}   Icon={Mail}          iconBg="bg-emerald-600" href="/dashboard/mail" />
-        <StatCard label="Deals Closed"     value={compact(stats.dealsClosed)}        delta={pctChange(stats.dealsClosed,  stats.dealsClosedPrev)}  Icon={BarChart2}     iconBg="bg-amber-600"  href="/dashboard/deals" />
-        <StatCard label="Tasks Completed"  value={`${taskPct}%`}                    delta={taskPct - 80}                                           Icon={CheckCircle2}  iconBg="bg-teal-600"   href="/dashboard/tasks" />
+        <StandardStatCard label="Total Revenue"    value={`R${compact(stats.revenue)}`}      delta={pctChange(stats.revenue, stats.revenuePrev)}      icon={DollarSign}    themeColor="purple" onClick={() => router.push('/dashboard/finance')} />
+        <StandardStatCard label="New Leads"        value={compact(stats.leads)}              delta={pctChange(stats.leads, stats.leadsPrev)}        icon={Users}         themeColor="blue"   onClick={() => router.push('/dashboard/crm')} />
+        <StandardStatCard label="Email Sent"       value={compact(stats.emailsSent)}         delta={pctChange(stats.emailsSent, stats.emailsSentPrev)}   icon={Mail}          themeColor="emerald" onClick={() => router.push('/dashboard/mail')} />
+        <StandardStatCard label="Deals Closed"     value={compact(stats.dealsClosed)}        delta={pctChange(stats.dealsClosed, stats.dealsClosedPrev)}  icon={BarChart2}     themeColor="amber"  onClick={() => router.push('/dashboard/deals')} />
+        <StandardStatCard label="Tasks Completed"  value={`${taskPct}%`}                    delta={taskPct - 80}                                           icon={CheckCircle2}  themeColor="teal"   onClick={() => router.push('/dashboard/tasks')} />
       </div>
 
       {/* ── Middle: Chart | Pipeline | AI Agents ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
         {/* Revenue chart */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white">Revenue Overview</h3>
@@ -316,12 +277,27 @@ export default function BusinessHomeDashboard() {
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chart} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} />
                 <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#64748b' }} tickLine={false} axisLine={false} interval={3} />
                 <YAxis tick={{ fontSize: 9, fill: '#64748b' }} tickLine={false} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 8, fontSize: 11 }}
-                  labelStyle={{ color: '#94a3b8' }}
+                  content={({ active, payload, label }: any) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-slate-950/95 backdrop-blur-md border border-white/10 p-3 rounded-lg shadow-xl">
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-1">{label}</p>
+                          {payload.map((entry: any, index: number) => (
+                            <div key={index} className="flex items-center gap-2 mt-1">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.stroke }} />
+                              <span className="text-xs text-slate-400 font-medium">{entry.name}:</span>
+                              <span className="text-xs text-white font-black">R{entry.value?.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <Line type="monotone" dataKey="thisMonth" stroke="#14b8a6" strokeWidth={2.5} dot={false} name="This Month" />
                 <Line type="monotone" dataKey="lastMonth" stroke="#334155" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Last Month" />
@@ -331,7 +307,7 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* Pipeline funnel */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white">Sales Pipeline</h3>
@@ -352,7 +328,7 @@ export default function BusinessHomeDashboard() {
                       <span className="text-slate-500 text-[10px]">{conv}%</span>
                     </div>
                   </div>
-                  <div className="h-6 bg-slate-800 rounded-lg overflow-hidden">
+                  <div className="h-6 bg-slate-850 rounded-lg overflow-hidden border border-white/5">
                     <div
                       className="h-full rounded-lg transition-all duration-700"
                       style={{ width: `${Math.max(w, s.count > 0 ? 8 : 0)}%`, backgroundColor: s.color }}
@@ -365,7 +341,7 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* AI Agents */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white">AI Agents</h3>
@@ -375,7 +351,7 @@ export default function BusinessHomeDashboard() {
           </div>
           <div className="space-y-2.5">
             {AGENTS.map(a => (
-              <div key={a.name} className="flex items-center gap-3 p-3 bg-slate-800/60 rounded-xl border border-white/5">
+              <div key={a.name} className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-xl border border-white/5">
                 <div className={`w-9 h-9 rounded-xl ${a.bg} flex items-center justify-center ${a.color}`}>
                   <Brain className="w-4 h-4" />
                 </div>
@@ -383,9 +359,7 @@ export default function BusinessHomeDashboard() {
                   <p className="text-xs font-bold text-white">{a.name}</p>
                   <p className="text-[10px] text-slate-500">{a.desc}</p>
                 </div>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Active
-                </span>
+                <StandardStatusBadge variant="success">Active</StandardStatusBadge>
               </div>
             ))}
           </div>
@@ -396,7 +370,7 @@ export default function BusinessHomeDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
         {/* Tasks */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">Tasks</h3>
             <button onClick={() => router.push('/dashboard/tasks')} className="text-[11px] text-teal-400 font-bold">View all</button>
@@ -405,7 +379,7 @@ export default function BusinessHomeDashboard() {
             {tasks.length === 0 ? (
               <p className="text-xs text-slate-500 py-8 text-center">No open tasks — you're all caught up 🎉</p>
             ) : tasks.map(t => (
-              <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/60 transition-colors">
+              <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/40 transition-colors">
                 <Circle className="w-4 h-4 text-slate-600 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-slate-200 truncate">{t.title}</p>
@@ -416,16 +390,16 @@ export default function BusinessHomeDashboard() {
                     </p>
                   )}
                 </div>
-                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md shrink-0 ${PRIORITY_CLASS[t.priority] || PRIORITY_CLASS.medium}`}>
+                <StandardStatusBadge variant={resolveStatusVariant(t.priority)}>
                   {t.priority || 'medium'}
-                </span>
+                </StandardStatusBadge>
               </div>
             ))}
           </div>
         </div>
 
         {/* Social Media */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">Social Media Overview</h3>
             <button onClick={() => router.push('/dashboard/business/social')} className="text-[11px] text-teal-400 font-bold">View all</button>
@@ -441,9 +415,9 @@ export default function BusinessHomeDashboard() {
           ) : (
             <div className="space-y-2.5">
               {social.map(acc => (
-                <div key={acc.platform} className="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-white/5">
+                <div key={acc.platform} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-white/5 group hover:border-white/10 transition-colors duration-300">
                   <div className="flex items-center gap-3">
-                    <span className={acc.color}>{acc.icon}</span>
+                    <SocialPlatformIcon platform={acc.platform} showBackground size="sm" />
                     <div>
                       <p className="text-xs font-bold text-white capitalize">{acc.platform}</p>
                       <p className="text-[11px] text-slate-400">{compact(acc.followers)} Followers</p>
@@ -459,7 +433,7 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* Recent Activities */}
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white">Recent Activities</h3>
             <button onClick={() => router.push('/dashboard/analytics')} className="text-[11px] text-teal-400 font-bold">View all</button>
@@ -488,3 +462,4 @@ export default function BusinessHomeDashboard() {
     </div>
   );
 }
+
