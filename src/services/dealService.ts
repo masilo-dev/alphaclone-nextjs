@@ -42,6 +42,35 @@ export interface Deal {
     updatedAt: string;
 }
 
+type DealStageHistoryEntry = {
+    from: string;
+    to: string;
+    reason?: string;
+    changed_at: string;
+};
+
+function appendDealStageMetadata(
+    metadata: any,
+    fromStage: string,
+    toStage: string,
+    reason?: string
+) {
+    const history = Array.isArray(metadata?.stage_history) ? metadata.stage_history : [];
+    const entry: DealStageHistoryEntry = {
+        from: fromStage,
+        to: toStage,
+        reason: reason?.trim() || undefined,
+        changed_at: new Date().toISOString(),
+    };
+    return {
+        ...(metadata || {}),
+        previous_stage: fromStage,
+        last_stage_change_at: entry.changed_at,
+        stage_change_reason: entry.reason,
+        stage_history: [...history.slice(-19), entry],
+    };
+}
+
 function triggerDealIntelligenceRecompute(tenantId: string, dealId: string) {
     if (typeof window === 'undefined') return;
     void import('../lib/automation/request-event').then(({ requestBusinessEvent }) =>
@@ -126,7 +155,7 @@ export interface DealService {
     }): Promise<{ deals: Deal[]; error: string | null }>;
     getDealById(dealId: string): Promise<{ deal: Deal | null; error: string | null }>;
     createDeal(userId: string, dealData: CreateDealInput): Promise<{ deal: Deal | null; error: string | null }>;
-    updateDeal(dealId: string, updates: Partial<Deal>): Promise<{ deal: Deal | null; error: string | null }>;
+    updateDeal(dealId: string, updates: Partial<Deal> & { stageReason?: string }): Promise<{ deal: Deal | null; error: string | null }>;
     deleteDeal(dealId: string): Promise<{ success: boolean; error: string | null }>;
     bulkDeleteDeals(dealIds: string[]): Promise<{ error: string | null; count: number }>;
     getDealActivities(dealId: string): Promise<{ activities: DealActivity[]; error: string | null }>;
@@ -389,13 +418,13 @@ export const dealService: DealService = {
     /**
      * Update a deal
      */
-    async updateDeal(dealId: string, updates: Partial<Deal>): Promise<{ deal: Deal | null; error: string | null }> {
+    async updateDeal(dealId: string, updates: Partial<Deal> & { stageReason?: string }): Promise<{ deal: Deal | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
 
             const { data: existingDeal } = await supabase
                 .from('deals')
-                .select('stage')
+                .select('stage, metadata')
                 .eq('id', dealId)
                 .eq('tenant_id', tenantId)
                 .single();
@@ -408,6 +437,12 @@ export const dealService: DealService = {
                     }
                 }
             }
+
+            const stageChanged = Boolean(updates.stage && existingDeal && existingDeal.stage !== updates.stage);
+            const stageReason = updates.stageReason?.trim() || undefined;
+            const nextMetadata = stageChanged && existingDeal
+                ? appendDealStageMetadata(existingDeal.metadata, existingDeal.stage, updates.stage as string, stageReason)
+                : updates.metadata;
 
             if (updates.stage === 'closed_lost') {
                 const { error: deleteError } = await supabase
@@ -439,7 +474,7 @@ export const dealService: DealService = {
             if (updates.customFields !== undefined) updateData.custom_fields = updates.customFields;
             if (updates.lostReason !== undefined) updateData.lost_reason = updates.lostReason;
             if (updates.wonDetails !== undefined) updateData.won_details = updates.wonDetails;
-            if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
+            if (nextMetadata !== undefined) updateData.metadata = nextMetadata;
 
             // Auto-set actual_close_date when deal is won (closed_lost deletes above)
             if (updates.stage === 'closed_won' && !updates.actualCloseDate) {
@@ -455,6 +490,22 @@ export const dealService: DealService = {
                 .single();
 
             if (error) throw error;
+
+            if (stageChanged && existingDeal) {
+                const { data: authData } = await supabase.auth.getUser();
+                const { error: historyError } = await supabase
+                    .from('deal_stage_history')
+                    .insert({
+                        deal_id: dealId,
+                        tenant_id: tenantId,
+                        from_stage: existingDeal.stage,
+                        to_stage: updates.stage,
+                        changed_by: authData.user?.id || null,
+                    });
+                if (historyError) {
+                    console.error('Failed to log deal stage history:', historyError);
+                }
+            }
 
             // GL INTEGRATION: When deal moves to closed_won, post revenue entry
             if (updates.stage === 'closed_won' && data.value && data.value > 0) {

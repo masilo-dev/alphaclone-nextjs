@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponents';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { CRMActionChips } from '../crm/CRMActionChips';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
 import { calendarService, CalendarEvent } from '../../../services/calendarService';
@@ -118,6 +119,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
     const [showEmailComposer, setShowEmailComposer] = useState(false);
     const [emailDraft, setEmailDraft] = useState<{ to: string; subject: string; body: string } | null>(null);
     const [showEditForm, setShowEditForm] = useState(false);
+    const [stageChangeReason, setStageChangeReason] = useState('');
     const [editForm, setEditForm] = useState({
         businessName: lead.businessName || '',
         email: lead.email || '',
@@ -138,6 +140,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             source: lead.source || 'Manual',
             stage: lead.stage || 'lead',
         });
+        setStageChangeReason('');
     }, [lead]);
 
     useEffect(() => {
@@ -683,6 +686,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
     const handleSaveLeadEdit = async () => {
         setIsLoading(true);
         try {
+            const stageChanged = editForm.stage !== (lead.stage || 'lead');
             const { error } = await leadService.updateLead(lead.id, {
                 businessName: editForm.businessName,
                 email: editForm.email,
@@ -691,6 +695,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 location: editForm.location,
                 source: editForm.source,
                 stage: editForm.stage,
+                stageReason: stageChanged ? stageChangeReason : undefined,
             });
             if (error) throw new Error(error);
             const updatedLead: Lead = {
@@ -705,8 +710,22 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 status: editForm.stage === 'lead' ? 'New' : editForm.stage,
             };
             onLeadUpdate?.(updatedLead);
+            if (stageChanged && stageChangeReason.trim() && user?.id) {
+                await leadService.addLeadActivity(
+                    lead.id,
+                    user.id,
+                    'stage_change',
+                    `Stage moved from ${lead.stage || 'lead'} to ${editForm.stage}`,
+                    {
+                        old_stage: lead.stage || 'lead',
+                        new_stage: editForm.stage,
+                        reason: stageChangeReason.trim(),
+                    }
+                );
+            }
             toast.success('Lead updated');
             setShowEditForm(false);
+            setStageChangeReason('');
         } catch (error: unknown) {
             toast.error('Failed to update lead: ' + getErrorMessage(error));
         } finally {
@@ -784,19 +803,45 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
-                        {lead.email && (
-                            <Button 
-                                variant="primary" 
-                                size="sm" 
-                                onClick={handleSendProviderEmail}
-                                className="bg-teal-600 hover:bg-teal-500 shadow-teal-500/10"
-                            >
-                                <Mail className="w-4 h-4 mr-2" />
-                                Email
-                            </Button>
-                        )}
-                        <Button
+                    <div className="flex flex-col items-end gap-2 rounded-2xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                        <div className="self-start">
+                            <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
+                                Quick actions
+                            </span>
+                        </div>
+                        <CRMActionChips
+                            items={[
+                                {
+                                    label: 'Email',
+                                    icon: Mail,
+                                    tone: 'indigo',
+                                    onClick: handleSendProviderEmail,
+                                    disabled: !lead.email,
+                                },
+                                {
+                                    label: 'Schedule',
+                                    icon: Calendar,
+                                    tone: 'amber',
+                                    onClick: handleScheduleCall,
+                                    disabled: !lead.phone,
+                                },
+                                {
+                                    label: 'Call',
+                                    icon: Phone,
+                                    tone: 'teal',
+                                    onClick: () => {
+                                        if (!lead.phone) {
+                                            toast.error('No phone number on file.');
+                                            return;
+                                        }
+                                        window.open(`tel:${lead.phone}`, '_self');
+                                    },
+                                    disabled: !lead.phone,
+                                },
+                            ]}
+                        />
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            <Button
                             variant="outline"
                             size="sm"
                             onClick={handleEnrich}
@@ -889,6 +934,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     : []),
                             ]}
                         />
+                        </div>
                     </div>
                 </div>
 
@@ -983,6 +1029,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <option value="won">Won</option>
                                         <option value="lost">Lost</option>
                                     </select>
+                                    <label className="block text-sm font-medium text-slate-300 mt-3">Reason for change</label>
+                                    <textarea
+                                        value={stageChangeReason}
+                                        onChange={(e) => setStageChangeReason(e.target.value)}
+                                        placeholder="Optional, but helpful when moving the lead backward for re-qualification."
+                                        className="w-full min-h-[92px] bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all resize-y"
+                                    />
                                 </div>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
@@ -1025,30 +1078,34 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 </div>
                             </Card>
 
-                            <div className="flex flex-wrap gap-2">
-                                {lead.email && (
-                                    <Button variant="outline" size="sm" onClick={handleSendProviderEmail}>
-                                        <Send className="w-4 h-4 mr-2" /> Send Email
-                                    </Button>
-                                )}
-                                {lead.phone && (
-                                    <Button variant="outline" size="sm" onClick={handleScheduleCall}>
-                                        <PhoneCall className="w-4 h-4 mr-2" /> Schedule Call
-                                    </Button>
-                                )}
-                                {lead.email && (
-                                    <Button variant="outline" size="sm" onClick={handleCopyEmail}>
-                                        <Copy className="w-4 h-4 mr-2" /> Copy Email
-                                    </Button>
-                                )}
-                                {lead.phone && (
-                                    <a href={`tel:${lead.phone}`} className="inline-flex">
-                                        <Button variant="outline" size="sm">
-                                            <Phone className="w-4 h-4 mr-2" /> Call
-                                        </Button>
-                                    </a>
-                                )}
-                            </div>
+                            <CRMActionChips
+                                items={[
+                                    {
+                                        label: 'Email',
+                                        icon: Send,
+                                        tone: 'indigo',
+                                        onClick: handleSendProviderEmail,
+                                        disabled: !lead.email,
+                                    },
+                                    {
+                                        label: 'Schedule',
+                                        icon: PhoneCall,
+                                        tone: 'amber',
+                                        onClick: handleScheduleCall,
+                                        disabled: !lead.phone,
+                                    },
+                                    {
+                                        label: 'Call',
+                                        icon: Phone,
+                                        tone: 'teal',
+                                        onClick: () => {
+                                            if (!lead.phone) return;
+                                            window.open(`tel:${lead.phone}`, '_self');
+                                        },
+                                        disabled: !lead.phone,
+                                    },
+                                ]}
+                            />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="p-6 space-y-4">
@@ -1470,10 +1527,17 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                 <span className="text-xs text-slate-500">{formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}</span>
                                             </div>
                                             {activity.metadata?.old_stage && (
-                                                <div className="flex items-center gap-2 mt-2 text-xs">
-                                                    <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
-                                                    <ArrowRight className="w-3 h-3 text-slate-600" />
-                                                    <Badge variant="blue" className="text-xs text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
+                                                <div className="space-y-2 mt-2 text-xs">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
+                                                        <ArrowRight className="w-3 h-3 text-slate-600" />
+                                                        <Badge variant="blue" className="text-xs text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
+                                                    </div>
+                                                    {activity.metadata.reason && (
+                                                        <p className="text-slate-400 leading-relaxed">
+                                                            Reason: {activity.metadata.reason}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

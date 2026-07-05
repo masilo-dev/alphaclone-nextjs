@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import {
   FilePlus, X, Send, Download, CheckCircle, Trash2,
   ArrowLeft, Search, ChevronRight, Receipt, Camera, Plus,
-  TrendingDown, TrendingUp, Sparkles, Loader2
+  TrendingDown, TrendingUp, Sparkles, Loader2, FileText
 } from 'lucide-react';
+import { EmptyStatePlaceholder } from '../ui/EmptyStatePlaceholder';
 import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { businessInvoiceService } from '../../services/businessInvoiceService';
@@ -303,6 +304,13 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
   const thisMonth = expenses.filter(e => e.date && new Date(e.date).getMonth() === new Date().getMonth());
   const thisTotal = thisMonth.reduce((s, e) => s + e.amount, 0);
 
+  // Collection rate stats
+  const totalSent = invoices.filter(i => i.status !== 'draft').length;
+  const totalPaid = invoices.filter(i => i.status === 'paid').length;
+  const collectionRate = totalSent > 0 ? Math.round((totalPaid / totalSent) * 100) : 0;
+  const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+  const pendingRevenue = invoices.filter(i => i.status === 'sent' || i.status === 'overdue').reduce((s, i) => s + i.amount, 0);
+
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       {/* Main tabs */}
@@ -315,6 +323,36 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       <div className="flex-1 ac-scroll-full pb-20 bg-slate-950">
         {mainTab === 'invoices' && (
           <>
+            {/* Collection rate summary card */}
+            {!loading && invoices.length > 0 && (
+              <div className="mx-4 mt-4 mb-1 bg-slate-900/60 border border-white/5 rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Collection Rate</div>
+                  <span className={`text-[13px] font-black ${
+                    collectionRate >= 80 ? 'text-emerald-400' : collectionRate >= 50 ? 'text-amber-400' : 'text-red-400'
+                  }`}>{collectionRate}%</span>
+                </div>
+                <div className="h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+                  <div
+                    className={`h-full rounded-full transition-all duration-700 ${
+                      collectionRate >= 80 ? 'bg-emerald-500' : collectionRate >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${collectionRate}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wide mb-0.5">Collected</div>
+                    <div className="text-[15px] font-black text-emerald-400">${totalRevenue.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-slate-800/60 rounded-xl p-3">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wide mb-0.5">Pending</div>
+                    <div className="text-[15px] font-black text-amber-400">${pendingRevenue.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Filter pills */}
             <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
               {(['all', ...INV_FILTERS] as (InvoiceStatus | 'all')[]).map(f => (
@@ -323,6 +361,13 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             </div>
             {loading ? (
               <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+            ) : invoices.length === 0 ? (
+              <EmptyStatePlaceholder
+                icon={FileText}
+                title="No invoices yet"
+                description="Create your first invoice to start tracking payments and collection rates."
+                action={{ label: '+ New Invoice', onClick: () => router.push(billingManagePath) }}
+              />
             ) : (
               <div className="px-2">
                 <EnterpriseDataTable
@@ -330,7 +375,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
                   data={filteredInvoices}
                   getRowId={(i) => i.id}
                   onRowClick={setSelectedInvoice}
-                  emptyMessage="No invoices match this filter. Clear the filter or create a new invoice."
+                  emptyMessage="No invoices match this filter — try clearing the filter."
                 />
               </div>
             )}

@@ -55,6 +55,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
 import { CRMNav } from '../crm/CRMNav';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { CRMActionChips } from '../crm/CRMActionChips';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -1349,10 +1351,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
-                                                                        setSelectedClientForCommunication(selectedClient);
-                                                                        setShowCommunicationModal(true);
+                                                                        const clientEmail = selectedClient.email;
+                                                                        if (!clientEmail) return;
+                                                                        router.push(buildMailComposeUrl(clientEmail, `Re: ${selectedClient.name}`));
                                                                     }}
-                                                                    className="truncate text-teal-400 hover:text-teal-300 text-left"
+                                                                    className="truncate rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-left text-xs font-bold text-indigo-200 hover:bg-indigo-500/15"
                                                                 >
                                                                     {selectedClient.email}
                                                                 </button>
@@ -1407,14 +1410,47 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     {/* Quick Actions Footer */}
-                                    <div className="mt-auto pt-6 border-t border-slate-800 bg-slate-900/50">
-                                        <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
-                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForInvoice(selectedClient); setShowInvoiceModal(true); }} icon={<Receipt className="w-4 h-4" />}>Invoice</Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleCallClient(selectedClient)} icon={<Phone className="w-4 h-4" />}>Call</Button>
-                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForCommunication(selectedClient); setShowCommunicationModal(true); }} icon={<Mail className="w-4 h-4" />}>Email</Button>
+                                    <div className="mt-auto rounded-2xl border border-white/5 bg-slate-900/50 p-4">
+                                        <div className="mb-3 flex items-center justify-between gap-3">
+                                            <div>
+                                                <h3 className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-500">Quick actions</h3>
+                                                <p className="mt-1 text-[11px] text-slate-500">Email, call, and schedule from one place.</p>
+                                            </div>
                                         </div>
+                                        <CRMActionChips
+                                            items={[
+                                                {
+                                                    label: 'Call',
+                                                    icon: Phone,
+                                                    tone: 'teal',
+                                                    onClick: () => handleCallClient(selectedClient),
+                                                },
+                                                {
+                                                    label: 'Compose',
+                                                    icon: Mail,
+                                                    tone: 'indigo',
+                                                    onClick: () => {
+                                                        if (!selectedClient.email) {
+                                                            toast.error('No email address on file for this client.');
+                                                            return;
+                                                        }
+                                                        router.push(buildMailComposeUrl(selectedClient.email, `Re: ${selectedClient.name}`));
+                                                    },
+                                                },
+                                                {
+                                                    label: 'Schedule',
+                                                    icon: Calendar,
+                                                    tone: 'amber',
+                                                    onClick: () => router.push('/dashboard/calendar'),
+                                                },
+                                                {
+                                                    label: 'Chat',
+                                                    icon: MessageSquare,
+                                                    tone: 'slate',
+                                                    onClick: () => router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages'}?selectedClientId=${selectedClient.id}`),
+                                                },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -1559,6 +1595,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
         customer: 'success',
         lost: 'error'
     } as const;
+    const router = useRouter();
 
     const dropdownItems = [
         {
@@ -1585,12 +1622,12 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
         {
             label: 'Schedule Meeting',
             icon: <Calendar className="w-4 h-4" />,
-            onClick: () => window.location.href = '/dashboard/calendar'
+            onClick: () => router.push('/dashboard/calendar')
         },
         {
             label: 'View History',
             icon: <History className="w-4 h-4" />,
-            onClick: () => window.location.href = '/dashboard/reports'
+            onClick: () => router.push('/dashboard/reports')
         },
         {
             label: 'Edit Client',
@@ -1635,6 +1672,19 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                         onClick={() => onCall(client)}
                         className="!p-2 hover:bg-teal-500/10 hover:text-teal-400"
                         icon={<Phone className="w-4 h-4" />}
+                    />
+                    <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                            if (!client.email) {
+                                toast.error('No email address on file for this client.');
+                                return;
+                            }
+                            router.push(buildMailComposeUrl(client.email, `Re: ${client.name}`));
+                        }}
+                        className="!p-2 hover:bg-indigo-500/10 hover:text-indigo-400"
+                        icon={<Mail className="w-4 h-4" />}
                     />
                     <Dropdown
                         trigger={

@@ -7,7 +7,7 @@ import {
   Circle, Clock, Globe,
 } from 'lucide-react';
 import {
-  ResponsiveContainer, LineChart, Line,
+  ResponsiveContainer, AreaChart, Area, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import { supabase } from '@/lib/supabase';
@@ -273,10 +273,29 @@ export default function BusinessHomeDashboard() {
             </div>
             <button onClick={() => router.push('/dashboard/finance')} className="text-[11px] text-teal-400 font-bold">View all</button>
           </div>
-          <p className="text-2xl font-black text-teal-400">R{compact(stats.revenue)}</p>
+          <div className="flex items-end justify-between gap-2">
+            <p className="text-2xl font-black text-teal-400">R{compact(stats.revenue)}</p>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full mb-0.5 ${
+              pctChange(stats.revenue, stats.revenuePrev) >= 0
+                ? 'bg-emerald-500/15 text-emerald-400'
+                : 'bg-red-500/15 text-red-400'
+            }`}>
+              {pctChange(stats.revenue, stats.revenuePrev) >= 0 ? '▲' : '▼'} {Math.abs(pctChange(stats.revenue, stats.revenuePrev))}% vs last month
+            </span>
+          </div>
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chart} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+              <AreaChart data={chart} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="bizRevGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="bizPrevGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#334155" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#334155" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} />
                 <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#64748b' }} tickLine={false} axisLine={false} interval={3} />
                 <YAxis tick={{ fontSize: 9, fill: '#64748b' }} tickLine={false} axisLine={false} />
@@ -299,9 +318,9 @@ export default function BusinessHomeDashboard() {
                     return null;
                   }}
                 />
-                <Line type="monotone" dataKey="thisMonth" stroke="#14b8a6" strokeWidth={2.5} dot={false} name="This Month" />
-                <Line type="monotone" dataKey="lastMonth" stroke="#334155" strokeWidth={1.5} strokeDasharray="5 5" dot={false} name="Last Month" />
-              </LineChart>
+                <Area type="monotone" dataKey="thisMonth" stroke="#14b8a6" strokeWidth={2.5} fill="url(#bizRevGradient)" dot={false} name="This Month" />
+                <Area type="monotone" dataKey="lastMonth" stroke="#334155" strokeWidth={1.5} strokeDasharray="5 5" fill="url(#bizPrevGradient)" dot={false} name="Last Month" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>

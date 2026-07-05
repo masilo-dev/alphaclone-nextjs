@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { User, Project } from '../../../types';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessEventService, BusinessEvent } from '../../../services/businessEventService';
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
+import { EmptyStatePlaceholder } from '../../ui/EmptyStatePlaceholder';
 
 interface CalendarPageProps {
     user: User;
@@ -93,6 +95,7 @@ const SOURCE_CONFIG = {
 
 const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
+    const router = useRouter();
     const [allEvents, setAllEvents] = useState<CalendarEvent[]>([]);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showAddModal, setShowAddModal] = useState(false);
@@ -451,6 +454,16 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} this month
                 </span>
             </div>
+
+            {filteredEvents.length === 0 && (
+                <EmptyStatePlaceholder
+                    icon={CalendarIcon}
+                    title="No events scheduled"
+                    description="Add a meeting, task, or booking to bring this calendar to life."
+                    action={{ label: 'Add Event', onClick: () => setShowAddModal(true) }}
+                    secondaryAction={{ label: 'Connect Google Calendar', onClick: () => router.push(`/api/auth/google/calendar/connect?userId=${user.id}`) }}
+                />
+            )}
 
 
             {/* Desktop Calendar Grid */}
@@ -972,4 +985,3 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
 };
 
 export default CalendarPage;
-

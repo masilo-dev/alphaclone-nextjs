@@ -209,10 +209,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     }
 
     return (
-        <div className="h-full flex flex-col space-y-4 sm:space-y-6 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
+        <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
             {/* Header */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 min-w-0">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-5 min-w-0">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 sm:gap-3 mb-1 min-w-0">
                         <div className="p-2.5 sm:p-3 bg-gradient-to-br from-teal-600 to-cyan-600 rounded-xl sm:rounded-2xl shadow-xl shadow-violet-500/20 shrink-0">
@@ -229,42 +229,42 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 </div>
 
                 <div className="flex items-center gap-4 w-full lg:w-auto">
-                    <div className="flex p-1 bg-slate-900 shadow-inner rounded-2xl border border-white/5">
+                    <div className="flex p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'list' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'list' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
-                            <LayoutList className="w-4 h-4" />
-                            <span className="text-xs font-medium">List</span>
+                            <LayoutList className="w-3.5 h-3.5" />
+                            <span>List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'timeline' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
-                            <BarChart3 className="w-4 h-4" />
-                            <span className="text-xs font-medium">Timeline</span>
+                            <BarChart3 className="w-3.5 h-3.5" />
+                            <span>Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
-                            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 ${viewMode === 'health' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'health' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
-                            <Activity className="w-4 h-4" />
-                            <span className="text-xs font-medium">Health</span>
+                            <Activity className="w-3.5 h-3.5" />
+                            <span>Health</span>
                         </button>
                     </div>
 
                     <button
                         onClick={() => exportToCSV(projects, 'Projects')}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white hover:bg-slate-800 rounded-2xl font-semibold text-sm transition-all border border-white/5"
+                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-white/5 bg-slate-900 px-3 text-[11px] font-bold text-white transition-all hover:bg-slate-800"
                     >
-                        <Download className="w-4 h-4" />
+                        <Download className="w-3.5 h-3.5" />
                         Export CSV
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white text-slate-900 hover:bg-violet-50 rounded-2xl font-semibold text-sm transition-all shadow-xl hover:shadow-white/10 active:scale-95"
+                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-bold text-slate-900 transition-all hover:bg-violet-50 active:scale-95 shadow-xl hover:shadow-white/10"
                     >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3.5 h-3.5" />
                         New Project
                     </button>
                 </div>
@@ -275,7 +275,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewMode === 'list' ? (
                     <div className="h-full flex flex-col space-y-4">
                         {/* List Header */}
-                        <div className="hidden lg:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-900/40 border border-white/5 rounded-xl text-xs font-medium text-slate-500">
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-full text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
                             <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
@@ -285,9 +285,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
                             {filteredProjects.length === 0 ? (
-                                <div className="py-20 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
-                                    <Target className="w-16 h-16 mb-4 opacity-20" />
-                                    <p className="text-sm text-slate-500">No projects found</p>
+                                <div className="py-16 flex flex-col items-center justify-center text-slate-500 bg-slate-900/20 rounded-3xl border border-dashed border-white/5">
+                                    <Target className="w-12 h-12 mb-3 opacity-20" />
+                                    <p className="text-xs text-slate-500">No projects found</p>
                                 </div>
                             ) : (
                                 filteredProjects.map((project) => (
@@ -464,24 +464,24 @@ const ProjectListRow = ({
                 <div className="flex items-end justify-end gap-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                        className="min-h-11 min-w-11 p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg"
+                        className="h-8 w-8 p-0.5 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-full transition-all"
                         title="Edit project"
                     >
-                        <Activity className="w-4 h-4" />
+                        <Activity className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(project.id); }}
-                        className="min-h-11 min-w-11 p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg"
+                        className="h-8 w-8 p-0.5 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-full transition-all"
                         title="Delete project"
                     >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
 
             {/* Status */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
-                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     project.status === 'in_progress' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
                     }`}>
@@ -491,19 +491,19 @@ const ProjectListRow = ({
 
             {/* Health & Risk */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center gap-2">
-                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
+                <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-bold ${project.health === 'At Risk' ? 'bg-red-500/10 border-red-500/20 text-red-500' :
                     project.health === 'Delayed' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
                         'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                     }`}>
                     <Activity className="w-3 h-3" />
-                    <span className="text-xs font-medium">{project.health || 'Unknown'}</span>
+                    <span>{project.health || 'Unknown'}</span>
                 </div>
             </div>
 
             {/* Countdown */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 {project.dueDate ? (
-                    <div className="scale-90 origin-center bg-slate-950/50 px-3 py-1.5 rounded-lg border border-white/5">
+                    <div className="scale-90 origin-center bg-slate-950/50 px-2.5 py-1 rounded-full border border-white/5">
                         <TaskCountdown dueDate={project.dueDate} showAlarm={true} />
                     </div>
                 ) : (

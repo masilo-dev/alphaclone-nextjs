@@ -203,32 +203,32 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
 
     return (
-        <div className={`space-y-6 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
+        <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
                         <DollarSign className="text-teal-500" /> Billing Hub
                     </h1>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoice Management & Collections</p>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 w-full sm:w-auto rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                   <button 
                     onClick={() => setActiveTab('invoices')}
-                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Invoices
                   </button>
                   <button 
                     onClick={() => setActiveTab('recurring')}
-                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Recurring
                   </button>
                   <button 
                     onClick={() => setActiveTab('services')}
-                    className={`flex-1 sm:flex-none h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-slate-500'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Services
                   </button>
@@ -303,18 +303,18 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* Invoices List */}
             <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                         {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                            <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}>{s}</button>
+                            <button key={s} onClick={() => setFilter(s)} className={`h-8 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}>{s}</button>
                         ))}
                     </div>
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                         {selectedInvoiceIds.size > 0 && (
-                            <>
+                            <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                                 <button
                                     type="button"
                                     onClick={() => setSelectedInvoiceIds(new Set())}
-                                    className="h-10 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-white/10 text-slate-400"
+                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-white/10 text-slate-500 transition-colors hover:text-slate-300"
                                 >
                                     Clear
                                 </button>
@@ -322,15 +322,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     type="button"
                                     disabled={bulkDeletingInvoices}
                                     onClick={handleBulkDeleteInvoices}
-                                    className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-500/30 text-rose-300 flex items-center gap-2 disabled:opacity-50"
+                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
                                 >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={12} />
                                     {bulkDeletingInvoices ? 'Deleting…' : `Delete (${selectedInvoiceIds.size})`}
                                 </button>
-                            </>
+                            </div>
                         )}
-                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 h-10 px-6 bg-teal-600 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-teal-900/20 flex items-center justify-center gap-2 transition-all hover:bg-teal-500">
-                            <Plus size={16} /> New Invoice
+                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:bg-teal-500">
+                            <Plus size={12} /> New Invoice
                         </button>
                     </div>
                 </div>
@@ -355,27 +355,27 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             e.stopPropagation();
                                             toggleInvoiceSelection(inv);
                                         }}
-                                        className={inv.status === 'draft' ? 'text-slate-400 hover:text-teal-400 shrink-0' : 'text-slate-700 cursor-not-allowed shrink-0'}
+                                        className={inv.status === 'draft' ? 'text-slate-500 hover:text-teal-400 shrink-0 transition-colors' : 'text-slate-700 cursor-not-allowed shrink-0'}
                                         aria-label={inv.status === 'draft' ? `Select ${inv.invoiceNumber}` : 'Only drafts can be selected'}
                                     >
                                         {selectedInvoiceIds.has(inv.id)
-                                            ? <CheckSquare size={18} className="text-teal-400" />
-                                            : <Square size={18} />}
+                                            ? <CheckSquare size={14} className="text-teal-400" />
+                                            : <Square size={14} />}
                                     </button>
-                                    <div className={`p-2 rounded-lg bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={18} /></div>
+                                    <div className={`p-2 rounded-full bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={14} /></div>
                                     <div>
-                                        <p className="text-sm font-black text-white">{inv.invoiceNumber}</p>
-                                        <p className="text-xs text-gray-500 font-bold uppercase">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
+                                        <p className="text-[12px] font-black text-white">{inv.invoiceNumber}</p>
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.22em]">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
                                     </div>
                                 </div>
-                                <span className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
+                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
                             </div>
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">Due Date</p>
-                                    <p className="text-xs font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
+                                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.22em]">Due Date</p>
+                                    <p className="text-[11px] font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
                                 </div>
-                                <p className="text-[24px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
+                                <p className="text-[20px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
                             </div>
                         </Card>
                     ))}
@@ -400,25 +400,25 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
                             className="fixed inset-x-0 bottom-0 z-[1110] max-h-[92dvh] bg-slate-950 border-t border-white/10 rounded-t-[2.5rem] shadow-2xl flex flex-col overflow-hidden"
                         >
-                            <div className="flex justify-center py-3 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
-                                <div className="w-12 h-1 bg-white/20 rounded-full" />
+                            <div className="flex justify-center py-2 shrink-0 cursor-grab bg-slate-900/40 border-b border-white/5">
+                                <div className="w-10 h-1 bg-white/20 rounded-full" />
                             </div>
                             
-                            <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-12 space-y-6">
+                            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar pb-10 space-y-5">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 font-mono">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500 font-mono">
                                             Invoice ID: #{selectedInvoiceForOptions.id.slice(0, 8).toUpperCase()}
                                         </span>
-                                        <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">
+                                        <h3 className="text-base font-black text-white uppercase mt-1 tracking-tight">
                                             {selectedInvoiceForOptions.invoiceNumber}
                                         </h3>
                                         <p className="text-xs text-slate-400 mt-1">
                                             Client: {selectedInvoiceForOptions.clientId && clientMap[selectedInvoiceForOptions.clientId]?.name ? clientMap[selectedInvoiceForOptions.clientId].name : 'Walk-in Client'}
                                         </p>
                                     </div>
-                                    <button onClick={() => setIsOptionsOpen(false)} className="p-1 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                                        <X className="w-5 h-5" />
+                                    <button onClick={() => setIsOptionsOpen(false)} className="h-8 w-8 p-0 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors flex items-center justify-center">
+                                        <X className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
 
@@ -441,13 +441,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             handleViewPDF(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
                                     >
-                                        <span className="flex items-center gap-3">
-                                            <Eye className="w-5 h-5 text-teal-400" />
+                                        <span className="flex items-center gap-2.5">
+                                            <Eye className="w-4 h-4 text-teal-400" />
                                             <span>Preview PDF Invoice</span>
                                         </span>
-                                        <span className="text-xs text-slate-500 font-mono">PDF PREVIEW</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">PDF PREVIEW</span>
                                     </button>
 
                                     <button
@@ -460,24 +460,24 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
                                             setIsOptionsOpen(false);
                                         }}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
                                     >
-                                        <span className="flex items-center gap-3">
-                                            <Download className="w-5 h-5 text-indigo-400" />
+                                        <span className="flex items-center gap-2.5">
+                                            <Download className="w-4 h-4 text-indigo-400" />
                                             <span>Download PDF File</span>
                                         </span>
-                                        <span className="text-xs text-slate-500 font-mono">PDF DOWNLOAD</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">PDF DOWNLOAD</span>
                                     </button>
 
                                     <button
                                         onClick={() => openInvoiceCompose(selectedInvoiceForOptions)}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
                                     >
-                                        <span className="flex items-center gap-3">
-                                            <Mail className="w-5 h-5 text-teal-400" />
+                                        <span className="flex items-center gap-2.5">
+                                            <Mail className="w-4 h-4 text-teal-400" />
                                             <span>Compose Email to Client</span>
                                         </span>
-                                        <span className="text-xs text-slate-500 font-mono">ZOHO / OUTLOOK</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">ZOHO / OUTLOOK</span>
                                     </button>
 
                                     {selectedInvoiceForOptions.clientId && currentTenant?.id && (
@@ -495,13 +495,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                     toast.error(err instanceof Error ? err.message : 'Failed to copy portal link');
                                                 }
                                             }}
-                                            className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                            className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
                                         >
-                                            <span className="flex items-center gap-3">
-                                                <User className="w-5 h-5 text-purple-400" />
+                                            <span className="flex items-center gap-2.5">
+                                                <User className="w-4 h-4 text-purple-400" />
                                                 <span>Copy Client Finance Portal Link</span>
                                             </span>
-                                            <span className="text-xs text-slate-500 font-mono">INVOICES + QUOTES</span>
+                                            <span className="text-[10px] text-slate-500 font-mono">INVOICES + QUOTES</span>
                                         </button>
                                     )}
 
@@ -517,13 +517,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 toast.error(`Failed: ${err.message}`, { id: toastId });
                                             }
                                         }}
-                                        className="w-full flex items-center justify-between p-4 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
                                     >
-                                        <span className="flex items-center gap-3">
-                                            <Send className="w-5 h-5 text-sky-400" />
+                                        <span className="flex items-center gap-2.5">
+                                            <Send className="w-4 h-4 text-sky-400" />
                                             <span>Email Invoice to Client</span>
                                         </span>
-                                        <span className="text-xs text-slate-500 font-mono">EMAIL DISPATCH</span>
+                                        <span className="text-[10px] text-slate-500 font-mono">EMAIL DISPATCH</span>
                                     </button>
 
                                     {selectedInvoiceForOptions.status !== 'paid' ? (
@@ -539,13 +539,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 setIsOptionsOpen(false);
                                                 void loadInvoices();
                                             }}
-                                            className="w-full flex items-center justify-between p-4 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all text-left text-sm text-emerald-200"
+                                            className="w-full flex items-center justify-between p-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all text-left text-sm text-emerald-200"
                                         >
-                                            <span className="flex items-center gap-3">
-                                                <CheckCircle className="w-5 h-5 text-emerald-400" />
+                                            <span className="flex items-center gap-2.5">
+                                                <CheckCircle className="w-4 h-4 text-emerald-400" />
                                                 <span>Mark as Paid</span>
                                             </span>
-                                            <span className="text-xs text-emerald-500/80 font-mono">MANUAL UPDATE</span>
+                                            <span className="text-[10px] text-emerald-500/80 font-mono">MANUAL UPDATE</span>
                                         </button>
                                     ) : (
                                         <button
@@ -560,13 +560,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                 setIsOptionsOpen(false);
                                                 void loadInvoices();
                                             }}
-                                            className="w-full flex items-center justify-between p-4 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-2xl transition-all text-left text-sm text-amber-200"
+                                            className="w-full flex items-center justify-between p-3.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-2xl transition-all text-left text-sm text-amber-200"
                                         >
-                                            <span className="flex items-center gap-3">
-                                                <Clock className="w-5 h-5 text-amber-400" />
+                                            <span className="flex items-center gap-2.5">
+                                                <Clock className="w-4 h-4 text-amber-400" />
                                                 <span>Mark as Unpaid</span>
                                             </span>
-                                            <span className="text-xs text-amber-500/80 font-mono">MANUAL UPDATE</span>
+                                            <span className="text-[10px] text-amber-500/80 font-mono">MANUAL UPDATE</span>
                                         </button>
                                     )}
                                 </div>

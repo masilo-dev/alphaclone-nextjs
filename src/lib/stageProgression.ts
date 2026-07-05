@@ -1,6 +1,7 @@
 /**
- * Forward-only funnel rules across CRM: stages only advance or exit via "lost",
- * never backward. Terminal states cannot be reopened in-place.
+ * CRM funnel rules.
+ * Deals and leads can move backward for re-qualification, but terminal states
+ * remain terminal unless a new record is created.
  */
 
 export const DEAL_STAGE_SEQUENCE = [
@@ -40,20 +41,6 @@ export function assertDealStageTransition(
 
     if (current === next) {
         return { ok: true };
-    }
-
-    if (next === 'closed_lost') {
-        return { ok: true };
-    }
-
-    const i = DEAL_STAGE_SEQUENCE.indexOf(current);
-    const j = DEAL_STAGE_SEQUENCE.indexOf(next);
-    if (j < i) {
-        return {
-            ok: false,
-            message:
-                'Pipeline moves forward only. Use Closed lost to exit when the opportunity is dead.',
-        };
     }
 
     return { ok: true };
@@ -116,7 +103,7 @@ export function getDealStageProgress(stage: string): {
 }
 
 export const PIPELINE_FORWARD_ONLY_HINT =
-    'Pipeline moves forward only. Swipe or drag right to advance. Swipe left or choose Closed lost to exit — deals do not move backward.';
+    'Use drag-and-drop to move deals between stages. Closed states stay terminal, but active deals can move backward for re-qualification.';
 
 export const LEAD_STAGE_SEQUENCE = [
     'lead',
@@ -159,13 +146,6 @@ export function assertLeadStageTransition(
     if (i === -1) {
         return { ok: false, message: 'Lead has an unrecognized stage.' };
     }
-    if (j < i) {
-        return {
-            ok: false,
-            message: 'Lead pipeline moves forward only. Use Lost to disqualify.',
-        };
-    }
-
     return { ok: true };
 }
 

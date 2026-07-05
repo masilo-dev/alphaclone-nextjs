@@ -667,9 +667,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
     return (
         <div className="min-h-full text-white px-1 sm:px-0">
-            <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} className="mb-4" />
+            <OperationalWorkflowStrip moduleId="contracts" userRole={user.role} className="mb-3 sm:mb-4" />
             {/* Header */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5 sm:mb-6">
                 <div className="min-w-0">
                     <h1 className="text-xl sm:text-2xl font-bold text-white">Contract Generator</h1>
                     <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">AI-assisted contracts tailored to your client and scope.</p>
@@ -678,21 +678,21 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     <button
                         type="button"
                         onClick={() => setActiveView('new')}
-                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'new' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
                     >
                         New Contract
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveView('list')}
-                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'list' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'list' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
                     >
                         Saved ({savedContracts.length})
                     </button>
                     <button
                         type="button"
                         onClick={() => setActiveView('lawyer')}
-                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
                     >
                         AI Lawyer
                     </button>
@@ -721,11 +721,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 Select draft contracts to remove. Signed contracts are kept for compliance.
                             </p>
                             {selectedContractIds.size > 0 && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                                     <button
                                         type="button"
                                         onClick={() => setSelectedContractIds(new Set())}
-                                        className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 border border-white/10"
+                                        className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
                                     >
                                         Clear
                                     </button>
@@ -733,7 +733,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         type="button"
                                         disabled={bulkDeletingContracts}
                                         onClick={handleBulkDeleteContracts}
-                                        className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5 disabled:opacity-50"
+                                        className="h-7 px-3 rounded-full text-[11px] font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
                                         {bulkDeletingContracts ? 'Deleting…' : `Delete (${selectedContractIds.size})`}
@@ -745,8 +745,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     {loadingContracts ? (
                         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
                     ) : savedContracts.length === 0 ? (
-                        <div className="text-center py-16 sm:py-20 text-slate-500 text-sm px-4">
-                            <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 opacity-30" />
+                        <div className="text-center py-14 sm:py-16 text-slate-500 text-xs px-4">
+                            <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
                             <p>No saved contracts yet. Generate your first one.</p>
                         </div>
                     ) : savedContracts.map((c: any) => {
@@ -819,9 +819,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setPreviewTab('document');
                                         setActiveView('new');
                                     }}
-                                    className="w-full sm:w-auto justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shrink-0 border border-white/5 hover:border-white/10"
+                                    className="w-full sm:w-auto justify-center px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"
                                 >
-                                    <Eye className="w-4 h-4 text-teal-400" /> View
+                                    <Eye className="w-3.5 h-3.5 text-teal-400" /> View
                                 </button>
                             </div>
                         );
@@ -1095,51 +1095,51 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             {/* Action Bar */}
                             <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
                                 <div className="flex gap-2 flex-wrap">
-                                    <button onClick={() => setStep('form')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
-                                        <RotateCcw className="w-4 h-4" /> Edit Parameters
+                                    <button onClick={() => setStep('form')} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
+                                        <RotateCcw className="w-3.5 h-3.5" /> Edit Parameters
                                     </button>
                                     {!isSigned && (
                                         <button
                                             onClick={() => setIsEditing(!isEditing)}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isEditing ? 'bg-teal-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                                            className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${isEditing ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                                         >
-                                            <Edit3 className="w-4 h-4" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
+                                            <Edit3 className="w-3.5 h-3.5" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
                                         </button>
                                     )}
                                     {(isSigned || step === 'saved') && (
                                         <>
-                                            <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
-                                                <Printer className="w-4 h-4" /> Print / PDF
+                                            <button onClick={handlePrint} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
+                                                <Printer className="w-3.5 h-3.5" /> Print / PDF
                                             </button>
-                                            <button onClick={openSendContractModal} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
-                                                <FileText className="w-4 h-4" /> Send Contract
+                                            <button onClick={openSendContractModal} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
+                                                <FileText className="w-3.5 h-3.5" /> Send Contract
                                             </button>
                                         </>
                                     )}
                                     {step !== 'saved' && (
-                                        <button onClick={saveContract} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60">
-                                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                        <button onClick={saveContract} disabled={isSaving} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60">
+                                            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                                             Save Contract
                                         </button>
                                     )}
                                 </div>
-                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
-                                    <RotateCcw className="w-4 h-4" /> New Contract
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
+                                    <RotateCcw className="w-3.5 h-3.5" /> New Contract
                                 </button>
                             </div>
 
                             {/* Tab Selection */}
                             {contractId && (
-                                <div className="flex gap-4 mb-6 border-b border-slate-800">
+                                <div className="inline-flex gap-1 rounded-full border border-white/5 bg-slate-900/60 p-1 mb-6">
                                     <button
                                         onClick={() => setPreviewTab('document')}
-                                        className={`pb-3 text-sm font-bold transition-all border-b-2 ${previewTab === 'document' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                                        className={`h-8 px-3 rounded-full text-[11px] font-bold transition-all ${previewTab === 'document' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                                     >
                                         Contract Document
                                     </button>
                                     <button
                                         onClick={() => setPreviewTab('audit')}
-                                        className={`pb-3 text-sm font-bold transition-all border-b-2 ${previewTab === 'audit' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                                        className={`h-8 px-3 rounded-full text-[11px] font-bold transition-all ${previewTab === 'audit' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                                     >
                                         Audit Trail & Compliance
                                     </button>
@@ -1496,7 +1496,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                                 {[
                                     { value: 'auto', label: 'Auto', icon: '🔄', desc: 'Best available' },
                                     { value: 'zoho', label: 'Zoho Mail', icon: '📧', desc: 'Zoho' },
@@ -1509,13 +1509,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         key={opt.value}
                                         type="button"
                                         onClick={() => setSendForm(prev => ({ ...prev, provider: opt.value }))}
-                                        className={`flex flex-col items-center justify-center gap-0.5 py-2 px-2 rounded-xl border text-xs font-medium transition-all ${
+                                        className={`flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-2 py-2 text-[11px] font-medium transition-all ${
                                             sendForm.provider === opt.value
                                                 ? 'bg-teal-600/20 border-teal-500 text-teal-300'
                                                 : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
                                         }`}
                                     >
-                                        <span className="text-base">{opt.icon}</span>
+                                        <span className="text-sm sm:text-base">{opt.icon}</span>
                                         <span>{opt.label}</span>
                                     </button>
                                 ))}
@@ -2158,4 +2158,3 @@ function buildTemplateContract(
 }
 
 export default ContractDashboard;
-

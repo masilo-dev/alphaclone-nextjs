@@ -22,6 +22,7 @@ import { contractService } from '@/services/contractService';
 import { notificationService, type Notification } from '../../services/dashboardService';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { Button } from '../ui/UIComponents';
+import { EmptyStatePlaceholder } from '../ui/EmptyStatePlaceholder';
 
 interface Module {
   label: string;
@@ -182,6 +183,58 @@ const HomeTab: React.FC<HomeTabProps> = ({
       .then(({ data }: { data: any[] | null }) => setActivity(data || []));
   }, [currentTenant?.id]);
 
+  const homeStats = useMemo<ModuleStat[]>(() => [
+    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
+    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
+    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
+    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
+  ], [quickStats, trendStats, periodNew]);
+  const memoryCount = Number(
+    databaseStats?.memoryCount ??
+    databaseStats?.knowledgeCount ??
+    databaseStats?.documents ??
+    databaseStats?.totalDocuments ??
+    0
+  );
+  const commandStats = [
+    { label: 'Momentum', value: `${Math.round(momentumScore)}%`, icon: Zap, color: 'text-teal-400' },
+    { label: 'Day Streak', value: `${loginStreak}d`, icon: Flame, color: loginStreak > 0 ? 'text-orange-400' : 'text-slate-500' },
+    { label: '24h Activity', value: activity24h, icon: Activity, color: 'text-blue-400' },
+    { label: 'Memory', value: memoryCount || 'Live', icon: Brain, color: 'text-purple-400' },
+  ];
+  const primaryModules = MODULES.slice(0, 12);
+  const secondaryModules = MODULES.slice(12);
+  const starterSteps = [
+    {
+      step: '1',
+      title: 'Finish onboarding',
+      description: 'Set up your workspace, services, and defaults.',
+      href: '/dashboard/onboarding',
+      icon: LayoutDashboard,
+    },
+    {
+      step: '2',
+      title: 'Open the inbox',
+      description: 'Check messages and keep replies tied to clients.',
+      href: '/dashboard/messages',
+      icon: Mail,
+    },
+    {
+      step: '3',
+      title: 'Review tasks',
+      description: 'Turn replies into follow-up work and due dates.',
+      href: '/dashboard/tasks',
+      icon: CheckSquare,
+    },
+    {
+      step: '4',
+      title: 'Add contacts',
+      description: 'Bring in clients or leads before you start outreach.',
+      href: '/dashboard/crm',
+      icon: Users,
+    },
+  ];
+
   // Client portal view
   if (user.role === 'client') {
     return (
@@ -236,58 +289,6 @@ const HomeTab: React.FC<HomeTabProps> = ({
   }
 
   // Admin / Tenant Admin view
-  const homeStats = useMemo<ModuleStat[]>(() => [
-    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
-    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
-    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
-    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
-  ], [quickStats, trendStats, periodNew]);
-  const memoryCount = Number(
-    databaseStats?.memoryCount ??
-    databaseStats?.knowledgeCount ??
-    databaseStats?.documents ??
-    databaseStats?.totalDocuments ??
-    0
-  );
-  const commandStats = [
-    { label: 'Momentum', value: `${Math.round(momentumScore)}%`, icon: Zap, color: 'text-teal-400' },
-    { label: 'Day Streak', value: `${loginStreak}d`, icon: Flame, color: loginStreak > 0 ? 'text-orange-400' : 'text-slate-500' },
-    { label: '24h Activity', value: activity24h, icon: Activity, color: 'text-blue-400' },
-    { label: 'Memory', value: memoryCount || 'Live', icon: Brain, color: 'text-purple-400' },
-  ];
-  const primaryModules = MODULES.slice(0, 12);
-  const secondaryModules = MODULES.slice(12);
-  const starterSteps = [
-    {
-      step: '1',
-      title: 'Finish onboarding',
-      description: 'Set up your workspace, services, and defaults.',
-      href: '/dashboard/onboarding',
-      icon: LayoutDashboard,
-    },
-    {
-      step: '2',
-      title: 'Open the inbox',
-      description: 'Check messages and keep replies tied to clients.',
-      href: '/dashboard/messages',
-      icon: Mail,
-    },
-    {
-      step: '3',
-      title: 'Review tasks',
-      description: 'Turn replies into follow-up work and due dates.',
-      href: '/dashboard/tasks',
-      icon: CheckSquare,
-    },
-    {
-      step: '4',
-      title: 'Add contacts',
-      description: 'Bring in clients or leads before you start outreach.',
-      href: '/dashboard/crm',
-      icon: Users,
-    },
-  ];
-
   return (
     <div className="space-y-4 pb-24 ac-scroll-full ac-enterprise-module">
       <CelebrationOverlay isOpen={celebration.show} title="Done!" message={celebration.message} onClose={() => setCelebration(p => ({ ...p, show: false }))} />
@@ -414,7 +415,13 @@ const HomeTab: React.FC<HomeTabProps> = ({
           </div>
           <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
             {activity.length === 0 && (
-              <div className="py-5 text-center text-[13px] text-slate-500 opacity-55">No recent activity yet.</div>
+              <EmptyStatePlaceholder
+                icon={Activity}
+                title="No activity yet"
+                description="Connect your email or add a lead to see workspace activity here."
+                action={{ label: 'Go to Analytics', onClick: () => router.push('/dashboard/analytics') }}
+                compact
+              />
             )}
             {activity.slice(0, 4).map((item, i) => (
               <div key={i} className="flex items-center gap-3 px-3 py-2.5 min-w-0">

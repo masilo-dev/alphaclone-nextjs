@@ -5,7 +5,7 @@ import {
   UserPlus, Search, X, Phone, Mail, Building,
   MessageCircle, Clock,
   UserCheck, Users, ArrowLeft, Star, AlertCircle,
-  ShieldCheck, DollarSign, Activity, Loader2, Smartphone, Video,
+  ShieldCheck, DollarSign, Activity, Loader2, Video, Calendar,
   ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw, Target,
   Trash2, CheckSquare, Square
 } from 'lucide-react';
@@ -28,6 +28,8 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { showActionNextSteps } from '../common/showActionNextSteps';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { CRMActionChips } from './crm/CRMActionChips';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
@@ -147,12 +149,13 @@ const SwipeableRow: React.FC<{
   status: 'online' | 'away' | 'busy' | 'offline';
   isTeamsConnected: boolean;
   onMarkContacted: (id: string) => void;
+  onSendEmail: (entity: CRMEntity) => void;
   onDisqualify: (id: string) => void;
   onQualify: (entity: CRMEntity) => void;
   onTap: (entity: CRMEntity) => void;
   isSelected?: boolean;
   onToggleSelect?: (entity: CRMEntity) => void;
-}> = ({ entity, status, isTeamsConnected, onMarkContacted, onDisqualify, onQualify, onTap, isSelected, onToggleSelect }) => {
+}> = ({ entity, status, isTeamsConnected, onMarkContacted, onSendEmail, onDisqualify, onQualify, onTap, isSelected, onToggleSelect }) => {
   const x = useMotionValue(0);
   const leftOpacity  = useTransform(x, [0, 80],  [0, 1]);
   const rightOpacity = useTransform(x, [-80, 0], [1, 0]);
@@ -168,7 +171,7 @@ const SwipeableRow: React.FC<{
   };
 
   return (
-    <div className="relative overflow-hidden group border-b border-white/5 hover:bg-slate-900/30 transition-colors">
+    <div className="relative overflow-hidden group rounded-2xl border border-white/5 bg-slate-900/70 shadow-sm transition-colors hover:border-teal-500/20 hover:bg-slate-900/90">
       {entity.type === 'lead' && (
         <>
           {/* Left action (green) */}
@@ -188,14 +191,14 @@ const SwipeableRow: React.FC<{
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className={`relative z-10 bg-slate-950/60 flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-slate-900/40 active:bg-slate-900/60 transition-colors ${isSelected ? 'bg-teal-500/10' : ''}`}
+        className={`relative z-10 flex items-start gap-3 px-3.5 py-3 cursor-pointer transition-colors ${isSelected ? 'bg-teal-500/10' : ''}`}
         onClick={() => onTap(entity)}
       >
         {onToggleSelect && (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleSelect(entity); }}
-            className="flex-shrink-0 p-1 text-slate-500 hover:text-teal-400 transition-colors"
+            className="flex-shrink-0 rounded-lg border border-white/5 bg-slate-950/70 p-1 text-slate-500 transition-colors hover:border-teal-500/30 hover:text-teal-400"
             aria-label={isSelected ? 'Deselect' : 'Select'}
           >
             {isSelected ? <CheckSquare className="w-4 h-4 text-teal-400" /> : <Square className="w-4 h-4" />}
@@ -203,35 +206,48 @@ const SwipeableRow: React.FC<{
         )}
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          <div className={`w-10 h-10 rounded-xl ${hashColor(entity.name)} flex items-center justify-center shadow-inner`}>
+          <div className={`w-11 h-11 rounded-2xl ${hashColor(entity.name)} flex items-center justify-center shadow-inner ring-1 ring-white/5`}>
             <span className="text-xs font-black text-white">{getInitials(entity.name)}</span>
           </div>
           <OnlineStatusBadge
             status={status}
             size="sm"
-            className="absolute -bottom-1 -right-1 border-2 border-slate-950 rounded-full bg-slate-950"
+            className="absolute -bottom-1 -right-1 border-2 border-slate-900 rounded-full bg-slate-900"
           />
         </div>
 
         {/* Center */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-bold text-white truncate">{entity.name}</span>
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className="block text-sm font-bold text-white truncate">{entity.name}</span>
+              <span className="block text-[11px] text-slate-400 truncate">
+                {entity.company || 'Private account'}
+              </span>
+            </div>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <span className="text-xs font-bold text-teal-400">
+                {entity.value ? `$${entity.value.toLocaleString()}` : ' '}
+              </span>
+              <StandardStatusBadge variant={resolveStatusVariant(entity.status)}>{entity.status}</StandardStatusBadge>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+            {entity.source && (
+              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-bold uppercase tracking-wider ${sourceColors[entity.source.toLowerCase()] || sourceColors.manual}`}>
+                <SocialPlatformIcon platform={entity.source} size="sm" />
+                {entity.source}
+              </span>
+            )}
             {isTeamsConnected && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-purple-500/20 bg-purple-950/30 text-purple-300 flex items-center gap-0.5">
+              <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/20 bg-purple-950/30 px-2 py-1 font-bold uppercase tracking-wider text-purple-300">
                 Teams
               </span>
             )}
-            {entity.source && (
-              <span className="flex items-center gap-1 shrink-0">
-                <SocialPlatformIcon platform={entity.source} size="sm" />
-                <StandardStatusBadge variant="neutral">{entity.source}</StandardStatusBadge>
-              </span>
-            )}
+            <span className="truncate text-slate-500">
+              {entity.email || entity.phone || 'No contact details'}
+            </span>
           </div>
-          <span className="text-xs text-slate-400 truncate block">
-            {entity.company ? `${entity.company} • ` : ''}{entity.email || entity.phone || 'No contact details'}
-          </span>
         </div>
 
         {/* Quick actions for leads (desktop / tablet) — visible on hover so users can move a lead without swiping */}
@@ -240,6 +256,16 @@ const SwipeableRow: React.FC<{
             className="hidden sm:flex items-center gap-1 flex-shrink-0 mr-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
+            {entity.email && (
+              <button
+                type="button"
+                title="Send email"
+                onClick={() => onSendEmail(entity)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/20 active:scale-95 transition-all"
+              >
+                <Mail className="w-3.5 h-3.5" />
+              </button>
+            )}
             {entity.status !== 'contacted' && entity.status !== 'qualified' && (
               <button
                 type="button"
@@ -273,15 +299,9 @@ const SwipeableRow: React.FC<{
           </div>
         )}
 
-        {/* Right */}
-        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span className="text-xs font-bold text-teal-400">
-            {entity.value ? `$${entity.value.toLocaleString()}` : ''}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <StandardStatusBadge variant={resolveStatusVariant(entity.status)}>{entity.status}</StandardStatusBadge>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-400 transition-colors" />
-          </div>
+        {/* Right affordance */}
+        <div className="flex items-center self-center flex-shrink-0 pl-1">
+          <ChevronRight className="w-4 h-4 text-slate-600 group-hover:text-slate-400 transition-colors" />
         </div>
       </motion.div>
     </div>
@@ -641,35 +661,6 @@ const Client360Detail: React.FC<{
     }
   };
 
-  const handleOpenWhatsApp = () => {
-    const phoneClean = client.phone?.replace(/[^0-9]/g, '') || '';
-    if (!phoneClean) {
-      toast.error('No phone number available for outreach');
-      return;
-    }
-    // Try to send via platform API first, fallback to opening WhatsApp
-    const sendViaPlatform = async () => {
-      try {
-        const res = await fetch('/api/whatsapp/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tenantId: currentTenant?.id,
-            to: phoneClean,
-            message: `Hello ${client.name}, this is a message from AlphaClone.`,
-          }),
-        });
-        if (res.ok) {
-          toast.success('WhatsApp message sent via platform!');
-          return;
-        }
-      } catch {}
-      // Fallback: open WhatsApp Web/app
-      window.open(`https://wa.me/${phoneClean}?text=Hello%20${encodeURIComponent(client.name)},`, '_blank');
-    };
-    sendViaPlatform();
-  };
-
   const clientActions = (
     <div className={`grid grid-cols-3 gap-2 ${inDrawer ? 'pt-2 border-t border-white/5' : 'fixed bottom-0 left-0 right-0 md:absolute bg-slate-950/95 border-t border-white/5 divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)] z-30'}`}>
       <button
@@ -808,47 +799,41 @@ const Client360Detail: React.FC<{
         </div>
 
         {/* Quick Communication Outreach Bar */}
-        <div className="grid grid-cols-4 gap-2 bg-slate-900/40 p-3 rounded-2xl border border-white/5">
-          <button
-            onClick={handleStartVideoCall}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900 hover:bg-slate-800 transition-all active:scale-95 group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center group-hover:bg-teal-500/20 transition-colors">
-              <Video className="w-5 h-5 text-teal-400" />
-            </div>
-            <span className="text-[10px] text-slate-400 font-bold">Secure Call</span>
-          </button>
-          <button
-            onClick={handleOpenWhatsApp}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900 hover:bg-slate-800 transition-all active:scale-95 group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-              <Smartphone className="w-5 h-5 text-emerald-400" />
-            </div>
-            <span className="text-[10px] text-slate-400 font-bold">WhatsApp</span>
-          </button>
-          <button
-            onClick={() => {
-              if (client.email) setShowEmailModal(true);
-              else toast.error('Add an email address for this client first.');
-            }}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900 hover:bg-slate-800 transition-all active:scale-95 group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
-              <Mail className="w-5 h-5 text-blue-400" />
-            </div>
-            <span className="text-[10px] text-slate-400 font-bold">Send Email</span>
-          </button>
-          <button
-            onClick={() => router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages'}?selectedClientId=${client.id}`)}
-            className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900 hover:bg-slate-800 transition-all active:scale-95 group"
-          >
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
-              <MessageCircle className="w-5 h-5 text-violet-400" />
-            </div>
-            <span className="text-[10px] text-slate-400 font-bold">Live Chat</span>
-          </button>
-        </div>
+        <CRMActionChips
+          className="rounded-2xl border border-white/5 bg-slate-900/40 p-3"
+          items={[
+            {
+              label: 'Call',
+              icon: Video,
+              tone: 'teal',
+              onClick: handleStartVideoCall,
+            },
+            {
+              label: 'Compose',
+              icon: Mail,
+              tone: 'indigo',
+              onClick: () => {
+                if (!client.email) {
+                  toast.error('Add an email address for this client first.');
+                  return;
+                }
+                router.push(buildMailComposeUrl(client.email, `Re: ${client.name}`));
+              },
+            },
+            {
+              label: 'Schedule',
+              icon: Calendar,
+              tone: 'amber',
+              onClick: () => router.push('/dashboard/calendar'),
+            },
+            {
+              label: 'Chat',
+              icon: MessageCircle,
+              tone: 'slate',
+              onClick: () => router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages'}?selectedClientId=${client.id}`),
+            },
+          ]}
+        />
 
         {/* AI Propensity & Health Panel */}
         <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 space-y-4">
@@ -1212,10 +1197,11 @@ const KANBAN_COLUMNS: { status: LeadStatus; label: string; accent: string; dot: 
 const KanbanCard: React.FC<{
   lead: Lead;
   onClick: () => void;
+  onSendEmail?: (lead: Lead) => void;
   overlay?: boolean;
   isSelected?: boolean;
   onToggleSelect?: (lead: Lead) => void;
-}> = ({ lead, onClick, overlay, isSelected, onToggleSelect }) => {
+}> = ({ lead, onClick, onSendEmail, overlay, isSelected, onToggleSelect }) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: lead.id, data: { status: lead.status } });
   return (
     <div
@@ -1237,6 +1223,18 @@ const KanbanCard: React.FC<{
             {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
           </button>
         )}
+        {onSendEmail && !overlay && lead.email && (
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onSendEmail(lead); }}
+            className="flex-shrink-0 rounded-lg border border-indigo-500/20 bg-indigo-500/10 p-1 text-indigo-300 hover:border-indigo-400/40 hover:bg-indigo-500/20"
+            aria-label={`Email ${lead.name}`}
+            title="Send email"
+          >
+            <Mail className="w-3.5 h-3.5" />
+          </button>
+        )}
         <div className={`w-8 h-8 rounded-lg ${hashColor(lead.name)} flex items-center justify-center flex-shrink-0`}>
           <span className="text-[11px] font-black text-white">{getInitials(lead.name)}</span>
         </div>
@@ -1253,9 +1251,10 @@ const KanbanColumn: React.FC<{
   col: typeof KANBAN_COLUMNS[number];
   leads: Lead[];
   onSelect: (l: Lead) => void;
+  onSendEmail?: (lead: Lead) => void;
   selectedKeys?: Set<string>;
   onToggleSelect?: (lead: Lead) => void;
-}> = ({ col, leads, onSelect, selectedKeys, onToggleSelect }) => {
+}> = ({ col, leads, onSelect, onSendEmail, selectedKeys, onToggleSelect }) => {
   const { setNodeRef, isOver } = useDroppable({ id: col.status });
   return (
     <div className="flex w-[78%] sm:w-72 flex-shrink-0 flex-col">
@@ -1268,13 +1267,14 @@ const KanbanColumn: React.FC<{
       </div>
       <div
         ref={setNodeRef}
-        className={`flex-1 min-h-[120px] rounded-2xl border ${col.accent} ${isOver ? 'bg-teal-500/10 border-teal-500/40' : 'bg-slate-950/40'} p-2 space-y-2 transition-colors`}
+        className={`flex-1 min-h-[120px] rounded-3xl border ${col.accent} ${isOver ? 'bg-teal-500/10 border-teal-500/40' : 'bg-slate-950/40'} p-2.5 space-y-2 transition-colors`}
       >
         {leads.map(l => (
           <KanbanCard
             key={l.id}
             lead={l}
             onClick={() => onSelect(l)}
+            onSendEmail={onSendEmail}
             isSelected={selectedKeys?.has(entityKey({ type: 'lead', id: l.id }))}
             onToggleSelect={onToggleSelect}
           />
@@ -1291,9 +1291,10 @@ const LeadKanban: React.FC<{
   leads: Lead[];
   onUpdate: (id: string, status: LeadStatus) => void;
   onSelect: (l: Lead) => void;
+  onSendEmail: (lead: Lead) => void;
   selectedKeys?: Set<string>;
   onToggleSelect?: (lead: Lead) => void;
-}> = ({ leads, onUpdate, onSelect, selectedKeys, onToggleSelect }) => {
+}> = ({ leads, onUpdate, onSelect, onSendEmail, selectedKeys, onToggleSelect }) => {
   const [activeLead, setActiveLead] = useState<Lead | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -1321,6 +1322,7 @@ const LeadKanban: React.FC<{
             col={col}
             leads={leads.filter(l => l.status === col.status)}
             onSelect={onSelect}
+            onSendEmail={onSendEmail}
             selectedKeys={selectedKeys}
             onToggleSelect={onToggleSelect}
           />
@@ -1355,6 +1357,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const crmListRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(50);
   const loadMoreEntities = useCallback(() => setVisibleCount((c) => c + 40), []);
+  const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string }) => {
+    if (!entity.email) return;
+    const displayName = entity.name || entity.company || 'there';
+    router.push(buildMailComposeUrl(entity.email, `Re: ${displayName}`));
+  }, [router]);
   // Realtime transparency: recently changed record IDs get a brief row flash
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
   const flashRecord = useCallback((id: string) => {
@@ -1961,9 +1968,42 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       <ModulePageLayout
         showBonnieDock
         header={(
-          <div className="px-4 pt-3 space-y-3 shrink-0">
+          <div className="px-4 pt-3 space-y-2.5 shrink-0">
             <CRMNav pathname={pathname} />
-            <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+            <div className="rounded-2xl border border-white/5 bg-slate-900/60 px-2.5 py-2">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
+                  Command bar
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/mail')}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1.5 text-[11px] font-bold text-indigo-200 transition-colors hover:bg-indigo-500/15"
+                >
+                  <Mail className="h-3 w-3" />
+                  Compose Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-2.5 py-1.5 text-[11px] font-bold text-teal-200 transition-colors hover:bg-teal-500/15"
+                >
+                  <UserPlus className="h-3 w-3" />
+                  Quick Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/leads')}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-[11px] font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
+                >
+                  <TrendingUp className="h-3 w-3" />
+                  Lead Board
+                </button>
+                <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+              </div>
+            </div>
           </div>
         )}
         stats={(
@@ -2145,10 +2185,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       >
       <div ref={crmListRef} className={`flex-1 ac-scroll-full bg-slate-950 ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
         {!loading && subView === 'leads' && leadsView === 'board' ? (
-          <LeadKanban
+            <LeadKanban
             leads={filteredKanbanLeads}
             onUpdate={handleStatusUpdate}
             onSelect={(l) => setSelectedEntity(entities.find(e => e.id === l.id) || null)}
+            onSendEmail={(lead) => openEmailCompose(lead)}
             selectedKeys={selectedKeys}
             onToggleSelect={toggleLeadSelection}
           />
@@ -2214,6 +2255,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
                     isTeamsConnected={isTeamsConnected}
                     onMarkContacted={(id) => handleStatusUpdate(id, 'contacted')}
+                    onSendEmail={(ent) => openEmailCompose(ent)}
                     onDisqualify={(id) => handleStatusUpdate(id, 'disqualified')}
                     onQualify={(ent) => ent.rawLead && handleQualifyLead(ent.rawLead)}
                     onTap={setSelectedEntity}

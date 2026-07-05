@@ -511,56 +511,49 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     const deal = deals.find((d) => d.id === id);
     if (!deal || !currentTenant?.id) return;
 
-    if (newStage === 'closed_lost') {
-      const { error } = await supabase
-        .from('deals')
-        .delete()
-        .eq('id', id)
-        .eq('tenant_id', currentTenant.id);
-      if (error) {
-        toast.error(error.message || 'Failed to remove deal');
-        return;
-      }
-      setDeals((prev) => prev.filter((d) => d.id !== id));
-      if (selectedDeal?.id === id) setSelectedDeal(null);
-      toast.success('Deal removed from pipeline');
-      showDealStageNextSteps('closed_lost', (path) => router.push(path));
-      return;
-    }
-
     const check = assertDealStageTransition(deal.stage, newStage);
     if (!check.ok) {
       toast.error(check.message);
       return;
     }
 
-    const { error } = await supabase
-      .from('deals')
-      .update({ stage: newStage, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .eq('tenant_id', currentTenant.id);
-
-    if (error) {
-      toast.error(error.message || 'Failed to update deal stage');
+    const currentIndex = STAGES.indexOf(deal.stage);
+    const nextIndex = STAGES.indexOf(newStage);
+    const isBackwardMove = currentIndex !== -1 && nextIndex !== -1 && nextIndex < currentIndex;
+    const stageReason = isBackwardMove
+      ? window.prompt(`Why is ${deal.name} moving back to ${newStage.replace('_', ' ')}?`)?.trim() || ''
+      : undefined;
+    if (isBackwardMove && !stageReason) {
+      toast.error('Please add a reason before moving a deal backward.');
       return;
     }
 
-    const removesFromBoard = newStage === 'closed_won';
+    const { error, deal: updatedDeal } = await dealService.updateDeal(id, {
+      stage: newStage,
+      stageReason,
+    });
+
+    if (error) {
+      toast.error(error || 'Failed to update deal stage');
+      return;
+    }
+
+    const removesFromBoard = newStage === 'closed_won' || newStage === 'closed_lost';
     if (removesFromBoard) {
       setDeals((prev) => prev.filter((d) => d.id !== id));
       if (selectedDeal?.id === id) setSelectedDeal(null);
-      toast.success('Deal closed won — removed from active board');
-      showDealStageNextSteps('closed_won', (path) => router.push(path));
+      toast.success(newStage === 'closed_won' ? 'Deal closed won — removed from active board' : 'Deal removed from pipeline');
+      showDealStageNextSteps(newStage, (path) => router.push(path));
       return;
     }
 
     setDeals((prev) =>
       prev.map((d) =>
-        d.id === id ? { ...d, stage: newStage, updated_at: new Date().toISOString() } : d
+        d.id === id ? { ...d, stage: updatedDeal?.stage || newStage, updated_at: new Date().toISOString() } : d
       )
     );
     if (selectedDeal?.id === id) {
-      setSelectedDeal((prev) => (prev ? { ...prev, stage: newStage } : prev));
+      setSelectedDeal((prev) => (prev ? { ...prev, stage: updatedDeal?.stage || newStage } : prev));
     }
     toast.success(`Moved to ${newStage.replace('_', ' ')}`);
     showDealStageNextSteps(newStage, (path) => router.push(path));
@@ -902,7 +895,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         <table className="ac-data-table w-full border-collapse text-left min-w-[700px]">
           <thead>
             <tr className="border-b border-white/5 bg-slate-900/20">
-              <th className="p-4 w-10">
+              <th className="px-3 py-3 w-10">
                 <button
                   type="button"
                   onClick={() => {
@@ -910,26 +903,26 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedDealIds.has(id));
                     setSelectedDealIds(allSelected ? new Set() : new Set(visibleIds));
                   }}
-                  className="text-slate-400 hover:text-white"
+                  className="text-slate-500 hover:text-white transition-colors"
                   aria-label="Select all deals"
                 >
                   {filteredDeals.length > 0 && filteredDeals.every((d) => selectedDealIds.has(d.id))
-                    ? <CheckSquare className="w-4 h-4" />
-                    : <Square className="w-4 h-4" />}
+                    ? <CheckSquare className="w-3.5 h-3.5" />
+                    : <Square className="w-3.5 h-3.5" />}
                 </button>
               </th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Deal Name</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Stage</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Value</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Contact</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Score</th>
-              <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Age</th>
+              <th className="px-3 py-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.22em]">Deal Name</th>
+              <th className="px-3 py-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.22em]">Stage</th>
+              <th className="px-3 py-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.22em]">Value</th>
+              <th className="px-3 py-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.22em]">Contact</th>
+              <th className="px-3 py-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.22em]">Score</th>
+              <th className="px-3 py-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.22em] text-right">Age</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
             {filteredDeals.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-500 text-xs">
+                <td colSpan={7} className="p-6 text-center text-slate-500 text-[11px]">
                   No deals found matching search criteria.
                 </td>
               </tr>
@@ -940,34 +933,34 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                     onClick={() => setSelectedDeal(deal)}
                     className={`hover:bg-white/5 transition-colors cursor-pointer ${selectedDealIds.has(deal.id) ? 'bg-teal-500/5' : ''}`}
                   >
-                    <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => toggleDealSelection(deal.id)}
-                        className="text-slate-400 hover:text-teal-400"
+                        className="text-slate-500 hover:text-teal-400 transition-colors"
                         aria-label={`Select ${deal.name}`}
                       >
                         {selectedDealIds.has(deal.id)
-                          ? <CheckSquare className="w-4 h-4 text-teal-400" />
-                          : <Square className="w-4 h-4" />}
+                          ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" />
+                          : <Square className="w-3.5 h-3.5" />}
                       </button>
                     </td>
-                    <td className="p-4">
-                      <span className="text-[13px] font-bold text-white block">{deal.name}</span>
+                    <td className="px-3 py-3">
+                      <span className="text-[12px] font-bold text-white block">{deal.name}</span>
                     </td>
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       <StandardStatusBadge variant={resolveStatusVariant(deal.stage)}>{deal.stage.replace('_', ' ')}</StandardStatusBadge>
                     </td>
-                    <td className="p-4">
-                      <span className="text-[13px] font-black text-teal-400">${(deal.value || 0).toLocaleString()}</span>
+                    <td className="px-3 py-3">
+                      <span className="text-[12px] font-black text-teal-400">${(deal.value || 0).toLocaleString()}</span>
                     </td>
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[13px] text-slate-350 font-semibold">{deal.contact_name || '-'}</span>
+                        <span className="text-[12px] text-slate-300 font-semibold">{deal.contact_name || '-'}</span>
                         {deal.contact_email && <span className="text-[10px] text-slate-500">{deal.contact_email}</span>}
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="px-3 py-3">
                       {deal.score != null ? (
                         <span className={`text-xs font-black ${scoreColor(deal.score)}`}>
                           ★ {deal.score}/10
@@ -976,7 +969,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                         <span className="text-slate-550 text-xs">-</span>
                       )}
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="px-3 py-3 text-right">
                       <span className="text-xs text-slate-500 font-semibold font-mono">{daysInStage(deal.updated_at)} days</span>
                     </td>
                   </tr>
@@ -1040,7 +1033,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950">
-      <div className="px-4 pt-3 shrink-0 space-y-3">
+      <div className="px-4 pt-3 shrink-0 space-y-2.5">
         <CRMNav pathname={pathname} />
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
       </div>
@@ -1061,11 +1054,11 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
           {selectedDealIds.size > 0 && (
-            <div className="flex items-center gap-2 mr-1">
+            <div className="flex items-center gap-1.5 mr-1 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
               <button
                 type="button"
                 onClick={() => setSelectedDealIds(new Set())}
-                className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-400 border border-white/10"
+                className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
               >
                 Clear
               </button>
@@ -1073,20 +1066,20 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 type="button"
                 disabled={bulkDeleting}
                 onClick={handleBulkDeleteDeals}
-                className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-rose-300 border border-rose-500/30 disabled:opacity-50"
+                className="h-7 px-3 rounded-full text-[11px] font-bold text-rose-300 border border-rose-500/30 transition-colors hover:text-rose-200 disabled:opacity-50"
               >
                 {bulkDeleting ? 'Deleting…' : `Delete (${selectedDealIds.size})`}
               </button>
             </div>
           )}
           {/* Switcher pills */}
-          <div className="flex bg-slate-900/60 p-1 rounded-xl border border-white/5">
+          <div className="flex bg-slate-900/60 p-1 rounded-full border border-white/5 shadow-inner">
             <button
               onClick={() => setViewMode('board')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${
                 viewMode === 'board'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -1094,10 +1087,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${
                 viewMode === 'list'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               <List className="w-3.5 h-3.5" />
@@ -1105,10 +1098,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             </button>
             <button
               onClick={() => setViewMode('mobile-stage')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${
                 viewMode === 'mobile-stage'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-300'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -1118,7 +1111,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-[11px] font-black rounded-lg transition-all shadow-md shadow-emerald-500/10 shrink-0"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-emerald-500 px-3 text-[11px] font-black text-white transition-all hover:bg-emerald-600 active:scale-95 shadow-md shadow-emerald-500/10 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Deal</span>

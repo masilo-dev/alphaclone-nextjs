@@ -51,6 +51,18 @@ export interface Lead {
     metadata?: LeadMetadata;
 }
 
+type LeadStageChangeMeta = {
+    previous_stage?: string;
+    last_stage_change_at?: string;
+    stage_change_reason?: string;
+    stage_history?: Array<{
+        from: string;
+        to: string;
+        reason?: string;
+        changed_at: string;
+    }>;
+};
+
 export interface GrowthAgentTarget {
     id: string;
     tenant_id: string;
@@ -184,6 +196,29 @@ function normalizeLeadRecord(l: any): Lead {
         socialLinks: normalizeSocialLinks(l.social_links),
         metadata
     };
+}
+
+function appendLeadStageMetadata(
+    metadata: LeadMetadata,
+    fromStage: string,
+    toStage: string,
+    reason?: string
+): LeadMetadata {
+    const history = Array.isArray(metadata.stage_history) ? metadata.stage_history : [];
+    const entry = {
+        from: fromStage,
+        to: toStage,
+        reason: reason?.trim() || undefined,
+        changed_at: new Date().toISOString(),
+    };
+    const nextMeta: LeadStageChangeMeta = {
+        ...metadata,
+        previous_stage: fromStage,
+        last_stage_change_at: entry.changed_at,
+        stage_change_reason: entry.reason,
+        stage_history: [...history.slice(-19), entry],
+    };
+    return nextMeta;
 }
 
 export const leadService = {
@@ -425,8 +460,11 @@ export const leadService = {
     /**
      * Update a lead
      */
-    async updateLead(id: string, updates: Partial<Lead>): Promise<{ error: string | null }> {
+    async updateLead(id: string, updates: Partial<Lead> & { stageReason?: string }): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
+
+        let stageChangeFrom: string | null = null;
+        let stageChangeReason: string | undefined;
 
         if (updates.stage) {
             const normalizedStage = normalizeLeadPipelineStage(updates.stage);
@@ -436,7 +474,7 @@ export const leadService = {
 
             const { data: existingLead } = await supabase
                 .from('leads')
-                .select('stage')
+                .select('stage, metadata')
                 .eq('id', id)
                 .eq('tenant_id', tenantId)
                 .single();
@@ -448,6 +486,14 @@ export const leadService = {
                     const message = (check as any).message || 'Invalid stage transition';
                     return { error: message };
                 }
+                stageChangeFrom = fromStage;
+                stageChangeReason = updates.stageReason?.trim() || undefined;
+
+                const existingMetadata = coerceMetadata((existingLead as any).metadata);
+                updates = {
+                    ...updates,
+                    metadata: appendLeadStageMetadata(existingMetadata, fromStage, normalizedStage, stageChangeReason),
+                };
             }
 
             updates = { ...updates, stage: normalizedStage };
@@ -483,7 +529,6 @@ export const leadService = {
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
         if (updates.socialLinks !== undefined) dbPayload.social_links = updates.socialLinks;
         if (updates.metadata !== undefined) dbPayload.metadata = updates.metadata;
-
         const shouldRecomputeIntelligence = [
             updates.industry,
             updates.email,

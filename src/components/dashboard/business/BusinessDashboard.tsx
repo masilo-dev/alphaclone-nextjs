@@ -126,6 +126,7 @@ import DocumentsHub from '../hubs/DocumentsHub';
 
 const SALES_HUB_ROUTES = new Set([
   '/dashboard/crm',
+  '/dashboard/crm/workspace',
   '/dashboard/crm/console',
   '/dashboard/crm/accounts',
   '/dashboard/crm/reports',

@@ -32,26 +32,26 @@ export function OperationalWorkflowStrip({
 
   return (
     <section
-      className={`rounded-xl border border-slate-800 bg-slate-900/60 p-3 md:p-4 ${className}`}
+      className={`rounded-2xl border border-white/5 bg-slate-900/55 px-3 py-2.5 ${className}`}
       aria-label="Workflow guidance"
     >
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-teal-400">
+          <p className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
             Finish the job
           </p>
-          <p className="text-sm font-semibold text-white mt-0.5">{title}</p>
-          <p className="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">
+          <p className="mt-1 text-sm font-semibold text-white">{title}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-400 line-clamp-2">
             {playbook[0]}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
           {quickLinks.map((link) => (
             <button
               key={link.resolvedHref + link.label}
               type="button"
               onClick={() => router.push(link.resolvedHref)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 transition-colors"
+              className="inline-flex h-8 items-center rounded-full border border-slate-700 bg-slate-950/40 px-2.5 text-[11px] font-bold text-slate-300 transition-colors hover:border-slate-500 hover:text-white"
             >
               {link.label}
             </button>
@@ -59,10 +59,10 @@ export function OperationalWorkflowStrip({
           <button
             type="button"
             onClick={() => router.push(primary.resolvedHref)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-2.5 text-[11px] font-bold text-white transition-colors hover:bg-teal-500"
           >
             {primary.label}
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="h-3 w-3" />
           </button>
         </div>
       </div>

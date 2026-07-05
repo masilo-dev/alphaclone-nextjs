@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Brain } from 'lucide-react';
+import { Brain, ChevronLeft, ChevronRight } from 'lucide-react';
 import BonnieChatPanel from './BonnieChatPanel';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +19,24 @@ export default function BonnieModuleDock() {
   const activeModule = resolveBonnieModuleFromPath(pathname || '');
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const hasLoadedPreferenceRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!tenantId || typeof window === 'undefined') return;
+    const storageKey = `bonnie_module_dock_collapsed_${tenantId}`;
+    const saved = window.localStorage.getItem(storageKey);
+    if (saved != null) {
+      setIsCollapsed(saved === 'true');
+    }
+    hasLoadedPreferenceRef.current = true;
+  }, [tenantId]);
+
+  React.useEffect(() => {
+    if (!tenantId || typeof window === 'undefined' || !hasLoadedPreferenceRef.current) return;
+    const storageKey = `bonnie_module_dock_collapsed_${tenantId}`;
+    window.localStorage.setItem(storageKey, String(isCollapsed));
+  }, [isCollapsed, tenantId]);
 
   if (!tenantId) return null;
 
@@ -80,27 +98,55 @@ export default function BonnieModuleDock() {
     <div className="flex h-full min-h-[420px] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16]">
       <div className="flex items-center gap-2 border-b border-slate-800 px-3 py-2.5">
         <Brain className="h-4 w-4 text-teal-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-teal-300">Bonnie AI</p>
-          <p className="truncate text-[10px] text-slate-500">{moduleHint.label}</p>
-        </div>
-        {pendingCount > 0 && (
+        {!isCollapsed && (
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-teal-300">Bonnie AI</p>
+            <p className="truncate text-[10px] text-slate-500">{moduleHint.label}</p>
+          </div>
+        )}
+        {pendingCount > 0 && !isCollapsed && (
           <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
             {pendingCount}
           </span>
         )}
+        <button
+          type="button"
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition-colors hover:border-teal-500/30 hover:text-white"
+          aria-label={isCollapsed ? 'Open Bonnie drawer' : 'Collapse Bonnie drawer'}
+        >
+          {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        </button>
       </div>
-      <div className="flex-1 min-h-0 p-2">
-        <BonnieChatPanel
-          streaming
-          storageKey={`bonnie_dock_${tenantId}_${activeModule}`}
-          placeholder={`Ask about ${moduleHint.label.toLowerCase()}…`}
-          introMessage={`Context: ${moduleHint.label}. Try "${moduleHint.examples[0]}"`}
-          onSend={handleSend}
-          onStreamSend={handleStream}
-          onResolveApproval={handleResolveApproval}
-        />
-      </div>
+      {isCollapsed ? (
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(false)}
+          className="flex flex-1 items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-slate-950/50"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white">Bonnie drawer collapsed</p>
+            <p className="text-xs text-slate-500">Open the drawer to keep AI guidance close while you work.</p>
+          </div>
+          {pendingCount > 0 && (
+            <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold text-slate-950">
+              {pendingCount} pending
+            </span>
+          )}
+        </button>
+      ) : (
+        <div className="flex-1 min-h-0 p-2">
+          <BonnieChatPanel
+            streaming
+            storageKey={`bonnie_dock_${tenantId}_${activeModule}`}
+            placeholder={`Ask about ${moduleHint.label.toLowerCase()}…`}
+            introMessage={`Context: ${moduleHint.label}. Try "${moduleHint.examples[0]}"`}
+            onSend={handleSend}
+            onStreamSend={handleStream}
+            onResolveApproval={handleResolveApproval}
+          />
+        </div>
+      )}
     </div>
   );
 }

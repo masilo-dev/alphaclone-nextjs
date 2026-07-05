@@ -34,9 +34,40 @@ export function DashboardLineChart({
   return (
     <DashboardChartCard title={title} subtitle={subtitle}>
       {!hasValues ? (
-        <div className="h-[240px] flex flex-col items-center justify-center text-center px-4">
-          <p className="text-sm text-slate-400">No trend data yet</p>
-          <p className="text-xs text-slate-500 mt-1">Activity will appear here as your team works.</p>
+        <div className="h-[240px] relative overflow-hidden rounded-xl border border-white/5 bg-gradient-to-b from-slate-950/40 to-slate-900/20 px-4 py-5">
+          <div className="absolute inset-x-4 top-10 h-px bg-white/5" />
+          <div className="absolute inset-x-4 top-20 h-px bg-white/5" />
+          <div className="absolute inset-x-4 top-28 h-px bg-white/5" />
+          <div className="absolute inset-x-4 bottom-12 h-px bg-white/5" />
+
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
+            <path
+              d="M0,30 C12,28 18,18 28,20 C36,22 43,12 52,14 C62,16 70,10 80,12 C88,13 94,9 100,11"
+              fill="none"
+              stroke="rgba(45, 212, 191, 0.55)"
+              strokeWidth="1.5"
+              strokeDasharray="2 2"
+            />
+            {[
+              [12, 28],
+              [28, 20],
+              [52, 14],
+              [80, 12],
+            ].map(([x, y], index) => (
+              <circle
+                key={index}
+                cx={x}
+                cy={y}
+                r="0.9"
+                fill={index === 2 ? 'rgba(45, 212, 191, 0.95)' : 'rgba(148, 163, 184, 0.8)'}
+              />
+            ))}
+          </svg>
+
+          <div className="absolute inset-x-0 bottom-5 text-center space-y-1">
+            <p className="text-sm font-semibold text-slate-300">No trend data yet</p>
+            <p className="text-xs text-slate-500">Activity will appear here as your team works.</p>
+          </div>
         </div>
       ) : (
         <ChartMount height={240}>

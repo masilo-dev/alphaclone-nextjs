@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart3,
   Loader2,
@@ -12,6 +13,9 @@ import {
   Users,
   AlertCircle,
   ExternalLink,
+  Sparkles,
+  TrendingUp,
+  ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +30,7 @@ interface ZohoCampaignsHubProps {
 
 export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>('campaigns');
   const [loading, setLoading] = useState(true);
   const [campaignsReady, setCampaignsReady] = useState(false);
@@ -108,7 +113,7 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   }, [refresh]);
 
   const connectZoho = () => {
-    window.location.href = '/api/auth/zoho/connect?region=EU';
+    router.push('/api/auth/zoho/connect?region=EU');
   };
 
   const handleCreateAndSend = async () => {
@@ -192,19 +197,72 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   if (!baseConnected) {
     return (
       <ModulePageLayout>
-        <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-10 text-center max-w-lg mx-auto">
-          <Megaphone className="w-12 h-12 text-teal-400 mx-auto mb-4" />
-          <h2 className="text-lg font-bold text-white mb-2">Connect Zoho to run campaigns</h2>
-          <p className="text-sm text-slate-400 mb-6">
-            Campaigns run natively through your Zoho account — lists, sends, opens, and clicks sync live from Zoho Campaigns.
-          </p>
-          <button
-            type="button"
-            onClick={connectZoho}
-            className="inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-5 py-2.5 text-sm font-bold text-white"
-          >
-            Connect Zoho
-          </button>
+        <div className="max-w-2xl mx-auto rounded-3xl border border-white/5 bg-slate-900/70 p-6 md:p-8 overflow-hidden relative">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.18),transparent_42%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.14),transparent_36%)] pointer-events-none" />
+          <div className="relative grid gap-6 md:grid-cols-[1.15fr_0.85fr] items-center">
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                <Megaphone className="w-7 h-7 text-teal-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-white">Connect Zoho to run campaigns</h2>
+                <p className="text-sm text-slate-400 mt-2 max-w-lg">
+                  Campaigns run natively through your Zoho account so lists, sends, opens, and clicks stay in sync.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Live sync', icon: Sparkles },
+                  { label: 'Open rates', icon: TrendingUp },
+                  { label: 'List segmentation', icon: Users },
+                ].map((chip) => {
+                  const ChipIcon = chip.icon;
+                  return (
+                    <span key={chip.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-950/60 px-3 py-1 text-[11px] font-bold text-slate-300">
+                      <ChipIcon className="w-3.5 h-3.5 text-teal-400" />
+                      {chip.label}
+                    </span>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={connectZoho}
+                className="inline-flex items-center gap-2 rounded-xl bg-teal-500 hover:bg-teal-400 px-5 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-teal-500/20"
+              >
+                Connect Zoho
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-white/5 bg-slate-950/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-500">Campaign flow</span>
+                <span className="text-[11px] font-bold text-teal-400">Ready in 2 steps</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { title: 'Zoho connected', text: 'Authorize your workspace', active: true },
+                  { title: 'Lists synced', text: 'Import segments and audiences', active: false },
+                  { title: 'Send campaign', text: 'Track opens and clicks', active: false },
+                ].map((step, index) => (
+                  <div key={step.title} className="flex items-start gap-3">
+                    <div className={`mt-0.5 w-7 h-7 rounded-full border flex items-center justify-center text-[11px] font-black ${
+                      step.active
+                        ? 'bg-teal-500/15 border-teal-500/30 text-teal-300'
+                        : 'bg-slate-800 border-white/5 text-slate-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-white">{step.title}</p>
+                      <p className="text-xs text-slate-500">{step.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </ModulePageLayout>
     );
@@ -213,14 +271,15 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   if (!campaignsReady && !loading) {
     return (
       <ModulePageLayout>
-        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center max-w-lg mx-auto">
+        <div className="max-w-lg mx-auto rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 text-center">
           <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
           <h2 className="text-lg font-bold text-white mb-2">Campaigns access needed</h2>
-          <p className="text-sm text-slate-400 mb-4">
+          <p className="text-sm text-slate-400 mb-5">
             Your Zoho connection is missing Campaigns permissions. Reconnect to grant list and campaign access.
           </p>
-          <button type="button" onClick={connectZoho} className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white">
+          <button type="button" onClick={connectZoho} className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 text-sm font-black text-slate-950">
             Reconnect Zoho
+            <ExternalLink className="w-4 h-4" />
           </button>
         </div>
       </ModulePageLayout>

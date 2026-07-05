@@ -37,9 +37,35 @@ export function DashboardBarChart({
   return (
     <DashboardChartCard title={title} subtitle={subtitle}>
       {!hasValues ? (
-        <div className="h-[240px] flex flex-col items-center justify-center text-center px-4">
-          <p className="text-sm text-slate-400">No chart data yet</p>
-          <p className="text-xs text-slate-500 mt-1">Numbers will plot here once records exist.</p>
+        <div className="h-[240px] relative overflow-hidden rounded-xl border border-white/5 bg-gradient-to-b from-slate-950/40 to-slate-900/20 px-4 py-5">
+          <div className="absolute inset-x-4 top-8 h-px bg-white/5" />
+          <div className="absolute inset-x-4 top-16 h-px bg-white/5" />
+          <div className="absolute inset-x-4 top-24 h-px bg-white/5" />
+          <div className="absolute inset-x-4 top-32 h-px bg-white/5" />
+          <div className="absolute inset-x-4 bottom-10 h-px bg-white/5" />
+
+          <div className="relative h-full flex items-end justify-between gap-3">
+            {[28, 52, 41, 66, 36, 74].map((height, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                <div
+                  className={`w-full max-w-10 rounded-t-xl border border-white/5 ${
+                    index === 3
+                      ? 'bg-teal-500/25'
+                      : index === 4
+                        ? 'bg-amber-500/20'
+                        : 'bg-slate-700/40'
+                  }`}
+                  style={{ height: `${height}%` }}
+                />
+                <div className="w-full max-w-10 h-2 rounded-full bg-white/5" />
+              </div>
+            ))}
+          </div>
+
+          <div className="absolute inset-x-0 bottom-5 text-center space-y-1">
+            <p className="text-sm font-semibold text-slate-300">No chart data yet</p>
+            <p className="text-xs text-slate-500">Numbers will plot here once records exist.</p>
+          </div>
         </div>
       ) : (
         <ChartMount height={240}>

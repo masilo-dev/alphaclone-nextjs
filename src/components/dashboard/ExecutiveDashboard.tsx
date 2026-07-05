@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { Loader2, DollarSign, Users, Target, TrendingUp, ChevronRight } from 'lucide-react';
-import { MetricCard } from './MetricCard';
+
 
 const GOAL_KEY = 'executive-kpi-goals';
 
@@ -91,8 +91,24 @@ export default function ExecutiveDashboard() {
     }
   ];
 
+  // Compute progress percentages (capped at 100%) for the first 3 goal-based KPIs
+  const kpiProgress = [
+    Math.min(100, Math.round((stats.revenue.total / Math.max(goals.revenue, 1)) * 100)),
+    Math.min(100, Math.round((stats.users.clients / Math.max(goals.clients, 1)) * 100)),
+    Math.min(100, Math.round((stats.projects.active / Math.max(goals.deals, 1)) * 100)),
+    null, // Revenue Trend has no progress bar
+  ];
+
+  const kpiColors = ['violet', 'blue', 'emerald', 'amber'] as const;
+  const colorMap: Record<string, { bar: string; text: string; bg: string }> = {
+    violet:  { bar: 'bg-violet-500',  text: 'text-violet-400',  bg: 'bg-violet-500/10' },
+    blue:    { bar: 'bg-blue-500',    text: 'text-blue-400',    bg: 'bg-blue-500/10' },
+    emerald: { bar: 'bg-emerald-500', text: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    amber:   { bar: 'bg-amber-500',   text: 'text-amber-400',   bg: 'bg-amber-500/10' },
+  };
+
   return (
-    <div className="p-4 md:p-6 space-y-6 pb-24 ac-enterprise-module">
+    <div className="p-4 md:p-6 space-y-4 pb-24 ac-enterprise-module">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-xl font-black text-white">Executive Oversight</h1>
@@ -106,25 +122,59 @@ export default function ExecutiveDashboard() {
         </button>
       </div>
 
+      {/* Enhanced KPI Cards with Progress Bars */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi, i) => (
-          <div key={i} className="relative group">
-            <MetricCard
-              label={kpi.label}
-              value={kpi.value}
-              delta={kpi.delta}
-              deltaDir={kpi.deltaDir}
-              comparisonText={kpi.comparisonText}
-              className="cursor-pointer"
-            />
-            <button 
+        {kpis.map((kpi, i) => {
+          const Icon = kpi.icon;
+          const color = kpiColors[i];
+          const { bar, text, bg } = colorMap[color];
+          const progress = kpiProgress[i];
+          const isUp = kpi.deltaDir === 'up';
+
+          return (
+            <button
+              key={i}
               onClick={() => router.push(kpi.href)}
-              className="absolute top-3 right-3 p-1 rounded-md bg-slate-800 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="group relative bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-4 text-left hover:border-white/10 transition-all duration-200 hover:bg-slate-900/80"
             >
-              <ChevronRight className="w-3 h-3" />
+              {/* Icon + label */}
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
+                  <Icon className={`w-4 h-4 ${text}`} />
+                </div>
+                {/* Trend arrow badge */}
+                <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-full ${
+                  isUp
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : 'bg-red-500/15 text-red-400'
+                }`}>
+                  {isUp ? '▲' : '▼'} {kpi.delta}
+                </span>
+              </div>
+
+              <div className="mb-1">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{kpi.label}</div>
+                <div className="text-xl font-black text-white">{kpi.value}</div>
+                <div className="text-[11px] text-slate-500 mt-0.5">{kpi.comparisonText}</div>
+              </div>
+
+              {/* Progress bar (only for goal-based KPIs) */}
+              {progress !== null && (
+                <div className="mt-3 space-y-1">
+                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${bar}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <div className="text-[10px] text-slate-600 font-bold">{progress}% of goal</div>
+                </div>
+              )}
+
+              <ChevronRight className="absolute top-3 right-3 w-3 h-3 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
