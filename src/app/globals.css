@@ -14,6 +14,16 @@
   --color-ac-accent: #14b8a6;
   --color-ac-accent-hover: #2dd4bf;
   --color-ac-accent-deep: #0d9488;
+  --color-ac-dashboard-bg: #0f172a;
+  --color-ac-dashboard-surface: #1a1a1a;
+  --color-ac-dashboard-surface-2: #2f2f2f;
+  --color-ac-dashboard-text: #f5f5f5;
+  --color-ac-dashboard-text-muted: #c0c0c0;
+  --color-ac-dashboard-mint: #adebb3;
+  --color-ac-dashboard-mint-strong: #3eb489;
+  --color-ac-dashboard-electric: #00f0ff;
+  --color-ac-dashboard-violet: #7f00ff;
+  --color-ac-dashboard-peach: #ffb347;
 }
 
 :root {
@@ -30,6 +40,21 @@
   --dashboard-red-bg: #FCEBEB;
   --dashboard-blue: #378ADD;
   --dashboard-blue-bg: #E6F1FB;
+  --dashboard-bg: #0f172a;
+  --dashboard-surface: rgba(15, 23, 42, 0.82);
+  --dashboard-surface-strong: rgba(26, 26, 26, 0.88);
+  --dashboard-surface-soft: rgba(47, 47, 47, 0.72);
+  --dashboard-border: rgba(148, 163, 184, 0.16);
+  --dashboard-text: #f5f5f5;
+  --dashboard-text-muted: #c0c0c0;
+  --dashboard-mint: #adebb3;
+  --dashboard-mint-strong: #3eb489;
+  --dashboard-electric: #00f0ff;
+  --dashboard-violet: #7f00ff;
+  --dashboard-peach: #ffb347;
+  --dashboard-warning: #facc15;
+  --dashboard-danger: #f87171;
+  --dashboard-info: #60a5fa;
 }
 
 .dark,
@@ -273,6 +298,188 @@ html.light .ac-business-scroll .text-slate-300 {
 .ac-business-root .text-slate-400,
 .ac-business-scroll .text-slate-400 {
   color: #cbd5e1 !important;
+}
+
+.ac-dashboard-root,
+.ac-business-root {
+  color: var(--dashboard-text);
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(0, 240, 255, 0.08) 0%, rgba(0, 240, 255, 0) 30%),
+    radial-gradient(circle at 82% 0%, rgba(127, 0, 255, 0.12) 0%, rgba(127, 0, 255, 0) 26%),
+    linear-gradient(180deg, #0f172a 0%, #0b1220 58%, #020617 100%);
+}
+
+.ac-dashboard-root .text-white,
+.ac-business-root .text-white {
+  color: var(--dashboard-text) !important;
+}
+
+.ac-dashboard-root .text-slate-200,
+.ac-business-root .text-slate-200 {
+  color: #e5e7eb !important;
+}
+
+.ac-dashboard-root .text-slate-300,
+.ac-business-root .text-slate-300 {
+  color: #d1d5db !important;
+}
+
+.ac-dashboard-root .text-slate-400,
+.ac-business-root .text-slate-400 {
+  color: #c0c0c0 !important;
+}
+
+.ac-dashboard-root .text-slate-500,
+.ac-business-root .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.ac-dashboard-root [class*="text-teal-"],
+.ac-business-root [class*="text-teal-"] {
+  color: #adebb3 !important;
+}
+
+.ac-dashboard-root [class*="text-blue-"],
+.ac-business-root [class*="text-blue-"] {
+  color: #00f0ff !important;
+}
+
+.ac-dashboard-root [class*="text-violet-"],
+.ac-business-root [class*="text-violet-"] {
+  color: #7f00ff !important;
+}
+
+.ac-dashboard-root [class*="text-emerald-"],
+.ac-business-root [class*="text-emerald-"] {
+  color: #3eb489 !important;
+}
+
+.ac-dashboard-root [class*="text-amber-"],
+.ac-business-root [class*="text-amber-"] {
+  color: #ffb347 !important;
+}
+
+.ac-dashboard-root [class*="text-rose-"],
+.ac-business-root [class*="text-rose-"] {
+  color: #f87171 !important;
+}
+
+.ac-dashboard-root .bg-slate-950,
+.ac-business-root .bg-slate-950 {
+  background-color: var(--dashboard-bg) !important;
+}
+
+.ac-dashboard-root .bg-slate-900,
+.ac-business-root .bg-slate-900 {
+  background-color: var(--dashboard-surface-strong) !important;
+}
+
+.ac-dashboard-root .bg-slate-800,
+.ac-business-root .bg-slate-800 {
+  background-color: var(--dashboard-surface-soft) !important;
+}
+
+.ac-dashboard-root [class*="bg-teal-"],
+.ac-business-root [class*="bg-teal-"] {
+  background-color: rgba(173, 235, 179, 0.16) !important;
+}
+
+.ac-dashboard-root [class*="bg-blue-"],
+.ac-business-root [class*="bg-blue-"] {
+  background-color: rgba(0, 240, 255, 0.16) !important;
+}
+
+.ac-dashboard-root [class*="bg-violet-"],
+.ac-business-root [class*="bg-violet-"] {
+  background-color: rgba(127, 0, 255, 0.16) !important;
+}
+
+.ac-dashboard-root [class*="bg-emerald-"],
+.ac-business-root [class*="bg-emerald-"] {
+  background-color: rgba(62, 180, 137, 0.16) !important;
+}
+
+.ac-dashboard-root [class*="bg-amber-"],
+.ac-business-root [class*="bg-amber-"] {
+  background-color: rgba(255, 179, 71, 0.16) !important;
+}
+
+.ac-dashboard-root [class*="bg-rose-"],
+.ac-business-root [class*="bg-rose-"] {
+  background-color: rgba(248, 113, 113, 0.16) !important;
+}
+
+.ac-dashboard-root .border-slate-800,
+.ac-business-root .border-slate-800,
+.ac-dashboard-root .border-slate-700,
+.ac-business-root .border-slate-700 {
+  border-color: var(--dashboard-border) !important;
+}
+
+.ac-dashboard-root [class*="border-teal-"],
+.ac-business-root [class*="border-teal-"] {
+  border-color: rgba(173, 235, 179, 0.22) !important;
+}
+
+.ac-dashboard-root [class*="border-blue-"],
+.ac-business-root [class*="border-blue-"] {
+  border-color: rgba(0, 240, 255, 0.22) !important;
+}
+
+.ac-dashboard-root [class*="border-violet-"],
+.ac-business-root [class*="border-violet-"] {
+  border-color: rgba(127, 0, 255, 0.22) !important;
+}
+
+.ac-dashboard-root [class*="border-emerald-"],
+.ac-business-root [class*="border-emerald-"] {
+  border-color: rgba(62, 180, 137, 0.22) !important;
+}
+
+.ac-dashboard-root [class*="border-amber-"],
+.ac-business-root [class*="border-amber-"] {
+  border-color: rgba(255, 179, 71, 0.22) !important;
+}
+
+.ac-dashboard-root [class*="border-rose-"],
+.ac-business-root [class*="border-rose-"] {
+  border-color: rgba(248, 113, 113, 0.22) !important;
+}
+
+.dashboard-panel {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.78) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow:
+    0 20px 40px -24px rgba(2, 6, 23, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.dashboard-panel-soft {
+  background:
+    linear-gradient(180deg, rgba(26, 26, 26, 0.9) 0%, rgba(20, 24, 31, 0.85) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow:
+    0 18px 36px -24px rgba(2, 6, 23, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-chart-grid {
+  stroke: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-chart-tooltip {
+  background: rgba(2, 6, 23, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: #f5f5f5;
+  box-shadow: 0 18px 32px -20px rgba(0, 0, 0, 0.65);
+}
+
+.dashboard-chart-muted {
+  color: #c0c0c0;
 }
 
 /* Stronger highlight chips for "next steps" guidance */

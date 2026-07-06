@@ -98,8 +98,8 @@ const BusinessPerformanceDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
-        <p className="text-slate-400 animate-pulse">Syncing Business Intelligence...</p>
+        <div className="w-12 h-12 border-4 border-[#adebb3]/20 border-t-[#adebb3] rounded-full animate-spin" />
+        <p className="text-[#c0c0c0] animate-pulse">Syncing Business Intelligence...</p>
       </div>
     );
   }
@@ -124,12 +124,12 @@ const BusinessPerformanceDashboard: React.FC = () => {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-3xl font-bold text-white tracking-tight">Business OS</h2>
-          <p className="text-slate-400 mt-1">Real-time performance metrics across your entire ecosystem.</p>
+          <p className="text-[#c0c0c0] mt-1">Real-time performance metrics across your entire ecosystem.</p>
         </div>
         <button 
           onClick={fetchData}
           disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl border border-slate-700 transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-[#f5f5f5] rounded-xl border border-white/5 transition-all disabled:opacity-50"
         >
           <RefreshCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           <span className="text-sm font-medium">Sync Engine</span>
@@ -174,23 +174,23 @@ const BusinessPerformanceDashboard: React.FC = () => {
       {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Revenue Performance Chart */}
-        <Card className="lg:col-span-2 p-8 border-slate-800 bg-slate-900/40 backdrop-blur-md overflow-hidden relative">
+        <Card className="lg:col-span-2 p-8 border-white/5 bg-white/5 backdrop-blur-md overflow-hidden relative">
           <div className="absolute top-0 right-0 p-8">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-teal-500" />
-                <span className="text-xs text-slate-400">Revenue</span>
+                <div className="w-3 h-3 rounded-full bg-[#adebb3]" />
+                <span className="text-xs text-[#c0c0c0]">Revenue</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-xs text-slate-400">Projects</span>
+                <div className="w-3 h-3 rounded-full bg-[#00f0ff]" />
+                <span className="text-xs text-[#c0c0c0]">Projects</span>
               </div>
             </div>
           </div>
           
           <div className="mb-8">
-             <h3 className="text-xl font-bold text-white mb-1">Revenue Momentum</h3>
-             <p className="text-sm text-slate-500">Trailing 30-day performance snapshot.</p>
+             <h3 className="text-xl font-bold text-[#f5f5f5] mb-1">Revenue Momentum</h3>
+             <p className="text-sm text-[#94a3b8]">Trailing 30-day performance snapshot.</p>
           </div>
 
           <div className="h-[350px] w-full">
@@ -199,34 +199,34 @@ const BusinessPerformanceDashboard: React.FC = () => {
                 <AreaChart data={data?.revenue?.byPeriod || []}>
                   <defs>
                     <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#adebb3" stopOpacity={0.34} />
+                      <stop offset="95%" stopColor="#adebb3" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
                   <XAxis 
                     dataKey="date" 
-                    stroke="#475569" 
+                    stroke="#c0c0c0" 
                     fontSize={12} 
                     tickFormatter={(val: any) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis 
-                    stroke="#475569" 
+                    stroke="#c0c0c0" 
                     fontSize={12} 
                     axisLine={false} 
                     tickLine={false}
                     tickFormatter={(val: any) => `$${val > 1000 ? (val/1000).toFixed(1) + 'k' : val}`}
                   />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                    itemStyle={{ color: '#fff' }}
+                    contentStyle={{ backgroundColor: 'rgba(2, 6, 23, 0.94)', border: '1px solid rgba(148, 163, 184, 0.16)', borderRadius: '12px', color: '#f5f5f5' }}
+                    itemStyle={{ color: '#f5f5f5' }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#14b8a6" 
+                    stroke="#adebb3" 
                     strokeWidth={3} 
                     fillOpacity={1} 
                     fill="url(#revenueGrad)" 
@@ -240,76 +240,76 @@ const BusinessPerformanceDashboard: React.FC = () => {
         {/* Sidebar Insights */}
         <div className="space-y-6">
           {/* Strategic Insights */}
-          <Card className="p-6 border-slate-800 bg-slate-900/40 backdrop-blur-md">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-teal-400" /> Executive Insights
+          <Card className="p-6 border-white/5 bg-white/5 backdrop-blur-md">
+            <h3 className="text-lg font-bold text-[#f5f5f5] mb-6 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[#adebb3]" /> Executive Insights
             </h3>
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex gap-3">
-                  <div className="mt-1 p-1.5 rounded-full bg-blue-500/10 text-blue-400">
+                  <div className="mt-1 p-1.5 rounded-full bg-[#00f0ff]/10 text-[#00f0ff]">
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">Revenue Momentum +12%</p>
-                    <p className="text-xs text-slate-500 mt-1">Growth is outpacing project volume, suggesting higher average deal value.</p>
+                    <p className="text-sm font-bold text-[#f5f5f5]">Revenue Momentum +12%</p>
+                    <p className="text-xs text-[#94a3b8] mt-1">Growth is outpacing project volume, suggesting higher average deal value.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex gap-3">
-                  <div className="mt-1 p-1.5 rounded-full bg-yellow-500/10 text-yellow-400">
+                  <div className="mt-1 p-1.5 rounded-full bg-[#ffb347]/10 text-[#facc15]">
                     <AlertCircle className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">7 Stagnant Leads</p>
-                    <p className="text-xs text-slate-500 mt-1">Leads identified with zero activity for 7+ days. Automated follow-up recommended.</p>
+                    <p className="text-sm font-bold text-[#f5f5f5]">7 Stagnant Leads</p>
+                    <p className="text-xs text-[#94a3b8] mt-1">Leads identified with zero activity for 7+ days. Automated follow-up recommended.</p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+              <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex gap-3">
-                  <div className="mt-1 p-1.5 rounded-full bg-green-500/10 text-green-400">
+                  <div className="mt-1 p-1.5 rounded-full bg-[#adebb3]/10 text-[#adebb3]">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">Automation Scaling</p>
-                    <p className="text-xs text-slate-500 mt-1">System handled 240+ runs today with 98% success. Throughput is healthy.</p>
+                    <p className="text-sm font-bold text-[#f5f5f5]">Automation Scaling</p>
+                    <p className="text-xs text-[#94a3b8] mt-1">System handled 240+ runs today with 98% success. Throughput is healthy.</p>
                   </div>
                 </div>
               </div>
             </div>
             
-            <button className="w-full mt-6 py-3 px-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
+            <button className="w-full mt-6 py-3 px-4 bg-[#3eb489] hover:bg-[#adebb3] text-[#0f172a] font-bold rounded-xl flex items-center justify-center gap-2 transition-all">
               Launch Orchestrator <ArrowRight className="w-4 h-4" />
             </button>
           </Card>
 
           {/* Activity Log Snapshot */}
-          <Card className="p-6 border-slate-800 bg-slate-900/40 backdrop-blur-md">
-            <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-slate-400" /> Recent Events
+          <Card className="p-6 border-white/5 bg-white/5 backdrop-blur-md">
+            <h3 className="text-lg font-bold text-[#f5f5f5] mb-6 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[#c0c0c0]" /> Recent Events
             </h3>
             <div className="space-y-6">
               {[
-                { label: 'Deal Won', desc: 'AlphaCorp Enterprise', time: '12m ago', color: 'bg-green-500' },
-                { label: 'Automation', desc: 'Email Sequence #4 sent', time: '45m ago', color: 'bg-blue-500' },
-                { label: 'Invoice', desc: 'Sent to BetaSystems', time: '2h ago', color: 'bg-teal-500' },
-                { label: 'Lead', desc: 'New lead from LinkedIn', time: '4h ago', color: 'bg-purple-500' },
+                { label: 'Deal Won', desc: 'AlphaCorp Enterprise', time: '12m ago', color: 'bg-[#adebb3]' },
+                { label: 'Automation', desc: 'Email Sequence #4 sent', time: '45m ago', color: 'bg-[#00f0ff]' },
+                { label: 'Invoice', desc: 'Sent to BetaSystems', time: '2h ago', color: 'bg-[#adebb3]' },
+                { label: 'Lead', desc: 'New lead from LinkedIn', time: '4h ago', color: 'bg-[#7f00ff]' },
               ].map((ev, i) => (
                 <div key={i} className="flex gap-4">
                   <div className="relative">
                     <div className={`w-3 h-3 rounded-full ${ev.color} mt-1`} />
-                    {i < 3 && <div className="absolute top-4 left-[5.5px] bottom-[-24px] w-[1px] bg-slate-800" />}
+                    {i < 3 && <div className="absolute top-4 left-[5.5px] bottom-[-24px] w-[1px] bg-white/5" />}
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <p className="text-sm font-bold text-white">{ev.label}</p>
-                      <span className="text-[10px] text-slate-600 font-bold uppercase">{ev.time}</span>
+                      <p className="text-sm font-bold text-[#f5f5f5]">{ev.label}</p>
+                      <span className="text-[10px] text-[#94a3b8] font-bold uppercase">{ev.time}</span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{ev.desc}</p>
+                    <p className="text-xs text-[#94a3b8] mt-0.5">{ev.desc}</p>
                   </div>
                 </div>
               ))}

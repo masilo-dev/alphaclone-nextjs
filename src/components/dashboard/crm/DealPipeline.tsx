@@ -64,7 +64,7 @@ const DealCard: React.FC<{
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="bg-slate-900/80 border border-slate-700/50 rounded-xl p-4 space-y-3 hover:border-teal-500/30 transition-colors group"
+      className="dashboard-panel-soft p-4 space-y-3 hover:border-teal-500/30 transition-colors group"
     >
       <div className="flex items-start justify-between gap-2">
         <h4 className="text-sm font-bold text-white truncate flex-1">{deal.name}</h4>
@@ -181,7 +181,7 @@ const DealFormModal: React.FC<DealFormModalProps> = ({ isOpen, onClose, onSave, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+      <div className="dashboard-panel w-full max-w-md overflow-hidden shadow-2xl">
         <div className="p-4 border-b border-white/5 flex items-center justify-between">
           <h3 className="text-sm font-bold text-white">
             {initialDeal ? 'Edit Deal' : 'Create Deal'}

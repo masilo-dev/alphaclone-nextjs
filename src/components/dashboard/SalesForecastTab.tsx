@@ -60,7 +60,7 @@ const SalesForecastTab = () => {
     }, [loadData, user]);
 
     if (loading) {
-        return <div className="p-12 text-center text-slate-500">Loading forecast data...</div>;
+        return <div className="p-12 text-center text-slate-400">Loading forecast data...</div>;
     }
 
     // Sort pipeline data by stage order
@@ -121,40 +121,40 @@ const SalesForecastTab = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Revenue Forecast Chart */}
-                <Card className="bg-slate-900 border-slate-800 p-6">
+                <Card className="dashboard-panel p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Revenue Forecast vs Actual</h3>
                     <ChartContainer className="h-80 w-full" minHeight={320}>
                         <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                                <XAxis dataKey="month" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => format(value, { notation: 'compact' } as any)} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--dashboard-grid)" />
+                                <XAxis dataKey="month" stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                                <YAxis stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => format(value, { notation: 'compact' } as any)} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
+                                    contentStyle={{ backgroundColor: 'var(--dashboard-surface)', borderColor: 'var(--dashboard-border)', color: 'var(--dashboard-text)' }}
                                     formatter={(value: any) => format(value, { notation: 'compact' } as any)}
                                 />
                                 <Legend />
-                                <Line type="monotone" dataKey="actual" name="Actual Revenue" stroke="#14b8a6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                <Line type="monotone" dataKey="projected" name="Projected" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} strokeDasharray="5 5" />
+                                <Line type="monotone" dataKey="actual" name="Actual Revenue" stroke="var(--dashboard-mint)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                <Line type="monotone" dataKey="projected" name="Projected" stroke="var(--dashboard-electric)" strokeWidth={3} dot={{ r: 4 }} strokeDasharray="5 5" />
                             </LineChart>
                         </ResponsiveContainer>
                     </ChartContainer>
                 </Card>
 
                 {/* Pipeline Distribution Chart */}
-                <Card className="bg-slate-900 border-slate-800 p-6">
+                <Card className="dashboard-panel p-6">
                     <h3 className="text-lg font-bold text-white mb-6">Deal Pipeline Value</h3>
                     <ChartContainer className="h-80 w-full" minHeight={320}>
                         <ResponsiveContainer width="100%" height={320} minWidth={0} minHeight={320}>
                             <BarChart data={pipelineChartData} layout="vertical" margin={{ left: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                                <XAxis type="number" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => format(value, { notation: 'compact' } as any)} />
-                                <YAxis dataKey="stage" type="category" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} width={80} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--dashboard-grid)" horizontal={false} />
+                                <XAxis type="number" stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value: number) => format(value, { notation: 'compact' } as any)} />
+                                <YAxis dataKey="stage" type="category" stroke="var(--dashboard-muted)" fontSize={12} tickLine={false} axisLine={false} width={80} />
                                 <Tooltip
                                     formatter={(value: any) => format(value, { notation: 'compact' } as any)}
-                                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
+                                    contentStyle={{ backgroundColor: 'var(--dashboard-surface)', borderColor: 'var(--dashboard-border)', color: 'var(--dashboard-text)' }}
                                 />
-                                <Bar dataKey="value" name="Pipeline Value" fill="#14b8a6" radius={[0, 4, 4, 0]} barSize={32} />
+                                <Bar dataKey="value" name="Pipeline Value" fill="var(--dashboard-mint)" radius={[0, 4, 4, 0]} barSize={32} />
                             </BarChart>
                         </ResponsiveContainer>
                     </ChartContainer>

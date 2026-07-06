@@ -24,67 +24,67 @@ const THEME_STYLES: Record<CardTheme, {
   textAccent: string;
 }> = {
   teal: {
-    hoverBorder: 'hover:border-teal-500/30',
-    glowBg: 'group-hover:bg-teal-500/[0.02]',
-    iconBg: 'bg-teal-500/10',
-    iconColor: 'text-teal-400',
-    textAccent: 'text-teal-400',
+    hoverBorder: 'hover:border-[#adebb3]/30',
+    glowBg: 'group-hover:bg-[#adebb3]/[0.04]',
+    iconBg: 'bg-[#adebb3]/10',
+    iconColor: 'text-[#adebb3]',
+    textAccent: 'text-[#adebb3]',
   },
   blue: {
-    hoverBorder: 'hover:border-blue-500/30',
-    glowBg: 'group-hover:bg-blue-500/[0.02]',
-    iconBg: 'bg-blue-500/10',
-    iconColor: 'text-blue-400',
-    textAccent: 'text-blue-400',
+    hoverBorder: 'hover:border-[#00f0ff]/30',
+    glowBg: 'group-hover:bg-[#00f0ff]/[0.04]',
+    iconBg: 'bg-[#00f0ff]/10',
+    iconColor: 'text-[#60a5fa]',
+    textAccent: 'text-[#60a5fa]',
   },
   purple: {
-    hoverBorder: 'hover:border-purple-500/30',
-    glowBg: 'group-hover:bg-purple-500/[0.02]',
-    iconBg: 'bg-purple-500/10',
-    iconColor: 'text-purple-400',
-    textAccent: 'text-purple-400',
+    hoverBorder: 'hover:border-[#7f00ff]/30',
+    glowBg: 'group-hover:bg-[#7f00ff]/[0.04]',
+    iconBg: 'bg-[#7f00ff]/10',
+    iconColor: 'text-[#c084fc]',
+    textAccent: 'text-[#c084fc]',
   },
   emerald: {
-    hoverBorder: 'hover:border-emerald-500/30',
-    glowBg: 'group-hover:bg-emerald-500/[0.02]',
-    iconBg: 'bg-emerald-500/10',
-    iconColor: 'text-emerald-400',
-    textAccent: 'text-emerald-400',
+    hoverBorder: 'hover:border-[#3eb489]/30',
+    glowBg: 'group-hover:bg-[#3eb489]/[0.04]',
+    iconBg: 'bg-[#3eb489]/10',
+    iconColor: 'text-[#4ade80]',
+    textAccent: 'text-[#4ade80]',
   },
   amber: {
-    hoverBorder: 'hover:border-amber-500/30',
-    glowBg: 'group-hover:bg-amber-500/[0.02]',
-    iconBg: 'bg-amber-500/10',
-    iconColor: 'text-amber-400',
-    textAccent: 'text-amber-400',
+    hoverBorder: 'hover:border-[#ffb347]/30',
+    glowBg: 'group-hover:bg-[#ffb347]/[0.04]',
+    iconBg: 'bg-[#ffb347]/10',
+    iconColor: 'text-[#facc15]',
+    textAccent: 'text-[#facc15]',
   },
   rose: {
-    hoverBorder: 'hover:border-rose-500/30',
-    glowBg: 'group-hover:bg-rose-500/[0.02]',
-    iconBg: 'bg-rose-500/10',
-    iconColor: 'text-rose-400',
-    textAccent: 'text-rose-400',
+    hoverBorder: 'hover:border-[#ff00cc]/30',
+    glowBg: 'group-hover:bg-[#ff00cc]/[0.04]',
+    iconBg: 'bg-[#ff00cc]/10',
+    iconColor: 'text-[#f87171]',
+    textAccent: 'text-[#f87171]',
   },
   sky: {
-    hoverBorder: 'hover:border-sky-500/30',
-    glowBg: 'group-hover:bg-sky-500/[0.02]',
-    iconBg: 'bg-sky-500/10',
-    iconColor: 'text-sky-400',
-    textAccent: 'text-sky-400',
+    hoverBorder: 'hover:border-[#00f0ff]/30',
+    glowBg: 'group-hover:bg-[#00f0ff]/[0.04]',
+    iconBg: 'bg-[#00f0ff]/10',
+    iconColor: 'text-[#38bdf8]',
+    textAccent: 'text-[#38bdf8]',
   },
   orange: {
-    hoverBorder: 'hover:border-orange-500/30',
-    glowBg: 'group-hover:bg-orange-500/[0.02]',
-    iconBg: 'bg-orange-500/10',
-    iconColor: 'text-orange-400',
-    textAccent: 'text-orange-400',
+    hoverBorder: 'hover:border-[#ffb347]/30',
+    glowBg: 'group-hover:bg-[#ffb347]/[0.04]',
+    iconBg: 'bg-[#ffb347]/10',
+    iconColor: 'text-[#fb923c]',
+    textAccent: 'text-[#fb923c]',
   },
   indigo: {
-    hoverBorder: 'hover:border-indigo-500/30',
-    glowBg: 'group-hover:bg-indigo-500/[0.02]',
-    iconBg: 'bg-indigo-500/10',
-    iconColor: 'text-indigo-400',
-    textAccent: 'text-indigo-400',
+    hoverBorder: 'hover:border-[#7f00ff]/30',
+    glowBg: 'group-hover:bg-[#7f00ff]/[0.04]',
+    iconBg: 'bg-[#7f00ff]/10',
+    iconColor: 'text-[#818cf8]',
+    textAccent: 'text-[#818cf8]',
   },
 };
 
@@ -141,7 +141,7 @@ export function StandardStatCard({
           <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
             {label}
           </span>
-          <h4 className="text-2xl font-black text-white tracking-tight leading-none mt-1">
+          <h4 className="text-2xl font-black text-[#f5f5f5] tracking-tight leading-none mt-1">
             {value}
           </h4>
         </div>
@@ -167,9 +167,9 @@ export function StandardStatCard({
             <span
               className={cn(
                 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold tabular-nums',
-                resolvedDeltaDir === 'up' && 'bg-emerald-500/10 text-emerald-400',
-                resolvedDeltaDir === 'down' && 'bg-rose-500/10 text-rose-400',
-                resolvedDeltaDir === 'none' && 'bg-slate-800 text-slate-400'
+                resolvedDeltaDir === 'up' && 'bg-[#adebb3]/10 text-[#adebb3]',
+                resolvedDeltaDir === 'down' && 'bg-[#f87171]/10 text-[#f87171]',
+                resolvedDeltaDir === 'none' && 'bg-white/5 text-[#c0c0c0]'
               )}
             >
               {resolvedDeltaDir === 'up' && <TrendingUp className="w-3 h-3" />}
@@ -177,18 +177,18 @@ export function StandardStatCard({
               {deltaText}
             </span>
           )}
-          <span className="text-[10px] text-slate-500 font-medium">{comparisonText}</span>
+          <span className="text-[10px] text-[#94a3b8] font-medium">{comparisonText}</span>
         </div>
 
         {isClickable && (
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors duration-300" />
+          <ChevronRight className="w-3.5 h-3.5 text-[#64748b] group-hover:text-[#f5f5f5] transition-colors duration-300" />
         )}
       </div>
     </div>
   );
 
   const cardClasses = cn(
-    'relative group text-left w-full bg-slate-950/40 backdrop-blur-md border border-white/5 rounded-xl p-4 transition-all duration-300 overflow-hidden',
+    'relative group text-left w-full dashboard-panel rounded-xl p-4 transition-all duration-300 overflow-hidden',
     styles.hoverBorder,
     styles.glowBg,
     isClickable && 'cursor-pointer',
@@ -199,15 +199,15 @@ export function StandardStatCard({
   const glowElement = (
     <div className={cn(
       'absolute -right-12 -bottom-12 w-24 h-24 rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none',
-      themeColor === 'teal' && 'bg-teal-500',
-      themeColor === 'blue' && 'bg-blue-500',
-      themeColor === 'purple' && 'bg-purple-500',
-      themeColor === 'emerald' && 'bg-emerald-500',
-      themeColor === 'amber' && 'bg-amber-500',
-      themeColor === 'rose' && 'bg-rose-500',
-      themeColor === 'sky' && 'bg-sky-500',
-      themeColor === 'orange' && 'bg-orange-500',
-      themeColor === 'indigo' && 'bg-indigo-500'
+      themeColor === 'teal' && 'bg-[#adebb3]',
+      themeColor === 'blue' && 'bg-[#00f0ff]',
+      themeColor === 'purple' && 'bg-[#7f00ff]',
+      themeColor === 'emerald' && 'bg-[#3eb489]',
+      themeColor === 'amber' && 'bg-[#ffb347]',
+      themeColor === 'rose' && 'bg-[#ff00cc]',
+      themeColor === 'sky' && 'bg-[#38bdf8]',
+      themeColor === 'orange' && 'bg-[#fb923c]',
+      themeColor === 'indigo' && 'bg-[#818cf8]'
     )} />
   );
 

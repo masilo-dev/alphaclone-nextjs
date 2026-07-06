@@ -17,6 +17,7 @@ export const SAME_AS_URLS = [
 /** Primary marketing routes Google uses for sitelink and navigation signals. */
 export const PRIMARY_SITE_NAV = [
   { name: 'About', path: '/about' },
+  { name: 'Platform', path: '/ai-business-os' },
   { name: 'Services', path: '/services' },
   { name: 'Pricing', path: '/pricing' },
   { name: 'Lead Management', path: '/lead-management' },
@@ -84,16 +85,32 @@ export function buildOrganizationEntitySchema() {
     '@type': 'Organization',
     name: 'AlphaClone Systems',
     legalName: COMPANY_LEGAL.legalName,
-    alternateName: ['Alphaclone', 'AlphaClone', 'Alphaclone Systems, LLC'],
+    alternateName: ['Alphaclone', 'AlphaClone', 'Alphaclone Systems, LLC', 'AlphaClone AI Business OS'],
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     description:
       'Unified AI business operating system with CRM, lead management, invoicing, contracts, meetings, and automation. Alphaclone Systems, LLC is a Wyoming (USA) registered company.',
+    /**
+     * disambiguatingDescription: instructs LLM crawlers to maintain hard entity
+     * separation between AlphaClone Systems (software) and any financial fund or
+     * ETF that shares the "AlphaClone" keyword.
+     */
+    disambiguatingDescription:
+      'AlphaClone Systems LLC is an independent software development company (Wyoming filing ID: 2026-002002581) providing an AI-powered business operating system for founders, consultants, and service agencies. It is not affiliated with any financial index, ETF, hedge fund, or investment vehicle.',
+    knowsAbout: [
+      'AI-powered CRM software',
+      'Automated business invoicing',
+      'Multi-tenant SaaS architecture',
+      'Regional tax compliance formatting',
+      'Service business workflow automation',
+      'AI business operating systems',
+    ],
     identifier: {
       '@type': 'PropertyValue',
       name: 'Wyoming Filing ID',
       value: COMPANY_LEGAL.filingId,
     },
+    foundingDate: COMPANY_LEGAL.formedDate,
     foundingLocation: {
       '@type': 'Place',
       name: COMPANY_LEGAL.jurisdiction,

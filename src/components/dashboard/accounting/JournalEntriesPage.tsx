@@ -122,12 +122,12 @@ export function JournalEntriesPage() {
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pb-2">
                         <div>
                             <h1 className="text-lg font-semibold text-white">Journal Entries</h1>
-                            <p className="text-sm text-slate-400">Record manual accounting transactions</p>
+                            <p className="text-sm text-slate-300">Record manual accounting transactions</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
-                            className="px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-500"
+                            className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
                         >
                             + New entry
                         </button>
@@ -137,7 +137,7 @@ export function JournalEntriesPage() {
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value as JournalStatus | 'all')}
-                        className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-teal-500/50"
+                        className="px-3 py-2 bg-slate-900 border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50"
                     >
                         <option value="all">All statuses</option>
                         <option value="draft">Draft</option>
@@ -153,7 +153,7 @@ export function JournalEntriesPage() {
                 )}
 
             {/* Entries List */}
-            <div className="bg-slate-900/40 border border-white/5 rounded-xl overflow-hidden min-w-0">
+            <div className="dashboard-panel-soft overflow-hidden min-w-0">
                 <div className="overflow-x-auto min-w-0">
                     <table className="min-w-[880px] w-full divide-y divide-slate-700">
                         <thead className="bg-slate-900">
@@ -167,7 +167,7 @@ export function JournalEntriesPage() {
                                 <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-slate-800 divide-y divide-slate-700">
+                        <tbody className="bg-slate-900/60 divide-y divide-white/5">
                             {entries.map((entry) => (
                                 <tr key={entry.id} className={entry.status === 'void' ? 'bg-slate-900/50 opacity-60' : ''}>
                                     <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
@@ -238,8 +238,8 @@ export function JournalEntriesPage() {
             </div>
 
             {entries.length === 0 && (
-                <div className="text-center py-12 rounded-xl border border-white/5 bg-slate-900/40">
-                    <p className="text-slate-400">No journal entries found</p>
+            <div className="text-center py-12 rounded-xl border border-white/5 bg-slate-900/40">
+                    <p className="text-slate-300">No journal entries found</p>
                 </div>
             )}
             </ModulePageLayout>
@@ -261,15 +261,15 @@ export function JournalEntriesPage() {
                     <div className="space-y-4 pb-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Date</p>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Date</p>
                                 <p className="font-medium text-white">{new Date(viewingEntry.entryDate).toLocaleDateString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Status</p>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Status</p>
                                 <p className="font-medium text-white capitalize">{viewingEntry.status}</p>
                             </div>
                             <div className="col-span-1 md:col-span-2">
-                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Description</p>
+                                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Description</p>
                                 <p className="text-white">{viewingEntry.description}</p>
                             </div>
                         </div>
@@ -277,17 +277,17 @@ export function JournalEntriesPage() {
                             <table className="min-w-[520px] w-full divide-y divide-white/5 text-sm">
                                 <thead className="bg-slate-900/80">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-xs text-slate-500 uppercase">Account</th>
-                                        <th className="px-4 py-2 text-left text-xs text-slate-500 uppercase">Description</th>
-                                        <th className="px-4 py-2 text-right text-xs text-slate-500 uppercase">Debit</th>
-                                        <th className="px-4 py-2 text-right text-xs text-slate-500 uppercase">Credit</th>
+                                        <th className="px-4 py-2 text-left text-xs text-slate-400 uppercase">Account</th>
+                                        <th className="px-4 py-2 text-left text-xs text-slate-400 uppercase">Description</th>
+                                        <th className="px-4 py-2 text-right text-xs text-slate-400 uppercase">Debit</th>
+                                        <th className="px-4 py-2 text-right text-xs text-slate-400 uppercase">Credit</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-white/5">
                                     {viewingEntry.lines.map((line) => (
                                         <tr key={line.id}>
                                             <td className="px-4 py-2 text-slate-200">{line.accountCode} - {line.accountName}</td>
-                                            <td className="px-4 py-2 text-slate-400">{line.description}</td>
+                                            <td className="px-4 py-2 text-slate-300">{line.description}</td>
                                             <td className="px-4 py-2 text-right font-mono text-white">{line.debitAmount > 0 ? `$${line.debitAmount.toFixed(2)}` : '—'}</td>
                                             <td className="px-4 py-2 text-right font-mono text-white">{line.creditAmount > 0 ? `$${line.creditAmount.toFixed(2)}` : '—'}</td>
                                         </tr>

@@ -6,16 +6,14 @@ import { extractCompanyPagesFromMetadata } from '@/services/linkedin/linkedinInt
 // 1. get_social_accounts
 registerTool('social', {
   name: 'get_social_accounts',
-  description: 'Retrieve configured social media integration accounts for the tenant.',
+  description: 'Retrieve configured social media integration accounts for the tenant. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
   }),
   jsonSchema: {
     type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-    },
-    required: ['tenant_id'],
+    properties: {},
+    required: [],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -33,16 +31,14 @@ registerTool('social', {
 // 1b. get_linkedin_identities (updated to return both person and org identities)
 registerTool('social', {
   name: 'get_linkedin_identities',
-  description: 'List posting identities for LinkedIn: personal profile and any connected company pages.',
+  description: 'List posting identities for LinkedIn: personal profile and any connected company pages. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
   }),
   jsonSchema: {
     type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-    },
-    required: ['tenant_id'],
+    properties: {},
+    required: [],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -114,9 +110,9 @@ registerTool('social', {
 // 2. schedule_social_post
 registerTool('social', {
   name: 'schedule_social_post',
-  description: 'Schedule a social media post for future publication.',
+  description: 'Schedule a social media post for future publication. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     platform: z.enum(['linkedin', 'x', 'facebook']),
     content: z.string(),
     scheduled_at: z.string(),
@@ -125,13 +121,12 @@ registerTool('social', {
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       platform: { type: 'string', enum: ['linkedin', 'x', 'facebook'] },
       content: { type: 'string', description: 'Post content' },
       scheduled_at: { type: 'string', format: 'date-time' },
       asset_id: { type: 'string', description: 'Optional media asset ID' },
     },
-    required: ['tenant_id', 'platform', 'content', 'scheduled_at'],
+    required: ['platform', 'content', 'scheduled_at'],
   },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
@@ -163,18 +158,17 @@ registerTool('social', {
 // 3. get_scheduled_posts
 registerTool('social', {
   name: 'get_scheduled_posts',
-  description: 'Retrieve pending or sent scheduled social posts.',
+  description: 'Retrieve pending or sent scheduled social posts. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     status: z.enum(['pending', 'sent', 'failed']).optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       status: { type: 'string', enum: ['pending', 'sent', 'failed'] },
     },
-    required: ['tenant_id'],
+    required: [],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -196,18 +190,17 @@ registerTool('social', {
 // 4. get_post_analytics
 registerTool('social', {
   name: 'get_post_analytics',
-  description: 'Retrieve engagement metrics and analytics for a social post.',
+  description: 'Retrieve engagement metrics and analytics for a social post. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     post_id: z.string().uuid(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       post_id: { type: 'string', format: 'uuid' },
     },
-    required: ['tenant_id', 'post_id'],
+    required: ['post_id'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -227,9 +220,9 @@ registerTool('social', {
 registerTool('social', {
   name: 'upload_media_asset',
   description:
-    'Upload an image or video to workspace media storage. Returns media_asset id and public_url for use with create_social_post (media_asset_ids) or schedule_social_post (asset_id).',
+    'Upload an image or video to workspace media storage. Returns media_asset id and public_url for use with create_social_post (media_asset_ids) or schedule_social_post (asset_id). Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     file_name: z.string(),
     mime_type: z.string(),
     file_base64: z.string(),
@@ -239,20 +232,19 @@ registerTool('social', {
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       file_name: { type: 'string', description: 'Original file name with extension' },
       mime_type: { type: 'string', description: 'MIME type such as image/png or video/mp4' },
       file_base64: { type: 'string', description: 'Base64 file data (raw or data:*;base64,...)' },
       alt_text: { type: 'string' },
       tags: { type: 'array', items: { type: 'string' } },
     },
-    required: ['tenant_id', 'file_name', 'mime_type', 'file_base64'],
+    required: ['file_name', 'mime_type', 'file_base64'],
   },
   handler: async (args, ctx) => {
     if (!ctx.userId) throw new Error('user_id is required');
     const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
     return uploadMediaAsset({
-      tenantId: args.tenant_id,
+      tenantId: args.tenant_id!, // guaranteed by session injection
       userId: ctx.userId,
       fileName: args.file_name,
       mimeType: args.mime_type,
@@ -267,9 +259,9 @@ registerTool('social', {
 registerTool('social', {
   name: 'create_social_post_with_media',
   description:
-    'Upload image/video and create or publish a social post in one call. Use for Claude/Manus when attaching media. Supports Facebook immediate publish or schedule/store for other platforms.',
+    'Upload image/video and create or publish a social post in one call. Use for Claude/Manus when attaching media. Supports Facebook immediate publish or schedule/store for other platforms. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     caption: z.string(),
     file_name: z.string(),
     mime_type: z.string(),
@@ -282,7 +274,6 @@ registerTool('social', {
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       caption: { type: 'string' },
       file_name: { type: 'string' },
       mime_type: { type: 'string' },
@@ -292,7 +283,7 @@ registerTool('social', {
       scheduled_at: { type: 'string', format: 'date-time' },
       page_id: { type: 'string' },
     },
-    required: ['tenant_id', 'caption', 'file_name', 'mime_type', 'file_base64'],
+    required: ['caption', 'file_name', 'mime_type', 'file_base64'],
   },
   handler: async (args, ctx) => {
     const userId = ctx.userId;
@@ -300,7 +291,7 @@ registerTool('social', {
 
     const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
     const asset = await uploadMediaAsset({
-      tenantId: args.tenant_id,
+      tenantId: args.tenant_id!, // guaranteed by session injection
       userId,
       fileName: args.file_name,
       mimeType: args.mime_type,
@@ -309,7 +300,7 @@ registerTool('social', {
     });
 
     const { createMCPServer } = await import('@/services/mcp/MCPServer');
-    const server = createMCPServer({ tenantId: args.tenant_id, userId });
+    const server = createMCPServer({ tenantId: args.tenant_id!, userId }); // guaranteed by session injection
     return server.runTool('create_social_post', {
       tenant_id: args.tenant_id,
       user_id: userId,

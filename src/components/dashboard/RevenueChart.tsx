@@ -34,11 +34,11 @@ export function RevenueChart() {
   const [data, setData] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const bgCard = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
-  const gridColor = useColorModeValue('#edf2f7', '#2d3748');
-  const labelColor = useColorModeValue('gray.600', 'gray.400');
+  const bgCard = useColorModeValue('white', '#0f172a');
+  const borderColor = useColorModeValue('gray.200', 'rgba(148, 163, 184, 0.16)');
+  const textColor = useColorModeValue('gray.800', '#f5f5f5');
+  const gridColor = useColorModeValue('#edf2f7', 'rgba(255, 255, 255, 0.05)');
+  const labelColor = useColorModeValue('gray.600', '#c0c0c0');
 
   useEffect(() => {
     if (!tenantId) return;
@@ -98,8 +98,9 @@ export function RevenueChart() {
         borderRadius="xl"
         borderWidth="1px"
         borderColor={borderColor}
-        h="350px"
-      >
+          h="350px"
+          className="dashboard-panel"
+        >
         <Skeleton height="24px" w="30%" mb={6} />
         <Skeleton height="240px" />
       </Box>
@@ -107,22 +108,23 @@ export function RevenueChart() {
   }
 
   return (
-    <Box
-      bg={bgCard}
-      p={5}
-      borderRadius="xl"
-      borderWidth="1px"
-      borderColor={borderColor}
-      boxShadow="sm"
-      h="350px"
-      display="flex"
-      flexDirection="column"
-    >
+      <Box
+        bg={bgCard}
+        p={5}
+        borderRadius="xl"
+        borderWidth="1px"
+        borderColor={borderColor}
+        boxShadow="sm"
+        h="350px"
+        display="flex"
+        flexDirection="column"
+        className="dashboard-panel"
+      >
       <Box mb={4}>
         <Heading size="sm" color={textColor} mb={1}>
           Revenue Trend (USD)
         </Heading>
-        <Text fontSize="xs" color="gray.500">
+        <Text fontSize="xs" color={labelColor}>
           Paid invoices per month — last 6 months
         </Text>
       </Box>
@@ -139,8 +141,8 @@ export function RevenueChart() {
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#319795" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#319795" stopOpacity={0} />
+                <stop offset="5%" stopColor="#adebb3" stopOpacity={0.38} />
+                <stop offset="95%" stopColor="#adebb3" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -160,7 +162,7 @@ export function RevenueChart() {
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: bgCard,
+                backgroundColor: 'rgba(2, 6, 23, 0.94)',
                 borderColor: borderColor,
                 borderRadius: '8px',
                 color: textColor,
@@ -171,7 +173,7 @@ export function RevenueChart() {
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#319795"
+              stroke="#adebb3"
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#colorRevenue)"

@@ -104,32 +104,76 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
-    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
 };
 
+/**
+ * SoftwareApplication schema — primary entity signal for AI Overview extraction.
+ * Includes featureList, priceSpecification, and disambiguatingDescription to
+ * permanently separate AlphaClone Systems (software company, Wyoming LLC, filing ID 2026-002002581)
+ * from unrelated financial indexes or ETFs that share the "AlphaClone" word.
+ */
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "AlphaClone Systems",
-  operatingSystem: "Web-based",
+  alternateName: "AlphaClone AI Business OS",
+  /**
+   * disambiguatingDescription: gives AI engines explicit boundary data.
+   * AlphaClone Systems LLC is an independent software development company
+   * — it is not affiliated with any financial index, ETF, or hedge fund.
+   */
+  disambiguatingDescription:
+    "AlphaClone Systems LLC is an independent software development company registered in Wyoming, USA (Filing ID: 2026-002002581). It provides an AI-powered business operating system for solo founders, consultants, and service agencies. AlphaClone Systems is not affiliated with, and should not be confused with, any financial fund, ETF, or investment index that uses the word AlphaClone.",
+  operatingSystem: "All",
   applicationCategory: "BusinessApplication",
+  applicationSubCategory: "CRM, Invoicing, Project Management, AI Automation",
   url: SITE_URL,
-  logo: `${SITE_URL}/favicon.ico`,
+  logo: `${SITE_URL}/logo.png`,
   description:
-    "Unified business operating platform for service businesses with CRM, billing, contracts, scheduling, messaging, documents, meetings, and operations.",
+    "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Starting at $15/month, it reduces administrative overhead for service businesses by unifying fragmented software ecosystems into a single operational backbone.",
+  featureList: [
+    "Unified Client Journey Records",
+    "AI-Driven Lead Tracking and CRM Workflows",
+    "Automated Multi-Tenant Billing and Invoicing",
+    "Contract Drafting, Versioning, and E-Signature",
+    "Native Social Media Scheduling and Publishing",
+    "Regional Tax Compliance Formatting (SARS, ZIMRA, ZRA)",
+    "Built-in HD Video Conferencing",
+    "Project and Task Management with Milestone Tracking",
+    "Bonnie AI Operational Assistant",
+    "MCP-Compatible AI Agent Tool Integration",
+  ],
   offers: {
-    "@type": "AggregateOffer",
+    "@type": "Offer",
+    price: "15.00",
     priceCurrency: "USD",
-    lowPrice: "15",
-    highPrice: "80",
-    offerCount: "3",
+    priceValidUntil: "2027-01-01",
+    priceSpecification: {
+      "@type": "PriceSpecification",
+      price: "15.00",
+      priceCurrency: "USD",
+      valueAddedTaxIncluded: false,
+      billingIncrement: 1,
+      unitCode: "MON",
+    },
+    name: "Starter Plan",
+    description: "Full access to CRM, invoicing, project management, contracts, and social media tools. 14-day free trial available.",
+    url: `${SITE_URL}/pricing`,
+    availability: "https://schema.org/InStock",
   },
   publisher: {
     "@type": "Organization",
     name: "AlphaClone Systems",
+    legalName: "Alphaclone Systems, LLC",
     url: SITE_URL,
-    logo: `${SITE_URL}/favicon.ico`,
+    logo: `${SITE_URL}/logo.png`,
+    sameAs: [
+      "https://www.linkedin.com/company/alphaclone-systems",
+      "https://www.facebook.com/100089899181752",
+      "https://twitter.com/AlphaCloneSys",
+    ],
   },
 };
 

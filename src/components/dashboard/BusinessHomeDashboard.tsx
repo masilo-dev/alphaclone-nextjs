@@ -73,10 +73,10 @@ const STAGE_MAP: Record<string, string> = {
 };
 
 const AGENTS = [
-  { name: 'Lead Finder',        desc: 'Finding new leads',   color: 'text-teal-400',   bg: 'bg-teal-500/10' },
-  { name: 'Email Agent',        desc: 'Sending follow-ups',  color: 'text-sky-400',    bg: 'bg-sky-500/10' },
-  { name: 'Social Media Agent', desc: 'Scheduling posts',    color: 'text-violet-400', bg: 'bg-violet-500/10' },
-  { name: 'Sales Assistant',    desc: 'Qualifying leads',    color: 'text-amber-400',  bg: 'bg-amber-500/10' },
+  { name: 'Lead Finder',        desc: 'Finding new leads',   color: 'text-[#adebb3]',   bg: 'bg-[#adebb3]/10' },
+  { name: 'Email Agent',        desc: 'Sending follow-ups',  color: 'text-[#00f0ff]',    bg: 'bg-[#00f0ff]/10' },
+  { name: 'Social Media Agent', desc: 'Scheduling posts',    color: 'text-[#7f00ff]', bg: 'bg-[#7f00ff]/10' },
+  { name: 'Sales Assistant',    desc: 'Qualifying leads',    color: 'text-[#ffb347]',  bg: 'bg-[#ffb347]/10' },
 ];
 
 /* ─── main ────────────────────────────────────────── */
@@ -175,12 +175,12 @@ export default function BusinessHomeDashboard() {
         .order('created_at', { ascending: false }).limit(5)
     );
     const colorForAction = (a: string) => {
-      if (/lead/i.test(a))    return 'text-teal-400';
-      if (/deal/i.test(a))    return 'text-emerald-400';
-      if (/invoice|pay/i.test(a)) return 'text-green-400';
-      if (/email|campaign/i.test(a)) return 'text-sky-400';
-      if (/contract/i.test(a)) return 'text-violet-400';
-      return 'text-slate-400';
+      if (/lead/i.test(a))    return 'text-[#adebb3]';
+      if (/deal/i.test(a))    return 'text-[#3eb489]';
+      if (/invoice|pay/i.test(a)) return 'text-[#adebb3]';
+      if (/email|campaign/i.test(a)) return 'text-[#00f0ff]';
+      if (/contract/i.test(a)) return 'text-[#7f00ff]';
+      return 'text-[#c0c0c0]';
     };
     setActivities(((actRows as any[]) || []).map((r: any) => ({
       id:          r.id,
@@ -226,12 +226,12 @@ export default function BusinessHomeDashboard() {
   if (loading) {
     return (
       <div className="p-4 md:p-6 space-y-4 animate-pulse">
-        <div className="h-8 w-56 bg-slate-800 rounded" />
+        <div className="h-8 w-56 bg-white/5 rounded" />
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-          {Array(5).fill(0).map((_, i) => <div key={i} className="h-36 bg-slate-800 rounded-2xl" />)}
+          {Array(5).fill(0).map((_, i) => <div key={i} className="h-36 bg-white/5 rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array(3).fill(0).map((_, i) => <div key={i} className="h-72 bg-slate-800 rounded-2xl" />)}
+          {Array(3).fill(0).map((_, i) => <div key={i} className="h-72 bg-white/5 rounded-2xl" />)}
         </div>
       </div>
     );
@@ -244,12 +244,12 @@ export default function BusinessHomeDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-black text-white">Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Welcome back, <span className="text-teal-400 font-semibold">{user?.name?.split(' ')[0]}</span>!
+          <p className="text-sm text-[#c0c0c0] mt-0.5">
+            Welcome back, <span className="text-[#adebb3] font-semibold">{user?.name?.split(' ')[0]}</span>!
             {' '}Your AI business is running smoothly.
           </p>
         </div>
-        <span className="text-xs text-slate-500 shrink-0 hidden sm:block pt-1">{dateLabel}</span>
+        <span className="text-xs text-[#94a3b8] shrink-0 hidden sm:block pt-1">{dateLabel}</span>
       </div>
 
       {/* ── 5 Stat Cards ── */}
@@ -265,20 +265,20 @@ export default function BusinessHomeDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
         {/* Revenue chart */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white">Revenue Overview</h3>
-              <p className="text-[11px] text-slate-500">This Month vs Last Month</p>
+              <h3 className="text-sm font-bold text-[#f5f5f5]">Revenue Overview</h3>
+              <p className="text-[11px] text-[#94a3b8]">This Month vs Last Month</p>
             </div>
-            <button onClick={() => router.push('/dashboard/finance')} className="text-[11px] text-teal-400 font-bold">View all</button>
+            <button onClick={() => router.push('/dashboard/finance')} className="text-[11px] text-[#adebb3] font-bold">View all</button>
           </div>
           <div className="flex items-end justify-between gap-2">
-            <p className="text-2xl font-black text-teal-400">R{compact(stats.revenue)}</p>
+            <p className="text-2xl font-black text-[#adebb3]">R{compact(stats.revenue)}</p>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full mb-0.5 ${
               pctChange(stats.revenue, stats.revenuePrev) >= 0
-                ? 'bg-emerald-500/15 text-emerald-400'
-                : 'bg-red-500/15 text-red-400'
+                ? 'bg-[#adebb3]/15 text-[#adebb3]'
+                : 'bg-[#f87171]/15 text-[#f87171]'
             }`}>
               {pctChange(stats.revenue, stats.revenuePrev) >= 0 ? '▲' : '▼'} {Math.abs(pctChange(stats.revenue, stats.revenuePrev))}% vs last month
             </span>
@@ -288,28 +288,28 @@ export default function BusinessHomeDashboard() {
               <AreaChart data={chart} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
                 <defs>
                   <linearGradient id="bizRevGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#adebb3" stopOpacity={0.34} />
+                    <stop offset="95%" stopColor="#adebb3" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="bizPrevGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#334155" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#334155" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff" strokeOpacity={0.03} />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#64748b' }} tickLine={false} axisLine={false} interval={3} />
-                <YAxis tick={{ fontSize: 9, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#c0c0c0' }} tickLine={false} axisLine={false} interval={3} />
+                <YAxis tick={{ fontSize: 9, fill: '#c0c0c0' }} tickLine={false} axisLine={false} />
                 <Tooltip
                   content={({ active, payload, label }: any) => {
                     if (active && payload && payload.length) {
                       return (
-                        <div className="bg-slate-950/95 backdrop-blur-md border border-white/10 p-3 rounded-lg shadow-xl">
-                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider mb-1">{label}</p>
+                        <div className="dashboard-chart-tooltip backdrop-blur-md p-3 rounded-lg shadow-xl">
+                          <p className="text-[10px] text-[#c0c0c0] font-black uppercase tracking-wider mb-1">{label}</p>
                           {payload.map((entry: any, index: number) => (
                             <div key={index} className="flex items-center gap-2 mt-1">
                               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.stroke }} />
-                              <span className="text-xs text-slate-400 font-medium">{entry.name}:</span>
-                              <span className="text-xs text-white font-black">R{entry.value?.toLocaleString()}</span>
+                              <span className="text-xs text-[#c0c0c0] font-medium">{entry.name}:</span>
+                              <span className="text-xs text-[#f5f5f5] font-black">R{entry.value?.toLocaleString()}</span>
                             </div>
                           ))}
                         </div>
@@ -318,21 +318,21 @@ export default function BusinessHomeDashboard() {
                     return null;
                   }}
                 />
-                <Area type="monotone" dataKey="thisMonth" stroke="#14b8a6" strokeWidth={2.5} fill="url(#bizRevGradient)" dot={false} name="This Month" />
-                <Area type="monotone" dataKey="lastMonth" stroke="#334155" strokeWidth={1.5} strokeDasharray="5 5" fill="url(#bizPrevGradient)" dot={false} name="Last Month" />
+                <Area type="monotone" dataKey="thisMonth" stroke="#adebb3" strokeWidth={2.5} fill="url(#bizRevGradient)" dot={false} name="This Month" />
+                <Area type="monotone" dataKey="lastMonth" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 5" fill="url(#bizPrevGradient)" dot={false} name="Last Month" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Pipeline funnel */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white">Sales Pipeline</h3>
-              <p className="text-[11px] text-slate-500">Deal progression</p>
+              <h3 className="text-sm font-bold text-[#f5f5f5]">Sales Pipeline</h3>
+              <p className="text-[11px] text-[#94a3b8]">Deal progression</p>
             </div>
-            <button onClick={() => router.push('/dashboard/deals')} className="text-[11px] text-teal-400 font-bold">View all</button>
+            <button onClick={() => router.push('/dashboard/deals')} className="text-[11px] text-[#00f0ff] font-bold">View all</button>
           </div>
           <div className="space-y-3">
             {pipeline.map(s => {
@@ -341,13 +341,13 @@ export default function BusinessHomeDashboard() {
               return (
                 <div key={s.stage}>
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-300 font-medium">{s.stage}</span>
+                    <span className="text-[#e5e7eb] font-medium">{s.stage}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-black">{compact(s.count)}</span>
-                      <span className="text-slate-500 text-[10px]">{conv}%</span>
+                      <span className="text-[#f5f5f5] font-black">{compact(s.count)}</span>
+                      <span className="text-[#94a3b8] text-[10px]">{conv}%</span>
                     </div>
                   </div>
-                  <div className="h-6 bg-slate-850 rounded-lg overflow-hidden border border-white/5">
+                  <div className="h-6 bg-[#1f2937] rounded-lg overflow-hidden border border-white/5">
                     <div
                       className="h-full rounded-lg transition-all duration-700"
                       style={{ width: `${Math.max(w, s.count > 0 ? 8 : 0)}%`, backgroundColor: s.color }}
@@ -360,23 +360,23 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* AI Agents */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-white">AI Agents</h3>
-              <p className="text-[11px] text-slate-500">Running autonomously</p>
+              <h3 className="text-sm font-bold text-[#f5f5f5]">AI Agents</h3>
+              <p className="text-[11px] text-[#94a3b8]">Running autonomously</p>
             </div>
-            <button onClick={() => router.push('/dashboard/sales-agent')} className="text-[11px] text-teal-400 font-bold">View all</button>
+            <button onClick={() => router.push('/dashboard/sales-agent')} className="text-[11px] text-[#adebb3] font-bold">View all</button>
           </div>
           <div className="space-y-2.5">
             {AGENTS.map(a => (
-              <div key={a.name} className="flex items-center gap-3 p-3 bg-slate-800/40 rounded-xl border border-white/5">
+              <div key={a.name} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
                 <div className={`w-9 h-9 rounded-xl ${a.bg} flex items-center justify-center ${a.color}`}>
                   <Brain className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white">{a.name}</p>
-                  <p className="text-[10px] text-slate-500">{a.desc}</p>
+                  <p className="text-xs font-bold text-[#f5f5f5]">{a.name}</p>
+                  <p className="text-[10px] text-[#94a3b8]">{a.desc}</p>
                 </div>
                 <StandardStatusBadge variant="success">Active</StandardStatusBadge>
               </div>
@@ -389,21 +389,21 @@ export default function BusinessHomeDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
         {/* Tasks */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white">Tasks</h3>
-            <button onClick={() => router.push('/dashboard/tasks')} className="text-[11px] text-teal-400 font-bold">View all</button>
+            <h3 className="text-sm font-bold text-[#f5f5f5]">Tasks</h3>
+            <button onClick={() => router.push('/dashboard/tasks')} className="text-[11px] text-[#adebb3] font-bold">View all</button>
           </div>
           <div className="space-y-1.5">
             {tasks.length === 0 ? (
-              <p className="text-xs text-slate-500 py-8 text-center">No open tasks — you're all caught up 🎉</p>
+              <p className="text-xs text-[#94a3b8] py-8 text-center">No open tasks — you're all caught up 🎉</p>
             ) : tasks.map(t => (
-              <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800/40 transition-colors">
-                <Circle className="w-4 h-4 text-slate-600 shrink-0" />
+              <div key={t.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors">
+                <Circle className="w-4 h-4 text-[#94a3b8] shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-200 truncate">{t.title}</p>
+                  <p className="text-xs font-medium text-[#e5e7eb] truncate">{t.title}</p>
                   {t.due_date && (
-                    <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                    <p className="text-[10px] text-[#94a3b8] flex items-center gap-1 mt-0.5">
                       <Clock className="w-2.5 h-2.5" />
                       {new Date(t.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                     </p>
@@ -418,31 +418,31 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* Social Media */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white">Social Media Overview</h3>
-            <button onClick={() => router.push('/dashboard/business/social')} className="text-[11px] text-teal-400 font-bold">View all</button>
+            <h3 className="text-sm font-bold text-[#f5f5f5]">Social Media Overview</h3>
+            <button onClick={() => router.push('/dashboard/business/social')} className="text-[11px] text-[#00f0ff] font-bold">View all</button>
           </div>
           {social.length === 0 ? (
             <div className="py-8 text-center space-y-2">
-              <Share2 className="w-8 h-8 text-slate-700 mx-auto" />
-              <p className="text-xs text-slate-500">No social accounts connected yet</p>
-              <button onClick={() => router.push('/dashboard/settings')} className="text-xs text-teal-400 font-semibold">
+              <Share2 className="w-8 h-8 text-[#94a3b8] mx-auto" />
+              <p className="text-xs text-[#94a3b8]">No social accounts connected yet</p>
+              <button onClick={() => router.push('/dashboard/settings')} className="text-xs text-[#adebb3] font-semibold">
                 Connect accounts →
               </button>
             </div>
           ) : (
             <div className="space-y-2.5">
               {social.map(acc => (
-                <div key={acc.platform} className="flex items-center justify-between p-3 bg-slate-800/40 rounded-xl border border-white/5 group hover:border-white/10 transition-colors duration-300">
+                <div key={acc.platform} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group hover:border-white/10 transition-colors duration-300">
                   <div className="flex items-center gap-3">
                     <SocialPlatformIcon platform={acc.platform} showBackground size="sm" />
                     <div>
-                      <p className="text-xs font-bold text-white capitalize">{acc.platform}</p>
-                      <p className="text-[11px] text-slate-400">{compact(acc.followers)} Followers</p>
+                      <p className="text-xs font-bold text-[#f5f5f5] capitalize">{acc.platform}</p>
+                      <p className="text-[11px] text-[#c0c0c0]">{compact(acc.followers)} Followers</p>
                     </div>
                   </div>
-                  <span className={`text-xs font-bold ${acc.growth >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className={`text-xs font-bold ${acc.growth >= 0 ? 'text-[#adebb3]' : 'text-[#f87171]'}`}>
                     {acc.growth >= 0 ? '+' : ''}{acc.growth}%
                   </span>
                 </div>
@@ -452,22 +452,22 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* Recent Activities */}
-        <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white">Recent Activities</h3>
-            <button onClick={() => router.push('/dashboard/analytics')} className="text-[11px] text-teal-400 font-bold">View all</button>
+            <h3 className="text-sm font-bold text-[#f5f5f5]">Recent Activities</h3>
+            <button onClick={() => router.push('/dashboard/analytics')} className="text-[11px] text-[#adebb3] font-bold">View all</button>
           </div>
           <div className="space-y-1">
             {activities.length === 0 ? (
-              <p className="text-xs text-slate-500 py-8 text-center">No recent activity</p>
+              <p className="text-xs text-[#94a3b8] py-8 text-center">No recent activity</p>
             ) : activities.map(a => (
-              <div key={a.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-800/40 transition-colors">
-                <div className={`w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center shrink-0 mt-0.5 ${a.iconColor}`}>
+              <div key={a.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                <div className={`w-6 h-6 rounded-full bg-[#1f2937] flex items-center justify-center shrink-0 mt-0.5 ${a.iconColor}`}>
                   <Activity className="w-3 h-3" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-200 leading-snug">{a.description}</p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="text-xs text-[#e5e7eb] leading-snug">{a.description}</p>
+                  <p className="text-[10px] text-[#94a3b8] mt-0.5">
                     {a.created_at
                       ? new Date(a.created_at).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })
                       : '–'}
@@ -481,4 +481,3 @@ export default function BusinessHomeDashboard() {
     </div>
   );
 }
-

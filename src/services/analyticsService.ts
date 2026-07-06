@@ -88,12 +88,11 @@ export const analyticsService = {
         
         // Fetch all financial activities for aggregation
         const [invoicesRes, expensesRes, payoutsRes] = await Promise.all([
-            // 1. Paid Invoices (Revenue)
+            // 1. Paid Invoices (Revenue) — fetch all and filter in-memory for case-insensitive status match
             supabase
                 .from('invoices')
                 .select('amount, created_at, status')
                 .eq('tenant_id', tenantId)
-                .in('status', ['Paid', 'Sent']) // Include Sent as potential revenue if needed
                 .gte('created_at', startDate.toISOString())
                 .lte('created_at', endDate.toISOString()),
             
@@ -120,13 +119,13 @@ export const analyticsService = {
         const expenses = expensesRes.data || [];
         const otherRevenue = (payoutsRes as any)?.data || [];
 
-        // Aggregate Revenue
+        // Aggregate Revenue — case-insensitive status comparison
         const paidRevenue = invoices
-            .filter((inv: any) => inv.status === 'Paid')
+            .filter((inv: any) => inv.status?.toLowerCase() === 'paid')
             .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
         
         const sentRevenue = invoices
-            .filter((inv: any) => inv.status === 'Sent')
+            .filter((inv: any) => inv.status?.toLowerCase() === 'sent')
             .reduce((sum: number, inv: any) => sum + (inv.amount || 0), 0);
         
         const directRevenue = otherRevenue
@@ -138,7 +137,7 @@ export const analyticsService = {
         // This month
         const thisMonthStart = startOfDay(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
         const thisMonthInvoices = invoices.filter(
-            (inv: any) => new Date(inv.created_at) >= thisMonthStart && inv.status === 'Paid'
+            (inv: any) => new Date(inv.created_at) >= thisMonthStart && inv.status?.toLowerCase() === 'paid'
         );
         const thisMonthDirect = otherRevenue.filter(
             (rec: any) => new Date(rec.created_at) >= thisMonthStart
@@ -161,7 +160,7 @@ export const analyticsService = {
             supabase
                 .from('invoices')
                 .select('amount')
-                .eq('status', 'Paid')
+                .ilike('status', 'paid')
                 .eq('tenant_id', tenantId)
                 .gte('created_at', lastMonthStart.toISOString())
                 .lte('created_at', lastMonthEnd.toISOString()),
@@ -188,7 +187,7 @@ export const analyticsService = {
         invoices.forEach((inv: any) => {
             const date = format(parseISO(inv.created_at), 'yyyy-MM-dd');
             if (!byPeriod[date]) byPeriod[date] = { revenue: 0, expenses: 0, projects: 0 };
-            if (inv.status === 'Paid') {
+            if (inv.status?.toLowerCase() === 'paid') {
                 byPeriod[date].revenue = Math.round((byPeriod[date].revenue + (inv.amount || 0)) * 100) / 100;
             }
         });

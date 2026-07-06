@@ -127,7 +127,7 @@ const AnalyticsTab: React.FC = () => {
             <button
               key={r}
               onClick={() => setDateRange(r)}
-              className={`h-[34px] px-4 rounded-full text-[12px] font-bold transition-all ${dateRange === r ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}
+              className={`h-[34px] px-4 rounded-full text-[12px] font-bold transition-all ${dateRange === r ? 'bg-[#adebb3] text-[#0f172a]' : 'bg-white/5 text-[#c0c0c0] border border-white/5'}`}
             >
               {r.toUpperCase()}
             </button>
@@ -136,7 +136,7 @@ const AnalyticsTab: React.FC = () => {
         <button
           onClick={() => loadData(true)}
           disabled={refreshing}
-          className="p-2 rounded-xl bg-slate-900 border border-white/5 text-slate-400 hover:text-teal-400 transition-colors"
+          className="p-2 rounded-xl bg-white/5 border border-white/5 text-[#c0c0c0] hover:text-[#adebb3] transition-colors"
           aria-label="Refresh analytics"
         >
           <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -165,7 +165,7 @@ const AnalyticsTab: React.FC = () => {
             <button
               key={m}
               onClick={() => setMetric(m)}
-              className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold capitalize transition-all ${metric === m ? 'text-white' : 'text-slate-500 bg-transparent'}`}
+              className={`flex-1 py-1.5 rounded-lg text-[12px] font-bold capitalize transition-all ${metric === m ? 'text-[#f5f5f5]' : 'text-[#94a3b8] bg-transparent'}`}
               style={{
                 backgroundColor: metric === m ? `${METRIC_COLORS[m]}33` : undefined,
                 color: metric === m ? METRIC_COLORS[m] : undefined,
@@ -187,19 +187,19 @@ const AnalyticsTab: React.FC = () => {
       </div>
 
       <div>
-        <span className="text-[13px] font-bold tracking-wide text-slate-400 block mb-3">Reports</span>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+        <span className="text-[13px] font-bold tracking-wide text-[#c0c0c0] block mb-3">Reports</span>
+        <div className="bg-white/5 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
           {REPORTS.map((report) => (
             <button
               key={report.name}
               onClick={() => router.push(report.href)}
               className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 transition-colors"
             >
-              <report.icon className="w-5 h-5 text-slate-500 flex-shrink-0" />
-              <span className="flex-1 text-[15px] text-white text-left">{report.name}</span>
+              <report.icon className="w-5 h-5 text-[#94a3b8] flex-shrink-0" />
+              <span className="flex-1 text-[15px] text-[#f5f5f5] text-left">{report.name}</span>
               <div className="flex items-center gap-2">
-                <span className="text-[13px] text-teal-400 font-bold">View</span>
-                <ChevronRight className="w-4 h-4 text-slate-600" />
+                <span className="text-[13px] text-[#adebb3] font-bold">View</span>
+                <ChevronRight className="w-4 h-4 text-[#64748b]" />
               </div>
             </button>
           ))}

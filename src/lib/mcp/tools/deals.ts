@@ -5,20 +5,19 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 // 1. get_deals
 registerTool('deals', {
   name: 'get_deals',
-  description: 'Retrieve deals matching filters.',
+  description: 'Retrieve deals matching filters. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session; optional for session-auth clients
     stage: z.string().optional(),
     owner_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       stage: { type: 'string', description: 'Filter by deal stage' },
       owner_id: { type: 'string', format: 'uuid', description: 'Filter by owner user ID' },
     },
-    required: ['tenant_id'],
+    required: [],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -43,9 +42,9 @@ registerTool('deals', {
 // 2. create_deal
 registerTool('deals', {
   name: 'create_deal',
-  description: 'Create a new deal in the pipeline. Accepts title or name; value and stage default to 0 and qualified.',
+  description: 'Create a new deal in the pipeline. Accepts title or name; value and stage default to 0 and qualified. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     user_id: z.string().uuid().optional(),
     title: z.string().optional(),
     name: z.string().optional(),
@@ -101,9 +100,9 @@ registerTool('deals', {
 // 3. update_deal
 registerTool('deals', {
   name: 'update_deal',
-  description: 'Update the fields of a deal.',
+  description: 'Update the fields of a deal. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     deal_id: z.string().uuid(),
     fields: z.object({
       name: z.string().optional(),
@@ -115,7 +114,6 @@ registerTool('deals', {
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       deal_id: { type: 'string', format: 'uuid' },
       fields: {
         type: 'object',
@@ -127,7 +125,7 @@ registerTool('deals', {
         },
       },
     },
-    required: ['tenant_id', 'deal_id', 'fields'],
+    required: ['deal_id', 'fields'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -150,20 +148,19 @@ registerTool('deals', {
 // 4. move_deal_stage
 registerTool('deals', {
   name: 'move_deal_stage',
-  description: 'Change the stage of a deal and log it to stage history.',
+  description: 'Change the stage of a deal and log it to stage history. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
     deal_id: z.string().uuid(),
     new_stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
       deal_id: { type: 'string', format: 'uuid' },
       new_stage: { type: 'string', enum: ['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost'] },
     },
-    required: ['tenant_id', 'deal_id', 'new_stage'],
+    required: ['deal_id', 'new_stage'],
   },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
@@ -214,16 +211,14 @@ registerTool('deals', {
 // 5. get_pipeline_summary
 registerTool('deals', {
   name: 'get_pipeline_summary',
-  description: 'Get total count and value of deals grouped by pipeline stages.',
+  description: 'Get total count and value of deals grouped by pipeline stages. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid(),
+    tenant_id: z.string().uuid().optional(), // injected from session
   }),
   jsonSchema: {
     type: 'object',
-    properties: {
-      tenant_id: { type: 'string', format: 'uuid' },
-    },
-    required: ['tenant_id'],
+    properties: {},
+    required: [],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();

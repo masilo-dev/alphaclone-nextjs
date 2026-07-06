@@ -16,7 +16,7 @@ export function ChartMount({ height = 240, children }: ChartMountProps) {
   }, []);
 
   if (!ready) {
-    return <div className="w-full rounded-lg bg-slate-800/40 animate-pulse" style={{ height }} />;
+    return <div className="w-full rounded-lg dashboard-panel-soft animate-pulse" style={{ height }} />;
   }
 
   return (

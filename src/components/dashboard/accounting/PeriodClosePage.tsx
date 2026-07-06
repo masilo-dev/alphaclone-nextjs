@@ -55,15 +55,15 @@ export default function PeriodClosePage() {
 
   return (
     <div className="p-4 space-y-5 overflow-y-auto pb-24 max-w-lg mx-auto">
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+      <div className="dashboard-panel-soft p-4">
         <h3 className="text-sm font-bold text-white mb-2">Period close progress</h3>
         <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-          <div className="bg-teal-500 h-full transition-all" style={{ width: `${progress}%` }} />
+          <div className="bg-emerald-500 h-full transition-all" style={{ width: `${progress}%` }} />
         </div>
-        <p className="text-xs text-slate-500 mt-2">{progress}% complete</p>
+        <p className="text-xs text-slate-300 mt-2">{progress}% complete</p>
       </div>
 
-      <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">
+      <div className="dashboard-panel-soft divide-y divide-white/5">
         {CHECKLIST.map((item) => (
           <button
             key={item.id}
@@ -72,7 +72,7 @@ export default function PeriodClosePage() {
             className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-white/5 disabled:opacity-60"
           >
             {checked[item.id] ? (
-              <CheckCircle2 className="w-5 h-5 text-teal-400 flex-shrink-0" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
             ) : (
               <Circle className="w-5 h-5 text-slate-600 flex-shrink-0" />
             )}

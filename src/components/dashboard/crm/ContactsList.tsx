@@ -18,8 +18,8 @@ interface ContactsListProps {
 }
 
 const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgColor: string }> = {
-    active: { label: 'Active', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20' },
-    inactive: { label: 'Inactive', color: 'text-slate-400', bgColor: 'bg-slate-500/20' },
+    active: { label: 'Active', color: 'text-emerald-300', bgColor: 'bg-emerald-500/15' },
+    inactive: { label: 'Inactive', color: 'text-slate-300', bgColor: 'bg-slate-500/15' },
     unsubscribed: { label: 'Unsubscribed', color: 'text-orange-400', bgColor: 'bg-orange-500/20' },
     bounced: { label: 'Bounced', color: 'text-red-400', bgColor: 'bg-red-500/20' },
 };
@@ -184,7 +184,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
         return (
             <div className="space-y-3">
                 {[...Array(6)].map((_, i) => (
-                    <div key={i} className="h-[88px] bg-slate-800/60 border border-slate-700/50 rounded-lg animate-pulse" />
+                    <div key={i} className="h-[88px] dashboard-panel-soft animate-pulse" />
                 ))}
             </div>
         );
@@ -198,7 +198,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-xl font-semibold text-white">Contacts</h2>
-                    <p className="text-sm text-slate-400">Manage your contacts and leads</p>
+                    <p className="text-sm text-slate-300">Manage your contacts and leads</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {selectedIds.length > 0 && (
@@ -213,14 +213,14 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                     <button
                         onClick={handleExportCSV}
                         disabled={filteredContacts.length === 0}
-                        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
                     >
                         <Download className="w-4 h-4" />
                         Export
                     </button>
                     <button
                         onClick={onCreateContact}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-lg transition-colors"
                     >
                         <Plus className="w-4 h-4" />
                         Add Contact
@@ -237,13 +237,13 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                         placeholder="Search contacts..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                        className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-white/5 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                     />
                 </div>
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as ContactStatus | 'all')}
-                    className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="px-4 py-2 bg-slate-900 border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
                 >
                     <option value="all">All Status</option>
                     {Object.entries(STATUS_CONFIG).map(([status, config]) => (
@@ -253,7 +253,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                 <select
                     value={sortField}
                     onChange={(e) => setSortField(e.target.value as typeof sortField)}
-                    className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                    className="px-4 py-2 bg-slate-900 border border-white/5 rounded-lg text-white focus:outline-none focus:border-emerald-500/50"
                 >
                     <option value="createdAt">Sort by Date</option>
                     <option value="name">Sort by Name</option>

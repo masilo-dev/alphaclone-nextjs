@@ -108,11 +108,11 @@ export const reportingService = {
 
         const { count: totalProjects } = await projectQuery;
 
-        // Get revenue
+        // Get revenue — use ilike for case-insensitive match (data may be 'paid' or 'Paid')
         let invoiceQuery = supabase
             .from('invoices')
             .select('amount')
-            .eq('status', 'Paid')
+            .ilike('status', 'paid')
             .eq('tenant_id', tenantService.getCurrentTenantId())
             .gte('created_at', from)
             .lte('created_at', to);
@@ -234,7 +234,7 @@ export const reportingService = {
         const { data: invoices } = await supabase
             .from('invoices')
             .select('amount, created_at')
-            .eq('status', 'Paid')
+            .ilike('status', 'paid')
             .eq('tenant_id', tenantService.getCurrentTenantId())
             .gte('created_at', from)
             .lte('created_at', to)

@@ -42,7 +42,7 @@ export function CashFlowStatement() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
       </div>
     );
   }
@@ -50,17 +50,17 @@ export function CashFlowStatement() {
   return (
     <div className="space-y-2">
       <h3 className="text-lg font-semibold text-white mb-4">Cash Flow Statement</h3>
-      <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
+      <div className="dashboard-panel-soft overflow-hidden">
         {rows.map((r) => (
           <div key={r.label} className="flex justify-between px-4 py-3 border-b border-white/5 last:border-0 text-sm">
-            <span className="text-slate-300">{r.label}</span>
-            <span className={`font-bold ${r.amount >= 0 ? 'text-teal-400' : 'text-red-400'}`}>
+            <span className="text-slate-200">{r.label}</span>
+            <span className={`font-bold ${r.amount >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               ${r.amount.toLocaleString()}
             </span>
           </div>
         ))}
       </div>
-      <p className="text-xs text-slate-500 mt-2">
+      <p className="text-xs text-slate-300 mt-2">
         Derived from P&amp;L and operational invoice/receipt data. Formal GL cash flow classification coming soon.
       </p>
     </div>

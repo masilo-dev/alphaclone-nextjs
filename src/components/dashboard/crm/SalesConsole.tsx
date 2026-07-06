@@ -72,7 +72,7 @@ export default function SalesConsole() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
       </div>
     );
   }
@@ -101,23 +101,23 @@ export default function SalesConsole() {
         ))}
       </div>
 
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+      <div className="dashboard-panel p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-teal-400" />
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
             Weighted Forecast
           </h3>
-          <button onClick={() => router.push('/dashboard/forecast')} className="text-xs text-teal-400 font-bold">
+          <button onClick={() => router.push('/dashboard/forecast')} className="text-xs text-emerald-400 font-bold">
             View forecast
           </button>
         </div>
-        <div className="text-2xl font-bold text-violet-400">${stats.weightedForecast.toLocaleString()}</div>
+        <div className="text-2xl font-bold text-violet-300">${stats.weightedForecast.toLocaleString()}</div>
       </div>
 
-      <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
+      <div className="dashboard-panel overflow-hidden">
         <div className="px-4 py-3 border-b border-white/5 flex justify-between items-center">
           <span className="text-sm font-bold text-white">Leads needing action</span>
-          <button onClick={() => router.push('/dashboard/leads')} className="text-xs text-teal-400 font-bold flex items-center gap-1">
+          <button onClick={() => router.push('/dashboard/leads')} className="text-xs text-emerald-400 font-bold flex items-center gap-1">
             View all <ArrowRight className="w-3 h-3" />
           </button>
         </div>

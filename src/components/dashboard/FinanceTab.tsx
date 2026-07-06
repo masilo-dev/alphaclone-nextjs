@@ -41,41 +41,41 @@ const InvoiceDetailContent: React.FC<{
 
   return (
     <div className="space-y-4 pb-6">
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
-        <div className="text-[13px] text-slate-500">Invoice #{invoice.number || invoice.id.slice(0,8)}</div>
-        <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
+      <div className="dashboard-panel-soft p-5 text-center space-y-2">
+        <div className="text-[13px] text-slate-300">Invoice #{invoice.number || invoice.id.slice(0,8)}</div>
+        <div className="text-[32px] font-bold text-emerald-400">{amountDisplay}</div>
         <StatusBadge variant={invoiceStatusVariant(invoice.status)}>{invoice.status}</StatusBadge>
       </div>
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-1">
+      <div className="dashboard-panel-soft p-4 space-y-1">
         <div className="text-[15px] font-bold text-white">{clientName}</div>
-        {invoice.client_email && <div className="text-[13px] text-slate-400 opacity-55">{invoice.client_email}</div>}
+        {invoice.client_email && <div className="text-[13px] text-slate-300 opacity-75">{invoice.client_email}</div>}
       </div>
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+      <div className="dashboard-panel-soft p-4">
         <div className="flex justify-between py-1.5 border-b border-white/5">
-          <span className="text-[15px] text-slate-400">Subtotal</span>
+          <span className="text-[15px] text-slate-300">Subtotal</span>
           <span className="text-[15px] text-white font-mono">{amountDisplay}</span>
         </div>
         <div className="flex justify-between pt-2">
           <span className="text-[17px] font-bold text-white">Total</span>
-          <span className="text-[20px] font-bold text-teal-400 font-mono">{amountDisplay}</span>
+          <span className="text-[20px] font-bold text-emerald-400 font-mono">{amountDisplay}</span>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         <button onClick={() => onSend(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
-          <Send className="w-4 h-4 text-sky-400" />
-          <span className="text-[11px] text-slate-400 font-bold">Send</span>
+          <Send className="w-4 h-4 text-sky-300" />
+          <span className="text-[11px] text-slate-300 font-bold">Send</span>
         </button>
         <button onClick={() => onMarkPaid(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
           <CheckCircle className="w-4 h-4 text-emerald-400" />
-          <span className="text-[11px] text-slate-400 font-bold">Mark Paid</span>
+          <span className="text-[11px] text-slate-300 font-bold">Mark Paid</span>
         </button>
         <button onClick={() => onDownload(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 transition-colors">
-          <Download className="w-4 h-4 text-slate-400" />
-          <span className="text-[11px] text-slate-400 font-bold">PDF</span>
+          <Download className="w-4 h-4 text-slate-300" />
+          <span className="text-[11px] text-slate-300 font-bold">PDF</span>
         </button>
         <button onClick={() => onDelete(invoice.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 transition-colors">
           <Trash2 className="w-4 h-4 text-red-400" />
-          <span className="text-[11px] text-red-400 font-bold">Delete</span>
+          <span className="text-[11px] text-red-300 font-bold">Delete</span>
         </button>
       </div>
     </div>
@@ -316,7 +316,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       {/* Main tabs */}
       <div className="flex border-b border-white/5 bg-slate-950">
         {(['invoices', 'expenses'] as MainTab[]).map(t => (
-          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}>{t}</button>
+          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-emerald-400 border-b-2 border-emerald-400' : 'text-slate-400'}`}>{t}</button>
         ))}
       </div>
 
@@ -325,9 +325,9 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
           <>
             {/* Collection rate summary card */}
             {!loading && invoices.length > 0 && (
-              <div className="mx-4 mt-4 mb-1 bg-slate-900/60 border border-white/5 rounded-2xl p-4">
+              <div className="mx-4 mt-4 mb-1 dashboard-panel-soft p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Collection Rate</div>
+                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-300">Collection Rate</div>
                   <span className={`text-[13px] font-black ${
                     collectionRate >= 80 ? 'text-emerald-400' : collectionRate >= 50 ? 'text-amber-400' : 'text-red-400'
                   }`}>{collectionRate}%</span>
@@ -342,11 +342,11 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-slate-800/60 rounded-xl p-3">
-                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wide mb-0.5">Collected</div>
+                    <div className="text-[10px] text-slate-300 uppercase font-bold tracking-wide mb-0.5">Collected</div>
                     <div className="text-[15px] font-black text-emerald-400">${totalRevenue.toLocaleString()}</div>
                   </div>
                   <div className="bg-slate-800/60 rounded-xl p-3">
-                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wide mb-0.5">Pending</div>
+                    <div className="text-[10px] text-slate-300 uppercase font-bold tracking-wide mb-0.5">Pending</div>
                     <div className="text-[15px] font-black text-amber-400">${pendingRevenue.toLocaleString()}</div>
                   </div>
                 </div>
@@ -356,7 +356,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Filter pills */}
             <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
               {(['all', ...INV_FILTERS] as (InvoiceStatus | 'all')[]).map(f => (
-                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
               ))}
             </div>
             {loading ? (
@@ -385,12 +385,12 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
         {mainTab === 'expenses' && (
           <>
             {/* Monthly total card */}
-            <div className="mx-4 mt-4 mb-3 bg-slate-900 border border-white/5 rounded-2xl p-4">
+              <div className="mx-4 mt-4 mb-3 dashboard-panel-soft p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[13px] text-slate-400 mb-1">This Month</div>
+                  <div className="text-[13px] text-slate-300 mb-1">This Month</div>
                   <div className="text-2xl sm:text-[32px] font-bold text-white">${thisTotal.toLocaleString()}</div>
-                  <div className="text-[13px] text-slate-500 opacity-55 flex items-center gap-1 mt-0.5">
+                  <div className="text-[13px] text-slate-400 opacity-75 flex items-center gap-1 mt-0.5">
                     <TrendingDown className="w-3 h-3" />
                     <span>{thisMonth.length} transactions</span>
                   </div>
@@ -413,7 +413,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Category filter */}
             <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
               {EXP_CATS.map(c => (
-                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
+                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
               ))}
             </div>
             <div className="px-2">

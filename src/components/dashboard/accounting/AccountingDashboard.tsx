@@ -195,8 +195,8 @@ export default function AccountingDashboard() {
 
     if (loading) {
         return (
-            <div className="flex flex-col justify-center items-center h-96 text-slate-400 gap-4">
-                <Activity className="w-12 h-12 animate-pulse text-teal-500" />
+            <div className="flex flex-col justify-center items-center h-96 text-slate-300 gap-4">
+                <Activity className="w-12 h-12 animate-pulse text-emerald-400" />
                 <p className="font-medium uppercase tracking-widest text-xs">Syncing Ledger...</p>
             </div>
         );
@@ -206,19 +206,19 @@ export default function AccountingDashboard() {
         <div className={`relative space-y-6 max-w-7xl mx-auto pb-24 ac-scroll-full ac-enterprise-module ${isMobile ? 'px-2' : 'px-6'}`}>
             {/* Initialization Banner for Empty Accounts */}
             {!loading && accounts.length === 0 && (
-                <div className="bg-teal-500/10 border border-teal-500/20 rounded-[32px] p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-2xl shadow-teal-900/10 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="dashboard-panel-soft p-8 flex flex-col md:flex-row items-center justify-between gap-6 mb-8 shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
-                        <div className="w-16 h-16 bg-teal-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-teal-500/20 shrink-0">
+                        <div className="w-16 h-16 bg-emerald-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 shrink-0">
                             <ShieldCheck size={32} />
                         </div>
                         <div>
                             <h3 className="text-xl font-black text-white uppercase tracking-tight">Setup your ledger</h3>
-                            <p className="text-slate-400 text-sm mt-1 max-w-md">Your Chart of Accounts is currently empty. Initialize standard business categories to start tracking your revenue and expenses.</p>
+                            <p className="text-slate-300 text-sm mt-1 max-w-md">Your Chart of Accounts is currently empty. Initialize standard business categories to start tracking your revenue and expenses.</p>
                         </div>
                     </div>
                     <button 
                         onClick={handleInitializeAccounts}
-                        className="w-full md:w-auto px-10 py-5 bg-teal-500 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-teal-900/40 hover:bg-teal-400 active:scale-95 transition-all"
+                        className="w-full md:w-auto px-10 py-5 bg-emerald-500 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-emerald-900/40 hover:bg-emerald-400 active:scale-95 transition-all"
                     >
                         Initialize Accounts
                     </button>
@@ -230,18 +230,18 @@ export default function AccountingDashboard() {
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Accounting Hub</h1>
                     <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs font-black text-teal-500 uppercase tracking-widest bg-teal-500/10 px-2 py-0.5 rounded">Professional Edition</span>
+                        <span className="text-xs font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Professional Edition</span>
                         <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Real-time Sync</span>
+                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Real-time Sync</span>
                     </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     {isMobile ? (
-                        <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-teal-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-teal-900/20"><Plus size={18} className="mr-2" /> Entry</button>
+                        <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> Entry</button>
                     ) : (
                         <>
-                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-slate-900/50 border border-slate-800 text-slate-300"><Wallet className="w-4 h-4 mr-2" /> Add Transaction</Button>
-                            <Button className="bg-teal-600 text-white" onClick={() => setIsUploadOpen(true)}><Upload className="w-4 h-4 mr-2" /> Upload Receipt</Button>
+                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-slate-900/50 border border-white/5 text-slate-300"><Wallet className="w-4 h-4 mr-2" /> Add Transaction</Button>
+                            <Button className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}><Upload className="w-4 h-4 mr-2" /> Upload Receipt</Button>
                         </>
                     )}
                 </div>
@@ -271,7 +271,7 @@ export default function AccountingDashboard() {
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`px-6 py-4 text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-teal-500 text-white bg-teal-500/5' : 'border-transparent text-gray-500'}`}
+                        className={`px-6 py-4 text-xs font-black uppercase tracking-[0.2em] whitespace-nowrap transition-all border-b-2 ${activeTab === tab.key ? 'border-emerald-400 text-white bg-emerald-500/5' : 'border-transparent text-slate-400'}`}
                     >
                         {tab.label}
                     </button>
@@ -305,9 +305,9 @@ export default function AccountingDashboard() {
                     </div>
 
                     {/* Responsive Ledger List */}
-                    <div className="bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden">
+                    <div className="dashboard-panel-soft overflow-hidden">
                         <div className="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414]">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><Activity size={16} className="mr-2 text-teal-500" /> Recent Ledger Activity</h3>
+                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><Activity size={16} className="mr-2 text-emerald-400" /> Recent Ledger Activity</h3>
                         </div>
                         <div className="divide-y divide-white/5">
                             {stats.recentTransactions.map(tx => (
@@ -316,7 +316,7 @@ export default function AccountingDashboard() {
                                         <p className="text-sm font-black text-white truncate">{tx.description}</p>
                                         <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">{new Date(tx.date).toLocaleDateString()}</p>
                                     </div>
-                                    <div className={`text-right font-black ${tx.type === 'income' ? 'text-teal-500' : 'text-gray-400'}`}>
+                                    <div className={`text-right font-black ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-400'}`}>
                                         {tx.type === 'income' ? '+' : '-'}${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </div>
                                 </div>
@@ -327,22 +327,22 @@ export default function AccountingDashboard() {
             )}
 
             {activeTab === 'income' && (
-                <Card className="p-6 sm:p-10 bg-slate-900/60 border-white/5 animate-in fade-in duration-300">
+                <Card className="dashboard-panel p-6 sm:p-10 animate-in fade-in duration-300">
                     <h2 className="text-xl font-black text-white uppercase tracking-tight mb-8">Statement of Profit & Loss</h2>
                     <div className="space-y-8">
                         <div>
-                            <div className="text-xs font-black text-teal-500 uppercase tracking-widest mb-4 border-b border-teal-500/20 pb-2">Operating Revenue</div>
-                            <div className="flex justify-between items-center py-2"><span className="text-sm font-bold text-gray-400">Gross Sales</span><span className="text-sm font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
-                            <div className="flex justify-between items-center py-4 mt-2 bg-teal-500/10 px-4 rounded-xl border border-teal-500/20"><span className="text-xs font-black uppercase text-teal-500">Gross Margin</span><span className="text-lg font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
+                            <div className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-4 border-b border-emerald-500/20 pb-2">Operating Revenue</div>
+                            <div className="flex justify-between items-center py-2"><span className="text-sm font-bold text-slate-300">Gross Sales</span><span className="text-sm font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
+                            <div className="flex justify-between items-center py-4 mt-2 bg-emerald-500/10 px-4 rounded-xl border border-emerald-500/20"><span className="text-xs font-black uppercase text-emerald-400">Gross Margin</span><span className="text-lg font-black text-white">${stats.totalRevenue.toLocaleString()}</span></div>
                         </div>
                         <div>
-                            <div className="text-xs font-black text-rose-500 uppercase tracking-widest mb-4 border-b border-rose-500/20 pb-2">Operating Expenses</div>
-                            <div className="flex justify-between items-center py-2"><span className="text-sm font-bold text-gray-400">G&A Expenses</span><span className="text-sm font-black text-rose-400">${stats.totalExpenses.toLocaleString()}</span></div>
+                            <div className="text-xs font-black text-rose-400 uppercase tracking-widest mb-4 border-b border-rose-500/20 pb-2">Operating Expenses</div>
+                            <div className="flex justify-between items-center py-2"><span className="text-sm font-bold text-slate-300">G&A Expenses</span><span className="text-sm font-black text-rose-300">${stats.totalExpenses.toLocaleString()}</span></div>
                         </div>
                         <div className="pt-6 border-t border-white/5">
                             <div className="p-6 bg-white/[0.03] rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-4">
                                 <span className="text-xs font-black uppercase tracking-widest text-gray-500">Net Operational Result</span>
-                                <span className={`text-3xl font-black ${stats.totalRevenue >= stats.totalExpenses ? 'text-teal-500' : 'text-rose-500'}`}>${(stats.totalRevenue - stats.totalExpenses).toLocaleString()}</span>
+                                <span className={`text-3xl font-black ${stats.totalRevenue >= stats.totalExpenses ? 'text-emerald-400' : 'text-rose-400'}`}>${(stats.totalRevenue - stats.totalExpenses).toLocaleString()}</span>
                             </div>
                         </div>
                     </div>
@@ -369,11 +369,11 @@ export default function AccountingDashboard() {
 
             {activeTab === 'receipts' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <Card className="bg-slate-900/40 border-white/5 overflow-hidden">
+                    <Card className="dashboard-panel-soft overflow-hidden">
                         <div className="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414]">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-teal-500" /> Pending & Recent Receipts</h3>
+                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-emerald-400" /> Pending & Recent Receipts</h3>
                             <div className="flex gap-2">
-                                <Button size="sm" variant="ghost" className="text-xs text-slate-400"><Filter size={14} className="mr-1" /> Filter</Button>
+                                <Button size="sm" variant="ghost" className="text-xs text-slate-300"><Filter size={14} className="mr-1" /> Filter</Button>
                             </div>
                         </div>
                         <div className="divide-y divide-white/5">
@@ -383,7 +383,7 @@ export default function AccountingDashboard() {
                                 receipts.map(receipt => (
                                     <div key={receipt.id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-all">
                                         <div className="flex items-start gap-4 flex-1">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${receipt.status === 'paid' ? 'bg-teal-500/10 text-teal-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${receipt.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
                                                 <Receipt size={20} />
                                             </div>
                                             <div className="min-w-0">
@@ -391,7 +391,7 @@ export default function AccountingDashboard() {
                                                 <div className="flex items-center gap-3 mt-1">
                                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(receipt.receiptDate).toLocaleDateString()}</span>
                                                     <div className="w-1 h-1 rounded-full bg-slate-800" />
-                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${receipt.status === 'paid' ? 'text-teal-500' : 'text-amber-500'}`}>{receipt.status}</span>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${receipt.status === 'paid' ? 'text-emerald-400' : 'text-amber-400'}`}>{receipt.status}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -400,7 +400,7 @@ export default function AccountingDashboard() {
                                                 <p className="text-lg font-black text-white">${receipt.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                                             </div>
                                             {receipt.status === 'pending' && (
-                                                <Button size="sm" onClick={() => handleMarkPaid(receipt.id)} className="bg-teal-600/20 text-teal-500 hover:bg-teal-600 hover:text-white border border-teal-500/30">Mark Paid</Button>
+                                                <Button size="sm" onClick={() => handleMarkPaid(receipt.id)} className="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30">Mark Paid</Button>
                                             )}
                                             {receipt.status === 'paid' && (
                                                 <div className="text-teal-500 flex items-center gap-1 text-xs font-black uppercase"><CheckCircle2 size={14} /> Recorded</div>

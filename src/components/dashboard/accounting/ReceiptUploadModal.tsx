@@ -152,7 +152,7 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
             <div className="space-y-6">
                 {!extractedData ? (
                     <>
-                        <div className="text-center text-slate-400 text-sm">
+                        <div className="text-center text-slate-300 text-sm">
                             Upload a photo or scanned copy of a receipt. Our AI will automatically extract the date, vendor/description, and amount.
                         </div>
 
@@ -164,11 +164,11 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
 
                         {!preview ? (
                             <div className="flex justify-center w-full">
-                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-800/50 hover:bg-slate-800 transition-colors">
+                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-slate-700 border-dashed rounded-xl cursor-pointer bg-slate-900/60 hover:bg-slate-900 transition-colors">
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <Camera className="w-10 h-10 text-teal-500 mb-3" />
-                                        <p className="mb-2 text-sm text-slate-300"><span className="font-semibold text-teal-400">Click to upload</span> or drag and drop</p>
-                                        <p className="text-xs text-slate-500">PNG, JPG or JPEG (MAX. 5MB)</p>
+                                        <Camera className="w-10 h-10 text-emerald-400 mb-3" />
+                                        <p className="mb-2 text-sm text-slate-300"><span className="font-semibold text-emerald-400">Click to upload</span> or drag and drop</p>
+                                        <p className="text-xs text-slate-400">PNG, JPG or JPEG (MAX. 5MB)</p>
                                     </div>
                                     <input id="dropzone-file" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                                 </label>
@@ -206,15 +206,15 @@ export default function ReceiptUploadModal({ isOpen, onClose, onSuccess, account
                     </>
                 ) : (
                     <div className="space-y-6">
-                        <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl flex items-start gap-4">
-                            <Receipt className="w-6 h-6 text-teal-400 shrink-0 mt-1" />
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-4">
+                            <Receipt className="w-6 h-6 text-emerald-400 shrink-0 mt-1" />
                             <div>
                                 <h4 className="text-white font-medium mb-1">Receipt Analyzed Successfully</h4>
-                                <p className="text-sm text-slate-400 mb-4">Please review the extracted data before saving.</p>
+                                <p className="text-sm text-slate-300 mb-4">Please review the extracted data before saving.</p>
 
                                 <div className="space-y-3">
                                     <div>
-                                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Description / Vendor</label>
+                                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 block">Description / Vendor</label>
                                         <Input
                                             value={extractedData.description || ''}
                                             onChange={(e) => setExtractedData({ ...extractedData, description: e.target.value })}
