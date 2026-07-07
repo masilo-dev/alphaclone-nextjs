@@ -147,9 +147,9 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-slate-800 text-slate-400 rounded-lg hover:bg-slate-700 transition-colors group w-full sm:w-auto"
+                className="flex h-[42px] w-10 sm:w-[304px] max-w-[304px] items-center justify-center sm:justify-start gap-2 rounded-2xl border border-white/5 bg-white/[0.04] px-0 sm:px-3.5 text-slate-400 transition-colors hover:bg-white/[0.06] group"
             >
-                <div className="relative w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                <div className="relative h-4 w-4 opacity-70 transition-opacity group-hover:opacity-100">
                     <Image
                         src="/logo.png"
                         alt="AlphaClone"
@@ -157,8 +157,8 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         className="object-contain"
                     />
                 </div>
-                <span className="text-sm">Search...</span>
-                <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs bg-slate-900 border border-slate-700 rounded ml-auto">
+                <span className="hidden text-sm font-medium sm:inline">Search anything...</span>
+                <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 text-xs text-slate-400 sm:inline-block">
                     ⌘K
                 </kbd>
             </button>
@@ -174,7 +174,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
             <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 sm:pt-20 px-4">
                 <Card className="w-full max-w-3xl max-h-[85vh] sm:max-h-[80vh] flex flex-col overflow-hidden">
                     {/* Search Input */}
-                    <div className="flex items-center gap-3 p-4 border-b border-slate-800">
+                    <div className="flex items-center gap-2.5 p-[14px] border-b border-slate-800">
                         <Search className="w-5 h-5 text-slate-400" />
                         <input
                             ref={inputRef}
@@ -367,4 +367,3 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
 };
 
 export default EnhancedGlobalSearch;
-

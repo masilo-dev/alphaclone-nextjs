@@ -1076,7 +1076,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 )}
 
                 {/* Header */}
-                <header className={`h-16 border-b border-slate-800/50 flex items-center justify-between px-4 md:px-8 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
+                <header className={`h-[4.75rem] border-b border-slate-800/50 flex items-center justify-between px-3 sm:px-4 md:px-9 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
                         {/* Mobile Menu Toggle removed - BottomNav handles it */}
@@ -1111,7 +1111,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </div>
 
                     {/* Right: compact utility cluster + account menu */}
-                    <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-2.5">
                         {activeBgTasksCount > 0 && (
                             <div className="hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
                                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1160,7 +1160,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     className={`flex-1 min-h-0 ac-business-scroll ${
                         DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
                             ? 'overflow-hidden p-0'
-                            : 'overflow-y-auto overflow-x-hidden p-4 md:p-8 dashboard-content-padding'
+                            : 'overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 dashboard-content-padding'
                     }`}
                 >
                     <WidgetErrorBoundary title="Business Dashboard Error">

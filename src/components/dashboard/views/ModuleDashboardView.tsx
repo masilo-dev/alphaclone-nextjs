@@ -179,7 +179,7 @@ export function OverviewDashboard() {
       moduleId="overview"
       endpoint="/api/dashboard/overview"
       chartType="line"
-      chartColor={DASHBOARD_COLORS.green}
+      chartColor={DASHBOARD_COLORS.amber}
       valuePrefix="$"
       overview
       chartTitle="Revenue trend"
@@ -240,7 +240,7 @@ export function InvoicingDashboard() {
       moduleId="invoicing"
       endpoint="/api/invoices/stats"
       chartType="bar"
-      chartColor={DASHBOARD_COLORS.blue}
+      chartColor={DASHBOARD_COLORS.amber}
       dualBar
       valuePrefix="$"
       chartTitle="Revenue collection"

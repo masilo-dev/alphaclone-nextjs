@@ -21,6 +21,7 @@ export default function DocumentsHub({ children }: DocumentsHubProps) {
       title="Documents"
       description="Hub, vault, contracts, and templates in one place"
       tabs={DOCUMENTS_TABS}
+      accent="amber"
     >
       {children}
     </HubShell>

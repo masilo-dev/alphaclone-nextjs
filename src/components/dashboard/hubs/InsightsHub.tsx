@@ -21,6 +21,7 @@ export default function InsightsHub({ children }: InsightsHubProps) {
       title="Insights Hub"
       description="KPIs, performance metrics, and business reports"
       tabs={INSIGHTS_TABS}
+      accent="purple"
     >
       {children}
     </HubShell>

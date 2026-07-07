@@ -563,7 +563,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     loadAllData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]); // Only re-run if user changes (not on every tenant update)
 
   const refreshStats = useCallback(async () => {
@@ -1910,8 +1909,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         <TrialBanner />
         {/* Header - Visible in all dashboard views */}
         <header className={`bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header ${activeTab === '/dashboard/pwa-settings' ? 'hidden md:block' : ''}`}>
-          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
-            <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center justify-between px-3 sm:px-7 py-2.5 sm:py-3.5">
+            <div className="flex items-center gap-2.5 sm:gap-4">
               {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
               {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
@@ -1921,7 +1920,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-3.5 min-w-0 flex-shrink-0">
               <div className="hidden md:flex items-center shrink-0">
                 <MomentumHUD 
                   score={dashboardStats?.momentumScore || 0}
@@ -1932,7 +1931,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 />
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-2.5">
                 {activeMeetingCallId && (
                   <button
                     onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
@@ -1977,7 +1976,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Main Content Area */}
         <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
-          <div className={`max-w-[1240px] mx-auto p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${
+          <div className={`max-w-[1560px] mx-auto p-3 sm:p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${
             activeTab === '/dashboard/pwa-settings'
               ? 'p-0 max-w-none'
               : activeTab === '/dashboard/mail' || activeTab === '/dashboard/messages'

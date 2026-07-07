@@ -312,7 +312,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
         {commandStats.map((s) => {
           const Icon = s.icon;
           return (
@@ -363,7 +363,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)] gap-4 items-start">
         <div className="space-y-3">
           <div className="mb-2">
-            <ModuleStatCards stats={homeStats} className="grid-cols-2 lg:grid-cols-4" />
+            <ModuleStatCards stats={homeStats} className="grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4" />
           </div>
 
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-3">
@@ -371,7 +371,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
               <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
               <button onClick={() => router.push('/dashboard/settings')} className="text-[11px] text-teal-400 font-bold">Manage</button>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {primaryModules.map((mod, idx) => {
                 const Icon = mod.icon;
                 return (
@@ -389,7 +389,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                 );
               })}
             </div>
-            <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2">
+            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
               {secondaryModules.map((mod, idx) => {
                 const Icon = mod.icon;
                 return (

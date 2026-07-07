@@ -14,6 +14,7 @@ export default function SalesHub({ children }: SalesHubProps) {
       title="Sales Workspace"
       description="One home for pipeline, leads, contacts, accounts, and execution tabs"
       tabs={SALES_WORKSPACE_TABS}
+      accent="blue"
     >
       {children}
     </HubShell>

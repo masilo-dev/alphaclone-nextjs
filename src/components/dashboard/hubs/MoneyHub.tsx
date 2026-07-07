@@ -26,6 +26,7 @@ export default function MoneyHub({ children }: MoneyHubProps) {
       description="Invoicing, accounting, expenses, and financial reports"
       tabs={MONEY_TABS}
       dataTour="money-hub"
+      accent="orange"
     >
       {children}
     </HubShell>

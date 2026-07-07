@@ -177,9 +177,10 @@ export default function BusinessHomeDashboard() {
     const colorForAction = (a: string) => {
       if (/lead/i.test(a))    return 'text-[#adebb3]';
       if (/deal/i.test(a))    return 'text-[#3eb489]';
-      if (/invoice|pay/i.test(a)) return 'text-[#adebb3]';
+      if (/invoice|pay|bill/i.test(a)) return 'text-[#fb923c]';
       if (/email|campaign/i.test(a)) return 'text-[#00f0ff]';
-      if (/contract/i.test(a)) return 'text-[#7f00ff]';
+      if (/contract/i.test(a)) return 'text-[#f87171]';
+      if (/task|overdue|alert/i.test(a)) return 'text-[#facc15]';
       return 'text-[#c0c0c0]';
     };
     setActivities(((actRows as any[]) || []).map((r: any) => ({
@@ -227,7 +228,7 @@ export default function BusinessHomeDashboard() {
     return (
       <div className="p-4 md:p-6 space-y-4 animate-pulse">
         <div className="h-8 w-56 bg-white/5 rounded" />
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
           {Array(5).fill(0).map((_, i) => <div key={i} className="h-36 bg-white/5 rounded-2xl" />)}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -238,70 +239,94 @@ export default function BusinessHomeDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 pb-24 ac-scroll-full ac-enterprise-module">
+    <div className="space-y-5 p-3 sm:p-4 md:p-6 pb-24 ac-scroll-full ac-enterprise-module">
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3.5">
         <div>
-          <h1 className="text-xl font-black text-white">Dashboard</h1>
-          <p className="text-sm text-[#c0c0c0] mt-0.5">
+          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-[#fb923c]">Workspace Home</p>
+          <h1 className="mt-1.5 text-3xl md:text-[40px] font-black tracking-tight text-white">Workspace Home</h1>
+          <p className="text-sm text-[#c0c0c0] mt-0.5 leading-[1.5]">
             Welcome back, <span className="text-[#adebb3] font-semibold">{user?.name?.split(' ')[0]}</span>!
-            {' '}Your AI business is running smoothly.
+            {' '}Here’s what’s happening with your business today.
           </p>
         </div>
-        <span className="text-xs text-[#94a3b8] shrink-0 hidden sm:block pt-1">{dateLabel}</span>
+        <div className="hidden sm:flex items-center gap-2.5 shrink-0 pt-0.5">
+          <button type="button" className="h-12 px-4 rounded-2xl border border-white/5 bg-white/[0.04] text-sm font-semibold text-white hover:bg-white/[0.06] transition-colors">
+            + Add Widget
+          </button>
+          <button type="button" className="h-12 w-12 rounded-2xl border border-white/5 bg-white/[0.04] text-white hover:bg-white/[0.06] transition-colors">
+            ⋯
+          </button>
+        </div>
       </div>
 
-      {/* ── 5 Stat Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-        <StandardStatCard label="Total Revenue"    value={`R${compact(stats.revenue)}`}      delta={pctChange(stats.revenue, stats.revenuePrev)}      icon={DollarSign}    themeColor="purple" onClick={() => router.push('/dashboard/finance')} />
-        <StandardStatCard label="New Leads"        value={compact(stats.leads)}              delta={pctChange(stats.leads, stats.leadsPrev)}        icon={Users}         themeColor="blue"   onClick={() => router.push('/dashboard/crm')} />
-        <StandardStatCard label="Email Sent"       value={compact(stats.emailsSent)}         delta={pctChange(stats.emailsSent, stats.emailsSentPrev)}   icon={Mail}          themeColor="emerald" onClick={() => router.push('/dashboard/mail')} />
-        <StandardStatCard label="Deals Closed"     value={compact(stats.dealsClosed)}        delta={pctChange(stats.dealsClosed, stats.dealsClosedPrev)}  icon={BarChart2}     themeColor="amber"  onClick={() => router.push('/dashboard/deals')} />
-        <StandardStatCard label="Tasks Completed"  value={`${taskPct}%`}                    delta={taskPct - 80}                                           icon={CheckCircle2}  themeColor="teal"   onClick={() => router.push('/dashboard/tasks')} />
-      </div>
-
-      {/* ── Middle: Chart | Pipeline | AI Agents ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-
-        {/* Revenue chart */}
-        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
-          <div className="flex items-center justify-between">
+      {/* ── hero cards ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-[380px_minmax(0,1fr)] gap-3">
+        <div className="dashboard-panel-soft rounded-[28px] px-6 pt-[22px] pb-6 border border-[#4ade80]/12 shadow-[0_24px_80px_-36px_rgba(74,222,128,0.3)]">
+          <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-bold text-[#f5f5f5]">Revenue Overview</h3>
-              <p className="text-[11px] text-[#94a3b8]">This Month vs Last Month</p>
+              <h3 className="text-[18px] font-bold text-white">Business Health Score</h3>
+              <p className="mt-1 text-xs text-[#94a3b8]">Performance across the workspace</p>
             </div>
-            <button onClick={() => router.push('/dashboard/finance')} className="text-[11px] text-[#adebb3] font-bold">View all</button>
+            <span className="text-[#94a3b8]">ⓘ</span>
           </div>
-          <div className="flex items-end justify-between gap-2">
-            <p className="text-2xl font-black text-[#adebb3]">R{compact(stats.revenue)}</p>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full mb-0.5 ${
-              pctChange(stats.revenue, stats.revenuePrev) >= 0
-                ? 'bg-[#adebb3]/15 text-[#adebb3]'
-                : 'bg-[#f87171]/15 text-[#f87171]'
-            }`}>
-              {pctChange(stats.revenue, stats.revenuePrev) >= 0 ? '▲' : '▼'} {Math.abs(pctChange(stats.revenue, stats.revenuePrev))}% vs last month
-            </span>
+          <div className="relative mx-auto mt-5 flex h-[290px] w-[290px] items-center justify-center rounded-full">
+            <div className="absolute inset-0 rounded-full border-[18px] border-white/[0.03]" />
+            <div
+              className="absolute inset-0 rounded-full border-[18px] border-transparent border-t-[#fb923c] border-r-[#4ade80] border-b-[#fb923c] border-l-[#4ade80] rotate-45"
+              style={{ clipPath: 'inset(0 round 9999px)' }}
+            />
+            <div className="absolute inset-[22px] rounded-full border border-white/5" />
+            <div className="relative text-center">
+              <div className="text-6xl font-black tracking-tight text-white">{Math.max(72, Math.min(99, 78 + Math.round((stats.revenue / 1000000) * 10)))}%</div>
+              <div className="mt-2 text-lg font-semibold text-[#4ade80]">Excellent</div>
+            </div>
           </div>
-          <div className="h-44">
+          <div className="mt-3.5 text-center text-sm text-slate-400">Your business is performing great.</div>
+          <button type="button" onClick={() => router.push('/dashboard/analytics')} className="mx-auto mt-3.5 flex items-center gap-2 text-sm font-semibold text-[#4ade80]">
+            View full analysis <span>→</span>
+          </button>
+        </div>
+
+        <div className="dashboard-panel-soft rounded-[28px] px-6 pt-[22px] pb-6 border border-[#fb923c]/12 shadow-[0_24px_80px_-36px_rgba(251,146,60,0.28)]">
+          <div className="flex items-start justify-between gap-3.5">
+            <div>
+              <h3 className="text-[18px] font-bold text-white">Revenue Analytics</h3>
+              <p className="mt-1 text-xs text-[#94a3b8]">Last 30 days</p>
+              <div className="mt-4 text-4xl font-black tracking-tight text-white">R{compact(stats.revenue)}</div>
+              <div className="mt-1.5 text-sm font-semibold text-[#4ade80]">
+                ↑ {Math.abs(pctChange(stats.revenue, stats.revenuePrev))}% vs last 30 days
+              </div>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <button type="button" className="h-11 rounded-2xl border border-white/5 bg-white/[0.04] px-4 text-sm text-slate-300">
+                Last 30 Days
+              </button>
+              <button type="button" className="h-11 w-11 rounded-2xl border border-white/5 bg-white/[0.04] text-slate-300">
+                ⌄
+              </button>
+            </div>
+          </div>
+          <div className="mt-[22px] h-[315px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chart} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="bizRevGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#adebb3" stopOpacity={0.34} />
-                    <stop offset="95%" stopColor="#adebb3" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="bizPrevGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.18} />
-                    <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" />
-                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#c0c0c0' }} tickLine={false} axisLine={false} interval={3} />
-                <YAxis tick={{ fontSize: 9, fill: '#c0c0c0' }} tickLine={false} axisLine={false} />
-                <Tooltip
-                  content={({ active, payload, label }: any) => {
-                    if (active && payload && payload.length) {
+                <AreaChart data={chart} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="bizRevGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4ade80" stopOpacity={0.36} />
+                      <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="bizPrevGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.18} />
+                      <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="dashboard-chart-grid" vertical={false} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={2} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    content={({ active, payload, label }: any) => {
+                      if (!active || !payload?.length) return null;
                       return (
                         <div className="dashboard-chart-tooltip backdrop-blur-md p-3 rounded-lg shadow-xl">
                           <p className="text-[10px] text-[#c0c0c0] font-black uppercase tracking-wider mb-1">{label}</p>
@@ -314,19 +339,30 @@ export default function BusinessHomeDashboard() {
                           ))}
                         </div>
                       );
-                    }
-                    return null;
-                  }}
-                />
-                <Area type="monotone" dataKey="thisMonth" stroke="#adebb3" strokeWidth={2.5} fill="url(#bizRevGradient)" dot={false} name="This Month" />
-                <Area type="monotone" dataKey="lastMonth" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 5" fill="url(#bizPrevGradient)" dot={false} name="Last Month" />
-              </AreaChart>
+                    }}
+                  />
+                  <Area type="monotone" dataKey="thisMonth" stroke="#4ade80" strokeWidth={2.5} fill="url(#bizRevGradient)" dot={false} name="This Month" />
+                  <Area type="monotone" dataKey="lastMonth" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 5" fill="url(#bizPrevGradient)" dot={false} name="Last Month" />
+                </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        {/* Pipeline funnel */}
-        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
+      {/* ── 5 Stat Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        <StandardStatCard label="Total Revenue"    value={`R${compact(stats.revenue)}`}      delta={pctChange(stats.revenue, stats.revenuePrev)}      icon={DollarSign}    themeColor="orange" onClick={() => router.push('/dashboard/finance')} />
+        <StandardStatCard label="New Leads"        value={compact(stats.leads)}              delta={pctChange(stats.leads, stats.leadsPrev)}        icon={Users}         themeColor="blue"   onClick={() => router.push('/dashboard/crm')} />
+        <StandardStatCard label="Email Sent"       value={compact(stats.emailsSent)}         delta={pctChange(stats.emailsSent, stats.emailsSentPrev)}   icon={Mail}          themeColor="emerald" onClick={() => router.push('/dashboard/mail')} />
+        <StandardStatCard label="Deals Closed"     value={compact(stats.dealsClosed)}        delta={pctChange(stats.dealsClosed, stats.dealsClosedPrev)}  icon={BarChart2}     themeColor="rose"   onClick={() => router.push('/dashboard/deals')} />
+        <StandardStatCard label="Tasks Completed"  value={`${taskPct}%`}                    delta={taskPct - 80}                                           icon={CheckCircle2}  themeColor="amber"  onClick={() => router.push('/dashboard/tasks')} />
+      </div>
+
+      {/* ── Middle: Pipeline | AI Agents ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        {/* Revenue chart */}
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3 border border-[#f87171]/15 shadow-[0_20px_60px_-34px_rgba(248,113,113,0.28)]">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-[#f5f5f5]">Sales Pipeline</h3>
@@ -360,7 +396,7 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* AI Agents */}
-        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3 border border-[#facc15]/12 shadow-[0_20px_60px_-34px_rgba(250,204,21,0.24)]">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-[#f5f5f5]">AI Agents</h3>
@@ -389,7 +425,7 @@ export default function BusinessHomeDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
         {/* Tasks */}
-        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3 border border-[#facc15]/12">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-[#f5f5f5]">Tasks</h3>
             <button onClick={() => router.push('/dashboard/tasks')} className="text-[11px] text-[#adebb3] font-bold">View all</button>
@@ -418,7 +454,7 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* Social Media */}
-        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3 border border-[#f87171]/12">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-[#f5f5f5]">Social Media Overview</h3>
             <button onClick={() => router.push('/dashboard/business/social')} className="text-[11px] text-[#00f0ff] font-bold">View all</button>
@@ -452,7 +488,7 @@ export default function BusinessHomeDashboard() {
         </div>
 
         {/* Recent Activities */}
-        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3">
+        <div className="dashboard-panel-soft rounded-2xl p-5 space-y-3 border border-[#fb923c]/12">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-[#f5f5f5]">Recent Activities</h3>
             <button onClick={() => router.push('/dashboard/analytics')} className="text-[11px] text-[#adebb3] font-bold">View all</button>

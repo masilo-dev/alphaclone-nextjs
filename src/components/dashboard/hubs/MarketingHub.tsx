@@ -26,6 +26,7 @@ export default function MarketingHub({ children }: MarketingHubProps) {
       title="Marketing Hub"
       description="Email campaigns, forms, social, and outreach"
       tabs={MARKETING_TABS}
+      accent="rose"
     >
       {children}
     </HubShell>
