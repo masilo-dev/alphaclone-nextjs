@@ -455,6 +455,26 @@ export const businessClientService = {
             if (!clientToArchive.is_active) return { error: 'Client is already archived' };
 
             const { data: { user } } = await supabase.auth.getUser();
+            const { data, error: rpcError } = await supabase.rpc('archive_tenant_client', {
+                p_client_id: clientId,
+            });
+
+            if (!rpcError && data && (data as { ok?: boolean }).ok) {
+                if (user && clientToArchive) {
+                    await activityService.logAudit({
+                        userId: user.id,
+                        tenantId: clientToArchive.tenant_id,
+                        action: 'CLIENT_ARCHIVE',
+                        resourceType: 'business_clients',
+                        resourceId: clientId,
+                        oldValues: { isActive: true },
+                        newValues: { isActive: false },
+                        metadata: { clientName: clientToArchive.name },
+                    });
+                }
+                return { error: null };
+            }
+
             const result = await softDeleteClientById(
                 supabase,
                 clientToArchive.tenant_id,

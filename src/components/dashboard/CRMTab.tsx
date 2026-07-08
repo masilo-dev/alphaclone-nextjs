@@ -315,8 +315,9 @@ const LeadDetail: React.FC<{
   onUpdate: (id: string, status: LeadStatus) => void;
   onQualify: (lead: Lead) => void;
   onSaveLead?: (id: string, patch: { name: string; email?: string; phone?: string; company?: string }) => Promise<void>;
+  onDeleteLead?: (leadId: string) => Promise<void>;
   inDrawer?: boolean;
-}> = ({ lead, onBack, onUpdate, onQualify, onSaveLead, inDrawer }) => {
+}> = ({ lead, onBack, onUpdate, onQualify, onSaveLead, onDeleteLead, inDrawer }) => {
   const [activities, setActivities] = useState<Array<{ id: string; type: string; description: string; created_at: string }>>([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
   const [name, setName] = useState(lead.name);
@@ -324,6 +325,18 @@ const LeadDetail: React.FC<{
   const [phone, setPhone] = useState(lead.phone || '');
   const [company, setCompany] = useState(lead.company || lead.business_name || '');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteLead = async () => {
+    if (!onDeleteLead) return;
+    if (!window.confirm(`Delete lead "${name || lead.name}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      await onDeleteLead(lead.id);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     setName(lead.name);
@@ -461,6 +474,16 @@ const LeadDetail: React.FC<{
               {saving ? 'Saving…' : 'Save changes'}
             </button>
           )}
+          {onDeleteLead && (
+            <button
+              type="button"
+              onClick={() => void handleDeleteLead()}
+              disabled={deleting}
+              className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/10 disabled:opacity-50"
+            >
+              {deleting ? 'Deleting…' : 'Delete lead'}
+            </button>
+          )}
         </div>
 
         {/* Read-only metadata */}
@@ -535,10 +558,11 @@ const Client360Detail: React.FC<{
   onNewDeal: (client: BusinessClient) => void;
   onDraftContract: (client: BusinessClient) => void;
   onClientSaved?: (clientId: string, patch: Partial<BusinessClient>) => Promise<void>;
+  onDeleteClient?: (clientId: string) => Promise<void>;
   status: 'online' | 'away' | 'busy' | 'offline';
   isTeamsConnected: boolean;
   inDrawer?: boolean;
-}> = ({ client, user, onBack, onNewDeal, onDraftContract, onClientSaved, status, isTeamsConnected, inDrawer }) => {
+}> = ({ client, user, onBack, onNewDeal, onDraftContract, onClientSaved, onDeleteClient, status, isTeamsConnected, inDrawer }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -551,6 +575,18 @@ const Client360Detail: React.FC<{
   const [salesStage, setSalesStage] = useState(client.sales_stage);
   const [value, setValue] = useState(String(client.value ?? 0));
   const [savingClient, setSavingClient] = useState(false);
+  const [deletingClient, setDeletingClient] = useState(false);
+
+  const handleDeleteClient = async () => {
+    if (!onDeleteClient) return;
+    if (!window.confirm(`Archive client "${name || client.name}"? You can restore archived records from Settings.`)) return;
+    setDeletingClient(true);
+    try {
+      await onDeleteClient(client.id);
+    } finally {
+      setDeletingClient(false);
+    }
+  };
 
   useEffect(() => {
     setName(client.name);
@@ -796,6 +832,16 @@ const Client360Detail: React.FC<{
           >
             {savingClient ? 'Saving…' : 'Save changes'}
           </button>
+          {onDeleteClient && (
+            <button
+              type="button"
+              onClick={() => void handleDeleteClient()}
+              disabled={deletingClient}
+              className="w-full min-h-11 rounded-xl border border-red-500/30 text-red-400 text-sm font-semibold hover:bg-red-500/10 disabled:opacity-50"
+            >
+              {deletingClient ? 'Archiving…' : 'Archive client'}
+            </button>
+          )}
         </div>
 
         {/* Quick Communication Outreach Bar */}
@@ -1788,6 +1834,24 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     toast.success('Client updated');
   };
 
+  const handleLeadDelete = async (leadId: string) => {
+    const { error } = await leadService.deleteLead(leadId);
+    if (error) throw new Error(error);
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+    setSelectedEntity(null);
+    toast.success('Lead deleted');
+    await loadCRMData();
+  };
+
+  const handleClientDelete = async (clientId: string) => {
+    const { error } = await businessClientService.deleteClient(clientId);
+    if (error) throw new Error(error);
+    setClients((prev) => prev.filter((c) => c.id !== clientId));
+    setSelectedEntity(null);
+    toast.success('Client archived');
+    await loadCRMData();
+  };
+
   // Convert/Qualify Lead to Client & active Deal
   const handleQualifyLead = (lead: Lead) => {
     setQualifyingLead(lead);
@@ -2370,6 +2434,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             onUpdate={handleStatusUpdate}
             onQualify={handleQualifyLead}
             onSaveLead={handleLeadSave}
+            onDeleteLead={handleLeadDelete}
             inDrawer
           />
         )}
@@ -2387,6 +2452,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             user={user}
             onBack={() => setSelectedEntity(null)}
             onClientSaved={handleClientSave}
+            onDeleteClient={handleClientDelete}
             onNewDeal={() => {
               setSelectedEntity(null);
               router.push('/dashboard/deals');

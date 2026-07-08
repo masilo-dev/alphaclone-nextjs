@@ -598,12 +598,32 @@ export const leadService = {
     async deleteLead(id: string): Promise<{ error: string | null }> {
         const tenantId = this.getTenantId();
         await fileUploadService.deleteFileByEntity('lead', id);
-        const { error } = await supabase
-            .from('leads')
-            .delete()
-            .eq('id', id)
-            .eq('tenant_id', tenantId);
-        return { error: error ? error.message : null };
+
+        const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
+        if (!error && data && (data as { ok?: boolean }).ok) {
+            return { error: null };
+        }
+
+        if (error) {
+            const { error: directError } = await supabase
+                .from('leads')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+            return { error: directError ? directError.message : error.message };
+        }
+
+        const rpcError = (data as { error?: string } | null)?.error;
+        if (rpcError) {
+            const { error: directError } = await supabase
+                .from('leads')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+            return { error: directError ? directError.message : rpcError };
+        }
+
+        return { error: null };
     },
 
     async bulkDeleteLeads(ids: string[]): Promise<{ error: string | null; count: number }> {
@@ -612,13 +632,22 @@ export const leadService = {
         const uniqueIds = [...new Set(ids)];
         try {
             await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('lead', id)));
-            const { error } = await supabase
-                .from('leads')
-                .delete()
-                .in('id', uniqueIds)
-                .eq('tenant_id', tenantId);
-            if (error) throw error;
-            return { error: null, count: uniqueIds.length };
+            let count = 0;
+            for (const id of uniqueIds) {
+                const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: id });
+                if (!error && data && (data as { ok?: boolean }).ok) {
+                    count += 1;
+                    continue;
+                }
+                const { error: directError } = await supabase
+                    .from('leads')
+                    .delete()
+                    .eq('id', id)
+                    .eq('tenant_id', tenantId);
+                if (directError) throw directError;
+                count += 1;
+            }
+            return { error: null, count };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };
         }

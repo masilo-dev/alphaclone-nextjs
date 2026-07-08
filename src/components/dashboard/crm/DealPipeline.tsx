@@ -8,6 +8,7 @@ import {
   Edit3, Trash2, GripVertical
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { dealService } from '@/services/dealService';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'react-hot-toast';
 import { Button, Input, Modal } from '../../ui/UIComponents';
@@ -401,12 +402,8 @@ export const DealPipeline: React.FC<DealPipelineProps> = ({ tenantId, onDealCrea
 
   const handleDeleteDeal = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('deals')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const { success, error } = await dealService.deleteDeal(id);
+      if (!success || error) throw new Error(error || 'Failed to delete deal');
 
       setDeals(prev => prev.filter(d => d.id !== id));
       toast.success('Deal deleted');
