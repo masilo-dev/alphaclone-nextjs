@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collaborationService, CollaborationDocument, CursorPosition } from '@/services/collaborationService';
 import { Loader2, Users, Save, X, Maximize2, Minimize2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { WORKSPACE } from '@/constants/design';
 
 interface CollaborativeTaskNotesProps {
     taskId: string;
@@ -147,9 +148,9 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
     }
 
     return (
-        <div className={`flex flex-col h-full bg-slate-950 border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 ${isFullscreen ? 'fixed inset-4 z-50' : 'relative'}`}>
+        <div className={`flex h-full flex-col overflow-hidden transition-all duration-500 ${WORKSPACE.panel.base} rounded-lg ${isFullscreen ? 'fixed inset-4 z-50' : 'relative'}`}>
             {/* Toolbar */}
-            <div className="flex items-center justify-between px-6 py-4 bg-slate-900/40 border-b border-white/5 backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-slate-900/40 px-6 py-4 backdrop-blur-xl">
                 <div className="flex items-center gap-4">
                     <div className="p-2 bg-teal-500/10 rounded-xl">
                         <Users className="w-5 h-5 text-teal-400" />
@@ -216,7 +217,7 @@ const CollaborativeTaskNotes: React.FC<CollaborativeTaskNotesProps> = ({
             </div>
 
             {/* Status Footer */}
-            <div className="px-6 py-2 bg-slate-900/20 border-t border-white/5 text-xs text-slate-600 flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 border-t border-[var(--ws-border)] bg-slate-900/20 px-6 py-2 text-xs text-slate-600">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 <span>Auto-saving</span>
             </div>

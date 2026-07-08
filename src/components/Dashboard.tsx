@@ -22,6 +22,7 @@ import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
 import { Button, Card, Input, Modal } from './ui/UIComponents';
 import { CLIENT_NAV_ITEMS, ADMIN_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS, LOGO_URL, APP_NAME } from '../constants';
+import { WORKSPACE } from '@/constants/design';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { useLanguage } from '../contexts/LanguageContext';
 import Image from 'next/image';
@@ -93,11 +94,10 @@ import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
 
 const BusinessDashboard = React.lazy(() => import('./dashboard/business/BusinessDashboard'));
-const BusinessHomeDashboard = React.lazy(() => import('./dashboard/BusinessHomeDashboard'));
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
-const CRMTab = React.lazy(() => import('./dashboard/CRMTab'));
-const MessagesTab = React.lazy(() => import('./dashboard/MessagesTab'));
+import CRMTab from './dashboard/CRMTab';
+import MessagesTab from './dashboard/MessagesTab';
 const FinanceTab = React.lazy(() => import('./dashboard/FinanceTab'));
 const ArticleEditor = React.lazy(() => import('./dashboard/ArticleEditor'));
 const CalendarComponent = React.lazy(() => import('./dashboard/CalendarComponent'));
@@ -105,15 +105,15 @@ const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdm
 const SuperAdminUsersTab = React.lazy(() => import('./dashboard/admin/SuperAdminUsersTab'));
 const ImprovementsPage = React.lazy(() => import('./dashboard/admin/ImprovementsPage'));
 const ContactSubmissionsTab = React.lazy(() => import('./dashboard/ContactSubmissionsTab'));
-const TasksTab = React.lazy(() => import('./dashboard/TasksTab'));
-const DealsTab = React.lazy(() => import('./dashboard/DealsTab'));
-const QuotesTab = React.lazy(() => import('./dashboard/QuotesTab'));
+import TasksTab from './dashboard/TasksTab';
+import DealsTab from './dashboard/DealsTab';
+import QuotesTab from './dashboard/QuotesTab';
 const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab'));
-const MailTab = React.lazy(() => import('./dashboard/MailTab'));
+import MailTab from './dashboard/MailTab';
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
-const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
-const ProjectsPage = React.lazy(() => import('./dashboard/business/ProjectsPage'));
+import ClientsPage from './dashboard/business/ClientsPage';
+import ProjectsPage from './dashboard/business/ProjectsPage';
 const ContractDashboard = React.lazy(() => import('./contracts/ContractDashboard'));
 const AccountingDashboard = React.lazy(() => import('./dashboard/accounting/AccountingDashboard'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/business/BusinessPerformanceDashboard'));
@@ -352,15 +352,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isVoiceActive, setIsVoiceActive] = useState(false);
 
   // -- ISOLATION LOGIC --
-  // Platform super admin: sees all projects within the active tenant context
-  // Tenant admin: sees all data within their tenant
+  // Super Admin: sees ALL data across ALL tenants
+  // Tenant Admin: sees all data within their tenant
   // Client: sees only their own data
   const filteredProjects = useMemo(() => isPlatformAdminRole(user.role)
-    ? (projects || []) // Platform admin sees all in current tenant
+    ? (projects || []) // Platform super admin sees everything
     : (projects || []).filter(p => p.ownerId === user.id), [user.id, user.role, projects]);
 
   const filteredMessages = useMemo(() => isPlatformAdminRole(user.role)
-    ? (messages || []) // Platform admin sees all in current tenant
+    ? (messages || []) // Platform super admin sees everything
     : (messages || []).filter(m => m.senderId === user.id || m.recipientId === user.id), [user.id, user.role, messages]);
 
   const filteredInvoices = useMemo(() => (user.role as UserRole) === 'admin' || (user.role as UserRole) === 'tenant_admin'
@@ -563,6 +563,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
 
     loadAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]); // Only re-run if user changes (not on every tenant update)
 
   const refreshStats = useCallback(async () => {
@@ -1136,10 +1137,19 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [user.id]);
 
   // -- RENDER CONTENT --
-  const handleShareProject = (projectId: string) => {
-    const url = `${window.location.origin}/p/${projectId}`;
-    navigator.clipboard.writeText(url);
-    toast.success('Public link copied to clipboard');
+  const handleShareProject = async (projectId: string) => {
+    try {
+      const { token, error } = await projectService.ensurePortalToken(projectId);
+      if (error || !token) {
+        toast.error('Could not create a secure client link');
+        return;
+      }
+      const url = `${window.location.origin}/p/${token}`;
+      await navigator.clipboard.writeText(url);
+      toast.success('Client portal link copied');
+    } catch {
+      toast.error('Failed to copy share link');
+    }
   };
 
   const renderContent = () => {
@@ -1603,9 +1613,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         if (location === '/dashboard' || location === '/dashboard/business') {
           return (
             <div data-tour="dashboard-overview">
-              <React.Suspense fallback={<TabSkeleton />}>
-                <BusinessHomeDashboard />
-              </React.Suspense>
+              <OverviewDashboard />
             </div>
           );
         }
@@ -1905,12 +1913,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-slate-950 ac-dashboard-shell-bg [height:100dvh]">
+      <div className="flex-1 flex flex-col overflow-hidden ac-workspace-canvas ac-dashboard-shell-bg [height:100dvh]">
         <TrialBanner />
         {/* Header - Visible in all dashboard views */}
-        <header className={`bg-slate-900 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-sm bg-slate-900/95 pt-safe ac-dashboard-header ${activeTab === '/dashboard/pwa-settings' ? 'hidden md:block' : ''}`}>
-          <div className="flex items-center justify-between px-3 sm:px-7 py-2.5 sm:py-3.5">
-            <div className="flex items-center gap-2.5 sm:gap-4">
+        <header className={`sticky top-0 z-30 pt-safe ac-dashboard-header ac-workspace-toolbar ${WORKSPACE.toolbar.height} ${activeTab === '/dashboard/pwa-settings' ? 'hidden md:block' : ''}`}>
+          <div className={`flex items-center justify-between h-full ${WORKSPACE.toolbar.padding}`}>
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Mobile Menu Toggle - Hidden if BottomNav handles it */}
               {/* Mobile Menu Toggle removed - BottomNav handles it */}
 
@@ -1920,7 +1928,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-3.5 min-w-0 flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-shrink-0">
               <div className="hidden md:flex items-center shrink-0">
                 <MomentumHUD 
                   score={dashboardStats?.momentumScore || 0}
@@ -1931,7 +1939,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 />
               </div>
 
-              <div className="flex items-center gap-1.5 sm:gap-2.5">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {activeMeetingCallId && (
                   <button
                     onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
@@ -1974,18 +1982,16 @@ const Dashboard: React.FC<DashboardProps> = ({
         </header>
 
         {/* Main Content Area */}
-        <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
+        <main id="main-content" className={`flex-1 min-h-0 ac-workspace-canvas ac-dashboard-main ${['/dashboard/mail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full scroll-smooth relative pb-safe md:pb-0`} role="main">
           {/* Content Wrapper for Max Width & Padding */}
-          <div className={`max-w-[1560px] mx-auto p-3 sm:p-4 md:p-8 dashboard-content-padding pb-24 md:pb-8 ${
+          <div className={`${WORKSPACE.canvas.maxWidth} mx-auto ${WORKSPACE.canvas.padding} dashboard-content-padding pb-24 md:pb-6 ${
             activeTab === '/dashboard/pwa-settings'
               ? 'p-0 max-w-none'
               : activeTab === '/dashboard/mail' || activeTab === '/dashboard/messages'
                 ? 'h-full flex flex-col'
                 : 'min-h-full'
           }`}>
-            {/* Background decorative elements */}
-            <div className="fixed top-20 left-1/3 w-96 h-96 bg-teal-600/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative z-10 max-w-7xl mx-auto min-h-full">
+            <div className="relative z-10 min-h-full">
               <WidgetErrorBoundary title="Dashboard Content Error">
                 <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(activeTab)}>
                   {renderContent()}

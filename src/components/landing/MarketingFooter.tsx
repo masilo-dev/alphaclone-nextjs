@@ -6,6 +6,13 @@ import { Twitter, Linkedin, Mail, Shield, Globe, Facebook } from 'lucide-react';
 import Image from 'next/image';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
 import { SOCIAL_PROFILES, COMPANY_LEGAL, formatCopyrightLine, formatLegalAddress } from '@/lib/seo/siteEntity';
+import {
+    BUSINESS_SIGNUP_HREF,
+    COMPANY_NAV_GROUP,
+    LOGIN_HREF,
+    PRODUCT_NAV_GROUP,
+    RESOURCES_NAV_GROUP,
+} from '@/lib/marketing/siteNavigation';
 
 const MarketingFooter: React.FC = () => {
     const currentYear = new Date().getFullYear();
@@ -14,28 +21,25 @@ const MarketingFooter: React.FC = () => {
         {
             title: 'Product',
             links: [
-                { label: 'Features', href: '/services' },
-                { label: 'CRM', href: '/crm' },
-                { label: 'Lead Management', href: '/lead-management' },
-                { label: 'Project Management', href: '/project-management' },
-                { label: 'AI Agents', href: '/ai-agents' },
-                { label: 'Video Meetings', href: '/video-meetings' },
-                { label: 'Claude and Manus', href: '/claude-manus-integrations' },
-                { label: 'Ecosystem', href: '/ecosystem' },
+                ...PRODUCT_NAV_GROUP.items.map((item) => ({ label: item.label, href: item.path })),
                 { label: 'Pricing', href: '/pricing' },
-                { label: 'Who We Serve', href: '/who-we-serve' },
                 { label: 'Results', href: '/results' },
+            ],
+        },
+        {
+            title: 'Resources',
+            links: [
+                ...RESOURCES_NAV_GROUP.items.map((item) => ({ label: item.label, href: item.path })),
+                { label: 'Search', href: '/search' },
+                { label: 'Start Free Trial', href: BUSINESS_SIGNUP_HREF },
+                { label: 'Login', href: LOGIN_HREF },
             ],
         },
         {
             title: 'Company',
             links: [
-                { label: 'About', href: '/about' },
+                ...COMPANY_NAV_GROUP.items.map((item) => ({ label: item.label, href: item.path })),
                 { label: 'Contact', href: '/contact' },
-                { label: 'User Guide', href: '/guide' },
-                { label: 'Search', href: '/search' },
-                { label: 'Docs', href: '/docs' },
-                { label: 'Login', href: '/auth/login' },
             ],
         },
         {

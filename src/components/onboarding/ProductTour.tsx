@@ -89,6 +89,11 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
 
     const tenantAdminSteps: Step[] = [
         {
+            target: '[data-tour="business-setup-checklist"]',
+            content: 'New here? Follow these three steps first — add a client, invoice, then connect inbox.',
+            placement: 'bottom',
+        },
+        {
             target: '[data-tour="business-home"]',
             content: 'Welcome to your Business OS. This home screen shows setup steps and quick actions for your workspace.',
             placement: 'bottom',

@@ -18,7 +18,7 @@ export function ModuleDashboardLayout({
   className,
 }: ModuleDashboardLayoutProps) {
   return (
-    <div className={cn(ENTERPRISE.moduleLayout.sectionGap, 'p-1 ac-scroll-full', className)}>
+    <div className={cn(ENTERPRISE.moduleLayout.sectionGap, 'ac-scroll-full', className)}>
       <div className={ENTERPRISE.moduleLayout.summaryGrid}>{row1}</div>
       {row1Extra ? (
         <div className={ENTERPRISE.moduleLayout.summaryGrid}>{row1Extra}</div>

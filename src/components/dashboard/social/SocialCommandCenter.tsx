@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     Bookmark, Link2, Plus, Trash2, ExternalLink, Facebook, Linkedin, Globe, 
     Search, Eye, Loader2, AlertCircle, CheckCircle2, RefreshCw, Video, Zap, 
     Copy, ChevronRight, Twitter, MessageSquare, Users, Activity as ActivityIcon, 
     Sparkles, Brain, Bot, Calendar, Camera, Image as ImageIcon, X, Sliders, 
-    BarChart2, Settings, HelpCircle, Clock, ArrowLeft, History, User, Building, 
+    BarChart2, Settings, HelpCircle, Clock, ArrowLeft, History, 
     ChevronDown, Repeat, Paperclip, AlertTriangle, Heart, Share2, MousePointerClick
 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
@@ -14,9 +14,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
+import EmptyState from '@/components/ui/EmptyState';
+import { WORKSPACE } from '@/constants/design';
 
 interface SocialPost {
     id: string;
@@ -68,6 +70,14 @@ interface LinkedInIntegration {
     linkedin_person_urn: string;
     scopes: string[] | null;
     is_active: boolean;
+    metadata?: {
+        company_pages?: Array<{
+            id: string;
+            name: string | null;
+            vanityName: string | null;
+            logoUrl: string | null;
+        }>;
+    } | null;
 }
 
 interface FacebookPage {
@@ -111,6 +121,7 @@ export default function SocialCommandCenter() {
     const [composeIsScheduled, setComposeIsScheduled] = useState(false);
     const [selectedLinkedInId, setSelectedLinkedInId] = useState('');
     const [selectedLinkedInIdentity, setSelectedLinkedInIdentity] = useState<'personal' | 'company'>('personal');
+    const [selectedLinkedInOrganizationId, setSelectedLinkedInOrganizationId] = useState('');
     const [selectedPageId, setSelectedPageId] = useState('');
     
     // X Twitter thread stacks
@@ -150,6 +161,35 @@ export default function SocialCommandCenter() {
     // Analytics state
     const [analyticsDateRange, setAnalyticsDateRange] = useState<'7D' | '30D' | '90D'>('7D');
 
+    const selectedLinkedInIntegration = useMemo(
+        () => linkedinIntegrations.find((row) => row.linkedin_member_id === selectedLinkedInId) || null,
+        [linkedinIntegrations, selectedLinkedInId],
+    );
+    const linkedInCompanyPages = useMemo(
+        () =>
+            Array.isArray(selectedLinkedInIntegration?.metadata?.company_pages)
+                ? selectedLinkedInIntegration.metadata.company_pages
+                : [],
+        [selectedLinkedInIntegration],
+    );
+    const hasLinkedInOrgScope = useMemo(
+        () => normalizeLinkedInScopes(selectedLinkedInIntegration?.scopes).includes('w_organization_social'),
+        [selectedLinkedInIntegration],
+    );
+
+    const handleConnectLinkedIn = async () => {
+        try {
+            const { authService } = await import('@/services/authService');
+            const { error } = await authService.connectLinkedInIntegration(
+                '/dashboard/business/linkedin',
+                currentTenant?.id,
+            );
+            if (error) toast.error(error);
+        } catch {
+            toast.error('Failed to start LinkedIn connection');
+        }
+    };
+
     const loadData = async () => {
         if (!currentTenant?.id) return;
         setLoading(true);
@@ -167,7 +207,7 @@ export default function SocialCommandCenter() {
             const [postsRes, pagesRes, linkedinRes, analyticsRes] = await Promise.all([
                 supabase.from('social_posts').select('*').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(60),
                 supabase.from('facebook_integrations').select('page_id,page_name').eq('user_id', user?.id || '').eq('is_active', true),
-                supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
+                supabase.from('linkedin_integrations').select('linkedin_member_id,linkedin_person_urn,scopes,is_active,metadata').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }),
                 supabase.from('social_post_analytics').select('post_id,impressions,clicks,reactions,created_at').eq('tenant_id', currentTenant.id).order('created_at', { ascending: false }).limit(250),
             ]);
 
@@ -326,6 +366,12 @@ export default function SocialCommandCenter() {
                 scheduled_at: composeIsScheduled && composeScheduledAt ? new Date(composeScheduledAt).toISOString() : undefined,
                 facebook_page_id: composePlatforms.includes('facebook') ? selectedPageId : undefined,
                 linkedin_member_id: composePlatforms.includes('linkedin') ? selectedLinkedInId : undefined,
+                linkedin_organization_id:
+                    composePlatforms.includes('linkedin') &&
+                    selectedLinkedInIdentity === 'company' &&
+                    selectedLinkedInOrganizationId
+                        ? selectedLinkedInOrganizationId
+                        : undefined,
             };
 
             const res = await fetch('/api/social/schedule', {
@@ -573,11 +619,10 @@ export default function SocialCommandCenter() {
     }
 
     return (
-        <BonnieModulePageShell>
-        <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+        <div className={`relative min-h-0 flex flex-col ac-scroll-full ac-safe-bottom ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             
             {/* Top Workspace Tab Mode Switcher */}
-            <div className="flex border-b border-white/5 bg-slate-900/50 p-2 gap-2">
+            <div className="flex gap-2 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-2">
                 <button
                     onClick={() => setActiveMainTab('manager')}
                     className={`flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${activeMainTab === 'manager' ? 'bg-teal-600 text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}`}
@@ -596,10 +641,10 @@ export default function SocialCommandCenter() {
                 /* ----------------------------------------------------
                    MODULE 1: Platform Manager (Native PWA Layout)
                    ---------------------------------------------------- */
-                <div className="flex flex-col flex-1 pb-24">
+                <div className="flex flex-col flex-1">
                     
                     {/* Platform Switcher Tab Bar (LinkedIn | Facebook | X) */}
-                    <div className="sticky top-0 z-20 flex h-11 bg-slate-900 border-b border-white/5 select-none divide-x divide-white/5">
+                    <div className="sticky top-0 z-20 flex h-11 select-none divide-x divide-[var(--ws-border)] border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
                         {[
                             { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, color: 'text-sky-400' },
                             { id: 'facebook', label: 'Facebook', icon: Facebook, color: 'text-blue-500' },
@@ -652,11 +697,27 @@ export default function SocialCommandCenter() {
                     </div>
 
                     {/* Main Platform Content */}
-                    <div className="flex-1 p-4">
+                    <div className="flex-1 p-4 space-y-4">
+                        {activePlatform === 'linkedin' && activeSubView !== 'analytics' ? (
+                            <LinkedInOrgPanel
+                                isConnected={!!selectedLinkedInIntegration?.is_active}
+                                companyPages={linkedInCompanyPages}
+                                selectedOrgId={
+                                    selectedLinkedInIdentity === 'company' ? selectedLinkedInOrganizationId : ''
+                                }
+                                onSelectOrg={(id) => {
+                                    setSelectedLinkedInOrganizationId(id);
+                                    setSelectedLinkedInIdentity(id ? 'company' : 'personal');
+                                }}
+                                hasOrganizationWriteScope={hasLinkedInOrgScope}
+                                onConnect={handleConnectLinkedIn}
+                                onReconnect={handleConnectLinkedIn}
+                            />
+                        ) : null}
                         {activeSubView === 'analytics' ? (
                             /* Analytics Dashboard */
                             <div className="space-y-6 animate-in fade-in duration-300">
-                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-2xl border border-white/5">
+                                <div className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Date Range</span>
                                     <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
                                         {['7D', '30D', '90D'].map((range) => (
@@ -678,7 +739,7 @@ export default function SocialCommandCenter() {
                                         { label: 'Comments', value: compactNumber(analyticsTotals.comments), change: 'Conversation signal', up: analyticsTotals.comments > 0 },
                                         { label: 'Clicks', value: compactNumber(analyticsTotals.clicks), change: 'Traffic signal', up: analyticsTotals.clicks > 0 }
                                     ].map((stat, i) => (
-                                        <div key={i} className="p-4 bg-slate-900 rounded-2xl border border-white/5 space-y-1">
+                                        <div key={i} className={`space-y-1 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                             <span className="text-[11px] font-bold text-slate-500 uppercase">{stat.label}</span>
                                             <div className="text-xl font-bold text-white">{stat.value}</div>
                                             <span className={`text-[10px] font-bold ${stat.up ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -689,7 +750,7 @@ export default function SocialCommandCenter() {
                                 </div>
 
                                 {/* Custom Tooltip Engagement Chart Mock */}
-                                <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
+                                <div className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <span className="text-xs font-bold text-slate-500 uppercase">Average Engagement Rate</span>
@@ -735,11 +796,12 @@ export default function SocialCommandCenter() {
                             /* Feed List / Queue with Swipe gestures */
                             <div className="space-y-1">
                                 {filteredPosts.length === 0 ? (
-                                    <div className="py-16 text-center bg-slate-900/10 rounded-2xl border border-dashed border-white/5">
-                                        <ActivityIcon className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                                        <h3 className="text-sm font-bold text-slate-400">No posts in this queue</h3>
-                                        <p className="text-xs text-slate-600 max-w-xs mx-auto mt-1">Tap the plus button below to craft your first draft.</p>
-                                    </div>
+                                    <EmptyState
+                                        icon={ActivityIcon}
+                                        title="No posts in this queue"
+                                        description="Create your first draft or schedule content for this platform to populate the queue."
+                                        className={`max-w-none py-16 border border-dashed border-[var(--ws-border)] ${WORKSPACE.panel.radius}`}
+                                    />
                                 ) : (
                                     <div className="space-y-4">
                                         {filteredPosts.map((post) => {
@@ -751,7 +813,7 @@ export default function SocialCommandCenter() {
                                             return (
                                                 <div 
                                                     key={post.id} 
-                                                    className="relative select-none overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl shadow-black/20"
+                                                    className={`relative select-none overflow-hidden border border-[var(--ws-border)] bg-slate-950 shadow-none ${WORKSPACE.panel.radius}`}
                                                     onTouchStart={(e) => handleTouchStart(e, post.id)}
                                                     onTouchMove={(e) => handleTouchMove(e, post.id)}
                                                     onTouchEnd={(e) => handleTouchEnd(e, post.id)}
@@ -893,7 +955,7 @@ export default function SocialCommandCenter() {
                     {/* Floating Compose Trigger FAB */}
                     <button
                         onClick={() => setIsComposeOpen(true)}
-                        className="fixed bottom-[74px] right-6 w-14 h-14 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-900/40 z-30 transition-transform active:scale-95"
+                        className="ac-fab-above-nav w-14 h-14 bg-teal-600 hover:bg-teal-500 text-white rounded-full flex items-center justify-center shadow-xl shadow-teal-900/40 transition-transform active:scale-95"
                     >
                         <Plus className="w-6 h-6" />
                     </button>
@@ -902,11 +964,11 @@ export default function SocialCommandCenter() {
                 /* ----------------------------------------------------
                    MODULE 2: Tools & Intelligence (Existing features)
                    ---------------------------------------------------- */
-                <div className="p-4 space-y-8 pb-20 animate-in fade-in duration-300">
+                <div className="p-4 space-y-8 ac-safe-bottom lg:pb-4 animate-in fade-in duration-300">
                     <ModuleIntelligenceCard moduleKey="socialMedia" title="Social Intelligence" />
 
                     {/* Watchlist discovey lead panel */}
-                    <section className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
+                    <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="text-sm font-bold text-white">AlphaClone Lead Intelligence</h3>
@@ -915,7 +977,7 @@ export default function SocialCommandCenter() {
                             <button
                                 onClick={handleTriggerNexusIntelligence}
                                 disabled={isIntelligenceRunning}
-                                className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold rounded-xl transition-all"
+                                className={`${WORKSPACE.action.primary} h-9 px-3.5 text-xs`}
                             >
                                 {isIntelligenceRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Run Nexus Sync'}
                             </button>
@@ -937,13 +999,13 @@ export default function SocialCommandCenter() {
                         </div>
 
                         {isAddingBookmark && (
-                            <form onSubmit={handleAddBookmark} className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
+                            <form onSubmit={handleAddBookmark} className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                 <input 
                                     required
                                     value={newBookmark.title}
                                     onChange={e => setNewBookmark({...newBookmark, title: e.target.value})}
                                     placeholder="Title"
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none"
                                 />
                                 <input 
                                     required
@@ -951,9 +1013,9 @@ export default function SocialCommandCenter() {
                                     value={newBookmark.url}
                                     onChange={e => setNewBookmark({...newBookmark, url: e.target.value})}
                                     placeholder="URL Link"
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none"
+                                    className="w-full px-3 py-2 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none"
                                 />
-                                <button type="submit" className="w-full py-2 bg-teal-600 text-white rounded-xl text-xs font-bold">
+                                <button type="submit" className={`${WORKSPACE.action.primary} h-10 w-full text-xs`}>
                                     Save
                                 </button>
                             </form>
@@ -961,7 +1023,7 @@ export default function SocialCommandCenter() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {bookmarks.map(bm => (
-                                <div key={bm.id} className="p-3 bg-slate-900 rounded-2xl border border-white/5 flex items-center justify-between">
+                                <div key={bm.id} className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <div className="min-w-0 flex-1 pr-2">
                                         <h4 className="text-xs font-bold text-white truncate">{bm.title}</h4>
                                         <span className="text-[10px] text-slate-500 truncate block">{bm.url}</span>
@@ -980,7 +1042,7 @@ export default function SocialCommandCenter() {
                     </section>
 
                     {/* Viral Script Generator */}
-                    <section className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
+                    <section className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                         <h3 className="text-sm font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                             <Video className="w-4 h-4 text-rose-500" /> Viral Hook Generator (Grok)
                         </h3>
@@ -988,19 +1050,19 @@ export default function SocialCommandCenter() {
                             value={videoTopic}
                             onChange={e => setVideoTopic(e.target.value)}
                             placeholder="Video niche / topic details..."
-                            className="w-full h-20 p-3 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none resize-none"
+                            className="w-full h-20 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white focus:outline-none resize-none"
                         />
                         <button
                             onClick={handleGenerateVideo}
                             disabled={isGeneratingVideo || !videoTopic}
-                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg flex items-center justify-center gap-2"
                         >
                             {isGeneratingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                             Generate script
                         </button>
 
                         {videoResult && (
-                            <div className="p-4 bg-slate-950 border border-white/5 rounded-2xl space-y-3">
+                            <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                 <div>
                                     <span className="text-[10px] font-bold text-rose-400 uppercase block">Hook</span>
                                     <p className="text-xs text-white font-bold italic">"{videoResult.hook}"</p>
@@ -1051,7 +1113,7 @@ export default function SocialCommandCenter() {
                             {/* Platform Selector Switches */}
                             <div className="space-y-1.5">
                                 <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-1">Publish platforms</label>
-                                <div className="grid grid-cols-3 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-white/5">
+                                <div className={`grid grid-cols-3 gap-2 p-1.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     {[
                                         { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
                                         { id: 'facebook', label: 'Facebook', icon: Facebook },
@@ -1082,43 +1144,26 @@ export default function SocialCommandCenter() {
 
                             {/* Platform Specifics Configuration */}
                             {composePlatforms.includes('linkedin') && (
-                                <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 space-y-3 animate-in slide-in-from-top-1">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-xs font-bold text-sky-400 flex items-center gap-1.5">
-                                            <Linkedin className="w-4 h-4" /> LinkedIn Configuration
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Identity Selectors */}
-                                    <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedLinkedInIdentity('personal')}
-                                            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${selectedLinkedInIdentity === 'personal' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}
-                                        >
-                                            <User className="w-3.5 h-3.5" /> Personal Profile
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedLinkedInIdentity('company')}
-                                            className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${selectedLinkedInIdentity === 'company' ? 'bg-slate-800 text-white' : 'text-slate-500'}`}
-                                        >
-                                            <Building className="w-3.5 h-3.5" /> Company Page
-                                        </button>
-                                    </div>
-
-                                    {/* Warning banner */}
-                                    {linkedinIntegrations.length === 0 && (
-                                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl flex items-start gap-2.5 text-[11px]">
-                                            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                                            <span>Active connection scopes are required to publish. Please connect your profile in Settings.</span>
-                                        </div>
-                                    )}
-                                </div>
+                                <LinkedInOrgPanel
+                                    isConnected={!!selectedLinkedInIntegration?.is_active}
+                                    companyPages={linkedInCompanyPages}
+                                    selectedOrgId={
+                                        selectedLinkedInIdentity === 'company'
+                                            ? selectedLinkedInOrganizationId
+                                            : ''
+                                    }
+                                    onSelectOrg={(id) => {
+                                        setSelectedLinkedInOrganizationId(id);
+                                        setSelectedLinkedInIdentity(id ? 'company' : 'personal');
+                                    }}
+                                    hasOrganizationWriteScope={hasLinkedInOrgScope}
+                                    onConnect={handleConnectLinkedIn}
+                                    onReconnect={handleConnectLinkedIn}
+                                />
                             )}
 
                             {composePlatforms.includes('facebook') && (
-                                <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 space-y-3 animate-in slide-in-from-top-1">
+                                <div className={`space-y-3 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <span className="text-xs font-bold text-blue-500 flex items-center gap-1.5">
                                         <Facebook className="w-4 h-4" /> Facebook Configuration
                                     </span>
@@ -1127,7 +1172,7 @@ export default function SocialCommandCenter() {
                                         <select
                                             value={selectedPageId}
                                             onChange={e => setSelectedPageId(e.target.value)}
-                                            className="w-full h-10 bg-slate-950 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                            className="w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-3 text-xs text-white outline-none"
                                         >
                                             {fbPages.length === 0 ? (
                                                 <option value="">No pages configured</option>
@@ -1153,7 +1198,7 @@ export default function SocialCommandCenter() {
                             )}
 
                             {composePlatforms.includes('x') && (
-                                <div className="p-4 bg-slate-900/60 rounded-2xl border border-white/5 space-y-4 animate-in slide-in-from-top-1">
+                                <div className={`space-y-4 p-4 animate-in slide-in-from-top-1 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <span className="text-xs font-bold text-white flex items-center gap-1.5">
                                         <Twitter className="w-4 h-4" /> X Thread stacks
                                     </span>
@@ -1204,12 +1249,12 @@ export default function SocialCommandCenter() {
                                     value={composeCaption}
                                     onChange={e => setComposeCaption(e.target.value)}
                                     placeholder="What are we sharing today? (Use #hashtags inside caption or bottom bar)"
-                                    className="w-full min-h-[140px] p-4 bg-slate-900 border border-white/5 rounded-2xl text-[16px] text-slate-200 outline-none focus:border-teal-500/50 transition-all resize-none placeholder-slate-600"
+                                    className="w-full min-h-[140px] p-4 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-[16px] text-slate-200 outline-none focus:border-teal-500/50 transition-all resize-none placeholder-slate-600"
                                 />
                             </div>
 
                             {/* Media attachment preview */}
-                            <div className="bg-slate-900 p-4 rounded-2xl border border-white/5 space-y-3">
+                            <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Paperclip className="w-4 h-4 text-teal-400" />
@@ -1229,12 +1274,12 @@ export default function SocialCommandCenter() {
                                             }
                                         }}
                                         placeholder="https://... image, gif, or mp4"
-                                        className="flex-1 h-11 bg-slate-950 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                        className="flex-1 h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 text-xs text-white outline-none focus:border-teal-500/50"
                                     />
                                     <button
                                         type="button"
                                         onClick={addComposeMediaUrl}
-                                        className="h-11 px-4 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-black uppercase"
+                                        className={`${WORKSPACE.action.primary} h-11 px-4 text-xs`}
                                     >
                                         Add
                                     </button>
@@ -1269,7 +1314,7 @@ export default function SocialCommandCenter() {
                             </div>
 
                             {/* Scheduled configuration picker */}
-                            <div className="bg-slate-900 p-4 rounded-2xl border border-white/5 space-y-3">
+                            <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <Calendar className="w-4 h-4 text-teal-400" />
@@ -1289,7 +1334,7 @@ export default function SocialCommandCenter() {
                                         type="datetime-local"
                                         value={composeScheduledAt}
                                         onChange={e => setComposeScheduledAt(e.target.value)}
-                                        className="w-full h-11 bg-slate-950 border border-white/5 rounded-xl px-4 text-xs text-white outline-none focus:border-teal-500/50"
+                                        className="w-full h-11 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg px-4 text-xs text-white outline-none focus:border-teal-500/50"
                                     />
                                 )}
                             </div>
@@ -1297,11 +1342,11 @@ export default function SocialCommandCenter() {
                         </div>
 
                         {/* Floating AI prompt trigger inside Compose Sheet */}
-                        <div className="p-4 bg-slate-900 border-t border-white/5 flex items-center justify-between gap-3">
+                        <div className="flex items-center justify-between gap-3 border-t border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-4">
                             <button
                                 type="button"
                                 onClick={() => setAiPromptOpen(true)}
-                                className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-4 py-2 rounded-xl border border-teal-500/20"
+                            className="flex items-center gap-2 text-xs font-black text-teal-400 uppercase tracking-widest bg-teal-500/10 px-4 py-2 rounded-lg border border-teal-500/20"
                             >
                                 <Sparkles className="w-4 h-4" /> Write Draft with AI
                             </button>
@@ -1318,7 +1363,7 @@ export default function SocialCommandCenter() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="w-full max-w-sm bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4"
+                            className={`w-full max-w-sm space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}
                         >
                             <div className="flex justify-between items-center">
                                 <h3 className="text-xs font-black text-slate-500 uppercase tracking-wider">AI Topic prompt</h3>
@@ -1328,12 +1373,12 @@ export default function SocialCommandCenter() {
                                 value={aiPromptText}
                                 onChange={e => setAiPromptText(e.target.value)}
                                 placeholder="e.g. A message welcoming new beta testers for our workspace automation application..."
-                                className="w-full h-24 p-3 bg-slate-950 border border-white/5 rounded-xl text-xs text-white outline-none resize-none"
+                                className="w-full h-24 p-3 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-xs text-white outline-none resize-none"
                             />
                             <button
                                 onClick={generateDraftWithAI}
                                 disabled={aiGenerating || !aiPromptText.trim()}
-                                className="w-full py-2.5 bg-teal-600 disabled:bg-slate-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                                className="w-full py-2.5 bg-teal-600 disabled:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5"
                             >
                                 {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
                                 Generate Content Draft
@@ -1360,7 +1405,7 @@ export default function SocialCommandCenter() {
                             animate={{ y: 0 }}
                             exit={{ y: '100%' }}
                             transition={{ type: 'spring', damping: 24, stiffness: 220 }}
-                            className="fixed bottom-0 left-0 right-0 max-h-[90vh] bg-slate-900 rounded-t-[32px] border-t border-white/10 z-[1110] flex flex-col pb-safe"
+                            className="fixed bottom-0 left-0 right-0 z-[1110] flex max-h-[90vh] flex-col border-t border-[var(--ws-border)] bg-slate-900 pb-safe rounded-t-[20px]"
                         >
                             {/* Drag handle */}
                             <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto my-3 flex-shrink-0" />
@@ -1382,7 +1427,7 @@ export default function SocialCommandCenter() {
                                 {/* Caption Preview */}
                                 <div className="space-y-1.5">
                                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Content caption</span>
-                                    <div className="p-4 bg-slate-950 rounded-2xl border border-white/5 text-sm text-slate-200 leading-relaxed font-medium">
+                                    <div className={`text-sm leading-relaxed font-medium text-slate-200 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                         {selectedPost.caption}
                                     </div>
                                 </div>
@@ -1390,7 +1435,7 @@ export default function SocialCommandCenter() {
                                 {selectedPrimaryMedia && (
                                     <div className="space-y-1.5">
                                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Rendered media</span>
-                                        <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950">
+                                        <div className={`overflow-hidden border bg-slate-950 ${WORKSPACE.panel.radius}`} style={{ borderColor: 'var(--ws-border)' }}>
                                             {selectedPrimaryMediaType === 'video' ? (
                                                 <video src={selectedPrimaryMedia} className="w-full max-h-[440px] bg-black object-cover" controls playsInline preload="metadata" />
                                             ) : (
@@ -1402,7 +1447,7 @@ export default function SocialCommandCenter() {
 
                                 {/* Platform and Date Info */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-white/5 flex flex-col justify-center">
+                                    <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                         <span className="text-[9px] font-bold text-slate-500 uppercase">Platforms</span>
                                         <div className="flex gap-1.5 mt-1">
                                             {selectedPost.platforms.map((plat) => (
@@ -1412,7 +1457,7 @@ export default function SocialCommandCenter() {
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="p-3.5 bg-slate-950 rounded-2xl border border-white/5 flex flex-col justify-center">
+                                    <div className={`flex flex-col justify-center p-3.5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                         <span className="text-[9px] font-bold text-slate-500 uppercase">Publish Status</span>
                                         <span className="text-xs text-white font-bold uppercase mt-1">
                                             {selectedPost.status}
@@ -1430,7 +1475,7 @@ export default function SocialCommandCenter() {
                                             { label: 'Comments', val: compactNumber(selectedMetrics?.comments) },
                                             { label: 'Clicks', val: compactNumber(selectedMetrics?.clicks) }
                                         ].map((stat, i) => (
-                                            <div key={i} className="p-3 bg-slate-950 rounded-2xl border border-white/5 text-center flex flex-col justify-center">
+                                            <div key={i} className={`flex flex-col justify-center p-3 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                                 <span className="text-[17px] font-black text-white">{stat.val}</span>
                                                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5">{stat.label}</span>
                                             </div>
@@ -1445,7 +1490,7 @@ export default function SocialCommandCenter() {
                                             handleDuplicatePost(selectedPost);
                                             setSelectedPost(null);
                                         }}
-                                        className="py-3.5 bg-teal-600 hover:bg-teal-500 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg shadow-teal-900/30"
+                                        className={`${WORKSPACE.action.primary} py-3.5 text-xs uppercase tracking-wider flex items-center justify-center gap-1.5`}
                                     >
                                         <Repeat className="w-4 h-4" /> Duplicate Post
                                     </button>
@@ -1456,7 +1501,7 @@ export default function SocialCommandCenter() {
                                                 setSelectedPost(null);
                                             }
                                         }}
-                                        className="py-3.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 rounded-2xl text-xs font-black uppercase tracking-wider border border-rose-500/20 flex items-center justify-center gap-1.5"
+                                        className="py-3.5 bg-rose-600/10 hover:bg-rose-600/20 text-rose-400 rounded-lg text-xs font-black uppercase tracking-wider border border-rose-500/20 flex items-center justify-center gap-1.5"
                                     >
                                         <Trash2 className="w-4 h-4" /> Delete post
                                     </button>
@@ -1469,6 +1514,5 @@ export default function SocialCommandCenter() {
             </AnimatePresence>
 
         </div>
-        </BonnieModulePageShell>
     );
 }

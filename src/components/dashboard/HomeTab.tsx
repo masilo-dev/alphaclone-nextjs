@@ -22,7 +22,6 @@ import { contractService } from '@/services/contractService';
 import { notificationService, type Notification } from '../../services/dashboardService';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { Button } from '../ui/UIComponents';
-import { EmptyStatePlaceholder } from '../ui/EmptyStatePlaceholder';
 
 interface Module {
   label: string;
@@ -183,58 +182,6 @@ const HomeTab: React.FC<HomeTabProps> = ({
       .then(({ data }: { data: any[] | null }) => setActivity(data || []));
   }, [currentTenant?.id]);
 
-  const homeStats = useMemo<ModuleStat[]>(() => [
-    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
-    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
-    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
-    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
-  ], [quickStats, trendStats, periodNew]);
-  const memoryCount = Number(
-    databaseStats?.memoryCount ??
-    databaseStats?.knowledgeCount ??
-    databaseStats?.documents ??
-    databaseStats?.totalDocuments ??
-    0
-  );
-  const commandStats = [
-    { label: 'Momentum', value: `${Math.round(momentumScore)}%`, icon: Zap, color: 'text-teal-400' },
-    { label: 'Day Streak', value: `${loginStreak}d`, icon: Flame, color: loginStreak > 0 ? 'text-orange-400' : 'text-slate-500' },
-    { label: '24h Activity', value: activity24h, icon: Activity, color: 'text-blue-400' },
-    { label: 'Memory', value: memoryCount || 'Live', icon: Brain, color: 'text-purple-400' },
-  ];
-  const primaryModules = MODULES.slice(0, 12);
-  const secondaryModules = MODULES.slice(12);
-  const starterSteps = [
-    {
-      step: '1',
-      title: 'Finish onboarding',
-      description: 'Set up your workspace, services, and defaults.',
-      href: '/dashboard/onboarding',
-      icon: LayoutDashboard,
-    },
-    {
-      step: '2',
-      title: 'Open the inbox',
-      description: 'Check messages and keep replies tied to clients.',
-      href: '/dashboard/messages',
-      icon: Mail,
-    },
-    {
-      step: '3',
-      title: 'Review tasks',
-      description: 'Turn replies into follow-up work and due dates.',
-      href: '/dashboard/tasks',
-      icon: CheckSquare,
-    },
-    {
-      step: '4',
-      title: 'Add contacts',
-      description: 'Bring in clients or leads before you start outreach.',
-      href: '/dashboard/crm',
-      icon: Users,
-    },
-  ];
-
   // Client portal view
   if (user.role === 'client') {
     return (
@@ -289,6 +236,58 @@ const HomeTab: React.FC<HomeTabProps> = ({
   }
 
   // Admin / Tenant Admin view
+  const homeStats = useMemo<ModuleStat[]>(() => [
+    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
+    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
+    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
+    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
+  ], [quickStats, trendStats, periodNew]);
+  const memoryCount = Number(
+    databaseStats?.memoryCount ??
+    databaseStats?.knowledgeCount ??
+    databaseStats?.documents ??
+    databaseStats?.totalDocuments ??
+    0
+  );
+  const commandStats = [
+    { label: 'Momentum', value: `${Math.round(momentumScore)}%`, icon: Zap, color: 'text-teal-400' },
+    { label: 'Day Streak', value: `${loginStreak}d`, icon: Flame, color: loginStreak > 0 ? 'text-orange-400' : 'text-slate-500' },
+    { label: '24h Activity', value: activity24h, icon: Activity, color: 'text-blue-400' },
+    { label: 'Memory', value: memoryCount || 'Live', icon: Brain, color: 'text-purple-400' },
+  ];
+  const primaryModules = MODULES.slice(0, 12);
+  const secondaryModules = MODULES.slice(12);
+  const starterSteps = [
+    {
+      step: '1',
+      title: 'Finish onboarding',
+      description: 'Set up your workspace, services, and defaults.',
+      href: '/dashboard/onboarding',
+      icon: LayoutDashboard,
+    },
+    {
+      step: '2',
+      title: 'Open the inbox',
+      description: 'Check messages and keep replies tied to clients.',
+      href: '/dashboard/messages',
+      icon: Mail,
+    },
+    {
+      step: '3',
+      title: 'Review tasks',
+      description: 'Turn replies into follow-up work and due dates.',
+      href: '/dashboard/tasks',
+      icon: CheckSquare,
+    },
+    {
+      step: '4',
+      title: 'Add contacts',
+      description: 'Bring in clients or leads before you start outreach.',
+      href: '/dashboard/crm',
+      icon: Users,
+    },
+  ];
+
   return (
     <div className="space-y-4 pb-24 ac-scroll-full ac-enterprise-module">
       <CelebrationOverlay isOpen={celebration.show} title="Done!" message={celebration.message} onClose={() => setCelebration(p => ({ ...p, show: false }))} />
@@ -312,11 +311,11 @@ const HomeTab: React.FC<HomeTabProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         {commandStats.map((s) => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className="bg-slate-900 border border-white/5 rounded-xl px-3 py-2.5 flex items-center gap-2 min-w-0">
+            <div key={s.label} className="ac-workspace-panel rounded-lg px-3 py-2.5 flex items-center gap-2 min-w-0">
               <Icon className={`w-4 h-4 shrink-0 ${s.color}`} />
               <div className="min-w-0">
                 <div className="text-[15px] font-black text-white leading-none truncate">{s.value}</div>
@@ -327,7 +326,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
         })}
       </div>
 
-      <div className="bg-slate-900/55 border border-white/5 rounded-2xl p-4">
+      <div className="ac-workspace-panel rounded-lg p-4">
         <div className="flex items-center justify-between gap-3 mb-3">
           <div>
             <div className="text-[11px] font-black uppercase tracking-[0.28em] text-teal-400">Start here</div>
@@ -342,9 +341,9 @@ const HomeTab: React.FC<HomeTabProps> = ({
               <button
                 key={step.step}
                 onClick={() => router.push(step.href)}
-                className="group text-left rounded-2xl border border-slate-800 bg-slate-950/55 hover:bg-slate-900 transition-all p-4 flex items-start gap-4"
+                className="group flex items-start gap-4 rounded-lg border border-[var(--ws-border)] bg-slate-950/55 p-4 text-left transition-all hover:bg-slate-900"
               >
-                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
                   <span className="text-[11px] font-black text-teal-400">{step.step}</span>
                 </div>
                 <div className="min-w-0 flex-1">
@@ -363,22 +362,22 @@ const HomeTab: React.FC<HomeTabProps> = ({
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)] gap-4 items-start">
         <div className="space-y-3">
           <div className="mb-2">
-            <ModuleStatCards stats={homeStats} className="grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4" />
+            <ModuleStatCards stats={homeStats} className="grid-cols-2 lg:grid-cols-4" />
           </div>
 
-          <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-3">
+          <div className="ac-workspace-panel rounded-lg p-3">
             <div className="flex items-center justify-between gap-3 mb-3">
               <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
               <button onClick={() => router.push('/dashboard/settings')} className="text-[11px] text-teal-400 font-bold">Manage</button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
               {primaryModules.map((mod, idx) => {
                 const Icon = mod.icon;
                 return (
                   <button
                     key={idx}
                     onClick={() => router.push(mod.href)}
-                    className="h-12 px-2 rounded-xl bg-slate-950/70 border border-white/5 hover:border-teal-500/30 active:scale-[0.98] transition-all flex items-center gap-2 min-w-0"
+                    className="flex h-12 min-w-0 items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-slate-950/70 px-2 transition-all hover:border-teal-500/30 active:scale-[0.98]"
                     style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     <span className={`w-7 h-7 rounded-lg ${mod.bg} flex items-center justify-center shrink-0`}>
@@ -389,7 +388,7 @@ const HomeTab: React.FC<HomeTabProps> = ({
                 );
               })}
             </div>
-            <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="mt-2 grid grid-cols-3 sm:grid-cols-6 gap-2">
               {secondaryModules.map((mod, idx) => {
                 const Icon = mod.icon;
                 return (
@@ -413,15 +412,9 @@ const HomeTab: React.FC<HomeTabProps> = ({
             <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Recent Activity</span>
             <button onClick={() => router.push('/dashboard/analytics')} className="text-[12px] text-teal-400 font-bold">View all</button>
           </div>
-          <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+          <div className="ac-workspace-panel rounded-lg divide-y divide-[var(--ws-border)] overflow-hidden">
             {activity.length === 0 && (
-              <EmptyStatePlaceholder
-                icon={Activity}
-                title="No activity yet"
-                description="Connect your email or add a lead to see workspace activity here."
-                action={{ label: 'Go to Analytics', onClick: () => router.push('/dashboard/analytics') }}
-                compact
-              />
+              <div className="py-5 text-center text-[13px] text-slate-500 opacity-55">No recent activity yet.</div>
             )}
             {activity.slice(0, 4).map((item, i) => (
               <div key={i} className="flex items-center gap-3 px-3 py-2.5 min-w-0">

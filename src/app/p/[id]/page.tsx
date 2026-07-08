@@ -2,11 +2,10 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { projectService } from '@/services/projectService';
-import { milestoneService, Milestone } from '@/services/milestoneService';
+import { Milestone } from '@/services/milestoneService';
 import { Project } from '@/types';
 import { Card } from '@/components/ui/UIComponents';
-import { CheckCircle2, Calendar, MessageSquare, Send, Loader2 } from 'lucide-react';
+import { CheckCircle2, Calendar, MessageSquare, Send, Loader2, Lock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -19,6 +18,8 @@ interface ProjectComment {
   created_at: string;
 }
 
+const portalPasswordKey = (token: string) => `portal_pw_${token}`;
+
 export default function PublicProjectPage() {
   const params = useParams();
   const portalRef = params?.id as string;
@@ -28,24 +29,89 @@ export default function PublicProjectPage() {
   const [comments, setComments] = useState<ProjectComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [requiresPassword, setRequiresPassword] = useState(false);
+  const [expired, setExpired] = useState(false);
+  const [portalPassword, setPortalPassword] = useState('');
+  const [accessPassword, setAccessPassword] = useState<string | undefined>(undefined);
   const [authorName, setAuthorName] = useState('');
   const [authorEmail, setAuthorEmail] = useState('');
   const [newComment, setNewComment] = useState('');
   const [posting, setPosting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+
+  const portalHeaders = useCallback((): Record<string, string> => {
+    if (!accessPassword) return {};
+    return { 'X-Portal-Password': accessPassword };
+  }, [accessPassword]);
 
   const loadComments = useCallback(async () => {
     if (!portalRef) return;
-    const res = await fetch(`/api/projects/public/${portalRef}/comments`);
+    if (requiresPassword && !accessPassword) return;
+    const res = await fetch(`/api/projects/public/${portalRef}/comments`, {
+      headers: portalHeaders(),
+    });
     const data = await res.json().catch(() => ({}));
     if (data.success) setComments(data.comments || []);
+  }, [portalRef, accessPassword, requiresPassword, portalHeaders]);
+
+  const loadPortal = useCallback(async (password?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const headers: Record<string, string> = {};
+      if (password) headers['X-Portal-Password'] = password;
+
+      const res = await fetch(`/api/projects/public/${portalRef}/access`, { headers, cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (data.expired) {
+          setExpired(true);
+          setError('This client link has expired. Ask your provider for a new one.');
+          return;
+        }
+        if (data.requiresPassword) {
+          setRequiresPassword(true);
+          if (data.projectName) setProject({ name: data.projectName });
+          return;
+        }
+        throw new Error(data.error || 'Not found');
+      }
+
+      setRequiresPassword(false);
+      setExpired(false);
+      setProject(data.project);
+      setInternalProjectId(data.projectId);
+      setMilestones(
+        (data.milestones || []).map((m: Record<string, unknown>) => ({
+          id: String(m.id),
+          projectId: data.projectId,
+          name: String(m.name || ''),
+          status: (m.status as Milestone['status']) || 'pending',
+          dueDate: m.due_date ? String(m.due_date) : undefined,
+          description: m.description ? String(m.description) : undefined,
+        }))
+      );
+      if (password) {
+        sessionStorage.setItem(portalPasswordKey(portalRef), password);
+        setAccessPassword(password);
+      }
+    } catch {
+      setError('Failed to load project details');
+    } finally {
+      setLoading(false);
+    }
   }, [portalRef]);
 
   useEffect(() => {
-    if (portalRef) loadData();
-  }, [portalRef]);
+    if (!portalRef) return;
+    const saved = sessionStorage.getItem(portalPasswordKey(portalRef)) || undefined;
+    if (saved) setAccessPassword(saved);
+    loadPortal(saved);
+  }, [portalRef, loadPortal]);
 
   useEffect(() => {
-    if (!internalProjectId) return;
+    if (!internalProjectId || requiresPassword) return;
     loadComments();
     const channel = supabase
       .channel(`project_comments_${internalProjectId}`)
@@ -60,25 +126,17 @@ export default function PublicProjectPage() {
       })
       .subscribe();
     return () => { channel.unsubscribe(); };
-  }, [internalProjectId, loadComments]);
+  }, [internalProjectId, loadComments, requiresPassword]);
 
-  const loadData = async () => {
-    try {
-      const { project: publicProject, error: projectError } = await projectService.getPublicProjectStatus(portalRef);
-      if (projectError || !publicProject) throw new Error(projectError || 'Not found');
-      setProject(publicProject);
-
-      const { projectId } = await projectService.resolvePublicProjectRef(portalRef);
-      if (!projectId) throw new Error('Project reference invalid');
-      setInternalProjectId(projectId);
-
-      const { milestones: rows, error: milestonesError } = await milestoneService.getMilestones(projectId);
-      if (!milestonesError) setMilestones(rows);
-    } catch {
-      setError('Failed to load project details');
-    } finally {
-      setLoading(false);
+  const handleUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!portalPassword.trim()) {
+      toast.error('Enter the password from your provider');
+      return;
     }
+    setVerifying(true);
+    await loadPortal(portalPassword.trim());
+    setVerifying(false);
   };
 
   const handlePostComment = async (e: React.FormEvent) => {
@@ -91,16 +149,22 @@ export default function PublicProjectPage() {
     try {
       const res = await fetch(`/api/projects/public/${portalRef}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authorName, authorEmail, content: newComment, isClient: true }),
+        headers: { 'Content-Type': 'application/json', ...portalHeaders() },
+        body: JSON.stringify({
+          authorName,
+          authorEmail,
+          content: newComment,
+          isClient: true,
+          password: accessPassword,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to post');
       if (data.comment) setComments((prev) => [...prev, data.comment]);
       setNewComment('');
       toast.success('Message sent to your team');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to send message');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setPosting(false);
     }
@@ -117,12 +181,46 @@ export default function PublicProjectPage() {
     );
   }
 
+  if (requiresPassword && !expired) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <Card className="w-full max-w-md p-8 border-slate-800 bg-slate-900/80">
+          <div className="flex items-center gap-3 mb-4 text-teal-400">
+            <Lock className="w-5 h-5" />
+            <h1 className="text-xl font-bold text-white">Password required</h1>
+          </div>
+          <p className="text-sm text-slate-400 mb-6">
+            {project?.name ? `"${project.name}" is protected.` : 'This project link is protected.'}{' '}
+            Enter the password your provider shared with you.
+          </p>
+          <form onSubmit={handleUnlock} className="space-y-4">
+            <input
+              type="password"
+              value={portalPassword}
+              onChange={(e) => setPortalPassword(e.target.value)}
+              placeholder="Portal password"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={verifying}
+              className="w-full py-3 bg-teal-600 hover:bg-teal-500 rounded-xl font-bold text-white disabled:opacity-50"
+            >
+              {verifying ? 'Checking…' : 'View project'}
+            </button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
   if (error || !project) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center text-red-400">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Project Not Found</h1>
-          <p className="text-slate-400">This project may not be public or the link is invalid.</p>
+        <div className="text-center max-w-md px-6">
+          <h1 className="text-2xl font-bold mb-2">{expired ? 'Link expired' : 'Project Not Found'}</h1>
+          <p className="text-slate-400">{error || 'This project may not be public or the link is invalid.'}</p>
         </div>
       </div>
     );

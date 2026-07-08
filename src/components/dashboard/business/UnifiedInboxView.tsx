@@ -352,7 +352,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   return (
     <>
-      <div className="flex h-[min(88dvh,820px)] min-h-[480px] rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden">
+      <div className="flex h-[min(88dvh,820px)] min-h-[480px] ac-workspace-panel overflow-hidden">
         {/* Sidebar list */}
         <div
           className={`${

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { WORKSPACE } from '@/constants/design';
 import { DashboardPanelHeader } from './DashboardPanelHeader';
 
 interface DashboardChartCardProps {
@@ -12,7 +13,7 @@ interface DashboardChartCardProps {
 
 export function DashboardChartCard({ children, className = '', title, subtitle }: DashboardChartCardProps) {
   return (
-    <div className={`dashboard-panel rounded-2xl p-5 min-h-[280px] flex flex-col ${className}`}>
+    <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.padding} min-h-[280px] flex flex-col shadow-none ${className}`}>
       {title ? <DashboardPanelHeader title={title} subtitle={subtitle} /> : null}
       <div className="flex-1 min-h-0">{children}</div>
     </div>

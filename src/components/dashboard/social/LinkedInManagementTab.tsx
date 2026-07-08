@@ -10,6 +10,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { LinkedInOrgPanel } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 
@@ -975,7 +976,7 @@ ${parentContext}Return only the comment text.`;
   }
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 pb-20 lg:pb-0">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom lg:pb-0">
       {/* Action-first strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button
@@ -1124,6 +1125,16 @@ ${parentContext}Return only the comment text.`;
           </button>
         </div>
       </div>
+
+      <LinkedInOrgPanel
+        isConnected={!!selectedIntegration?.is_active}
+        companyPages={companyPages}
+        selectedOrgId={selectedLinkedInOrganizationId}
+        onSelectOrg={setSelectedLinkedInOrganizationId}
+        hasOrganizationWriteScope={hasOrganizationWriteScope}
+        onConnect={handleConnectLinkedIn}
+        onReconnect={handleConnectLinkedIn}
+      />
 
       {schemaWarning && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 flex items-center gap-3">
@@ -1336,7 +1347,7 @@ ${parentContext}Return only the comment text.`;
       {isMobile && (
         <button
           onClick={() => setShowComposeSheet(true)}
-          className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-teal-600 text-white shadow-2xl flex items-center justify-center z-40 active:scale-90 transition-transform"
+          className="ac-fab-above-nav w-16 h-16 rounded-full bg-teal-600 text-white shadow-2xl flex items-center justify-center active:scale-90 transition-transform"
         >
           <Plus className="w-8 h-8" />
         </button>

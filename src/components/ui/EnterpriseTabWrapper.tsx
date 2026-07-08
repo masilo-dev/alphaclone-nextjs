@@ -23,7 +23,7 @@ export function EnterpriseTabWrapper({
   return (
     <div
       className={cn(
-        'ac-enterprise-module w-full min-w-0',
+        'ac-enterprise-module ac-workspace-canvas w-full min-w-0',
         fullBleed ? 'h-full min-h-0 flex flex-col' : cn('ac-scroll-full', ENTERPRISE.moduleLayout.sectionGap),
         className
       )}
@@ -47,6 +47,15 @@ export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   '/dashboard/conference',
   '/dashboard/meetings',
   '/dashboard/business/meetings',
+  '/dashboard/business/social',
+  '/dashboard/social',
+  '/dashboard/business/social/compose',
+  '/dashboard/social/compose',
+  '/dashboard/business/social-command',
+  '/dashboard/business/linkedin',
+  '/dashboard/business/facebook',
+  '/dashboard/business/instagram',
+  '/dashboard/business/x',
 ]);
 
 export function isEnterpriseFullBleedTab(tab: string): boolean {

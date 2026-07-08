@@ -42,6 +42,12 @@ const TAX_RULES_CACHE: TaxRule[] = [
   { countryCode: 'AE', taxName: 'VAT',          rate: 5,    appliesTo: 'all' },
   { countryCode: 'SA', taxName: 'VAT',          rate: 15,   appliesTo: 'all' },
   { countryCode: 'KE', taxName: 'VAT',          rate: 16,   appliesTo: 'all' },
+  { countryCode: 'ZW', taxName: 'VAT',          rate: 15,   appliesTo: 'all' },
+  { countryCode: 'GH', taxName: 'VAT',          rate: 15,   appliesTo: 'all' },
+  { countryCode: 'NG', taxName: 'VAT',          rate: 7.5,  appliesTo: 'all' },
+  { countryCode: 'BW', taxName: 'VAT',          rate: 14,   appliesTo: 'all' },
+  { countryCode: 'TZ', taxName: 'VAT',          rate: 18,   appliesTo: 'all' },
+  { countryCode: 'UG', taxName: 'VAT',          rate: 18,   appliesTo: 'all' },
   { countryCode: 'US', taxName: 'Sales Tax',    rate: 0,    appliesTo: 'all' }, // US: state-level, prompt manual entry
 ];
 
@@ -113,6 +119,12 @@ export const COUNTRY_NAMES: Record<string, string> = {
   AE: 'United Arab Emirates',
   SA: 'Saudi Arabia',
   KE: 'Kenya',
+  ZW: 'Zimbabwe',
+  GH: 'Ghana',
+  NG: 'Nigeria',
+  BW: 'Botswana',
+  TZ: 'Tanzania',
+  UG: 'Uganda',
   US: 'United States',
   BR: 'Brazil',
 };

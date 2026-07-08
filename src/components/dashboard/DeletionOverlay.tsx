@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AlertTriangle, RefreshCw, Trash2, LogOut } from 'lucide-react';
+import { WORKSPACE } from '@/constants/design';
 
 export const DeletionOverlay: React.FC = () => {
     const { user, cancelAccountDeletion, signOut } = useAuth();
@@ -32,10 +33,10 @@ export const DeletionOverlay: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="max-w-md w-full bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-8 space-y-6 text-center animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 p-4 backdrop-blur-md">
+            <div className={`max-w-md w-full p-8 space-y-6 text-center animate-in fade-in zoom-in duration-300 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                 <div className="flex justify-center">
-                    <div className="p-4 bg-amber-500/10 rounded-full">
+                    <div className="rounded-full bg-amber-500/10 p-4">
                         <AlertTriangle className="w-12 h-12 text-amber-500" />
                     </div>
                 </div>
@@ -49,7 +50,7 @@ export const DeletionOverlay: React.FC = () => {
                 </div>
 
                 {error && (
-                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm italic">
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm italic text-red-500">
                         {error}
                     </div>
                 )}
@@ -58,7 +59,7 @@ export const DeletionOverlay: React.FC = () => {
                     <button
                         onClick={handleCancel}
                         disabled={isCancelling}
-                        className="w-full py-3 px-4 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+                        className="flex w-full items-center justify-center space-x-2 rounded-lg bg-white px-4 py-3 font-bold text-slate-900 transition-all hover:bg-slate-100 disabled:opacity-50"
                     >
                         {isCancelling ? (
                             <RefreshCw className="w-5 h-5 animate-spin" />
@@ -72,7 +73,7 @@ export const DeletionOverlay: React.FC = () => {
 
                     <button
                         onClick={signOut}
-                        className="w-full py-3 px-4 bg-slate-700/50 text-white font-semibold rounded-xl hover:bg-slate-700 transition-all flex items-center justify-center space-x-2 border border-slate-600"
+                        className="flex w-full items-center justify-center space-x-2 rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] px-4 py-3 font-semibold text-white transition-all hover:bg-[var(--ws-surface-2)]"
                     >
                         <LogOut className="w-5 h-5" />
                         <span>Sign Out</span>

@@ -134,6 +134,7 @@ export default function PublicContractPage() {
 
     const generateAndDownloadPDF = (contractData: any, signature: string) => {
         const doc = new jsPDF();
+        const pageHeight = doc.internal.pageSize.height;
 
         // Use a better header
         doc.setFillColor(15, 23, 42); // slate-900
@@ -153,15 +154,40 @@ export default function PublicContractPage() {
         let y = 60;
         doc.setTextColor(15, 23, 42);
         doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
 
-        const splitText = doc.splitTextToSize(contractData.content || '', 170);
-        splitText.forEach((line: string) => {
-            if (y > 275) {
+        const content = contractService.prepareContractContentForPdf(contractData.content || '');
+        const lines = content.split('\n');
+
+        lines.forEach((line) => {
+            if (y > pageHeight - 30) {
                 doc.addPage();
                 y = 20;
             }
-            doc.text(line, 20, y);
-            y += 6;
+
+            if (line.trim().startsWith('#')) {
+                const headerText = line.replace(/^#+\s*/, '');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                const split = doc.splitTextToSize(headerText, 170);
+                doc.text(split, 20, y);
+                y += split.length * 7 + 2;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(11);
+            } else if (line.trim() === '') {
+                y += 5;
+            } else {
+                const cleanLine = line.replace(/\*\*/g, '');
+                const split = doc.splitTextToSize(cleanLine, 170);
+                split.forEach((textLine: string) => {
+                    if (y > pageHeight - 30) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(textLine, 20, y);
+                    y += 6;
+                });
+            }
         });
 
         // Signatures

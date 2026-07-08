@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { resolveInvoiceSenderName } from '@/lib/invoices/invoiceBranding';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 import { activityService } from './activityService';
@@ -689,7 +691,7 @@ export const businessInvoiceService = {
     /**
      * Generate a professional PDF for a business invoice
      */
-    generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string }) {
+    generatePDF(invoice: any, tenant: any, client: any, signature?: { type: 'draw' | 'type', data: string }, businessSettings?: { trading_name?: string | null; business_name?: string | null }) {
         const metadata = this.parseMetadata(invoice.notes);
         const isReceipt = metadata?.type === 'receipt' || (invoice.invoice_number || invoice.invoiceNumber || '').startsWith('REC-');
         
@@ -724,7 +726,11 @@ export const businessInvoiceService = {
 
         // --- HEADER SECTION ---
         const logoUrl = tenant?.logo_url || tenant?.settings?.branding?.logo;
-        const senderName = invoice.senderName || tenant?.name || 'AlphaClone Partner';
+        const senderName = resolveInvoiceSenderName(
+            { senderName: invoice.senderName },
+            tenant,
+            businessSettings
+        );
 
         // Logo
         if (logoUrl) {

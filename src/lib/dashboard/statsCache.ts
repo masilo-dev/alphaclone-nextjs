@@ -1,4 +1,4 @@
-const CACHE_MS = 30_000;
+const CACHE_MS = 120_000;
 const store = new Map<string, { expires: number; data: unknown }>();
 
 export function getStatsCache<T>(key: string): T | null {

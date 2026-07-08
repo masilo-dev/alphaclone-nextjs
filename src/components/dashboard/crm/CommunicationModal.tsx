@@ -2,7 +2,8 @@
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown, MailCheck, Sparkles } from 'lucide-react';
-import { Button, Input, Modal } from '../../ui/UIComponents';
+import { Button, Input } from '../../ui/UIComponents';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
 import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -317,7 +318,12 @@ Return valid JSON with keys "subject" and "body".`;
     };
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Send Email" maxWidth="max-w-2xl">
+        <DetailDrawer
+            open
+            onOpenChange={(open) => { if (!open) onClose(); }}
+            title="Send Email"
+            size="wide"
+        >
             <div className="space-y-6">
                 {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
                 <div className="space-y-2">
@@ -518,6 +524,6 @@ Return valid JSON with keys "subject" and "body".`;
                     </div>
                 </div>
             </div>
-        </Modal>
+        </DetailDrawer>
     );
 };

@@ -15,6 +15,7 @@ import type { AcThemeMode } from '@/lib/applyAcTheme';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
 import { preferencesService } from '@/services/dashboardService';
+import { WORKSPACE } from '@/constants/design';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -160,17 +161,17 @@ const Sidebar = React.memo<SidebarProps>(({
             )}
 
             <aside className={`
-                fixed md:relative z-[60] h-full bg-slate-900 border-r border-slate-800
-                flex flex-col transition-all duration-300 shadow-2xl overflow-hidden will-change-transform
-                ${sidebarOpen ? 'translate-x-0 w-[14.5rem] pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-[4.25rem]'}
+                fixed md:relative z-[60] h-full ac-workspace-sidebar border-r
+                flex flex-col transition-all duration-200 overflow-hidden will-change-transform
+                ${sidebarOpen ? 'translate-x-0 w-[240px] pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-12'}
             `}>
 
                 {/* ── Logo ── */}
-                <div className="h-[4.5rem] flex items-center px-[16px] border-b border-slate-800 bg-slate-900 shrink-0">
-                    <div className="flex items-center gap-2.5 overflow-hidden">
-                        <Image src={LOGO_URL} alt="AlphaClone" width={32} height={32}
-                            className="rounded-xl object-contain flex-shrink-0" />
-                        <span className={`font-bold text-white text-[16px] leading-none tracking-tight transition-opacity duration-300 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
+                <div className={`${WORKSPACE.sidebar.logoHeight} flex items-center px-3 border-b border-[var(--ws-border)] shrink-0`}>
+                    <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
+                        <Image src={LOGO_URL} alt="AlphaClone" width={28} height={28}
+                            className="rounded-md object-contain flex-shrink-0" />
+                        <span className={`font-semibold text-white text-[13px] tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
                             {t('AlphaClone')}
                         </span>
                     </div>
@@ -207,21 +208,21 @@ const Sidebar = React.memo<SidebarProps>(({
 
                 {/* ── Nav ── */}
 
-                <nav className="flex-1 overflow-y-auto py-3.5 px-2 space-y-0.5 custom-scrollbar transform-gpu">
+                <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 custom-scrollbar transform-gpu">
                     {/* Admin badge */}
                     {isPlatformAdminRole(user.role) && (
-                        <div className="mb-3 px-1 space-y-1">
+                        <div className="mb-2 px-0.5 space-y-0.5">
                             <button
                                 onClick={() => navigate('/dashboard/admin/tenants')}
-                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-3.5' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-gradient-to-r from-indigo-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:border-teal-400`}
+                                className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} border border-[var(--ws-border)] text-teal-400`}
                             >
-                                <ShieldAlert className="w-[18px] h-[18px] flex-shrink-0" />
+                                <ShieldAlert className="w-4 h-4 flex-shrink-0" />
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Admin Panel')}</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => navigate('/dashboard/admin/operations')}
-                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-3.5' : 'justify-center px-1'} py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500`}
+                                className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'}`}
                             >
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Operations')}</span>
                             </button>
@@ -248,16 +249,11 @@ const Sidebar = React.memo<SidebarProps>(({
                                         }
                                     }}
                                     title={!sidebarOpen ? t(item.label) : undefined}
-                                    className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-3.5' : 'justify-center px-2'} py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative overflow-hidden active:scale-95 touch-manipulation
-                                        ${active
-                                            ? 'bg-teal-600 text-white shadow-lg shadow-teal-900/20'
-                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                        }`}
+                                    className={`${WORKSPACE.nav.item} ${active ? WORKSPACE.nav.itemActive : ''} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} group relative touch-manipulation`}
                                 >
-                                    {active && <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent pointer-events-none" />}
-                                    {Icon && <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active ? 'text-white' : 'group-hover:text-teal-400 transition-colors'}`} />}
+                                    {Icon && <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-white' : 'text-[var(--ws-text-tertiary)] group-hover:text-white'}`} />}
 
-                                        <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
+                                    <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
                                         {item.comingSoon && sidebarOpen && (
                                             <span className="ml-2 px-1.5 py-0.5 text-xs font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
@@ -276,17 +272,17 @@ const Sidebar = React.memo<SidebarProps>(({
                                     {/* Expand chevron */}
                                     {hasChildren && sidebarOpen && (
                                         <span className="ml-auto flex-shrink-0 transition-transform duration-200" style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)' }}>
-                                            <ChevronDown className="w-3.5 h-3.5 text-slate-500 group-hover:text-slate-300" />
+                                            <ChevronDown className="w-4 h-4 text-slate-500 group-hover:text-slate-300" />
                                         </span>
                                     )}
                                     {hasChildren && !sidebarOpen && (
-                                        <ChevronRight className="w-2.5 h-2.5 text-slate-600 absolute right-0.5 bottom-0.5" />
+                                        <ChevronRight className="w-3 h-3 text-slate-600 absolute right-0.5 bottom-0.5" />
                                     )}
                                 </button>
 
                                 {/* Sub-items: only show when expanded AND sidebar open */}
                                 {hasChildren && sidebarOpen && isExpanded && (
-                                    <div className="ml-4 mt-0.5 pl-4 border-l border-slate-700/60 space-y-0.5">
+                                    <div className="ml-3 mt-0.5 pl-2 border-l border-[var(--ws-border)] space-y-0.5">
                                         {item.subItems.map((sub: any, sIdx: number) => {
                                             const SubIcon = sub.icon;
                                             const subHref = sub.href.split('?')[0];
@@ -298,13 +294,9 @@ const Sidebar = React.memo<SidebarProps>(({
                                                         if (sub.comingSoon) return;
                                                         navigate(sub.href);
                                                     }}
-                                                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all touch-manipulation active:scale-95
-                                                        ${subActive
-                                                            ? 'bg-teal-600/20 text-teal-300 border border-teal-500/20'
-                                                            : 'text-slate-500 hover:text-white hover:bg-slate-800'
-                                                        }`}
+                                                    className={`${WORKSPACE.nav.subItem} ${subActive ? WORKSPACE.nav.subItemActive : ''} gap-2`}
                                                 >
-                                                    {SubIcon && <SubIcon className="w-3 h-3 flex-shrink-0" />}
+                                                    {SubIcon && <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />}
                                                     <span className="whitespace-nowrap">
                                                         {t(sub.label)}
                                                         {sub.comingSoon && (
@@ -322,7 +314,7 @@ const Sidebar = React.memo<SidebarProps>(({
                 </nav>
 
                 {/* ── Bottom bar ── */}
-                <div className="p-4 border-t border-slate-800 bg-slate-900 mt-auto shrink-0">
+                <div className="p-2 border-t border-[var(--ws-border)] mt-auto shrink-0">
 
                     {/* Operations HUD (Integrated) */}
                     {tasks.length > 0 && sidebarOpen && (

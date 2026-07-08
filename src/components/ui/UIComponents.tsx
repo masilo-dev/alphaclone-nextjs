@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useBlurValidation } from '@/hooks/useBlurValidation';
 import { Loader2, X, ChevronDown, MoreVertical } from 'lucide-react';
 import Image from 'next/image';
+import { WORKSPACE } from '@/constants/design';
 
 // --- Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -21,13 +22,13 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   ...props
 }) => {
-  const baseStyles = "inline-flex items-center justify-center rounded-xl font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95 min-w-11";
+  const baseStyles = `inline-flex items-center justify-center ${WORKSPACE.panel.radius} font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95 min-w-11`;
 
   const variants = {
-    primary: "bg-teal-600 text-white hover:bg-teal-500/90 shadow-lg shadow-teal-900/20",
-    secondary: "bg-blue-600 text-white hover:bg-blue-500/90 shadow-lg shadow-blue-900/20",
-    outline: "border border-slate-600 text-white hover:bg-slate-800",
-    ghost: "text-teal-400 hover:text-teal-300 hover:underline underline-offset-2 bg-transparent",
+    primary: `${WORKSPACE.action.primary} border-0`,
+    secondary: "bg-blue-600 text-white hover:bg-blue-500/90 shadow-sm shadow-blue-900/20",
+    outline: "border border-[var(--ws-border)] bg-[var(--ws-toolbar)] text-white hover:bg-[var(--ws-surface-2)]",
+    ghost: "text-teal-400 hover:text-teal-300 hover:bg-[var(--ws-surface-2)]",
     danger: "bg-red-600 text-white hover:bg-red-500/90",
   };
 
@@ -60,7 +61,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({ children, className = '', hoverEffect = false, ...props }) => {
   return (
     <div
-      className={`bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6 ${hoverEffect ? 'hover:bg-slate-800/80 transition-all duration-300 hover:border-teal-500/30 hover:shadow-lg hover:shadow-teal-900/10' : ''} ${className}`}
+      className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 ${hoverEffect ? 'hover:bg-[var(--ws-surface-2)] transition-all duration-300 hover:border-teal-500/20' : ''} ${className}`}
       {...props}
     >
       {children}
@@ -85,7 +86,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
   };
 
   return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium border whitespace-nowrap ${variants[variant]} ${className}`}>
       {children}
     </span>
   );
@@ -140,7 +141,7 @@ export const Input: React.FC<InputProps> = ({
     ? { value: fieldValue, onChange: handleChange, onBlur: handleBlur }
     : { defaultValue, onBlur, onChange, ...props };
 
-  const sharedClass = `w-full bg-slate-950 border ${error ? 'border-red-500' : 'border-slate-800'} rounded-lg px-3 py-2 text-sm leading-normal text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`;
+  const sharedClass = `w-full bg-[var(--ws-toolbar)] border ${error ? 'border-red-500' : 'border-[var(--ws-border)]'} ${WORKSPACE.panel.radius} px-3 py-2 text-sm leading-normal text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`;
 
   return (
     <div className="w-full">
@@ -202,10 +203,10 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <div className={`fixed inset-0 z-[1100] flex items-center justify-center px-4 pt-safe pb-safe ${containerClassName}`}>
       <div className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm`} onClick={onClose} />
-      <div className={`relative bg-slate-900 border border-slate-700 rounded-3xl w-full ${maxWidth} shadow-2xl animate-fade-in overflow-hidden max-h-[85vh] flex flex-col ${className}`}>
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
+      <div className={`relative ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[85vh] flex flex-col ${className}`}>
+        <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-2 hover:bg-slate-800 rounded-lg">
+          <button onClick={onClose} className={`text-slate-400 hover:text-white transition-colors p-2 hover:bg-[var(--ws-surface-2)] ${WORKSPACE.panel.radius}`}>
             <X className="w-5 h-5" />
           </button>
         </div>

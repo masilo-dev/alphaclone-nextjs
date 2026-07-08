@@ -22,6 +22,7 @@ import { MobileDataCard, ResponsiveTableDesktop, ResponsiveTableMobile } from '.
 import { workflowService, Workflow, WorkflowExecution } from '../../../services/workflowService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
+import EmptyState from '@/components/ui/EmptyState';
 
 // Define custom node types for a premium feel
 const TriggerNode = ({ data }: { data: { label: string; description: string } }) => (
@@ -594,7 +595,7 @@ export default function AutomationBuilder() {
             }}
             className="bg-slate-50 dark:bg-slate-950"
         >
-            <Controls className="bg-white dark:bg-slate-800 border-none shadow-xl rounded-xl overflow-hidden" />
+            <Controls className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-800" />
             <MiniMap 
                 nodeStrokeColor={(n: Node) => {
                     if (n.type === 'triggerNode') return '#4f46e5';
@@ -607,14 +608,14 @@ export default function AutomationBuilder() {
                     return '#fff';
                 }}
                 maskColor="rgba(0, 0, 0, 0.1)"
-                className="bg-white/50 dark:bg-slate-900/50 backdrop-blur rounded-xl shadow-xl border border-slate-200 dark:border-slate-800" 
+                className="rounded-lg border border-slate-200 bg-white/50 shadow-none backdrop-blur dark:border-slate-800 dark:bg-slate-900/50" 
             />
             <Background color="#94a3b8" gap={24} size={1} />
         </ReactFlow>
 
         {/* Footer info */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-            <Panel position="bottom-left" className="pointer-events-auto bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs px-3 py-2 rounded-lg border border-blue-200 dark:border-blue-800/30 flex items-center gap-2 shadow-lg">
+            <Panel position="bottom-left" className="pointer-events-auto flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-600 shadow-none dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400">
                 <Settings className="w-3 h-3" />
                 Drag handles to connect actions. No code required.
             </Panel>
@@ -632,23 +633,31 @@ export default function AutomationBuilder() {
                 </div>
 
                 {!workflowId ? (
-                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <div className="text-center">
-                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <p className="text-slate-500 font-medium">Save this workflow to start tracking history</p>
-                        </div>
+                    <div className="flex-1">
+                        <EmptyState
+                            icon={Clock}
+                            title="No history yet"
+                            description="Save this workflow first, then test or run it to start building an audit trail."
+                            className="max-w-none rounded-lg border-2 border-dashed border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+                        />
                     </div>
                 ) : loadingHistory ? (
                     <div className="flex-1 flex items-center justify-center">
                         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin" />
                     </div>
                 ) : executions.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-                        <div className="text-center">
-                            <Clock className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <p className="text-slate-500 font-medium">No execution history found yet.</p>
-                            <button onClick={handleExecute} className="mt-4 text-indigo-500 font-bold hover:underline">Run a Test Now</button>
-                        </div>
+                    <div className="flex-1">
+                        <EmptyState
+                            icon={Clock}
+                            title="No execution history yet"
+                            description="Run a test execution to capture status, timing, and error details for this workflow."
+                            action={
+                                <button onClick={handleExecute} className="mt-4 text-indigo-500 font-bold hover:underline">
+                                    Run a Test Now
+                                </button>
+                            }
+                            className="max-w-none rounded-lg border border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+                        />
                     </div>
                 ) : (
                     <>
@@ -673,7 +682,7 @@ export default function AutomationBuilder() {
                             </MobileDataCard>
                         ))}
                     </ResponsiveTableMobile>
-                    <ResponsiveTableDesktop className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
+                    <ResponsiveTableDesktop className="rounded-lg border border-slate-200 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
                         <table className="w-full min-w-[520px] text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">

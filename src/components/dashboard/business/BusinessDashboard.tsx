@@ -34,7 +34,9 @@ import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
+import { usePrefetchDashboardStats } from '@/hooks/useDashboardStats';
 import { startClientVideoCall } from '@/services/instantMeetingService';
+import { WORKSPACE } from '@/constants/design';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -49,8 +51,14 @@ import {
 } from '../views/ModuleDashboardView';
 import ProjectsPage from './ProjectsPage';
 import TeamPage from './TeamPage';
+import ClientsPage from './ClientsPage';
+import CRMTab from '../CRMTab';
+import TasksTab from '../TasksTab';
+import DealsTab from '../DealsTab';
+import QuotesTab from '../QuotesTab';
+import MailTab from '../MailTab';
+import MessagesPage from './MessagesPage';
 // Lazy load heavier tabs that aren't needed on dashboard mount
-const MessagesPage = React.lazy(() => import('./MessagesPage'));
 const CalendarPage = React.lazy(() => import('./CalendarPage'));
 const EnhancedBillingPage = React.lazy(() => import('./EnhancedBillingPage'));
 const ReportsPage = React.lazy(() => import('./ReportsPage'));
@@ -59,20 +67,13 @@ const PwaSettingsScreen = React.lazy(() => import('../../pwa/PwaSettingsScreen')
 const MeetingsPage = React.lazy(() => import('./MeetingsPage'));
 const ReferralsPage = React.lazy(() => import('./ReferralsPage'));
 const BookingTab = React.lazy(() => import('./BookingTab'));
-// New CRM Components - Lazy loaded to prevent Error #306
-const CRMTab = React.lazy(() => import('../CRMTab'));
-const TasksTab = React.lazy(() => import('../TasksTab'));
 import SalesAgent from '../SalesAgent';
 const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
-const DealsTab = React.lazy(() => import('../DealsTab'));
-const QuotesTab = React.lazy(() => import('../QuotesTab'));
-const ClientsPage = React.lazy(() => import('./ClientsPage'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
 import DocumentHub from '../../documents/DocumentHub';
 // Accounting Components - Lazy loaded to prevent module resolution issues
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
-const MailTab = React.lazy(() => import('../MailTab'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const UnifiedInboxView = React.lazy(() => import('./UnifiedInboxView'));
@@ -118,86 +119,7 @@ const SequenceBuilder = React.lazy(() => import('../marketing/SequenceBuilder'))
 const DeliverabilityPanel = React.lazy(() => import('../marketing/DeliverabilityPanel'));
 const ExecutiveDashboard = React.lazy(() => import('../ExecutiveDashboard'));
 import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
-import SalesHub from '../hubs/SalesHub';
-import MoneyHub from '../hubs/MoneyHub';
-import MarketingHub from '../hubs/MarketingHub';
-import InsightsHub from '../hubs/InsightsHub';
-import DocumentsHub from '../hubs/DocumentsHub';
-
-const SALES_HUB_ROUTES = new Set([
-  '/dashboard/crm',
-  '/dashboard/crm/workspace',
-  '/dashboard/crm/console',
-  '/dashboard/crm/accounts',
-  '/dashboard/crm/reports',
-  '/dashboard/leads',
-  '/dashboard/leads/campaigns',
-  '/dashboard/deals',
-  '/dashboard/contacts',
-  '/dashboard/crm/unified-contacts',
-  '/dashboard/forecast',
-  '/dashboard/tasks',
-]);
-
-const MONEY_HUB_ROUTES = new Set([
-  '/dashboard/accounting',
-  '/dashboard/accounting/banking',
-  '/dashboard/accounting/bills',
-  '/dashboard/accounting/period-close',
-  '/dashboard/business/billing',
-  '/dashboard/business/invoices',
-  '/dashboard/business/expenses',
-  '/dashboard/business/quotes',
-  '/dashboard/business/cash-flow',
-  '/dashboard/finance',
-]);
-
-const MARKETING_HUB_ROUTES = new Set([
-  '/dashboard/business/campaigns',
-  '/dashboard/business/forms',
-  '/dashboard/business/social',
-  '/dashboard/business/unified-inbox',
-  '/dashboard/marketing/sequences',
-  '/dashboard/marketing/deliverability',
-  '/dashboard/business/facebook',
-  '/dashboard/business/linkedin',
-  '/dashboard/business/x',
-]);
-
-const INSIGHTS_HUB_ROUTES = new Set([
-  '/dashboard/analytics',
-  '/dashboard/performance',
-  '/dashboard/executive',
-  '/dashboard/business/reports',
-]);
-
-const DOCUMENTS_HUB_ROUTES = new Set([
-  '/dashboard/business/documents',
-  '/dashboard/business/vault',
-  '/dashboard/contracts',
-  '/dashboard/business/contracts',
-]);
-
-const ALL_HUB_ROUTES = new Set([
-  ...SALES_HUB_ROUTES,
-  ...MONEY_HUB_ROUTES,
-  ...MARKETING_HUB_ROUTES,
-  ...INSIGHTS_HUB_ROUTES,
-  ...DOCUMENTS_HUB_ROUTES,
-]);
-
-function isHubRoute(tab: string): boolean {
-  return ALL_HUB_ROUTES.has(tab);
-}
-
-function wrapInHub(tab: string, content: React.ReactNode): React.ReactNode {
-  if (SALES_HUB_ROUTES.has(tab)) return <SalesHub>{content}</SalesHub>;
-  if (MONEY_HUB_ROUTES.has(tab)) return <MoneyHub>{content}</MoneyHub>;
-  if (MARKETING_HUB_ROUTES.has(tab)) return <MarketingHub>{content}</MarketingHub>;
-  if (INSIGHTS_HUB_ROUTES.has(tab)) return <InsightsHub>{content}</InsightsHub>;
-  if (DOCUMENTS_HUB_ROUTES.has(tab)) return <DocumentsHub>{content}</DocumentsHub>;
-  return content;
-}
+import { isHubRoute, wrapRouteInHub } from '@/lib/dashboard/hubRoutes';
 
 import { TrialBanner } from '../TrialBanner';
 import BonnieWidget from '../bonnie/BonnieWidget';
@@ -215,10 +137,13 @@ import NotificationCenter from '../NotificationCenter';
 import CommandPalette from '../CommandPalette';
 import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
 import ProductTour from '../../onboarding/ProductTour';
+import OnboardingFlow from '../../onboarding/OnboardingFlow';
+import { BusinessWelcomeModal } from './BusinessWelcomeModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
+import { DashboardRouteTransition } from '../DashboardRouteTransition';
 
 /** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). Home + CRM scroll with the main column — not listed here. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
@@ -230,6 +155,15 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/zoho/mail',
     '/dashboard/business/messages',
     '/dashboard/pwa-settings',
+    '/dashboard/business/social',
+    '/dashboard/social',
+    '/dashboard/business/social/compose',
+    '/dashboard/social/compose',
+    '/dashboard/business/social-command',
+    '/dashboard/business/linkedin',
+    '/dashboard/business/facebook',
+    '/dashboard/business/instagram',
+    '/dashboard/business/x',
 ];
 
 interface BusinessDashboardProps {
@@ -249,6 +183,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     );
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
     const currentTenant = propTenant || contextTenant;
+    usePrefetchDashboardStats(currentTenant?.id);
     const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
     if (currentTenant) {
         hasBootstrappedRef.current = true;
@@ -257,6 +192,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
     const [showProductTour, setShowProductTour] = useState(false);
+    const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
+    const [showOnboarding, setShowOnboarding] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const {
         activeMeetingCallId,
@@ -288,12 +225,45 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     React.useEffect(() => {
         if (!user?.id || typeof window === 'undefined') return;
-        const key = `business_tour_completed_${user.id}`;
-        if (!localStorage.getItem(key) && route === '/dashboard') {
-            const timer = window.setTimeout(() => setShowProductTour(true), 2500);
+
+        const welcomeKey = `business_welcome_seen_${user.id}`;
+        const onboardingKey = `onboarding_completed_${user.id}`;
+        const tourKey = `business_tour_completed_${user.id}`;
+
+        if (!localStorage.getItem(welcomeKey)) {
+            setShowBusinessWelcome(true);
+            return;
+        }
+        if (!localStorage.getItem(onboardingKey)) {
+            setShowOnboarding(true);
+            return;
+        }
+        if (!localStorage.getItem(tourKey) && route === '/dashboard') {
+            const timer = window.setTimeout(() => setShowProductTour(true), 2000);
             return () => window.clearTimeout(timer);
         }
     }, [user?.id, route]);
+
+    const handleBusinessWelcomeClose = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(`business_welcome_seen_${user.id}`, '1');
+        }
+        setShowBusinessWelcome(false);
+        if (typeof window !== 'undefined' && !localStorage.getItem(`onboarding_completed_${user.id}`)) {
+            setShowOnboarding(true);
+            return;
+        }
+        if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
+            window.setTimeout(() => setShowProductTour(true), 1500);
+        }
+    };
+
+    const handleOnboardingComplete = () => {
+        setShowOnboarding(false);
+        if (typeof window !== 'undefined' && !localStorage.getItem(`business_tour_completed_${user.id}`) && route === '/dashboard') {
+            window.setTimeout(() => setShowProductTour(true), 1500);
+        }
+    };
 
     // Initialize MS Teams-like Presence
     React.useEffect(() => {
@@ -471,7 +441,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         switch (tab) {
             case '/dashboard':
             case '/dashboard/business':
-                return <BusinessHome />;
+                return <BusinessHome user={user} />;
             case '/dashboard/projects':
             case '/dashboard/business/projects':
                 return <ProjectsDashboard />;
@@ -482,11 +452,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <TeamPage user={user} />;
             case '/dashboard/messages':
             case '/dashboard/business/messages':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
-                        <MessagesPage user={user} />
-                    </React.Suspense>
-                );
+                return <MessagesPage />;
             case '/dashboard/calendar':
             case '/dashboard/business/calendar':
                 return (
@@ -554,37 +520,19 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/crm':
                 return <CrmDashboard />;
             case '/dashboard/crm/workspace':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <CRMTab user={user} />
-                    </React.Suspense>
-                );
+                return <CRMTab user={user} />;
             case '/dashboard/outreach':
                 return <OutreachDashboard />;
             case '/dashboard/deals':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <DealsTab user={user} />
-                    </React.Suspense>
-                );
+                return <DealsTab user={user} />;
             case '/dashboard/business/referrals':
                 return <ReferralsPage user={user} tenant={currentTenant} />;
             case '/dashboard/leads':
             case '/dashboard/contacts':
             case '/dashboard/business/clients':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <ClientsPage
-                            user={user}
-                        />
-                    </React.Suspense>
-                );
+                return <ClientsPage user={user} />;
             case '/dashboard/crm/unified-contacts':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={10} columns={6} />}>
-                        <ClientsPage user={user} />
-                    </React.Suspense>
-                );
+                return <ClientsPage user={user} />;
             case '/dashboard/forecast':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
@@ -652,11 +600,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/tasks':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <TasksTab user={user} />
-                    </React.Suspense>
-                );
+                return <TasksTab user={user} />;
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
             case '/dashboard/leads/campaigns':
@@ -673,11 +617,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <ContractDashboard user={user} initialTab="details" />;
             // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
             case '/dashboard/business/quotes':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
-                        <QuotesTab user={user} />
-                    </React.Suspense>
-                );
+                return <QuotesTab user={user} />;
             case '/dashboard/business/tasks':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
@@ -802,11 +742,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             case '/dashboard/mail':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={4} columns={1} />}>
-                        <MailTab user={user} />
-                    </React.Suspense>
-                );
+                return <MailTab user={user} />;
 
             case '/dashboard/zoho/mail':
                 return (
@@ -910,7 +846,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     };
 
     const moduleContent = useMemo(
-        () => wrapInHub(route, renderBusinessContent(route)),
+        () => wrapRouteInHub(route, renderBusinessContent(route)),
         [route, user.id, currentTenant?.id, dashboardStats],
     );
 
@@ -1036,7 +972,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Use external nav items instead of local redundant array
 
     return (
-        <div className="flex min-w-0 bg-slate-950 text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root [height:100dvh]">
+        <div className="flex min-w-0 ac-workspace-canvas text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root [height:100dvh]">
             <div data-tour="navigation" className="flex-shrink-0">
             <Sidebar
                 sidebarOpen={sidebarOpen}
@@ -1052,7 +988,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main className="flex-1 flex flex-col min-w-0 min-h-0 bg-slate-950 ac-business-main">
+            <main className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main">
 
                 <TrialBanner />
 
@@ -1076,7 +1012,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 )}
 
                 {/* Header */}
-                <header className={`h-[4.75rem] border-b border-slate-800/50 flex items-center justify-between px-3 sm:px-4 md:px-9 bg-slate-950/95 sticky top-0 z-10 w-full ac-business-header ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
+                <header className={`${WORKSPACE.toolbar.height} border-b border-[var(--ws-border)] flex items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
                         {/* Mobile Menu Toggle removed - BottomNav handles it */}
@@ -1111,7 +1047,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </div>
 
                     {/* Right: compact utility cluster + account menu */}
-                    <div className="flex items-center gap-2 sm:gap-2.5">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {activeBgTasksCount > 0 && (
                             <div className="hidden md:flex items-center gap-1.5 text-teal-400 px-2.5 py-1 rounded-full text-[11px] font-medium border border-teal-500/25 bg-teal-500/5">
                                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -1157,16 +1093,16 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
                 {/* Dynamic Content Area */}
                 <div
-                    className={`flex-1 min-h-0 ac-business-scroll ${
+                    className={`flex-1 min-h-0 ac-workspace-canvas ac-business-scroll ${
                         DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
                             ? 'overflow-hidden p-0'
-                            : 'overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 dashboard-content-padding'
+                            : `overflow-y-auto overflow-x-hidden ${WORKSPACE.canvas.padding} dashboard-content-padding`
                     }`}
                 >
                     <WidgetErrorBoundary title="Business Dashboard Error">
-                        <div
-                            key={route}
-                            className={`w-full min-w-0 ${
+                        <DashboardRouteTransition
+                            routeKey={route}
+                            className={`w-full min-w-0 ${WORKSPACE.canvas.maxWidth} mx-auto ${
                                 DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
                                     ? 'h-full min-h-0 max-md:pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))]'
                                     : 'min-h-full'
@@ -1175,7 +1111,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <EnterpriseTabWrapper fullBleed={isEnterpriseFullBleedTab(route)}>
                             {moduleContent}
                         </EnterpriseTabWrapper>
-                        </div>
+                        </DashboardRouteTransition>
                     </WidgetErrorBoundary>
                 </div>
             </main>
@@ -1213,6 +1149,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             />
 
             <IncomingCallModal userId={user.id} userName={user.name} />
+
+            <BusinessWelcomeModal
+                isOpen={showBusinessWelcome}
+                onClose={handleBusinessWelcomeClose}
+                userName={user.name || user.email || 'there'}
+            />
+
+            {showOnboarding ? <OnboardingFlow user={user} onComplete={handleOnboardingComplete} /> : null}
 
             <ProductTour
                 isOpen={showProductTour}

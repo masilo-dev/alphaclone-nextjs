@@ -12,6 +12,9 @@ import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps'
 import { useTenant } from '../../contexts/TenantContext';
 import { COMPREHENSIVE_INDUSTRIES, getAllIndustryNames, getServicesByIndustry, findIndustryByNameOrKeyword, ServiceItem } from '../../lib/comprehensiveIndustries';
 import { UNIVERSAL_SERVICE_CATALOG } from '../../services/universalServiceCatalog';
+import { supabase } from '@/lib/supabase';
+import { getTaxRateForCountry } from '@/lib/tax/taxRules';
+import { WORKSPACE } from '@/constants/design';
 
 
 interface LineItem {
@@ -43,6 +46,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const [bankDetails, setBankDetails] = useState('');
     const [mobileDetails, setMobileDetails] = useState('');
     const [taxRate, setTaxRate] = useState<number>(0);
+    const [taxCountry, setTaxCountry] = useState<string>('ZW');
     const [discountAmount, setDiscountAmount] = useState<number>(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [clients, setClients] = useState<any[]>([]);
@@ -87,6 +91,27 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
             setMobileDetails(tenantPaymentMethods.mobile || tenantDefaults.mobile);
         }
     }, [tenantPaymentMethods, tenantDefaults.bank, tenantDefaults.mobile]);
+
+    React.useEffect(() => {
+        if (!isOpen || !currentTenant?.id) return;
+        const loadTaxDefaults = async () => {
+            const { data } = await supabase
+                .from('business_settings')
+                .select('tax_rate, tax_country')
+                .eq('tenant_id', currentTenant.id)
+                .maybeSingle();
+
+            const country = data?.tax_country || 'ZW';
+            setTaxCountry(country);
+            if (data?.tax_rate != null && Number(data.tax_rate) > 0) {
+                setTaxRate(Number(data.tax_rate));
+            } else {
+                const lookup = getTaxRateForCountry(country);
+                if (lookup.rate > 0) setTaxRate(lookup.rate);
+            }
+        };
+        loadTaxDefaults();
+    }, [isOpen, currentTenant?.id]);
 
     // Load clients when component mounts or project changes
     React.useEffect(() => {
@@ -385,9 +410,9 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
     return (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-            <div className="flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl">
+            <div className={`flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}>
                 {/* Header */}
-                <div className="flex shrink-0 items-center justify-between border-b border-slate-800 p-6">
+                <div className="flex shrink-0 items-center justify-between border-b border-[var(--ws-border)] p-6">
                     <div>
                         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                             <DollarSign className="w-6 h-6 text-teal-400" />
@@ -408,7 +433,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {/* STEP 1: Edit Details */}
                     {step === 'edit' && (
                         <div className="space-y-6">
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-start gap-3">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 flex items-start gap-3 border-teal-500/20`}>
                                 <Edit3 className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold text-sm">Invoice Details</h3>
@@ -419,7 +444,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Payment Links Warning */}
-                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 border-yellow-500/20`}>
                                 <div className="flex items-start gap-3">
                                     <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5" />
                                     <div className="flex-1">
@@ -442,7 +467,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
 
 
                             {/* Template Selector */}
-                            <div className="border-b border-slate-800 pb-6">
+                            <div className="border-b border-[var(--ws-border)] pb-6">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <Sparkles className="w-5 h-5 text-teal-400" />
                                     Choose Style
@@ -509,7 +534,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                                                 initial={{ opacity: 0, y: -10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -10 }}
-                                                className="absolute w-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl z-[100] max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700"
+                                                className={`absolute z-[100] mt-2 max-h-60 w-full overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-700 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}
                                             >
                                                 {clients.filter(c => 
                                                     !searchQuery || 
@@ -789,7 +814,28 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Tax and Discount */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Tax country</label>
+                                    <select
+                                        value={taxCountry}
+                                        onChange={(e) => {
+                                            const code = e.target.value;
+                                            setTaxCountry(code);
+                                            const lookup = getTaxRateForCountry(code);
+                                            if (lookup.rate > 0) setTaxRate(lookup.rate);
+                                        }}
+                                        className={`w-full h-10 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] ${WORKSPACE.panel.radius} px-3 text-sm text-white outline-none`}
+                                    >
+                                        <option value="ZW">Zimbabwe (15% VAT)</option>
+                                        <option value="ZA">South Africa</option>
+                                        <option value="KE">Kenya</option>
+                                        <option value="GH">Ghana</option>
+                                        <option value="NG">Nigeria</option>
+                                        <option value="GB">United Kingdom</option>
+                                        <option value="US">United States</option>
+                                    </select>
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">Tax Rate (%)</label>
                                     <Input
@@ -815,7 +861,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Total */}
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
                                 <div className="space-y-2 text-sm">
                                     <div className="flex justify-between text-slate-300">
                                         <span>Subtotal:</span>
@@ -841,7 +887,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Digital Signature */}
-                            <div className="border-t border-slate-800 pt-6">
+                            <div className="border-t border-[var(--ws-border)] pt-6">
                                 <h3 className="text-white font-bold mb-3 flex items-center gap-2">
                                     <PenLine className="w-5 h-5 text-teal-400" />
                                     Digital Signature (Optional)
@@ -911,7 +957,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                     {/* STEP 2: Preview */}
                     {step === 'preview' && (
                         <div className="space-y-6">
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 flex items-start gap-3">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 flex items-start gap-3 border-teal-500/20`}>
                                 <FileText className="w-5 h-5 text-teal-400 mt-0.5" />
                                 <div>
                                     <h3 className="text-teal-400 font-bold text-sm">Invoice Preview</h3>
@@ -922,7 +968,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Invoice Preview */}
-                            <div className="bg-slate-950 rounded-lg p-6 text-white border border-slate-800">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 text-white`}>
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-2xl font-bold">{currentTenant?.name || 'Business Name'}</h2>
@@ -1020,7 +1066,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Status Summary */}
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4`}>
                                 <h4 className="text-white font-bold mb-2">Invoice Status</h4>
                                 <div className="space-y-1 text-sm text-slate-300">
                                     <div className="flex justify-between">
@@ -1077,7 +1123,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                             </div>
 
                             {/* Next Steps */}
-                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 text-left">
+                            <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 text-left`}>
                                 <h4 className="text-white font-bold mb-2">Next Steps</h4>
                                 <ul className="text-slate-300 text-sm space-y-1">
                                     <li>• Download the PDF and send it to your client</li>
@@ -1090,7 +1136,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
                 </div>
 
                 {/* Footer — always visible */}
-                <div className="flex shrink-0 items-center justify-between border-t border-slate-800 bg-slate-900/95 p-4 sm:p-6 backdrop-blur-sm">
+                <div className="flex shrink-0 items-center justify-between border-t border-[var(--ws-border)] bg-slate-900/95 p-4 sm:p-6 backdrop-blur-sm">
                     <div className="text-sm text-slate-400">
                         Total: <span className="text-white font-bold">${calculateTotal().toFixed(2)}</span>
                     </div>

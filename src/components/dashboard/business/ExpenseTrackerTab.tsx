@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { chartOfAccountsService, ChartOfAccount } from '@/services/accounting/chartOfAccountsService';
 import toast from 'react-hot-toast';
-import { Modal } from '../../ui/UIComponents';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import {
     MobileDataCard,
     ResponsiveTableDesktop,
@@ -464,11 +464,16 @@ export default function ExpenseTrackerTab() {
 
             {/* Add/Edit Form */}
             {/* Add/Edit Form */}
-            <Modal
-                isOpen={showForm}
-                onClose={() => { setShowForm(false); setEditingId(null); }}
+            <DetailDrawer
+                open={showForm}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setShowForm(false);
+                        setEditingId(null);
+                    }
+                }}
                 title={editingId ? 'Edit Expense' : 'Add Expense'}
-                maxWidth="max-w-2xl"
+                size="wide"
             >
                 <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -595,7 +600,7 @@ export default function ExpenseTrackerTab() {
                         </button>
                     </div>
                 </div>
-            </Modal>
+            </DetailDrawer>
 
             {/* Expenses Table */}
             {filtered.length === 0 ? (

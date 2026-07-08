@@ -36,14 +36,19 @@ export async function registerServiceWorkerSafely(): Promise<ServiceWorkerRegist
             try {
                 await purgeStaleServiceWorkerCaches();
 
-                const head = await fetch('/sw.js', { method: 'HEAD', cache: 'no-store' });
+                const head = await fetch('/service-worker.js', { method: 'HEAD', cache: 'no-store' })
+                    .then((r) => (r.ok ? r : fetch('/sw.js', { method: 'HEAD', cache: 'no-store' })));
                 if (!head.ok) {
                     return null;
                 }
 
+                const swPath = (await fetch('/sw.js', { method: 'HEAD', cache: 'no-store' })).ok
+                    ? '/sw.js'
+                    : '/service-worker.js';
+
                 const existing = await navigator.serviceWorker.getRegistration('/');
                 const registration =
-                    existing ?? (await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }));
+                    existing ?? (await navigator.serviceWorker.register(swPath, { scope: '/', updateViaCache: 'none' }));
 
                 try {
                     await registration.update();

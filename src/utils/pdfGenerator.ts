@@ -3,6 +3,7 @@ import autoTable from 'jspdf-autotable';
 import { Quote, QuoteItem } from '../services/quoteService';
 import { Tenant } from '../services/tenancy/types';
 import type { TrialBalance } from '../services/accounting/generalLedgerService';
+import { resolveInvoiceSenderName } from '@/lib/invoices/invoiceBranding';
 
 /**
  * Convert hex color to RGB array
@@ -719,7 +720,8 @@ export interface InvoiceData {
 export const generateInvoicePDF = (
     invoice: InvoiceData,
     items: InvoiceItem[],
-    tenant: Tenant
+    tenant: Tenant,
+    businessSettings?: { trading_name?: string | null; business_name?: string | null }
 ) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -740,10 +742,12 @@ export const generateInvoicePDF = (
     doc.setFont('helvetica', 'normal');
     doc.text(`#${invoice.invoiceNumber}`, pageWidth - 20, 24, { align: 'right' });
 
+    const displayName = resolveInvoiceSenderName({}, tenant, businessSettings);
+
     // Company name
     doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
-    doc.text(tenant?.legal_name || tenant?.name || 'AlphaClone', 20, 22);
+    doc.text(displayName, 20, 22);
 
     // Meta chips
     const chipY = 44;

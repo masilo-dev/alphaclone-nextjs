@@ -1,3 +1,4 @@
+import { stripHtml } from '@/lib/html/stripHtml';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
 import { generateText } from './unifiedAIService';
@@ -244,6 +245,11 @@ export const contractService = {
             .trim();
     },
 
+    prepareContractContentForPdf(rawContent: string): string {
+        const asText = rawContent.includes('<') ? stripHtml(rawContent) : rawContent;
+        return this.normalizeContractTextForPdf(this.cleanMarkdown(asText));
+    },
+
     /**
      * Generate Draft with AI
      */
@@ -466,7 +472,7 @@ export const contractService = {
         doc.setFont('helvetica', 'normal');
 
         const rawContent = typeof contract.content === 'string' ? contract.content : 'No content provided';
-        const content = this.normalizeContractTextForPdf(this.cleanMarkdown(rawContent));
+        const content = this.prepareContractContentForPdf(rawContent);
         const lines = content.split('\n');
 
         lines.forEach((line) => {

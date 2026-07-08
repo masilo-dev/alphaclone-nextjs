@@ -38,7 +38,9 @@ import {
     Square
 } from 'lucide-react';
 import AIOutreachModal from './AIOutreachModal';
-import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
+import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
+import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import EmptyState from '@/components/ui/EmptyState';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
 import { startClientVideoCall } from '@/services/instantMeetingService';
@@ -55,8 +57,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
 import { CRMNav } from '../crm/CRMNav';
-import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
-import { CRMActionChips } from '../crm/CRMActionChips';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
@@ -704,7 +704,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }
 
     if (loading) {
-        return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading clients...</div></div>;
+        return (
+            <div className="flex items-center justify-center h-full">
+                <EmptyState
+                    icon={Users}
+                    title="Loading contacts"
+                    description="We are pulling your latest sales contacts and activity into the workspace."
+                />
+            </div>
+        );
     }
 
     return (
@@ -896,7 +904,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             );
                         })}
                         {filteredClients.length === 0 && (
-                            <div className="col-span-full text-center py-8 text-slate-500 text-sm">No contacts found</div>
+                            <div className="col-span-full">
+                                <EmptyState
+                                    icon={Users}
+                                    title="No contacts match these filters"
+                                    description="Try another stage or search term, or add a new contact to start building your pipeline."
+                                    className="py-8"
+                                />
+                            </div>
                         )}
                     </div>
 
@@ -962,8 +977,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             );
                         })}
                         {filteredClients.length === 0 && (
-                            <div className="col-span-full text-center py-16 text-slate-500 text-sm">
-                                No contacts found. Add your first contact to get started.
+                            <div className="col-span-full">
+                                <EmptyState
+                                    icon={Users}
+                                    title="No contacts yet"
+                                    description="Add your first contact to start tracking deals, communication, and billing from one place."
+                                />
                             </div>
                         )}
                     </div>
@@ -1086,7 +1105,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Right Pane: Details */}
-                    <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
+                    <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
                         {selectedClient ? (
                             <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
                                 <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
@@ -1186,9 +1205,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                                                     </div>
                                                 ) : !clientTimeline?.activities || clientTimeline.activities.length === 0 ? (
-                                                    <div className="text-center py-12 text-slate-500 text-sm">
-                                                        No timeline activity or communications found for this client.
-                                                    </div>
+                                                    <EmptyState
+                                                        icon={Clock}
+                                                        title="No timeline activity yet"
+                                                        description="This contact has not logged notes, invoices, payments, or communication activity yet."
+                                                        className="py-12"
+                                                    />
                                                 ) : (
                                                     <div className="relative pl-6 border-l-2 border-slate-800 space-y-6 py-2">
                                                         {clientTimeline.activities.map((act: any) => {
@@ -1229,7 +1251,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'notes' && (
                                             <div className="space-y-4">
                                                 {/* Add Note Form */}
-                                                <form onSubmit={handleAddNote} className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+                                                <form onSubmit={handleAddNote} className="ac-workspace-panel rounded-lg p-4 space-y-3">
                                                     <h3 className="text-xs font-bold text-white uppercase tracking-wider">Add Activity Note</h3>
                                                     <div>
                                                         <Input
@@ -1237,7 +1259,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Note Title (e.g. Call feedback, Meeting summary)"
                                                             value={newNoteTitle}
                                                             onChange={(e) => setNewNoteTitle(e.target.value)}
-                                                            className="!bg-slate-900 border-slate-800 text-white placeholder-slate-500 text-sm"
+                                                            className="text-white placeholder-slate-500 text-sm"
                                                             required
                                                         />
                                                     </div>
@@ -1246,7 +1268,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
-                                                            className="w-full bg-slate-900 border border-slate-800 text-white placeholder-slate-500 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 min-h-[80px]"
+                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 text-sm focus:outline-none focus:border-teal-500 min-h-[80px]"
                                                             required
                                                         />
                                                     </div>
@@ -1255,7 +1277,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             type="submit"
                                                             size="sm"
                                                             isLoading={noteSubmitting}
-                                                            className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white"
+                                                            className="text-white"
                                                             icon={<Send className="w-3.5 h-3.5" />}
                                                         >
                                                             Add Note
@@ -1266,10 +1288,15 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 {/* Notes Feed */}
                                                 <div className="space-y-3 mt-4">
                                                     {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').length === 0 ? (
-                                                        <p className="text-center py-6 text-xs text-slate-500">No notes written yet. Add one above!</p>
+                                                        <EmptyState
+                                                            icon={FileText}
+                                                            title="No notes yet"
+                                                            description="Capture meeting context, follow-ups, and relationship details here."
+                                                            className="py-6"
+                                                        />
                                                     ) : (
                                                         clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').map((note: any) => (
-                                                            <div key={note.id} className="bg-slate-950/40 border border-slate-805 p-3 rounded-2xl">
+                                                            <div key={note.id} className="ac-workspace-panel rounded-lg p-3">
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
                                                                     <h4 className="text-xs font-bold text-teal-400">{note.title}</h4>
                                                                     <span className="text-[10px] text-slate-500 font-mono">
@@ -1287,15 +1314,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'invoices' && (
                                             <div className="space-y-3">
                                                 {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').length === 0 ? (
-                                                    <div className="text-center py-12 text-slate-500 text-sm">
-                                                        No billing records or invoices found.
-                                                    </div>
+                                                    <EmptyState
+                                                        icon={Receipt}
+                                                        title="No billing records yet"
+                                                        description="Invoices and payment updates for this contact will appear here."
+                                                        className="py-12"
+                                                    />
                                                 ) : (
                                                     clientTimeline.activities.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').map((inv: any) => {
                                                         const status = inv.metadata?.status || 'paid';
                                                         const isPaid = status === 'paid';
                                                         return (
-                                                            <div key={inv.id} className="bg-slate-950/80 border border-slate-850 p-4 rounded-2xl flex justify-between items-center gap-4">
+                                                            <div key={inv.id} className="ac-workspace-panel rounded-lg p-4 flex justify-between items-center gap-4">
                                                                 <div>
                                                                     <div className="flex items-center gap-2">
                                                                         <Receipt className={`w-4 h-4 ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`} />
@@ -1343,7 +1373,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'properties' && (
                                             <div className="space-y-4">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                    <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-1">Email</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
                                                             <Mail className="w-4 h-4 text-teal-500" />
@@ -1351,11 +1381,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
-                                                                        const clientEmail = selectedClient.email;
-                                                                        if (!clientEmail) return;
-                                                                        router.push(buildMailComposeUrl(clientEmail, `Re: ${selectedClient.name}`));
+                                                                        setSelectedClientForCommunication(selectedClient);
+                                                                        setShowCommunicationModal(true);
                                                                     }}
-                                                                    className="truncate rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 text-left text-xs font-bold text-indigo-200 hover:bg-indigo-500/15"
+                                                                    className="truncate text-teal-400 hover:text-teal-300 text-left"
                                                                 >
                                                                     {selectedClient.email}
                                                                 </button>
@@ -1364,7 +1393,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                    <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-1">Phone</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
                                                             <Phone className="w-4 h-4 text-teal-500" />
@@ -1372,13 +1401,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         </div>
                                                     </div>
                                                     {selectedClient.industry && (
-                                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <div className="ac-workspace-panel rounded-lg p-4">
                                                             <p className="text-xs text-slate-400 mb-1">Industry</p>
                                                             <p className="text-white text-sm font-semibold">{selectedClient.industry}</p>
                                                         </div>
                                                     )}
                                                     {selectedClient.location && (
-                                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <div className="ac-workspace-panel rounded-lg p-4">
                                                             <p className="text-xs text-slate-400 mb-1">Location</p>
                                                             <p className="text-white text-sm font-semibold">{selectedClient.location}</p>
                                                         </div>
@@ -1386,14 +1415,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 </div>
 
                                                 {selectedClient.description && (
-                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                    <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-2">Description</p>
                                                         <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
                                                     </div>
                                                 )}
 
                                                 {selectedClient.customFields && Object.keys(selectedClient.customFields).length > 0 && (
-                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                    <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-3">Custom Fields</p>
                                                         <div className="space-y-2">
                                                             {Object.entries(selectedClient.customFields).map(([key, val]) => (
@@ -1410,47 +1439,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     {/* Quick Actions Footer */}
-                                    <div className="mt-auto rounded-2xl border border-white/5 bg-slate-900/50 p-4">
-                                        <div className="mb-3 flex items-center justify-between gap-3">
-                                            <div>
-                                                <h3 className="text-[11px] font-bold uppercase tracking-[0.28em] text-slate-500">Quick actions</h3>
-                                                <p className="mt-1 text-[11px] text-slate-500">Email, call, and schedule from one place.</p>
-                                            </div>
+                                    <div className="mt-auto bg-[var(--ws-toolbar)] pt-6 border-t border-[var(--ws-border)]">
+                                        <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
+                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForInvoice(selectedClient); setShowInvoiceModal(true); }} icon={<Receipt className="w-4 h-4" />}>Invoice</Button>
+                                            <Button variant="outline" size="sm" onClick={() => handleCallClient(selectedClient)} icon={<Phone className="w-4 h-4" />}>Call</Button>
+                                            <Button variant="outline" size="sm" onClick={() => { setSelectedClientForCommunication(selectedClient); setShowCommunicationModal(true); }} icon={<Mail className="w-4 h-4" />}>Email</Button>
                                         </div>
-                                        <CRMActionChips
-                                            items={[
-                                                {
-                                                    label: 'Call',
-                                                    icon: Phone,
-                                                    tone: 'teal',
-                                                    onClick: () => handleCallClient(selectedClient),
-                                                },
-                                                {
-                                                    label: 'Compose',
-                                                    icon: Mail,
-                                                    tone: 'indigo',
-                                                    onClick: () => {
-                                                        if (!selectedClient.email) {
-                                                            toast.error('No email address on file for this client.');
-                                                            return;
-                                                        }
-                                                        router.push(buildMailComposeUrl(selectedClient.email, `Re: ${selectedClient.name}`));
-                                                    },
-                                                },
-                                                {
-                                                    label: 'Schedule',
-                                                    icon: Calendar,
-                                                    tone: 'amber',
-                                                    onClick: () => router.push('/dashboard/calendar'),
-                                                },
-                                                {
-                                                    label: 'Chat',
-                                                    icon: MessageSquare,
-                                                    tone: 'slate',
-                                                    onClick: () => router.push(`${user.role === 'tenant_admin' ? '/dashboard/business/messages' : '/dashboard/messages'}?selectedClientId=${selectedClient.id}`),
-                                                },
-                                            ]}
-                                        />
                                     </div>
                                 </div>
                             </div>
@@ -1595,7 +1591,6 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
         customer: 'success',
         lost: 'error'
     } as const;
-    const router = useRouter();
 
     const dropdownItems = [
         {
@@ -1622,12 +1617,12 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
         {
             label: 'Schedule Meeting',
             icon: <Calendar className="w-4 h-4" />,
-            onClick: () => router.push('/dashboard/calendar')
+            onClick: () => window.location.href = '/dashboard/calendar'
         },
         {
             label: 'View History',
             icon: <History className="w-4 h-4" />,
-            onClick: () => router.push('/dashboard/reports')
+            onClick: () => window.location.href = '/dashboard/reports'
         },
         {
             label: 'Edit Client',
@@ -1672,19 +1667,6 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                         onClick={() => onCall(client)}
                         className="!p-2 hover:bg-teal-500/10 hover:text-teal-400"
                         icon={<Phone className="w-4 h-4" />}
-                    />
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                            if (!client.email) {
-                                toast.error('No email address on file for this client.');
-                                return;
-                            }
-                            router.push(buildMailComposeUrl(client.email, `Re: ${client.name}`));
-                        }}
-                        className="!p-2 hover:bg-indigo-500/10 hover:text-indigo-400"
-                        icon={<Mail className="w-4 h-4" />}
                     />
                     <Dropdown
                         trigger={
@@ -1755,7 +1737,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
     };
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Register New Client Entity" maxWidth="max-w-2xl">
+        <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Register New Client Entity" size="wide">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Input
@@ -1833,7 +1815,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </DetailDrawer>
     );
 };
 
@@ -1855,7 +1837,7 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
     };
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Edit Client Information" maxWidth="max-w-2xl">
+        <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Edit Client Information" size="wide">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Input
@@ -1928,7 +1910,7 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </DetailDrawer>
     );
 };
 
@@ -1983,15 +1965,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold">Import Clients</h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
+        <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Import Clients" size="wide">
                 {importedClients.length === 0 ? (
                     <div
                         {...getRootProps()}
@@ -2043,8 +2017,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </DetailDrawer>
     );
 };
 
@@ -2101,7 +2074,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
     };
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Initialize Project Proposal" maxWidth="max-w-xl">
+        <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Initialize Project Proposal" size="wide">
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl mb-4">
                     <p className="text-sm text-teal-200">
@@ -2156,7 +2129,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </DetailDrawer>
     );
 };
 
@@ -2219,7 +2192,7 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
     };
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Create Invoice" maxWidth="max-w-xl">
+        <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Create Invoice" size="wide">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
                     <p className="text-sm text-teal-200">
@@ -2276,7 +2249,7 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
                     </Button>
                 </div>
             </form>
-        </Modal>
+        </DetailDrawer>
     );
 };
 

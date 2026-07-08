@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { toast } from 'react-hot-toast';
+import EmptyState from '@/components/ui/EmptyState';
+import { WORKSPACE } from '@/constants/design';
 
 interface IntelligenceAction {
     id: string;
@@ -116,7 +118,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
 
     if (loading && !data) {
         return (
-            <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-6 flex flex-col items-center justify-center gap-4 min-h-[200px]">
+            <div className={`min-h-[200px] p-6 flex flex-col items-center justify-center gap-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                 <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
                 <p className="text-slate-500 text-xs font-black uppercase tracking-widest">Scanning Module Logic...</p>
             </div>
@@ -127,7 +129,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
 
     if (compact) {
         return (
-            <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4 space-y-3">
+            <div className={`space-y-3 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-teal-400" />
@@ -153,7 +155,7 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
     }
 
     return (
-        <div className="rounded-[2rem] border border-white/10 bg-slate-900/60 p-6 shadow-2xl relative overflow-hidden group">
+        <div className={`group relative overflow-hidden p-6 shadow-none ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Sparkles className="w-24 h-24 text-teal-400" />
             </div>
@@ -188,16 +190,19 @@ export const AIIntelligencePanel: React.FC<AIIntelligencePanelProps> = ({
                     </h4>
                     <div className="space-y-3">
                         {data.topActions.length === 0 ? (
-                            <div className="p-4 rounded-2xl border border-dashed border-white/5 text-xs text-slate-500 text-center">
-                                System state optimized. No immediate actions required.
-                            </div>
+                            <EmptyState
+                                icon={Sparkles}
+                                title="System state optimized"
+                                description="No immediate actions are required for this module right now."
+                                className="max-w-none rounded-lg border border-dashed border-[var(--ws-border)] py-8"
+                            />
                         ) : (
                             data.topActions.slice(0, 3).map((action: string, i: number) => (
                                 <button
                                     key={i}
                                     onClick={() => handleExecuteAction(action)}
                                     disabled={!!executingAction}
-                                    className="w-full group relative p-4 rounded-2xl bg-slate-950 border border-white/5 hover:border-teal-500/40 hover:bg-slate-900 transition-all text-left flex items-start gap-4"
+                                    className="group relative flex w-full items-start gap-4 rounded-lg border border-[var(--ws-border)] bg-slate-950 p-4 text-left transition-all hover:border-teal-500/40 hover:bg-slate-900"
                                 >
                                     <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
                                         {executingAction === action ? (

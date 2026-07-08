@@ -1,18 +1,19 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, BarChart3, TrendingUp, Receipt, FileText } from 'lucide-react';
+import { DollarSign, BarChart3, TrendingUp, Receipt, FileText, Briefcase } from 'lucide-react';
 import HubShell from './HubShell';
 
 const MONEY_TABS = [
   { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
   { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
   { label: 'Bills', href: '/dashboard/accounting/bills', icon: Receipt },
+  { label: 'Vendors', href: '/dashboard/vendors', icon: Briefcase },
   { label: 'Billing', href: '/dashboard/business/billing', icon: DollarSign },
   { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: FileText },
   { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
   { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
-  { label: 'Cash Flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
+  { label: 'Cash flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
 ];
 
 interface MoneyHubProps {
@@ -26,7 +27,7 @@ export default function MoneyHub({ children }: MoneyHubProps) {
       description="Invoicing, accounting, expenses, and financial reports"
       tabs={MONEY_TABS}
       dataTour="money-hub"
-      accent="orange"
+      accent="amber"
     >
       {children}
     </HubShell>

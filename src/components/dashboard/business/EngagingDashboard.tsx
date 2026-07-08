@@ -205,9 +205,9 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
     const starterSteps = useMemo(() => [
         {
             step: '1',
-            title: 'Set up your workspace',
-            description: 'Finish onboarding so your company, services, and team data are ready.',
-            href: '/dashboard/business/onboarding',
+            title: 'Add your first client',
+            description: 'Open CRM and quick-add a contact so billing and mail have someone to work with.',
+            href: '/dashboard/crm/workspace?quickAdd=true',
             icon: CheckCircle2,
         },
         {
@@ -271,7 +271,7 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         ].every((value) => Number(value || 0) === 0);
     }, [stats]);
 
-    const showSetupGuide = !isOwner && isNewWorkspace && !onboardingComplete;
+    const showSetupGuide = isOwner && isNewWorkspace && !onboardingComplete;
 
     const ownerPrioritySteps = useMemo(() => {
         const items: Array<{ step: string; title: string; description: string; href: string; icon: React.FC<any> }> = [];
@@ -370,8 +370,8 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
         {
             time: 'Now',
             title: 'Finish setup',
-            detail: 'Open onboarding and confirm your workspace basics.',
-            href: '/dashboard/business/onboarding',
+            detail: 'Add your first client and send an invoice to activate the workspace.',
+            href: '/dashboard/crm/workspace?quickAdd=true',
             icon: CheckCircle2,
         },
         {
@@ -411,13 +411,13 @@ const EngagingDashboard: React.FC<{ user: User; stats?: any }> = ({ user, stats 
                             </div>
                             <h2 className="text-2xl sm:text-3xl font-black text-white">Continue setup and launch your workspace</h2>
                             <p className="text-sm sm:text-base text-slate-300 mt-2 max-w-xl">
-                                Start with onboarding, then connect inbox, chat, and tasks so the business OS feels ready instead of empty.
+                                Start with onboarding, then add a client, send an invoice, and connect mail so the workspace feels ready instead of empty.
                             </p>
                         </div>
 
                         <div className="flex flex-col gap-3 shrink-0">
                             <button
-                                onClick={() => router.push('/dashboard/business/onboarding')}
+                                onClick={() => router.push('/dashboard/crm/workspace?quickAdd=true')}
                                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-500 px-5 py-4 text-sm font-black text-white shadow-xl shadow-teal-500/25 hover:bg-teal-400 active:scale-95 transition-all"
                             >
                                 Continue setup

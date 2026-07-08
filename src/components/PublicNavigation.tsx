@@ -6,20 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpen,
-  Bot,
-  CheckSquare,
   ChevronDown,
-  FileText,
-  HelpCircle,
-  Layers,
-  Mail,
-  Receipt,
-  Search,
-  Sparkles,
-  Target,
-  Users,
-  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import {
@@ -32,87 +19,31 @@ import {
 } from '@/components/marketing/ui/sheet';
 import { Separator } from '@/components/marketing/ui/separator';
 import { SOCIAL_PROFILES } from '@/lib/seo/siteEntity';
+import {
+  BUSINESS_SIGNUP_HREF,
+  COMPANY_NAV_GROUP,
+  COMPANY_PATHS,
+  LOGIN_HREF,
+  MARKETING_PRIMARY_LINKS,
+  PRODUCT_NAV_GROUP,
+  PRODUCT_PATHS,
+  RESOURCES_NAV_GROUP,
+  RESOURCES_PATHS,
+  type MarketingNavGroup,
+  type MarketingNavLink,
+} from '@/lib/marketing/siteNavigation';
 
 interface PublicNavigationProps {
   onLoginClick: () => void;
 }
 
-type NavLink = {
-  label: string;
-  path: string;
-  description?: string;
-  icon?: LucideIcon;
-  /** Opens in a new tab instead of in-app routing */
-  externalUrl?: string;
-};
+type NavDropdownGroup = MarketingNavGroup;
+type NavLink = MarketingNavLink;
 
-type NavDropdownGroup = {
-  label: string;
-  items: NavLink[];
-};
-
-const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
-const LOGIN_HREF = '/auth/login';
-
-const DESKTOP_PRIMARY_LINKS: NavLink[] = [
-  { label: 'Home', path: '/' },
-  { label: 'About', path: '/about' },
-  { label: 'Services', path: '/services' },
-  { label: 'Pricing', path: '/pricing' },
-  { label: 'Results', path: '/results' },
-  { label: 'Book Demo', path: '/book-demo' },
-];
-
-const DOCS_DROPDOWN_GROUPS: NavDropdownGroup[] = [
-  {
-    label: 'Get started',
-    items: [
-      { label: 'Platform overview', path: '/docs', description: 'Full product walkthrough', icon: BookOpen },
-      { label: 'Onboarding guide', path: '/guide', description: 'Step-by-step setup', icon: Sparkles },
-    ],
-  },
-  {
-    label: 'Core workflows',
-    items: [
-      { label: 'CRM & Deals', path: '/docs#crm', description: 'Pipeline and contacts', icon: Users },
-      { label: 'Invoicing', path: '/docs#financials', description: 'Quotes and payments', icon: Receipt },
-      { label: 'Contracts', path: '/docs#contracts', description: 'E-sign and templates', icon: FileText },
-      { label: 'Tasks & Projects', path: '/docs#tasks', description: 'Delivery and handoffs', icon: CheckSquare },
-    ],
-  },
-  {
-    label: 'Help',
-    items: [
-      { label: 'FAQ', path: '/faq', description: 'Common questions', icon: HelpCircle },
-      { label: 'Contact', path: '/contact', description: 'Talk to our team', icon: Mail },
-    ],
-  },
-];
-
-const MORE_DROPDOWN_GROUPS: NavDropdownGroup[] = [
-  {
-    label: 'Product',
-    items: [
-      { label: 'AI Agents', path: '/ai-agents', description: 'Automated growth workflows', icon: Bot },
-      { label: 'Ecosystem', path: '/ecosystem', description: 'Integrations and modules', icon: Layers },
-      { label: 'Who we serve', path: '/who-we-serve', description: 'Teams we built for', icon: Target },
-    ],
-  },
-  {
-    label: 'Company',
-    items: [
-      { label: 'Search', path: '/search', description: 'Find pages and content', icon: Search },
-    ],
-  },
-];
-
-const DOCS_PATHS = new Set(['/docs', '/guide', '/faq', '/contact']);
-const MORE_PATHS = new Set([
-  '/ai-agents',
-  '/ecosystem',
-  '/who-we-serve',
-  '/search',
-]);
+const DESKTOP_PRIMARY_LINKS = MARKETING_PRIMARY_LINKS;
+const PRODUCT_DROPDOWN_GROUPS: NavDropdownGroup[] = [PRODUCT_NAV_GROUP];
+const RESOURCES_DROPDOWN_GROUPS: NavDropdownGroup[] = [RESOURCES_NAV_GROUP];
+const COMPANY_DROPDOWN_GROUPS: NavDropdownGroup[] = [COMPANY_NAV_GROUP];
 
 const NAV_LINK_ACTIVE =
   'text-cyan-400 bg-cyan-500/10';
@@ -210,26 +141,31 @@ function MobileNavAccordion({
 
 const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLoginClick }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileDocsOpen, setMobileDocsOpen] = useState(false);
-  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [mobileProductOpen, setMobileProductOpen] = useState(false);
+  const [mobileResourcesOpen, setMobileResourcesOpen] = useState(false);
+  const [mobileCompanyOpen, setMobileCompanyOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [docsOpen, setDocsOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const docsRef = useRef<HTMLDivElement>(null);
-  const moreRef = useRef<HTMLDivElement>(null);
+  const [productOpen, setProductOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const productRef = useRef<HTMLDivElement>(null);
+  const resourcesRef = useRef<HTMLDivElement>(null);
+  const companyRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
     setMobileMenuOpen(false);
-    setDocsOpen(false);
-    setMoreOpen(false);
+    setProductOpen(false);
+    setResourcesOpen(false);
+    setCompanyOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
-      setMobileDocsOpen(false);
-      setMobileMoreOpen(false);
+      setMobileProductOpen(false);
+      setMobileResourcesOpen(false);
+      setMobileCompanyOpen(false);
     }
   }, [mobileMenuOpen]);
 
@@ -242,20 +178,26 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (docsRef.current && !docsRef.current.contains(e.target as Node)) {
-        setDocsOpen(false);
+      if (productRef.current && !productRef.current.contains(e.target as Node)) {
+        setProductOpen(false);
       }
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
+      if (resourcesRef.current && !resourcesRef.current.contains(e.target as Node)) {
+        setResourcesOpen(false);
+      }
+      if (companyRef.current && !companyRef.current.contains(e.target as Node)) {
+        setCompanyOpen(false);
       }
     };
-    if (docsOpen || moreOpen) document.addEventListener('mousedown', handleClickOutside);
+    if (productOpen || resourcesOpen || companyOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [docsOpen, moreOpen]);
+  }, [productOpen, resourcesOpen, companyOpen]);
 
   const isActive = (path: string) => pathname === path;
-  const isDocsSectionActive = pathname != null && DOCS_PATHS.has(pathname);
-  const isMoreSectionActive = pathname != null && MORE_PATHS.has(pathname);
+  const isProductSectionActive = pathname != null && PRODUCT_PATHS.has(pathname);
+  const isResourcesSectionActive = pathname != null && RESOURCES_PATHS.has(pathname);
+  const isCompanySectionActive = pathname != null && COMPANY_PATHS.has(pathname);
   const showMobileBack = pathname !== '/';
 
   const handleMobileBack = () => {
@@ -268,11 +210,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
   const closeDropdowns = () => {
-    setDocsOpen(false);
-    setMoreOpen(false);
+    setProductOpen(false);
+    setResourcesOpen(false);
+    setCompanyOpen(false);
   };
 
-  const docsFooter = (
+  const productFooter = (
     <div className="px-4 py-3 border-t border-slate-800/80 bg-cyan-500/5">
       <Link
         href={BUSINESS_SIGNUP_HREF}
@@ -331,19 +274,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                 const linkClass = `inline-flex items-center h-10 px-2 xl:px-2.5 text-sm font-semibold rounded-lg transition-colors whitespace-nowrap ${
                   active ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
                 }`;
-                if (item.externalUrl) {
-                  return (
-                    <a
-                      key={item.path}
-                      href={item.externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={linkClass}
-                    >
-                      {item.label}
-                    </a>
-                  );
-                }
                 return (
                   <Link key={item.path} href={item.path} className={linkClass}>
                     {item.label}
@@ -351,56 +281,86 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                 );
               })}
 
-              <div className="relative" ref={docsRef}>
+              <div className="relative" ref={productRef}>
                 <button
                   type="button"
                   onClick={() => {
-                    setMoreOpen(false);
-                    setDocsOpen((v) => !v);
+                    setResourcesOpen(false);
+                    setCompanyOpen(false);
+                    setProductOpen((v) => !v);
                   }}
                   className={`inline-flex items-center gap-1.5 h-10 px-2.5 xl:px-3 text-sm font-semibold rounded-lg transition-colors ${
-                    docsOpen || isDocsSectionActive ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
+                    productOpen || isProductSectionActive ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
                   }`}
                 >
-                  Docs
+                  Product
                   <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${docsOpen ? 'rotate-180' : ''}`}
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${productOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {docsOpen && (
+                {productOpen && (
                   <NavDropdownPanel
-                    title="Documentation"
-                    subtitle="Learn the platform"
-                    groups={DOCS_DROPDOWN_GROUPS}
-                    footer={docsFooter}
+                    title="Product"
+                    subtitle="CRM, billing, delivery & AI"
+                    groups={PRODUCT_DROPDOWN_GROUPS}
+                    footer={productFooter}
                     align="left"
                     onNavigate={closeDropdowns}
                   />
                 )}
               </div>
 
-              <div className="relative" ref={moreRef}>
+              <div className="relative" ref={resourcesRef}>
                 <button
                   type="button"
                   onClick={() => {
-                    setDocsOpen(false);
-                    setMoreOpen((v) => !v);
+                    setProductOpen(false);
+                    setCompanyOpen(false);
+                    setResourcesOpen((v) => !v);
                   }}
                   className={`inline-flex items-center gap-1.5 h-10 px-2.5 xl:px-3 text-sm font-semibold rounded-lg transition-colors ${
-                    moreOpen || isMoreSectionActive ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
+                    resourcesOpen || isResourcesSectionActive ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
                   }`}
                 >
-                  More
+                  Resources
                   <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${moreOpen ? 'rotate-180' : ''}`}
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${resourcesOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {moreOpen && (
+                {resourcesOpen && (
                   <NavDropdownPanel
-                    title="Explore"
-                    subtitle="Product and company"
-                    groups={MORE_DROPDOWN_GROUPS}
+                    title="Resources"
+                    subtitle="Docs, guides & support"
+                    groups={RESOURCES_DROPDOWN_GROUPS}
                     align="left"
+                    onNavigate={closeDropdowns}
+                  />
+                )}
+              </div>
+
+              <div className="relative" ref={companyRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductOpen(false);
+                    setResourcesOpen(false);
+                    setCompanyOpen((v) => !v);
+                  }}
+                  className={`inline-flex items-center gap-1.5 h-10 px-2.5 xl:px-3 text-sm font-semibold rounded-lg transition-colors ${
+                    companyOpen || isCompanySectionActive ? NAV_LINK_ACTIVE : NAV_LINK_IDLE
+                  }`}
+                >
+                  Company
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${companyOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {companyOpen && (
+                  <NavDropdownPanel
+                    title="Company"
+                    subtitle="About AlphaClone"
+                    groups={COMPANY_DROPDOWN_GROUPS}
+                    align="right"
                     onNavigate={closeDropdowns}
                   />
                 )}
@@ -522,20 +482,6 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                         const mobileClass = `block text-lg font-bold py-3.5 border-b border-slate-900/50 transition-colors ${
                           isActive(item.path) ? 'text-cyan-400' : 'text-slate-300 hover:text-white'
                         }`;
-                        if (item.externalUrl) {
-                          return (
-                            <a
-                              key={item.path}
-                              href={item.externalUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={closeMobileMenu}
-                              className={mobileClass}
-                            >
-                              {item.label}
-                            </a>
-                          );
-                        }
                         return (
                           <Link
                             key={item.path}
@@ -553,15 +499,12 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                   <Separator />
 
                   <MobileNavAccordion
-                    title="Docs & help"
-                    open={mobileDocsOpen}
-                    onToggle={() => setMobileDocsOpen((v) => !v)}
+                    title="Product"
+                    open={mobileProductOpen}
+                    onToggle={() => setMobileProductOpen((v) => !v)}
                   >
-                    {DOCS_DROPDOWN_GROUPS.map((group) => (
+                    {PRODUCT_DROPDOWN_GROUPS.map((group) => (
                       <div key={group.label} className="mb-2 last:mb-0">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-1.5 px-2">
-                          {group.label}
-                        </p>
                         <div className="space-y-0.5">
                           {group.items.map((item) => {
                             const Icon = item.icon;
@@ -588,15 +531,44 @@ const PublicNavigation: React.FC<PublicNavigationProps> = ({ onLoginClick: _onLo
                   </MobileNavAccordion>
 
                   <MobileNavAccordion
-                    title="More"
-                    open={mobileMoreOpen}
-                    onToggle={() => setMobileMoreOpen((v) => !v)}
+                    title="Resources"
+                    open={mobileResourcesOpen}
+                    onToggle={() => setMobileResourcesOpen((v) => !v)}
                   >
-                    {MORE_DROPDOWN_GROUPS.map((group) => (
+                    {RESOURCES_DROPDOWN_GROUPS.map((group) => (
                       <div key={group.label} className="mb-2 last:mb-0">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-1.5 px-2">
-                          {group.label}
-                        </p>
+                        <div className="space-y-0.5">
+                          {group.items.map((item) => {
+                            const Icon = item.icon;
+                            const basePath = item.path.split('#')[0] ?? item.path;
+                            return (
+                              <Link
+                                key={item.path}
+                                href={item.path}
+                                onClick={closeMobileMenu}
+                                className={`flex items-center gap-3 py-2.5 px-2 rounded-lg transition-colors ${
+                                  isActive(basePath)
+                                    ? 'text-cyan-400 bg-cyan-500/5'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                                }`}
+                              >
+                                {Icon && <Icon className="w-4 h-4 shrink-0 text-cyan-500" />}
+                                <span className="text-sm font-semibold">{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </MobileNavAccordion>
+
+                  <MobileNavAccordion
+                    title="Company"
+                    open={mobileCompanyOpen}
+                    onToggle={() => setMobileCompanyOpen((v) => !v)}
+                  >
+                    {COMPANY_DROPDOWN_GROUPS.map((group) => (
+                      <div key={group.label} className="mb-2 last:mb-0">
                         <div className="space-y-0.5">
                           {group.items.map((item) => {
                             const Icon = item.icon;

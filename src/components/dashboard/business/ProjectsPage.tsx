@@ -37,6 +37,7 @@ import {
     Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { ProjectPortalShareDialog } from './ProjectPortalShareDialog';
 import { showActionNextSteps } from '../../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import { exportToCSV } from '../../../utils/exportUtils';
@@ -828,7 +829,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
     const [progress, setProgress] = useState(project.progress || 0);
     const [milestones, setMilestones] = useState<{ id: string; label: string; checked: boolean }[]>([]);
     const [milestonesLoading, setMilestonesLoading] = useState(true);
-    const [sharing, setSharing] = useState(false);
+    const [shareDialogOpen, setShareDialogOpen] = useState(false);
     const [comments, setComments] = useState<Array<{
         id: string;
         author_name: string;
@@ -849,35 +850,8 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
         setProgress(project.progress || 0);
     }, [project.id, project.progress]);
 
-    const handleShareWithClient = async () => {
-        setSharing(true);
-        try {
-            const { toast } = await import('react-hot-toast');
-            if (!project.isPublic) {
-                const { error } = await projectService.updateProject(project.id, { isPublic: true });
-                if (error) {
-                    toast.error('Could not enable the public link. Please try again.');
-                    return;
-                }
-                project.isPublic = true;
-            }
-            const { token, error: tokenErr } = await projectService.ensurePortalToken(project.id);
-            if (tokenErr || !token) {
-                toast.error('Could not create a secure client link. Please try again.');
-                return;
-            }
-            const url = `${window.location.origin}/p/${token}`;
-            try {
-                await navigator.clipboard.writeText(url);
-                toast.success('Client link copied to clipboard');
-            } catch {
-                // Clipboard can be blocked (e.g. non-secure context); surface the URL instead.
-                toast.success('Public link ready');
-                window.prompt('Copy this client link:', url);
-            }
-        } finally {
-            setSharing(false);
-        }
+    const handleShareWithClient = () => {
+        setShareDialogOpen(true);
     };
 
     useEffect(() => {
@@ -1312,11 +1286,10 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md px-6 py-4 border-t border-white/10 z-10 flex gap-3 items-center justify-end">
                     <button
                         onClick={handleShareWithClient}
-                        disabled={sharing}
                         title="Copy a public link to share this project's progress and milestones with the client"
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 rounded-xl font-bold text-xs transition-all disabled:opacity-50"
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 rounded-xl font-bold text-xs transition-all"
                     >
-                        {sharing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+                        <Share2 className="w-3.5 h-3.5" />
                         Share with Client
                     </button>
                     <button
@@ -1327,6 +1300,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                     </button>
                 </div>
             </motion.div>
+            <ProjectPortalShareDialog
+                isOpen={shareDialogOpen}
+                onClose={() => setShareDialogOpen(false)}
+                projectId={project.id}
+                tenantId={tenantId}
+                projectName={project.name}
+            />
         </>
     );
 };

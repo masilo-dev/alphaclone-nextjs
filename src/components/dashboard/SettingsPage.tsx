@@ -20,6 +20,7 @@ import { fileUploadService } from '@/services/fileUploadService';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServiceCatalog';
 import { supabase } from '@/lib/supabase';
+import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -93,12 +94,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
     const [businessSettings, setBusinessSettings] = useState({
         businessName: '',
+        tradingName: '',
         logoUrl: '',
         brandColor: '#2dd4bf',
         address: '',
         phone: '',
         email: '',
         taxRate: 0,
+        taxCountry: 'ZW',
         currency: 'USD',
         invoicePrefix: 'INV',
         bankDetails: '',
@@ -122,12 +125,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 if (!error && bData) {
                     setBusinessSettings({
                         businessName: bData.business_name || user?.name || '',
+                        tradingName: bData.trading_name || '',
                         logoUrl: bData.logo_url || '',
                         brandColor: bData.brand_color || '#2dd4bf',
                         address: bData.address || '',
                         phone: bData.phone || '',
                         email: bData.email || user?.email || '',
                         taxRate: bData.tax_rate || 0,
+                        taxCountry: bData.tax_country || 'ZW',
                         currency: bData.currency || 'USD',
                         invoicePrefix: bData.invoice_prefix || 'INV',
                         bankDetails: bData.bank_details || '',
@@ -272,12 +277,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 .upsert({
                     tenant_id: currentTenant.id,
                     business_name: businessSettings.businessName,
+                    trading_name: businessSettings.tradingName || null,
                     logo_url: businessSettings.logoUrl,
                     brand_color: businessSettings.brandColor,
                     address: businessSettings.address,
                     phone: businessSettings.phone,
                     email: businessSettings.email,
                     tax_rate: businessSettings.taxRate,
+                    tax_country: businessSettings.taxCountry,
                     currency: businessSettings.currency,
                     invoice_prefix: businessSettings.invoicePrefix,
                     bank_details: businessSettings.bankDetails,
@@ -567,7 +574,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
                                         <div className="space-y-3">
-                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder="Official Company Name" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <input value={businessSettings.businessName} onChange={e => setBusinessSettings({...businessSettings, businessName: e.target.value})} placeholder="Official legal company name" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <input value={businessSettings.tradingName} onChange={e => setBusinessSettings({...businessSettings, tradingName: e.target.value})} placeholder="Short name on invoices (e.g. ACS)" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
+                                            <p className="text-[10px] text-slate-500">PDF invoices use the short trading name when set — keeps layouts clean.</p>
                                             <input value={businessSettings.email} onChange={e => setBusinessSettings({...businessSettings, email: e.target.value})} placeholder="Business Email" className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white" />
                                             <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder="Business Address" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
                                             <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder="Bank transfer account details" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
@@ -600,6 +609,42 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                     className="overflow-hidden bg-slate-950/40"
                                 >
                                     <div className="p-4 space-y-4 border-t border-white/5">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] text-slate-500 uppercase font-black">Tax country (VAT / GST)</label>
+                                            <select
+                                                value={businessSettings.taxCountry}
+                                                onChange={(e) => {
+                                                    const code = e.target.value;
+                                                    const lookup = getTaxRateForCountry(code);
+                                                    setBusinessSettings({
+                                                        ...businessSettings,
+                                                        taxCountry: code,
+                                                        taxRate: lookup.rate > 0 ? lookup.rate : businessSettings.taxRate,
+                                                    });
+                                                }}
+                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                            >
+                                                <option value="ZW">Zimbabwe (15% VAT)</option>
+                                                <option value="ZA">South Africa (15% VAT)</option>
+                                                <option value="KE">Kenya (16% VAT)</option>
+                                                <option value="GH">Ghana (15% VAT)</option>
+                                                <option value="NG">Nigeria (7.5% VAT)</option>
+                                                <option value="GB">United Kingdom (20% VAT)</option>
+                                                <option value="US">United States (manual)</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] text-slate-500 uppercase font-black">Default tax rate (%)</label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                step={0.5}
+                                                value={businessSettings.taxRate}
+                                                onChange={(e) => setBusinessSettings({ ...businessSettings, taxRate: parseFloat(e.target.value) || 0 })}
+                                                className="w-full h-10 bg-slate-900 border border-white/5 rounded-xl px-3 text-xs text-white outline-none"
+                                            />
+                                        </div>
                                         <div className="space-y-1">
                                             <label className="text-[10px] text-slate-500 uppercase font-black">Workspace currency</label>
                                             <select 

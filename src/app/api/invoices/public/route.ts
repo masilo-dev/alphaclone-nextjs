@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { extractTenantBranding } from '@/lib/tenantBranding';
+import { resolveInvoiceSenderName } from '@/lib/invoices/invoiceBranding';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,15 +99,30 @@ async function authorizePublicInvoice(
     .eq('invoice_id', invoiceId)
     .order('created_at', { ascending: true });
 
-  const { data: tenant } = await admin
-    .from('tenants')
-    .select('name, settings')
-    .eq('id', invoice.tenant_id)
-    .maybeSingle();
+  const [{ data: tenant }, { data: businessSettings }] = await Promise.all([
+    admin.from('tenants').select('name, legal_name, settings').eq('id', invoice.tenant_id).maybeSingle(),
+    admin.from('business_settings').select('trading_name, business_name, logo_url, brand_color').eq('tenant_id', invoice.tenant_id).maybeSingle(),
+  ]);
+
+  const brandingBase = extractTenantBranding(tenant);
+  const displayName = resolveInvoiceSenderName(
+    { senderName: invoice.sender_name as string | null },
+    tenant,
+    businessSettings
+  );
 
   return {
-    invoice: mapPublicInvoice(invoice as Record<string, unknown>, (lineItems || []) as Record<string, unknown>[]),
-    branding: extractTenantBranding(tenant),
+    invoice: {
+      ...mapPublicInvoice(invoice as Record<string, unknown>, (lineItems || []) as Record<string, unknown>[]),
+      senderName: displayName,
+      clientName: invoice.client_name,
+    },
+    branding: {
+      ...brandingBase,
+      name: displayName,
+      logoUrl: businessSettings?.logo_url || brandingBase.logoUrl,
+      primaryColor: businessSettings?.brand_color || brandingBase.primaryColor,
+    },
     error: null,
   };
 }

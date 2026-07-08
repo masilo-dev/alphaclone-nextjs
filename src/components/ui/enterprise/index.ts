@@ -10,5 +10,5 @@ export { StatusBadge, invoiceStatusVariant, quoteStatusVariant, inboxStatusVaria
 export type { StatusBadgeVariant } from '@/components/ui/StatusBadge';
 export { useBlurValidation } from '@/hooks/useBlurValidation';
 export { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-export { ENTERPRISE } from '@/constants/design';
+export { ENTERPRISE, WORKSPACE } from '@/constants/design';
 export { default as BonnieModuleDock } from '@/components/dashboard/bonnie/BonnieModuleDock';

@@ -8,8 +8,8 @@ const STATIC_ASSETS = [
   '/',
   '/dashboard',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/favicon-192x192.png',
+  '/favicon-512x512.png',
 ];
 
 // Dynamic cache for API responses
@@ -208,7 +208,7 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: data.body || 'You have a new notification',
-    icon: '/icons/icon-192x192.png',
+    icon: '/favicon-192x192.png',
     badge: '/icons/badge-72x72.png',
     tag: data.tag || 'default',
     requireInteraction: data.requireInteraction || false,

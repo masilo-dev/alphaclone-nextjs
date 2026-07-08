@@ -11,6 +11,8 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 import type { DashboardFeedItem } from '@/types/dashboardStats';
+import EmptyState from '@/components/ui/EmptyState';
+import { WORKSPACE } from '@/constants/design';
 
 interface NotificationsActivityTabProps {
   user: User;
@@ -73,8 +75,8 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
       }
     >
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4 ac-scroll-full pb-24">
-        <div className="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between gap-3 p-4 border-b border-white/5">
+        <div className={`overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
+          <div className="flex items-center justify-between gap-3 border-b border-[var(--ws-border)] p-4">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-teal-400" />
               <span className="text-sm font-semibold text-white">In-app alerts</span>
@@ -103,9 +105,9 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
 
           <div className="divide-y divide-white/5 max-h-[60vh] overflow-y-auto">
             {loading ? (
-              <div className="p-8 text-center text-sm text-slate-500">Loading…</div>
+              <EmptyState icon={Bell} title="Loading alerts" description="Pulling your latest notifications and audit activity into the workspace." className="py-8" />
             ) : visibleNotifications.length === 0 ? (
-              <div className="p-8 text-center text-sm text-slate-500">No notifications</div>
+              <EmptyState icon={BellOff} title="No notifications" description="You are all caught up. New alerts will appear here when important activity happens." className="py-8" />
             ) : (
               visibleNotifications.map((n) => (
                 <div
@@ -134,7 +136,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
         </div>
 
         <div className="space-y-4">
-          <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+          <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="flex items-center gap-2 mb-3">
               <Smartphone className="w-4 h-4 text-teal-400" />
               <span className="text-sm font-semibold text-white">Alert preferences</span>
@@ -142,7 +144,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
             {pushSupported ? (
               <button
                 onClick={() => subscribeToPush()}
-                className="w-full text-left rounded-xl border border-white/5 bg-slate-950/60 p-3 hover:bg-slate-950 transition-colors"
+                className="w-full rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 text-left transition-colors hover:bg-slate-950"
               >
                 <p className="text-sm text-white">{isSubscribed ? 'Push enabled' : 'Enable push notifications'}</p>
                 <p className="text-xs text-slate-500 mt-1">Browser alerts for invoices, deals, and tasks</p>
@@ -155,7 +157,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
             )}
           </div>
 
-          <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+          <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-teal-400" />
               <span className="text-sm font-semibold text-white">Activity timeline</span>

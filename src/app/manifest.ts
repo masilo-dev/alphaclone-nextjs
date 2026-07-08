@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'AlphaClone',
     description: 'Your business operating system — CRM, mail, billing, and projects.',
     id: '/',
-    start_url: '/dashboard',
+    start_url: '/',
     scope: '/',
     display: 'standalone',
     display_override: ['window-controls-overlay', 'minimal-ui', 'standalone'],

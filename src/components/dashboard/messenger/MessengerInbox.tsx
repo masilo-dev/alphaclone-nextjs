@@ -12,6 +12,8 @@ import { supabase } from '@/lib/supabase';
 import { generateMessengerReply } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import EmptyState from '@/components/ui/EmptyState';
+import { WORKSPACE } from '@/constants/design';
 
 interface Conversation {
     id: string;
@@ -264,7 +266,7 @@ export default function MessengerInbox() {
     const activeConv = conversations.find(c => c.id === selectedConversation);
 
     return (
-        <div className="flex flex-col bg-gray-950 text-gray-100 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden shadow-2xl h-[calc(100dvh-160px)] min-h-[520px] relative">
+        <div className={`relative flex h-[calc(100dvh-160px)] min-h-[520px] flex-col overflow-hidden text-gray-100 ${WORKSPACE.panel.base} rounded-lg shadow-none`}>
             {isMobileMenuOpen && (
                 <button
                     type="button"
@@ -276,7 +278,7 @@ export default function MessengerInbox() {
             <div className="flex flex-1 overflow-hidden">
                 {/* Conversation Sidebar */}
                 <div className={`
-                    ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 bg-gray-950 w-72 border-r border-white/10 shadow-2xl shadow-blue-500/10' : 'hidden lg:flex'} 
+                    ${isMobileMenuOpen ? 'fixed inset-y-0 left-0 z-50 w-72 border-r border-[var(--ws-border)] bg-gray-950' : 'hidden lg:flex'} 
                     w-80 flex-col bg-gray-900/20 backdrop-blur-3xl shrink-0 transition-all duration-300 border-r border-white/5
                 `}>
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
@@ -312,11 +314,12 @@ export default function MessengerInbox() {
                                 ))}
                             </div>
                         ) : filteredConversations.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-gray-600 opacity-60 text-center px-6">
-                                <Inbox size={40} className="mb-4 opacity-20" />
-                                <p className="text-sm font-semibold">No conversations</p>
-                                <p className="text-xs uppercase tracking-widest mt-1">Inbox is empty</p>
-                            </div>
+                            <EmptyState
+                                icon={Inbox}
+                                title="No conversations"
+                                description="Your inbox is empty right now. New messages will appear here when customers reach out."
+                                className="py-20 opacity-80"
+                            />
                         ) : (
                             filteredConversations.map(conv => (
                                 <button
@@ -325,11 +328,11 @@ export default function MessengerInbox() {
                                         setSelectedConversation(conv.id);
                                         setIsMobileMenuOpen(false);
                                     }}
-                                    className={`w-full text-left p-4 rounded-2xl transition-all group flex flex-col gap-1.5 relative ${selectedConversation === conv.id ? 'bg-blue-600/10 border border-blue-500/20 shadow-lg' : 'hover:bg-white/5 border border-transparent'}`}
+                                    className={`relative flex w-full flex-col gap-1.5 rounded-lg border p-4 text-left transition-all group ${selectedConversation === conv.id ? 'bg-blue-600/10 border border-blue-500/20' : 'hover:bg-white/5 border border-transparent'}`}
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <div className={`w-10 h-10 bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-purple-600 to-pink-500' : 'from-gray-800 to-gray-900'} rounded-xl flex items-center justify-center text-white font-bold border border-white/5 group-hover:border-blue-500/30 transition-all`}>
+                                            <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-purple-600 to-pink-500' : 'from-gray-800 to-gray-900'} border border-white/5 font-bold text-white transition-all group-hover:border-blue-500/30`}>
                                                 {conv.metadata?.platform === 'instagram' ? <Instagram size={18} /> : (conv.contacts?.full_name?.charAt(0) || <User size={18} />)}
                                             </div>
                                             <div className="min-w-0">

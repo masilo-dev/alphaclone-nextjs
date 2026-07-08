@@ -4,11 +4,11 @@ export const OUTCOME_PROMISE = {
   badge: 'Every lead-to-invoice workflow in one place',
   /** Shorter badge for narrow screens — clearer ICP, less wrap under the nav */
   badgeMobile: 'For service businesses & agencies',
-  headline: 'Turn more leads into paid clients —',
-  headlineAccent: 'without five apps and a spreadsheet.',
+  headline: 'Stop managing tools.',
+  headlineAccent: 'Run your whole client business from one workspace.',
   subhead:
-    'From first inquiry to signed contract to invoice, every client lives in one record. Follow up faster, deliver with full context, and get paid without copy-pasting between Gmail, CRM, and billing.',
-  icp: 'For consultants, agencies, and solo founders who sell services — not teams shopping for "enterprise CRM."',
+    'AlphaClone replaces a patchwork of CRM, invoicing, contracts, projects, meetings, and social tools with a single, AI-assisted OS for service businesses.',
+  icp: 'For founders, agencies, and lean teams who want enterprise-grade tracking without enterprise-grade complexity.',
 } as const;
 
 export const OUTCOME_HERO_BULLETS = [

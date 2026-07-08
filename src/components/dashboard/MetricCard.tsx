@@ -1,8 +1,16 @@
 'use client';
 
-import React from 'react';
+import type { CSSProperties } from 'react';
 import type { DeltaColor, DeltaDir } from '@/types/dashboardStats';
-import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
+import { ENTERPRISE, WORKSPACE } from '@/constants/design';
+import { cn } from '@/lib/utils';
+
+const DELTA_STYLES: Record<DeltaColor, string> = {
+  green: 'text-dashboard-green',
+  amber: 'text-dashboard-amber',
+  red: 'text-dashboard-red',
+  blue: 'text-dashboard-blue',
+};
 
 interface MetricCardProps {
   label: string;
@@ -12,15 +20,8 @@ interface MetricCardProps {
   deltaColor?: DeltaColor;
   comparisonText?: string;
   className?: string;
+  style?: CSSProperties;
 }
-
-const COLOR_MAP: Record<DeltaColor, CardTheme> = {
-  green: 'emerald',
-  amber: 'amber',
-  red: 'rose',
-  blue: 'blue',
-  teal: 'teal',
-};
 
 export function MetricCard({
   label,
@@ -30,34 +31,81 @@ export function MetricCard({
   deltaColor = 'green',
   comparisonText,
   className,
+  style,
 }: MetricCardProps) {
-  const themeColor = COLOR_MAP[deltaColor] || 'teal';
-  
-  return (
-    <StandardStatCard
-      label={label}
-      value={value}
-      delta={delta}
-      deltaDir={deltaDir}
-      comparisonText={comparisonText}
-      themeColor={themeColor}
-      className={className}
-      interactive={false}
-    />
-  );
-}
+  const arrow = deltaDir === 'down' ? '↓' : deltaDir === 'up' ? '↑' : '';
+  const period =
+    comparisonText ?? (delta ? ENTERPRISE.metricCard.defaultComparison : undefined);
 
-export function MetricCardSkeleton({ className }: { className?: string }) {
   return (
     <div
-      className="bg-slate-900/40 rounded-xl p-4 border border-white/5 animate-pulse min-h-[120px] flex flex-col justify-between"
+      className={cn(
+        WORKSPACE.panel.base,
+        ENTERPRISE.metricCard.minHeight,
+        'p-4 flex flex-col justify-between shadow-none',
+        className
+      )}
+      style={style}
     >
-      <div>
-        <div className="h-3 w-16 bg-slate-800 rounded mb-2" />
-        <div className="h-6 w-24 bg-slate-800 rounded" />
+      <span className={cn('text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ws-text-tertiary)] truncate')}>
+        {label}
+      </span>
+
+      <div className="mt-2">
+        <span
+          className={cn(
+            ENTERPRISE.metricCard.valueSize,
+            'font-semibold text-white leading-none tabular-nums tracking-tight block',
+          )}
+        >
+          {value}
+        </span>
+
+        {(delta || period) && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2">
+            {delta ? (
+              <span
+                className={cn(
+                  ENTERPRISE.metricCard.trendSize,
+                  'font-medium tabular-nums',
+                  DELTA_STYLES[deltaColor]
+                )}
+              >
+                {arrow} {delta}
+              </span>
+            ) : null}
+            {period ? (
+              <span className={cn(ENTERPRISE.metricCard.comparisonSize, 'text-slate-500')}>
+                {period}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
-      <div className="h-3 w-28 bg-slate-800/65 rounded mt-4" />
     </div>
   );
 }
 
+export function MetricCardSkeleton({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      className={cn(
+        WORKSPACE.panel.base,
+        ENTERPRISE.metricCard.minHeight,
+        'p-4 ac-skeleton-pulse shadow-none',
+        className
+      )}
+      style={style}
+    >
+      <div className="h-3.5 w-24 bg-slate-800 rounded" />
+      <div className="h-8 w-32 bg-slate-800 rounded mt-3" />
+      <div className="h-3 w-20 bg-slate-800/70 rounded mt-2" />
+    </div>
+  );
+}

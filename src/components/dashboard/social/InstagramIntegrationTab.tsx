@@ -57,7 +57,7 @@ export default function InstagramIntegrationTab() {
   const isConnected = integrations.some((i) => i.is_active);
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-4xl mx-auto p-4 pb-20">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-4xl mx-auto p-4 ac-safe-bottom lg:pb-4">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
         <div className="flex items-start gap-4 mb-6">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">

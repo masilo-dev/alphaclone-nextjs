@@ -9,12 +9,15 @@ const ANTHROPIC_API_KEY = ENV.ANTHROPIC_API_KEY || '';
 const OPENAI_API_KEY = ENV.OPENAI_API_KEY || '';
 const XAI_API_KEY = ENV.XAI_API_KEY || ENV.GROK_API_KEY || '';
 
+const OPENROUTER_API_KEY = ENV.OPENROUTER_API_KEY || '';
+
 // Check which providers are available
 export const getAvailableProviders = () => {
     return {
         claude: !!ANTHROPIC_API_KEY,
         openai: !!OPENAI_API_KEY,
         grok: !!XAI_API_KEY,
+        openrouter: !!OPENROUTER_API_KEY,
     };
 };
 
@@ -27,7 +30,7 @@ export const isAnyAIConfigured = () => {
     }
 
     const providers = getAvailableProviders();
-    return providers.claude || providers.openai || providers.grok;
+    return providers.claude || providers.openai || providers.grok || providers.openrouter;
 };
 
 /**

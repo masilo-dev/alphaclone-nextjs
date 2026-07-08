@@ -1,6 +1,6 @@
 /**
  * AI Router Service
- * Smart routing with fallback chain: Anthropic (Claude) → xAI Grok → OpenAI → Gemini
+ * Smart routing with fallback chain: Anthropic → xAI → OpenAI → Gemini → OpenRouter
  *
  * Priority Order:
  * 1. Anthropic Claude (primary - best for contracts, legal, analysis)
@@ -13,7 +13,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '@/config/env';
-import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL } from '@/config/aiModels';
+import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL, DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
 
 const CLAUDE_ALLOWED_MODELS = new Set<string>([
   'claude-sonnet-4-6-20260217',
@@ -323,10 +323,24 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
+  // Priority 5: OpenRouter (universal fallback when direct keys fail or are missing)
+  if (openRouterClient) {
+    try {
+      console.log('[AI Router] Attempting OpenRouter fallback...');
+      const response = await completeWithOpenRouter(options);
+      console.log('[AI Router] ✓ OpenRouter succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `OpenRouter failed: ${error.message}`;
+      console.error(`[AI Router] ✗ OpenRouter Error:`, error);
+      errors.push(errorMsg);
+    }
+  }
+
   // All providers failed
   const finalError = errors.length > 0
     ? `All AI providers failed:\n${errors.join('\n')}`
-    : "No AI providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
+    : "No AI providers are configured. Set ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, VITE_GEMINI_API_KEY, or OPENROUTER_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -423,6 +437,13 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'gemini-1.5-flash'
       };
     }
+    if (requestedModel.startsWith('openrouter/') && openRouterClient) {
+      return {
+        stream: await streamWithOpenRouter(options),
+        provider: 'openrouter',
+        model: options.model || DEFAULT_OPENROUTER_MODEL,
+      };
+    }
   }
 
   // Fallback Chain (Priority 1: DeepSeek)
@@ -492,6 +513,20 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
       };
     } catch (error) {
       console.warn('[AI Router] Gemini stream failed, falling back...');
+    }
+  }
+
+  // Priority 5: OpenRouter stream fallback
+  if (openRouterClient) {
+    try {
+      console.log('[AI Router] Attempting OpenRouter stream fallback...');
+      return {
+        stream: await streamWithOpenRouter(options),
+        provider: 'openrouter',
+        model: options.model || DEFAULT_OPENROUTER_MODEL,
+      };
+    } catch (error) {
+      console.warn('[AI Router] OpenRouter stream failed:', error);
     }
   }
 
@@ -768,9 +803,23 @@ export async function routeAIChat(
     }
   }
 
+  // Priority 5: OpenRouter fallback
+  if (openRouterClient) {
+    try {
+      console.log('[AI Router] Attempting OpenRouter chat fallback...');
+      const response = await chatWithOpenRouter(history, message, systemPrompt, model);
+      console.log('[AI Router] ✓ OpenRouter chat succeeded');
+      return response;
+    } catch (error: any) {
+      const errorMsg = `OpenRouter chat failed: ${error.message}`;
+      console.error(`[AI Router] ✗ ${errorMsg}`);
+      errors.push(errorMsg);
+    }
+  }
+
   const finalError = errors.length > 0
     ? `All AI chat providers failed:\n${errors.join('\n')}`
-    : "No AI chat providers are configured. Please check your .env file for ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, or VITE_GEMINI_API_KEY.";
+    : "No AI chat providers are configured. Set ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, VITE_GEMINI_API_KEY, or OPENROUTER_API_KEY.";
 
   throw new Error(finalError);
 }
@@ -998,7 +1047,7 @@ async function completeWithOpenRouter(options: AIRequestOptions): Promise<AIResp
     throw new Error('OpenRouter API key not configured');
   }
 
-  let model = options.model || 'anthropic/claude-3.5-sonnet';
+  let model = options.model || DEFAULT_OPENROUTER_MODEL;
   if (model.startsWith('openrouter/')) {
     model = model.replace('openrouter/', '');
   }
@@ -1037,7 +1086,7 @@ async function chatWithOpenRouter(
     throw new Error('OpenRouter API key not configured');
   }
 
-  let selectedModel = model || 'anthropic/claude-3.5-sonnet';
+  let selectedModel = model || DEFAULT_OPENROUTER_MODEL;
   if (selectedModel.startsWith('openrouter/')) {
     selectedModel = selectedModel.replace('openrouter/', '');
   }
@@ -1099,8 +1148,9 @@ export function getPrimaryProvider(): string {
   if (deepseek) return 'DeepSeek';
   if (anthropic) return 'Claude (Anthropic)';
   if (xai) return 'Grok (xAI)';
-  if (openRouterClient) return 'OpenRouter';
   if (openai) return 'GPT-4 (OpenAI)';
+  if (openRouterClient) return 'OpenRouter';
+  if (geminiAI) return 'Gemini';
   return 'No AI provider configured';
 }
 
@@ -1200,6 +1250,40 @@ async function streamWithOpenAI(options: AIRequestOptions): Promise<ReadableStre
     async start(controller) {
       const stream = await openai.chat.completions.create({
         model: model,
+        messages: [
+          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
+          { role: 'user' as const, content: options.prompt },
+        ],
+        max_tokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+        stream: true,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || '';
+        if (content) {
+          controller.enqueue(encoder.encode(content));
+        }
+      }
+      controller.close();
+    },
+  });
+}
+
+async function streamWithOpenRouter(options: AIRequestOptions): Promise<ReadableStream> {
+  if (!openRouterClient) throw new Error('OpenRouter not configured');
+
+  let model = options.model || DEFAULT_OPENROUTER_MODEL;
+  if (model.startsWith('openrouter/')) {
+    model = model.replace('openrouter/', '');
+  }
+
+  const encoder = new TextEncoder();
+
+  return new ReadableStream({
+    async start(controller) {
+      const stream = await openRouterClient.chat.completions.create({
+        model,
         messages: [
           ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
           { role: 'user' as const, content: options.prompt },

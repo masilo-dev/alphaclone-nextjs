@@ -69,6 +69,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       .eq('invoice_id', invoice.id)
       .order('created_at', { ascending: true });
 
+    const { data: businessSettings } = await admin
+      .from('business_settings')
+      .select('trading_name, business_name')
+      .eq('tenant_id', invoice.tenant_id)
+      .maybeSingle();
+
     const doc = generateInvoicePDF(
       {
         id: invoice.id,
@@ -94,7 +100,8 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
         rate: Number(item.rate || 0),
         amount: Number(item.amount || 0),
       })),
-      invoice.tenant as any
+      invoice.tenant as any,
+      businessSettings || undefined
     );
 
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));

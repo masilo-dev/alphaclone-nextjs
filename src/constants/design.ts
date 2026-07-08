@@ -1,6 +1,12 @@
 /**
  * Design System Constants
- * Centralized design tokens for consistent styling across the application
+ * Centralized design tokens for consistent styling across the application.
+ *
+ * Dashboard normalization note:
+ * - `WORKSPACE` is the canonical source for dashboard panel chrome, tabs, toolbar, and typography.
+ * - `ENTERPRISE` defines dashboard layout density, metric cards, data tables, and drawer structure.
+ * - When dashboard styling changes, keep these tokens aligned with global workspace CSS and Tailwind usage.
+ * - Prefer extending these objects over introducing one-off dashboard class strings in feature modules.
  */
 
 export const COLORS = {
@@ -144,9 +150,9 @@ export const ENTERPRISE = {
         defaultComparison: 'vs last 30 days',
     },
     moduleLayout: {
-        summaryGrid: 'grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6',
-        sectionGap: 'space-y-4 md:space-y-6',
-        stickyHeader: 'sticky top-0 z-20 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/60',
+        summaryGrid: 'grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4',
+        sectionGap: 'space-y-4 md:space-y-5',
+        stickyHeader: 'sticky top-0 z-20 bg-[var(--ws-toolbar)] backdrop-blur-none border-b border-[var(--ws-border)]',
     },
     dataTable: {
         cellPadding: 'px-2 py-3',
@@ -161,5 +167,50 @@ export const ENTERPRISE = {
         /** Overlay + panel z-index — keep above sticky hub headers (z-20) and bottom nav (z-50) */
         overlayZ: 'z-[1100]',
         panelZ: 'z-[1110]',
+    },
+} as const;
+
+/**
+ * Figma-inspired workspace chrome — structure and density, AlphaClone teal accent.
+ */
+export const WORKSPACE = {
+    sidebar: {
+        widthExpanded: 'w-[240px]',
+        widthCollapsed: 'md:w-12',
+        logoHeight: 'h-12',
+    },
+    toolbar: {
+        height: 'h-12',
+        padding: 'px-4 md:px-6',
+    },
+    canvas: {
+        maxWidth: 'max-w-[1440px]',
+        padding: 'p-4 md:p-6',
+        gap: 'gap-4 md:gap-5',
+    },
+    panel: {
+        base: 'ac-workspace-panel',
+        radius: 'rounded-lg',
+        padding: 'p-4 md:p-5',
+    },
+    action: {
+        primary: 'ac-workspace-action-btn ac-workspace-action-btn--primary',
+        secondary: 'ac-workspace-action-btn ac-workspace-action-btn--secondary',
+    },
+    nav: {
+        item: 'ac-workspace-nav-item',
+        itemActive: 'ac-workspace-nav-item--active',
+        subItem: 'ac-workspace-nav-subitem',
+        subItemActive: 'ac-workspace-nav-subitem--active',
+    },
+    tab: {
+        base: 'ac-workspace-tab',
+        active: 'ac-workspace-tab--active',
+    },
+    typography: {
+        pageTitle: 'text-[15px] font-semibold text-white tracking-tight',
+        sectionLabel: 'text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500',
+        panelTitle: 'text-[13px] font-semibold text-slate-100',
+        panelSubtitle: 'text-[11px] text-slate-500',
     },
 } as const;

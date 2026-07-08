@@ -46,6 +46,7 @@ const VideoExplainer = dynamic(() => import('./dashboard/VideoExplainer'), {
 });
 
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
+import { LANDING_SECTIONS } from '@/lib/marketing/siteNavigation';
 
 const BUSINESS_SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
 const LOGIN_HREF = '/auth/login';
@@ -157,6 +158,10 @@ const LandingPage = () => {
                         {OUTCOME_PROMISE.icp}
                      </p>
 
+                     <p className="text-sm text-slate-400 mb-6 max-w-2xl mx-auto">
+                        After signup: add a client → send an invoice → connect inbox. Most teams see real client work flowing through the system in under 10 minutes.
+                     </p>
+
                      {/* CTAs */}
                      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6 mt-6">
                         <Button
@@ -203,10 +208,10 @@ const LandingPage = () => {
                         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                            <div>
                               <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300 mb-3">
-                                 Try before you buy
+                                 Trial with real workflows
                               </div>
                               <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                                 Get set up in minutes, not weeks.
+                                 Validate your full operating flow in days, not weeks.
                               </h2>
                               <p className="mt-2 max-w-2xl text-sm sm:text-base text-slate-300 leading-relaxed">
                                  Run a real client workflow in your 14-day trial — from lead to invoice — and decide with evidence, not a slide deck.
@@ -241,10 +246,25 @@ const LandingPage = () => {
                      </div>
                   </motion.div>
                </motion.div>
+
+               <nav
+                  aria-label="On this page"
+                  className="relative z-10 max-w-3xl mx-auto px-4 mt-2 flex flex-wrap justify-center gap-2"
+               >
+                  {LANDING_SECTIONS.map((section) => (
+                     <a
+                        key={section.id}
+                        href={`#${section.id}`}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-700/80 bg-slate-950/60 text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors"
+                     >
+                        {section.label}
+                     </a>
+                  ))}
+               </nav>
             </section>
 
             {/* ─── Verified partner integrations ─── */}
-            <section className="py-10 border-y border-slate-800/60 bg-slate-950/60 overflow-hidden">
+            <section id="integrations" className="py-10 border-y border-slate-800/60 bg-slate-950/60 overflow-hidden">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
                   <p className="text-[11px] uppercase tracking-[0.28em] font-bold text-slate-500">
                      Works with the tools you already use
@@ -269,10 +289,10 @@ const LandingPage = () => {
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <div className="text-center mb-10">
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
-                        One workspace beats <span className="text-cyan-400">tool sprawl</span>
+                        One workspace instead of five disconnected tools.
                      </h2>
                      <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-                        AlphaClone combines the core systems most founders need, so you can act faster without switching apps all day.
+                        AlphaClone stitches CRM, delivery, and billing together so you always know what was promised, what is in progress, and what has been paid, without hopping between apps.
                      </p>
                   </div>
 
@@ -310,14 +330,14 @@ const LandingPage = () => {
             </motion.section>
 
             {/* Before / After */}
-            <section className="py-16 bg-slate-950/50 border-b border-slate-900">
+            <section id="how-it-works" className="py-16 bg-slate-950/50 border-b border-slate-900">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-10">
                      <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
-                        What changes when your tools share one client record
+                        What changes when every tool shares the same client record
                      </h2>
                      <p className="text-slate-400 max-w-2xl mx-auto">
-                        Most teams don&apos;t need more software. They need fewer handoffs.
+                        Instead of copy-pasting between CRM, project boards, and invoicing, AlphaClone keeps one source of truth for each client — from first touch to final payment.
                      </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -340,7 +360,7 @@ const LandingPage = () => {
             </section>
 
             {/* Workflow and Product Preview */}
-            <section className="py-16 border-y border-slate-800 bg-[#050B14]/80">
+            <section id="workflow" className="py-16 border-y border-slate-800 bg-[#050B14]/80">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                      <motion.div
@@ -349,9 +369,9 @@ const LandingPage = () => {
                         viewport={{ once: true }}
                         className="rounded-2xl border border-cyan-500/20 bg-[#081228]/90 p-5"
                      >
-                        <h3 className="text-xl font-bold text-white mb-2">Chat-Driven Execution</h3>
+                        <h3 className="text-xl font-bold text-white mb-2">From chat to execution — one place to trigger work.</h3>
                            <p className="text-sm text-slate-300 mb-4">
-                           Trigger business workflows from chat while staying in your workspace. The platform runs CRM, tasks, invoices, and social operations in sequence.
+                           Kick off outreach, posts, tasks, and follow-ups from a single interface. AlphaClone coordinates CRM updates, pipeline changes, tasks, and billing events in the background.
                         </p>
                         <div className="space-y-2 text-sm">
                            {[
@@ -413,14 +433,14 @@ const LandingPage = () => {
             </section>
 
             {/* Platform Capabilities */}
-            <section className="py-16 bg-slate-950/70">
+            <section id="platform" className="py-16 bg-slate-950/70">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="mb-10 text-center">
                      <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
-                        Everything your business needs. Nothing it does not.
+                        Everything you need to run client work. Nothing bloated.
                      </h2>
                      <p className="text-slate-300 max-w-3xl mx-auto">
-                        Built for business operators. Manage leads, tasks, projects, social publishing, and billing from a consistent interface with clear execution states.
+                        Designed for operators, not hobby projects. Leads, tasks, projects, social, and billing share one set of workflows and one shared view of what happens next.
                      </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -469,7 +489,7 @@ const LandingPage = () => {
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                      <div className="rounded-2xl border border-cyan-500/15 bg-[#081228]/90 p-6">
-                        <h3 className="text-2xl font-black text-white mb-3">Privacy and Compliance</h3>
+                        <h3 className="text-2xl font-black text-white mb-3">Trust, privacy, and compliance by default</h3>
                         <p className="text-sm text-slate-300 leading-relaxed mb-4">
                            AlphaClone is built for operational trust. We provide clear legal policies, data handling disclosures, and account-level controls for businesses and teams.
                         </p>
@@ -489,7 +509,7 @@ const LandingPage = () => {
                         </div>
                      </div>
                      <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
-                        <h4 className="text-lg font-bold text-white mb-3">Why teams trust the platform</h4>
+                        <h4 className="text-lg font-bold text-white mb-3">Why operators trust this stack</h4>
                         <ul className="space-y-2">
                            {[
                               'Encryption in transit and at rest with tenant isolation between workspaces.',
@@ -540,7 +560,7 @@ const LandingPage = () => {
             </section>
 
             {/* Features / Services Section */}
-            <section id="services" className="py-20 bg-[#040A12]">
+            <section id="features" className="py-20 bg-[#040A12]">
                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                   <motion.div 
                      initial={{ opacity: 0, y: 30 }}
@@ -561,25 +581,25 @@ const LandingPage = () => {
                         {
                            icon: Database,
                            title: 'Win clients',
-                           desc: 'Capture leads, track pipeline, and follow up before opportunities go cold.',
+                          desc: 'Capture leads, score intent, and keep every follow-up on a single timeline.',
                            color: 'from-blue-500 to-cyan-500'
                         },
                         {
                            icon: Briefcase,
                            title: 'Deliver work',
-                           desc: 'Run projects and tasks with the same context sales promised the client.',
+                          desc: 'Run projects with clear owners, milestones, and a client-visible portal.',
                            color: 'from-purple-500 to-indigo-500'
                         },
                         {
                            icon: TrendingUp,
                            title: 'Get paid',
-                           desc: 'Send quotes and invoices tied to the deal — see what is paid, pending, or overdue.',
+                          desc: 'Turn signed contracts into invoices automatically and see what is overdue at a glance.',
                            color: 'from-green-500 to-emerald-500'
                         },
                         {
                            icon: Zap,
                            title: 'Grow without admin drag',
-                           desc: 'AI-assisted outreach and follow-up prep while you focus on delivery.',
+                          desc: 'Use AI to draft outreach and follow-ups while the system updates the work behind the scenes.',
                            color: 'from-yellow-500 to-orange-500'
                         },
                         {
@@ -634,10 +654,10 @@ const LandingPage = () => {
                      className="text-center mb-16"
                   >
                      <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                        One price. Your whole client operation connected.
+                        One simple price for your whole operation.
                      </h2>
                      <p className="text-lg text-slate-300 max-w-3xl mx-auto">
-                        No hidden fees. Test the full workflow free for 14 days — then keep the plan that matches your team.
+                        Every plan includes CRM, projects, contracts, invoicing, and AI helpers. Start with a 14-day trial, then keep the plan that matches your volume — no hidden add-ons.
                      </p>
                   </motion.div>
 
@@ -711,13 +731,13 @@ const LandingPage = () => {
                      className="text-center mb-10"
                   >
                      <p className="text-[11px] uppercase tracking-[0.28em] font-bold text-slate-500 mb-3">
-                        Typical outcomes
+                        Typical operator outcomes
                      </p>
                      <h2 className="font-marketing-heading text-2xl sm:text-3xl font-black text-white tracking-tight">
-                        What changes when handoffs disappear
+                        What changes when your workflow is truly connected
                      </h2>
                      <p className="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
-                        Representative scenarios from teams like yours.{' '}
+                        Representative scenarios from teams like yours running CRM, delivery, and billing in one place.{' '}
                         <Link href="/results" className="text-cyan-400 hover:text-cyan-300 font-semibold">
                            Read full workflow stories →
                         </Link>
@@ -732,10 +752,10 @@ const LandingPage = () => {
                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="text-center mb-10">
                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
-                        Built for founders who run lean and move fast.
+                        Built for founders who want less software and more signal.
                      </h2>
                      <p className="text-base text-slate-300 max-w-xl mx-auto mb-8">
-                        Create your workspace, connect the basics, and ask our team for onboarding support when you need it.
+                        Create your workspace, connect the basics, and we'll help you wire the first live workflow — from lead to invoice — so you can decide based on real usage, not promises.
                      </p>
                      
                      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">

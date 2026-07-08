@@ -1,0 +1,17 @@
+---
+description: Enforce AlphaClone dashboard design consistency across modules
+globs: src/components/dashboard/**/*.tsx
+alwaysApply: false
+---
+
+# AlphaClone Dashboard Consistency
+
+- Treat dashboard work as one product system, not one-off screens. New modules must match existing AlphaClone primitives before inventing new chrome.
+- Reuse shared primitives first: `ModuleDashboardLayout`, `ModuleDashboardView`, `DashboardChartCard`, `DashboardPanelHeader`, shared `Button`, `Badge`, `EmptyState`, and workspace panel classes from `src/constants/design.ts`.
+- Do not introduce generic AI-SaaS defaults: no random `rounded-2xl/3xl`, heavy one-off shadows, gradient hero blocks, colorful icon chips on every stat, or ad hoc white-card layouts.
+- Keep tokens synchronized. If you touch dashboard styling, update the locked sources in `src/constants/design.ts`, Tailwind, and workspace CSS together instead of hardcoding local values.
+- Match one spacing/radius/elevation rhythm across modules. Prefer the existing workspace/enterprise tokens; avoid literal sizes unless the token layer is being updated intentionally.
+- Respect each module's real information shape. CRM should not look like invoicing just because both can be rendered as cards and tables.
+- Use Lucide consistently and only when icons add meaning. Avoid decorative icon overload.
+- Empty, loading, and error states must explain what happened and what the user should do next. Never fail silently.
+- Before finishing, compare against at least two existing modules and check: header anatomy, panel chrome, primary actions, table/list row behavior, status badges, and empty states.

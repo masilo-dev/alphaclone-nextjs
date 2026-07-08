@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { generateMessengerReply } from '@/services/unifiedAIService';
 import toast from 'react-hot-toast';
+import EmptyState from '@/components/ui/EmptyState';
+import { WORKSPACE } from '@/constants/design';
 
 interface WhatsAppMessage {
     id: string;
@@ -371,10 +373,10 @@ export default function WhatsAppChatHub() {
     }
 
     return (
-        <div className="rounded-3xl border border-white/5 bg-slate-950/60 overflow-hidden grid grid-cols-1 lg:grid-cols-12 h-[680px] shadow-2xl relative">
+        <div className={`relative grid h-[680px] grid-cols-1 overflow-hidden lg:grid-cols-12 ${WORKSPACE.panel.base} rounded-lg shadow-none`}>
             
             {/* Sidebar Columns (Left side) */}
-            <div className="lg:col-span-4 border-r border-white/5 flex flex-col bg-slate-900/10 h-full">
+            <div className="lg:col-span-4 flex h-full flex-col border-r border-[var(--ws-border)] bg-slate-900/10">
                 
                 {/* Search Bar */}
                 <div className="p-4 border-b border-white/5 space-y-3">
@@ -462,10 +464,12 @@ export default function WhatsAppChatHub() {
                 {/* Thread list */}
                 <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
                     {filteredThreads.length === 0 ? (
-                        <div className="text-center py-16 text-slate-600">
-                            <MessageCircle className="w-10 h-10 text-slate-800 mx-auto mb-2 opacity-50" />
-                            <p className="text-xs font-bold uppercase tracking-widest">No conversations found</p>
-                        </div>
+                        <EmptyState
+                            icon={MessageCircle}
+                            title="No conversations found"
+                            description="Inbound WhatsApp conversations will appear here when customers message your workspace."
+                            className="py-16"
+                        />
                     ) : (
                         filteredThreads.map(thread => {
                             const isSelected = thread.phone === selectedPhone;
@@ -473,14 +477,14 @@ export default function WhatsAppChatHub() {
                                 <button
                                     key={thread.phone}
                                     onClick={() => setSelectedPhone(thread.phone)}
-                                    className={`w-full text-left p-3.5 rounded-2xl flex items-center justify-between gap-3 transition-all relative border ${
+                                    className={`relative flex w-full items-center justify-between gap-3 rounded-lg border p-3.5 text-left transition-all ${
                                         isSelected 
-                                        ? 'bg-emerald-600/10 border-emerald-500/20 shadow-lg' 
+                                        ? 'bg-emerald-600/10 border-emerald-500/20' 
                                         : 'hover:bg-slate-800/40 border-transparent'
                                     }`}
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 font-bold text-sm shrink-0">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-sm font-bold text-emerald-400">
                                             {thread.contactName.charAt(0) === '+' ? <Phone className="w-4 h-4 text-emerald-400" /> : thread.contactName.charAt(0)}
                                         </div>
                                         <div className="min-w-0">
@@ -510,9 +514,9 @@ export default function WhatsAppChatHub() {
                 {activeThread ? (
                     <>
                         {/* Header */}
-                        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/30 backdrop-blur-md">
+                        <div className="flex items-center justify-between border-b border-[var(--ws-border)] bg-slate-900/30 p-4 backdrop-blur-md">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 text-emerald-400 font-bold shrink-0">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-400">
                                     <MessageSquare className="w-5 h-5 text-emerald-400" />
                                 </div>
                                 <div>
@@ -532,7 +536,7 @@ export default function WhatsAppChatHub() {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider">
+                            <div className="flex items-center gap-2 rounded-lg border border-[var(--ws-border)] bg-slate-900 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                                 <ShieldCheck className="w-4 h-4 text-emerald-400" /> Secure Encryption
                             </div>
                         </div>
@@ -543,7 +547,7 @@ export default function WhatsAppChatHub() {
                                 const isMe = msg.direction === 'outbound';
                                 return (
                                     <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} w-full`}>
-                                        <div className={`p-3.5 rounded-2xl text-xs max-w-[70%] shadow-lg border transition-all ${
+                                        <div className={`max-w-[70%] rounded-lg border p-3.5 text-xs transition-all ${
                                             isMe 
                                             ? 'bg-emerald-950/60 text-emerald-50 border-emerald-500/20 rounded-br-none' 
                                             : 'bg-slate-900 border-slate-800 text-slate-200 rounded-bl-none'
@@ -567,7 +571,7 @@ export default function WhatsAppChatHub() {
                         </div>
 
                         {/* Input Footer */}
-                        <div className="p-4 border-t border-white/5 bg-slate-900/30 backdrop-blur-md space-y-3">
+                        <div className="space-y-3 border-t border-[var(--ws-border)] bg-slate-900/30 p-4 backdrop-blur-md">
                             {!metaConnected && (
                                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
                                     Outbound WhatsApp is not configured for this workspace. Connect Meta Cloud API credentials in Integration Settings before sending messages.
@@ -577,7 +581,7 @@ export default function WhatsAppChatHub() {
                                 <button
                                     onClick={handleAiSuggest}
                                     disabled={aiGenerating}
-                                    className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 hover:from-emerald-500/20 hover:to-teal-500/20 text-emerald-400 px-3.5 py-1.5 rounded-xl border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-emerald-950/20"
+                                    className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400 transition-all active:scale-95 disabled:opacity-50"
                                 >
                                     {aiGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />}
                                     AI Assist Copilot Draft
@@ -591,12 +595,12 @@ export default function WhatsAppChatHub() {
                                     onChange={e => setReplyText(e.target.value)}
                                     placeholder={metaConnected ? 'Type a WhatsApp message...' : 'Configure WhatsApp to send messages'}
                                     disabled={!metaConnected}
-                                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500/40 transition-all placeholder:text-slate-600 disabled:opacity-50"
+                                    className="flex-1 rounded-lg border border-[var(--ws-border)] bg-slate-900 px-4 py-3 text-xs text-white outline-none transition-all placeholder:text-slate-600 focus:border-emerald-500/40 disabled:opacity-50"
                                 />
                                 <button
                                     type="submit"
                                     disabled={sending || !replyText.trim() || !metaConnected}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-xl shadow-xl shadow-emerald-900/20 disabled:opacity-50 disabled:scale-100 transition-all active:scale-95 shrink-0 flex items-center justify-center"
+                                    className="flex shrink-0 items-center justify-center rounded-lg bg-emerald-600 p-3 text-white transition-all active:scale-95 hover:bg-emerald-500 disabled:scale-100 disabled:opacity-50"
                                 >
                                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                 </button>
@@ -604,15 +608,12 @@ export default function WhatsAppChatHub() {
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center p-12 text-slate-500">
-                        <div className="w-16 h-16 bg-emerald-500/5 rounded-3xl border border-emerald-500/10 flex items-center justify-center mb-4">
-                            <MessageCircle className="w-8 h-8 text-emerald-500/60" />
-                        </div>
-                        <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-1">WhatsApp Live Chat Hub</h3>
-                        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                            Select an active customer conversation on the left to start viewing live messages and chatting in real-time.
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon={MessageCircle}
+                        title="WhatsApp live chat hub"
+                        description="Select an active customer conversation on the left to start viewing messages and chatting in real time."
+                        className="max-w-md py-12"
+                    />
                 )}
             </div>
         </div>
