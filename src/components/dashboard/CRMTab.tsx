@@ -42,6 +42,7 @@ import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
+import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -1050,12 +1051,17 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
   const [value, setValue] = useState('');
 
   const handleSave = () => {
-    if (!name) {
+    if (!name.trim()) {
       toast.error('Name is required');
       return;
     }
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+      toast.error('Enter a valid email address');
+      return;
+    }
     onSave({
-      type, name, email, phone, company, source, industry, value: parseFloat(value) || 0
+      type, name, email: trimmedEmail, phone, company, source, industry, value: parseFloat(value) || 0
     });
     setName(''); setEmail(''); setPhone(''); setCompany(''); setSource('Manual'); setIndustry(''); setValue('');
   };
@@ -1847,13 +1853,19 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     industry: string;
     value: number;
   }) => {
+    const trimmedEmail = entity.email.trim();
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+      toast.error('Enter a valid email address');
+      return;
+    }
+
     setIsCreateOpen(false);
     const saveToast = toast.loading('Saving record...');
     try {
       if (entity.type === 'lead') {
         const { error } = await leadService.addLead({
           businessName: entity.name,
-          email: entity.email,
+          email: trimmedEmail,
           phone: entity.phone,
           industry: entity.industry || undefined,
           source: entity.source || 'manual',
@@ -1864,7 +1876,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       } else {
         const { error } = await businessClientService.createClient(currentTenant!.id, {
           name: entity.name,
-          email: entity.email,
+          email: trimmedEmail,
           phone: entity.phone,
           industry: entity.industry || 'General',
           salesStage: 'customer',

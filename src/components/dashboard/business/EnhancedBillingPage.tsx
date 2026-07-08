@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
@@ -29,6 +29,7 @@ interface EnhancedBillingPageProps {
 
 const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
     
@@ -111,6 +112,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             loadClients();
         }
     }, [currentTenant?.id]);
+
+    useEffect(() => {
+        if (!searchParams) return;
+        if (searchParams.get('create') === 'true' || searchParams.get('new') === 'true') {
+            setShowCreateModal(true);
+            router.replace('/dashboard/business/billing/manage', { scroll: false });
+        }
+    }, [searchParams, router]);
 
     const loadClients = async () => {
         if (!currentTenant?.id) return;

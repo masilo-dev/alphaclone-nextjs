@@ -324,11 +324,29 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && user?.id) {
-      setWelcomeOpen(!localStorage.getItem(`welcome_seen_${user.id}`));
-      setShowOnboarding(!localStorage.getItem(`onboarding_completed_${user.id}`));
-    }
-  }, [user.id]);
+    if (typeof window === 'undefined' || !user?.id) return;
+
+    let cancelled = false;
+
+    const resolveGates = async () => {
+      const { resolveOnboardingGate } = await import('@/lib/onboarding/resolveOnboardingGate');
+      const gate = await resolveOnboardingGate(
+        user.id,
+        currentTenant?.id,
+        (user as { user_metadata?: Record<string, unknown> }).user_metadata
+      );
+
+      if (cancelled) return;
+
+      setWelcomeOpen(!gate.welcomeSeen && !gate.establishedWorkspace);
+      setShowOnboarding(!gate.onboardingCompleted);
+    };
+
+    resolveGates();
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id, currentTenant?.id]);
 
   const [showProductTour, setShowProductTour] = useState(false);
 

@@ -13,7 +13,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '@/config/env';
-import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL, DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
+import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL, DEFAULT_OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODELS } from '@/config/aiModels';
+import { requestOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
 
 const CLAUDE_ALLOWED_MODELS = new Set<string>([
   'claude-sonnet-4-6-20260217',
@@ -1052,25 +1053,37 @@ async function completeWithOpenRouter(options: AIRequestOptions): Promise<AIResp
     model = model.replace('openrouter/', '');
   }
 
-  const messages: any[] = [];
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
   if (options.systemPrompt) {
     messages.push({ role: 'system', content: options.systemPrompt });
   }
   messages.push({ role: 'user', content: options.prompt });
 
-  const completion = await openRouterClient.chat.completions.create({
-    model: model,
-    messages,
-    max_tokens: options.maxTokens || 4096,
-    temperature: options.temperature || 0.7,
-  });
+  const models = [
+    model,
+    ...OPENROUTER_FALLBACK_MODELS.filter((candidate) => candidate !== model),
+  ];
 
-  return {
-    content: completion.choices[0]?.message?.content || '',
-    provider: 'openrouter',
-    model: model,
-    success: true,
-  };
+  let lastError = 'OpenRouter request failed';
+  for (const candidate of models) {
+    try {
+      const { content, model: usedModel } = await requestOpenRouterCompletion(messages, {
+        model: candidate,
+        maxTokens: options.maxTokens || 4096,
+        temperature: options.temperature || 0.7,
+      });
+      return {
+        content,
+        provider: 'openrouter',
+        model: usedModel,
+        success: true,
+      };
+    } catch (error: any) {
+      lastError = error?.message || lastError;
+    }
+  }
+
+  throw new Error(lastError);
 }
 
 /**
@@ -1091,13 +1104,12 @@ async function chatWithOpenRouter(
     selectedModel = selectedModel.replace('openrouter/', '');
   }
 
-  // Ensure history alternates and starts with 'user'
   const validHistory = history.filter((msg, idx) => {
     if (idx === 0 && msg.role !== 'user') return false;
     return true;
   });
 
-  const chatMessages: any[] = [];
+  const chatMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
   for (const msg of validHistory) {
     const role = msg.role === 'user' ? 'user' : 'assistant';
     if (chatMessages.length > 0 && chatMessages[chatMessages.length - 1].role === role) {
@@ -1108,23 +1120,35 @@ async function chatWithOpenRouter(
       content: msg.content || (msg as any).text || '',
     });
   }
+  if (systemPrompt) {
+    chatMessages.unshift({ role: 'system', content: systemPrompt });
+  }
+  chatMessages.push({ role: 'user', content: message });
 
-  const completion = await openRouterClient.chat.completions.create({
-    model: selectedModel,
-    messages: [
-      ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
-      ...chatMessages,
-      { role: 'user', content: message }
-    ],
-    max_tokens: 4096,
-  });
+  const models = [
+    selectedModel,
+    ...OPENROUTER_FALLBACK_MODELS.filter((candidate) => candidate !== selectedModel),
+  ];
 
-  return {
-    content: completion.choices[0]?.message?.content || '',
-    provider: 'openrouter',
-    model: selectedModel,
-    success: true,
-  };
+  let lastError = 'OpenRouter chat failed';
+  for (const candidate of models) {
+    try {
+      const { content, model: usedModel } = await requestOpenRouterCompletion(chatMessages, {
+        model: candidate,
+        maxTokens: 4096,
+      });
+      return {
+        content,
+        provider: 'openrouter',
+        model: usedModel,
+        success: true,
+      };
+    } catch (error: any) {
+      lastError = error?.message || lastError;
+    }
+  }
+
+  throw new Error(lastError);
 }
 
 /**

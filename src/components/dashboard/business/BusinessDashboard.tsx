@@ -31,6 +31,7 @@ import { Project, User } from '../../../types';
 import { projectService } from '../../../services/projectService';
 import { useTenant } from '../../../contexts/TenantContext';
 import { supabase } from '../../../lib/supabase';
+import { resolveOnboardingGate } from '@/lib/onboarding/resolveOnboardingGate';
 import toast from 'react-hot-toast';
 import { useBackgroundTasks } from '../../../contexts/BackgroundTaskContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
@@ -234,23 +235,39 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     React.useEffect(() => {
         if (!user?.id || typeof window === 'undefined') return;
 
-        const welcomeKey = `business_welcome_seen_${user.id}`;
-        const onboardingKey = `onboarding_completed_${user.id}`;
-        const tourKey = `business_tour_completed_${user.id}`;
+        let cancelled = false;
+        const tourStorageKey = `business_tour_completed_${user.id}`;
 
-        if (!localStorage.getItem(welcomeKey)) {
-            setShowBusinessWelcome(true);
-            return;
-        }
-        if (!localStorage.getItem(onboardingKey)) {
-            setShowOnboarding(true);
-            return;
-        }
-        if (!localStorage.getItem(tourKey) && route === '/dashboard') {
-            const timer = window.setTimeout(() => setShowProductTour(true), 2000);
-            return () => window.clearTimeout(timer);
-        }
-    }, [user?.id, route]);
+        const resolveGates = async () => {
+            const gate = await resolveOnboardingGate(
+                user.id,
+                currentTenant?.id,
+                (user as { user_metadata?: Record<string, unknown> }).user_metadata
+            );
+
+            if (cancelled) return;
+
+            if (!gate.welcomeSeen && !gate.establishedWorkspace) {
+                setShowBusinessWelcome(true);
+                return;
+            }
+
+            if (!gate.onboardingCompleted) {
+                setShowOnboarding(true);
+                return;
+            }
+
+            if (!gate.tourCompleted && route === '/dashboard') {
+                const timer = window.setTimeout(() => setShowProductTour(true), 2000);
+                return () => window.clearTimeout(timer);
+            }
+        };
+
+        resolveGates();
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.id, currentTenant?.id, route]);
 
     const handleBusinessWelcomeClose = () => {
         if (typeof window !== 'undefined') {

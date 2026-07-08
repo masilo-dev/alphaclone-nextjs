@@ -3,6 +3,7 @@
  * Docs: https://platform.deepseek.com/api-docs
  */
 import { DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
+import { requestOpenRouterCompletion, streamOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
 
 export type DeepSeekModel = 'deepseek-chat' | 'deepseek-reasoner';
 
@@ -64,40 +65,12 @@ async function openRouterCompletion(
     messages: DeepSeekMessage[],
     options: DeepSeekOptions = {}
 ): Promise<string> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-        throw new Error('OPENROUTER_API_KEY is not configured');
-    }
-
-    const completionModel = DEFAULT_OPENROUTER_MODEL;
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://alphaclonesystems.com',
-            'X-Title': 'AlphaClone Systems',
-        },
-        body: JSON.stringify({
-            model: completionModel,
-            messages,
-            max_tokens: options.maxTokens ?? 2000,
-            temperature: options.temperature ?? 0.7,
-        }),
+    const { content } = await requestOpenRouterCompletion(messages, {
+        model: DEFAULT_OPENROUTER_MODEL,
+        maxTokens: options.maxTokens ?? 2000,
+        temperature: options.temperature ?? 0.7,
     });
-
-    if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`OpenRouter API error ${res.status}: ${err}`);
-    }
-
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) {
-        throw new Error('OpenRouter returned empty response');
-    }
-
-    return content as string;
+    return content;
 }
 
 export async function callDeepSeek(
@@ -217,63 +190,10 @@ async function openRouterStream(
     options: DeepSeekOptions,
     onToken: (chunk: string) => void
 ): Promise<string> {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-        throw new Error('OPENROUTER_API_KEY is not configured');
-    }
-
-    const completionModel = DEFAULT_OPENROUTER_MODEL;
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://alphaclonesystems.com',
-            'X-Title': 'AlphaClone Systems',
-        },
-        body: JSON.stringify({
-            model: completionModel,
-            messages,
-            max_tokens: options.maxTokens ?? 2000,
-            temperature: options.temperature ?? 0.5,
-            stream: true,
-        }),
-    });
-
-    if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`OpenRouter stream error ${res.status}: ${err}`);
-    }
-
-    const reader = res.body?.getReader();
-    if (!reader) throw new Error('OpenRouter stream unavailable');
-
-    const decoder = new TextDecoder();
-    let full = '';
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const block = decoder.decode(value, { stream: true });
-        for (const line of block.split('\n')) {
-            const trimmed = line.trim();
-            if (!trimmed.startsWith('data:')) continue;
-            const payload = trimmed.slice(5).trim();
-            if (!payload || payload === '[DONE]') continue;
-
-            try {
-                const parsed = JSON.parse(payload);
-                const delta = parsed?.choices?.[0]?.delta?.content;
-                if (typeof delta === 'string' && delta.length > 0) {
-                    full += delta;
-                    onToken(delta);
-                }
-            } catch {
-                // Ignore malformed SSE chunks.
-            }
-        }
-    }
-
-    return full;
+    const { content } = await streamOpenRouterCompletion(messages, {
+        model: DEFAULT_OPENROUTER_MODEL,
+        maxTokens: options.maxTokens ?? 2000,
+        temperature: options.temperature ?? 0.5,
+    }, onToken);
+    return content;
 }

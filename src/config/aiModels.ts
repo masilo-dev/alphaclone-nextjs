@@ -65,5 +65,13 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
 
 export const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-6-20260217';
 export const DEFAULT_OPENAI_MODEL = 'gpt-4o';
+/** OpenRouter models tried in order when the primary model is unavailable (404/410). */
+export const OPENROUTER_FALLBACK_MODELS = [
+    'openai/gpt-4o-mini',
+    'google/gemini-2.0-flash-001',
+    'anthropic/claude-3.5-sonnet',
+    'meta-llama/llama-3.3-70b-instruct',
+] as const;
+
 /** Universal fallback model when direct provider keys fail — routed via OpenRouter */
-export const DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-3.5-sonnet';
+export const DEFAULT_OPENROUTER_MODEL = OPENROUTER_FALLBACK_MODELS[0];

@@ -180,9 +180,17 @@ export const businessInvoiceService = {
 
             let insertError;
             let retryCount = 0;
-            const maxRetries = 2;
+            const maxRetries = 5;
             let currentPayload = { ...payload };
             let finalData;
+
+            const isDuplicateInvoiceNumberError = (error: any) => {
+                if (!error) return false;
+                if (error.code === '23505') return true;
+                if (error.status === 409) return true;
+                const message = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`;
+                return /duplicate|unique|invoice_number|conflict/i.test(message);
+            };
 
             while (retryCount <= maxRetries) {
                 const { data, error } = await supabase
@@ -197,16 +205,14 @@ export const businessInvoiceService = {
                 }
 
                 insertError = error;
-                // Check for duplicate key violation (PostgreSQL error code 23505)
-                if (error.code === '23505' && error.message?.includes('invoice_number')) {
+                if (isDuplicateInvoiceNumberError(error)) {
                     console.warn(`Duplicate invoice number detected. Retry ${retryCount + 1}/${maxRetries}...`);
-                    const nextInvoiceNumber = await this.generateInvoiceNumber(tenantId);
-                    currentPayload.invoice_number = nextInvoiceNumber;
+                    currentPayload.invoice_number = `INV-${Date.now().toString().slice(-8)}-${retryCount + 1}`;
                     retryCount++;
-                } else {
-                    // Not a duplicate key error we can handle by retrying
-                    break;
+                    continue;
                 }
+
+                break;
             }
 
             if (!finalData) {
@@ -534,48 +540,43 @@ export const businessInvoiceService = {
 
     /**
      * Generate next invoice number
-     * IMPROVED: Using a more robust approach to avoid race conditions
+     * Uses recent invoices and picks the highest numeric suffix to avoid lexicographic collisions.
      */
     async generateInvoiceNumber(tenantId: string): Promise<string> {
         try {
-            // Fetch the highest invoice number for this tenant
-            // Sorting by invoice_number descending instead of created_at
             const { data, error } = await supabase
                 .from('business_invoices')
                 .select('invoice_number')
                 .eq('tenant_id', tenantId)
-                .order('invoice_number', { ascending: false })
-                .limit(1);
+                .order('created_at', { ascending: false })
+                .limit(100);
 
             if (error) throw error;
 
-            if (data && data.length > 0) {
-                const lastNumber = data[0].invoice_number;
-                // Regular expression to find the numeric part (handling variations like INV-0001 or INV1001)
+            let maxNum = 1000;
+            let prefix = 'INV-';
+
+            for (const row of data || []) {
+                const lastNumber = row.invoice_number || '';
                 const match = lastNumber.match(/\d+/g);
-                if (match && match.length > 0) {
-                    // Take the last match (useful if the prefix has numbers)
-                    const lastNumericPart = match[match.length - 1];
-                    const nextNum = parseInt(lastNumericPart) + 1;
+                if (!match?.length) continue;
 
-                    // Maintain original padding if it was numeric lead
-                    const padding = lastNumericPart.length;
-                    const nextNumString = nextNum.toString().padStart(padding, '0');
+                const numeric = parseInt(match[match.length - 1], 10);
+                if (Number.isNaN(numeric) || numeric < maxNum) continue;
 
-                    // Reconstruct with original prefix
-                    const prefixMatch = lastNumber.match(/^[A-Z-]+/i);
-                    const prefix = prefixMatch ? prefixMatch[0] : 'INV-';
-
-                    return `${prefix}${nextNumString}`;
+                maxNum = numeric;
+                const prefixMatch = lastNumber.match(/^[A-Za-z-]+/);
+                if (prefixMatch?.[0]) {
+                    prefix = prefixMatch[0];
                 }
             }
 
-            // Default fallback
-            return 'INV-1001';
+            const nextNum = maxNum + 1;
+            const padding = Math.max(4, String(maxNum).length);
+            return `${prefix}${nextNum.toString().padStart(padding, '0')}`;
         } catch (err) {
             console.error('Error generating invoice number:', err);
-            // Unique enough to avoid collision but clearly a fallback
-            return `INV-${Date.now().toString().slice(-6)}`;
+            return `INV-${Date.now().toString().slice(-8)}`;
         }
     },
 

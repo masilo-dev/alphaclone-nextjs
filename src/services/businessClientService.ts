@@ -7,6 +7,7 @@ import {
     softDeleteClientById,
     restoreClientById,
 } from '../lib/crm/softDeleteContact';
+import { isValidEmail } from '@/lib/email/isValidEmail';
 
 let hasLoggedMissingAiProviders = false;
 
@@ -144,12 +145,17 @@ export const businessClientService = {
             const quotaUserId = authData?.user?.id || null;
 
             // Duplicate detection: check for existing client with same email in same tenant
-            if (client.email) {
+            const normalizedEmail = client.email?.trim();
+            if (normalizedEmail && !isValidEmail(normalizedEmail)) {
+                return { client: null, error: 'Enter a valid email address' };
+            }
+
+            if (normalizedEmail) {
                 const { data: existing } = await supabase
                     .from('business_clients')
                     .select('id, name')
                     .eq('tenant_id', tenantId)
-                    .eq('email', client.email)
+                    .eq('email', normalizedEmail)
                     .eq('is_active', true)
                     .maybeSingle();
 
@@ -178,7 +184,7 @@ export const businessClientService = {
                 .insert({
                     tenant_id: tenantId,
                     name: client.name,
-                    email: client.email,
+                    email: normalizedEmail || null,
                     phone: client.phone,
                     industry: client.industry,
                     location: client.location,
