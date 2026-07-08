@@ -93,7 +93,7 @@ export default function Microsoft365Integration() {
 
     if (status === 'loading') {
         return (
-            <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
+            <div className="ac-workspace-panel rounded-lg p-8 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-400">Verifying Microsoft 365 status...</p>
             </div>
@@ -104,14 +104,15 @@ export default function Microsoft365Integration() {
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden text-slate-200"
+            className="ac-workspace-panel rounded-lg overflow-hidden text-slate-200"
         >
             <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
                         <Mail className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Microsoft 365 / Teams Suite</h2>
                             {status === 'connected' && (
@@ -134,12 +135,12 @@ export default function Microsoft365Integration() {
 
             <div className="p-6 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-white/5 bg-slate-950/50 p-4">
+                    <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
                         <p className="text-[11px] uppercase tracking-widest font-black text-slate-500 mb-2">Connection</p>
                         <p className="text-sm text-white font-semibold">{displayName || 'No Microsoft account connected'}</p>
                         <p className="text-xs text-slate-400 mt-1">{connectionEmail || 'Connect a work or school account to enable Outlook + Teams.'}</p>
                     </div>
-                    <div className="rounded-xl border border-white/5 bg-slate-950/50 p-4">
+                    <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
                         <p className="text-[11px] uppercase tracking-widest font-black text-slate-500 mb-2">Status</p>
                         <p className={`text-sm font-semibold ${status === 'connected' ? 'text-emerald-400' : status === 'error' ? 'text-rose-400' : 'text-slate-300'}`}>
                             {status === 'connected' ? 'Delegated Microsoft Graph access active' : status === 'error' ? 'Connection issue detected' : 'Not connected'}
@@ -164,7 +165,7 @@ export default function Microsoft365Integration() {
                     ].map((item) => {
                         const Icon = item.icon;
                         return (
-                            <div key={item.label} className="rounded-xl border border-white/5 bg-slate-950/40 p-4">
+                            <div key={item.label} className="rounded-lg border border-white/5 bg-slate-950/40 p-4">
                                 <Icon className="w-4 h-4 text-blue-400 mb-2" />
                                 <p className="text-sm font-semibold text-white">{item.label}</p>
                                 <p className="text-xs text-slate-400 mt-1">{item.desc}</p>

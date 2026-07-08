@@ -193,7 +193,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
     if (status === 'loading') {
         return (
-            <div className="max-w-4xl rounded-2xl border border-white/5 bg-slate-900/60 p-5 text-center">
+            <div className="max-w-4xl ac-workspace-panel rounded-lg p-5 text-center">
                 <RefreshCw className="w-5 h-5 animate-spin text-orange-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-400">Checking HubSpot connection...</p>
             </div>
@@ -202,12 +202,13 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
 
     if (status !== 'connected') {
         return (
-            <div className="max-w-4xl rounded-2xl border border-white/5 bg-slate-900/60 p-5">
+            <div className="max-w-4xl ac-workspace-panel rounded-lg p-5">
                 <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center shrink-0">
                         <Plug2 className="w-5 h-5 text-orange-400" />
                     </div>
                     <div className="flex-1">
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
                         <p className="text-sm text-slate-400 mt-1 max-w-2xl">
                             Sync HubSpot contacts into AlphaClone and manage them from one workspace.
@@ -234,14 +235,15 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-4xl rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+            className="max-w-4xl ac-workspace-panel rounded-lg overflow-hidden"
         >
             <div className="border-b border-white/5 p-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
                         <Users className="w-5 h-5 text-orange-400" />
                     </div>
                     <div>
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-base font-bold text-white">HubSpot CRM</h2>
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-400 border border-emerald-500/20">
@@ -283,7 +285,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="Search contacts by name, email, or company..."
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/40"
+                        className="w-full rounded-lg border border-slate-800 bg-slate-950/50 pl-10 pr-4 py-2.5 text-sm text-white outline-none focus:border-orange-500/40"
                     />
                 </div>
 
@@ -304,7 +306,7 @@ export default function HubspotIntegration({ onClose }: HubspotIntegrationProps)
                             return (
                                 <div
                                     key={contact.id}
-                                    className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                                    className="rounded-lg border border-slate-800 bg-slate-950/40 p-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
                                 >
                                     <div className="min-w-0">
                                         <p className="font-semibold text-white truncate">{fullName}</p>

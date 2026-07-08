@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, useSpring, useTransform } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, Info, AlertCircle, CheckCircle2, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
 import { useRevenueMomentum } from '@/hooks/useRevenueMomentum';
 
 export default function RevenueMomentumCard() {
@@ -27,15 +27,15 @@ export default function RevenueMomentumCard() {
     return 'text-red-400';
   };
 
-  const getStatusBg = (s: number) => {
-    if (s >= 70) return 'bg-green-500/10 border-green-500/20';
-    if (s >= 40) return 'bg-amber-500/10 border-amber-500/20';
-    return 'bg-red-500/10 border-red-500/20';
+  const getStatusBorder = (s: number) => {
+    if (s >= 70) return 'border-emerald-500/20';
+    if (s >= 40) return 'border-amber-500/20';
+    return 'border-rose-500/20';
   };
 
   if (isLoading) {
     return (
-      <div className="h-[180px] w-full rounded-2xl bg-slate-800/50 animate-pulse border border-slate-700" />
+      <div className="ac-workspace-panel h-[180px] w-full rounded-lg animate-pulse" />
     );
   }
 
@@ -43,19 +43,18 @@ export default function RevenueMomentumCard() {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${getStatusBg(score)}`}
+      className={`ac-workspace-panel relative overflow-hidden rounded-lg p-5 transition-all ${getStatusBorder(score)}`}
     >
-      <div className="absolute top-0 right-0 p-4 opacity-5">
-        <Zap className={`w-24 h-24 ${getStatusColor(score)}`} />
-      </div>
-
-      <div className="relative z-10">
+      <div className="relative">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg bg-slate-900/50 ${getStatusColor(score)}`}>
+            <div className={`p-1.5 rounded-lg bg-slate-950/50 border border-white/5 ${getStatusColor(score)}`}>
               <Zap className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Revenue Momentum</h3>
+            <div>
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Revenue Momentum</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Current sales pace and collection pressure</p>
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             {trend === 'up' && <TrendingUp className="w-4 h-4 text-green-400" />}
@@ -69,7 +68,7 @@ export default function RevenueMomentumCard() {
 
         <div className="flex items-end gap-3 mb-4">
           <motion.span 
-            className={`text-5xl font-black tracking-tighter ${getStatusColor(score)}`}
+            className={`text-4xl md:text-5xl font-black tracking-tighter ${getStatusColor(score)}`}
           >
             {displayScore}
           </motion.span>
@@ -81,9 +80,9 @@ export default function RevenueMomentumCard() {
 
         <div className="space-y-3">
           {/* Nudge Box */}
-          <div className="bg-slate-900/40 rounded-xl p-3 border border-white/5">
-            <p className="text-xs text-slate-300 leading-relaxed italic">
-              "{nudge}"
+          <div className="rounded-lg bg-slate-950/45 p-3 border border-white/5">
+            <p className="text-xs text-slate-300 leading-relaxed">
+              {nudge}
             </p>
           </div>
 
@@ -106,7 +105,7 @@ export default function RevenueMomentumCard() {
       </div>
 
       {/* Progress Bar Background */}
-      <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-900/50">
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-slate-950/40">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}

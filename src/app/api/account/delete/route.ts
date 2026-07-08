@@ -5,10 +5,17 @@ import { accountDeletionService } from '@/services/accountDeletionService';
 export const dynamic = 'force-dynamic';
 
 /** POST — user requests account deletion (30-day grace period). */
-export async function POST() {
+export async function POST(req: NextRequest) {
     try {
         const { user } = await requireAuthenticatedUser();
-        const result = await accountDeletionService.scheduleAccountDeletion(user.id);
+        const immediateParam = req.nextUrl.searchParams.get('immediate');
+        const immediate =
+            immediateParam === 'true' ||
+            immediateParam === '1';
+
+        const result = immediate
+            ? await accountDeletionService.purgeUserAccount(user.id, 'user_immediate_delete')
+            : await accountDeletionService.scheduleAccountDeletion(user.id);
 
         if (!result.success) {
             return NextResponse.json({ error: result.error || 'Failed to schedule deletion' }, { status: 500 });
@@ -16,7 +23,7 @@ export async function POST() {
 
         return NextResponse.json({
             success: true,
-            message: 'Account deletion scheduled. You will be signed out.',
+            message: immediate ? 'Account deleted. You will be signed out.' : 'Account deletion scheduled. You will be signed out.',
         });
     } catch (err) {
         return routeErrorResponse(err);

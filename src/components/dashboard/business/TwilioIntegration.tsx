@@ -129,7 +129,7 @@ const TwilioIntegration: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
+            <div className="ac-workspace-panel rounded-lg p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mb-3" />
                 <p className="text-sm text-slate-400">Verifying Twilio connection...</p>
             </div>
@@ -140,15 +140,15 @@ const TwilioIntegration: React.FC = () => {
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-6 rounded-2xl border transition-all ${
+            className={`p-6 rounded-lg border transition-all ${
                 connected 
-                    ? 'bg-emerald-500/5 border-emerald-500/20 shadow-[0_0_20px_-5px_rgba(16,185,129,0.1)]' 
-                    : 'bg-slate-900/60 border-white/5'
+                    ? 'ac-workspace-panel border-emerald-500/20' 
+                    : 'ac-workspace-panel'
             }`}
         >
             <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
                 <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
                         connected 
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                             : 'bg-slate-800 text-slate-500 border-white/5'
@@ -156,6 +156,7 @@ const TwilioIntegration: React.FC = () => {
                         <Phone className="w-6 h-6" />
                     </div>
                     <div>
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
                         <div className="flex items-center gap-2 mb-1">
                             <h2 className="text-lg font-bold text-white tracking-tight">Twilio SMS & Voice</h2>
                             {connected ? (
@@ -219,7 +220,7 @@ const TwilioIntegration: React.FC = () => {
                                     placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                     value={accountSid}
                                     onChange={e => setAccountSid(e.target.value)}
-                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-sm text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-700" />
                             </div>
@@ -233,7 +234,7 @@ const TwilioIntegration: React.FC = () => {
                                     placeholder="Your secret auth token"
                                     value={authToken}
                                     onChange={e => setAuthToken(e.target.value)}
-                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 pr-12 text-sm text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 pr-12 text-sm text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                                 />
                                 <button
                                     type="button"
@@ -252,7 +253,7 @@ const TwilioIntegration: React.FC = () => {
                                 placeholder="+1234567890"
                                 value={phoneNumber}
                                 onChange={e => setPhoneNumber(e.target.value)}
-                                className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
+                                className="w-full bg-slate-950/50 border border-slate-800 rounded-lg px-4 py-3 text-sm text-white font-mono placeholder:text-slate-700 focus:outline-none focus:border-teal-500/30 transition-all focus:ring-1 focus:ring-teal-500/10"
                             />
                             <p className="text-[11px] text-slate-500 mt-1.5 ml-1">Must be an active Twilio number in E.164 format (e.g. +12125551234)</p>
                         </div>

@@ -177,7 +177,7 @@ export default function GmailIntegration() {
 
     if (status === 'loading') {
         return (
-            <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
+            <div className="ac-workspace-panel rounded-lg p-8 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-400">Verifying Gmail connection...</p>
             </div>
@@ -188,14 +188,15 @@ export default function GmailIntegration() {
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+            className="ac-workspace-panel rounded-lg overflow-hidden"
         >
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
                         <Mail className="w-6 h-6 text-teal-400" />
                     </div>
                     <div>
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Gmail Integration</h2>
                             {status === 'connected' && (
@@ -223,7 +224,7 @@ export default function GmailIntegration() {
 
             <form onSubmit={handleSave} className="p-6 space-y-6">
                 {status !== 'connected' && (
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex gap-3">
+                    <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 flex gap-3">
                         <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
                         <div className="text-xs text-amber-200/80 space-y-1">
                             <p className="font-bold text-amber-400 uppercase tracking-wider">Setup Required</p>
@@ -248,7 +249,7 @@ export default function GmailIntegration() {
                             value={config.fromEmail}
                             onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
                             placeholder="your-email@gmail.com"
-                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
                         />
                     </div>
                     <div className="space-y-2">
@@ -259,7 +260,7 @@ export default function GmailIntegration() {
                                 value={config.appPassword}
                                 onChange={(e) => setConfig({ ...config, appPassword: e.target.value })}
                                 placeholder="xxxx xxxx xxxx xxxx"
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 text-sm text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 pl-10 text-sm text-white outline-none focus:border-teal-500/40"
                             />
                             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                         </div>
@@ -271,7 +272,7 @@ export default function GmailIntegration() {
                             value={config.fromName}
                             onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
                             placeholder="Your Name or Company"
-                            className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
+                            className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
                         />
                     </div>
                 </div>
@@ -300,7 +301,7 @@ export default function GmailIntegration() {
                                 value={testRecipient}
                                 onChange={(e) => setTestRecipient(e.target.value)}
                                 placeholder="recipient@domain.com"
-                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
+                                className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-white outline-none focus:border-teal-500/40"
                             />
                             <Button
                                 type="button"

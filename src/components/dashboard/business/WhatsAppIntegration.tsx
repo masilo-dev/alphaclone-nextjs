@@ -164,7 +164,7 @@ export default function WhatsAppIntegration() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
+      <div className="ac-workspace-panel rounded-lg p-8 text-center">
         <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
         <p className="text-sm text-slate-400">Loading WhatsApp settings...</p>
       </div>
@@ -175,14 +175,15 @@ export default function WhatsAppIntegration() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+      className="ac-workspace-panel rounded-lg overflow-hidden"
     >
       <div className="p-6 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
             <MessageCircle className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
             <h2 className="text-lg font-bold text-white">WhatsApp Integration</h2>
             <p className="text-sm text-slate-400">
               Choose Meta Cloud API or Zernio routing for your WhatsApp inbox.
@@ -205,7 +206,7 @@ export default function WhatsAppIntegration() {
       <div className="p-6 space-y-6">
         {activeIntegration ? (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-slate-800/40 border border-white/5 space-y-3">
+            <div className="p-4 rounded-lg bg-slate-950/45 border border-white/5 space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 Active Integration: {activeIntegration.alias}
@@ -297,7 +298,7 @@ export default function WhatsAppIntegration() {
                 <button
                   type="button"
                   onClick={() => setProvider('meta')}
-                  className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                  className={`rounded-lg border px-4 py-3 text-left transition-colors ${
                     provider === 'meta'
                       ? 'border-emerald-500/40 bg-emerald-500/10'
                       : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'
@@ -312,7 +313,7 @@ export default function WhatsAppIntegration() {
                 <button
                   type="button"
                   onClick={() => setProvider('zernio')}
-                  className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                  className={`rounded-lg border px-4 py-3 text-left transition-colors ${
                     provider === 'zernio'
                       ? 'border-violet-500/40 bg-violet-500/10'
                       : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'
@@ -335,7 +336,7 @@ export default function WhatsAppIntegration() {
                       value={wabaId}
                       onChange={(e) => setWabaId(e.target.value)}
                       placeholder="e.g. 104857285918239"
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
@@ -346,7 +347,7 @@ export default function WhatsAppIntegration() {
                       value={phoneNumberId}
                       onChange={(e) => setPhoneNumberId(e.target.value)}
                       placeholder="e.g. 109827364528192"
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
 
@@ -357,12 +358,12 @@ export default function WhatsAppIntegration() {
                       value={accessToken}
                       onChange={(e) => setAccessToken(e.target.value)}
                       placeholder="EAABw..."
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
                     />
                   </div>
                 </>
               ) : (
-                <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-slate-300">
+                <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-slate-300">
                   Zernio uses the WhatsApp account ID saved in <code className="text-violet-300">tenant.settings.zernio.whatsappAccountId</code>.
                   No Meta token or phone number ID is needed here.
                 </div>
@@ -375,7 +376,7 @@ export default function WhatsAppIntegration() {
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder="e.g. Primary Support Line"
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-emerald-500/40"
                 />
               </div>
 

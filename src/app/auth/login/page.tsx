@@ -226,6 +226,8 @@ function LoginContent() {
                         errorMsg.toLowerCase().includes('already exists') ||
                         errorMsg.toLowerCase().includes('already been registered')) {
                         setError('An account with this email already exists. Please sign in instead, or reset your password.');
+                    } else if (errorMsg.toLowerCase().includes('permanently blocked') || errorMsg.toLowerCase().includes('blocked after account deletion')) {
+                        setError('This email was permanently deleted and is banned from registering again.');
                     } else if (errorMsg.toLowerCase().includes('password')) {
                         setError('Your password does not meet the security requirements. Use at least 8 characters.');
                     } else {

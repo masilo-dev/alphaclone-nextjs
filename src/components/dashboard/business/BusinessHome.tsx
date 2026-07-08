@@ -35,7 +35,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     !dismissed && (isNewWorkspaceStats(stats) || stats === null);
 
   return (
-    <div className="space-y-4 ac-scroll-full" data-tour="business-home">
+    <div className="space-y-4 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
       {showSetup ? (
         <NewUserSetupPanel
           user={user}

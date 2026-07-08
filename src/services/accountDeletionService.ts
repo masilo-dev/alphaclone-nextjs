@@ -8,6 +8,12 @@ export interface AccountDeletionResult {
 
 const GRACE_PERIOD_DAYS = 30;
 
+function normalizeEmail(email: string | null | undefined): string | null {
+    if (!email) return null;
+    const normalized = email.trim().toLowerCase();
+    return normalized || null;
+}
+
 async function safeDelete(admin: ReturnType<typeof createSupabaseAdminClient>, table: string, column: string, userId: string) {
     const { error } = await admin.from(table).delete().eq(column, userId);
     if (error) {
@@ -86,6 +92,35 @@ export const accountDeletionService = {
         const admin = createSupabaseAdminClient();
 
         try {
+            let userEmail: string | null = null;
+            const authUserResult = await admin.auth.admin.getUserById(userId);
+            userEmail = normalizeEmail(authUserResult.data.user?.email);
+
+            if (!userEmail) {
+                const { data: profileRow } = await admin
+                    .from('profiles')
+                    .select('email')
+                    .eq('id', userId)
+                    .maybeSingle();
+                userEmail = normalizeEmail((profileRow as { email?: string | null } | null)?.email);
+            }
+
+            if (userEmail) {
+                const { error: blockError } = await admin
+                    .from('blocked_account_emails')
+                    .upsert({
+                        normalized_email: userEmail,
+                        reason,
+                        user_id: userId,
+                        blocked_at: new Date().toISOString(),
+                        metadata: { source: 'accountDeletionService' },
+                    }, { onConflict: 'normalized_email' });
+
+                if (blockError) {
+                    return { success: false, userId, error: `Failed to block deleted email: ${blockError.message}` };
+                }
+            }
+
             await safeDelete(admin, 'user_api_keys', 'user_id', userId);
             await safeDelete(admin, 'notification_preferences', 'user_id', userId);
             await safeDelete(admin, 'notification_queue', 'user_id', userId);

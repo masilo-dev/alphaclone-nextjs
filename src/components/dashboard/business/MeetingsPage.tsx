@@ -102,11 +102,13 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
     }, [meetings, user.id]);
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto ac-scroll-full ac-enterprise-module">
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+        <div className="space-y-5 max-w-5xl mx-auto ac-scroll-full ac-enterprise-module">
+            <div className="ac-workspace-panel rounded-lg p-4 md:p-5">
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Meetings</h1>
-                    <p className="text-slate-400">Host secure AlphaClone video rooms and manage your booking links.</p>
+                    <div className="text-[11px] font-black uppercase tracking-widest text-teal-400">Meetings Workspace</div>
+                    <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Video rooms & booking links</h1>
+                    <p className="text-slate-400 text-sm mt-1">Host secure AlphaClone rooms and manage the links you share with clients.</p>
                 </div>
                 <div className="flex gap-2">
                     {hasBooking && (
@@ -129,12 +131,15 @@ const MeetingsPage: React.FC<MeetingsPageProps> = ({ user, onJoinRoom }) => {
                     </Button>
                 </div>
             </div>
+            </div>
 
             {!loading && <ModuleStatCards stats={meetingStats} />}
 
-            {/* Active / upcoming meetings */}
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
-                <h2 className="text-lg font-bold text-white mb-4">Your Rooms</h2>
+            <div className="ac-workspace-panel rounded-lg p-6">
+                <div className="mb-4">
+                    <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Rooms</div>
+                    <h2 className="text-lg font-bold text-white mt-1">Active and upcoming meetings</h2>
+                </div>
                 {loading ? (
                     <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-slate-800/40 rounded-xl animate-pulse" />)}</div>
                 ) : meetings.length === 0 ? (

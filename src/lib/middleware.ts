@@ -155,10 +155,10 @@ export async function updateSession(request: NextRequest) {
                 .eq('id', user.id)
                 .maybeSingle();
 
-            if (!profile || profile.account_status === 'deleted') {
+            if (!profile || profile.account_status === 'deleted' || profile.account_status === 'pending_deletion') {
                 const url = request.nextUrl.clone();
                 url.pathname = '/auth/login';
-                url.searchParams.set('reason', 'account_removed');
+                url.searchParams.set('reason', profile?.account_status === 'pending_deletion' ? 'account_deletion_scheduled' : 'account_removed');
                 const redirect = NextResponse.redirect(url);
                 redirect.cookies.getAll()
                     .filter((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
@@ -170,7 +170,11 @@ export async function updateSession(request: NextRequest) {
                 const url = request.nextUrl.clone();
                 url.pathname = '/auth/login';
                 url.searchParams.set('reason', 'account_suspended');
-                return NextResponse.redirect(url);
+                const redirect = NextResponse.redirect(url);
+                redirect.cookies.getAll()
+                    .filter((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
+                    .forEach((c) => redirect.cookies.set(c.name, '', { expires: new Date(0), path: '/' }));
+                return redirect;
             }
 
             // Skip gate for the upgrade page itself to avoid redirect loops

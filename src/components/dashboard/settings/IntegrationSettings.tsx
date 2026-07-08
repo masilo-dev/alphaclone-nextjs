@@ -128,24 +128,45 @@ export function IntegrationSettings() {
     { id: 'activity',    label: 'Activity',     icon: TrendingUp   },
   ];
 
+  const connectedCount = connected.length;
+  const providerCount = integrations.length;
+  const errorCount = errorLogs.length;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-1">Integrations</h1>
-        <p className="text-slate-400 text-sm">
+    <div className="space-y-5 ac-scroll-full ac-enterprise-module">
+      <div className="ac-workspace-panel rounded-lg p-4 md:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-teal-400">Workspace Integrations</div>
+            <h1 className="text-xl md:text-2xl font-bold text-white mt-1">Connections & provider setup</h1>
+            <p className="text-slate-400 text-sm mt-1">
           Configure provider API keys and sender identities for this workspace.
-        </p>
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 md:min-w-[320px]">
+            <div className="rounded-lg border border-white/5 bg-slate-950/45 px-3 py-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Connected</div>
+              <div className="text-lg font-bold text-white">{connectedCount}</div>
+            </div>
+            <div className="rounded-lg border border-white/5 bg-slate-950/45 px-3 py-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Providers</div>
+              <div className="text-lg font-bold text-white">{providerCount}</div>
+            </div>
+            <div className="rounded-lg border border-white/5 bg-slate-950/45 px-3 py-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Errors</div>
+              <div className="text-lg font-bold text-white">{errorCount}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Tab bar */}
       <ModuleJumpSelect
         options={tabs.map((t) => ({ label: t.label, href: t.id }))}
         currentHref={activeTab}
         label="Integrations section"
         onNavigate={setActiveTab}
       />
-      <div className="hidden md:flex gap-1 bg-slate-800/50 p-1 rounded-lg overflow-x-auto">
+      <div className="hidden md:flex gap-1 ac-workspace-panel rounded-lg p-1 overflow-x-auto">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -154,7 +175,7 @@ export function IntegrationSettings() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
-                active ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                active ? 'bg-slate-800 text-white border border-white/5' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -175,9 +196,10 @@ export function IntegrationSettings() {
         {/* ── Providers ── */}
         {activeTab === 'providers' && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-4">
-              <h2 className="text-lg font-semibold text-white">Email Provider Credentials</h2>
-              <p className="text-xs text-slate-400 mt-1">
+            <div className="ac-workspace-panel rounded-lg p-4">
+              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Email providers</div>
+              <h2 className="text-lg font-semibold text-white mt-1">Provider credentials & sender identity</h2>
+              <p className="text-sm text-slate-400 mt-1">
                 Use any verified sender email from your provider account. It does not need to match your login email.
               </p>
             </div>
@@ -201,11 +223,14 @@ export function IntegrationSettings() {
         {/* ── Preferences ── */}
         {activeTab === 'preferences' && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-white">Global Preferences</h2>
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace policy</div>
+              <h2 className="text-lg font-semibold text-white mt-1">Global preferences</h2>
+            </div>
             <p className="text-sm text-slate-500">
               Workspace-wide integration policies. Preferences are saved per workspace on this device.
             </p>
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 space-y-4">
+            <div className="ac-workspace-panel rounded-lg p-6 space-y-4">
               {PREF_ROWS.map((row) => (
                 <div key={row.id} className="flex items-center justify-between">
                   <div>
@@ -227,10 +252,12 @@ export function IntegrationSettings() {
         {/* ── Activity ── */}
         {activeTab === 'activity' && (
           <div className="space-y-5">
-            <h2 className="text-lg font-semibold text-white">Integration Health</h2>
+            <div>
+              <div className="text-[11px] font-black uppercase tracking-widest text-slate-400">Monitoring</div>
+              <h2 className="text-lg font-semibold text-white mt-1">Integration health</h2>
+            </div>
             
-            {/* Sync Status */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="ac-workspace-panel rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white">Sync Status</h3>
                 <button
@@ -256,7 +283,7 @@ export function IntegrationSettings() {
                       : 'Not recorded';
                     
                     return (
-                      <div key={int.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg">
+                      <div key={int.id} className="flex items-center justify-between p-3 bg-slate-950/45 rounded-lg border border-white/5">
                         <div className="flex items-center gap-3">
                           <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`} />
                           <span className="text-sm text-white">{int.name}</span>
@@ -277,7 +304,7 @@ export function IntegrationSettings() {
             </div>
 
             {/* Error Logs */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="ac-workspace-panel rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-white">Workspace error log</h3>
                 <span className="text-xs text-slate-500">

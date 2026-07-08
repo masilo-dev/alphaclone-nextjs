@@ -12,7 +12,7 @@ import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 import { resolveModuleActions } from '@/config/moduleDashboardActions';
 import { cn } from '@/lib/utils';
-import { ChevronRight } from 'lucide-react';
+import { BarChart3, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Users, Zap } from 'lucide-react';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -89,6 +89,24 @@ function DashboardContent({
   const metrics = data.metrics.slice(0, 4);
   const allMetricsZero = metrics.every((m) => Number(m.value) === 0 || m.value === '0' || m.value === '0%');
 
+  const overviewQuickModules =
+    moduleId === 'overview'
+      ? [
+          { label: 'CRM', href: '/dashboard/crm', Icon: Users },
+          { label: 'Deals', href: '/dashboard/deals', Icon: Zap },
+          { label: 'Projects', href: '/dashboard/projects', Icon: Briefcase },
+          { label: 'Tasks', href: '/dashboard/tasks', Icon: CheckSquare },
+          { label: 'Invoicing', href: '/dashboard/accounting', Icon: FileText },
+          { label: 'Quotes', href: '/dashboard/quotes', Icon: Receipt },
+          { label: 'Accounting', href: '/dashboard/accounting', Icon: BarChart3 },
+          { label: 'Messages', href: '/dashboard/messages', Icon: MessageCircle },
+          { label: 'WhatsApp', href: '/dashboard/business/whatsapp', Icon: Phone },
+          { label: 'Social', href: '/dashboard/business/social', Icon: Sparkles },
+          { label: 'Campaigns', href: '/dashboard/business/campaigns', Icon: Mail },
+          { label: 'AI Agents', href: '/dashboard/sales-agent', Icon: Cpu },
+        ]
+      : null;
+
   return (
     <div className={cn('ac-scroll-full ac-module-section space-y-4', isValidating ? 'opacity-95' : '')}>
       {moduleId === 'overview' && allMetricsZero ? (
@@ -145,6 +163,41 @@ function DashboardContent({
           />
         )}
       </div>
+
+      {overviewQuickModules ? (
+        <div className="ac-workspace-panel rounded-lg p-4">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">Workspace Modules</span>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/settings')}
+              className="text-[11px] text-teal-400 font-bold"
+            >
+              Manage
+            </button>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+            {overviewQuickModules.map(({ label, href, Icon }) => (
+              <button
+                key={href}
+                type="button"
+                onClick={() => router.push(href)}
+                className="h-10 rounded-lg bg-slate-950/40 border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2 min-w-0 px-2"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+                aria-label={label}
+              >
+                <Icon className="w-4 h-4 shrink-0 text-teal-400" />
+                <span className="text-[10px] font-bold text-slate-300 truncate">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-slate-500 mt-3">
+            Tip: Tap a module tile to jump straight into CRM, Deals, Invoicing, and more.
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

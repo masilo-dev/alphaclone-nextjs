@@ -172,6 +172,20 @@ export const authService = {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
 
+            try {
+                const eligibilityResponse = await fetch('/api/auth/signup-eligibility', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: validated.email }),
+                });
+                const eligibilityData = await eligibilityResponse.json().catch(() => ({}));
+                if (eligibilityResponse.ok && eligibilityData?.blocked) {
+                    return { user: null, error: 'This email address is permanently blocked after account deletion.' };
+                }
+            } catch (eligibilityError) {
+                console.warn('Signup eligibility precheck failed, continuing with auth provider check.', eligibilityError);
+            }
+
             // Fetch location for registration
             let registrationCountry = 'Unknown';
             try {
@@ -198,6 +212,9 @@ export const authService = {
 
             if (error) {
                 console.error("SignUp Error:", error);
+                if (String(error.message || '').toLowerCase().includes('permanently blocked')) {
+                    return { user: null, error: 'This email address is permanently blocked after account deletion.' };
+                }
                 return { user: null, error: error.message };
             }
 
@@ -758,12 +775,13 @@ export const authService = {
     /**
      * Request account deletion
      */
-    async requestAccountDeletion(): Promise<{ error: string | null }> {
+    async requestAccountDeletion(options?: { immediate?: boolean }): Promise<{ error: string | null }> {
         try {
-            const res = await fetch('/api/account/delete', { method: 'POST' });
+            const immediate = options?.immediate ? '?immediate=true' : '';
+            const res = await fetch(`/api/account/delete${immediate}`, { method: 'POST' });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                return { error: data.error || 'Failed to schedule account deletion' };
+                return { error: data.error || (options?.immediate ? 'Failed to delete account' : 'Failed to schedule account deletion') };
             }
             return { error: null };
         } catch (err) {

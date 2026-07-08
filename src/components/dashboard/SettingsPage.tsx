@@ -374,11 +374,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     const handleDeleteAccount = async () => {
         setIsDeleting(true);
         try {
-            const { error } = await authService.requestAccountDeletion();
+            const { error } = await authService.requestAccountDeletion({ immediate: true });
             if (error) throw new Error(error);
-            toast.success('Account deletion scheduled. Signing out...');
+            toast.success('Account deleted. Signing out...');
             await signOut();
-            window.location.href = '/auth/login?reason=deletion_scheduled';
+            window.location.href = '/auth/login?reason=account_deleted';
         } catch (err: any) {
             toast.error(err.message || 'Deletion failed');
         } finally {
@@ -1091,8 +1091,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <div className="bg-slate-900/40 border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
                     <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <div>
-                            <h4 className="text-[13px] font-bold text-rose-400">Request Account Deletion</h4>
-                            <p className="text-[10px] text-slate-500 mt-0.5">Schedules your user profile and all data for wipe in 30 days</p>
+                            <h4 className="text-[13px] font-bold text-rose-400">Delete Account Now</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Permanently removes your account and signs you out immediately</p>
                         </div>
                         <button 
                             onClick={() => setDeleteModalOpen(true)}
@@ -1119,7 +1119,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <h3 className="text-sm font-black uppercase tracking-wider">Warning Action</h3>
                             </div>
                             <p className="text-xs text-slate-400 leading-relaxed">
-                                This will schedule your profile for deletion. All custom templates, contact lists, and scheduled posts will be wiped at the end of the 30-day grace window.
+                                This will permanently delete your profile and associated data. You will be signed out and will not be able to log back in.
                             </p>
                             <div className="grid grid-cols-2 gap-3 pt-2">
                                 <button 

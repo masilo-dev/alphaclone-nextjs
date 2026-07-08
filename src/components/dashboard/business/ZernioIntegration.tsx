@@ -52,14 +52,15 @@ export default function ZernioIntegration() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+      className="ac-workspace-panel rounded-lg overflow-hidden"
     >
       <div className="p-6 border-b border-white/5">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
             <Share2 className="w-6 h-6 text-violet-400" />
           </div>
           <div>
+            <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Workspace Connector</div>
             <h2 className="text-lg font-bold text-white">Zernio Social Publishing</h2>
             <p className="text-sm text-slate-400">
               Connect Instagram and LinkedIn company pages in your Zernio dashboard, then paste account IDs here.
@@ -78,7 +79,7 @@ export default function ZernioIntegration() {
             value={instagramAccountId}
             onChange={(e) => setInstagramAccountId(e.target.value)}
             placeholder="From Zernio → Instagram channel"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/40"
+            className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/40"
           />
           <p className="text-xs text-slate-600">Scheduled Instagram posts publish through Zernio.</p>
         </div>
@@ -92,7 +93,7 @@ export default function ZernioIntegration() {
             value={linkedinOrgAccountId}
             onChange={(e) => setLinkedinOrgAccountId(e.target.value)}
             placeholder="From Zernio → LinkedIn org channel"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/40"
+            className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-2.5 text-sm text-white outline-none focus:border-violet-500/40"
           />
           <p className="text-xs text-slate-600">Company page posts route through Zernio when an org is selected.</p>
         </div>

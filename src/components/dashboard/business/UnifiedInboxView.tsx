@@ -317,7 +317,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   if (!statusChecked) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
+      <div className="ac-workspace-panel rounded-lg p-8 text-center">
         <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
         <p className="text-sm text-slate-400">Checking your email accounts…</p>
       </div>
@@ -326,7 +326,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   if (!anyConnected) {
     return (
-      <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center max-w-lg mx-auto">
+      <div className="ac-workspace-panel rounded-lg p-8 text-center max-w-lg mx-auto">
         <Mail className="w-10 h-10 text-teal-400 mx-auto mb-4" />
         <h2 className="text-lg font-bold text-white mb-2">Connect email to see your inbox</h2>
         <p className="text-sm text-slate-400 mb-6">
@@ -336,14 +336,14 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
           <button
             type="button"
             onClick={connectMicrosoft}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-500 px-4 py-2 text-sm font-semibold text-white"
           >
             Connect Microsoft 365
           </button>
           <button
             type="button"
             onClick={connectZoho}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 px-4 py-2 text-sm font-semibold text-white"
           >
             Connect Zoho Mail
           </button>
@@ -383,7 +383,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
               type="button"
               onClick={openNewEmail}
               disabled={!providerConnected}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2.5 text-sm font-bold text-white"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2.5 text-sm font-bold text-white"
             >
               <PenSquare className="w-4 h-4" />
               Write new email
@@ -391,13 +391,13 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
             <Link
               href="/dashboard/business/campaigns"
-              className="w-full flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white"
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white"
             >
               <Users className="w-3.5 h-3.5" />
               Bulk send (campaigns)
             </Link>
 
-            <div className="flex gap-1 p-1 rounded-xl bg-slate-900 border border-white/5">
+            <div className="flex gap-1 p-1 rounded-lg bg-slate-900 border border-white/5">
               <button
                 type="button"
                 onClick={() => switchProvider('microsoft')}
@@ -419,7 +419,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
             </div>
 
             {!providerConnected && (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
                 {provider === 'microsoft' ? (
                   <>
                     Outlook not connected.{' '}
@@ -439,7 +439,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
             )}
 
             {active.error && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200 space-y-2">
+              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200 space-y-2">
                 <p>{active.error}</p>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={refresh} className="underline font-semibold">
@@ -465,7 +465,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search mail…"
-                className="w-full bg-slate-900 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40"
+                className="w-full bg-slate-900 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40"
               />
             </div>
 
@@ -598,7 +598,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                   type="button"
                   onClick={openReply}
                   disabled={!providerConnected}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white shrink-0 disabled:opacity-40"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white shrink-0 disabled:opacity-40"
                 >
                   <Reply className="w-3.5 h-3.5" />
                   Reply
@@ -634,7 +634,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 type="button"
                 onClick={openNewEmail}
                 disabled={!providerConnected}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white"
               >
                 <PenSquare className="w-4 h-4" />
                 Write new email
