@@ -182,6 +182,15 @@ const HomeTab: React.FC<HomeTabProps> = ({
       .then(({ data }: { data: any[] | null }) => setActivity(data || []));
   }, [currentTenant?.id]);
 
+  // Admin / Tenant Admin view
+  // Keep this hook above the client-portal early return so hooks order stays stable.
+  const homeStats = useMemo<ModuleStat[]>(() => [
+    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
+    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
+    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
+    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
+  ], [quickStats, trendStats, periodNew]);
+
   // Client portal view
   if (user.role === 'client') {
     return (
@@ -235,13 +244,6 @@ const HomeTab: React.FC<HomeTabProps> = ({
     );
   }
 
-  // Admin / Tenant Admin view
-  const homeStats = useMemo<ModuleStat[]>(() => [
-    { label: 'Open Leads', value: quickStats.leads, sub: `${periodNew.leads} new · 30d`, trend: trendStats.leads, Icon: Users, accent: 'blue' },
-    { label: 'Active Deals', value: quickStats.deals, sub: `${periodNew.deals} new · 30d`, trend: trendStats.deals, Icon: Zap, accent: 'emerald' },
-    { label: 'Pending Tasks', value: quickStats.tasks, sub: `${periodNew.tasks} new · 30d`, trend: trendStats.tasks, Icon: CheckSquare, accent: 'orange' },
-    { label: 'Unpaid Invoices', value: quickStats.unpaidInvoices, sub: `${periodNew.invoices} new sent · 30d`, trend: trendStats.invoices, Icon: Receipt, accent: 'rose' },
-  ], [quickStats, trendStats, periodNew]);
   const memoryCount = Number(
     databaseStats?.memoryCount ??
     databaseStats?.knowledgeCount ??

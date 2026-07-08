@@ -71,6 +71,8 @@ export const STAGES: ProjectStage[] = ['Initiation', 'Planning', 'Execution', 'R
 
 export interface Project {
   id: string;
+  dealId?: string;
+  contractId?: string;
   ownerId?: string;
   ownerName?: string; // Helper for contract generation
   name: string;

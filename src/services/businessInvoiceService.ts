@@ -21,6 +21,9 @@ export interface BusinessInvoice {
     tax: number;
     discountAmount: number;
     total: number;
+    amountPaid?: number;
+    balanceDue?: number;
+    autoFollowupEnabled?: boolean;
     lineItems: InvoiceLineItem[];
     notes?: string;
     isPublic: boolean;
@@ -101,6 +104,9 @@ export const businessInvoiceService = {
                 tax: parseFloat(inv.tax || 0),
                 discountAmount: parseFloat(inv.discount_amount || 0),
                 total: parseFloat(inv.total || 0),
+                amountPaid: parseFloat(inv.amount_paid || 0),
+                balanceDue: parseFloat(String(inv.balance_due ?? (Number(inv.total || 0) - Number(inv.amount_paid || 0) || 0))),
+                autoFollowupEnabled: inv.auto_followup_enabled !== false,
                 lineItems: (inv.invoice_line_items || []).map((li: any) => ({
                     description: li.description,
                     quantity: parseFloat(li.quantity),
@@ -685,6 +691,66 @@ export const businessInvoiceService = {
         } catch (err: any) {
             console.error('Error marking invoice as paid:', err);
             return { error: err.message };
+        }
+    },
+
+    /**
+     * Record a payment against an invoice (supports deposits / partials).
+     * Updates `amount_paid` and moves status to `partially_paid` or `paid`.
+     */
+    async recordPayment(
+        invoiceId: string,
+        amount: number
+    ): Promise<{ error: string | null; status?: BusinessInvoice['status']; amountPaid?: number }> {
+        try {
+            const paymentAmount = Number(amount || 0);
+            if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+                return { error: 'Payment amount must be greater than zero.' };
+            }
+
+            const { data: invoice, error: fetchError } = await supabase
+                .from('business_invoices')
+                .select('id, tenant_id, status, total, total_amount, amount_paid, paid_at, invoice_number')
+                .eq('id', invoiceId)
+                .single();
+
+            if (fetchError) throw fetchError;
+            const total = Number(invoice?.total_amount ?? invoice?.total ?? 0);
+            const currentPaid = Number(invoice?.amount_paid ?? 0);
+            const nextPaid = Math.max(0, Math.round((currentPaid + paymentAmount) * 100) / 100);
+
+            const nextStatus: BusinessInvoice['status'] =
+                nextPaid >= total
+                    ? 'paid'
+                    : nextPaid > 0
+                        ? 'partially_paid'
+                        : (invoice?.status as BusinessInvoice['status']) || 'sent';
+
+            const patch: Record<string, unknown> = {
+                amount_paid: nextPaid,
+                status: nextStatus,
+                updated_at: new Date().toISOString(),
+            };
+            if (nextStatus === 'paid' && !invoice?.paid_at) {
+                patch.paid_at = new Date().toISOString();
+            }
+
+            const { error } = await supabase
+                .from('business_invoices')
+                .update(patch)
+                .eq('id', invoiceId);
+
+            if (error) throw error;
+
+            if (nextStatus === 'paid') {
+                await this.postRevenueOnPayment(invoiceId, invoice);
+                this.triggerReceiptAutomation(invoiceId, invoice.tenant_id).catch(console.error);
+            }
+
+            return { error: null, status: nextStatus, amountPaid: nextPaid };
+        } catch (err: any) {
+            console.error('Error recording invoice payment:', err);
+            return { error: err.message || 'Failed to record payment' };
         }
     },
 

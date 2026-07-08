@@ -195,6 +195,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+    const hideBonnieWidget =
+        route === '/dashboard/business/bonnie' ||
+        route === '/dashboard/mail' ||
+        route === '/dashboard/zoho/mail' ||
+        route === '/dashboard/contacts' ||
+        route === '/dashboard/leads' ||
+        route === '/dashboard/deals' ||
+        route.startsWith('/dashboard/crm');
     const {
         activeMeetingCallId,
         startMeeting,
@@ -931,7 +939,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Show loading state only on first workspace bootstrap (never flash back mid-session).
     if (!hasBootstrappedRef.current && tenantLoading && !currentTenant) {
         return (
-            <div className="flex items-center justify-center h-screen bg-slate-950">
+            <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center">
                     <div className="text-slate-400 text-lg animate-pulse">{t('Loading Workspace...')}</div>
                 </div>
@@ -942,7 +950,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Show error state if no tenant after loading completes
     if (!currentTenant) {
         return (
-            <div className="flex items-center justify-center h-screen bg-slate-950">
+            <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center max-w-md p-8">
                     <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
                     <div className="text-slate-400 mb-6">
@@ -1136,7 +1144,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 userRole="tenant_admin"
             />
 
-            {route !== '/dashboard/business/bonnie' && <BonnieWidget />}
+            {!hideBonnieWidget && <BonnieWidget />}
 
             <CommandPalette
                 isOpen={commandPaletteOpen}

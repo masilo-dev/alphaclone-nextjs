@@ -19,12 +19,13 @@ import { cn } from '@/lib/utils';
 
 export interface SalesWorkspaceTab {
   label: string;
+  shortLabel?: string;
   href: string;
   icon: LucideIcon;
 }
 
 export const SALES_WORKSPACE_TABS: SalesWorkspaceTab[] = [
-  { label: 'Overview', href: '/dashboard/crm', icon: LayoutGrid },
+  { label: 'Overview', shortLabel: 'Home', href: '/dashboard/crm', icon: LayoutGrid },
   { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Workflow },
   { label: 'Pipeline', href: '/dashboard/deals', icon: Target },
   { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
@@ -32,7 +33,7 @@ export const SALES_WORKSPACE_TABS: SalesWorkspaceTab[] = [
   { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
   { label: 'Console', href: '/dashboard/crm/console', icon: MessageCircle },
   { label: 'Reports', href: '/dashboard/crm/reports', icon: FileText },
-  { label: 'Lead Finder', href: '/dashboard/leads/campaigns', icon: Search },
+  { label: 'Lead Finder', shortLabel: 'Finder', href: '/dashboard/leads/campaigns', icon: Search },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
 ];
 
@@ -75,14 +76,15 @@ export function SalesWorkspaceTabs({ pathname, compact = false, className }: Sal
             key={tab.href}
             href={tab.href}
             className={cn(
-              'flex-shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-full text-xs font-bold transition-all border whitespace-nowrap',
+              'flex-shrink-0 inline-flex items-center gap-1.5 min-h-10 px-3 rounded-full text-[11px] sm:text-xs font-bold transition-all border whitespace-nowrap',
               isActive
                 ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/10'
                 : 'bg-slate-900 text-slate-400 border-white/5 hover:border-teal-500/30 hover:text-white'
             )}
           >
             <Icon className="w-3.5 h-3.5" />
-            {tab.label}
+            <span className="sm:hidden">{tab.shortLabel ?? tab.label}</span>
+            <span className="hidden sm:inline">{tab.label}</span>
           </Link>
         );
       })}

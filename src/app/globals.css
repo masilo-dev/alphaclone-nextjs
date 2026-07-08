@@ -343,7 +343,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .ac-dashboard-root [class*="text-blue-"],
 .ac-business-root [class*="text-blue-"] {
-  color: #00f0ff !important;
+  color: var(--dashboard-blue) !important;
 }
 
 .ac-dashboard-root [class*="text-violet-"],
@@ -388,7 +388,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .ac-dashboard-root [class*="bg-blue-"],
 .ac-business-root [class*="bg-blue-"] {
-  background-color: rgba(0, 240, 255, 0.16) !important;
+  background-color: rgba(56, 138, 221, 0.16) !important;
 }
 
 .ac-dashboard-root [class*="bg-violet-"],
@@ -425,7 +425,7 @@ html.light .ac-business-scroll .text-slate-300 {
 
 .ac-dashboard-root [class*="border-blue-"],
 .ac-business-root [class*="border-blue-"] {
-  border-color: rgba(0, 240, 255, 0.22) !important;
+  border-color: rgba(56, 138, 221, 0.22) !important;
 }
 
 .ac-dashboard-root [class*="border-violet-"],

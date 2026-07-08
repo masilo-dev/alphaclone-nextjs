@@ -172,7 +172,7 @@ export async function evaluateToolPolicy(params: {
     return {
       outcome: 'deny',
       riskClass,
-      reason: 'Could not queue approval; action blocked.',
+      reason: `Approval queue unavailable: ${error.message}. Action blocked to avoid unsupervised execution.`,
     };
   }
 

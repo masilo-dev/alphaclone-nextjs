@@ -36,6 +36,7 @@ import { showDealStageNextSteps } from '@/lib/dealStageActions';
 import { CRMNav } from './crm/CRMNav';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { usePathname } from 'next/navigation';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -247,7 +248,7 @@ const DealDetail: React.FC<{
         <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center">
           <ArrowLeft className="w-4 h-4 text-slate-300" />
         </button>
-        <span className="text-[15px] font-bold text-white flex-1">Deal Detail</span>
+        <span className="text-[15px] font-bold text-white flex-1">Pipeline Record</span>
       </div>
       )}
 
@@ -269,7 +270,7 @@ const DealDetail: React.FC<{
               onClick={() => onStageChange(deal.id, nextStage)}
               className={`px-4 py-1.5 rounded-full text-[13px] font-bold border capitalize ${col.bg} ${col.text} ${col.border}`}
             >
-              Advance to {nextStage.replace('_', ' ')}
+              Move to {nextStage.replace('_', ' ')}
             </button>
           )}
           {deal.stage !== 'closed_won' && deal.stage !== 'closed_lost' && (
@@ -277,7 +278,7 @@ const DealDetail: React.FC<{
               onClick={() => onStageChange(deal.id, 'closed_lost')}
               className="text-[11px] font-semibold text-red-400/80 hover:text-red-400"
             >
-              Mark closed lost
+              Close as lost
             </button>
           )}
           {deal.score != null && (
@@ -305,7 +306,7 @@ const DealDetail: React.FC<{
                   )}
                   className="shrink-0 text-xs font-bold text-teal-400 hover:text-teal-300"
                 >
-                  Compose
+                  Follow up
                 </button>
               )}
             </div>
@@ -481,6 +482,22 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       setBulkDeleting(false);
     }
   };
+
+  const handleBulkEmailDeals = useCallback(() => {
+    if (selectedDealIds.size === 0) return;
+    const recipients = deals
+      .filter((deal) => selectedDealIds.has(deal.id))
+      .map((deal) => deal.contact_email?.trim() || '')
+      .filter((email, index, arr) => email.length > 0 && arr.indexOf(email) === index);
+
+    if (recipients.length === 0) {
+      toast.error('Selected deals do not have contact email addresses.');
+      return;
+    }
+
+    const subject = recipients.length === 1 ? 'Deal follow-up' : 'Pipeline follow-up';
+    router.push(buildMailComposeUrl(recipients, subject));
+  }, [deals, router, selectedDealIds]);
 
   // Detect responsive view mode on load
   useEffect(() => {
@@ -1022,9 +1039,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       <div className="relative flex flex-col h-full bg-slate-950 p-6">
         <EmptyState
           icon={TrendingUp}
-          title="No deals yet"
-          description="Create your first deal to track pipeline value and stage progression."
-          actionLabel="Add deal"
+          title="No pipeline records yet"
+          description="Create your first deal to start tracking movement, value, and next-step risk."
+          actionLabel="Create deal"
           onAction={() => setShowCreateModal(true)}
         />
       </div>
@@ -1042,9 +1059,9 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         toolbar={(
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
         <div>
-          <h1 className="text-[15px] font-black text-white">Deals Pipeline</h1>
+          <h1 className="text-[15px] font-black text-white">Pipeline Workspace</h1>
           <p className="text-[11px] text-slate-500 mt-0.5 font-semibold">
-            Total Pipeline: <span className="text-teal-400 font-bold">${totalPipelineValue.toLocaleString()}</span> • {deals.length} deals
+            Open pipeline: <span className="text-teal-400 font-bold">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
             {pipelineHealth != null && (
               <> • Avg progress <span className="text-teal-400 font-bold">{pipelineHealth}%</span></>
             )}
@@ -1061,6 +1078,13 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
                 className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
               >
                 Clear
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkEmailDeals}
+                className="h-7 px-3 rounded-full text-[11px] font-bold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
+              >
+                Follow-up ({selectedDealIds.size})
               </button>
               <button
                 type="button"
@@ -1094,7 +1118,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
               }`}
             >
               <List className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Table</span>
+              <span className="hidden sm:inline">List</span>
             </button>
             <button
               onClick={() => setViewMode('mobile-stage')}
@@ -1114,7 +1138,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             className="inline-flex h-8 items-center gap-1.5 rounded-full bg-emerald-500 px-3 text-[11px] font-black text-white transition-all hover:bg-emerald-600 active:scale-95 shadow-md shadow-emerald-500/10 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>New Deal</span>
+            <span>Create Deal</span>
           </button>
         </div>
           </div>

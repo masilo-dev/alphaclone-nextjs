@@ -678,7 +678,20 @@ Voice & rules:
         toast.success(`${preset.label} ready`);
     };
 
-    if (loading) return <div className="p-8 text-slate-400 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" /> Loading Campaigns...</div>;
+    if (loading) {
+        return (
+            <BonnieModulePageShell>
+                <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+                    <div className="flex flex-1 items-center justify-center p-8 text-slate-400 text-center">
+                        <div>
+                            <Loader2 className="w-8 h-8 animate-spin mx-auto text-teal-500 mb-2" />
+                            Loading Campaigns...
+                        </div>
+                    </div>
+                </div>
+            </BonnieModulePageShell>
+        );
+    }
 
     return (
         <BonnieModulePageShell>

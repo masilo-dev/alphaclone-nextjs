@@ -47,6 +47,8 @@ export const projectService = {
 
             const projects: Project[] = (data || []).map((p: any) => ({
                 id: p.id,
+                dealId: p.deal_id,
+                contractId: p.contract_id,
                 ownerId: p.owner_id,
                 ownerName: p.owner_name,
                 name: p.name,
@@ -114,6 +116,8 @@ export const projectService = {
 
             const projects: Project[] = (data || []).map((p: any) => ({
                 id: p.id,
+                dealId: p.deal_id,
+                contractId: p.contract_id,
                 ownerId: p.owner_id,
                 ownerName: p.owner_name,
                 name: p.name,

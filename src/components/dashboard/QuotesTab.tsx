@@ -20,6 +20,7 @@ import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 
 type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
@@ -571,6 +572,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<QuoteRow | null>(null);
   const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string } | null>(null);
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const listRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(40);
   const loadMoreQuotes = useCallback(() => setVisibleCount((c) => c + 30), []);
@@ -671,8 +673,75 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   const filtered = quotes.filter(q => filter === 'all' || q.status === filter);
   useInfiniteScroll(listRef, loadMoreQuotes, { enabled: filtered.length > visibleCount });
   const visibleQuotes = filtered.slice(0, visibleCount);
+  const allVisibleSelected = visibleQuotes.length > 0 && visibleQuotes.every((quote) => selectedQuoteIds.has(quote.id));
+
+  const toggleQuoteSelection = useCallback((quoteId: string) => {
+    setSelectedQuoteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(quoteId)) next.delete(quoteId);
+      else next.add(quoteId);
+      return next;
+    });
+  }, []);
+
+  const handleBulkEmailQuotes = useCallback(() => {
+    if (selectedQuoteIds.size === 0) return;
+    const recipients = quotes
+      .filter((quote) => selectedQuoteIds.has(quote.id))
+      .map((quote) => quote.client_email?.trim() || '')
+      .filter((email, index, arr) => email.length > 0 && arr.indexOf(email) === index);
+
+    if (recipients.length === 0) {
+      toast.error('Selected quotes do not have recipient email addresses.');
+      return;
+    }
+
+    const subject = recipients.length === 1 ? 'Quote follow-up' : 'Quotes follow-up';
+    router.push(buildMailComposeUrl(recipients, subject));
+  }, [quotes, router, selectedQuoteIds]);
 
   const quoteColumns = useMemo<EnterpriseColumn<QuoteRow>[]>(() => [
+    {
+      id: 'select',
+      header: (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            if (allVisibleSelected) {
+              setSelectedQuoteIds(new Set());
+            } else {
+              setSelectedQuoteIds(new Set(visibleQuotes.map((quote) => quote.id)));
+            }
+          }}
+          className="inline-flex items-center text-slate-400 hover:text-white"
+          aria-label={allVisibleSelected ? 'Deselect all visible quotes' : 'Select all visible quotes'}
+        >
+          {allVisibleSelected ? (
+            <CheckCircle className="w-4 h-4 text-teal-400" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </button>
+      ),
+      accessor: (q) => (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            toggleQuoteSelection(q.id);
+          }}
+          className="inline-flex items-center text-slate-400 hover:text-white"
+          aria-label={selectedQuoteIds.has(q.id) ? 'Deselect quote' : 'Select quote'}
+        >
+          {selectedQuoteIds.has(q.id) ? (
+            <CheckCircle className="w-4 h-4 text-teal-400" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </button>
+      ),
+    },
     {
       id: 'client',
       header: 'Quote',
@@ -705,7 +774,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       sortValue: (q) => q.valid_until || '',
       accessor: (q) => q.valid_until ? new Date(q.valid_until).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—',
     },
-  ], []);
+  ], [allVisibleSelected, selectedQuoteIds, toggleQuoteSelection, visibleQuotes]);
 
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
@@ -717,7 +786,25 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
           </div>
         )}
         toolbar={(
-          <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5">
+          <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5 items-center">
+        {selectedQuoteIds.size > 0 && (
+          <div className="flex items-center gap-1.5 mr-1 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setSelectedQuoteIds(new Set())}
+              className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkEmailQuotes}
+              className="h-7 px-3 rounded-full text-[11px] font-bold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
+            >
+              Follow-up ({selectedQuoteIds.size})
+            </button>
+          </div>
+        )}
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
         ))}
@@ -738,7 +825,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
             data={visibleQuotes}
             getRowId={(q) => q.id}
             onRowClick={setSelected}
-            emptyMessage="No quotes found."
+            emptyMessage="No quotes in this workspace yet."
           />
         )}
       </div>

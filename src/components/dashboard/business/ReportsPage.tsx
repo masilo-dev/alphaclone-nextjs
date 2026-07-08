@@ -223,7 +223,11 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
     const COLORS = ['#adebb3', '#00f0ff', '#7f00ff', '#ffb347', '#f87171'];
 
     if (loading) {
-        return <div className="flex items-center justify-center h-full"><div className="text-[#c0c0c0]">Loading reports...</div></div>;
+        return (
+            <div className="ac-scroll-full ac-enterprise-module min-h-0 flex items-center justify-center py-12">
+                <div className="text-[#c0c0c0]">Loading reports...</div>
+            </div>
+        );
     }
 
     return (

@@ -6,6 +6,7 @@ import { Twitter, Link2, RefreshCw, Send, Loader2 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
+import { WORKSPACE } from '@/constants/design';
 
 interface XIntegrationRow {
   id: string;
@@ -131,9 +132,13 @@ export default function XIntegrationTab() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-slate-400 gap-3">
-        <RefreshCw className="w-5 h-5 animate-spin" />
-        Loading X workspace...
+      <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-5xl mx-auto p-4 ac-safe-bottom lg:pb-4 space-y-6">
+        <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 min-h-[320px] flex items-center justify-center">
+          <div className="flex items-center justify-center gap-3 text-slate-400">
+            <RefreshCw className="w-5 h-5 animate-spin" />
+            <span className="text-sm font-medium">Loading X workspace...</span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -141,7 +146,7 @@ export default function XIntegrationTab() {
   if (!integration) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center">
+        <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-10 text-center`}>
           <Twitter className="w-12 h-12 text-sky-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Connect X (Twitter)</h1>
           <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
@@ -170,7 +175,7 @@ export default function XIntegrationTab() {
 
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-5xl mx-auto p-4 ac-safe-bottom lg:pb-4 space-y-6">
-      <div className="rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6">
+      <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6`}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0">
@@ -206,15 +211,15 @@ export default function XIntegrationTab() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+          <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 shadow-none`}>
             <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Workspace</div>
             <div className="mt-1 text-sm text-slate-200 truncate">{currentTenant?.name || 'Current workspace'}</div>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+          <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 shadow-none`}>
             <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Posts Loaded</div>
             <div className="mt-1 text-sm text-slate-200">{tweets.length}</div>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+          <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-4 shadow-none`}>
             <div className="text-xs font-bold uppercase tracking-widest text-slate-500">Account ID</div>
             <div className="mt-1 text-sm text-slate-200 truncate">{integration.x_user_id}</div>
           </div>
@@ -231,7 +236,7 @@ export default function XIntegrationTab() {
         </div>
       )}
 
-      <form onSubmit={handlePost} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
+      <form onSubmit={handlePost} className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-5 space-y-4`}>
         <div className="flex items-center justify-between">
           <div className="text-sm font-bold text-white">Compose</div>
           <div className={`text-xs font-semibold ${remainingChars < 20 ? 'text-amber-300' : 'text-slate-400'}`}>
@@ -265,7 +270,7 @@ export default function XIntegrationTab() {
         </div>
       </form>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+      <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} overflow-hidden`}>
         <div className="px-5 py-4 flex items-center justify-between border-b border-slate-800">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
             Recent posts

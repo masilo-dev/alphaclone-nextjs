@@ -564,14 +564,14 @@ export const MCP_TOOLS = [
   },
   {
     name: 'create_deal',
-    description: 'Create a new deal in the CRM pipeline. Accepts name or title; value defaults to 0, stage defaults to qualified. Workspace resolved from MCP session.',
+    description: 'Create a new deal in the CRM pipeline. Accepts name or title; value defaults to 0, stage defaults to lead. Workspace resolved from MCP session.',
     inputSchema: {
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Deal name/title (alias: title)' },
         title: { type: 'string', description: 'Deal name/title (alias: name)' },
         value: { type: 'number', description: 'Estimated deal value in USD (default 0)' },
-        stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: qualified)' },
+        stage: { type: 'string', description: 'lead | qualified | proposal | negotiation | closed_won | closed_lost (default: lead)' },
         contact_id: { type: 'string', description: 'Optional contact UUID' },
         client_id: { type: 'string', description: 'Optional CRM client UUID' },
         description: { type: 'string' },

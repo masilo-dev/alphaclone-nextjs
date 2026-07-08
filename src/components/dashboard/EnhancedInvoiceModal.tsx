@@ -302,17 +302,16 @@ export default function EnhancedInvoiceModal({
 
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
-      // Trigger MCP dispatch
+      // Trigger durable invoice lifecycle (PDF -> send -> reminders -> overdue)
       try {
         const { callMcpTool } = await import('@/services/mcp/toolCaller');
-        await callMcpTool('send_invoice', {
+        await callMcpTool('start_invoice_lifecycle', {
           invoice_id: finalInvoice.id,
-          recipient_email: formData.clientEmail
         });
-        toast.success("Invoice sent successfully with PDF attachment!", { id: toastId });
+        toast.success("Invoice lifecycle started — email + reminders now managed automatically.", { id: toastId });
       } catch (dispatchError: any) {
         console.error('MCP Dispatch Error:', dispatchError);
-        toast.error(`Invoice saved, but email dispatch failed: ${dispatchError.message}`, { id: toastId });
+        toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });
       }
 
       onSuccess?.(finalInvoice);

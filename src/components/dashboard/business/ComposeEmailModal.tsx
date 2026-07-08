@@ -21,6 +21,13 @@ import {
   type DeliveryEmailProvider,
 } from '@/lib/email/emailProviderOptions';
 
+function parseRecipientList(value: string): string[] {
+    return value
+        .split(/[,\n;]+/)
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+}
+
 export type EmailComposerProps = {
     isOpen: boolean;
     onClose: () => void;
@@ -33,6 +40,7 @@ export type EmailComposerProps = {
     entityType?: 'invoice' | 'contract' | 'document' | 'lead' | 'client' | 'direct';
     entityId?: string;
     attachments?: Array<{ id: string; name: string; size: number; data?: string }>;
+    preferredProvider?: DeliveryEmailProvider;
 };
 
 interface ComposeEmailModalProps extends EmailComposerProps {}
@@ -47,6 +55,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     skipCrmGate = false,
     entityType = 'direct',
     entityId,
+    preferredProvider,
 }) => {
     const { currentTenant } = useTenant();
     const [to, setTo] = useState(initialTo);
@@ -119,12 +128,16 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 setProviderOptions(connectedList);
 
                 const tenantDefault = normalizeDeliveryProvider(providerSettings.defaultProvider);
+                const preferredDefault =
+                    preferredProvider && connectedList.some((p) => p.id === preferredProvider && p.connected)
+                        ? preferredProvider
+                        : tenantDefault;
                 setWorkspaceDefault(tenantDefault);
-                setDeliveryProvider(tenantDefault);
+                setDeliveryProvider(preferredDefault);
 
                 const connectedIds = connectedList.filter((p) => p.connected).map((p) => p.id);
-                const resolved = resolveAutoProvider(connectedIds, tenantDefault);
-                const pickType = tenantDefault === 'auto' ? resolved : tenantDefault;
+                const resolved = resolveAutoProvider(connectedIds, preferredDefault);
+                const pickType = preferredDefault === 'auto' ? resolved : preferredDefault;
                 const match = filtered.find((p) => p.type === pickType);
                 setSelectedProvider(match || filtered[0] || null);
             });
@@ -136,7 +149,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             };
             fetchUser();
         }
-    }, [isOpen, currentTenant?.id, userId]);
+    }, [isOpen, currentTenant?.id, userId, preferredProvider]);
 
     // Update 'From' field when provider changes
     React.useEffect(() => {
@@ -171,10 +184,18 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     );
 
     const matchedClient = React.useMemo(() => {
-        const normalized = to.trim().toLowerCase();
+        const normalized = parseRecipientList(to)[0]?.toLowerCase() || '';
         if (!normalized) return null;
         return clients.find((client) => client.email?.toLowerCase() === normalized) || null;
     }, [clients, to]);
+
+    const toRecipients = React.useMemo(() => parseRecipientList(to), [to]);
+    const ccRecipients = React.useMemo(() => parseRecipientList(cc), [cc]);
+    const bccRecipients = React.useMemo(() => parseRecipientList(bcc), [bcc]);
+    const allRecipients = React.useMemo(
+        () => Array.from(new Set([...toRecipients, ...ccRecipients, ...bccRecipients])),
+        [toRecipients, ccRecipients, bccRecipients]
+    );
 
     const TONES = [
         { id: 'professional', label: 'Professional' },
@@ -280,10 +301,15 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     };
 
     const handleSend = async () => {
-        const toError = validateEmailField(to);
-        if (toError) {
-            toast.error(toError);
+        if (toRecipients.length === 0) {
+            toast.error('Add at least one recipient.');
             return;
+        }
+        for (const email of allRecipients) {
+            if (!isValidEmail(email)) {
+                toast.error(`Invalid email address: ${email}`);
+                return;
+            }
         }
         if (!subject.trim()) {
             toast.error('Subject is required');
@@ -308,38 +334,43 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     : deliveryProvider;
             const sendProvider = resolvedType === 'auto' ? selectedProvider?.type : resolvedType;
 
-            const res = await fetch('/api/outreach/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tenantId: currentTenant.id,
-                    leadEmail: to.trim(),
-                    leadName: matchedClient?.name,
-                    subject,
-                    body,
-                    pitchAngle: 'direct_message',
-                    autoSend: true,
-                    consentGranted: true,
-                    confidenceScore: 100,
-                    directSend: skipCrmGate,
-                    skipCrmGate,
-                    entityType,
-                    entityId,
-                    deliveryProviders: sendProvider ? [sendProvider] : undefined,
-                    preferredProvider: sendProvider,
-                    balanceByDailyLimit: false,
-                }),
-            });
+            for (const recipient of allRecipients) {
+                const clientMatch = clients.find((client) => client.email?.toLowerCase() === recipient.toLowerCase());
+                const res = await fetch('/api/outreach/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenantId: currentTenant.id,
+                        leadEmail: recipient,
+                        leadName: clientMatch?.name,
+                        subject,
+                        body,
+                        pitchAngle: 'direct_message',
+                        autoSend: true,
+                        consentGranted: true,
+                        confidenceScore: 100,
+                        directSend: skipCrmGate,
+                        skipCrmGate,
+                        entityType,
+                        entityId,
+                        deliveryProviders: sendProvider ? [sendProvider] : undefined,
+                        preferredProvider: sendProvider,
+                        balanceByDailyLimit: false,
+                    }),
+                });
 
-            const result = await res.json().catch(() => ({}));
-            if (!res.ok || !result.success) {
-                throw new Error(result.error || 'Email could not be sent. Check your email provider settings.');
-            }
-            if (result.status === 'queued') {
-                throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry.');
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok || !result.success) {
+                    throw new Error(result.error || `Email to ${recipient} could not be sent. Check your email provider settings.`);
+                }
+                if (result.status === 'queued') {
+                    throw new Error(`Email to ${recipient} was queued for approval instead of sending. Check AI Agents or retry.`);
+                }
             }
 
-            toast.success(`Email sent via ${String(result.provider || selectedProvider?.type || 'platform').toUpperCase()}`);
+            toast.success(
+                `${allRecipients.length === 1 ? 'Email' : `${allRecipients.length} emails`} sent via ${String(sendProvider || selectedProvider?.type || 'platform').toUpperCase()}`
+            );
             onClose();
             setTo('');
             setCc('');
@@ -472,12 +503,14 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
                                         />
                                     </div>
-                                    <p className="mt-2 px-1 text-xs text-slate-500 font-mono uppercase tracking-wider">Note: Ensure this address is verified with your selected provider.</p>
+                                    <p className="mt-2 px-1 text-xs text-slate-500 font-mono uppercase tracking-wider">
+                                        Sending via {selectedProvider?.name || 'workspace provider'} as {from || 'your connected address'}.
+                                    </p>
                                 </div>
 
                                 {/* TO: RECIPIENT */}
                                 <div className="relative" ref={dropdownRef}>
-                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipient</label>
+                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipients</label>
                                     <div className="relative group">
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
                                             <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
@@ -491,7 +524,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 setShowContactDropdown(true);
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
-                                            placeholder="Search database or protocol address..."
+                                            placeholder="Add one or more emails, separated by commas..."
                                             className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
                                         />
                                         <button 
@@ -581,9 +614,30 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                         )}
                                     </AnimatePresence>
 
-                                    {to.includes('@') && (
+                                    {allRecipients.length > 0 && (
+                                        <div className="mt-3 rounded-xl border border-white/5 bg-slate-950/40 p-3 space-y-2">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Recipient Review</p>
+                                                <p className="text-[11px] text-teal-300 font-semibold">
+                                                    {toRecipients.length} to / {ccRecipients.length} cc / {bccRecipients.length} bcc
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {allRecipients.map((recipient) => (
+                                                    <span
+                                                        key={recipient}
+                                                        className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300"
+                                                    >
+                                                        {recipient}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {toRecipients.length === 1 && to.includes('@') && (
                                         <div className="mt-3">
-                                            <EmailLeadInsightPanel from={to} subject={subject} compact />
+                                            <EmailLeadInsightPanel from={toRecipients[0]} subject={subject} compact />
                                         </div>
                                     )}
                                 </div>

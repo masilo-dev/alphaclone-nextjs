@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
@@ -20,12 +21,14 @@ import { CommunicationModal } from '../crm/CommunicationModal';
 import type { EmailRecipient } from '../crm/emailRecipient';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
+import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 
 interface EnhancedBillingPageProps {
     user: any;
 }
 
 const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
+    const router = useRouter();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
     
@@ -53,16 +56,28 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [bulkDeletingInvoices, setBulkDeletingInvoices] = useState(false);
 
     const toggleInvoiceSelection = (inv: BusinessInvoice) => {
-        if (inv.status !== 'draft') {
-            toast.error('Only draft invoices can be deleted. Sent or paid invoices must stay on file.');
-            return;
-        }
         setSelectedInvoiceIds((prev) => {
             const next = new Set(prev);
             if (next.has(inv.id)) next.delete(inv.id);
             else next.add(inv.id);
             return next;
         });
+    };
+
+    const handleBulkEmailInvoices = () => {
+        if (selectedInvoiceIds.size === 0) return;
+        const recipients = invoices
+            .filter((inv) => selectedInvoiceIds.has(inv.id))
+            .map((inv) => resolveInvoiceRecipient(inv)?.email?.trim() || '')
+            .filter((email, index, arr) => email.length > 0 && arr.indexOf(email) === index);
+
+        if (recipients.length === 0) {
+            toast.error('Selected invoices do not have client email addresses.');
+            return;
+        }
+
+        const subject = recipients.length === 1 ? 'Invoice follow-up' : 'Invoices follow-up';
+        router.push(buildMailComposeUrl(recipients, subject));
     };
 
     const handleBulkDeleteInvoices = async () => {
@@ -198,7 +213,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setShowPDFPreview(pdfUrl);
     };
 
-    if (loading) return <div className="p-8 text-slate-400">Loading Billing Data...</div>;
+    if (loading) {
+        return (
+            <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
+                <div className="ac-workspace-panel rounded-lg p-8 text-center text-slate-400">
+                    Loading billing workspace...
+                </div>
+            </div>
+        );
+    }
 
     const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
 
@@ -209,16 +232,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                        <DollarSign className="text-teal-500" /> Billing Hub
+                        <DollarSign className="text-teal-500" /> Revenue Workspace
                     </h1>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoice Management & Collections</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoices, recurring revenue, and follow-ups</p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                   <button 
                     onClick={() => setActiveTab('invoices')}
                     className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
-                    Invoices
+                    Billing
                   </button>
                   <button 
                     onClick={() => setActiveTab('recurring')}
@@ -230,7 +253,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     onClick={() => setActiveTab('services')}
                     className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
-                    Services
+                    Catalog
                   </button>
                 </div>
             </div>
@@ -251,8 +274,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[
-                    { label: 'Revenue', value: stats.totalRevenue, color: 'text-teal-400' },
-                    { label: 'Pending', value: stats.pendingAmount, color: 'text-teal-400' },
+                    { label: 'Collected', value: stats.totalRevenue, color: 'text-teal-400' },
+                    { label: 'Awaiting Payment', value: stats.pendingAmount, color: 'text-teal-400' },
                     { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
                     { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
                 ].map(s => (
@@ -320,6 +343,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 </button>
                                 <button
                                     type="button"
+                                    onClick={handleBulkEmailInvoices}
+                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
+                                >
+                                    <Mail size={12} />
+                                    {`Send Follow-up (${selectedInvoiceIds.size})`}
+                                </button>
+                                <button
+                                    type="button"
                                     disabled={bulkDeletingInvoices}
                                     onClick={handleBulkDeleteInvoices}
                                     className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
@@ -330,12 +361,12 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             </div>
                         )}
                         <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:bg-teal-500">
-                            <Plus size={12} /> New Invoice
+                            <Plus size={12} /> Create Invoice
                         </button>
                     </div>
                 </div>
                 <p className="text-xs text-slate-500 -mt-2">
-                    Tip: select draft invoices to bulk-delete. Sent and paid invoices are protected for your books.
+                    Tip: select invoices to send one follow-up to many clients at once. Only drafts can be bulk deleted.
                 </p>
 
                 <div className="space-y-3">
@@ -355,8 +386,8 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             e.stopPropagation();
                                             toggleInvoiceSelection(inv);
                                         }}
-                                        className={inv.status === 'draft' ? 'text-slate-500 hover:text-teal-400 shrink-0 transition-colors' : 'text-slate-700 cursor-not-allowed shrink-0'}
-                                        aria-label={inv.status === 'draft' ? `Select ${inv.invoiceNumber}` : 'Only drafts can be selected'}
+                                        className="text-slate-500 hover:text-teal-400 shrink-0 transition-colors"
+                                        aria-label={`Select ${inv.invoiceNumber}`}
                                     >
                                         {selectedInvoiceIds.has(inv.id)
                                             ? <CheckSquare size={14} className="text-teal-400" />
@@ -374,6 +405,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 <div>
                                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.22em]">Due Date</p>
                                     <p className="text-[11px] font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
+                                    {Number(inv.amountPaid || 0) > 0 && (
+                                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-300">
+                                            Paid {Number(inv.amountPaid || 0).toLocaleString()} · Balance {Number(inv.balanceDue || 0).toLocaleString()}
+                                        </p>
+                                    )}
                                 </div>
                                 <p className="text-[20px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
                             </div>
@@ -427,12 +463,27 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     <p className="text-3xl font-black text-teal-400 tracking-tight font-mono">
                                         ${selectedInvoiceForOptions.total.toLocaleString()}
                                     </p>
+                                    {Number(selectedInvoiceForOptions.amountPaid || 0) > 0 && (
+                                        <div className="mt-3 grid grid-cols-2 gap-3 text-left">
+                                            <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 px-3 py-2">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-blue-200/80">Paid So Far</p>
+                                                <p className="text-sm font-black text-blue-200">${Number(selectedInvoiceForOptions.amountPaid || 0).toLocaleString()}</p>
+                                            </div>
+                                            <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-amber-200/80">Balance Due</p>
+                                                <p className="text-sm font-black text-amber-200">${Number(selectedInvoiceForOptions.balanceDue || 0).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="mt-3 flex justify-center">
                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getStatusStyles(selectedInvoiceForOptions.status)}`}>
                                             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
                                             {selectedInvoiceForOptions.status}
                                         </span>
                                     </div>
+                                    <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                        Auto follow-ups: {selectedInvoiceForOptions.autoFollowupEnabled === false ? 'Off' : 'On'}
+                                    </p>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-3">
@@ -480,6 +531,42 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         <span className="text-[10px] text-slate-500 font-mono">ZOHO / OUTLOOK</span>
                                     </button>
 
+                                    {currentTenant?.id && (
+                                        <button
+                                            onClick={async () => {
+                                                const enabled = confirm('Enable automatic follow-ups for this invoice?\n\nOK = enable\nCancel = disable');
+                                                const toastId = toast.loading('Updating follow-up settings...');
+                                                try {
+                                                    const res = await fetch(`/api/invoices/${selectedInvoiceForOptions.id}/followup-settings`, {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            tenantId: currentTenant.id,
+                                                            autoFollowupEnabled: enabled,
+                                                        }),
+                                                    });
+                                                    const data = await res.json().catch(() => ({}));
+                                                    if (!res.ok) throw new Error(data.error || 'Failed to update follow-ups');
+                                                    toast.success(
+                                                        enabled ? 'Auto follow-ups enabled for this invoice.' : 'Auto follow-ups disabled for this invoice.',
+                                                        { id: toastId }
+                                                    );
+                                                    setIsOptionsOpen(false);
+                                                    void loadInvoices();
+                                                } catch (err) {
+                                                    toast.error(err instanceof Error ? err.message : 'Failed to update follow-ups', { id: toastId });
+                                                }
+                                            }}
+                                            className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                        >
+                                            <span className="flex items-center gap-2.5">
+                                                <CheckCircle className="w-4 h-4 text-teal-400" />
+                                                <span>Toggle Auto Follow-ups</span>
+                                            </span>
+                                            <span className="text-[10px] text-slate-500 font-mono">REMINDERS</span>
+                                        </button>
+                                    )}
+
                                     {selectedInvoiceForOptions.clientId && currentTenant?.id && (
                                         <button
                                             onClick={async () => {
@@ -507,14 +594,15 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                                     <button
                                         onClick={async () => {
+                                            if (!selectedInvoiceForOptions) return;
                                             setIsOptionsOpen(false);
-                                            const toastId = toast.loading('Sending invoice...');
+                                            const toastId = toast.loading('Starting invoice lifecycle...');
                                             try {
                                                 const { callMcpTool } = await import('@/services/mcp/toolCaller');
-                                                await callMcpTool('send_invoice', { invoice_id: selectedInvoiceForOptions.id });
-                                                toast.success('Invoice dispatched successfully!', { id: toastId });
+                                                await callMcpTool('start_invoice_lifecycle', { invoice_id: selectedInvoiceForOptions.id });
+                                                toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
                                             } catch (err: any) {
-                                                toast.error(`Failed: ${err.message}`, { id: toastId });
+                                                toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
                                             }
                                         }}
                                         className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
@@ -527,26 +615,60 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     </button>
 
                                     {selectedInvoiceForOptions.status !== 'paid' ? (
-                                        <button
-                                            onClick={async () => {
-                                                const toastId = toast.loading('Updating payment status...');
-                                                const { error } = await businessInvoiceService.markAsPaid(selectedInvoiceForOptions.id);
-                                                if (error) {
-                                                    toast.error(error, { id: toastId });
-                                                    return;
-                                                }
-                                                toast.success('Invoice marked as paid', { id: toastId });
-                                                setIsOptionsOpen(false);
-                                                void loadInvoices();
-                                            }}
-                                            className="w-full flex items-center justify-between p-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all text-left text-sm text-emerald-200"
-                                        >
-                                            <span className="flex items-center gap-2.5">
-                                                <CheckCircle className="w-4 h-4 text-emerald-400" />
-                                                <span>Mark as Paid</span>
-                                            </span>
-                                            <span className="text-[10px] text-emerald-500/80 font-mono">MANUAL UPDATE</span>
-                                        </button>
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={async () => {
+                                                    const toastId = toast.loading('Updating payment status...');
+                                                    const { error } = await businessInvoiceService.markAsPaid(selectedInvoiceForOptions.id);
+                                                    if (error) {
+                                                        toast.error(error, { id: toastId });
+                                                        return;
+                                                    }
+                                                    toast.success('Invoice marked as paid', { id: toastId });
+                                                    setIsOptionsOpen(false);
+                                                    void loadInvoices();
+                                                }}
+                                                className="w-full flex items-center justify-between p-3.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-2xl transition-all text-left text-sm text-emerald-200"
+                                            >
+                                                <span className="flex items-center gap-2.5">
+                                                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                                    <span>Mark as Paid</span>
+                                                </span>
+                                                <span className="text-[10px] text-emerald-500/80 font-mono">FULL PAYMENT</span>
+                                            </button>
+
+                                            <button
+                                                onClick={async () => {
+                                                    const raw = prompt('Record a payment amount (deposit/partial). Example: 250');
+                                                    if (!raw) return;
+                                                    const amount = Number(String(raw).replace(/[^0-9.]/g, ''));
+                                                    const toastId = toast.loading('Recording payment...');
+                                                    const { error, status, amountPaid } = await businessInvoiceService.recordPayment(
+                                                        selectedInvoiceForOptions.id,
+                                                        amount
+                                                    );
+                                                    if (error) {
+                                                        toast.error(error, { id: toastId });
+                                                        return;
+                                                    }
+                                                    toast.success(
+                                                        status === 'paid'
+                                                            ? 'Payment recorded — invoice is now paid.'
+                                                            : `Deposit recorded — total paid now ${Number(amountPaid || 0).toFixed(2)}.`,
+                                                        { id: toastId }
+                                                    );
+                                                    setIsOptionsOpen(false);
+                                                    void loadInvoices();
+                                                }}
+                                                className="w-full flex items-center justify-between p-3.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all text-left text-sm text-blue-200"
+                                            >
+                                                <span className="flex items-center gap-2.5">
+                                                    <Clock className="w-4 h-4 text-blue-300" />
+                                                    <span>Record Deposit / Partial</span>
+                                                </span>
+                                                <span className="text-[10px] text-blue-300/80 font-mono">AMOUNT PAID</span>
+                                            </button>
+                                        </div>
                                     ) : (
                                         <button
                                             onClick={async () => {
@@ -589,19 +711,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             <button
                                 onClick={async () => {
                                     if (!selectedInvoiceForOptions) return;
-                                    const toastId = toast.loading('Sending invoice...');
+                                    const toastId = toast.loading('Starting invoice lifecycle...');
                                     try {
                                         const { callMcpTool } = await import('@/services/mcp/toolCaller');
-                                        await callMcpTool('send_invoice', { invoice_id: selectedInvoiceForOptions.id });
-                                        toast.success('Invoice dispatched successfully!', { id: toastId });
+                                        await callMcpTool('start_invoice_lifecycle', { invoice_id: selectedInvoiceForOptions.id });
+                                        toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
                                         setShowPDFPreview(null);
                                     } catch (err: any) {
-                                        toast.error(`Failed: ${err.message}`, { id: toastId });
+                                        toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
                                     }
                                 }}
                                 className="flex-1 h-12 bg-teal-600 text-white rounded-xl font-black uppercase text-xs"
                             >
-                                Send Invoice
+                                Start Lifecycle
                             </button>
                             <button
                                 onClick={() => {

@@ -38,6 +38,7 @@ export function NotificationBell() {
   const bgPopover = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const unreadBg = useColorModeValue('blue.50', 'blue.900');
 
   useEffect(() => {
     if (!tenantId) return;
@@ -108,7 +109,7 @@ export function NotificationBell() {
                   key={notif.id}
                   p={2}
                   borderRadius="md"
-                  bg={notif.read ? 'transparent' : useColorModeValue('blue.50', 'blue.900')}
+                      bg={notif.read ? 'transparent' : unreadBg}
                 >
                   <Text fontSize="sm" fontWeight="medium" color={textColor}>
                     {notif.title}

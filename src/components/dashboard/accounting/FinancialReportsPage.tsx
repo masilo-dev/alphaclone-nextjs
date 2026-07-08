@@ -450,12 +450,12 @@ export function FinancialReportsPage() {
     };
 
     return (
-        <div className="p-4 md:p-6">
+        <div className="p-4 md:p-6 ac-scroll-full ac-enterprise-module">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Financial Reports</h1>
-                    <p className="text-slate-300 mt-1">View accounting reports and financial statements</p>
+                    <h1 className="text-2xl font-bold text-white">Financial Statements</h1>
+                    <p className="text-slate-300 mt-1">Review the core reports that explain cash, performance, and balance health.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <button
@@ -464,13 +464,13 @@ export function FinancialReportsPage() {
                         className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                     >
                         <FileDown className="w-4 h-4" />
-                        Export PDF
+                        Export Statement
                     </button>
                     <button
                         onClick={handleRefresh}
                         className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
                     >
-                        Reload Data
+                        Refresh Figures
                     </button>
                 </div>
             </div>
@@ -482,11 +482,11 @@ export function FinancialReportsPage() {
             )}
 
             {/* Report Selector */}
-            <div className="bg-slate-800 rounded-lg shadow-sm p-4 mb-6">
+            <div className="ac-workspace-panel rounded-lg p-4 mb-6">
                 <ModuleJumpSelect
                     options={REPORT_OPTIONS}
                     currentHref={selectedReport}
-                    label="Report type"
+                    label="Statement type"
                     onNavigate={(href) => setSelectedReport(href as ReportType)}
                     className="mb-3"
                 />
@@ -532,8 +532,8 @@ export function FinancialReportsPage() {
 
             {/* Loading State */}
             {loading && (
-                <div className="flex items-center justify-center h-64">
-                    <div className="text-slate-300">Generating report...</div>
+                <div className="ac-workspace-panel rounded-lg flex items-center justify-center h-64">
+                    <div className="text-slate-300">Preparing statement...</div>
                 </div>
             )}
 

@@ -202,9 +202,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-                <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
-                <div className="text-slate-500 text-sm animate-pulse">Loading projects...</div>
+            <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 min-h-[320px]">
+                    <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
+                    <div className="text-slate-500 text-sm animate-pulse">Loading projects...</div>
+                </div>
             </div>
         );
     }

@@ -48,6 +48,7 @@ export function NexusWidget() {
   const bgCard = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const assistantBg = useColorModeValue('gray.100', 'gray.700');
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -159,7 +160,7 @@ export function NexusWidget() {
                     bg={
                       msg.role === 'user'
                         ? 'brand.500'
-                        : useColorModeValue('gray.100', 'gray.700')
+                        : assistantBg
                     }
                     color={msg.role === 'user' ? 'white' : textColor}
                   >
@@ -173,7 +174,7 @@ export function NexusWidget() {
                   <Box
                     p={3}
                     borderRadius="lg"
-                    bg={useColorModeValue('gray.100', 'gray.700')}
+                  bg={assistantBg}
                   >
                     <Text fontSize="sm" color="gray.500">
                       Thinking...

@@ -36,6 +36,7 @@ type ComposeState = {
   to?: string;
   subject?: string;
   body?: string;
+  preferredProvider?: InboxProvider;
 };
 
 type UnifiedInboxViewProps = {
@@ -283,7 +284,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
   };
 
   const openNewEmail = () => {
-    setComposeDraft({});
+    setComposeDraft({ preferredProvider: provider });
     setComposeOpen(true);
   };
 
@@ -303,6 +304,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
         ? selectedEmail.subject
         : `Re: ${selectedEmail.subject || ''}`,
       body: `\n\n---\nOn ${new Date(selectedEmail.receivedAt).toLocaleString()}, ${selectedEmail.from} wrote:\n${selectedEmail.snippet || ''}`,
+      preferredProvider: provider,
     });
     setComposeOpen(true);
   };
@@ -653,6 +655,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
           initialTo={composeDraft.to || ''}
           initialSubject={composeDraft.subject || ''}
           initialBody={composeDraft.body || ''}
+          preferredProvider={composeDraft.preferredProvider}
           skipCrmGate
           entityType="direct"
         />

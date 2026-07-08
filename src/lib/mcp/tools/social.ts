@@ -3,6 +3,12 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { extractCompanyPagesFromMetadata } from '@/services/linkedin/linkedinIntegrationService';
 
+function requireTenantId(args: { tenant_id?: string }, ctx: { tenantId?: string }) {
+  const tenantId = args.tenant_id || ctx.tenantId;
+  if (!tenantId) throw new Error('tenant_id is required');
+  return tenantId;
+}
+
 // 1. get_social_accounts
 registerTool('social', {
   name: 'get_social_accounts',
@@ -15,12 +21,13 @@ registerTool('social', {
     properties: {},
     required: [],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const tenantId = requireTenantId(args, ctx);
     const { data, error } = await supabase
       .from('integrations')
       .select('id, type, enabled, config, updated_at')
-      .eq('tenant_id', args.tenant_id)
+      .eq('tenant_id', tenantId)
       .in('type', ['linkedin', 'twitter', 'facebook', 'instagram', 'youtube']);
 
     if (error) throw error;
@@ -40,14 +47,15 @@ registerTool('social', {
     properties: {},
     required: [],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const tenantId = requireTenantId(args, ctx);
     
     // Get person identity from linkedin_integrations
     const { data: personIdentity, error: personError } = await supabase
       .from('linkedin_integrations')
       .select('linkedin_member_id, linkedin_person_urn, scopes, metadata, is_active, updated_at')
-      .eq('tenant_id', args.tenant_id)
+      .eq('tenant_id', tenantId)
       .eq('is_active', true)
       .order('updated_at', { ascending: false })
       .limit(1)
@@ -59,7 +67,7 @@ registerTool('social', {
     const { data: orgIdentities, error: orgError } = await supabase
       .from('linkedin_identities')
       .select('*')
-      .eq('tenant_id', args.tenant_id)
+      .eq('tenant_id', tenantId)
       .eq('type', 'organization');
 
     if (orgError && orgError.code !== '42P01') throw orgError;
@@ -129,29 +137,20 @@ registerTool('social', {
     required: ['platform', 'content', 'scheduled_at'],
   },
   handler: async (args, ctx) => {
-    const supabase = createSupabaseAdminClient();
-    const row: Record<string, unknown> = {
-      tenant_id: args.tenant_id,
-      platform: args.platform,
-      content: args.content,
-      asset_id: args.asset_id || null,
+    const tenantId = requireTenantId(args, ctx);
+    if (!ctx.userId) throw new Error('user_id is required');
+    const { createMCPServer } = await import('@/services/mcp/MCPServer');
+    const server = createMCPServer({ tenantId, userId: ctx.userId });
+
+    return server.runTool('create_social_post', {
+      tenant_id: tenantId,
+      user_id: ctx.userId,
+      caption: args.content,
+      media_asset_ids: args.asset_id ? [args.asset_id] : [],
+      platforms: [args.platform],
+      publish_now: false,
       scheduled_at: args.scheduled_at,
-      status: 'pending',
-    };
-    if (ctx.userId) row.user_id = ctx.userId;
-
-    const { data, error } = await supabase
-      .from('scheduled_posts')
-      .insert(row)
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(
-        `schedule_social_post failed: ${error.message}. Tip: use create_social_post with scheduled_at as an alternative.`
-      );
-    }
-    return data;
+    });
   },
 });
 
@@ -170,15 +169,18 @@ registerTool('social', {
     },
     required: [],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const tenantId = requireTenantId(args, ctx);
     let query = supabase
-      .from('scheduled_posts')
-      .select('*')
-      .eq('tenant_id', args.tenant_id);
+      .from('social_posts')
+      .select('id, caption, platforms, status, scheduled_at, published_at, media_urls, created_at')
+      .eq('tenant_id', tenantId);
 
     if (args.status) {
-      query = query.eq('status', args.status);
+      const normalizedStatus =
+        args.status === 'pending' ? 'scheduled' : args.status === 'sent' ? 'published' : 'failed';
+      query = query.eq('status', normalizedStatus);
     }
 
     const { data, error } = await query;
@@ -202,13 +204,14 @@ registerTool('social', {
     },
     required: ['post_id'],
   },
-  handler: async (args) => {
+  handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    const tenantId = requireTenantId(args, ctx);
     const { data, error } = await supabase
       .from('social_post_analytics')
       .select('*')
       .eq('post_id', args.post_id)
-      .eq('tenant_id', args.tenant_id)
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -242,9 +245,10 @@ registerTool('social', {
   },
   handler: async (args, ctx) => {
     if (!ctx.userId) throw new Error('user_id is required');
+    const tenantId = requireTenantId(args, ctx);
     const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
     return uploadMediaAsset({
-      tenantId: args.tenant_id!, // guaranteed by session injection
+      tenantId,
       userId: ctx.userId,
       fileName: args.file_name,
       mimeType: args.mime_type,
@@ -288,10 +292,11 @@ registerTool('social', {
   handler: async (args, ctx) => {
     const userId = ctx.userId;
     if (!userId) throw new Error('user_id is required');
+    const tenantId = requireTenantId(args, ctx);
 
     const { uploadMediaAsset } = await import('@/lib/social/uploadMediaAsset');
     const asset = await uploadMediaAsset({
-      tenantId: args.tenant_id!, // guaranteed by session injection
+      tenantId,
       userId,
       fileName: args.file_name,
       mimeType: args.mime_type,
@@ -300,9 +305,9 @@ registerTool('social', {
     });
 
     const { createMCPServer } = await import('@/services/mcp/MCPServer');
-    const server = createMCPServer({ tenantId: args.tenant_id!, userId }); // guaranteed by session injection
+    const server = createMCPServer({ tenantId, userId });
     return server.runTool('create_social_post', {
-      tenant_id: args.tenant_id,
+      tenant_id: tenantId,
       user_id: userId,
       caption: args.caption,
       media_asset_ids: [asset.id],

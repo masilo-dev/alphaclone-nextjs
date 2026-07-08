@@ -15,7 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { dailyService } from '../../services/dailyService';
 import { churnPropensityService, ChurnRiskReport } from '@/services/intelligence/churnPropensityService';
 import { customer360Service, Customer360Profile } from '@/services/intelligence/customer360Service';
@@ -38,7 +38,6 @@ import { leadService } from '../../services/leadService';
 import { businessClientService } from '../../services/businessClientService';
 import { contactService } from '../../services/contactService';
 import { dealService } from '../../services/dealService';
-import { CRMNav } from './crm/CRMNav';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
@@ -1338,7 +1337,6 @@ const LeadKanban: React.FC<{
 const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const { currentTenant } = useTenant();
   const router = useRouter();
-  const pathname = usePathname() || '';
   const searchParams = useSearchParams();
   const { t } = useLanguage();
 
@@ -1669,6 +1667,34 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     }
   };
 
+  const handleBulkEmail = useCallback(() => {
+    if (selectedKeys.size === 0) return;
+
+    const recipientSet = new Set<string>();
+    selectedKeys.forEach((key) => {
+      const [type, id] = key.split(':');
+      if (!id) return;
+
+      if (type === 'lead') {
+        const lead = leads.find((entry) => entry.id === id);
+        if (lead?.email) recipientSet.add(lead.email.trim());
+        return;
+      }
+
+      const client = clients.find((entry) => entry.id === id);
+      if (client?.email) recipientSet.add(client.email.trim());
+    });
+
+    const recipients = Array.from(recipientSet).filter(Boolean);
+    if (recipients.length === 0) {
+      toast.error('Selected records do not have email addresses.');
+      return;
+    }
+
+    const subject = recipients.length === 1 ? 'Follow-up' : 'CRM follow-up';
+    router.push(buildMailComposeUrl(recipients, subject));
+  }, [clients, leads, router, selectedKeys]);
+
   // Lead status transition
   const handleStatusUpdate = async (id: string, status: LeadStatus) => {
     try {
@@ -1969,7 +1995,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         showBonnieDock
         header={(
           <div className="px-4 pt-3 space-y-2.5 shrink-0">
-            <CRMNav pathname={pathname} />
             <div className="rounded-2xl border border-white/5 bg-slate-900/60 px-2.5 py-2">
               <div className="mb-2 flex items-center gap-2">
                 <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
@@ -2037,7 +2062,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 </button>
               ))}
             </div>
-            <div className="px-4 py-3 space-y-2.5 bg-slate-950/80 sticky top-0 z-10 backdrop-blur-md">
+            <div className="px-4 py-3 space-y-2.5 bg-slate-950/80">
         {isTeamsConnected && (
           <div className="flex items-center justify-between rounded-xl border border-blue-500/10 bg-blue-500/5 px-3 py-2">
             <div>
@@ -2159,6 +2184,14 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             </button>
             {selectedCount > 0 && (
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleBulkEmail}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-300 hover:text-indigo-200"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Email ({selectedCount})
+                </button>
                 <button
                   type="button"
                   onClick={() => setSelectedKeys(new Set())}

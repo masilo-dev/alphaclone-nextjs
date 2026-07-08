@@ -968,9 +968,11 @@ ${parentContext}Return only the comment text.`;
 
   if (loading) {
     return (
-      <div className="h-64 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-        <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
+      <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom lg:pb-0">
+        <div className="flex-1 flex h-64 items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+          <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
+        </div>
       </div>
     );
   }

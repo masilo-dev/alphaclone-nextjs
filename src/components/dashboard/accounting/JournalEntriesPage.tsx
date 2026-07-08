@@ -14,6 +14,11 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { JournalEntryModal } from './JournalEntryModal';
 import { ModulePageLayout } from '../../ui/ModulePageLayout';
 import { DetailDrawer } from '../../ui/DetailDrawer';
+import {
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+    MobileDataCard,
+} from '../../ui/ResponsiveTable';
 
 export function JournalEntriesPage() {
     const { user } = useAuth();
@@ -121,15 +126,15 @@ export function JournalEntriesPage() {
                 header={(
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 pb-2">
                         <div>
-                            <h1 className="text-lg font-semibold text-white">Journal Entries</h1>
-                            <p className="text-sm text-slate-300">Record manual accounting transactions</p>
+                            <h1 className="text-lg font-semibold text-white">Ledger Entries</h1>
+                            <p className="text-sm text-slate-300">Review and post the manual entries shaping your books.</p>
                         </div>
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
                             className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500"
                         >
-                            + New entry
+                            + New ledger entry
                         </button>
                     </div>
                 )}
@@ -154,87 +159,163 @@ export function JournalEntriesPage() {
 
             {/* Entries List */}
             <div className="dashboard-panel-soft overflow-hidden min-w-0">
-                <div className="overflow-x-auto min-w-0">
-                    <table className="min-w-[880px] w-full divide-y divide-slate-700">
-                        <thead className="bg-slate-900">
-                            <tr>
-                                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Entry #</th>
-                                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Date</th>
-                                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
-                                <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Debits</th>
-                                <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Credits</th>
-                                <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
-                                <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-slate-900/60 divide-y divide-white/5">
-                            {entries.map((entry) => (
-                                <tr key={entry.id} className={entry.status === 'void' ? 'bg-slate-900/50 opacity-60' : ''}>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
-                                        {entry.entryNumber}
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-slate-200">
-                                        {new Date(entry.entryDate).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 text-sm text-slate-200">
-                                        {entry.description}
-                                        {entry.reference && (
-                                            <span className="ml-2 text-xs text-slate-400">({entry.reference})</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
-                                        ${entry.totalDebits.toFixed(2)}
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
-                                        ${entry.totalCredits.toFixed(2)}
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${entry.status === 'posted'
-                                            ? 'bg-green-900/50 text-green-300'
-                                            : entry.status === 'void'
-                                                ? 'bg-red-900/50 text-red-300'
-                                                : 'bg-yellow-900/50 text-yellow-300'
-                                            }`}>
-                                            {entry.status.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <ResponsiveTableMobile>
+                    {entries.map((entry) => (
+                        <MobileDataCard
+                            key={entry.id}
+                            className={entry.status === 'void' ? 'opacity-60' : undefined}
+                            onClick={() => handleViewEntry(entry.id)}
+                        >
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-white">{entry.entryNumber}</p>
+                                    <p className="text-xs text-slate-400">{new Date(entry.entryDate).toLocaleDateString()}</p>
+                                </div>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${entry.status === 'posted'
+                                    ? 'bg-green-900/50 text-green-300'
+                                    : entry.status === 'void'
+                                        ? 'bg-red-900/50 text-red-300'
+                                        : 'bg-yellow-900/50 text-yellow-300'
+                                    }`}>
+                                    {entry.status.toUpperCase()}
+                                </span>
+                            </div>
+                            <p className="text-sm text-slate-200 leading-relaxed">{entry.description}</p>
+                            {entry.reference ? (
+                                <p className="text-xs text-slate-500">Ref: {entry.reference}</p>
+                            ) : null}
+                            <div className="grid grid-cols-2 gap-3 text-sm font-mono">
+                                <div>
+                                    <span className="block text-[10px] uppercase tracking-wider text-slate-500">Debits</span>
+                                    <span className="text-white">${entry.totalDebits.toFixed(2)}</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="block text-[10px] uppercase tracking-wider text-slate-500">Credits</span>
+                                    <span className="text-white">${entry.totalCredits.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); handleViewEntry(entry.id); }}
+                                    className="px-2.5 py-1.5 rounded-lg border border-blue-500/20 text-blue-300 text-xs font-semibold hover:bg-blue-500/10"
+                                >
+                                    View
+                                </button>
+                                {entry.status === 'draft' && (
+                                    <>
                                         <button
-                                            onClick={() => handleViewEntry(entry.id)}
-                                            className="text-blue-400 hover:text-blue-300 mr-3 transition-colors"
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handlePost(entry.id); }}
+                                            className="px-2.5 py-1.5 rounded-lg border border-green-500/20 text-green-300 text-xs font-semibold hover:bg-green-500/10"
                                         >
-                                            View
+                                            Post
                                         </button>
-                                        {entry.status === 'draft' && (
-                                            <>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
+                                            className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 text-xs font-semibold hover:bg-red-500/10"
+                                        >
+                                            Delete
+                                        </button>
+                                    </>
+                                )}
+                                {entry.status === 'posted' && (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => { e.stopPropagation(); handleVoid(entry.id); }}
+                                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-300 text-xs font-semibold hover:bg-red-500/10"
+                                    >
+                                        Void
+                                    </button>
+                                )}
+                            </div>
+                        </MobileDataCard>
+                    ))}
+                </ResponsiveTableMobile>
+                <ResponsiveTableDesktop>
+                    <div className="overflow-x-auto min-w-0">
+                        <table className="min-w-[880px] w-full divide-y divide-slate-700">
+                            <thead className="bg-slate-900">
+                                <tr>
+                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Entry #</th>
+                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Date</th>
+                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
+                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Debits</th>
+                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Credits</th>
+                                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Status</th>
+                                    <th className="px-4 md:px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-slate-900/60 divide-y divide-white/5">
+                                {entries.map((entry) => (
+                                    <tr key={entry.id} className={entry.status === 'void' ? 'bg-slate-900/50 opacity-60' : ''}>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm font-medium text-white">
+                                            {entry.entryNumber}
+                                        </td>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-slate-200">
+                                            {new Date(entry.entryDate).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-4 md:px-6 py-4 text-sm text-slate-200">
+                                            {entry.description}
+                                            {entry.reference && (
+                                                <span className="ml-2 text-xs text-slate-400">({entry.reference})</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
+                                            ${entry.totalDebits.toFixed(2)}
+                                        </td>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-sm text-right text-white font-mono">
+                                            ${entry.totalCredits.toFixed(2)}
+                                        </td>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${entry.status === 'posted'
+                                                ? 'bg-green-900/50 text-green-300'
+                                                : entry.status === 'void'
+                                                    ? 'bg-red-900/50 text-red-300'
+                                                    : 'bg-yellow-900/50 text-yellow-300'
+                                                }`}>
+                                                {entry.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button
+                                                onClick={() => handleViewEntry(entry.id)}
+                                                className="text-blue-400 hover:text-blue-300 mr-3 transition-colors"
+                                            >
+                                                View
+                                            </button>
+                                            {entry.status === 'draft' && (
+                                                <>
+                                                    <button
+                                                        onClick={() => handlePost(entry.id)}
+                                                        className="text-green-400 hover:text-green-300 mr-3 transition-colors"
+                                                    >
+                                                        Post
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(entry.id)}
+                                                        className="text-red-400 hover:text-red-300 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </>
+                                            )}
+                                            {entry.status === 'posted' && (
                                                 <button
-                                                    onClick={() => handlePost(entry.id)}
-                                                    className="text-green-400 hover:text-green-300 mr-3 transition-colors"
-                                                >
-                                                    Post
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(entry.id)}
+                                                    onClick={() => handleVoid(entry.id)}
                                                     className="text-red-400 hover:text-red-300 transition-colors"
                                                 >
-                                                    Delete
+                                                    Void
                                                 </button>
-                                            </>
-                                        )}
-                                        {entry.status === 'posted' && (
-                                            <button
-                                                onClick={() => handleVoid(entry.id)}
-                                                className="text-red-400 hover:text-red-300 transition-colors"
-                                            >
-                                                Void
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </ResponsiveTableDesktop>
             </div>
 
             {entries.length === 0 && (

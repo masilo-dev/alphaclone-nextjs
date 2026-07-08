@@ -194,8 +194,8 @@ export default function BankingCenterPage() {
       <ModulePageLayout
         header={(
           <div className="px-1 pb-2">
-            <h1 className="text-lg font-semibold text-white">Banking center</h1>
-            <p className="text-sm text-slate-400">Reconcile accounts and track statement sessions</p>
+            <h1 className="text-lg font-semibold text-white">Banking Workspace</h1>
+            <p className="text-sm text-slate-400">Track balances, manage accounts, and run reconciliations from one place.</p>
           </div>
         )}
         toolbar={(
@@ -206,7 +206,7 @@ export default function BankingCenterPage() {
               className="h-9 px-3 rounded-xl bg-teal-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-teal-500"
             >
               <Plus className="w-4 h-4" />
-              Add account
+              Add Bank Account
             </button>
             <button
               type="button"
@@ -232,8 +232,8 @@ export default function BankingCenterPage() {
           <EmptyState
             icon={Landmark}
             title="No bank accounts"
-            description="Connect a bank account to reconcile transactions and match payments to invoices."
-            actionLabel="Add bank account"
+            description="Add your operating accounts to reconcile transactions and match payments against invoices."
+            actionLabel="Add Bank Account"
             onAction={() => setShowAddDrawer(true)}
           />
         ) : (
@@ -246,7 +246,7 @@ export default function BankingCenterPage() {
               emptyMessage="No bank accounts."
             />
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Reconciliation history</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Reconciliation Sessions</h3>
               {sessions.length === 0 ? (
                 <p className="text-sm text-slate-500 px-1">No reconciliation sessions yet.</p>
               ) : (
@@ -265,7 +265,7 @@ export default function BankingCenterPage() {
       <DetailDrawer
         open={showAddDrawer}
         onOpenChange={setShowAddDrawer}
-        title="Add bank account"
+        title="Add Bank Account"
       >
         <form onSubmit={handleCreateAccount} className="space-y-4 pb-6">
           <Input

@@ -186,7 +186,7 @@ export default function RecurringInvoicesPanel({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-slate-500">
+      <div className="ac-workspace-panel rounded-lg p-8 flex items-center justify-center text-slate-500">
         <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading recurring profiles...
       </div>
     );

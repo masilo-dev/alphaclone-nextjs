@@ -36,6 +36,18 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
   const { data: contract } = await supabase.from('contracts').select('*').eq('id', contractId).single();
   if (!contract) return null;
 
+  const { data: existingInvoice } = await supabase
+    .from('business_invoices')
+    .select('id, project_id, status')
+    .eq('tenant_id', tenantId)
+    .contains('metadata', { contract_id: contractId })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existingInvoice?.id) {
+    return existingInvoice;
+  }
+
   const amount = Number(contract.payment_amount || 0) || 1000;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const publicToken = crypto.randomUUID();
@@ -45,6 +57,7 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
     .insert({
       tenant_id: tenantId,
       client_id: contract.client_id || null,
+      project_id: contract.project_id || null,
       invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
       issue_date: new Date().toISOString().slice(0, 10),
       due_date: dueDate,
@@ -84,7 +97,34 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
   const { data: contract } = await supabase.from('contracts').select('*').eq('id', contractId).single();
+  if (!contract) return null;
+
+  if (contract.project_id) {
+    const { data: existingProject } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('id', contract.project_id)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    if (existingProject?.id) {
+      return existingProject;
+    }
+  }
+
   const dealId = contract?.metadata?.deal_id;
+  let clientId = contract.client_id || null;
+  let ownerId: string | null = null;
+  let ownerName: string | null = null;
+
+  if (dealId) {
+    const { data: deal } = await supabase
+      .from('deals')
+      .select('contact_id, owner_id, name')
+      .eq('id', dealId)
+      .maybeSingle();
+    clientId = clientId || deal?.contact_id || null;
+    ownerId = deal?.owner_id || null;
+  }
 
   const { data: project } = await supabase
     .from('projects')
@@ -93,13 +133,29 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
       name: `Project: ${contract?.title || 'Signed Project'}`,
       contract_id: contractId,
       deal_id: dealId || null,
-      status: 'active',
+      client_id: clientId,
+      owner_id: ownerId,
+      owner_name: ownerName,
+      category: 'Client Delivery',
+      current_stage: 'Initiation',
+      status: 'Active',
+      progress: 0,
+      contract_status: 'Signed',
+      auto_invoice_enabled: true,
     })
     .select()
     .single();
 
   if (project) {
     await supabase.from('contracts').update({ project_id: project.id }).eq('id', contractId);
+    if (dealId) {
+      await supabase.from('deals').update({ project_id: project.id, updated_at: new Date().toISOString() }).eq('id', dealId);
+    }
+    await supabase
+      .from('business_invoices')
+      .update({ project_id: project.id, updated_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId)
+      .contains('metadata', { contract_id: contractId });
   }
 
   return project;

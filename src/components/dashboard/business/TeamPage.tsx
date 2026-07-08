@@ -110,7 +110,13 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     };
 
     if (loading) {
-        return <div className="flex items-center justify-center h-full"><div className="text-slate-400">Loading team...</div></div>;
+        return (
+            <div className="space-y-6 h-full flex flex-col">
+                <div className="flex-1 min-h-[320px] flex items-center justify-center">
+                    <div className="text-slate-400">Loading team...</div>
+                </div>
+            </div>
+        );
     }
 
     return (

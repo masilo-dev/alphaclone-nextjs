@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { WORKSPACE } from '@/constants/design';
 
 interface InstagramIntegrationRow {
   id: string;
@@ -58,10 +59,10 @@ export default function InstagramIntegrationTab() {
 
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module max-w-4xl mx-auto p-4 ac-safe-bottom lg:pb-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8">
+      <div className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-8`}>
         <div className="flex items-start gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
-            <Instagram className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center">
+            <Instagram className="w-7 h-7 text-pink-300" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Instagram Business</h1>
@@ -111,7 +112,7 @@ export default function InstagramIntegrationTab() {
             <button
               type="button"
               onClick={handleConnect}
-              className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:opacity-90 text-white font-bold transition-opacity"
+              className="inline-flex items-center gap-2 h-12 px-6 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold transition-colors"
             >
               <Link2 className="w-5 h-5" />
               Connect Instagram Business

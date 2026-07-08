@@ -612,8 +612,12 @@ export default function SocialCommandCenter() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+            <div
+                className={`relative min-h-0 flex flex-col ac-scroll-full ac-safe-bottom ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}
+            >
+                <div className="flex-1 flex items-center justify-center h-64">
+                    <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
+                </div>
             </div>
         );
     }

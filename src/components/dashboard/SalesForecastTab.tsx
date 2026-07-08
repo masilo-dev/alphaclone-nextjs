@@ -60,7 +60,11 @@ const SalesForecastTab = () => {
     }, [loadData, user]);
 
     if (loading) {
-        return <div className="p-12 text-center text-slate-400">Loading forecast data...</div>;
+        return (
+            <div className="ac-scroll-full ac-enterprise-module min-h-0 flex items-center justify-center py-12">
+                <div className="text-center text-slate-400">Loading forecast data...</div>
+            </div>
+        );
     }
 
     // Sort pipeline data by stage order

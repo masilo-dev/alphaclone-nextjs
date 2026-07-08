@@ -10,6 +10,8 @@ import {
     AlertTriangle, CreditCard, Landmark, RefreshCcw
 } from 'lucide-react';
 import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
+import { WORKSPACE } from '@/constants/design';
+import EmptyState from '@/components/ui/EmptyState';
 import { supabase } from '../../../lib/supabase';
 import ReceiptUploadModal from './ReceiptUploadModal';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
@@ -30,11 +32,11 @@ type Period = 'week' | 'month' | 'quarter' | 'year';
 type AccountingTab = 'overview' | 'income' | 'reports' | 'chart' | 'journal' | 'receipts';
 
 const ACCOUNTING_TABS: { key: AccountingTab; label: string }[] = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'income', label: 'Income' },
-    { key: 'reports', label: 'Financial Reports' },
-    { key: 'chart', label: 'Chart of Accounts' },
-    { key: 'journal', label: 'Journal Entries' },
+    { key: 'overview', label: 'Finance Home' },
+    { key: 'income', label: 'Performance' },
+    { key: 'reports', label: 'Statements' },
+    { key: 'chart', label: 'Accounts' },
+    { key: 'journal', label: 'Ledger' },
     { key: 'receipts', label: 'Receipts' },
 ];
 
@@ -195,9 +197,11 @@ export default function AccountingDashboard() {
 
     if (loading) {
         return (
-            <div className="flex flex-col justify-center items-center h-96 text-slate-300 gap-4">
-                <Activity className="w-12 h-12 animate-pulse text-emerald-400" />
-                <p className="font-medium uppercase tracking-widest text-xs">Syncing Ledger...</p>
+            <div className="relative space-y-6 max-w-7xl mx-auto pb-24 ac-scroll-full ac-enterprise-module px-2 sm:px-6">
+                <div className="ac-workspace-panel rounded-lg p-8 flex flex-col justify-center items-center min-h-[320px] text-slate-300 gap-4">
+                    <Activity className="w-12 h-12 animate-pulse text-emerald-400" />
+                    <p className="font-medium uppercase tracking-widest text-xs">Syncing Ledger...</p>
+                </div>
             </div>
         );
     }
@@ -212,15 +216,15 @@ export default function AccountingDashboard() {
                             <ShieldCheck size={32} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight">Setup your ledger</h3>
-                            <p className="text-slate-300 text-sm mt-1 max-w-md">Your Chart of Accounts is currently empty. Initialize standard business categories to start tracking your revenue and expenses.</p>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight">Activate your finance workspace</h3>
+                            <p className="text-slate-300 text-sm mt-1 max-w-md">Your account structure is still empty. Load the standard business chart so revenue, expenses, and cashflow start flowing into the workspace.</p>
                         </div>
                     </div>
                     <button 
                         onClick={handleInitializeAccounts}
                         className="w-full md:w-auto px-10 py-5 bg-emerald-500 text-white font-black uppercase text-xs rounded-2xl shadow-xl shadow-emerald-900/40 hover:bg-emerald-400 active:scale-95 transition-all"
                     >
-                        Initialize Accounts
+                        Load Starter Accounts
                     </button>
                 </div>
             )}
@@ -228,20 +232,20 @@ export default function AccountingDashboard() {
             {/* Standardized Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Accounting Hub</h1>
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">Finance Hub</h1>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded">Professional Edition</span>
                         <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Real-time Sync</span>
+                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Live Books</span>
                     </div>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                     {isMobile ? (
-                        <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> Entry</button>
+                        <button onClick={() => setIsManualEntryOpen(true)} className="flex-1 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-900/20"><Plus size={18} className="mr-2" /> New Entry</button>
                     ) : (
                         <>
-                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-slate-900/50 border border-white/5 text-slate-300"><Wallet className="w-4 h-4 mr-2" /> Add Transaction</Button>
-                            <Button className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}><Upload className="w-4 h-4 mr-2" /> Upload Receipt</Button>
+                            <Button variant="ghost" onClick={() => setIsManualEntryOpen(true)} className="bg-slate-900/50 border border-white/5 text-slate-300"><Wallet className="w-4 h-4 mr-2" /> Record Entry</Button>
+                            <Button className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}><Upload className="w-4 h-4 mr-2" /> Add Receipt</Button>
                         </>
                     )}
                 </div>
@@ -305,9 +309,9 @@ export default function AccountingDashboard() {
                     </div>
 
                     {/* Responsive Ledger List */}
-                    <div className="dashboard-panel-soft overflow-hidden">
-                        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414]">
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><Activity size={16} className="mr-2 text-emerald-400" /> Recent Ledger Activity</h3>
+                    <div className="ac-workspace-panel rounded-lg overflow-hidden">
+                        <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-toolbar)]">
+                            <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><Activity size={16} className="mr-2 text-emerald-400" /> Recent Finance Activity</h3>
                         </div>
                         <div className="divide-y divide-white/5">
                             {stats.recentTransactions.map(tx => (
@@ -327,7 +331,7 @@ export default function AccountingDashboard() {
             )}
 
             {activeTab === 'income' && (
-                <Card className="dashboard-panel p-6 sm:p-10 animate-in fade-in duration-300">
+                <Card className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} p-6 sm:p-10 animate-in fade-in duration-300`}>
                     <h2 className="text-xl font-black text-white uppercase tracking-tight mb-8">Statement of Profit & Loss</h2>
                     <div className="space-y-8">
                         <div>
@@ -369,16 +373,26 @@ export default function AccountingDashboard() {
 
             {activeTab === 'receipts' && (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                    <Card className="dashboard-panel-soft overflow-hidden">
-                        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414]">
+                    <Card className={`${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} overflow-hidden`}>
+                        <div className="p-5 border-b border-[var(--ws-border)] flex justify-between items-center bg-[var(--ws-toolbar)]">
                             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center"><FileText size={16} className="mr-2 text-emerald-400" /> Pending & Recent Receipts</h3>
                             <div className="flex gap-2">
                                 <Button size="sm" variant="ghost" className="text-xs text-slate-300"><Filter size={14} className="mr-1" /> Filter</Button>
+                                <Button size="sm" className="bg-emerald-600 text-white" onClick={() => setIsUploadOpen(true)}>
+                                    <Upload size={14} className="mr-1" /> Add Receipt
+                                </Button>
                             </div>
                         </div>
                         <div className="divide-y divide-white/5">
                             {receipts.length === 0 ? (
-                                <div className="p-12 text-center text-slate-500 text-sm">No receipts found. Upload your first receipt to start tracking.</div>
+                                <EmptyState
+                                    icon={Receipt}
+                                    title="No receipts captured yet"
+                                    description="Upload supplier receipts here to keep expenses, proof of payment, and ledger postings in one place."
+                                    actionLabel="Upload receipt"
+                                    onAction={() => setIsUploadOpen(true)}
+                                    className="max-w-none py-12"
+                                />
                             ) : (
                                 receipts.map(receipt => (
                                     <div key={receipt.id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-all">
@@ -420,9 +434,9 @@ export default function AccountingDashboard() {
 
             {/* Mobile Action Bar */}
             {isMobile && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-xl border-t border-white/5 z-40 flex gap-2 native-bottom-bar">
-                    <button onClick={() => setIsUploadOpen(true)} className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><Upload size={18} className="mr-2" /> Upload</button>
-                    <button onClick={() => setIsReceiptGeneratorOpen(true)} className="flex-1 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><FileText size={18} className="mr-2" /> Receipt</button>
+                <div className="sticky bottom-0 p-4 bg-[var(--ws-toolbar)]/95 backdrop-blur-md border-t border-[var(--ws-border)] z-20 flex gap-2 native-bottom-bar">
+                    <button onClick={() => setIsUploadOpen(true)} className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><Upload size={18} className="mr-2" /> Add Receipt</button>
+                    <button onClick={() => setIsReceiptGeneratorOpen(true)} className="flex-1 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-white text-xs font-black uppercase tracking-widest"><FileText size={18} className="mr-2" /> New Slip</button>
                 </div>
             )}
         </div>

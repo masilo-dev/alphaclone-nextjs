@@ -377,10 +377,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-slate-400 text-sm">Loading calendar...</span>
+            <div className="space-y-4 ac-scroll-full ac-enterprise-module">
+                <div className="flex items-center justify-center min-h-[320px]">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-slate-400 text-sm">Loading calendar...</span>
+                    </div>
                 </div>
             </div>
         );

@@ -11,7 +11,7 @@ import {
 
 export interface EnterpriseColumn<T> {
   id: string;
-  header: string;
+  header: React.ReactNode;
   accessor: (row: T) => React.ReactNode;
   /** Shown in mobile card header row */
   mobilePrimary?: boolean;

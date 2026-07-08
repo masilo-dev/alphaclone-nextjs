@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Receipt, Loader2 } from 'lucide-react';
+import { Receipt, Loader2, RefreshCcw } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import {
   accountingManagementClient,
@@ -25,10 +25,12 @@ export default function BillsPayablePage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
     setLoading(true);
+    setError(null);
     try {
       const [billsRes, agingRes] = await Promise.all([
         accountingManagementClient.getBills(1, 100, filter === 'all' ? undefined : filter),
@@ -38,6 +40,7 @@ export default function BillsPayablePage() {
       setAging(agingRes.data?.aging || []);
     } catch (e) {
       console.error(e);
+      setError(e instanceof Error ? e.message : 'Failed to load bills payable');
     } finally {
       setLoading(false);
     }
@@ -52,7 +55,7 @@ export default function BillsPayablePage() {
   );
 
   return (
-    <div className="p-4 space-y-4 overflow-y-auto pb-24">
+    <div className="p-4 space-y-4 pb-24 ac-scroll-full ac-enterprise-module">
       {aging.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {aging.slice(0, 4).map((a, i) => (
@@ -74,14 +77,29 @@ export default function BillsPayablePage() {
       />
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+        <div className="ac-workspace-panel rounded-lg min-h-[240px] flex items-center justify-center">
+          <div className="flex items-center gap-3 text-slate-400">
+            <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
+            <span className="text-sm font-medium">Loading bills payable...</span>
+          </div>
         </div>
+      ) : error ? (
+        <EmptyState
+          icon={RefreshCcw}
+          title="Bills workspace unavailable"
+          description={`${error}. Retry to reload vendor balances and due dates.`}
+          actionLabel="Try again"
+          onAction={() => void load()}
+        />
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Receipt}
           title="No bills to pay"
-          description="Vendor bills and accounts payable will appear here when recorded."
+          description={
+            filter === 'all' && !search
+              ? 'Vendor bills and accounts payable will appear here once expenses are captured. Add bills from purchases or receipts so due dates and cash commitments stay visible.'
+              : 'No bills match your current filters. Clear the search or switch the status filter to review the full payables queue.'
+          }
         />
       ) : (
         <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5">

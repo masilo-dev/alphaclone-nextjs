@@ -45,7 +45,7 @@ export default function HubShell({
     <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       <div
         className={cn(
-          'flex-shrink-0 px-4 pt-3 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)] ac-hub-toolbar-sticky',
+          'flex-shrink-0 px-4 pt-3 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)]',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >

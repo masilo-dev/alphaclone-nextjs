@@ -78,6 +78,8 @@ import { videoRoomOrchestrationWorkflow } from '../../workflows/video-room-orche
 import { userOnboardingWorkflow } from '../../workflows/user-onboarding';
 import { mcpAgentWorkflow } from '../../workflows/mcp-agent';
 import { strategicAuditService } from '../StrategicAuditService';
+import { assertLeadStageTransition } from '../../lib/stageProgression';
+import { isTerminalLeadStage, normalizeLeadPipelineStage } from '../../lib/crmPipelineStages';
 import { strategicThinkerService } from '../StrategicThinkerService';
 import { xaiVideoGenerationService } from '../ai/xaiVideoGenerationService';
 import { xService } from '../xService';
@@ -2181,9 +2183,10 @@ class AlphaCloneMCPServer {
           const { lead_id, business_name, email, phone, industry, location, source, notes, status, stage, search_email, search_business_name } = a;
           
           let resolvedId = lead_id;
+          const resolvedIdTrimmed = typeof resolvedId === 'string' ? resolvedId.trim() : resolvedId;
 
           // Smart Lookup fallback
-          if (!resolvedId && (search_email || search_business_name)) {
+          if (!resolvedIdTrimmed && (search_email || search_business_name)) {
             let lookup = supabaseAdmin.from('leads').select('id').eq('tenant_id', tenant_id);
             if (search_email) lookup = lookup.eq('email', search_email);
             if (search_business_name) lookup = lookup.eq('business_name', search_business_name);
@@ -2195,6 +2198,76 @@ class AlphaCloneMCPServer {
             throw new Error('lead_id must be a valid lead UUID. Use get_leads or provide search_email/search_business_name for Smart Lookup.');
           }
 
+          const resolvedLeadId = String(resolvedId).trim();
+
+          const coerceMetadata = (value: unknown) => {
+            if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, any>;
+            return {};
+          };
+
+          const appendLeadStageMetadata = (
+            metadata: Record<string, any>,
+            fromStage: string,
+            toStage: string,
+            reason?: string
+          ) => {
+            const history = Array.isArray(metadata?.stage_history) ? metadata.stage_history : [];
+            const entry = {
+              from: fromStage,
+              to: toStage,
+              reason: reason?.trim() || undefined,
+              changed_at: new Date().toISOString(),
+            };
+
+            return {
+              ...(metadata || {}),
+              previous_stage: fromStage,
+              last_stage_change_at: entry.changed_at,
+              stage_change_reason: entry.reason,
+              stage_history: [...history.slice(-19), entry],
+            };
+          };
+
+          // If stage is being updated, normalize legacy stages and keep metadata in sync.
+          const normalizedStage = stage !== undefined ? normalizeLeadPipelineStage(stage) : null;
+          if (normalizedStage) {
+            const { data: existingLead, error: existingLeadErr } = await supabaseAdmin
+              .from('leads')
+              .select('stage, metadata')
+              .eq('tenant_id', tenant_id)
+              .eq('id', resolvedLeadId)
+              .maybeSingle();
+
+            if (existingLeadErr) throw supabaseErrorToMcpClientError('update_lead', existingLeadErr.message);
+            if (!existingLead) throw new Error(`Lead not found: ${resolvedLeadId}`);
+
+            const fromStage = normalizeLeadPipelineStage(existingLead.stage);
+            const check = assertLeadStageTransition(fromStage, normalizedStage);
+            if (!check.ok) throw new Error(check.message);
+
+            if (isTerminalLeadStage(normalizedStage) && normalizedStage === 'lost') {
+              // Match leadService semantics: closing lost removes the lead record from the pipeline.
+              try {
+                await fileUploadService.deleteFileByEntity('lead', resolvedLeadId);
+              } catch (_) {
+                // Deletion of attached assets is best-effort; we still delete the lead record.
+              }
+
+              const { error: deleteErr } = await supabaseAdmin
+                .from('leads')
+                .delete()
+                .eq('tenant_id', tenant_id)
+                .eq('id', resolvedLeadId);
+
+              if (deleteErr) throw supabaseErrorToMcpClientError('update_lead', deleteErr.message);
+
+              result = {
+                content: [{ type: 'text', text: `Lead ${resolvedLeadId} closed — removed from pipeline.` }],
+              };
+              break;
+            }
+          }
+
           const update: Record<string, any> = cleanObjectPlaceholders({});
           if (business_name !== undefined) update.business_name = business_name;
           if (email !== undefined) update.email = email || null;
@@ -2204,7 +2277,27 @@ class AlphaCloneMCPServer {
           if (source !== undefined) update.source = source || null;
           if (notes !== undefined) update.notes = notes || null;
           if (status !== undefined) update.status = status;
-          if (stage !== undefined) update.stage = stage;
+          if (stage !== undefined) {
+            const stageToSet = normalizedStage as string;
+            update.stage = stageToSet;
+
+            // Keep stage_history + change timestamps visible in UI/analytics.
+            const { data: existingLead } = await supabaseAdmin
+              .from('leads')
+              .select('stage, metadata')
+              .eq('tenant_id', tenant_id)
+              .eq('id', resolvedLeadId)
+              .maybeSingle();
+
+            const fromStage = normalizeLeadPipelineStage(existingLead?.stage);
+            const nextMetadata = appendLeadStageMetadata(
+              coerceMetadata(existingLead?.metadata),
+              fromStage,
+              stageToSet,
+              typeof notes === 'string' ? notes.trim() : undefined
+            );
+            update.metadata = nextMetadata;
+          }
           
           const cleanedUpdate = cleanObjectPlaceholders(update);
           if (Object.keys(cleanedUpdate).length === 0) throw new Error('Provide at least one field to update');
@@ -2213,7 +2306,7 @@ class AlphaCloneMCPServer {
             .from('leads')
             .update(cleanedUpdate)
             .eq('tenant_id', tenant_id)
-            .eq('id', (resolvedId as string).trim())
+            .eq('id', resolvedLeadId)
             .select('id, business_name, status, stage, updated_at')
             .single();
           if (error) throw supabaseErrorToMcpClientError('update_lead', error.message);
@@ -5187,8 +5280,11 @@ class AlphaCloneMCPServer {
             unitsForTextGeneration(2048)
           );
           if (!quota.ok) {
+            const quotaInfraUnavailable = quota.used === 0 && quota.remaining === 0;
             throw new Error(
-              'Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.'
+              quotaInfraUnavailable
+                ? 'AI quota service is temporarily unavailable, so contract drafting cannot start right now. Please retry shortly.'
+                : 'Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.'
             );
           }
           if (!contract_type || !client_name) {
@@ -7452,7 +7548,12 @@ Return ONLY a JSON array of 60 objects:
             const plan = (tenantRow?.subscription_plan as string) || 'free';
             const quota = await consumeTenantAiUnits(supabaseAdmin, tenant_id, plan, unitsForTextGeneration(2048));
             if (!quota.ok) {
-              throw new Error('Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.');
+              const quotaInfraUnavailable = quota.used === 0 && quota.remaining === 0;
+              throw new Error(
+                quotaInfraUnavailable
+                  ? 'AI quota service is temporarily unavailable, so contract drafting cannot start right now. Please retry shortly.'
+                  : 'Daily AI usage limit reached for this workspace. Try again after UTC midnight or upgrade your plan.'
+              );
             }
             const contractContent = await generateContractDraftText(contract_type, client_name, a.key_terms);
             const draftedContract = appendContractDisclaimer(contractContent, 'Claude (via AlphaClone MCP nexus_contract_drafter)');
