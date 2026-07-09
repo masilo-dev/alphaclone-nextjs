@@ -19,7 +19,7 @@ export default function BonnieModuleDock() {
   const activeModule = resolveBonnieModuleFromPath(pathname || '');
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(true);
   const hasLoadedPreferenceRef = React.useRef(false);
 
   React.useEffect(() => {

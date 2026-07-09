@@ -50,7 +50,7 @@ export function ModulePageLayout({
           {stats ? <section className="flex-shrink-0 mb-4 md:mb-6">{stats}</section> : null}
           <section className="flex-1 min-h-0 ac-scroll-full">{children}</section>
         </div>
-        <aside className="hidden lg:flex lg:w-[320px] xl:w-[360px] flex-shrink-0 flex-col min-h-0">
+        <aside className="hidden lg:flex lg:w-[300px] xl:w-[340px] flex-shrink-0 flex-col min-h-0 max-h-[calc(100dvh-8rem)]">
           {sidePanel}
         </aside>
       </div>

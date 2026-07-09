@@ -120,7 +120,7 @@ const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/busine
 const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
 const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
 const DeepDeskView = React.lazy(() => import('./dashboard/tickets/DeepDeskView'));
-const ZohoCampaignsHub = React.lazy(() => import('./dashboard/zoho/ZohoCampaignsHub'));
+const EmailCampaignsPage = React.lazy(() => import('./dashboard/marketing/EmailCampaignsPage'));
 const SocialMediaComposer = React.lazy(() => import('./dashboard/engine/SocialMediaComposer'));
 const WhatsAppManagementPage = React.lazy(() => import('./dashboard/WhatsAppManagementPage'));
 
@@ -1509,7 +1509,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/business/campaigns':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
-            <ZohoCampaignsHub userId={user.id} />
+            <EmailCampaignsPage userId={user.id} />
           </React.Suspense>
         );
 

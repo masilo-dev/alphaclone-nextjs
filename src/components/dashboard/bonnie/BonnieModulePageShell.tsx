@@ -13,15 +13,13 @@ type BonnieModulePageShellProps = {
   className?: string;
 };
 
-/** Wraps module pages without ModulePageLayout — adds Bonnie dock on xl+ */
+/** Wraps module pages — Bonnie dock sits below main content so forms stay full width. */
 export function BonnieModulePageShell({ children, className }: BonnieModulePageShellProps) {
   return (
-    <div className={`flex flex-col gap-4 xl:flex-row xl:items-start ${className || ''}`}>
-      <div className="min-w-0 flex-1">{children}</div>
-      <aside className="hidden w-[288px] 2xl:w-[340px] shrink-0 xl:block xl:sticky xl:top-6 xl:h-[calc(100vh-6rem)]">
-        <div className="h-full rounded-3xl border border-white/5 bg-slate-900/50 backdrop-blur-xl overflow-hidden shadow-2xl shadow-black/20">
-          <BonnieModuleDock />
-        </div>
+    <div className={`flex flex-col gap-4 ${className || ''}`}>
+      <div className="min-w-0 w-full">{children}</div>
+      <aside className="hidden md:block w-full lg:max-w-sm lg:ml-auto shrink-0">
+        <BonnieModuleDock />
       </aside>
     </div>
   );

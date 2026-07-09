@@ -1040,6 +1040,21 @@ Voice & rules:
                     {/* 1. LIST VIEW */}
                     {viewMode === 'list' && (
                         <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                            <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-4 text-sm text-slate-300 leading-relaxed">
+                                <p className="font-semibold text-teal-200">You choose how campaigns are sent and styled</p>
+                                <p className="mt-1.5">
+                                    Zoho Mail is <span className="text-white font-medium">one option</span>, not the only path.
+                                    Pick your delivery provider in{' '}
+                                    <button
+                                        type="button"
+                                        onClick={() => router.push('/dashboard/business/settings')}
+                                        className="text-teal-400 hover:text-teal-300 underline underline-offset-2"
+                                    >
+                                        Settings → Email Delivery
+                                    </button>
+                                    {' '}— Brevo, SendGrid, Resend, or Zoho Mail. Write in plain English or switch to advanced HTML when you want full design control.
+                                </p>
+                            </div>
                             <DeliverabilityPanel />
                             {campaigns.some((camp) => camp.status === 'draft') && (
                                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex gap-3">

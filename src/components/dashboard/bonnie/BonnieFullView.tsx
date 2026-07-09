@@ -252,9 +252,9 @@ export default function BonnieFullView() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-140px)] min-h-[600px] w-full flex-col gap-6 bg-slate-950 text-white p-1 md:p-2">
+    <div className="flex min-h-[calc(100dvh-10rem)] w-full flex-col gap-4 md:gap-6 bg-slate-950 text-white p-1 md:p-2 overflow-y-auto">
       {/* Header Banner */}
-      <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-800 bg-[#090d16] p-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-800 bg-[#090d16] p-4 md:p-6 sm:flex-row sm:items-center shrink-0">
         <div className="flex items-center gap-4">
           <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 shadow-xl shadow-teal-500/20">
             <Brain className="h-7 w-7 text-white animate-pulse" />
@@ -309,10 +309,10 @@ export default function BonnieFullView() {
       </div>
 
       {/* Main Split Interface */}
-      <div className="flex flex-1 gap-6 overflow-hidden min-h-0">
+      <div className="flex flex-1 flex-col lg:flex-row gap-4 lg:gap-6 min-h-0">
         
         {/* Left Side: System Information & Activity Log */}
-        <div className="hidden lg:flex w-96 flex-col gap-6 shrink-0 overflow-y-auto pr-1 custom-scrollbar">
+        <div className="flex w-full lg:w-80 xl:w-96 flex-col gap-4 lg:gap-6 shrink-0 lg:max-h-[calc(100dvh-12rem)] lg:overflow-y-auto pr-0 lg:pr-1 custom-scrollbar">
           {/* Status Panel */}
           <div className="rounded-3xl border border-slate-800 bg-[#090d16] p-6 space-y-4">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
@@ -427,7 +427,7 @@ export default function BonnieFullView() {
         </div>
 
         {/* Right Side: Chat Interface */}
-        <div className="flex-1 flex flex-col bg-[#090d16] border border-slate-800 rounded-3xl p-6 relative overflow-hidden min-h-0">
+        <div className="flex flex-1 flex flex-col bg-[#090d16] border border-slate-800 rounded-3xl p-4 md:p-6 relative min-h-[min(70dvh,720px)] lg:min-h-[480px]">
           <div className="flex items-center justify-between pb-4 border-b border-slate-800/50 mb-4 shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-teal-400" />
@@ -447,7 +447,7 @@ export default function BonnieFullView() {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-[280px]">
             <BonnieChatPanel
               streaming
               storageKey={tenantId ? `bonnie_chat_full_${tenantId}` : undefined}
