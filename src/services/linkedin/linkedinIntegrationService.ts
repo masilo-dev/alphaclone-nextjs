@@ -653,6 +653,56 @@ export function extractCompanyPagesFromMetadata(raw: unknown): LinkedInCompanyPa
     .filter((page): page is LinkedInCompanyPage => !!page);
 }
 
+/** Merge company pages from integration metadata and linkedin_identities rows. */
+export async function resolveLinkedInCompanyPagesForTenant(
+  admin: SupabaseClient,
+  tenantId: string,
+  metadata?: unknown
+): Promise<LinkedInCompanyPage[]> {
+  const merged = new Map<string, LinkedInCompanyPage>();
+
+  for (const page of extractCompanyPagesFromMetadata(metadata)) {
+    merged.set(page.id, page);
+  }
+
+  const { data: orgIdentities, error } = await admin
+    .from('linkedin_identities')
+    .select('linkedin_organization_id, name, vanity_name, logo_url')
+    .eq('tenant_id', tenantId)
+    .eq('type', 'organization');
+
+  if (!error || error.code === '42P01') {
+    for (const org of orgIdentities || []) {
+      const row = org as {
+        linkedin_organization_id?: unknown;
+        name?: unknown;
+        vanity_name?: unknown;
+        logo_url?: unknown;
+      };
+      const id = String(row.linkedin_organization_id || '').trim();
+      if (!id) continue;
+      const existing = merged.get(id);
+      merged.set(id, {
+        id,
+        name: typeof row.name === 'string' ? row.name : existing?.name ?? null,
+        vanityName: typeof row.vanity_name === 'string' ? row.vanity_name : existing?.vanityName ?? null,
+        logoUrl: typeof row.logo_url === 'string' ? row.logo_url : existing?.logoUrl ?? null,
+        roles: existing?.roles ?? [],
+        primaryRole: existing?.primaryRole ?? null,
+      });
+    }
+  }
+
+  return Array.from(merged.values());
+}
+
+export function extractLinkedInOrganizationIdFromAuthorUrn(authorUrn: string): string | null {
+  const prefix = 'urn:li:organization:';
+  if (!authorUrn.startsWith(prefix)) return null;
+  const id = authorUrn.slice(prefix.length).trim();
+  return id || null;
+}
+
 export async function encryptLinkedInAccessToken(token: string): Promise<string> {
   const secret = getEncryptionSecret();
   if (!secret) return token;

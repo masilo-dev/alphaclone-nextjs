@@ -1445,12 +1445,12 @@ export const MCP_TOOLS = [
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         text: { type: 'string', description: 'Post text content' },
-        post_as: { type: 'string', description: 'personal | company | all_pages (default: personal)' },
+        post_as: { type: 'string', description: 'personal | company | all_pages (default: personal). Passing linkedin_organization_id implies company.' },
         media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs for scheduled publishing' },
         media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset references uploaded to the workspace library' },
         publish_now: { type: 'boolean' },
         scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
-        linkedin_organization_id: { type: 'string', description: 'Optional LinkedIn organization ID to post as company page' },
+        linkedin_organization_id: { type: 'string', description: 'LinkedIn organization ID to post as company page. When provided, the post is published as that page even without post_as=company.' },
         task_id: { type: 'string', description: 'Optional task reference to update with execution notes' },
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
@@ -1479,7 +1479,7 @@ export const MCP_TOOLS = [
       properties: {
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         post_urn: { type: 'string', description: 'LinkedIn activity or ugcPost URN' },
-        linkedin_organization_id: { type: 'string', description: 'Optional organization ID for organization analytics lookup' },
+        linkedin_organization_id: { type: 'string', description: 'Optional organization ID for org analytics. Auto-resolved from the social_posts record when omitted.' },
       },
       required: ['post_urn'],
     },

@@ -20,7 +20,11 @@ import {
 } from '../../lib/social/linkedinPublishHelpers';
 import { loadMcpLinkedInIntegration } from '../../lib/linkedin/mcpLinkedIn';
 import { linkedInFetch, LinkedInApiError } from '../../lib/linkedin/linkedinClient';
-import { markLinkedInIntegrationInactive } from '../../services/linkedin/linkedinIntegrationService';
+import {
+  extractLinkedInOrganizationIdFromAuthorUrn,
+  markLinkedInIntegrationInactive,
+  resolveLinkedInCompanyPagesForTenant,
+} from '../../services/linkedin/linkedinIntegrationService';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
@@ -4038,47 +4042,36 @@ class AlphaCloneMCPServer {
             throwLinkedInError('LINKEDIN_NOT_CONNECTED', 'LinkedIn is not connected for this workspace/user.');
           }
 
-          const scopes = Array.isArray(li.scopes) ? li.scopes : [];
-          const postAsMode = String(post_as || 'personal').trim().toLowerCase();
+          const scopes = Array.isArray(li.scopes)
+            ? li.scopes.map((scope: unknown) => String(scope).toLowerCase())
+            : [];
+          let postAsMode = String(post_as || 'personal').trim().toLowerCase();
           if (postAsMode !== 'personal' && postAsMode !== 'company' && postAsMode !== 'all_pages') {
             throw new Error('post_as must be one of: personal, company, all_pages');
           }
-          if (postAsMode === 'personal' && !scopes.includes('w_member_social')) {
-            throwLinkedInError('LINKEDIN_MISSING_MEMBER_SCOPE', 'LinkedIn connection is missing w_member_social scope.');
-          }
 
-          const companyPages = Array.isArray((li as any)?.metadata?.company_pages)
-            ? ((li as any).metadata.company_pages as Array<Record<string, unknown>>)
-            : [];
+          const companyPages = await resolveLinkedInCompanyPagesForTenant(
+            supabaseAdmin,
+            tenant_id,
+            (li as { metadata?: unknown }).metadata
+          );
           const requestedOrganizationId =
             typeof linkedin_organization_id === 'string' && linkedin_organization_id.trim()
               ? linkedin_organization_id.trim()
               : null;
+
+          // linkedin_organization_id implies a company-page post (Bonnie often omits post_as=company).
+          if (requestedOrganizationId && postAsMode === 'personal') {
+            postAsMode = 'company';
+          }
+
           const selectedCompany = requestedOrganizationId
-            ? companyPages.find((page) => String(page?.id || '') === requestedOrganizationId)
+            ? companyPages.find((page) => String(page.id) === requestedOrganizationId)
             : null;
           let postAsCompany = false;
-          if (postAsMode === 'company') {
-            if (!scopes.includes('w_organization_social')) {
-              throwLinkedInError(
-                'LINKEDIN_MISSING_ORGANIZATION_SCOPE',
-                'LinkedIn connection is missing w_organization_social scope. Reconnect LinkedIn and approve company page permissions.'
-              );
-            }
-            if (!requestedOrganizationId || !selectedCompany) {
-              const availableIds = companyPages.map((page) => String(page?.id || '').trim()).filter(Boolean);
-              throwLinkedInError(
-                'LINKEDIN_ORGANIZATION_ID_REQUIRED',
-                'post_as=company requires linkedin_organization_id from get_linkedin_identities.',
-                { available_organization_ids: availableIds }
-              );
-            }
-            postAsCompany = true;
-          }
-          const allCompanyPageIds = companyPages
-            .map((page) => String(page?.id || '').trim())
-            .filter(Boolean);
           const postToAllPages = postAsMode === 'all_pages';
+          const allCompanyPageIds = companyPages.map((page) => page.id).filter(Boolean);
+
           if (postToAllPages) {
             if (!scopes.includes('w_organization_social')) {
               throwLinkedInError(
@@ -4092,7 +4085,31 @@ class AlphaCloneMCPServer {
                 'No connected LinkedIn company pages found. Reconnect LinkedIn and ensure your account is an admin for at least one page.'
               );
             }
+          } else if (postAsMode === 'company' || requestedOrganizationId) {
+            if (!scopes.includes('w_organization_social')) {
+              throwLinkedInError(
+                'LINKEDIN_MISSING_ORGANIZATION_SCOPE',
+                'LinkedIn connection is missing w_organization_social scope. Reconnect LinkedIn and approve company page permissions.'
+              );
+            }
+            if (!requestedOrganizationId) {
+              const availableIds = allCompanyPageIds;
+              throwLinkedInError(
+                'LINKEDIN_ORGANIZATION_ID_REQUIRED',
+                'post_as=company requires linkedin_organization_id from get_linkedin_identities.',
+                { available_organization_ids: availableIds }
+              );
+            }
+            if (!selectedCompany && allCompanyPageIds.length > 0 && !allCompanyPageIds.includes(requestedOrganizationId)) {
+              console.warn(
+                `[create_linkedin_post] linkedin_organization_id=${requestedOrganizationId} not in cached company pages; posting anyway`
+              );
+            }
+            postAsCompany = true;
+          } else if (!scopes.includes('w_member_social')) {
+            throwLinkedInError('LINKEDIN_MISSING_MEMBER_SCOPE', 'LinkedIn connection is missing w_member_social scope.');
           }
+
           const authorUrn = postAsCompany
             ? `urn:li:organization:${requestedOrganizationId}`
             : li.linkedin_person_urn;
@@ -4379,6 +4396,7 @@ class AlphaCloneMCPServer {
               linkedin_post_urn: linkedinPostUrn,
               linkedin_organization_id: postAsCompany ? requestedOrganizationId : null,
               linkedin_member_id: postAsCompany ? null : li.linkedin_member_id || null,
+              linkedin_author_urn: authorUrn,
               analytics: linkedinPostUrn ? { linkedin_post_urn: linkedinPostUrn } : {},
               metadata: baseMetadata,
             };
@@ -4681,11 +4699,33 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const post_urn = String(a.post_urn || '').trim();
-          const linkedin_organization_id =
+          let linkedin_organization_id =
             typeof a.linkedin_organization_id === 'string' && a.linkedin_organization_id.trim()
               ? a.linkedin_organization_id.trim()
               : null;
           if (!post_urn) throw new Error('post_urn is required');
+
+          if (!linkedin_organization_id) {
+            const { data: postRow } = await supabaseAdmin
+              .from('social_posts')
+              .select('linkedin_organization_id, metadata, linkedin_author_urn')
+              .eq('tenant_id', tenant_id)
+              .eq('linkedin_post_urn', post_urn)
+              .maybeSingle();
+            const metadata =
+              postRow?.metadata && typeof postRow.metadata === 'object'
+                ? (postRow.metadata as Record<string, unknown>)
+                : null;
+            linkedin_organization_id =
+              (typeof postRow?.linkedin_organization_id === 'string' && postRow.linkedin_organization_id.trim()
+                ? postRow.linkedin_organization_id.trim()
+                : null) ||
+              (typeof metadata?.linkedin_organization_id === 'string' && metadata.linkedin_organization_id.trim()
+                ? String(metadata.linkedin_organization_id).trim()
+                : null) ||
+              extractLinkedInOrganizationIdFromAuthorUrn(String(postRow?.linkedin_author_urn || '')) ||
+              extractLinkedInOrganizationIdFromAuthorUrn(String(metadata?.linkedin_author_urn || ''));
+          }
 
           const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token) throw new Error('LinkedIn is not connected for this workspace/user.');

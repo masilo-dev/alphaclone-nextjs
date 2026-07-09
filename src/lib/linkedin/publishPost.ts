@@ -8,10 +8,10 @@ import {
   updateSocialPostLinkedInUrnWithRetry,
 } from '@/lib/social/linkedinPublishHelpers';
 import {
-  extractCompanyPagesFromMetadata,
   getLinkedInIntegrationWithToken,
   markLinkedInIntegrationInactive,
   normalizeLinkedInScopes,
+  resolveLinkedInCompanyPagesForTenant,
 } from '@/services/linkedin/linkedinIntegrationService';
 
 export type LinkedInPublishResult = {
@@ -156,28 +156,25 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
         : typeof post.metadata?.linkedin_organization_id === 'string'
           ? String(post.metadata.linkedin_organization_id)
           : null;
-    const companyPages = extractCompanyPagesFromMetadata(integration.metadata);
+    const companyPages = await resolveLinkedInCompanyPagesForTenant(admin, post.tenant_id, integration.metadata);
     const selectedCompany = requestedOrganizationId
       ? companyPages.find((page) => String(page.id) === requestedOrganizationId)
       : null;
 
     if (requestedOrganizationId) {
-      if (!selectedCompany) {
-        return {
-          ok: false,
-          platform: 'linkedin',
-          reason:
-            'Selected LinkedIn company page is not connected. Refresh company pages or reconnect LinkedIn.',
-        };
-      }
       if (!scopes.includes('w_organization_social')) {
         return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
+      }
+      if (!selectedCompany && companyPages.length > 0) {
+        console.warn(
+          `[publishLinkedInPost] linkedin_organization_id=${requestedOrganizationId} not in cached company pages; posting anyway`
+        );
       }
     } else if (!scopes.includes('w_member_social')) {
       return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
     }
 
-    const canPostAsCompany = Boolean(requestedOrganizationId && selectedCompany);
+    const canPostAsCompany = Boolean(requestedOrganizationId && scopes.includes('w_organization_social'));
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
       : integration.linkedin_person_urn;
@@ -253,8 +250,9 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
     const postUrn = parseLinkedInUgcPostUrn(res, rawBody);
     const patch: Record<string, unknown> = {
       linkedin_post_urn: postUrn,
-      linkedin_member_id: integration.linkedin_member_id || post.linkedin_member_id || null,
+      linkedin_member_id: canPostAsCompany ? null : integration.linkedin_member_id || post.linkedin_member_id || null,
       linkedin_organization_id: canPostAsCompany ? requestedOrganizationId : null,
+      linkedin_author_urn: authorUrn,
     };
 
     const retry = await updateSocialPostLinkedInUrnWithRetry(admin, postId, patch);
