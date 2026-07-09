@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
+import { formatLinkedInCompanyPageLabel } from '@/services/linkedin/linkedinIntegrationService';
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 
@@ -25,6 +26,8 @@ interface LinkedInPostRow {
   created_at: string;
   linkedin_post_urn: string | null;
   linkedin_member_id: string | null;
+  linkedin_organization_id?: string | null;
+  metadata?: Record<string, unknown> | null;
   external_id?: string | null;
   analytics?: Record<string, unknown> | null;
   error_message: string | null;
@@ -37,6 +40,7 @@ interface LinkedInIntegrationRow {
   is_active: boolean;
   token_expires_at?: string | null;
   metadata?: {
+    name?: string | null;
     company_pages?: Array<{
       id: string;
       name: string | null;
@@ -98,6 +102,17 @@ function isMissingRelationOrColumn(error: any, name: string) {
     (error.code === '42703' && msg.includes(name)) ||
     msg.includes(name)
   );
+}
+
+function getLinkedInPostOrganizationId(post: LinkedInPostRow): string | null {
+  if (typeof post.linkedin_organization_id === 'string' && post.linkedin_organization_id.trim()) {
+    return post.linkedin_organization_id.trim();
+  }
+  const analyticsOrg = (post.analytics as Record<string, unknown> | null)?.linkedin_organization_id;
+  if (typeof analyticsOrg === 'string' && analyticsOrg.trim()) return analyticsOrg.trim();
+  const metadataOrg = post.metadata?.linkedin_organization_id;
+  if (typeof metadataOrg === 'string' && metadataOrg.trim()) return metadataOrg.trim();
+  return null;
 }
 
 async function loadLinkedInPostsWithSchemaFallback(tenantId: string) {
@@ -280,14 +295,6 @@ export default function LinkedInManagementTab() {
     loadData();
   }, [loadData]);
 
-  const filteredPosts = useMemo(() => {
-    const accountPosts = selectedLinkedInMemberId
-      ? posts.filter((post) => !post.linkedin_member_id || post.linkedin_member_id === selectedLinkedInMemberId)
-      : posts;
-    if (statusFilter === 'all') return accountPosts;
-    return accountPosts.filter((post) => post.status === statusFilter);
-  }, [posts, statusFilter, selectedLinkedInMemberId]);
-
   const duplicateGroups = useMemo(() => {
     const groups: Record<string, string[]> = {};
     posts.forEach((p) => {
@@ -333,6 +340,31 @@ export default function LinkedInManagementTab() {
     }
     return Array.from(merged.values());
   }, [selectedIntegration, orgIdentities]);
+  const selectedCompanyPage = useMemo(
+    () => companyPages.find((page) => page.id === selectedLinkedInOrganizationId) || null,
+    [companyPages, selectedLinkedInOrganizationId]
+  );
+  const linkedInProfileLabel = useMemo(() => {
+    const profileName =
+      typeof selectedIntegration?.metadata?.name === 'string'
+        ? selectedIntegration.metadata.name.trim()
+        : '';
+    return profileName || 'Personal profile';
+  }, [selectedIntegration?.metadata?.name]);
+  const linkedInPostingAsLabel = useMemo(() => {
+    if (selectedCompanyPage) return formatLinkedInCompanyPageLabel(selectedCompanyPage);
+    return linkedInProfileLabel;
+  }, [selectedCompanyPage, linkedInProfileLabel]);
+  const filteredPosts = useMemo(() => {
+    const accountPosts = selectedLinkedInMemberId
+      ? posts.filter((post) => !post.linkedin_member_id || post.linkedin_member_id === selectedLinkedInMemberId)
+      : posts;
+    const scopedPosts = selectedLinkedInOrganizationId
+      ? accountPosts.filter((post) => getLinkedInPostOrganizationId(post) === selectedLinkedInOrganizationId)
+      : accountPosts.filter((post) => !getLinkedInPostOrganizationId(post));
+    if (statusFilter === 'all') return scopedPosts;
+    return scopedPosts.filter((post) => post.status === statusFilter);
+  }, [posts, statusFilter, selectedLinkedInMemberId, selectedLinkedInOrganizationId]);
   const hasOrganizationReadScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     const normalized = normalizeLinkedInScopes(scopes);
@@ -942,8 +974,14 @@ ${parentContext}Return only the comment text.`;
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-bold text-white">
                     {selectedLinkedInOrganizationId
-                      ? companyPages.find((p) => p.id === selectedLinkedInOrganizationId)?.name || 'Company page'
-                      : 'Personal profile'}
+                      ? formatLinkedInCompanyPageLabel(
+                          companyPages.find((p) => p.id === selectedLinkedInOrganizationId) || {
+                            id: selectedLinkedInOrganizationId,
+                            name: null,
+                            vanityName: null,
+                          }
+                        )
+                      : linkedInProfileLabel}
                   </p>
                   <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Preview</span>
                 </div>
@@ -1147,9 +1185,11 @@ ${parentContext}Return only the comment text.`;
             <h2 className="text-lg font-bold text-white tracking-tight">LinkedIn manager</h2>
             <div className="flex items-center gap-2 mt-0.5">
               <div className={`w-2 h-2 rounded-full ${selectedIntegration?.is_active ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]'}`} />
-              <p className="text-xs text-slate-400 font-medium truncate max-w-[150px] sm:max-w-none">
-                {selectedIntegration?.is_active 
-                  ? `${selectedLinkedInMemberId} — personal profile` 
+              <p className="text-xs text-slate-400 font-medium truncate max-w-[220px] sm:max-w-none">
+                {selectedIntegration?.is_active
+                  ? selectedLinkedInOrganizationId
+                    ? `Company page · ${linkedInPostingAsLabel}`
+                    : `${linkedInProfileLabel} · personal profile`
                   : 'Disconnected — reconnect required'}
               </p>
             </div>
@@ -1241,7 +1281,11 @@ ${parentContext}Return only the comment text.`;
         <div className="space-y-4">
           <div className="px-1">
             <h3 className="text-sm font-semibold text-white uppercase tracking-wider opacity-60">Post queue</h3>
-            <p className="text-xs text-slate-500 mt-1">Scheduled and published posts</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {selectedLinkedInOrganizationId
+                ? `Posts for ${linkedInPostingAsLabel}`
+                : `Posts for ${linkedInProfileLabel}`}
+            </p>
           </div>
 
           {duplicateCount > 0 && (

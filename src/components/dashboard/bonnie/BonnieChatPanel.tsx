@@ -423,7 +423,7 @@ export default function BonnieChatPanel({
                   Bonnie AI
                 </p>
               )}
-              {msg.executionStatus ? (
+              {msg.executionStatus && msg.executionStatus !== 'read_only_answer' ? (
                 <div className="mb-2">
                   {msg.executionStatus === 'queued_for_approval' ? (
                     <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-100">
@@ -433,12 +433,7 @@ export default function BonnieChatPanel({
                   ) : msg.executionStatus === 'planning_failed' ? (
                     <div className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-200">
                       <AlertCircle className="h-3 w-3" />
-                      Planning failed
-                    </div>
-                  ) : msg.executionStatus === 'read_only_answer' ? (
-                    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600 bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300">
-                      <BookOpen className="h-3 w-3" />
-                      Read-only
+                      Could not execute
                     </div>
                   ) : msg.executionStatus === 'provider_blocked' ? (
                     <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-100">

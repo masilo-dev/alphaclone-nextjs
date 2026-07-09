@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, Building2, Linkedin, RefreshCw, User } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { formatLinkedInCompanyPageLabel } from '@/services/linkedin/linkedinIntegrationService';
 
 export interface LinkedInCompanyPage {
   id: string;
@@ -141,7 +142,7 @@ export function LinkedInOrgPanel({
             )}
             <div className="min-w-0">
               <p className="text-[13px] font-medium text-white truncate">
-                {page.name || page.vanityName || 'Company page'}
+                {formatLinkedInCompanyPageLabel(page)}
               </p>
               <p className="text-[11px] text-[var(--ws-text-tertiary)]">Organization</p>
             </div>

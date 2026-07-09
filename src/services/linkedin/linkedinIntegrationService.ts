@@ -51,6 +51,69 @@ function extractOrganizationIdFromUrn(value: unknown): string {
   return /^\d+$/.test(value.trim()) ? value.trim() : '';
 }
 
+/** Parse LinkedIn localized name fields (string or nested localized map). */
+export function parseLinkedInLocalizedName(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (!value || typeof value !== 'object') return null;
+  const obj = value as Record<string, unknown>;
+  if (typeof obj.localizedName === 'string' && obj.localizedName.trim()) {
+    return obj.localizedName.trim();
+  }
+  const localized = obj.localized;
+  if (localized && typeof localized === 'object') {
+    const values = Object.values(localized as Record<string, unknown>);
+    const first = values.find((entry) => typeof entry === 'string' && entry.trim());
+    if (typeof first === 'string') return first.trim();
+  }
+  if (obj.name) {
+    const nested = parseLinkedInLocalizedName(obj.name);
+    if (nested) return nested;
+  }
+  return null;
+}
+
+export function formatLinkedInCompanyPageLabel(
+  page: Pick<LinkedInCompanyPage, 'name' | 'vanityName' | 'id'>
+): string {
+  if (page.name?.trim()) return page.name.trim();
+  if (page.vanityName?.trim()) {
+    return page.vanityName
+      .trim()
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+  return `Organization ${page.id}`;
+}
+
+async function enrichLinkedInCompanyPages(
+  accessToken: string,
+  pages: LinkedInCompanyPage[]
+): Promise<LinkedInCompanyPage[]> {
+  const enriched: LinkedInCompanyPage[] = [];
+  for (const page of pages) {
+    if (page.name?.trim()) {
+      enriched.push(page);
+      continue;
+    }
+    try {
+      const lookedUp = await lookupLinkedInOrganizationById(accessToken, page.id);
+      enriched.push(
+        lookedUp
+          ? {
+              ...page,
+              name: page.name || lookedUp.name,
+              vanityName: page.vanityName || lookedUp.vanityName,
+              logoUrl: page.logoUrl || lookedUp.logoUrl,
+            }
+          : page
+      );
+    } catch {
+      enriched.push(page);
+    }
+  }
+  return enriched;
+}
+
 function parseOrganizationTarget(row: Record<string, unknown>): Record<string, unknown> | null {
   const expanded = row['organizationalTarget~'];
   if (expanded && typeof expanded === 'object') return expanded as Record<string, unknown>;
@@ -86,7 +149,7 @@ function parseOrganizationAclElements(elements: unknown[]): LinkedInCompanyPage[
       if (!id) return null;
       return {
         id,
-        name: target.localizedName ? String(target.localizedName) : null,
+        name: parseLinkedInLocalizedName(target.localizedName) || parseLinkedInLocalizedName(target.name),
         vanityName: target.vanityName ? String(target.vanityName) : null,
         logoUrl:
           firstIdentifier && typeof (firstIdentifier as Record<string, unknown>).identifier === 'string'
@@ -206,7 +269,7 @@ export async function fetchLinkedInCompanyPages(
     throw authLikeError;
   }
 
-  const companyPages = Array.from(byId.values());
+  const companyPages = await enrichLinkedInCompanyPages(accessToken, Array.from(byId.values()));
   return {
     companyPages,
     diagnostics: {
@@ -256,7 +319,7 @@ async function lookupLinkedInOrganizationByVanity(
   if (!id) return null;
   return {
     id,
-    name: first?.localizedName ? String(first.localizedName) : null,
+    name: parseLinkedInLocalizedName(first?.localizedName) || parseLinkedInLocalizedName(first?.name),
     vanityName: first?.vanityName ? String(first.vanityName) : vanityName,
     logoUrl: null,
     roles: [],
@@ -268,6 +331,30 @@ async function lookupLinkedInOrganizationById(
   accessToken: string,
   organizationId: string
 ): Promise<LinkedInCompanyPage | null> {
+  const restUrl = `https://api.linkedin.com/rest/organizations/${encodeURIComponent(organizationId)}`;
+  try {
+    const restRes = await linkedInFetch(restUrl, accessToken, { method: 'GET' }, {
+      linkedInVersion: LINKEDIN_REST_VERSION,
+    });
+    const restPayload = await restRes.json().catch(() => ({}));
+    const restId = restPayload?.id ? String(restPayload.id) : organizationId;
+    const restName =
+      parseLinkedInLocalizedName(restPayload?.localizedName) ||
+      parseLinkedInLocalizedName(restPayload?.name);
+    if (restName) {
+      return {
+        id: restId,
+        name: restName,
+        vanityName: restPayload?.vanityName ? String(restPayload.vanityName) : null,
+        logoUrl: null,
+        roles: [],
+        primaryRole: null,
+      };
+    }
+  } catch {
+    // fall through to v2 lookup
+  }
+
   const url = `https://api.linkedin.com/v2/organizations/${encodeURIComponent(organizationId)}`;
   const res = await linkedInFetch(url, accessToken, { method: 'GET' });
   const payload = await res.json().catch(() => ({}));
@@ -275,7 +362,7 @@ async function lookupLinkedInOrganizationById(
   if (!id) return null;
   return {
     id,
-    name: payload?.localizedName ? String(payload.localizedName) : null,
+    name: parseLinkedInLocalizedName(payload?.localizedName) || parseLinkedInLocalizedName(payload?.name),
     vanityName: payload?.vanityName ? String(payload.vanityName) : null,
     logoUrl: null,
     roles: [],

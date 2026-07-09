@@ -71,7 +71,15 @@ function looksLikePureChitchat(text: string): boolean {
   const t = text.trim();
   if (!t) return true;
   if (t.length <= 3) return true;
+  if (looksLikeActionInstruction(t)) return false;
   return /^(hi|hello|hey|thanks|thank you|ok|okay|bye|goodbye|good morning|good night)[!.?\s]*$/i.test(t);
+}
+
+function looksLikeActionInstruction(text: string): boolean {
+  const t = text.toLowerCase().trim();
+  return /\b(send|post|publish|schedule|create|run|execute|sync|connect|audit|scan|draft|launch|approve|reject|update|delete|remove|add|import|export|remind|invoice|bill|message|whatsapp|email|campaign|linkedin|facebook|tweet|share|find|list|show|get|check|fix|retry|resume|pause|trigger)\b/.test(
+    t
+  );
 }
 
 function detectConversationMode(text: string): 'briefing' | 'autopilot' | 'query' | 'instruction' {
@@ -469,11 +477,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: allQueryResults,
         logs: ['Query mode: targeted read tools + synthesis'],
         rounds: 1,
-        executionStatus: detectProviderBlocked(allQueryResults)
-          ? 'provider_blocked'
-          : allQueryResults.length
-            ? 'executed'
-            : 'read_only_answer',
+        executionStatus: detectProviderBlocked(allQueryResults) ? 'provider_blocked' : 'executed',
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Query failed';
@@ -509,7 +513,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: [],
         logs: ['Conversational reply (no tools)'],
         rounds: 0,
-        executionStatus: 'read_only_answer',
+        executionStatus: 'executed',
       };
     } catch (err: any) {
       return {
@@ -629,16 +633,42 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   await persistBonnieLogs(tenantId, allLogs).catch(() => undefined);
   await persistRunnerActions(tenantId, instruction, allToolResults).catch(() => undefined);
 
-  const anyTools = allToolResults.length > 0;
-  const anyApproval = allToolResults.some((r) => r.approvalRequired);
-  const providerBlocked = detectProviderBlocked(allToolResults);
+  let finalToolResults = allToolResults;
+  if (!finalToolResults.length && looksLikeActionInstruction(instruction)) {
+    const { executeBonnieToolCalls } = await import('@/lib/bonnie/bonnieToolExecutor');
+    const suggested = suggestToolsForQuestion(instruction, moduleId).slice(0, 3);
+    if (suggested.length) {
+      const forced = await executeBonnieToolCalls(
+        tenantId,
+        userId,
+        suggested.map((tool) => ({ tool, arguments: { tenant_id: tenantId } })),
+        instruction
+      );
+      finalToolResults = [...warmResults, ...forced];
+      allLogs.push(...forced.map((r) => `Auto-run ${r.tool}: ${r.summary}`));
+      if (forced.length) {
+        const synthesized = await synthesizeWithDeepSeek(
+          instruction,
+          { response: lastPlan.response || 'Done.', done: true },
+          finalToolResults,
+          moduleId,
+          onStreamToken
+        ).catch(() => null);
+        if (synthesized?.trim()) response = sanitizeBonnieResponse(synthesized.trim());
+      }
+    }
+  }
+
+  const anyTools = finalToolResults.length > 0;
+  const anyApproval = finalToolResults.some((r) => r.approvalRequired);
+  const providerBlocked = detectProviderBlocked(finalToolResults);
 
   return {
     response,
     success: true,
     provider,
     model,
-    toolResults: allToolResults,
+    toolResults: finalToolResults,
     logs: allLogs,
     rounds,
     executionStatus: providerBlocked
@@ -647,6 +677,8 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         ? 'queued_for_approval'
         : anyTools
           ? 'executed'
-          : 'read_only_answer',
+          : looksLikeActionInstruction(instruction)
+            ? 'planning_failed'
+            : 'executed',
   };
 }

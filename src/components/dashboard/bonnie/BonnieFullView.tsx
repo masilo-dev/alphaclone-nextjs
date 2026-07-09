@@ -265,7 +265,7 @@ export default function BonnieFullView() {
               Bonnie AI System Console
             </h1>
             <p className="text-sm text-slate-400">
-              Bonnie AI executes real actions across CRM, finance, outreach, social, and automation — not just chat.
+              Bonnie AI executes real actions across CRM, finance, outreach, social, and automation. Ask for actions like &quot;run scan&quot;, &quot;list overdue invoices&quot;, or &quot;publish LinkedIn post&quot;.
             </p>
           </div>
         </div>
