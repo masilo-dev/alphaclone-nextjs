@@ -33,7 +33,7 @@ export function EnterpriseTabWrapper({
   );
 }
 
-/** Edge-to-edge dashboard routes — same list as BusinessDashboard. */
+/** Edge-to-edge dashboard routes — same list as BusinessDashboard. Social modules scroll with the main column. */
 export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   '/dashboard/mail',
   '/dashboard/business/projects',
@@ -47,15 +47,6 @@ export const ENTERPRISE_FULL_BLEED_TABS = new Set([
   '/dashboard/conference',
   '/dashboard/meetings',
   '/dashboard/business/meetings',
-  '/dashboard/business/social',
-  '/dashboard/social',
-  '/dashboard/business/social/compose',
-  '/dashboard/social/compose',
-  '/dashboard/business/social-command',
-  '/dashboard/business/linkedin',
-  '/dashboard/business/facebook',
-  '/dashboard/business/instagram',
-  '/dashboard/business/x',
 ]);
 
 export function isEnterpriseFullBleedTab(tab: string): boolean {

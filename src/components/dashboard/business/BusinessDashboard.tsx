@@ -146,7 +146,7 @@ import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
 
-/** Full-bleed tabs: no outer padding; use overflow-hidden only where the child manages its own scroll (mail, projects, etc.). Home + CRM scroll with the main column — not listed here. */
+/** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/mail',
     '/dashboard/business/projects',
@@ -156,15 +156,6 @@ const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/zoho/mail',
     '/dashboard/business/messages',
     '/dashboard/pwa-settings',
-    '/dashboard/business/social',
-    '/dashboard/social',
-    '/dashboard/business/social/compose',
-    '/dashboard/social/compose',
-    '/dashboard/business/social-command',
-    '/dashboard/business/linkedin',
-    '/dashboard/business/facebook',
-    '/dashboard/business/instagram',
-    '/dashboard/business/x',
 ];
 
 interface BusinessDashboardProps {

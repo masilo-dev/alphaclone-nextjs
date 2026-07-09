@@ -798,7 +798,7 @@ Return only the comment text.`;
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-24 ac-safe-bottom">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -987,9 +987,9 @@ Return only the comment text.`;
                             <textarea
                                 value={caption}
                                 onChange={e => setCaption(e.target.value)}
-                                rows={6}
+                                rows={8}
                                 placeholder="Write your post caption here, or use AI Write above..."
-                                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-none text-sm"
+                                className="w-full min-h-[180px] px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-base text-white placeholder-slate-500 focus:outline-none focus:border-teal-500 resize-y"
                             />
                             <p className={`text-xs text-right mt-1 ${charWarning ? 'text-amber-400' : 'text-slate-600'}`}>
                                 {charCount.toLocaleString()} chars

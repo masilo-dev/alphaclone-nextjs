@@ -868,8 +868,8 @@ ${parentContext}Return only the comment text.`;
           value={aiTopic}
           onChange={(e) => setAiTopic(e.target.value)}
           placeholder="What should this post be about? Describe it or let AI draft it..."
-          rows={3}
-          className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-sm text-white placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-none group-hover:border-slate-700"
+          rows={4}
+          className="w-full min-h-[96px] bg-slate-950 border border-slate-800 rounded-xl p-4 text-base text-white placeholder-slate-600 focus:border-teal-500/50 focus:outline-none transition-all resize-y group-hover:border-slate-700"
         />
       </div>
 
@@ -879,8 +879,8 @@ ${parentContext}Return only the comment text.`;
             value={composeCaption}
             onChange={(e) => setComposeCaption(e.target.value)}
             placeholder="Post content will appear here..."
-            rows={6}
-            className="w-full bg-transparent border-b border-slate-800 py-2 text-sm text-slate-300 placeholder-slate-700 focus:border-teal-500 focus:outline-none transition-all resize-none"
+            rows={8}
+            className="w-full min-h-[180px] bg-transparent border-b border-slate-800 py-2 text-base text-slate-300 placeholder-slate-700 focus:border-teal-500 focus:outline-none transition-all resize-y"
           />
         </div>
 
@@ -976,7 +976,7 @@ ${parentContext}Return only the comment text.`;
 
   if (loading) {
     return (
-      <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom lg:pb-0">
+      <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom pb-24 lg:pb-6">
         <div className="flex-1 flex h-64 items-center justify-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
           <p className="text-xs text-slate-500 font-medium animate-pulse">Syncing LinkedIn data...</p>
@@ -986,7 +986,7 @@ ${parentContext}Return only the comment text.`;
   }
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom lg:pb-0">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module space-y-6 ac-safe-bottom pb-24 lg:pb-6">
       {/* Action-first strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <button
@@ -1250,7 +1250,7 @@ ${parentContext}Return only the comment text.`;
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium leading-relaxed ${isDup ? 'text-slate-100' : 'text-slate-300'} line-clamp-3 group-hover:line-clamp-none transition-all mb-2`}>
+                        <p className={`text-sm font-medium leading-relaxed break-words whitespace-pre-line ${isDup ? 'text-slate-100' : 'text-slate-300'} mb-2`}>
                           {post.caption}
                         </p>
                         <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
@@ -1339,7 +1339,7 @@ ${parentContext}Return only the comment text.`;
                                   value={replyByComment[c.commentUrn] || ''}
                                   onChange={(e) => setReplyByComment(prev => ({...prev, [c.commentUrn]: e.target.value}))}
                                   placeholder="Type reply..." 
-                                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-teal-500 focus:outline-none"
+                                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-base text-white focus:border-teal-500 focus:outline-none"
                                 />
                                 <button 
                                   onClick={() => handleComment(post, c.commentUrn)}

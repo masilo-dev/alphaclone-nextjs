@@ -645,7 +645,7 @@ export default function SocialCommandCenter() {
                 /* ----------------------------------------------------
                    MODULE 1: Platform Manager (Native PWA Layout)
                    ---------------------------------------------------- */
-                <div className="flex flex-col flex-1">
+                <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
                     
                     {/* Platform Switcher Tab Bar (LinkedIn | Facebook | X) */}
                     <div className="sticky top-0 z-20 flex h-11 select-none divide-x divide-[var(--ws-border)] border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
@@ -701,7 +701,7 @@ export default function SocialCommandCenter() {
                     </div>
 
                     {/* Main Platform Content */}
-                    <div className="flex-1 p-4 space-y-4">
+                    <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 pb-24 ac-safe-bottom">
                         {activePlatform === 'linkedin' && activeSubView !== 'analytics' ? (
                             <LinkedInOrgPanel
                                 isConnected={!!selectedLinkedInIntegration?.is_active}
@@ -817,7 +817,7 @@ export default function SocialCommandCenter() {
                                             return (
                                                 <div 
                                                     key={post.id} 
-                                                    className={`relative select-none overflow-hidden border border-[var(--ws-border)] bg-slate-950 shadow-none ${WORKSPACE.panel.radius}`}
+                                                    className={`relative select-none overflow-hidden border border-[var(--ws-border)] bg-slate-950 shadow-none touch-pan-y ${WORKSPACE.panel.radius}`}
                                                     onTouchStart={(e) => handleTouchStart(e, post.id)}
                                                     onTouchMove={(e) => handleTouchMove(e, post.id)}
                                                     onTouchEnd={(e) => handleTouchEnd(e, post.id)}
@@ -877,7 +877,7 @@ export default function SocialCommandCenter() {
                                                             </div>
 
                                                             <div className="space-y-3">
-                                                                <p className="text-[15px] text-slate-100 font-medium leading-relaxed whitespace-pre-line line-clamp-5">
+                                                                <p className="text-[15px] text-slate-100 font-medium leading-relaxed whitespace-pre-line break-words">
                                                                     {post.caption}
                                                                 </p>
                                                                 {post.hashtags?.length > 0 && (
@@ -968,7 +968,7 @@ export default function SocialCommandCenter() {
                 /* ----------------------------------------------------
                    MODULE 2: Tools & Intelligence (Existing features)
                    ---------------------------------------------------- */
-                <div className="p-4 space-y-8 ac-safe-bottom lg:pb-4 animate-in fade-in duration-300">
+                <div className="p-4 space-y-8 pb-24 ac-safe-bottom lg:pb-4 animate-in fade-in duration-300">
                     <ModuleIntelligenceCard moduleKey="socialMedia" title="Social Intelligence" />
 
                     {/* Watchlist discovey lead panel */}
@@ -1253,7 +1253,7 @@ export default function SocialCommandCenter() {
                                     value={composeCaption}
                                     onChange={e => setComposeCaption(e.target.value)}
                                     placeholder="What are we sharing today? (Use #hashtags inside caption or bottom bar)"
-                                    className="w-full min-h-[140px] p-4 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-[16px] text-slate-200 outline-none focus:border-teal-500/50 transition-all resize-none placeholder-slate-600"
+                                    className="w-full min-h-[160px] p-4 bg-[var(--ws-toolbar)] border border-[var(--ws-border)] rounded-lg text-base text-slate-200 outline-none focus:border-teal-500/50 transition-all resize-y placeholder-slate-600"
                                 />
                             </div>
 
