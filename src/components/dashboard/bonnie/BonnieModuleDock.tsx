@@ -44,6 +44,7 @@ export default function BonnieModuleDock() {
     text: res.response,
     tools: res.toolsExecuted,
     approval: res.pendingApproval || undefined,
+    executionStatus: res.executionStatus,
   });
 
   const handleSend = async (
@@ -62,7 +63,7 @@ export default function BonnieModuleDock() {
     });
     void refreshApprovals();
     if (res.success) return mapResult(res);
-    return { text: res.response || 'Failed to process command.', error: true };
+    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleStream = async (
@@ -79,7 +80,7 @@ export default function BonnieModuleDock() {
     });
     void refreshApprovals();
     if (res.success) return mapResult(res);
-    return { text: res.response || 'Failed to process command.', error: true };
+    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleResolveApproval = async (
@@ -95,7 +96,7 @@ export default function BonnieModuleDock() {
   };
 
   return (
-    <div className="flex h-full min-h-[420px] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16]">
+    <div className="flex h-full min-h-[360px] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16]">
       <div className="flex items-center gap-2 border-b border-slate-800 px-3 py-2.5">
         <Brain className="h-4 w-4 text-teal-400" />
         {!isCollapsed && (
@@ -126,7 +127,7 @@ export default function BonnieModuleDock() {
         >
           <div className="min-w-0">
             <p className="text-sm font-bold text-white">Bonnie drawer collapsed</p>
-            <p className="text-xs text-slate-500">Open the drawer to keep AI guidance close while you work.</p>
+            <p className="text-xs text-slate-500">Open it when you want help, without giving up as much workspace width.</p>
           </div>
           {pendingCount > 0 && (
             <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold text-slate-950">
@@ -139,7 +140,7 @@ export default function BonnieModuleDock() {
           <BonnieChatPanel
             streaming
             storageKey={`bonnie_dock_${tenantId}_${activeModule}`}
-            placeholder={`Ask about ${moduleHint.label.toLowerCase()}…`}
+            placeholder={`Ask about ${moduleHint.label.toLowerCase()}...`}
             introMessage={`Context: ${moduleHint.label}. Try "${moduleHint.examples[0]}"`}
             onSend={handleSend}
             onStreamSend={handleStream}

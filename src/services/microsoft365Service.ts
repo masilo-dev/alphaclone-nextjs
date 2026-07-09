@@ -60,7 +60,7 @@ export const microsoft365Service = {
       }
 
       const config: Microsoft365Config = {
-        id: connection.id,
+        id: connection.id || connection.user_id,
         tenantId,
         clientId: '',
         clientSecret: '',

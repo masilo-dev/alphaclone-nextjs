@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
         ? {
             response: continuation.response,
             toolResults: continuation.toolResults,
+            executionStatus: continuation.executionStatus,
           }
         : null,
     });

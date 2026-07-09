@@ -146,7 +146,126 @@ export async function POST(
 
     let processed = 0;
     let unmatched = 0;
+    const affectedCampaigns = new Set<string>(); // `${tenantId}:${campaignId}`
     for (const event of parsedEvents) {
+      const eventTypeLower = event.eventType.toLowerCase();
+      const mappedStatus = mapDeliveryStatus(event.eventType);
+      const isBounceLike = eventTypeLower.includes('bounce') || eventTypeLower.includes('spam') || eventTypeLower.includes('reject') || eventTypeLower.includes('drop');
+      const isFailureLike = eventTypeLower.includes('defer') || eventTypeLower.includes('fail');
+
+      // 1) Prefer campaign recipient reconciliation (campaign sends)
+      //    We match by provider_message_id stored at send time.
+      let matchedCampaignRecipient:
+        | {
+            id: string;
+            tenant_id: string;
+            campaign_id: string;
+            email: string | null;
+            status: string | null;
+            sent_at: string | null;
+            delivered_at: string | null;
+            opened_at: string | null;
+            first_opened_at: string | null;
+            open_count: number | null;
+            clicked_at: string | null;
+            click_count: number | null;
+            bounced_at: string | null;
+            bounce_reason: string | null;
+            unsubscribed_at: string | null;
+            error_message: string | null;
+          }
+        | null = null;
+
+      if (event.providerMessageId) {
+        const { data: cr } = await admin
+          .from('campaign_recipients')
+          .select(
+            'id, tenant_id, campaign_id, email, status, sent_at, delivered_at, opened_at, first_opened_at, open_count, clicked_at, click_count, bounced_at, bounce_reason, unsubscribed_at, error_message'
+          )
+          .eq('provider_message_id', event.providerMessageId)
+          .maybeSingle();
+        if (cr) matchedCampaignRecipient = cr as any;
+      }
+
+      if (matchedCampaignRecipient) {
+        const nowIso = event.eventTimestamp || new Date().toISOString();
+        await admin.from('email_webhook_events').insert({
+          tenant_id: matchedCampaignRecipient.tenant_id,
+          user_id: null,
+          provider: event.provider,
+          event_type: event.eventType,
+          provider_message_id: event.providerMessageId,
+          tracking_id: event.trackingId,
+          event_timestamp: event.eventTimestamp,
+          payload: event.payload,
+          processing_status: 'processed',
+        });
+
+        const currentOpenCount = Number(matchedCampaignRecipient.open_count || 0);
+        const currentClickCount = Number(matchedCampaignRecipient.click_count || 0);
+
+        const patch: Record<string, unknown> = {
+          status: matchedCampaignRecipient.status,
+          last_event_at: nowIso,
+        };
+
+        if (mappedStatus === 'delivered') {
+          patch.status = 'delivered';
+          patch.delivered_at = nowIso;
+        }
+        if (mappedStatus === 'sent') {
+          patch.status = 'sent';
+          patch.sent_at = nowIso;
+        }
+        if (mappedStatus === 'opened') {
+          patch.status = 'opened';
+          patch.opened_at = nowIso;
+          patch.first_opened_at = matchedCampaignRecipient.first_opened_at || nowIso;
+          patch.open_count = currentOpenCount + 1;
+        }
+        if (mappedStatus === 'clicked') {
+          patch.status = 'clicked';
+          patch.clicked_at = nowIso;
+          patch.click_count = currentClickCount + 1;
+        }
+
+        if (isBounceLike) {
+          patch.status = 'bounced';
+          patch.bounced_at = nowIso;
+          patch.bounce_reason = `Provider webhook reported bounce (${event.eventType}).`;
+          patch.error_message = `Provider webhook reported bounce (${event.eventType}).`;
+        } else if (eventTypeLower.includes('unsubscribe')) {
+          patch.status = 'unsubscribed';
+          patch.unsubscribed_at = nowIso;
+          patch.error_message = `Recipient unsubscribed (${event.eventType}).`;
+        } else if (isFailureLike || mappedStatus === 'failed') {
+          patch.status = 'failed';
+          patch.error_message = `Provider webhook reported failure (${event.eventType}).`;
+        }
+
+        await admin
+          .from('campaign_recipients')
+          .update(patch)
+          .eq('tenant_id', matchedCampaignRecipient.tenant_id)
+          .eq('id', matchedCampaignRecipient.id);
+
+        if (isBounceLike || eventTypeLower.includes('unsubscribe')) {
+          await syncSuppressionCleanup({
+            tenantId: matchedCampaignRecipient.tenant_id,
+            email: String(matchedCampaignRecipient.email || '').trim(),
+            reason: eventTypeLower.includes('unsubscribe') ? 'unsubscribe' : 'bounce',
+            provider: event.provider,
+            eventId: event.providerMessageId || event.trackingId || undefined,
+            metadata: event.payload,
+          });
+        }
+
+        processed += 1;
+        affectedCampaigns.add(`${matchedCampaignRecipient.tenant_id}:${matchedCampaignRecipient.campaign_id}`);
+        continue;
+      }
+
+      // 2) Backward compatible: legacy outreach reconciliation
       let lookup = admin
         .from('lead_outreach_log')
         .select('id, tenant_id, user_id, lead_email')
@@ -162,24 +281,17 @@ export async function POST(
         continue;
       }
 
-      const mappedStatus = mapDeliveryStatus(event.eventType);
-      const eventTypeLower = event.eventType.toLowerCase();
-      const isBounceLike = eventTypeLower.includes('bounce') || eventTypeLower.includes('spam') || eventTypeLower.includes('reject') || eventTypeLower.includes('drop');
-      const isFailureLike = eventTypeLower.includes('defer') || eventTypeLower.includes('fail');
-
-      await admin
-        .from('email_webhook_events')
-        .insert({
-          tenant_id: logRow.tenant_id,
-          user_id: logRow.user_id,
-          provider: event.provider,
-          event_type: event.eventType,
-          provider_message_id: event.providerMessageId,
-          tracking_id: event.trackingId,
-          event_timestamp: event.eventTimestamp,
-          payload: event.payload,
-          processing_status: 'processed',
-        });
+      await admin.from('email_webhook_events').insert({
+        tenant_id: logRow.tenant_id,
+        user_id: logRow.user_id,
+        provider: event.provider,
+        event_type: event.eventType,
+        provider_message_id: event.providerMessageId,
+        tracking_id: event.trackingId,
+        event_timestamp: event.eventTimestamp,
+        payload: event.payload,
+        processing_status: 'processed',
+      });
 
       const patch: Record<string, unknown> = {
         provider_event_status: mappedStatus,
@@ -201,11 +313,7 @@ export async function POST(
         patch.error_message = `Provider webhook reported failure (${event.eventType}).`;
       }
 
-      await admin
-        .from('lead_outreach_log')
-        .update(patch)
-        .eq('tenant_id', logRow.tenant_id)
-        .eq('id', logRow.id);
+      await admin.from('lead_outreach_log').update(patch).eq('tenant_id', logRow.tenant_id).eq('id', logRow.id);
 
       if (isBounceLike || eventTypeLower.includes('unsubscribe')) {
         await syncSuppressionCleanup({
@@ -219,6 +327,39 @@ export async function POST(
       }
 
       processed += 1;
+    }
+
+    // 3) Roll up affected email campaign totals from campaign_recipients truth
+    for (const key of affectedCampaigns) {
+      const [tenantId, campaignId] = key.split(':');
+      const countByStatus = async (status: string): Promise<number> => {
+        const { count } = await admin
+          .from('campaign_recipients')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .eq('campaign_id', campaignId)
+          .eq('status', status);
+        return count || 0;
+      };
+
+      const totalSent = await countByStatus('sent');
+      const totalDelivered = await countByStatus('delivered');
+      const totalOpened = await countByStatus('opened');
+      const totalClicked = await countByStatus('clicked');
+      const totalBounced = await countByStatus('bounced');
+      const totalUnsubscribed = await countByStatus('unsubscribed');
+
+      await admin
+        .from('email_campaigns')
+        .update({
+          total_sent: totalSent,
+          total_delivered: totalDelivered,
+          total_opened: totalOpened,
+          total_clicked: totalClicked,
+          total_bounced: totalBounced,
+          total_unsubscribed: totalUnsubscribed,
+        })
+        .eq('id', campaignId);
     }
 
     return NextResponse.json({

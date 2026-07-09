@@ -12,10 +12,19 @@ function getAppUrl(req: NextRequest) {
   );
 }
 
+function sanitizeReturnTo(returnTo: string | null | undefined): string {
+  const fallback = '/dashboard/settings';
+  const value = typeof returnTo === 'string' ? returnTo.trim() : '';
+  if (!value.startsWith('/') || value.startsWith('//')) {
+    return fallback;
+  }
+  return value;
+}
+
 export async function GET(req: NextRequest) {
   const appUrl = getAppUrl(req);
   const { searchParams } = new URL(req.url);
-  const returnTo = searchParams.get('returnTo') || '/dashboard/settings';
+  const returnTo = sanitizeReturnTo(searchParams.get('returnTo'));
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -24,7 +33,7 @@ export async function GET(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.redirect(`${appUrl}/login?redirect=${encodeURIComponent(req.url)}`);
+      return NextResponse.redirect(`${appUrl}/auth/login?redirect=${encodeURIComponent(req.url)}`);
     }
 
     const clientId = ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID;

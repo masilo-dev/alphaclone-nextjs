@@ -4,6 +4,7 @@ import { ENV } from '@/config/env';
 const STATE_TTL_MS = 10 * 60 * 1000;
 
 export type LinkedInOAuthState = {
+  nonce?: string | null;
   userId: string;
   tenantId?: string | null;
   returnTo?: string | null;

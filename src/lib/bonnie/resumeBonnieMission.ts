@@ -9,7 +9,12 @@ export async function resumeBonnieMissionAfterApproval(params: {
   instruction?: string;
   toolName?: string;
   toolResult?: BonnieToolResult;
-}): Promise<{ continued: boolean; response?: string; toolResults?: BonnieToolResult[] }> {
+}): Promise<{
+  continued: boolean;
+  response?: string;
+  toolResults?: BonnieToolResult[];
+  executionStatus?: 'executed' | 'queued_for_approval' | 'read_only_answer' | 'planning_failed' | 'provider_blocked';
+}> {
   const instruction = params.instruction?.trim();
   if (!instruction) {
     return { continued: false };
@@ -29,6 +34,7 @@ export async function resumeBonnieMissionAfterApproval(params: {
     continued: true,
     response: agentResult.response,
     toolResults: agentResult.toolResults,
+    executionStatus: agentResult.executionStatus,
   };
 }
 

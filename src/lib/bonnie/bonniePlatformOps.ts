@@ -18,7 +18,7 @@ export async function bonnieGetIntegrationHealth(tenantId: string, userId: strin
   const checks = await Promise.all([
     admin.from('facebook_integrations').select('page_name,is_active,updated_at').eq('tenant_id', tenantId),
     admin.from('whatsapp_integrations').select('phone_number_id,is_active,updated_at').eq('tenant_id', tenantId),
-    admin.from('microsoft_connections').select('email,updated_at').eq('user_id', userId).maybeSingle(),
+    admin.from('microsoft_connections').select('microsoft_email,updated_at').eq('user_id', userId).maybeSingle(),
     admin.from('linkedin_integrations').select('linkedin_member_id,is_active').eq('tenant_id', tenantId).limit(3),
     admin.from('tenants').select('stripe_connect_id,stripe_connect_onboarded').eq('id', tenantId).maybeSingle(),
   ]);
@@ -34,7 +34,7 @@ export async function bonnieGetIntegrationHealth(tenantId: string, userId: strin
   if (!((wa.data || []) as ActiveIntegrationRow[]).some((r) => r.is_active)) {
     issues.push('WhatsApp not connected — messaging unavailable.');
   }
-  if (!ms.data?.email) issues.push('Microsoft 365 not connected — mail/calendar tools limited.');
+  if (!ms.data?.microsoft_email) issues.push('Microsoft 365 not connected — mail/calendar tools limited.');
   if (!((li.data || []) as ActiveIntegrationRow[]).some((r) => r.is_active)) {
     issues.push('LinkedIn not connected — LinkedIn post tools limited.');
   }
@@ -46,7 +46,7 @@ export async function bonnieGetIntegrationHealth(tenantId: string, userId: strin
         .map((r) => r.page_name),
     },
     whatsapp: { connected: ((wa.data || []) as ActiveIntegrationRow[]).some((r) => r.is_active) },
-    microsoft: { connected: Boolean(ms.data?.email), email: ms.data?.email || null },
+    microsoft: { connected: Boolean(ms.data?.microsoft_email), email: ms.data?.microsoft_email || null },
     linkedin: { connected: ((li.data || []) as ActiveIntegrationRow[]).some((r) => r.is_active) },
     stripe: {
       connected: Boolean(tenantRow.data?.stripe_connect_id),

@@ -18,7 +18,7 @@ export function BonnieModulePageShell({ children, className }: BonnieModulePageS
   return (
     <div className={`flex flex-col gap-4 xl:flex-row xl:items-start ${className || ''}`}>
       <div className="min-w-0 flex-1">{children}</div>
-      <aside className="hidden w-[320px] 2xl:w-[360px] shrink-0 xl:block xl:sticky xl:top-6 xl:h-[calc(100vh-6rem)]">
+      <aside className="hidden w-[288px] 2xl:w-[340px] shrink-0 xl:block xl:sticky xl:top-6 xl:h-[calc(100vh-6rem)]">
         <div className="h-full rounded-3xl border border-white/5 bg-slate-900/50 backdrop-blur-xl overflow-hidden shadow-2xl shadow-black/20">
           <BonnieModuleDock />
         </div>

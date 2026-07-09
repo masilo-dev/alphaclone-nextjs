@@ -670,6 +670,23 @@ export const emailCampaignService = {
         }
     },
 
+    async retryFailedRecipients(campaignId: string): Promise<{ success: boolean; reset: number; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('No active tenant');
+            const res = await fetch('/api/email/campaigns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, campaignId, mode: 'retry_failed' }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(payload.error || 'Failed to reset failed recipients');
+            return { success: true, reset: Number(payload.reset || 0), error: null };
+        } catch (err) {
+            return { success: false, reset: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
     async diagnoseCampaign(campaignId: string): Promise<{
         issues: string[];
         warnings: string[];

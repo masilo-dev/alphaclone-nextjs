@@ -7,7 +7,7 @@ import { sendWhatsAppMessage, isWhatsAppConfigured } from '@/lib/whatsapp/sendWh
 import { blocksBonnieSend, campaignQualityCheck } from '@/lib/bonnie/bonnieBannedLanguage';
 import { bonnieErrorMessage, BONNIE_KNOWN_ERRORS } from '@/lib/bonnie/bonnieError';
 
-type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
+type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho';
 type ProviderConfig = {
     id: CampaignProvider;
     apiKey?: string;
@@ -21,7 +21,6 @@ const DEFAULT_DAILY_LIMITS: Record<CampaignProvider, number> = {
     resend: 300,
     brevo: 300,
     zoho: 200,
-    gmail: 150,
 };
 
 function toNonEmptyString(value: unknown): string | null {
@@ -42,7 +41,7 @@ function parseJsonObject(value: unknown): Record<string, unknown> {
 
 function normalizeProviderId(value: unknown): CampaignProvider | null {
     const raw = String(value || '').trim().toLowerCase();
-    if (raw === 'sendgrid' || raw === 'resend' || raw === 'brevo' || raw === 'zoho' || raw === 'gmail') return raw;
+    if (raw === 'sendgrid' || raw === 'resend' || raw === 'brevo' || raw === 'zoho') return raw;
     return null;
 }
 
@@ -202,7 +201,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             .from('integrations')
             .select('type, enabled, config, user_id, tenant_id')
             .eq('enabled', true)
-            .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
+            .in('type', ['sendgrid', 'resend', 'brevo', 'zoho']);
 
         if (filters.length > 0) {
             query = query.or(filters.join(','));
@@ -226,7 +225,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         if (sendEmailChannel && !activeProviders.length) {
             return {
                 success: false,
-                error: 'No active email providers are connected for this campaign. Connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.',
+                error: 'No active email providers are connected for this campaign. Connect SendGrid, Resend, Brevo, or Zoho Mail.',
             };
         }
 
@@ -450,7 +449,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     senderName: fromName,
                 }
             );
-            const preferredProvider = provider.id === 'gmail' ? undefined : provider.id;
+            const preferredProvider = provider.id;
             const sendResult = await sendEmail(String(c.tenant_id || ''), {
                 to: recipient.email,
                 subject: personalizedSubject,
@@ -470,7 +469,14 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .update({
                         status: 'sent',
                         sent_at: new Date().toISOString(),
-                        metadata: { provider: sendResult.provider || provider.id, provider_from: fromEmail, language: campaignLanguage, abVariant: abVariant || 'A' },
+                        provider_message_id: sendResult.emailId || null,
+                        metadata: {
+                            provider: sendResult.provider || provider.id,
+                            provider_from: fromEmail,
+                            provider_message_id: sendResult.emailId || null,
+                            language: campaignLanguage,
+                            abVariant: abVariant || 'A',
+                        },
                     })
                     .eq('id', recipient.id);
                 try {

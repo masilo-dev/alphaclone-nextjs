@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       provider: result.provider,
       model: result.model,
       toolsExecuted: mapToolResultsForApi(result.toolResults),
+      executionStatus: result.executionStatus,
       pendingApproval: pending
         ? {
             approvalId: pending.approvalId,

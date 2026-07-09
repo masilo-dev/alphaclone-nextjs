@@ -94,7 +94,7 @@ export default function DashboardClientPage() {
                     onExtendSession={extendSession}
                     onLogout={handleLogout}
                 />
-                <AppLegalFooter />
+                <AppLegalFooter compact />
             </SubscriptionGuard>
         </BuildErrorLogger>
     );

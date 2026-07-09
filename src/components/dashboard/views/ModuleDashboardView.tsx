@@ -12,7 +12,7 @@ import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 import { resolveModuleActions } from '@/config/moduleDashboardActions';
 import { cn } from '@/lib/utils';
-import { BarChart3, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Users, Zap } from 'lucide-react';
+import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -107,12 +107,67 @@ function DashboardContent({
         ]
       : null;
 
+  const overviewNextSteps =
+    moduleId === 'overview'
+      ? [
+          {
+            label: 'What to do next',
+            title: 'Run your first useful workflow',
+            description: 'Start with CRM, billing, or messages so the workspace has enough activity to generate better advice.',
+            href: workspaceAction?.resolvedHref || '/dashboard/crm',
+            Icon: Users,
+            cta: workspaceAction?.label || 'Open workspace',
+          },
+          {
+            label: 'Bonnie help',
+            title: 'Ask Bonnie for practical advice',
+            description: 'Use Bonnie to summarise priorities, chase unpaid invoices, or suggest the next campaign to run.',
+            href: '/dashboard/bonnie',
+            Icon: Bot,
+            cta: 'Open Bonnie',
+          },
+          {
+            label: 'Gamification',
+            title: 'Track streaks and progress',
+            description: 'See momentum, activity goals, and streaks so the workspace feels alive instead of empty.',
+            href: '/dashboard/gamification',
+            Icon: Trophy,
+            cta: 'View progress',
+          },
+        ]
+      : null;
+
   return (
     <div className={cn('ac-scroll-full ac-module-section space-y-4', isValidating ? 'opacity-95' : '')}>
       {moduleId === 'overview' && allMetricsZero ? (
         <p className="text-[12px] text-[var(--ws-text-tertiary)] px-0.5">
           No activity yet — use the checklist above to add your first client.
         </p>
+      ) : null}
+      {overviewNextSteps ? (
+        <div className="grid gap-3 lg:grid-cols-3">
+          {overviewNextSteps.map(({ label, title, description, href, Icon, cta }) => (
+            <button
+              key={href}
+              type="button"
+              onClick={() => router.push(href)}
+              className="ac-workspace-panel rounded-lg p-4 text-left transition-all hover:border-teal-500/20 hover:bg-slate-900/70"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/10 text-teal-400">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-teal-400">{label}</span>
+              </div>
+              <h3 className="text-sm font-semibold text-white">{title}</h3>
+              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{description}</p>
+              <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-bold text-teal-400">
+                {cta}
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+              </span>
+            </button>
+          ))}
+        </div>
       ) : null}
       <div className="flex items-center justify-end gap-2">
         {workspaceAction ? (

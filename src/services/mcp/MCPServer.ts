@@ -19,7 +19,8 @@ import {
   updateSocialPostLinkedInUrnWithRetry,
 } from '../../lib/social/linkedinPublishHelpers';
 import { loadMcpLinkedInIntegration } from '../../lib/linkedin/mcpLinkedIn';
-import { linkedInFetch } from '../../lib/linkedin/linkedinClient';
+import { linkedInFetch, LinkedInApiError } from '../../lib/linkedin/linkedinClient';
+import { markLinkedInIntegrationInactive } from '../../services/linkedin/linkedinIntegrationService';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 import { consumeTenantAiUnits } from '../../lib/quotas/tenantAiUnitsQuota';
@@ -3940,11 +3941,13 @@ class AlphaCloneMCPServer {
           }
 
           const identities: any[] = [];
+          let canPostOrg = false;
 
           if (li) {
             const scopes = Array.isArray(li.scopes)
               ? li.scopes.map((scope: any) => String(scope).toLowerCase())
               : [];
+            canPostOrg = scopes.includes('w_organization_social');
             identities.push({
               type: 'person',
               linkedin_member_id: li.linkedin_member_id || null,
@@ -3962,7 +3965,7 @@ class AlphaCloneMCPServer {
                 ).map((page: Record<string, unknown>) => ({
                   linkedin_organization_id: String(page.id || ''),
                   author_urn: `urn:li:organization:${String(page.id || '')}`,
-                  can_post: true,
+                  can_post: canPostOrg,
                   name: page.name || null,
                 }));
 
@@ -4036,12 +4039,12 @@ class AlphaCloneMCPServer {
           }
 
           const scopes = Array.isArray(li.scopes) ? li.scopes : [];
-          if (!scopes.includes('w_member_social')) {
-            throwLinkedInError('LINKEDIN_MISSING_MEMBER_SCOPE', 'LinkedIn connection is missing w_member_social scope.');
-          }
           const postAsMode = String(post_as || 'personal').trim().toLowerCase();
           if (postAsMode !== 'personal' && postAsMode !== 'company' && postAsMode !== 'all_pages') {
             throw new Error('post_as must be one of: personal, company, all_pages');
+          }
+          if (postAsMode === 'personal' && !scopes.includes('w_member_social')) {
+            throwLinkedInError('LINKEDIN_MISSING_MEMBER_SCOPE', 'LinkedIn connection is missing w_member_social scope.');
           }
 
           const companyPages = Array.isArray((li as any)?.metadata?.company_pages)
@@ -4330,7 +4333,7 @@ class AlphaCloneMCPServer {
               lifecycleState: 'PUBLISHED',
               specificContent: {
                 'com.linkedin.ugc.ShareContent': {
-                  shareCommentary: { text: text.trim() },
+                  shareCommentary: { text: sanitizedLinkedInText },
                   shareMediaCategory,
                   media,
                 },
@@ -4338,26 +4341,35 @@ class AlphaCloneMCPServer {
               visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
             };
 
-            const resp = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${li.access_token}`,
-                'Content-Type': 'application/json',
-                'X-Restli-Protocol-Version': '2.0.0',
-              },
-              body: JSON.stringify(payload),
-            });
-            const raw = await resp.text();
-            if (!resp.ok) {
+            let resp: Response;
+            try {
+              resp = await linkedInFetch(
+                'https://api.linkedin.com/v2/ugcPosts',
+                li.access_token,
+                {
+                  method: 'POST',
+                  body: JSON.stringify(payload),
+                },
+                { timeoutMs: 25000 }
+              );
+            } catch (err) {
+              if (err instanceof LinkedInApiError && err.code === 'TOKEN_EXPIRED' && li.id) {
+                await markLinkedInIntegrationInactive(supabaseAdmin, String(li.id), 'token_expired').catch(() => undefined);
+              }
+              const message = err instanceof Error ? err.message : 'LinkedIn post failed';
               await supabaseAdmin
                 .from('social_posts')
                 .update({
                   status: 'failed',
-                  error_message: raw.slice(0, 2000),
+                  error_message: message.slice(0, 2000),
                 })
                 .eq('id', postId);
-              throw new Error(`LinkedIn post failed: ${raw}`);
+              throw err instanceof LinkedInApiError
+                ? new Error(`LinkedIn post failed: ${err.message}`)
+                : err;
             }
+
+            const raw = await resp.text();
 
             const linkedinPostUrn = parseLinkedInUgcPostUrn(resp, raw);
             const publishedAt = new Date().toISOString();
@@ -4877,20 +4889,41 @@ class AlphaCloneMCPServer {
           const li = await loadMcpLinkedInIntegration(supabaseAdmin, tenant_id, user_id);
           if (!li?.access_token || !li?.linkedin_person_urn) throw new Error('LinkedIn is not connected for this workspace/user.');
 
-          const resp = await fetch('https://api.linkedin.com/v2/socialActions/' + encodeURIComponent(post_urn) + '/comments', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${li.access_token}`,
-              'Content-Type': 'application/json',
-              'X-Restli-Protocol-Version': '2.0.0',
-            },
-            body: JSON.stringify({
-              actor: li.linkedin_person_urn,
-              message: { text: text.trim() },
-            }),
-          });
-          const raw = await resp.text();
-          if (!resp.ok) throw new Error(`LinkedIn comment failed: ${raw}`);
+          const scopes = Array.isArray(li.scopes) ? li.scopes : [];
+          if (!scopes.includes('w_member_social')) {
+            throwLinkedInError(
+              'LINKEDIN_MISSING_MEMBER_SCOPE',
+              'LinkedIn connection is missing w_member_social scope required for comments.'
+            );
+          }
+
+          let resp: Response;
+          try {
+            resp = await linkedInFetch(
+              `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(post_urn.trim())}/comments`,
+              li.access_token,
+              {
+                method: 'POST',
+                body: JSON.stringify({
+                  actor: li.linkedin_person_urn,
+                  message: { text: text.trim() },
+                }),
+              },
+              { timeoutMs: 25000 }
+            );
+          } catch (err) {
+            if (err instanceof LinkedInApiError && err.code === 'TOKEN_EXPIRED' && li.id) {
+              await markLinkedInIntegrationInactive(supabaseAdmin, String(li.id), 'token_expired').catch(() => undefined);
+            }
+            throw err instanceof LinkedInApiError
+              ? new Error(`LinkedIn comment failed: ${err.message}`)
+              : err;
+          }
+
+          if (!resp.ok) {
+            const raw = await resp.text().catch(() => '');
+            throw new Error(`LinkedIn comment failed: ${raw}`);
+          }
           result = { content: [{ type: 'text', text: 'LinkedIn comment created successfully.' }] };
           break;
         }

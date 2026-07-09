@@ -20,6 +20,11 @@ import SegmentBuilder from '../marketing/SegmentBuilder';
 import DeliverabilityPanel from '../marketing/DeliverabilityPanel';
 import { showActionNextSteps } from '../../common/showActionNextSteps';
 import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
+import {
+    DELIVERY_PROVIDER_LABELS,
+    resolveAutoProvider,
+    type DeliveryEmailProvider,
+} from '@/lib/email/emailProviderOptions';
 
 const statusColors: Record<string, string> = {
     draft: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
@@ -125,6 +130,39 @@ const QUICK_STARTS = [
     },
 ] as const;
 
+const PROVIDER_DELIVERY_NOTES: Partial<Record<DeliveryEmailProvider, string>> = {
+    zoho: 'Zoho Mail sends directly from the connected mailbox. This is AlphaClone direct delivery, not the separate Zoho Campaigns hub.',
+    brevo: 'Brevo uses the connected API key and sender identity. Verify sender/domain settings in Brevo if delivery fails.',
+    resend: 'Resend is best for fast transactional-style delivery. Make sure the sender domain or from address is verified.',
+    sendgrid: 'SendGrid uses the connected API key and sender profile. Check sender authentication if opens are low or mail is blocked.',
+    gmail: 'Gmail is not supported for bulk email campaigns in the direct provider path. Use Zoho, Brevo, SendGrid, or Resend.',
+    microsoft: 'Microsoft delivery is supported for inbox-style sends, not bulk email campaigns. Use Zoho, Brevo, SendGrid, or Resend.',
+};
+
+// Providers supported by the email campaign sender path (`sendScheduledCampaignServer` + `sendEmail`).
+const CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS: DeliveryEmailProvider[] = ['zoho', 'brevo', 'sendgrid', 'resend'];
+
+type ConnectedCampaignProvider = {
+    id: DeliveryEmailProvider;
+    label: string;
+    connected: boolean;
+    native?: boolean;
+    campaigns?: boolean;
+};
+
+type SenderProfileState = {
+    fromName: string;
+    fromEmail: string;
+    signature: string;
+    defaultProvider?: string;
+};
+
+type ComposeAudit = {
+    issues: string[];
+    warnings: string[];
+    info: string[];
+};
+
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const router = useRouter();
     const { isMobile } = useBreakpoint();
@@ -144,6 +182,8 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
     // Selected single campaign for detail mode
     const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+    const [selectedCampaignRecipients, setSelectedCampaignRecipients] = useState<Awaited<ReturnType<typeof emailCampaignService.getCampaignRecipients>>['recipients']>([]);
+    const [loadingSelectedRecipients, setLoadingSelectedRecipients] = useState(false);
 
     // Form state
     const [form, setForm] = useState({
@@ -190,6 +230,16 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     
     // HTML visual vs code tab editor
     const [editorTab, setEditorTab] = useState<'preview' | 'code'>('preview');
+    const [senderProfile, setSenderProfile] = useState<SenderProfileState | null>(null);
+    const [connectedProviders, setConnectedProviders] = useState<ConnectedCampaignProvider[]>([]);
+    const [workspaceDefaultProvider, setWorkspaceDefaultProvider] = useState<DeliveryEmailProvider>('auto');
+    const [campaignsProviderNote, setCampaignsProviderNote] = useState('');
+    const [providerStateLoading, setProviderStateLoading] = useState(true);
+    const [auditLoading, setAuditLoading] = useState(false);
+    const [composeAudit, setComposeAudit] = useState<ComposeAudit>({ issues: [], warnings: [], info: [] });
+    const [testEmailAddress, setTestEmailAddress] = useState('');
+    const [sendingTestEmail, setSendingTestEmail] = useState(false);
+    const [retryingFailedRecipients, setRetryingFailedRecipients] = useState(false);
 
     useEffect(() => { loadData(); }, []);
 
@@ -198,24 +248,182 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
             const tenantId = tenantService.getCurrentTenantId();
             if (!tenantId) return;
             try {
-                const res = await fetch(`/api/email/sender-profile?tenantId=${encodeURIComponent(tenantId)}`);
-                const data = await res.json();
-                if (data?.profile?.fromEmail || data?.profile?.fromName || data?.profile?.defaultProvider) {
+                setProviderStateLoading(true);
+                const [senderRes, providerRes] = await Promise.all([
+                    fetch(`/api/email/sender-profile?tenantId=${encodeURIComponent(tenantId)}`),
+                    fetch(`/api/settings/email-provider?tenantId=${encodeURIComponent(tenantId)}`),
+                ]);
+                const senderData = await senderRes.json().catch(() => ({}));
+                const providerData = await providerRes.json().catch(() => ({}));
+                if (senderData?.profile?.fromEmail || senderData?.profile?.fromName || senderData?.profile?.defaultProvider) {
+                    setSenderProfile(senderData.profile);
+                    setTestEmailAddress(String(senderData.profile.fromEmail || ''));
                     setForm((f) => ({
                         ...f,
-                        fromName: data.profile.fromName || f.fromName,
-                        fromEmail: data.profile.fromEmail || f.fromEmail,
-                        selectedProviders: data.profile.defaultProvider
-                            ? [data.profile.defaultProvider]
+                        fromName: senderData.profile.fromName || f.fromName,
+                        fromEmail: senderData.profile.fromEmail || f.fromEmail,
+                        selectedProviders: senderData.profile.defaultProvider
+                            ? (CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(senderData.profile.defaultProvider as any)
+                                ? [senderData.profile.defaultProvider]
+                                : f.selectedProviders)
                             : f.selectedProviders,
                     }));
                 }
+                if (providerRes.ok) {
+                    const dp = providerData.defaultProvider || 'auto';
+                    setWorkspaceDefaultProvider(CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(dp as any) ? dp : 'auto');
+                    const connected = Array.isArray(providerData.connectedProviders) ? providerData.connectedProviders : [];
+                    setConnectedProviders(connected.filter((p: any) => CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(p.id)));
+                    setCampaignsProviderNote(String(providerData.campaignsNote || ''));
+                }
             } catch {
                 // Non-fatal
+            } finally {
+                setProviderStateLoading(false);
             }
         };
         loadSender();
     }, []);
+
+    const resolvedProvider = useMemo<DeliveryEmailProvider>(() => {
+        const selected = (form.selectedProviders[0] || '').trim();
+        if (selected) {
+            return CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(selected as any) ? (selected as DeliveryEmailProvider) : 'auto';
+        }
+        const connectedIds = connectedProviders
+            .filter((provider) => provider.connected)
+            .map((provider) => provider.id);
+        return resolveAutoProvider(connectedIds, workspaceDefaultProvider);
+    }, [connectedProviders, form.selectedProviders, workspaceDefaultProvider]);
+
+    const resolvedProviderMeta = useMemo(
+        () => connectedProviders.find((provider) => provider.id === resolvedProvider) || null,
+        [connectedProviders, resolvedProvider]
+    );
+
+    const buildComposeAudit = useMemo<ComposeAudit>(() => {
+        const issues: string[] = [];
+        const warnings: string[] = [];
+        const info: string[] = [];
+
+        const resolvedRecipients =
+            recipientType === 'all'
+                ? contacts
+                : recipientType === 'import' || recipientType === 'few' || recipientType === 'specific'
+                    ? contacts.filter((contact) => selectedContactIds.includes(contact.id))
+                    : [];
+
+        if (!form.name.trim()) issues.push('Add an internal campaign name.');
+        if (!form.subject.trim()) issues.push('Add a subject line before launch.');
+        if (!String(form.bodyHtml || '').trim()) issues.push('Write the email body before launch.');
+        if (!recipientType) issues.push('Choose who should receive this campaign.');
+        if (recipientType && resolvedRecipients.length === 0) issues.push('Add at least one recipient before launch.');
+        if (!form.fromName.trim()) issues.push('Set a sender name.');
+        if (!form.fromEmail.trim()) warnings.push('Sender email is empty in the builder. A provider default may be used, but it is safer to set one explicitly.');
+
+        if (form.deliveryChannel === 'email' || form.deliveryChannel === 'both') {
+            if (resolvedProvider === 'auto') {
+                issues.push('No connected email provider is available for this workspace.');
+            }
+            if (resolvedProviderMeta && !resolvedProviderMeta.connected) {
+                issues.push(`${resolvedProviderMeta.label} is selected but not connected for this workspace.`);
+            }
+            if (resolvedProviderMeta?.connected) {
+                info.push(`Delivery provider ready: ${resolvedProviderMeta.label}.`);
+            }
+        }
+
+        const connectedLabels = connectedProviders
+            .filter((provider) => provider.connected)
+            .map((provider) => provider.label);
+        if (connectedLabels.length > 0) {
+            info.push(`Connected email providers: ${connectedLabels.join(', ')}.`);
+        } else {
+            warnings.push('No email provider is connected yet for campaigns. Connect Brevo, Resend, SendGrid, or Zoho Mail in Settings.');
+        }
+
+        if (campaignsProviderNote) {
+            info.push(campaignsProviderNote);
+        }
+
+        if (form.deliveryChannel !== 'email') {
+            warnings.push('This campaign also uses WhatsApp delivery. Make sure recipients have phone numbers if you expect WhatsApp sends.');
+        }
+
+        return { issues, warnings, info };
+    }, [
+        campaignsProviderNote,
+        connectedProviders,
+        contacts,
+        form.bodyHtml,
+        form.deliveryChannel,
+        form.fromEmail,
+        form.fromName,
+        form.name,
+        form.subject,
+        recipientType,
+        resolvedProvider,
+        resolvedProviderMeta,
+        selectedContactIds,
+    ]);
+
+    useEffect(() => {
+        setComposeAudit(buildComposeAudit);
+    }, [buildComposeAudit]);
+
+    const selectedCampaignDeliverySummary = useMemo(() => {
+        if (!selectedCampaign || selectedCampaignRecipients.length === 0) return null;
+
+        const providerCounts = new Map<string, number>();
+        const failureReasons = new Map<string, number>();
+        let sentCount = 0;
+        let failedCount = 0;
+        let unsubscribedCount = 0;
+        let pendingCount = 0;
+
+        for (const recipient of selectedCampaignRecipients) {
+            const recipientMeta = (recipient.metadata || {}) as Record<string, unknown>;
+            const provider = String(recipientMeta.provider || recipientMeta.whatsapp_provider || '').trim();
+            if (provider) {
+                providerCounts.set(provider, (providerCounts.get(provider) || 0) + 1);
+            }
+
+            if (recipient.status === 'failed' || recipient.status === 'bounced') {
+                failedCount += 1;
+                const reason = String(recipient.errorMessage || recipient.bounceReason || 'Unknown failure').trim();
+                failureReasons.set(reason, (failureReasons.get(reason) || 0) + 1);
+            } else if (recipient.status === 'unsubscribed') {
+                unsubscribedCount += 1;
+            } else if (recipient.status === 'pending') {
+                pendingCount += 1;
+            } else {
+                sentCount += 1;
+            }
+        }
+
+        const topProvider =
+            [...providerCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'n/a';
+        const topFailureReasons = [...failureReasons.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+
+        return {
+            topProvider,
+            sentCount,
+            failedCount,
+            unsubscribedCount,
+            pendingCount,
+            topFailureReasons,
+        };
+    }, [selectedCampaign, selectedCampaignRecipients]);
+
+    const refreshSelectedCampaignRecipients = async () => {
+        if (!selectedCampaign) return;
+        setLoadingSelectedRecipients(true);
+        const { recipients } = await emailCampaignService.getCampaignRecipients(selectedCampaign.id);
+        setSelectedCampaignRecipients(recipients);
+        setLoadingSelectedRecipients(false);
+    };
 
     const loadData = async () => {
         setLoading(true);
@@ -374,6 +582,14 @@ Request: ${userMsg}`,
     };
 
     const handleCreate = async () => {
+        setAuditLoading(true);
+        const currentAudit = buildComposeAudit;
+        setComposeAudit(currentAudit);
+        setAuditLoading(false);
+        if (currentAudit.issues.length > 0) {
+            toast.error(currentAudit.issues[0]);
+            return;
+        }
         if (!form.name || !form.subject || !form.bodyHtml) {
             toast.error('Name, subject, and message are required');
             return;
@@ -412,12 +628,12 @@ Request: ${userMsg}`,
             scheduledAt: form.scheduleEnabled && form.scheduledAt ? new Date(form.scheduledAt).toISOString() : undefined,
                 metadata: { 
                 bodyHtml: form.bodyHtml,
-                provider: form.selectedProviders[0] || 'zoho',
+                provider: form.selectedProviders.find((p) => CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(p as any)) || 'zoho',
                 deliveryChannel: form.deliveryChannel,
                 languageMode: form.languageMode,
                 languageInstruction: getCampaignLanguageInstruction({ languageMode: form.languageMode }),
                 deliverySettings: {
-                    selectedProviders: form.selectedProviders,
+                    selectedProviders: form.selectedProviders.filter((p) => CAMPAIGN_SUPPORTED_EMAIL_PROVIDERS.includes(p as any)),
                     balanceByDailyLimit: form.balanceByDailyLimit,
                 },
                 abTest: form.abTestEnabled
@@ -493,6 +709,58 @@ Request: ${userMsg}`,
         setRecipientType(null);
         setSelectedContactIds([]);
         loadData();
+    };
+
+    const runComposeAudit = () => {
+        setAuditLoading(true);
+        const nextAudit = buildComposeAudit;
+        setComposeAudit(nextAudit);
+        setAuditLoading(false);
+        if (nextAudit.issues.length === 0) {
+            toast.success('Campaign passed the builder audit.');
+            return;
+        }
+        toast.error(nextAudit.issues[0]);
+    };
+
+    const handleSendTestEmail = async () => {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+            toast.error('No active tenant found.');
+            return;
+        }
+        if (!testEmailAddress.trim()) {
+            toast.error('Enter a test email address first.');
+            return;
+        }
+        if (resolvedProvider === 'auto') {
+            toast.error('Connect an email provider before sending a test email.');
+            return;
+        }
+
+        setSendingTestEmail(true);
+        try {
+            const response = await fetch('/api/email/providers/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    provider: resolvedProvider,
+                    to: testEmailAddress.trim(),
+                    subject: form.subject?.trim() || 'AlphaClone campaign test',
+                    message: plainFromHtml(form.bodyHtml).trim() || 'This is a campaign test email from AlphaClone.',
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.error || 'Failed to send test email');
+            }
+            toast.success(`Test email sent via ${DELIVERY_PROVIDER_LABELS[resolvedProvider]} to ${testEmailAddress.trim()}.`);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Failed to send test email');
+        } finally {
+            setSendingTestEmail(false);
+        }
     };
 
     const insertVariable = (tag: string) => {
@@ -635,6 +903,21 @@ Voice & rules:
         setActiveStep(1);
         toast.success('Campaign details copied to composer');
     };
+
+    useEffect(() => {
+        const loadSelectedRecipients = async () => {
+            if (viewMode !== 'detail' || !selectedCampaign) {
+                setSelectedCampaignRecipients([]);
+                return;
+            }
+            setLoadingSelectedRecipients(true);
+            const { recipients } = await emailCampaignService.getCampaignRecipients(selectedCampaign.id);
+            setSelectedCampaignRecipients(recipients);
+            setLoadingSelectedRecipients(false);
+        };
+
+        void loadSelectedRecipients();
+    }, [selectedCampaign, viewMode]);
 
     const startNewCompose = () => {
         setForm({
@@ -896,9 +1179,72 @@ Voice & rules:
                                         >
                                             <Repeat className="w-4 h-4" />
                                         </button>
+                                        {selectedCampaignDeliverySummary && selectedCampaignDeliverySummary.failedCount > 0 && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!selectedCampaign) return;
+                                                    setRetryingFailedRecipients(true);
+                                                    const resetResult = await emailCampaignService.retryFailedRecipients(selectedCampaign.id);
+                                                    if (!resetResult.success) {
+                                                        toast.error(resetResult.error || 'Failed to reset failed recipients');
+                                                        setRetryingFailedRecipients(false);
+                                                        return;
+                                                    }
+                                                    const sendResult = await emailCampaignService.sendCampaign(selectedCampaign.id);
+                                                    if (!sendResult.success) {
+                                                        const detail = await describeCampaignFailure(selectedCampaign.id, sendResult.error);
+                                                        toast.error(detail);
+                                                    } else {
+                                                        toast.success(`Retried ${resetResult.reset} failed recipient${resetResult.reset === 1 ? '' : 's'}.`);
+                                                    }
+                                                    await loadData();
+                                                    await refreshSelectedCampaignRecipients();
+                                                    setRetryingFailedRecipients(false);
+                                                }}
+                                                disabled={retryingFailedRecipients}
+                                                className="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-amber-300 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-50"
+                                            >
+                                                {retryingFailedRecipients ? <Loader2 className="w-3 h-3 animate-spin" /> : <Repeat className="w-3 h-3" />}
+                                                Retry failed
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
+
+                            {selectedCampaignDeliverySummary ? (
+                                <div className="rounded-3xl border border-white/5 bg-slate-900 p-5 space-y-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-teal-400">Delivery summary</p>
+                                            <h3 className="mt-1 text-sm font-bold text-white">
+                                                Sent via {selectedCampaignDeliverySummary.topProvider}
+                                            </h3>
+                                            <p className="mt-1 text-sm text-slate-400">
+                                                {selectedCampaignDeliverySummary.sentCount} delivered or progressing, {selectedCampaignDeliverySummary.failedCount} failed, {selectedCampaignDeliverySummary.unsubscribedCount} unsubscribed, {selectedCampaignDeliverySummary.pendingCount} pending.
+                                            </p>
+                                        </div>
+                                        <span className="rounded-full border border-white/10 bg-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-300">
+                                            {selectedCampaignRecipients.length} recipients
+                                        </span>
+                                    </div>
+
+                                    {selectedCampaignDeliverySummary.topFailureReasons.length > 0 ? (
+                                        <div className="rounded-2xl border border-rose-500/15 bg-rose-500/5 p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-rose-300">Top failure reasons</p>
+                                            <ul className="mt-2 space-y-1 text-sm text-rose-100">
+                                                {selectedCampaignDeliverySummary.topFailureReasons.map(([reason, count]) => (
+                                                    <li key={reason}>• {count}x {reason}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4 text-sm text-emerald-100">
+                                            No failure reasons recorded for this campaign yet.
+                                        </div>
+                                    )}
+                                </div>
+                            ) : null}
 
                             {/* 2x2 Statistics dashboard */}
                             <div className="grid grid-cols-2 gap-4">
@@ -944,6 +1290,82 @@ Voice & rules:
                                         <p className="text-[10px] text-slate-500">Sending via tenant email provider</p>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="bg-slate-900 p-5 rounded-3xl border border-white/5 space-y-4">
+                                <div className="flex items-center justify-between gap-3">
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Recipient delivery audit</h3>
+                                    <button
+                                        type="button"
+                                        onClick={refreshSelectedCampaignRecipients}
+                                        className="rounded-xl border border-white/5 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-300 hover:text-white"
+                                    >
+                                        Refresh
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                    {[
+                                        { label: 'Pending', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'pending').length },
+                                        { label: 'Sent', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'sent' || recipient.status === 'delivered' || recipient.status === 'opened' || recipient.status === 'clicked').length },
+                                        { label: 'Failed', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'failed' || recipient.status === 'bounced').length },
+                                        { label: 'Unsubscribed', value: selectedCampaignRecipients.filter((recipient) => recipient.status === 'unsubscribed').length },
+                                    ].map((stat) => (
+                                        <div key={stat.label} className="rounded-2xl border border-white/5 bg-slate-950/60 p-3">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{stat.label}</p>
+                                            <p className="mt-1 text-lg font-black text-white">{stat.value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {loadingSelectedRecipients ? (
+                                    <div className="flex items-center justify-center py-10 text-sm text-slate-500">
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin text-teal-400" />
+                                        Loading recipient audit...
+                                    </div>
+                                ) : selectedCampaignRecipients.length === 0 ? (
+                                    <div className="rounded-2xl border border-dashed border-white/5 py-10 text-center text-sm text-slate-500">
+                                        No recipient rows recorded for this campaign yet.
+                                    </div>
+                                ) : (
+                                    <div className="overflow-hidden rounded-2xl border border-white/5">
+                                        <div className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 border-b border-white/5 bg-slate-950/80 px-4 py-3 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            <span>Recipient</span>
+                                            <span>Provider</span>
+                                            <span>Status</span>
+                                        </div>
+                                        <div className="divide-y divide-white/5">
+                                            {selectedCampaignRecipients.slice(0, 12).map((recipient) => {
+                                                const recipientMeta = (recipient.metadata || {}) as Record<string, unknown>;
+                                                const provider = String(recipientMeta.provider || recipientMeta.whatsapp_provider || 'n/a');
+                                                return (
+                                                    <div key={recipient.id} className="grid grid-cols-[minmax(0,2fr)_auto_auto] gap-3 px-4 py-3 text-sm">
+                                                        <div className="min-w-0">
+                                                            <p className="truncate font-semibold text-white">{recipient.email}</p>
+                                                            <p className="mt-1 truncate text-[11px] text-slate-500">
+                                                                {recipient.errorMessage || recipient.bounceReason || `Created ${new Date(recipient.createdAt).toLocaleString()}`}
+                                                            </p>
+                                                        </div>
+                                                        <span className="self-start rounded-full border border-white/10 bg-slate-950 px-2 py-1 text-[10px] font-bold uppercase text-slate-300">
+                                                            {provider}
+                                                        </span>
+                                                        <span className={`self-start rounded-full border px-2 py-1 text-[10px] font-bold uppercase ${
+                                                            recipient.status === 'failed' || recipient.status === 'bounced'
+                                                                ? 'border-rose-500/20 bg-rose-500/10 text-rose-300'
+                                                                : recipient.status === 'unsubscribed'
+                                                                    ? 'border-amber-500/20 bg-amber-500/10 text-amber-300'
+                                                                    : recipient.status === 'pending'
+                                                                        ? 'border-slate-600 bg-slate-800 text-slate-300'
+                                                                        : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300'
+                                                        }`}>
+                                                            {recipient.status}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     )}
@@ -1066,6 +1488,59 @@ Voice & rules:
                                                     </div>
                                                 </>
                                             )}
+                                        </div>
+
+                                        <div className="rounded-2xl border border-white/5 bg-slate-900 p-4 space-y-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-teal-400">Delivery readiness</p>
+                                                    <h4 className="mt-1 text-sm font-bold text-white">
+                                                        {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}
+                                                    </h4>
+                                                    <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                                                        {campaignsProviderNote || 'Confirm the connected provider, sender identity, and test send before launch.'}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={runComposeAudit}
+                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-teal-300 hover:bg-teal-500/20"
+                                                >
+                                                    {auditLoading ? 'Checking...' : 'Run audit'}
+                                                </button>
+                                            </div>
+
+                                            <div className="grid gap-3 md:grid-cols-2">
+                                                <div className="rounded-xl border border-white/5 bg-slate-950/70 p-3">
+                                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Workspace provider</p>
+                                                    <p className="mt-1 text-sm font-semibold text-white">
+                                                        {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}
+                                                    </p>
+                                                    <p className="mt-1 text-[11px] text-slate-500">
+                                                        {resolvedProviderMeta?.connected ? 'Connected and available.' : 'Not connected yet.'}
+                                                    </p>
+                                                </div>
+                                                <div className="rounded-xl border border-white/5 bg-slate-950/70 p-3">
+                                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">Sender identity</p>
+                                                    <p className="mt-1 text-sm font-semibold text-white">{form.fromName || 'No sender name set'}</p>
+                                                    <p className="mt-1 text-[11px] text-slate-500">{form.fromEmail || 'No sender email set'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2">
+                                                {connectedProviders.map((provider) => (
+                                                    <span
+                                                        key={provider.id}
+                                                        className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                                                            provider.connected
+                                                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                                                                : 'border-slate-700 bg-slate-950 text-slate-500'
+                                                        }`}
+                                                    >
+                                                        {provider.label}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
 
                                         {campaignMode === 'advanced' ? (
@@ -1431,6 +1906,136 @@ Voice & rules:
                                                     className="p-5 bg-white text-slate-800 rounded-2xl min-h-[200px] prose prose-sm max-w-none shadow-inner"
                                                     dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">No email body content.</p>' }}
                                                 />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-4 lg:grid-cols-3">
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop inbox</p>
+                                                <p className="mt-1 text-[11px] text-slate-500">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
+                                                <div className="mt-3 rounded-2xl bg-white p-4 text-slate-800 shadow-inner">
+                                                    <div className="mb-3 rounded-xl bg-slate-100 px-3 py-2 text-[11px]">
+                                                        <div><span className="font-bold">From:</span> {form.fromName || 'Sender'} &lt;{form.fromEmail || 'from@example.com'}&gt;</div>
+                                                        <div className="mt-1"><span className="font-bold">Subject:</span> {form.subject || '(No subject yet)'}</div>
+                                                    </div>
+                                                    <div
+                                                        className="prose prose-sm max-w-none"
+                                                        dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mobile preview</p>
+                                                <p className="mt-1 text-[11px] text-slate-500">Shorter lines and tighter spacing for phone inboxes.</p>
+                                                <div className="mt-3 mx-auto w-[220px] rounded-[28px] border border-slate-700 bg-slate-950 p-3">
+                                                    <div className="rounded-[22px] bg-white p-3 text-slate-800 shadow-inner">
+                                                        <div className="mb-2 text-[10px] text-slate-500">
+                                                            <div>{form.fromName || 'Sender'}</div>
+                                                            <div className="font-semibold text-slate-700">{form.subject || '(No subject yet)'}</div>
+                                                        </div>
+                                                        <div
+                                                            className="prose prose-sm max-w-none text-[12px]"
+                                                            dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Plain text fallback</p>
+                                                <p className="mt-1 text-[11px] text-slate-500">Provider: {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}</p>
+                                                <div className="mt-3 rounded-2xl bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-300">
+                                                    {plainFromHtml(form.bodyHtml) || 'Plain text version will appear here.'}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                <div>
+                                                    <span className="block text-[10px] font-bold uppercase tracking-widest text-teal-400">Pre-send audit</span>
+                                                    <p className="mt-1 text-sm text-slate-400">
+                                                        This checks the same things users expect from Brevo or Resend before launch: provider connection, sender identity, content, and recipients.
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={runComposeAudit}
+                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-teal-300 hover:bg-teal-500/20"
+                                                >
+                                                    {auditLoading ? 'Checking...' : 'Refresh audit'}
+                                                </button>
+                                            </div>
+
+                                            {composeAudit.issues.length > 0 ? (
+                                                <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-rose-300">Blocked</p>
+                                                    <ul className="mt-2 space-y-1 text-sm text-rose-100">
+                                                        {composeAudit.issues.map((issue) => (
+                                                            <li key={issue}>• {issue}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ) : (
+                                                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-emerald-300">Ready to launch</p>
+                                                    <p className="mt-2 text-sm text-emerald-100">
+                                                        The builder has enough sender, content, provider, and audience information to attempt delivery.
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {composeAudit.warnings.length > 0 && (
+                                                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-amber-300">Warnings</p>
+                                                    <ul className="mt-2 space-y-1 text-sm text-amber-100">
+                                                        {composeAudit.warnings.map((warning) => (
+                                                            <li key={warning}>• {warning}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {composeAudit.info.length > 0 && (
+                                                <div className="rounded-2xl border border-sky-500/20 bg-sky-500/10 p-4">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-sky-300">Audit notes</p>
+                                                    <ul className="mt-2 space-y-1 text-sm text-sky-100">
+                                                        {composeAudit.info.map((item) => (
+                                                            <li key={item}>• {item}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            <div className="rounded-2xl border border-white/5 bg-slate-950/70 p-4 space-y-3">
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Send test</p>
+                                                        <p className="mt-1 text-xs text-slate-400">Verify how the email looks in a real inbox before bulk delivery.</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleSendTestEmail}
+                                                        disabled={sendingTestEmail || providerStateLoading}
+                                                        className="rounded-xl bg-white px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-950 hover:bg-slate-200 disabled:opacity-50"
+                                                    >
+                                                        {sendingTestEmail ? 'Sending...' : 'Send test'}
+                                                    </button>
+                                                </div>
+                                                <input
+                                                    type="email"
+                                                    value={testEmailAddress}
+                                                    onChange={(e) => setTestEmailAddress(e.target.value)}
+                                                    placeholder={senderProfile?.fromEmail || 'name@example.com'}
+                                                    className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white outline-none"
+                                                />
+                                                <p className="text-[11px] text-slate-500">
+                                                    Test uses {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]} with the current subject and message draft.
+                                                </p>
+                                                {PROVIDER_DELIVERY_NOTES[resolvedProvider] ? (
+                                                    <p className="text-[11px] text-slate-500">
+                                                        {PROVIDER_DELIVERY_NOTES[resolvedProvider]}
+                                                    </p>
+                                                ) : null}
                                             </div>
                                         </div>
 

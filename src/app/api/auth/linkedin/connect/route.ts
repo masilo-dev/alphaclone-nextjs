@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
 import { encodeLinkedInOAuthState, type LinkedInOAuthState } from '@/lib/linkedin/oauthState';
@@ -65,11 +66,26 @@ export async function GET(req: NextRequest) {
     }
 
     const statePayload: LinkedInOAuthState = {
+      nonce: crypto.randomUUID(),
       userId: user.id,
       tenantId: tenantIdParam,
       returnTo,
       ts: Date.now(),
     };
+    const admin = createSupabaseAdminClient();
+    const { error: stateError } = await admin.from('oauth_states').insert({
+      id: statePayload.nonce,
+      user_id: user.id,
+      metadata: {
+        provider: 'linkedin',
+        tenant_id: tenantIdParam,
+        return_to: returnTo,
+      },
+    });
+    if (stateError) {
+      console.error('[linkedin/connect] oauth_states insert failed:', stateError);
+      return NextResponse.json({ error: 'OAuth initialization failed' }, { status: 500 });
+    }
     const state = encodeLinkedInOAuthState(statePayload);
 
     const forceReauth = req.nextUrl.searchParams.get('force_reauth') === '1';

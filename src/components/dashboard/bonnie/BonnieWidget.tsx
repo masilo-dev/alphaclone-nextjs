@@ -128,10 +128,19 @@ export default function BonnieWidget() {
   };
 
   const isRunning = rules?.enabled ?? true;
+  const effectiveMode =
+    !rules
+      ? 'Unknown'
+      : !rules.enabled
+        ? 'Paused'
+        : rules.auto_send_enabled && !rules.high_risk_approval_required
+          ? 'Autonomous'
+          : 'Act with approval';
 
   const mapInstructionResult = (res: {
     response: string;
     success: boolean;
+    executionStatus?: 'executed' | 'queued_for_approval' | 'read_only_answer' | 'planning_failed' | 'provider_blocked';
     toolsExecuted?: Array<{
       tool: string;
       success: boolean;
@@ -146,6 +155,7 @@ export default function BonnieWidget() {
     text: res.response,
     tools: res.toolsExecuted,
     approval: res.pendingApproval || undefined,
+    executionStatus: res.executionStatus,
   });
 
   const handleBonnieMessage = async (
@@ -191,7 +201,7 @@ export default function BonnieWidget() {
       return mapInstructionResult(res);
     }
 
-    return { text: res.response || 'Failed to process command.', error: true };
+    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleBonnieStream = async (
@@ -212,7 +222,7 @@ export default function BonnieWidget() {
       void refreshApprovals();
       return mapInstructionResult(res);
     }
-    return { text: res.response || 'Failed to process command.', error: true };
+    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleResolveApproval = async (
@@ -253,7 +263,7 @@ export default function BonnieWidget() {
   };
 
   return (
-    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+72px)] right-4 z-[70] flex flex-col items-end md:bottom-6 md:right-6" data-tour="bonnie-widget">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+78px)] right-3 z-[70] flex flex-col items-end md:bottom-5 md:right-5" data-tour="bonnie-widget">
       {/* Drawer / Popup Window */}
       <AnimatePresence>
         {isOpen && (
@@ -262,7 +272,7 @@ export default function BonnieWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-4 flex max-h-[min(85dvh,680px)] w-[min(100vw-2rem,360px)] 2xl:w-[400px] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-slate-900/90 text-white shadow-2xl backdrop-blur-2xl"
+            className="mb-3 flex max-h-[min(82dvh,640px)] w-[min(100vw-1.25rem,340px)] xl:w-[360px] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/90 text-white shadow-2xl backdrop-blur-2xl"
           >
             {/* Header */}
             <div className="relative flex items-center justify-between border-b border-slate-800 bg-slate-950/60 p-4">
@@ -276,7 +286,7 @@ export default function BonnieWidget() {
                     Bonnie
                   </h3>
                   <p className="text-xs text-slate-400">
-                    {moduleHint.label} · WhatsApp, campaigns, CRM & more
+                    {moduleHint.label} · actions, approvals, and advice
                   </p>
                 </div>
               </div>
@@ -291,7 +301,7 @@ export default function BonnieWidget() {
             {/* Controls Bar */}
             <div className="flex items-center justify-between border-b border-slate-800/80 bg-slate-950/20 px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400">Status:</span>
+                <span className="text-xs text-slate-400">Agent:</span>
                 <span className={`inline-flex items-center gap-1 text-xs font-semibold ${isRunning ? 'text-emerald-400' : 'text-amber-400'}`}>
                   {isRunning ? (
                     <>
@@ -302,6 +312,12 @@ export default function BonnieWidget() {
                       <Pause className="h-3 w-3 fill-current" /> Paused
                     </>
                   )}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">Mode:</span>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-300">
+                  {effectiveMode}
                 </span>
               </div>
 
@@ -333,7 +349,7 @@ export default function BonnieWidget() {
                   className="flex items-center gap-1.5 rounded-lg bg-teal-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950 hover:bg-teal-400 active:scale-95 disabled:opacity-50 transition-all shadow-md shadow-teal-500/10 border border-teal-400/20"
                 >
                   <RefreshCw className={`h-3 w-3 ${isTriggering ? 'animate-spin' : ''}`} />
-                  Run Now
+                  Scan
                 </button>
               </div>
             </div>

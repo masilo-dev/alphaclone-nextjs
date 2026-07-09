@@ -2,13 +2,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { decrypt, encrypt } from '@/lib/encryption';
-import { linkedInFetch } from '@/lib/linkedin/linkedinClient';
+import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
 
 export type LinkedInCompanyPage = {
   id: string;
   name: string | null;
   vanityName: string | null;
   logoUrl: string | null;
+  roles?: string[];
+  primaryRole?: string | null;
 };
 
 /** Roles that can post to or administer a LinkedIn company page (queried separately — API filters one role per call). */
@@ -19,6 +21,15 @@ const LINKEDIN_COMPANY_PAGE_ROLES = [
   'CURATOR',
   'RECRUITING_POSTER',
 ] as const;
+
+function mergeCompanyPageRole(existing: LinkedInCompanyPage | undefined, next: LinkedInCompanyPage): LinkedInCompanyPage {
+  const mergedRoles = Array.from(new Set([...(existing?.roles || []), ...(next.roles || [])]));
+  return {
+    ...next,
+    roles: mergedRoles,
+    primaryRole: existing?.primaryRole || next.primaryRole || mergedRoles[0] || null,
+  };
+}
 
 function parseOrganizationAclElements(elements: unknown[]): LinkedInCompanyPage[] {
   return elements
@@ -31,6 +42,7 @@ function parseOrganizationAclElements(elements: unknown[]): LinkedInCompanyPage[
       const firstStream = Array.isArray(streams) ? streams[0] : null;
       const identifiers = (firstStream as Record<string, unknown> | null)?.identifiers;
       const firstIdentifier = Array.isArray(identifiers) ? identifiers[0] : null;
+      const role = typeof row.role === 'string' ? row.role : null;
       return {
         id: target?.id ? String(target.id) : '',
         name: target?.localizedName ? String(target.localizedName) : null,
@@ -39,6 +51,8 @@ function parseOrganizationAclElements(elements: unknown[]): LinkedInCompanyPage[
           firstIdentifier && typeof (firstIdentifier as Record<string, unknown>).identifier === 'string'
             ? String((firstIdentifier as Record<string, unknown>).identifier)
             : null,
+        roles: role ? [role] : [],
+        primaryRole: role,
       } as LinkedInCompanyPage;
     })
     .filter((page: LinkedInCompanyPage) => Boolean(page.id));
@@ -48,24 +62,49 @@ async function fetchLinkedInCompanyPagesForRole(
   accessToken: string,
   role?: string
 ): Promise<LinkedInCompanyPage[]> {
-  const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
-  const url =
-    `https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&state=APPROVED${roleParam}` +
-    '&projection=(elements*(organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))))';
-  const res = await linkedInFetch(url, accessToken, { method: 'GET' });
-  const payload = await res.json().catch(() => ({}));
-  const elements = Array.isArray(payload?.elements) ? payload.elements : [];
-  return parseOrganizationAclElements(elements);
+  const byId = new Map<string, LinkedInCompanyPage>();
+  let start = 0;
+  const count = 100;
+
+  while (true) {
+    const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
+    const url =
+      `https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&state=APPROVED${roleParam}` +
+      `&start=${start}&count=${count}` +
+      '&projection=(elements*(role,organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))),paging)';
+    const res = await linkedInFetch(url, accessToken, { method: 'GET' });
+    const payload = await res.json().catch(() => ({}));
+    const elements = Array.isArray(payload?.elements) ? payload.elements : [];
+    const pages = parseOrganizationAclElements(elements);
+    for (const page of pages) {
+      byId.set(page.id, mergeCompanyPageRole(byId.get(page.id), page));
+    }
+
+    const paging = payload?.paging as { start?: unknown; count?: unknown } | undefined;
+    const returnedCount = elements.length;
+    const nextStart = start + returnedCount;
+    const pageCount = typeof paging?.count === 'number' ? paging.count : count;
+    if (returnedCount === 0 || returnedCount < pageCount) {
+      break;
+    }
+    start = nextStart;
+  }
+
+  return Array.from(byId.values());
 }
 
 export async function fetchLinkedInCompanyPages(accessToken: string): Promise<LinkedInCompanyPage[]> {
   const byId = new Map<string, LinkedInCompanyPage>();
+  let authLikeError: LinkedInApiError | null = null;
 
   for (const role of LINKEDIN_COMPANY_PAGE_ROLES) {
     try {
       const pages = await fetchLinkedInCompanyPagesForRole(accessToken, role);
       for (const page of pages) byId.set(page.id, page);
     } catch (err) {
+      if (err instanceof LinkedInApiError && (err.code === 'TOKEN_EXPIRED' || err.code === 'FORBIDDEN')) {
+        authLikeError = err;
+      }
       console.warn('[linkedin] organizationAcls role fetch failed:', role, err);
     }
   }
@@ -75,8 +114,15 @@ export async function fetchLinkedInCompanyPages(accessToken: string): Promise<Li
       const pages = await fetchLinkedInCompanyPagesForRole(accessToken);
       for (const page of pages) byId.set(page.id, page);
     } catch (err) {
+      if (err instanceof LinkedInApiError && (err.code === 'TOKEN_EXPIRED' || err.code === 'FORBIDDEN')) {
+        authLikeError = err;
+      }
       console.warn('[linkedin] organizationAcls unfiltered fetch failed:', err);
     }
+  }
+
+  if (byId.size === 0 && authLikeError) {
+    throw authLikeError;
   }
 
   return Array.from(byId.values());
@@ -94,6 +140,9 @@ export async function refreshLinkedInCompanyPages(params: {
     linkedinMemberId: params.linkedinMemberId,
   });
   if (!integration?.accessToken) {
+    if (integration?.id) {
+      await markLinkedInIntegrationInactive(admin, integration.id, 'token_expired').catch(() => undefined);
+    }
     return { companyPages: [], scopes: [], error: 'LinkedIn is not connected or token expired' };
   }
 
@@ -106,7 +155,27 @@ export async function refreshLinkedInCompanyPages(params: {
     };
   }
 
-  const companyPages = await fetchLinkedInCompanyPages(integration.accessToken);
+  let companyPages: LinkedInCompanyPage[] = [];
+  try {
+    companyPages = await fetchLinkedInCompanyPages(integration.accessToken);
+  } catch (err) {
+    if (err instanceof LinkedInApiError && err.code === 'TOKEN_EXPIRED') {
+      await markLinkedInIntegrationInactive(admin, integration.id, 'token_expired').catch(() => undefined);
+      return {
+        companyPages: [],
+        scopes,
+        error: 'LinkedIn token expired. Reconnect LinkedIn and approve company page access again.',
+      };
+    }
+    if (err instanceof LinkedInApiError && err.code === 'FORBIDDEN') {
+      return {
+        companyPages: [],
+        scopes,
+        error: 'LinkedIn denied organization access for this token. Reconnect and approve company page permissions again.',
+      };
+    }
+    throw err;
+  }
   const metadata =
     integration.metadata && typeof integration.metadata === 'object'
       ? { ...(integration.metadata as Record<string, unknown>) }
@@ -185,7 +254,7 @@ export function extractCompanyPagesFromMetadata(raw: unknown): LinkedInCompanyPa
   const maybePages = (raw as { company_pages?: unknown }).company_pages;
   if (!Array.isArray(maybePages)) return [];
   return maybePages
-    .map((page) => {
+    .map<LinkedInCompanyPage | null>((page) => {
       if (!page || typeof page !== 'object') return null;
       const obj = page as Record<string, unknown>;
       const id = typeof obj.id === 'string' ? obj.id : '';
@@ -195,7 +264,9 @@ export function extractCompanyPagesFromMetadata(raw: unknown): LinkedInCompanyPa
         name: typeof obj.name === 'string' ? obj.name : null,
         vanityName: typeof obj.vanityName === 'string' ? obj.vanityName : null,
         logoUrl: typeof obj.logoUrl === 'string' ? obj.logoUrl : null,
-      };
+        roles: Array.isArray(obj.roles) ? obj.roles.map((role) => String(role)) : [],
+        primaryRole: typeof obj.primaryRole === 'string' ? obj.primaryRole : null,
+      } satisfies LinkedInCompanyPage;
     })
     .filter((page): page is LinkedInCompanyPage => !!page);
 }
@@ -366,6 +437,7 @@ export async function syncLinkedInIdentities(
 ): Promise<void> {
   const canPostMember = params.scopes.includes('w_member_social');
   const canPostOrg = params.scopes.includes('w_organization_social');
+  const currentOrgIds = new Set(params.companyPages.map((page) => page.id));
 
   await admin.from('linkedin_identities').upsert(
     {
@@ -385,6 +457,20 @@ export async function syncLinkedInIdentities(
     { onConflict: 'tenant_id,author_urn' }
   );
 
+  await admin
+    .from('linkedin_identities')
+    .delete()
+    .eq('tenant_id', params.tenantId)
+    .eq('integration_id', params.integrationId)
+    .eq('type', 'organization')
+    .not(
+      'linkedin_organization_id',
+      'in',
+      `(${Array.from(currentOrgIds)
+        .map((id) => JSON.stringify(id))
+        .join(',') || '""'})`
+    );
+
   for (const page of params.companyPages) {
     const authorUrn = `urn:li:organization:${page.id}`;
     await admin.from('linkedin_identities').upsert(
@@ -399,7 +485,10 @@ export async function syncLinkedInIdentities(
         logo_url: page.logoUrl,
         can_post: canPostOrg,
         is_admin: true,
-        metadata: {},
+        metadata: {
+          roles: page.roles || [],
+          primary_role: page.primaryRole || null,
+        },
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'tenant_id,author_urn' }
@@ -507,6 +596,18 @@ export async function deleteLinkedInIntegration(params: {
     .eq('linkedin_member_id', params.linkedinMemberId);
 
   if (error) return { success: false, error: error.message };
+
+  await admin
+    .from('linkedin_identities')
+    .delete()
+    .eq('tenant_id', params.tenantId)
+    .eq('integration_id', integration?.id || '');
+
+  await admin
+    .from('linkedin_integration_secrets')
+    .delete()
+    .eq('integration_id', integration?.id || '');
+
   return { success: true };
 }
 

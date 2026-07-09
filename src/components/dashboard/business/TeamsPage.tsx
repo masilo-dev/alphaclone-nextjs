@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { useMeetingSession } from '@/hooks/useMeetingSession';
 import { microsoft365Service } from '@/services/microsoft365Service';
-import { microsoftAuthService } from '@/services/microsoftAuthService';
+import { humanizeMicrosoftOAuthReason, microsoftAuthService } from '@/services/microsoftAuthService';
 import { tenantService } from '@/services/tenancy/TenantService';
 import {
     createInstantMeeting,
@@ -81,7 +81,7 @@ export default function TeamsPage({ user, setActiveTab }: TeamsPageProps) {
         const params = new URLSearchParams(window.location.search);
         const oauthStatus = params.get('microsoft');
         if (oauthStatus === 'connected') toast.success('Microsoft 365 connected');
-        else if (oauthStatus === 'error') toast.error(params.get('reason') || 'Microsoft connection failed');
+        else if (oauthStatus === 'error') toast.error(humanizeMicrosoftOAuthReason(params.get('reason')));
         params.delete('microsoft'); params.delete('reason');
         const next = params.toString();
         window.history.replaceState({}, '', `${window.location.pathname}${next ? `?${next}` : ''}`);

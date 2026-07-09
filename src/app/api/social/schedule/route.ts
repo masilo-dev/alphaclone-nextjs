@@ -337,7 +337,49 @@ export async function POST(req: NextRequest) {
     }
 
     const requestedOrganizationId = body.linkedin_organization_id?.trim() || null;
-    if (requestedOrganizationId) {
+    const platforms = body.platforms?.length ? body.platforms : ['facebook'];
+
+    if (platforms.includes('linkedin')) {
+      const { data: liIntegration, error: liError } = await supabase
+        .from('linkedin_integrations')
+        .select('metadata, scopes')
+        .eq('tenant_id', tenantId)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle();
+      if (liError || !liIntegration) {
+        return NextResponse.json({ error: 'LinkedIn integration is not connected for this workspace.' }, { status: 400 });
+      }
+
+      const scopes = normalizeScopes(liIntegration.scopes);
+      if (requestedOrganizationId) {
+        const companyPages = extractCompanyPagesFromMetadata(liIntegration.metadata);
+        const hasCompany = companyPages.some((company) => company.id === requestedOrganizationId);
+        if (!hasCompany) {
+          return NextResponse.json(
+            { error: 'Selected LinkedIn company page does not belong to this connected account.' },
+            { status: 400 }
+          );
+        }
+        if (!scopes.includes('w_organization_social')) {
+          return NextResponse.json(
+            {
+              error:
+                'LinkedIn is missing company page write permissions. Reconnect LinkedIn and approve organization access.',
+            },
+            { status: 400 }
+          );
+        }
+      } else if (!scopes.includes('w_member_social')) {
+        return NextResponse.json(
+          {
+            error: 'LinkedIn is missing personal post permissions. Reconnect LinkedIn and approve post access.',
+          },
+          { status: 400 }
+        );
+      }
+    } else if (requestedOrganizationId) {
       const { data: liIntegration, error: liError } = await supabase
         .from('linkedin_integrations')
         .select('metadata')
@@ -373,7 +415,7 @@ export async function POST(req: NextRequest) {
       user_id: user.id,
       title: body.title?.trim() || null,
       caption: body.caption.trim(),
-      platforms: body.platforms?.length ? body.platforms : ['facebook'],
+      platforms: platforms,
       media_urls: body.media_urls || [],
       media_types: body.media_types || [],
       link_url: body.link_url || null,

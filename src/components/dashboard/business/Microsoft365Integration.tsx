@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, Mail, Calendar, Users, Files } from 'lucide-react';
 import { microsoft365Service } from '@/services/microsoft365Service';
-import { microsoftAuthService } from '@/services/microsoftAuthService';
+import { humanizeMicrosoftOAuthReason, microsoftAuthService } from '@/services/microsoftAuthService';
 import MicrosoftConnectButton from '@/components/dashboard/business/MicrosoftConnectButton';
 import toast from 'react-hot-toast';
 
 export default function Microsoft365Integration() {
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
     const [status, setStatus] = useState<'idle' | 'loading' | 'connected' | 'error'>('loading');
     const [isBusy, setIsBusy] = useState(false);
     const [connectionEmail, setConnectionEmail] = useState<string>('');
@@ -47,7 +50,7 @@ export default function Microsoft365Integration() {
             toast.success('Microsoft 365 connected');
             void loadConnection();
         } else if (oauthStatus === 'error') {
-            toast.error(reason || 'Microsoft connection failed');
+            toast.error(humanizeMicrosoftOAuthReason(reason));
         }
 
         params.delete('microsoft');
@@ -58,7 +61,8 @@ export default function Microsoft365Integration() {
     }, []);
 
     const handleConnect = () => {
-        microsoftAuthService.initiateOAuth();
+        const search = searchParams?.toString();
+        microsoftAuthService.initiateOAuth(`${pathname}${search ? `?${search}` : ''}`);
     };
 
     const handleDisconnect = async () => {

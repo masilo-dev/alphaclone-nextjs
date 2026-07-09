@@ -138,10 +138,19 @@ export default function BonnieFullView() {
   };
 
   const isRunning = rules?.enabled ?? true;
+  const effectiveMode =
+    !rules
+      ? 'Unknown'
+      : !rules.enabled
+        ? 'Paused'
+        : rules.auto_send_enabled && !rules.high_risk_approval_required
+          ? 'Autonomous'
+          : 'Act with approval';
 
   const mapInstructionResult = (res: {
     response: string;
     success: boolean;
+    executionStatus?: 'executed' | 'queued_for_approval' | 'read_only_answer' | 'planning_failed' | 'provider_blocked';
     toolsExecuted?: Array<{
       tool: string;
       success: boolean;
@@ -156,6 +165,7 @@ export default function BonnieFullView() {
     text: res.response,
     tools: res.toolsExecuted,
     approval: res.pendingApproval || undefined,
+    executionStatus: res.executionStatus,
   });
 
   const handleBonnieMessage = async (
@@ -201,7 +211,7 @@ export default function BonnieFullView() {
       return mapInstructionResult(res);
     }
 
-    return { text: res.response || 'Failed to process command.', error: true };
+    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleBonnieStream = async (
@@ -222,7 +232,7 @@ export default function BonnieFullView() {
       void refreshApprovals();
       return mapInstructionResult(res);
     }
-    return { text: res.response || 'Failed to process command.', error: true };
+    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleResolveApproval = async (
@@ -329,7 +339,9 @@ export default function BonnieFullView() {
               </div>
               <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
                 <span className="text-slate-400">High-risk sends</span>
-                <span className="font-bold text-slate-300">Approval required</span>
+                <span className="font-bold text-slate-300">
+                  {effectiveMode === 'Autonomous' ? 'Autonomous allowed' : 'Approval required'}
+                </span>
               </div>
             </div>
 

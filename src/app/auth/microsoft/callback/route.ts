@@ -11,8 +11,16 @@ function getAppUrl(req: NextRequest) {
   );
 }
 
+function sanitizeReturnTo(returnTo: string | null | undefined, fallback = '/dashboard/settings') {
+  const value = typeof returnTo === 'string' ? returnTo.trim() : '';
+  if (!value.startsWith('/') || value.startsWith('//')) {
+    return fallback;
+  }
+  return value;
+}
+
 function redirectWithStatus(appUrl: string, returnTo: string, status: 'connected' | 'error', reason?: string) {
-  const url = new URL(returnTo, appUrl);
+  const url = new URL(sanitizeReturnTo(returnTo), appUrl);
   url.searchParams.set('microsoft', status);
   if (reason) {
     url.searchParams.set('reason', reason);
@@ -32,7 +40,7 @@ async function resolveReturnPath(state: string | null, fallback: string) {
     .eq('id', state)
     .maybeSingle();
 
-  return (stateData?.metadata?.return_to as string | undefined) || fallback;
+  return sanitizeReturnTo((stateData?.metadata?.return_to as string | undefined) || fallback, fallback);
 }
 
 export async function GET(req: NextRequest) {
@@ -71,7 +79,10 @@ export async function GET(req: NextRequest) {
       return redirectWithStatus(appUrl, defaultReturn, 'error', 'invalid_state');
     }
 
-    const returnTo = (stateData.metadata?.return_to as string | undefined) || defaultReturn;
+    const returnTo = sanitizeReturnTo(
+      (stateData.metadata?.return_to as string | undefined) || defaultReturn,
+      defaultReturn
+    );
     const redirectUri =
       (stateData.metadata?.redirect_uri as string | undefined) || getMicrosoftRedirectUri(appUrl);
     const userId = stateData.user_id;
@@ -110,6 +121,13 @@ export async function GET(req: NextRequest) {
       },
     });
     const profile = await profileResponse.json();
+    if (!profileResponse.ok) {
+      const message =
+        profile?.error?.message ||
+        profile?.error_description ||
+        'Failed to load Microsoft profile';
+      return redirectWithStatus(appUrl, returnTo, 'error', message);
+    }
 
     const expiresAt = tokenPayload.expires_in
       ? new Date(Date.now() + Number(tokenPayload.expires_in) * 1000).toISOString()

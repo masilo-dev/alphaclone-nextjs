@@ -8,6 +8,7 @@ import {
     skipAiQuotaForAdminMode,
 } from '@/lib/quotas/resolveTenantForAiRequest';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
+import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
 import { routeAIRequest, streamAIRequest } from '@/services/aiRouter';
 
 export const runtime = 'nodejs';
@@ -94,6 +95,21 @@ export async function POST(req: Request) {
         });
     } catch (error: any) {
         console.error('AI Generate API Error:', error);
+        if (isAIProviderUnavailableError(error)) {
+            return NextResponse.json(
+                {
+                    error: 'AI provider layer is temporarily unavailable. Please retry after the cooldown window.',
+                    code: 'AI_PROVIDER_UNAVAILABLE',
+                    retryAfter: error.retryAfterSeconds,
+                },
+                {
+                    status: 503,
+                    headers: {
+                        'Retry-After': String(error.retryAfterSeconds || 300),
+                    },
+                }
+            );
+        }
         const msg = String(error?.message || '').toLowerCase();
         if (
             msg.includes('api key') ||

@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
         info.push(`Campaign status: "${campaign.status}"`);
 
         const meta = (campaign.metadata || {}) as Record<string, unknown>;
+        const deliverySettings = ((meta.deliverySettings || {}) as Record<string, unknown>);
         const abTest = (meta.abTest || {}) as Record<string, unknown>;
         if (abTest.enabled) {
           if (!String(abTest.subjectB || '').trim()) {
@@ -54,6 +55,21 @@ export async function GET(req: NextRequest) {
 
         if (campaign.status === 'draft') {
             issues.push('Campaign is still in DRAFT — it has not been sent yet. Click "Send" to launch it.');
+        }
+
+        const selectedProviders = Array.isArray(deliverySettings.selectedProviders)
+            ? deliverySettings.selectedProviders.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)
+            : [];
+        const supportedCampaignProviders = ['sendgrid', 'resend', 'brevo', 'zoho'];
+        const selectedSupportedProviders = selectedProviders.filter((p) => supportedCampaignProviders.includes(p));
+        if (selectedProviders.length > 0) {
+            info.push(`Requested delivery providers: ${selectedProviders.join(', ')}`);
+        } else {
+            info.push('No provider was explicitly selected, so workspace defaults and connected providers decide delivery.');
+        }
+        info.push('This builder delivers through AlphaClone direct provider sending, not the separate native Zoho Campaigns hub.');
+        if (selectedProviders.length > 0 && selectedSupportedProviders.length === 0) {
+            issues.push('Selected delivery provider(s) are not supported for direct campaigns. Use Zoho Mail, Brevo, SendGrid, or Resend.');
         }
 
         if (campaign.status === 'scheduled' && campaign.scheduled_at) {
@@ -74,7 +90,7 @@ export async function GET(req: NextRequest) {
             .from('integrations')
             .select('type, enabled, config, tenant_id, user_id')
             .eq('enabled', true)
-            .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
+            .in('type', ['sendgrid', 'resend', 'brevo', 'zoho']);
 
         const { data: tenantIntegrations } = await integrationQuery.eq('tenant_id', tenantId);
         const { data: creatorIntegrations } = creatorId
@@ -83,7 +99,7 @@ export async function GET(req: NextRequest) {
                 .select('type, enabled, config, tenant_id, user_id')
                 .eq('enabled', true)
                 .eq('user_id', creatorId)
-                .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'])
+                .in('type', ['sendgrid', 'resend', 'brevo', 'zoho'])
             : { data: [] as any[] };
 
         const integrations = [...(tenantIntegrations || []), ...(creatorIntegrations || [])].filter(
@@ -91,20 +107,43 @@ export async function GET(req: NextRequest) {
         );
 
         if (!integrations.length) {
-            issues.push('No email provider connected. Go to Settings > Integrations and connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.');
+            issues.push('No email provider connected for campaigns. Go to Settings > Integrations and connect SendGrid, Resend, Brevo, or Zoho Mail.');
         } else {
             const providerNames = integrations.map((i: any) => i.type).join(', ');
             info.push(`Active email providers: ${providerNames}`);
 
             for (const integ of integrations) {
                 const cfg = integ.config || {};
-                if (integ.type !== 'zoho' && integ.type !== 'gmail') {
+                if (integ.type !== 'zoho') {
                     const hasKey = !!(cfg.apiKey || cfg.api_key);
                     if (!hasKey) {
                         issues.push(`Provider "${integ.type}" is connected but missing an API key. Edit the integration and add a valid key.`);
                     }
                 }
+                const providerFromEmail = String(cfg.fromEmail || cfg.from_email || '').trim();
+                if (integ.type !== 'zoho' && !providerFromEmail) {
+                    warnings.push(`Provider "${integ.type}" is connected but has no sender email configured. Campaigns may fall back to the campaign sender address.`);
+                }
             }
+        }
+
+        if (selectedSupportedProviders.length > 0) {
+            const connectedTypes = new Set(integrations.map((row: any) => String(row.type || '').trim().toLowerCase()));
+            const missingRequestedProviders = selectedSupportedProviders.filter((provider) => !connectedTypes.has(provider));
+            if (missingRequestedProviders.length > 0) {
+                issues.push(`Selected provider(s) not connected: ${missingRequestedProviders.join(', ')}.`);
+            }
+        }
+
+        const campaignFromName = String(campaign.from_name || '').trim();
+        const campaignFromEmail = String(campaign.from_email || '').trim();
+        if (!campaignFromName) {
+            warnings.push('Campaign sender name is empty. Recipients may see a generic sender label.');
+        }
+        if (!campaignFromEmail) {
+            issues.push('Campaign sender email is empty. Add a sender email or configure a provider sender profile.');
+        } else {
+            info.push(`Campaign sender identity: ${campaignFromName || 'No name set'} <${campaignFromEmail}>`);
         }
 
         // 4. Check recipients

@@ -337,6 +337,14 @@ export default function LinkedInManagementTab() {
     return normalizeScopes(scopes).includes('w_organization_social');
   }, [integrations, selectedLinkedInMemberId]);
   const canPostAsSelectedCompany = !selectedLinkedInOrganizationId || hasOrganizationWriteScope;
+  const hasLinkedInProfileConnection = Boolean(selectedLinkedInMemberId);
+  const hasCompanyPageAccess = companyPages.length > 0;
+  const linkedInOrgStatusMessage =
+    hasLinkedInProfileConnection && !hasCompanyPageAccess
+      ? !hasOrganizationReadScope
+        ? 'Your personal LinkedIn profile is connected, but company page access is missing. Reconnect and approve organization permissions.'
+        : 'Your personal LinkedIn profile is connected, but no company pages were returned for this workspace yet. Refresh company pages or reconnect.'
+      : null;
 
   const linkedInTokenExpiryWarning = useMemo(() => {
     const exp = selectedIntegration?.token_expires_at;
@@ -1020,6 +1028,34 @@ ${parentContext}Return only the comment text.`;
         </div>
       )}
 
+      {linkedInOrgStatusMessage && (
+        <div className="flex items-start gap-3 rounded-xl border border-sky-500/20 bg-sky-500/10 p-4 text-sm text-sky-100">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" />
+          <div className="flex-1 space-y-2">
+            <p className="font-semibold text-white">Profile connected, page posting still unavailable</p>
+            <p className="text-xs leading-relaxed text-sky-100/80">{linkedInOrgStatusMessage}</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void handleRefreshCompanyPages()}
+                disabled={refreshingCompanyPages || !hasOrganizationReadScope}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-500 disabled:opacity-50"
+              >
+                {refreshingCompanyPages ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                Refresh company pages
+              </button>
+              <button
+                type="button"
+                onClick={handleConnectLinkedIn}
+                className="rounded-lg border border-sky-400/20 px-3 py-1.5 text-xs font-bold text-sky-100 hover:bg-sky-500/10"
+              >
+                Reconnect LinkedIn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedIntegration?.is_active && companyPages.length === 0 && (
         <div className="flex items-start gap-3 p-4 rounded-xl bg-slate-800/60 border border-slate-700 text-slate-200 text-sm">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
@@ -1029,7 +1065,7 @@ ${parentContext}Return only the comment text.`;
               AlphaClone only shows LinkedIn company pages returned by LinkedIn&apos;s API for your account.
               {!hasOrganizationReadScope
                 ? ' Your current connection is missing organization permissions — reconnect and approve company page access.'
-                : ' If you are a Content Admin (not Super Admin) on the page, use Refresh company pages after this update, or reconnect LinkedIn.'}
+                : ' Supported page roles include Super Admin / Administrator, Content Admin, Curator, and other approved LinkedIn page roles returned by the API. Refresh company pages or reconnect LinkedIn to resync them.'}
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               <button

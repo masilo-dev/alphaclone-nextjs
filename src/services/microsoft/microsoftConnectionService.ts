@@ -195,6 +195,57 @@ export async function refreshMicrosoftAccessToken(
   return { accessToken: tokenPayload.access_token as string, refreshed: true };
 }
 
+export async function deleteMicrosoftConnection(admin: SupabaseClient, userId: string): Promise<void> {
+  await admin.from('microsoft_connection_secrets').delete().eq('connection_user_id', userId);
+  const { error } = await admin.from('microsoft_connections').delete().eq('user_id', userId);
+  if (error) throw new Error(error.message);
+}
+
+export async function resolveMicrosoftUserId(
+  admin: SupabaseClient,
+  userId: string,
+  tenantId?: string | null
+): Promise<string> {
+  const trimmedUserId = String(userId || '').trim();
+  if (trimmedUserId) {
+    const direct = await getMicrosoftConnection(admin, trimmedUserId);
+    if (direct) return trimmedUserId;
+  }
+
+  if (!tenantId) {
+    throw new Error('No Microsoft connection found.');
+  }
+
+  const { data: tenant } = await admin
+    .from('tenants')
+    .select('created_by')
+    .eq('id', tenantId)
+    .maybeSingle();
+  const ownerId = typeof tenant?.created_by === 'string' ? tenant.created_by.trim() : '';
+  if (ownerId && ownerId !== trimmedUserId) {
+    const ownerConnection = await getMicrosoftConnection(admin, ownerId);
+    if (ownerConnection) return ownerId;
+  }
+
+  const { data: members } = await admin
+    .from('tenant_users')
+    .select('user_id, role')
+    .eq('tenant_id', tenantId)
+    .in('role', ['owner', 'admin'])
+    .limit(10);
+
+  for (const member of members || []) {
+    const memberId = typeof member.user_id === 'string' ? member.user_id.trim() : '';
+    if (!memberId || memberId === trimmedUserId) continue;
+    const memberConnection = await getMicrosoftConnection(admin, memberId);
+    if (memberConnection) return memberId;
+  }
+
+  throw new Error(
+    'No Microsoft connection found for this workspace. Connect Microsoft 365 in Settings → Integrations.'
+  );
+}
+
 export async function runMicrosoftTokenHealthCheck(limit = 50): Promise<{
   checked: number;
   expired: number;

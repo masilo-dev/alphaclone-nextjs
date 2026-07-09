@@ -4,6 +4,7 @@ import { cleanAIJSONResponse } from '@/lib/utils';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
 import { extractEmailAddress, formatMailFrom } from '@/lib/email/parseEmailHeader';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
+import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
 
 export interface ZohoMessage {
     messageId: string;
@@ -521,6 +522,10 @@ Rules:
             }
             return data;
         } catch (e) {
+            if (isAIProviderUnavailableError(e)) {
+                console.warn('[ZohoMailService] Triage skipped: AI provider cooldown active');
+                return { status: 'deferred_provider_blocked' };
+            }
             console.error('[ZohoMailService] Triage error:', e);
             return { status: 'error' };
         }

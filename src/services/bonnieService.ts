@@ -27,6 +27,36 @@ export interface BonnieNavIntent {
 
 let bonnieLogsTableAvailable: boolean | null = null;
 
+function humanizeBonnieError(message: string, status?: number): string {
+  const raw = String(message || '').trim();
+  const normalized = raw.toLowerCase();
+
+  const providerCreditsIssue =
+    normalized.includes('all ai providers failed') ||
+    normalized.includes('insufficient credits') ||
+    normalized.includes('insufficient balance') ||
+    normalized.includes('credit balance too low') ||
+    normalized.includes('credits exhausted') ||
+    normalized.includes('account not active') ||
+    normalized.includes('api error 402') ||
+    normalized.includes('openrouter') ||
+    normalized.includes('payment required');
+
+  if (providerCreditsIssue || status === 402) {
+    return 'Bonnie could not execute that because the AI provider layer is out of credits or billing is inactive. Restore at least one provider or OpenRouter account, then try again.';
+  }
+
+  if (normalized.includes('no endpoints found')) {
+    return 'Bonnie could not execute that because the configured model endpoint is unavailable. Update the AI provider model mapping and try again.';
+  }
+
+  if (normalized.includes('invalid api key') || normalized.includes('forbidden') || normalized.includes('suspended')) {
+    return 'Bonnie could not execute that because an AI provider key is invalid, suspended, or missing access.';
+  }
+
+  return raw || `Bonnie could not process that instruction${status ? ` (${status})` : ''}.`;
+}
+
 function isMissingBonnieLogsTable(error: { code?: string; message?: string } | null | undefined): boolean {
   if (!error) return false;
   const message = String(error.message || '').toLowerCase();
@@ -107,6 +137,12 @@ export interface BonnieInstructionResult {
   success: boolean;
   toolsExecuted?: BonnieToolExecuted[];
   pendingApproval?: BonniePendingApprovalResponse | null;
+  executionStatus?:
+    | 'executed'
+    | 'queued_for_approval'
+    | 'read_only_answer'
+    | 'planning_failed'
+    | 'provider_blocked';
 }
 
 export const bonnieService = {
@@ -187,7 +223,7 @@ export const bonnieService = {
 
       const data = await response.json();
       if (!response.ok) {
-        return { success: false, error: data.error || 'Failed to trigger run' };
+        return { success: false, error: humanizeBonnieError(String(data.error || 'Failed to trigger run'), response.status) };
       }
 
       return { success: true };
@@ -303,7 +339,7 @@ export const bonnieService = {
 
       if (!response.ok) {
         return {
-          response: String(data.error || `Bonnie could not process that instruction (${response.status}).`),
+          response: humanizeBonnieError(String(data.error || `Bonnie could not process that instruction (${response.status}).`), response.status),
           success: false,
         };
       }
@@ -313,11 +349,12 @@ export const bonnieService = {
         success: Boolean(data.success),
         toolsExecuted: data.toolsExecuted as BonnieToolExecuted[] | undefined,
         pendingApproval: (data.pendingApproval as BonniePendingApprovalResponse | null) || null,
+        executionStatus: data.executionStatus as BonnieInstructionResult['executionStatus'],
       };
     } catch (e: any) {
       console.error('Error sending instruction to Bonnie:', e);
       return {
-        response: `Bonnie hit a connection error: ${e.message}. Check your network and try again.`,
+        response: humanizeBonnieError(`Bonnie hit a connection error: ${e.message}`),
         success: false,
       };
     }
@@ -343,10 +380,10 @@ export const bonnieService = {
 
     if (!response.ok || !response.body) {
       const raw = await response.text().catch(() => '');
-      let message = `Bonnie stream failed (${response.status}).`;
+        let message = humanizeBonnieError(`Bonnie stream failed (${response.status}).`, response.status);
       try {
         const parsed = JSON.parse(raw);
-        if (parsed.error) message = String(parsed.error);
+          if (parsed.error) message = humanizeBonnieError(String(parsed.error), response.status);
       } catch {
         // ignore
       }
@@ -361,6 +398,7 @@ export const bonnieService = {
     let success = false;
     let toolsExecuted: BonnieToolExecuted[] | undefined;
     let pendingApproval: BonniePendingApprovalResponse | null = null;
+    let executionStatus: BonnieInstructionResult['executionStatus'] | undefined;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -396,9 +434,10 @@ export const bonnieService = {
           success = Boolean(data.success);
           toolsExecuted = data.toolsExecuted as BonnieToolExecuted[] | undefined;
           pendingApproval = (data.pendingApproval as BonniePendingApprovalResponse | null) || null;
+          executionStatus = data.executionStatus as BonnieInstructionResult['executionStatus'];
         }
         if (event === 'error') {
-          return { response: String(data.message || 'Bonnie stream failed.'), success: false };
+          return { response: humanizeBonnieError(String(data.message || 'Bonnie stream failed.')), success: false };
         }
       }
     }
@@ -408,6 +447,7 @@ export const bonnieService = {
       success,
       toolsExecuted,
       pendingApproval,
+      executionStatus,
     };
   },
 

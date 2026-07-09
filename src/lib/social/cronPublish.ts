@@ -227,6 +227,22 @@ async function publishToZernio(
 
 export async function publishSocialPost(postId: string) {
   const adminClient = createSupabaseAdminClient();
+  const { data: currentPost } = await adminClient
+    .from('social_posts')
+    .select('id, status, linkedin_post_urn')
+    .eq('id', postId)
+    .maybeSingle();
+
+  if (!currentPost) return;
+  if (currentPost.status === 'published' || currentPost.status === 'publishing') return;
+  if (currentPost.linkedin_post_urn) return;
+
+  const claimResult = await updateSocialPostStatusWithFallback(postId, {
+    status: 'publishing',
+    error_message: null,
+  });
+  if (claimResult.error) return;
+
   const { data: post } = await adminClient
     .from('social_posts')
     .select('id, tenant_id, platforms, linkedin_organization_id, metadata')
@@ -278,10 +294,6 @@ export async function publishSocialPost(postId: string) {
     return;
   }
 
-  await updateSocialPostStatusWithFallback(postId, {
-    status: 'publishing',
-    error_message: null,
-  });
   const results = await Promise.all(jobs);
   const failed = results.filter((r) => !r.ok);
   const succeeded = results.filter((r) => r.ok);

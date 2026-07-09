@@ -429,10 +429,16 @@ export const authService = {
                 const messages: Record<string, string> = {
                     missing_w_member_social: 'LinkedIn connected, but write scope is missing. Reconnect and approve posting permissions.',
                     missing_required_scopes: 'LinkedIn connected, but required scopes are missing. Reconnect and approve all requested permissions.',
+                    missing_write_permissions: 'LinkedIn connected, but posting permissions are missing. Reconnect and approve both personal and company page scopes.',
+                    invalid_state: 'LinkedIn sign-in expired. Start the connection again.',
+                    unauthorized_state: 'LinkedIn sign-in does not match the current user. Start the connection again.',
                     unauthorized_scope_error: 'LinkedIn rejected one or more scopes for this app. Check LinkedIn app products/permissions, then reconnect.',
                     app_not_configured: 'LinkedIn app is not configured on server.',
                     token_exchange_failed: 'LinkedIn OAuth token exchange failed. Please try reconnecting.',
                     profile_failed: 'LinkedIn profile read failed. Please reconnect.',
+                    tenant_not_found: 'No workspace membership was found for this LinkedIn connection.',
+                    save_failed: 'LinkedIn connected, but saving the page identities failed. Please reconnect.',
+                    unexpected_error: 'LinkedIn connect failed unexpectedly. Please try reconnecting.',
                 };
                 toast.error(messages[liError] || `LinkedIn connect failed: ${liError}`);
             }).catch(() => { });

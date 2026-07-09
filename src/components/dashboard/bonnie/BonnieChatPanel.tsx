@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { BookOpen, CheckCircle2, Loader2, Mic, MicOff, Send, Wrench, XCircle, Zap } from 'lucide-react';
+import { AlertCircle, BookOpen, CheckCircle2, Clock, Loader2, Mic, MicOff, Send, Wrench, XCircle, Zap } from 'lucide-react';
 import BonnieApprovalCard from './BonnieApprovalCard';
 import { bonnieService } from '@/services/bonnieService';
 
@@ -30,6 +30,18 @@ function sanitizeDisplayText(text: string): string {
     .replace(/\n{3,}/g, '\n\n');
 }
 
+function isProviderOutageMessage(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return (
+    normalized.includes('out of credits') ||
+    normalized.includes('billing is inactive') ||
+    normalized.includes('all ai providers failed') ||
+    normalized.includes('insufficient credits') ||
+    normalized.includes('insufficient balance') ||
+    normalized.includes('account not active')
+  );
+}
+
 export type BonnieToolStep = {
   tool: string;
   success: boolean;
@@ -55,6 +67,7 @@ export type BonnieChatMessage = {
   error?: boolean;
   tools?: BonnieToolStep[];
   approval?: BonniePendingApproval;
+  executionStatus?: 'executed' | 'queued_for_approval' | 'read_only_answer' | 'planning_failed' | 'provider_blocked';
 };
 
 type BonnieChatSendResult = {
@@ -62,6 +75,7 @@ type BonnieChatSendResult = {
   error?: boolean;
   tools?: BonnieToolStep[];
   approval?: BonniePendingApproval;
+  executionStatus?: 'executed' | 'queued_for_approval' | 'read_only_answer' | 'planning_failed' | 'provider_blocked';
 };
 
 type BonnieAiQuota = {
@@ -93,7 +107,11 @@ type BonnieChatPanelProps = {
     approvalId: string,
     status: 'approved' | 'rejected',
     editedArgs?: Record<string, unknown>
-  ) => Promise<{ success: boolean; message?: string; continuation?: { response?: string; continued?: boolean } | null }>;
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+    continuation?: { response?: string; continued?: boolean; executionStatus?: 'executed' | 'queued_for_approval' | 'read_only_answer' | 'planning_failed' | 'provider_blocked' } | null;
+  }>;
   /** Tenant id for voice commands */
   tenantId?: string;
   pathname?: string;
@@ -161,6 +179,7 @@ export default function BonnieChatPanel({
             role: 'assistant',
             text: res.response,
             error: !res.success,
+            executionStatus: res.executionStatus,
             tools: res.toolsExecuted?.map((t) => ({
               tool: t.tool,
               success: t.success,
@@ -308,6 +327,7 @@ export default function BonnieChatPanel({
                   error: result.error,
                   tools: result.tools,
                   approval: result.approval,
+                  executionStatus: result.executionStatus,
                 }
               : m
           )
@@ -326,6 +346,7 @@ export default function BonnieChatPanel({
             error: result.error,
             tools: result.tools,
             approval: result.approval,
+            executionStatus: result.executionStatus,
           },
         ]);
       }
@@ -402,7 +423,42 @@ export default function BonnieChatPanel({
                   Bonnie AI
                 </p>
               )}
+              {msg.executionStatus ? (
+                <div className="mb-2">
+                  {msg.executionStatus === 'queued_for_approval' ? (
+                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-100">
+                      <Clock className="h-3 w-3" />
+                      Awaiting approval
+                    </div>
+                  ) : msg.executionStatus === 'planning_failed' ? (
+                    <div className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-200">
+                      <AlertCircle className="h-3 w-3" />
+                      Planning failed
+                    </div>
+                  ) : msg.executionStatus === 'read_only_answer' ? (
+                    <div className="inline-flex items-center gap-1 rounded-full border border-slate-600 bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-300">
+                      <BookOpen className="h-3 w-3" />
+                      Read-only
+                    </div>
+                  ) : msg.executionStatus === 'provider_blocked' ? (
+                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-100">
+                      <Wrench className="h-3 w-3" />
+                      Provider blocked
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-100">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Executed
+                    </div>
+                  )}
+                </div>
+              ) : null}
               <p className="whitespace-pre-wrap">{sanitizeDisplayText(msg.text)}</p>
+              {msg.error && isProviderOutageMessage(msg.text) ? (
+                <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+                  Bonnie is online, but execution is blocked by AI provider billing or credit exhaustion. Re-enable at least one provider and retry the action.
+                </div>
+              ) : null}
               {msg.tools && msg.tools.length > 0 && (
                 <div className="mt-2 space-y-1 border-t border-slate-700/50 pt-2">
                   <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -445,6 +501,7 @@ export default function BonnieChatPanel({
                           text: result.message
                             ? `Approved and executed: ${result.message}`
                             : 'Action approved and executed successfully.',
+                          executionStatus: 'executed',
                         },
                       ];
                       if (result.continuation?.response) {
@@ -452,6 +509,7 @@ export default function BonnieChatPanel({
                           id: `assistant-resume-${Date.now() + 1}`,
                           role: 'assistant',
                           text: result.continuation.response,
+                          executionStatus: result.continuation.executionStatus,
                         });
                       }
                       setMessages((prev) => [
@@ -575,7 +633,7 @@ export default function BonnieChatPanel({
           </button>
         </div>
         <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
-          Enter to send · Mic uses Web Speech → voice API · Bonnie runs real tools across your workspace
+          Enter to send · Mic uses Web Speech → voice API · Bonnie will show when an action was blocked by provider billing instead of silently failing
         </p>
       </div>
     </div>

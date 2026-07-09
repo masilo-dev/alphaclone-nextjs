@@ -172,6 +172,77 @@ export async function POST(request: NextRequest) {
         const auth = await requireTenantAccess(tenantId);
         const admin = createSupabaseAdminClient();
 
+        if (mode === 'retry_failed') {
+            const campaignId = String(parsed.data.campaignId || '').trim();
+            if (!campaignId) {
+                return NextResponse.json({ error: 'campaignId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
+            }
+
+            const { data: failedRows, error: failedFetchError } = await admin
+                .from('campaign_recipients')
+                .select('id, metadata')
+                .eq('tenant_id', tenantId)
+                .eq('campaign_id', campaignId)
+                .in('status', ['failed', 'bounced']);
+            if (failedFetchError) {
+                return NextResponse.json({ error: failedFetchError.message, code: 'FAILED_RECIPIENTS_FETCH_FAILED' }, { status: 500 });
+            }
+
+            if (!failedRows || failedRows.length === 0) {
+                return NextResponse.json({ success: true, reset: 0, message: 'No failed recipients to retry.' });
+            }
+
+            for (const row of failedRows) {
+                const currentMeta = (row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata))
+                    ? row.metadata as Record<string, unknown>
+                    : {};
+                const retryCount = Number(currentMeta.retry_count || 0) + 1;
+                const nextMeta: Record<string, unknown> = {
+                    ...currentMeta,
+                    retry_count: retryCount,
+                    last_retry_at: new Date().toISOString(),
+                };
+                delete nextMeta.provider;
+                delete nextMeta.provider_from;
+                delete nextMeta.tried;
+
+                const { error: resetError } = await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'pending',
+                        sent_at: null,
+                        delivered_at: null,
+                        opened_at: null,
+                        first_opened_at: null,
+                        open_count: 0,
+                        clicked_at: null,
+                        click_count: 0,
+                        bounced_at: null,
+                        bounce_reason: null,
+                        unsubscribed_at: null,
+                        error_message: null,
+                        metadata: nextMeta,
+                    })
+                    .eq('id', row.id)
+                    .eq('tenant_id', tenantId);
+                if (resetError) {
+                    return NextResponse.json({ error: resetError.message, code: 'FAILED_RECIPIENTS_RESET_FAILED' }, { status: 500 });
+                }
+            }
+
+            await admin
+                .from('email_campaigns')
+                .update({ status: 'draft', completed_at: null })
+                .eq('id', campaignId)
+                .eq('tenant_id', tenantId);
+
+            return NextResponse.json({
+                success: true,
+                reset: failedRows.length,
+                message: `Reset ${failedRows.length} failed recipient${failedRows.length === 1 ? '' : 's'} to pending.`,
+            });
+        }
+
         if (mode === 'add_recipients') {
             const campaignId = String(parsed.data.campaignId || '').trim();
             const contactIds = parsed.data.contactIds || [];

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   AlertTriangle,
@@ -70,6 +70,7 @@ async function fetchProviderStatus(): Promise<{ microsoft: boolean; zoho: boolea
 export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const urlProvider = searchParams?.get('provider');
@@ -309,7 +310,10 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     setComposeOpen(true);
   };
 
-  const connectMicrosoft = () => microsoftAuthService.initiateOAuth();
+  const connectMicrosoft = () => {
+    const search = searchParams?.toString();
+    microsoftAuthService.initiateOAuth(`${pathname}${search ? `?${search}` : ''}`);
+  };
 
   const connectZoho = () => {
     window.location.href = '/api/auth/zoho/connect';

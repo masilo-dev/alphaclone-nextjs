@@ -1,10 +1,10 @@
 import { supabase } from '@/lib/supabase';
 
 export interface MicrosoftConnection {
-  id: string;
+  id?: string;
   user_id: string;
-  access_token: string;
-  refresh_token: string;
+  access_token?: string | null;
+  refresh_token?: string | null;
   token_expiry: string | null;
   microsoft_email: string | null;
   display_name: string | null;
@@ -33,6 +33,28 @@ function tokenNeedsRefresh(tokenExpiry: string | null | undefined, force = false
   return Date.now() + 5 * 60 * 1000 >= expiresAt;
 }
 
+export function humanizeMicrosoftOAuthReason(reason: string | null | undefined): string {
+  const value = (reason || '').trim();
+  if (!value) return 'Microsoft connection failed';
+
+  const normalized = value.toLowerCase();
+  if (normalized.includes('access_denied')) return 'Microsoft sign-in was canceled or permissions were denied.';
+  if (normalized.includes('invalid_state')) return 'Microsoft sign-in expired. Please try connecting again.';
+  if (normalized.includes('missing_params')) return 'Microsoft sign-in returned incomplete data. Please try again.';
+  if (normalized.includes('not_configured')) return 'Microsoft OAuth is not configured on the server.';
+  if (normalized.includes('failed to exchange') || normalized.includes('invalid_grant')) {
+    return 'Microsoft sign-in code exchange failed. Please reconnect and try again.';
+  }
+  if (normalized.includes('failed to load microsoft profile')) {
+    return 'Microsoft connected, but profile lookup failed. Please reconnect and try again.';
+  }
+  if (normalized.includes('aadsts50011') || normalized.includes('redirect uri')) {
+    return 'Microsoft rejected the redirect URL. Check the Azure app redirect URI configuration.';
+  }
+
+  return value;
+}
+
 let refreshInFlight: Promise<{ success: boolean; connection: MicrosoftConnection }> | null = null;
 
 export const microsoftAuthService = {
@@ -40,7 +62,7 @@ export const microsoftAuthService = {
     const userId = await getCurrentUserId();
     const { data, error } = await supabase
       .from('microsoft_connections')
-      .select('*')
+      .select('user_id, token_expiry, microsoft_email, display_name, created_at, updated_at')
       .eq('user_id', userId)
       .maybeSingle();
 
@@ -53,7 +75,7 @@ export const microsoftAuthService = {
 
   async isConnected(): Promise<boolean> {
     const connection = await this.getConnection();
-    return !!connection?.access_token;
+    return Boolean(connection?.microsoft_email || connection?.user_id);
   },
 
   initiateOAuth(returnTo?: string) {
@@ -62,9 +84,9 @@ export const microsoftAuthService = {
     }
 
     const params = new URLSearchParams();
-    if (returnTo) {
-      params.set('returnTo', returnTo);
-    }
+    const resolvedReturnTo =
+      returnTo || `${window.location.pathname}${window.location.search || ''}`;
+    params.set('returnTo', resolvedReturnTo);
 
     const query = params.toString();
     window.location.href = query
@@ -72,18 +94,17 @@ export const microsoftAuthService = {
       : '/api/auth/microsoft/connect';
   },
 
-  async refreshAccessToken(refreshToken?: string, options?: { force?: boolean }) {
+  async refreshAccessToken(_refreshToken?: string, options?: { force?: boolean }) {
     if (refreshInFlight) return refreshInFlight;
 
     refreshInFlight = (async () => {
       const connection = await this.getConnection();
-      const token = refreshToken || connection?.refresh_token;
-      if (!token) {
-        throw new Error('No Microsoft refresh token available.');
+      if (!connection) {
+        throw new Error('Microsoft 365 is not connected.');
       }
 
-      if (!options?.force && connection && !tokenNeedsRefresh(connection.token_expiry)) {
-        return { success: true, connection };
+      if (!options?.force && !tokenNeedsRefresh(connection.token_expiry)) {
+        return { success: true, connection, refreshed: false };
       }
 
       const response = await fetch('/api/auth/microsoft/refresh', {
@@ -91,7 +112,7 @@ export const microsoftAuthService = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken: token, force: options?.force === true }),
+        body: JSON.stringify({ force: options?.force === true }),
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -113,23 +134,28 @@ export const microsoftAuthService = {
 
   async getValidAccessToken(options?: { force?: boolean }) {
     const connection = await this.getConnection();
-    if (!connection?.access_token) {
+    if (!connection) {
       throw new Error('Microsoft 365 is not connected.');
     }
 
-    if (tokenNeedsRefresh(connection.token_expiry, options?.force)) {
-      const refreshed = await this.refreshAccessToken(connection.refresh_token, options);
-      return refreshed.connection.access_token;
+    const response = await fetch('/api/auth/microsoft/access-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: options?.force === true }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || typeof payload?.accessToken !== 'string' || !payload.accessToken) {
+      throw new Error(payload?.error || 'Failed to load Microsoft access token.');
     }
 
-    return connection.access_token;
+    return payload.accessToken;
   },
 
   async disconnect() {
-    const userId = await getCurrentUserId();
-    const { error } = await supabase.from('microsoft_connections').delete().eq('user_id', userId);
-    if (error) {
-      throw new Error(error.message);
+    const response = await fetch('/api/auth/microsoft/disconnect', { method: 'POST' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload?.error || 'Failed to disconnect Microsoft 365.');
     }
 
     return { success: true };

@@ -36,6 +36,12 @@ export type BonnieAgentResult = {
   toolResults: BonnieToolResult[];
   logs: string[];
   rounds: number;
+  executionStatus:
+    | 'executed'
+    | 'queued_for_approval'
+    | 'read_only_answer'
+    | 'planning_failed'
+    | 'provider_blocked';
 };
 
 type BonniePlan = {
@@ -82,6 +88,26 @@ function detectConversationMode(text: string): 'briefing' | 'autopilot' | 'query
   return 'instruction';
 }
 
+function isProviderBillingOrOutageText(text: string): boolean {
+  const normalized = String(text || '').toLowerCase();
+  return (
+    normalized.includes('out of credits') ||
+    normalized.includes('insufficient credits') ||
+    normalized.includes('insufficient balance') ||
+    normalized.includes('credit balance too low') ||
+    normalized.includes('credits exhausted') ||
+    normalized.includes('account not active') ||
+    normalized.includes('payment required') ||
+    normalized.includes('api error 402') ||
+    normalized.includes('402') ||
+    normalized.includes('openrouter')
+  );
+}
+
+function detectProviderBlocked(toolResults: BonnieToolResult[]): boolean {
+  return toolResults.some((r) => !r.success && isProviderBillingOrOutageText(r.summary || r.details || ''));
+}
+
 async function runBriefingMode(
   tenantId: string,
   userId: string,
@@ -113,6 +139,7 @@ async function runBriefingMode(
     toolResults,
     logs: ['Briefing mode: solo_owner_operator_brief + get_business_snapshot'],
     rounds: 1,
+    executionStatus: detectProviderBlocked(toolResults) ? 'provider_blocked' : 'executed',
   };
 }
 
@@ -139,6 +166,7 @@ async function runAutopilotMode(
       toolResults,
       logs: ['Autopilot mode: chief of staff routine queued approval'],
       rounds: 1,
+      executionStatus: detectProviderBlocked(toolResults) ? 'provider_blocked' : 'queued_for_approval',
     };
   }
 
@@ -157,6 +185,7 @@ async function runAutopilotMode(
     toolResults,
     logs: ['Autopilot mode: run_chief_of_staff_routine'],
     rounds: 1,
+    executionStatus: detectProviderBlocked(toolResults) ? 'provider_blocked' : 'executed',
   };
 }
 
@@ -403,11 +432,14 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   const conversationMode = detectConversationMode(instruction);
 
   if (conversationMode === 'briefing') {
-    return runBriefingMode(tenantId, userId, moduleId);
+    const result = await runBriefingMode(tenantId, userId, moduleId);
+    return { ...result, executionStatus: 'executed' };
   }
 
   if (conversationMode === 'autopilot') {
-    return runAutopilotMode(tenantId, userId, moduleId);
+    const result = await runAutopilotMode(tenantId, userId, moduleId);
+    const hasPending = result.toolResults.some((r) => r.approvalRequired);
+    return { ...result, executionStatus: hasPending ? 'queued_for_approval' : 'executed' };
   }
 
   if (conversationMode === 'query') {
@@ -437,6 +469,11 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: allQueryResults,
         logs: ['Query mode: targeted read tools + synthesis'],
         rounds: 1,
+        executionStatus: detectProviderBlocked(allQueryResults)
+          ? 'provider_blocked'
+          : allQueryResults.length
+            ? 'executed'
+            : 'read_only_answer',
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Query failed';
@@ -448,6 +485,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: allQueryResults,
         logs: [],
         rounds: 1,
+        executionStatus: 'planning_failed',
       };
     }
   }
@@ -471,6 +509,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: [],
         logs: ['Conversational reply (no tools)'],
         rounds: 0,
+        executionStatus: 'read_only_answer',
       };
     } catch (err: any) {
       return {
@@ -481,6 +520,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: [],
         logs: [],
         rounds: 0,
+        executionStatus: 'planning_failed',
       };
     }
   }
@@ -507,9 +547,10 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       model = planned.model;
       lastPlan = plan;
     } catch (err: any) {
-      // JSON plan failed — fall back to conversational DeepChat reply
+      // JSON plan failed — treat as execution-planning failure, not a successful chat
+      let fallbackText = '';
       try {
-        const { text, model: chatModel } = await conversationalReply(
+        const { text } = await conversationalReply(
           instruction,
           history,
           moduleId,
@@ -517,26 +558,25 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
           tenantId,
           onStreamToken
         );
-        return {
-          response: text,
-          success: true,
-          provider,
-          model: chatModel,
-          toolResults: allToolResults,
-          logs: allLogs,
-          rounds,
-        };
+        fallbackText = text;
       } catch {
-        return {
-          response: `Bonnie could not parse that request (${err.message}). Try a clear action, e.g. "run autonomous scan" or "list overdue invoices".`,
-          success: false,
-          provider,
-          model,
-          toolResults: allToolResults,
-          logs: allLogs,
-          rounds,
-        };
+        // ignore, we will return a generic planning failure message below
       }
+
+      await persistBonnieLogs(tenantId, allLogs).catch(() => undefined);
+
+      return {
+        response:
+          fallbackText ||
+          `Bonnie could not parse that request (${err instanceof Error ? err.message : 'planning_failed'}). Try a clear action, e.g. "run autonomous scan" or "list overdue invoices".`,
+        success: false,
+        provider,
+        model,
+        toolResults: allToolResults,
+        logs: allLogs,
+        rounds,
+        executionStatus: 'planning_failed',
+      };
     }
 
     const toolCalls = plan.tool_calls || [];
@@ -589,6 +629,10 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   await persistBonnieLogs(tenantId, allLogs).catch(() => undefined);
   await persistRunnerActions(tenantId, instruction, allToolResults).catch(() => undefined);
 
+  const anyTools = allToolResults.length > 0;
+  const anyApproval = allToolResults.some((r) => r.approvalRequired);
+  const providerBlocked = detectProviderBlocked(allToolResults);
+
   return {
     response,
     success: true,
@@ -597,5 +641,12 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     toolResults: allToolResults,
     logs: allLogs,
     rounds,
+    executionStatus: providerBlocked
+      ? 'provider_blocked'
+      : anyApproval
+        ? 'queued_for_approval'
+        : anyTools
+          ? 'executed'
+          : 'read_only_answer',
   };
 }

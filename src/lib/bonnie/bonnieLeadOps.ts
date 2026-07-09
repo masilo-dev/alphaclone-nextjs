@@ -238,7 +238,7 @@ export async function bonnieGetAccountOverview(tenantId: string, userId: string)
   const [fb, wa, ms, linkedin, campaigns, scraperCount, recentLeads] = await Promise.all([
     admin.from('facebook_integrations').select('page_name,is_active').eq('tenant_id', tenantId).limit(10),
     admin.from('whatsapp_integrations').select('phone_number_id,is_active').eq('tenant_id', tenantId).limit(5),
-    admin.from('microsoft_connections').select('email').eq('user_id', userId).maybeSingle(),
+    admin.from('microsoft_connections').select('microsoft_email').eq('user_id', userId).maybeSingle(),
     admin.from('linkedin_integrations').select('id').eq('tenant_id', tenantId).limit(1),
     admin.from('scraper_campaigns').select('id,name,status,min_score_threshold').eq('tenant_id', tenantId).limit(10),
     admin.from('scraper_leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
@@ -255,7 +255,7 @@ export async function bonnieGetAccountOverview(tenantId: string, userId: string)
         .filter((r) => r.is_active)
         .map((r) => r.page_name),
       whatsapp_connected: ((wa.data || []) as IntegrationRow[]).some((r) => r.is_active),
-      microsoft_email: ms.data?.email || null,
+      microsoft_email: ms.data?.microsoft_email || null,
       linkedin_connected: (linkedin.data?.length || 0) > 0,
     },
     lead_ops: {

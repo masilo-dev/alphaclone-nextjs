@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
                 }
               : null,
             rounds: result.rounds,
+            executionStatus: result.executionStatus,
           });
         } catch (error: any) {
           push('error', { message: error?.message || 'Bonnie stream failed' });

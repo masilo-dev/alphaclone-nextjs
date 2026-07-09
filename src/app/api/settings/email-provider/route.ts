@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
       connectedIds,
       campaignsProvider: NATIVE_CAMPAIGNS_PROVIDER,
       campaignsNote:
-        'Bulk marketing campaigns always run through Zoho Campaigns when Zoho is connected. Choose below which provider sends invoices, replies, and one-to-one email.',
+        'This campaign builder sends through the connected provider stack directly (Zoho Mail, Brevo, SendGrid, Resend). The separate Zoho Campaigns hub is the native Zoho-only path.',
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to load email provider settings', req);

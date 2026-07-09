@@ -3,6 +3,8 @@ export type LinkedInCompanyPage = {
   name: string | null;
   vanityName: string | null;
   logoUrl: string | null;
+  roles?: string[];
+  primaryRole?: string | null;
 };
 
 export function normalizeLinkedInScopes(raw: unknown): string[] {
@@ -27,7 +29,7 @@ export function extractLinkedInCompanyPages(raw: unknown): LinkedInCompanyPage[]
   if (!Array.isArray(maybePages)) return [];
 
   return maybePages
-    .map((page) => {
+    .map<LinkedInCompanyPage | null>((page) => {
       if (!page || typeof page !== 'object') return null;
       const obj = page as Record<string, unknown>;
       const id = typeof obj.id === 'string' ? obj.id.trim() : '';
@@ -37,6 +39,8 @@ export function extractLinkedInCompanyPages(raw: unknown): LinkedInCompanyPage[]
         name: typeof obj.name === 'string' ? obj.name : null,
         vanityName: typeof obj.vanityName === 'string' ? obj.vanityName : null,
         logoUrl: typeof obj.logoUrl === 'string' ? obj.logoUrl : null,
+        roles: Array.isArray(obj.roles) ? obj.roles.map((role) => String(role)) : [],
+        primaryRole: typeof obj.primaryRole === 'string' ? obj.primaryRole : null,
       } satisfies LinkedInCompanyPage;
     })
     .filter((page): page is LinkedInCompanyPage => !!page);

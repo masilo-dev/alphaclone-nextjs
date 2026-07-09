@@ -15,6 +15,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '@/config/env';
 import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL, DEFAULT_OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODELS } from '@/config/aiModels';
 import { requestOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
+import {
+  clearAIProviderCooldown,
+  createAIProviderUnavailableError,
+  getAIProviderCooldown,
+  noteAIProviderFailure,
+  type AIProviderId,
+} from '@/lib/ai/providerHealth';
 
 const CLAUDE_ALLOWED_MODELS = new Set<string>([
   'claude-sonnet-4-6-20260217',
@@ -168,6 +175,47 @@ export interface AIStreamResponse {
   model: string;
 }
 
+function providerLabel(provider: AIProviderId): string {
+  switch (provider) {
+    case 'deepseek': return 'DeepSeek';
+    case 'anthropic': return 'Anthropic';
+    case 'xai': return 'xAI';
+    case 'openai': return 'OpenAI';
+    case 'gemini': return 'Gemini';
+    case 'openrouter': return 'OpenRouter';
+  }
+}
+
+function appendCooldownSkip(errors: string[], provider: AIProviderId): boolean {
+  const cooldown = getAIProviderCooldown(provider);
+  if (!cooldown) return false;
+  const seconds = Math.max(1, Math.ceil((cooldown.blockedUntil - Date.now()) / 1000));
+  errors.push(`${providerLabel(provider)} skipped: ${cooldown.reason} cooldown active (${seconds}s remaining)`);
+  return true;
+}
+
+function recordProviderSuccess(provider: AIProviderId): void {
+  clearAIProviderCooldown(provider);
+}
+
+function recordProviderFailure(errors: string[], provider: AIProviderId, phase: string, error: any): void {
+  const errorMsg = `${providerLabel(provider)} ${phase} failed: ${error.message}`;
+  console.error(`[AI Router] ✗ ${providerLabel(provider)} ${phase} Error:`, error);
+  errors.push(errorMsg);
+  noteAIProviderFailure(provider, error);
+}
+
+function throwAllProvidersUnavailable(errors: string[]): never {
+  const retryAfterSeconds = (['deepseek', 'anthropic', 'xai', 'openai', 'gemini', 'openrouter'] as AIProviderId[])
+    .map((provider) => getAIProviderCooldown(provider))
+    .filter((value): value is NonNullable<typeof value> => Boolean(value))
+    .map((state) => Math.ceil((state.blockedUntil - Date.now()) / 1000))
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((a, b) => a - b)[0];
+
+  throw createAIProviderUnavailableError(errors, retryAfterSeconds);
+}
+
 /**
  * Tasks for Strength-Based Routing
  */
@@ -255,95 +303,88 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   }
 
   // Fallback Chain (Priority 1: DeepSeek)
-  if (deepseek) {
+  if (deepseek && !appendCooldownSkip(errors, 'deepseek')) {
     try {
       console.log('[AI Router] Attempting DeepSeek...');
       const response = await completeWithDeepSeek(options);
       console.log('[AI Router] ✓ DeepSeek succeeded');
+      recordProviderSuccess('deepseek');
       return response;
     } catch (error: any) {
-      const errorMsg = `DeepSeek failed: ${error.message}`;
-      console.error(`[AI Router] ✗ DeepSeek Error:`, error);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'deepseek', '', error);
     }
   }
 
   // Priority 2: Try Anthropic
-  if (anthropic) {
+  if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic (Claude)...');
       const response = await completeWithAnthropic(options);
       console.log('[AI Router] ✓ Anthropic succeeded');
+      recordProviderSuccess('anthropic');
       return response;
     } catch (error: any) {
-      const errorMsg = `Anthropic failed: ${error.message}`;
-      console.error(`[AI Router] ✗ Anthropic Error:`, error);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'anthropic', '', error);
     }
   }
 
   // Priority 2: Try xAI Grok
-  if (xai) {
+  if (xai && !appendCooldownSkip(errors, 'xai')) {
     try {
       console.log('[AI Router] Attempting xAI Grok...');
       const response = await completeWithXAI(options);
       console.log('[AI Router] ✓ xAI Grok succeeded');
+      recordProviderSuccess('xai');
       return response;
     } catch (error: any) {
-      const errorMsg = `xAI failed: ${error.message}`;
-      console.error(`[AI Router] ✗ xAI Error:`, error);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'xai', '', error);
     }
   }
 
   // Priority 3: Try OpenAI
-  if (openai) {
+  if (openai && !appendCooldownSkip(errors, 'openai')) {
     try {
       console.log(`[AI Router] Attempting OpenAI (${DEFAULT_OPENAI_MODEL})...`);
       const response = await completeWithOpenAI(options);
       console.log('[AI Router] ✓ OpenAI succeeded');
+      recordProviderSuccess('openai');
       return response;
     } catch (error: any) {
-      const errorMsg = `OpenAI failed: ${error.message}`;
-      console.error(`[AI Router] ✗ OpenAI Error:`, error);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'openai', '', error);
     }
   }
 
   // Priority 4: Try Gemini
-  if (geminiAI) {
+  if (geminiAI && !appendCooldownSkip(errors, 'gemini')) {
     try {
       console.log('[AI Router] Attempting Google Gemini...');
       const response = await completeWithGemini(options);
       console.log('[AI Router] ✓ Gemini succeeded');
+      recordProviderSuccess('gemini');
       return response;
     } catch (error: any) {
-      const errorMsg = `Gemini failed: ${error.message}`;
-      console.error(`[AI Router] ✗ Gemini Error:`, error);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'gemini', '', error);
     }
   }
 
   // Priority 5: OpenRouter (universal fallback when direct keys fail or are missing)
-  if (openRouterClient) {
+  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
     try {
       console.log('[AI Router] Attempting OpenRouter fallback...');
       const response = await completeWithOpenRouter(options);
       console.log('[AI Router] ✓ OpenRouter succeeded');
+      recordProviderSuccess('openrouter');
       return response;
     } catch (error: any) {
-      const errorMsg = `OpenRouter failed: ${error.message}`;
-      console.error(`[AI Router] ✗ OpenRouter Error:`, error);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'openrouter', '', error);
     }
   }
 
   // All providers failed
-  const finalError = errors.length > 0
-    ? `All AI providers failed:\n${errors.join('\n')}`
-    : "No AI providers are configured. Set ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, VITE_GEMINI_API_KEY, or OPENROUTER_API_KEY.";
-
-  throw new Error(finalError);
+  if (errors.length > 0) {
+    throwAllProvidersUnavailable(errors);
+  }
+  throw new Error("No AI providers are configured. Set ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, VITE_GEMINI_API_KEY, or OPENROUTER_API_KEY.");
 }
 
 /**
@@ -351,13 +392,16 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
  * Uses the best model for the task type and cleans output of emojis.
  */
 export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, systemPrompt?: string): Promise<AIResponse> {
-  if (deepseek) {
+  const errors: string[] = [];
+  if (deepseek && !appendCooldownSkip(errors, 'deepseek')) {
     try {
       const model = task === 'legal' || task === 'strategy' ? 'deepseek-reasoner' : 'deepseek-chat';
       const res = await completeWithDeepSeek({ prompt, systemPrompt, model });
       res.content = cleanProfessionalContent(res.content);
       return res;
     } catch (error) {
+      noteAIProviderFailure('deepseek', error);
+      errors.push(`DeepSeek autonomous task failed: ${error instanceof Error ? error.message : 'failed'}`);
       console.warn('[AI Router] DeepSeek failed for autonomous task, falling back:', error);
     }
   }
@@ -399,6 +443,7 @@ export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, 
  * Streaming version of AI routing
  */
 export async function streamAIRequest(options: AIRequestOptions): Promise<AIStreamResponse> {
+  const errors: string[] = [];
   const requestedModel = options.model?.toLowerCase();
 
   // Specific Provider Routing
@@ -448,7 +493,7 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
   }
 
   // Fallback Chain (Priority 1: DeepSeek)
-  if (deepseek) {
+  if (deepseek && !appendCooldownSkip(errors, 'deepseek')) {
     try {
       console.log('[AI Router] Attempting DeepSeek stream...');
       return {
@@ -457,12 +502,14 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'deepseek-chat'
       };
     } catch (error) {
+      noteAIProviderFailure('deepseek', error);
       console.warn('[AI Router] DeepSeek stream failed, falling back...');
+      errors.push(`DeepSeek stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
   // Priority 2: Try Anthropic
-  if (anthropic) {
+  if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic stream...');
       return {
@@ -471,12 +518,14 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || DEFAULT_CLAUDE_MODEL
       };
     } catch (error) {
+      noteAIProviderFailure('anthropic', error);
       console.warn('[AI Router] Anthropic stream failed, falling back...');
+      errors.push(`Anthropic stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
   // Priority 2: Try xAI Grok
-  if (xai) {
+  if (xai && !appendCooldownSkip(errors, 'xai')) {
     try {
       console.log('[AI Router] Attempting xAI stream...');
       return {
@@ -485,12 +534,14 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'grok-4.3'
       };
     } catch (error) {
+      noteAIProviderFailure('xai', error);
       console.warn('[AI Router] xAI stream failed, falling back...');
+      errors.push(`xAI stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
   // Priority 3: Try OpenAI
-  if (openai) {
+  if (openai && !appendCooldownSkip(errors, 'openai')) {
     try {
       console.log('[AI Router] Attempting OpenAI stream...');
       return {
@@ -499,12 +550,14 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'gpt-4-turbo'
       };
     } catch (error) {
+      noteAIProviderFailure('openai', error);
       console.warn('[AI Router] OpenAI stream failed, falling back...');
+      errors.push(`OpenAI stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
   // Priority 4: Try Gemini
-  if (geminiAI) {
+  if (geminiAI && !appendCooldownSkip(errors, 'gemini')) {
     try {
       console.log('[AI Router] Attempting Gemini stream...');
       return {
@@ -513,12 +566,14 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || 'gemini-1.5-flash'
       };
     } catch (error) {
+      noteAIProviderFailure('gemini', error);
       console.warn('[AI Router] Gemini stream failed, falling back...');
+      errors.push(`Gemini stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
   // Priority 5: OpenRouter stream fallback
-  if (openRouterClient) {
+  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
     try {
       console.log('[AI Router] Attempting OpenRouter stream fallback...');
       return {
@@ -527,10 +582,15 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
         model: options.model || DEFAULT_OPENROUTER_MODEL,
       };
     } catch (error) {
+      noteAIProviderFailure('openrouter', error);
       console.warn('[AI Router] OpenRouter stream failed:', error);
+      errors.push(`OpenRouter stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
+  if (errors.length > 0) {
+    throwAllProvidersUnavailable(errors);
+  }
   throw new Error('No AI providers available for streaming');
 }
 
@@ -735,94 +795,87 @@ export async function routeAIChat(
   }
 
   // Priority 1: Try DeepSeek
-  if (deepseek) {
+  if (deepseek && !appendCooldownSkip(errors, 'deepseek')) {
     try {
       console.log('[AI Router] Attempting DeepSeek chat...');
       const response = await chatWithDeepSeek(history, message, systemPrompt, model);
       console.log('[AI Router] ✓ DeepSeek chat succeeded');
+      recordProviderSuccess('deepseek');
       return response;
     } catch (error: any) {
-      const errorMsg = `DeepSeek chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'deepseek', 'chat', error);
     }
   }
 
   // Priority 2: Try Anthropic
-  if (anthropic) {
+  if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic chat...');
       const response = await chatWithAnthropic(history, message, systemPrompt);
       console.log('[AI Router] ✓ Anthropic chat succeeded');
+      recordProviderSuccess('anthropic');
       return response;
     } catch (error: any) {
-      const errorMsg = `Anthropic chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'anthropic', 'chat', error);
     }
   }
 
   // Priority 2: Try xAI Grok
-  if (xai) {
+  if (xai && !appendCooldownSkip(errors, 'xai')) {
     try {
       console.log('[AI Router] Attempting xAI chat...');
       const response = await chatWithXAI(history, message, systemPrompt, undefined, image);
       console.log('[AI Router] ✓ xAI chat succeeded');
+      recordProviderSuccess('xai');
       return response;
     } catch (error: any) {
-      const errorMsg = `xAI chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'xai', 'chat', error);
     }
   }
 
   // Priority 3: Try OpenAI
-  if (openai) {
+  if (openai && !appendCooldownSkip(errors, 'openai')) {
     try {
       console.log('[AI Router] Attempting OpenAI chat...');
       const response = await chatWithOpenAI(history, message, systemPrompt);
       console.log('[AI Router] ✓ OpenAI chat succeeded');
+      recordProviderSuccess('openai');
       return response;
     } catch (error: any) {
-      const errorMsg = `OpenAI chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'openai', 'chat', error);
     }
   }
 
   // Priority 4: Try Gemini
-  if (geminiAI) {
+  if (geminiAI && !appendCooldownSkip(errors, 'gemini')) {
     try {
       console.log('[AI Router] Attempting Gemini chat...');
       const response = await chatWithGemini(history, message, systemPrompt, model);
       console.log('[AI Router] ✓ Gemini chat succeeded');
+      recordProviderSuccess('gemini');
       return response;
     } catch (error: any) {
-      const errorMsg = `Gemini chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'gemini', 'chat', error);
     }
   }
 
   // Priority 5: OpenRouter fallback
-  if (openRouterClient) {
+  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
     try {
       console.log('[AI Router] Attempting OpenRouter chat fallback...');
       const response = await chatWithOpenRouter(history, message, systemPrompt, model);
       console.log('[AI Router] ✓ OpenRouter chat succeeded');
+      recordProviderSuccess('openrouter');
       return response;
     } catch (error: any) {
-      const errorMsg = `OpenRouter chat failed: ${error.message}`;
-      console.error(`[AI Router] ✗ ${errorMsg}`);
-      errors.push(errorMsg);
+      recordProviderFailure(errors, 'openrouter', 'chat', error);
     }
   }
 
-  const finalError = errors.length > 0
-    ? `All AI chat providers failed:\n${errors.join('\n')}`
-    : "No AI chat providers are configured. Set ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, VITE_GEMINI_API_KEY, or OPENROUTER_API_KEY.";
-
-  throw new Error(finalError);
+  if (errors.length > 0) {
+    throwAllProvidersUnavailable(errors);
+  }
+  throw new Error("No AI chat providers are configured. Set ANTHROPIC_API_KEY, XAI_API_KEY, OPENAI_API_KEY, VITE_GEMINI_API_KEY, or OPENROUTER_API_KEY.");
 }
 
 /**

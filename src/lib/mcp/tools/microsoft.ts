@@ -1,29 +1,56 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { refreshMicrosoftAccessToken } from '@/services/microsoft/microsoftConnectionService';
+import {
+  refreshMicrosoftAccessToken,
+  resolveMicrosoftUserId,
+} from '@/services/microsoft/microsoftConnectionService';
 
 const graphBase = 'https://graph.microsoft.com/v1.0';
 
-async function ensureMicrosoftAccessToken(userId: string) {
+async function ensureMicrosoftAccessToken(userId: string, tenantId?: string | null) {
   const supabase = createSupabaseAdminClient();
-  const { accessToken } = await refreshMicrosoftAccessToken(supabase, userId);
-  return accessToken;
+  const resolvedUserId = await resolveMicrosoftUserId(supabase, userId, tenantId);
+  const { accessToken } = await refreshMicrosoftAccessToken(supabase, resolvedUserId);
+  return { accessToken, resolvedUserId };
 }
 
-async function graphRequest(userId: string, path: string, init?: RequestInit) {
-  const token = await ensureMicrosoftAccessToken(userId);
+async function graphRequest(
+  userId: string,
+  tenantId: string | null | undefined,
+  path: string,
+  init?: RequestInit,
+  retried = false
+) {
+  const supabase = createSupabaseAdminClient();
+  const resolvedUserId = await resolveMicrosoftUserId(supabase, userId, tenantId);
+  const { accessToken } = await refreshMicrosoftAccessToken(supabase, resolvedUserId);
   const response = await fetch(path.startsWith('http') ? path : `${graphBase}${path}`, {
     ...init,
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       ...(init?.headers || {}),
     },
   });
 
   if (!response.ok) {
-    throw new Error(await response.text().catch(() => 'Microsoft Graph request failed.'));
+    const message = await response.text().catch(() => 'Microsoft Graph request failed.');
+    const isAuthError =
+      response.status === 401 ||
+      response.status === 403 ||
+      /InvalidAuthenticationToken|token.*expired|Lifetime validation failed/i.test(message);
+
+    if (isAuthError && !retried) {
+      try {
+        await refreshMicrosoftAccessToken(supabase, resolvedUserId, { force: true });
+        return graphRequest(userId, tenantId, path, init, true);
+      } catch {
+        // Fall through with the original error below.
+      }
+    }
+
+    throw new Error(message);
   }
 
   if (response.status === 204) return { success: true };
@@ -46,7 +73,7 @@ registerTool('microsoft', {
     required: ['tenant_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/me/mailFolders/inbox/messages?$top=${args.limit}&$orderby=receivedDateTime DESC`),
+    graphRequest(context.userId, args.tenant_id, `/me/mailFolders/inbox/messages?$top=${args.limit}&$orderby=receivedDateTime DESC`),
 });
 
 registerTool('microsoft', {
@@ -69,7 +96,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'to', 'subject', 'body'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, '/me/sendMail', {
+    graphRequest(context.userId, args.tenant_id, '/me/sendMail', {
       method: 'POST',
       body: JSON.stringify({
         message: {
@@ -104,7 +131,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'subject', 'start', 'end'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, '/me/onlineMeetings', {
+    graphRequest(context.userId, args.tenant_id, '/me/onlineMeetings', {
       method: 'POST',
       body: JSON.stringify({
         subject: args.subject,
@@ -139,7 +166,7 @@ registerTool('microsoft', {
     if (args.startDateTime) params.set('startDateTime', args.startDateTime);
     if (args.endDateTime) params.set('endDateTime', args.endDateTime);
     const path = params.size ? `/me/calendarView?${params.toString()}` : '/me/events';
-    return graphRequest(context.userId, path);
+    return graphRequest(context.userId, args.tenant_id, path);
   },
 });
 
@@ -167,7 +194,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'subject', 'start', 'end'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, '/me/events', {
+    graphRequest(context.userId, args.tenant_id, '/me/events', {
       method: 'POST',
       body: JSON.stringify({
         subject: args.subject,
@@ -199,7 +226,11 @@ registerTool('microsoft', {
     required: ['tenant_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, args.list_id ? `/me/todo/lists/${args.list_id}/tasks` : '/me/todo/lists'),
+    graphRequest(
+      context.userId,
+      args.tenant_id,
+      args.list_id ? `/me/todo/lists/${args.list_id}/tasks` : '/me/todo/lists'
+    ),
 });
 
 registerTool('microsoft', {
@@ -222,7 +253,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'list_id', 'title'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/me/todo/lists/${args.list_id}/tasks`, {
+    graphRequest(context.userId, args.tenant_id, `/me/todo/lists/${args.list_id}/tasks`, {
       method: 'POST',
       body: JSON.stringify({
         title: args.title,
@@ -249,7 +280,7 @@ registerTool('microsoft', {
     required: ['tenant_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/me/contacts?$top=${args.limit}`),
+    graphRequest(context.userId, args.tenant_id, `/me/contacts?$top=${args.limit}`),
 });
 
 registerTool('microsoft', {
@@ -272,14 +303,14 @@ registerTool('microsoft', {
     required: ['tenant_id', 'file_name', 'content_base64'],
   },
   handler: async (args, context) => {
-    const token = await ensureMicrosoftAccessToken(context.userId);
+    const { accessToken } = await ensureMicrosoftAccessToken(context.userId, args.tenant_id);
     const folderPrefix = args.folder_path?.trim() ? `${args.folder_path.replace(/^\/+/, '')}/` : '';
     const response = await fetch(
       `${graphBase}/me/drive/root:/${folderPrefix}${args.file_name}:/content`,
       {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/octet-stream',
         },
         body: Buffer.from(args.content_base64, 'base64'),
@@ -312,7 +343,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'team_id', 'channel_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/teams/${args.team_id}/channels/${args.channel_id}/messages`),
+    graphRequest(context.userId, args.tenant_id, `/teams/${args.team_id}/channels/${args.channel_id}/messages`),
 });
 
 registerTool('microsoft', {
@@ -329,7 +360,7 @@ registerTool('microsoft', {
     required: ['tenant_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, '/me/joinedTeams'),
+    graphRequest(context.userId, args.tenant_id, '/me/joinedTeams'),
 });
 
 registerTool('microsoft', {
@@ -348,7 +379,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'team_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/teams/${args.team_id}/channels`),
+    graphRequest(context.userId, args.tenant_id, `/teams/${args.team_id}/channels`),
 });
 
 registerTool('microsoft', {
@@ -371,7 +402,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'team_id', 'channel_id', 'message'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/teams/${args.team_id}/channels/${args.channel_id}/messages`, {
+    graphRequest(context.userId, args.tenant_id, `/teams/${args.team_id}/channels/${args.channel_id}/messages`, {
       method: 'POST',
       body: JSON.stringify({
         body: {
@@ -396,7 +427,7 @@ registerTool('microsoft', {
     required: ['tenant_id'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, '/me/chats'),
+    graphRequest(context.userId, args.tenant_id, '/me/chats'),
 });
 
 registerTool('microsoft', {
@@ -419,7 +450,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'userIds'],
   },
   handler: async (args, context) => {
-    const me = await graphRequest(context.userId, '/me');
+    const me = await graphRequest(context.userId, args.tenant_id, '/me');
     const myId = me.id;
     const members = [
       {
@@ -433,7 +464,7 @@ registerTool('microsoft', {
         'user@odata.bind': `https://graph.microsoft.com/v1.0/users('${userId}')`,
       })),
     ];
-    return graphRequest(context.userId, '/chats', {
+    return graphRequest(context.userId, args.tenant_id, '/chats', {
       method: 'POST',
       body: JSON.stringify({
         chatType: args.chatType,
@@ -462,7 +493,7 @@ registerTool('microsoft', {
     required: ['tenant_id', 'chat_id', 'message'],
   },
   handler: async (args, context) =>
-    graphRequest(context.userId, `/chats/${args.chat_id}/messages`, {
+    graphRequest(context.userId, args.tenant_id, `/chats/${args.chat_id}/messages`, {
       method: 'POST',
       body: JSON.stringify({
         body: {

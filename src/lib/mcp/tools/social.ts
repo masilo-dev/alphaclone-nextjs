@@ -73,11 +73,13 @@ registerTool('social', {
     if (orgError && orgError.code !== '42P01') throw orgError;
 
     const identities: any[] = [];
+    let canPostOrg = false;
 
     if (personIdentity) {
       const scopes = Array.isArray(personIdentity.scopes)
         ? personIdentity.scopes.map((s: any) => String(s).toLowerCase())
         : [];
+      canPostOrg = scopes.includes('w_organization_social');
       identities.push({
         type: 'person',
         linkedin_member_id: personIdentity.linkedin_member_id || null,
@@ -92,7 +94,7 @@ registerTool('social', {
         : extractCompanyPagesFromMetadata(personIdentity?.metadata).map((page) => ({
             linkedin_organization_id: page.id,
             author_urn: `urn:li:organization:${page.id}`,
-            can_post: true,
+            can_post: canPostOrg,
             name: page.name,
           }));
 
@@ -102,7 +104,7 @@ registerTool('social', {
           type: 'organization',
           linkedin_organization_id: org.linkedin_organization_id,
           author_urn: org.author_urn,
-          can_post: org.can_post !== false,
+          can_post: org.can_post === true,
           name: org.name || null,
         });
       }

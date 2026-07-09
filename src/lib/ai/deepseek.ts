@@ -4,6 +4,7 @@
  */
 import { DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
 import { requestOpenRouterCompletion, streamOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
+import { createAIProviderUnavailableError, getAIProviderCooldown, noteAIProviderFailure } from '@/lib/ai/providerHealth';
 
 export type DeepSeekModel = 'deepseek-chat' | 'deepseek-reasoner';
 
@@ -65,6 +66,9 @@ async function openRouterCompletion(
     messages: DeepSeekMessage[],
     options: DeepSeekOptions = {}
 ): Promise<string> {
+    if (getAIProviderCooldown('openrouter')) {
+        throw createAIProviderUnavailableError(['OpenRouter skipped: cooldown active']);
+    }
     const { content } = await requestOpenRouterCompletion(messages, {
         model: DEFAULT_OPENROUTER_MODEL,
         maxTokens: options.maxTokens ?? 2000,
@@ -83,10 +87,18 @@ export async function callDeepSeek(
     }
     messages.push({ role: 'user', content: prompt });
     try {
-        return await deepSeekCompletion(messages, options);
+        if (!getAIProviderCooldown('deepseek')) {
+            return await deepSeekCompletion(messages, options);
+        }
     } catch (err) {
+        noteAIProviderFailure('deepseek', err);
+    }
+    try {
         // DeepSeek is optional; fall back to OpenRouter so AI doesn't go dark.
         return await openRouterCompletion(messages, options);
+    } catch (err) {
+        noteAIProviderFailure('openrouter', err);
+        throw err;
     }
 }
 
@@ -104,10 +116,18 @@ export async function chatDeepSeek(
     }
     messages.push({ role: 'user', content: message });
     try {
-        return await deepSeekCompletion(messages, options);
+        if (!getAIProviderCooldown('deepseek')) {
+            return await deepSeekCompletion(messages, options);
+        }
     } catch (err) {
+        noteAIProviderFailure('deepseek', err);
+    }
+    try {
         // If DeepSeek errors, transparently fail over to OpenRouter.
         return await openRouterCompletion(messages, options);
+    } catch (err) {
+        noteAIProviderFailure('openrouter', err);
+        throw err;
     }
 }
 
@@ -130,6 +150,9 @@ export async function streamDeepSeek(
     }
 
     try {
+        if (getAIProviderCooldown('deepseek')) {
+            return await openRouterStream(messages, options, onToken);
+        }
         const res = await fetch('https://api.deepseek.com/chat/completions', {
             method: 'POST',
             headers: {
@@ -180,8 +203,14 @@ export async function streamDeepSeek(
 
         return full;
     } catch (err) {
+        noteAIProviderFailure('deepseek', err);
         // If DeepSeek streaming fails mid-flight, still provide output via OpenRouter.
-        return await openRouterStream(messages, options, onToken);
+        try {
+            return await openRouterStream(messages, options, onToken);
+        } catch (fallbackErr) {
+            noteAIProviderFailure('openrouter', fallbackErr);
+            throw fallbackErr;
+        }
     }
 }
 
@@ -190,6 +219,9 @@ async function openRouterStream(
     options: DeepSeekOptions,
     onToken: (chunk: string) => void
 ): Promise<string> {
+    if (getAIProviderCooldown('openrouter')) {
+        throw createAIProviderUnavailableError(['OpenRouter stream skipped: cooldown active']);
+    }
     const { content } = await streamOpenRouterCompletion(messages, {
         model: DEFAULT_OPENROUTER_MODEL,
         maxTokens: options.maxTokens ?? 2000,

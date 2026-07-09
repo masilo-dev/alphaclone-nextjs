@@ -53,13 +53,36 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user?.id || user.id !== stateData.userId) {
+    const admin = createSupabaseAdminClient();
+    const stateNonce = typeof stateData.nonce === 'string' ? stateData.nonce.trim() : '';
+    if (!stateNonce) {
+      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'invalid_state' });
+    }
+    const { data: oauthStateRow, error: oauthStateError } = await admin
+      .from('oauth_states')
+      .delete()
+      .eq('id', stateNonce)
+      .select('user_id, metadata')
+      .single();
+    if (oauthStateError || !oauthStateRow?.user_id) {
+      return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'invalid_state' });
+    }
+    if (oauthStateRow.user_id !== stateData.userId) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'unauthorized_state' });
     }
+    const metadata =
+      oauthStateRow.metadata && typeof oauthStateRow.metadata === 'object'
+        ? (oauthStateRow.metadata as Record<string, unknown>)
+        : {};
+    const resolvedUserId = String(oauthStateRow.user_id);
+    const stateTenantId =
+      typeof metadata.tenant_id === 'string' && metadata.tenant_id.trim()
+        ? metadata.tenant_id.trim()
+        : stateData.tenantId?.trim() || null;
+    const stateReturnTo =
+      typeof metadata.return_to === 'string' && metadata.return_to.trim()
+        ? metadata.return_to.trim()
+        : stateData.returnTo || null;
 
     const clientId = ENV.LINKEDIN_CLIENT_ID;
     const clientSecret = ENV.LINKEDIN_CLIENT_SECRET;
@@ -118,14 +141,12 @@ export async function GET(req: NextRequest) {
       : null;
     const companyPages = await fetchLinkedInCompanyPages(accessToken);
 
-    const admin = createSupabaseAdminClient();
-
-    let resolvedTenantId: string | null = stateData.tenantId?.trim() || null;
+    let resolvedTenantId: string | null = stateTenantId;
     if (resolvedTenantId) {
       const { data: mem } = await admin
         .from('tenant_users')
         .select('tenant_id')
-        .eq('user_id', stateData.userId)
+        .eq('user_id', resolvedUserId)
         .eq('tenant_id', resolvedTenantId)
         .maybeSingle();
       if (!mem?.tenant_id) resolvedTenantId = null;
@@ -134,7 +155,7 @@ export async function GET(req: NextRequest) {
       const { data: first } = await admin
         .from('tenant_users')
         .select('tenant_id')
-        .eq('user_id', stateData.userId)
+        .eq('user_id', resolvedUserId)
         .limit(1)
         .maybeSingle();
       resolvedTenantId = first?.tenant_id ?? null;
@@ -145,7 +166,7 @@ export async function GET(req: NextRequest) {
 
     const upsertResult = await upsertLinkedInIntegration({
       tenantId: resolvedTenantId,
-      userId: stateData.userId,
+      userId: resolvedUserId,
       linkedinMemberId: memberId,
       linkedinPersonUrn: personUrn,
       accessToken,
@@ -174,17 +195,17 @@ export async function GET(req: NextRequest) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'save_failed' });
     }
 
-    if (hasOrgWriteScope && companyPages.length > 0) {
+    if (companyPages.length > 0) {
       const organizationRows = companyPages.map((page) => ({
         tenant_id: resolvedTenantId,
-        user_id: stateData.userId,
+        user_id: resolvedUserId,
         type: 'organization' as const,
         linkedin_organization_id: page.id,
         author_urn: `urn:li:organization:${page.id}`,
         name: page.name,
         vanity_name: page.vanityName,
         logo_url: page.logoUrl,
-        can_post: true,
+        can_post: hasOrgWriteScope,
         metadata: {
           source: 'linkedin_oauth_connector',
           member_id: memberId,
@@ -213,13 +234,13 @@ export async function GET(req: NextRequest) {
         integration_id: 'linkedin-social',
         status: 'connected',
         connected_at: new Date().toISOString(),
-        configured_by: stateData.userId,
+        configured_by: resolvedUserId,
         metadata: { member_id: memberId, company_pages_count: companyPages.length },
       },
       { onConflict: 'tenant_id,integration_id' }
     );
 
-    return buildRedirect(appUrl, stateData, { ok: true });
+    return buildRedirect(appUrl, { ...stateData, tenantId: resolvedTenantId, returnTo: stateReturnTo }, { ok: true });
   } catch (err) {
     console.error('[linkedin/callback] GET error:', err);
     return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'unexpected_error' });

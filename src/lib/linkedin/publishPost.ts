@@ -160,17 +160,27 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
     const selectedCompany = requestedOrganizationId
       ? companyPages.find((page) => String(page.id) === requestedOrganizationId)
       : null;
-    const canPostAsCompany = !!selectedCompany && scopes.includes('w_organization_social');
+
+    if (requestedOrganizationId) {
+      if (!selectedCompany) {
+        return {
+          ok: false,
+          platform: 'linkedin',
+          reason:
+            'Selected LinkedIn company page is not connected. Refresh company pages or reconnect LinkedIn.',
+        };
+      }
+      if (!scopes.includes('w_organization_social')) {
+        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
+      }
+    } else if (!scopes.includes('w_member_social')) {
+      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+    }
+
+    const canPostAsCompany = Boolean(requestedOrganizationId && selectedCompany);
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
       : integration.linkedin_person_urn;
-
-    if (!canPostAsCompany && !scopes.includes('w_member_social')) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
-    }
-    if (canPostAsCompany && !scopes.includes('w_organization_social')) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
-    }
 
     const hasLink = typeof post.link_url === 'string' && post.link_url.trim().length > 0;
     const mediaUrls = Array.isArray(post.media_urls)
