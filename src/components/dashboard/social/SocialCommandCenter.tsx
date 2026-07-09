@@ -77,6 +77,12 @@ interface LinkedInIntegration {
             vanityName: string | null;
             logoUrl: string | null;
         }>;
+        company_pages_diagnostics?: {
+            hint?: string | null;
+            apiForbidden?: boolean;
+            missingOrgScopes?: boolean;
+            grantedScopes?: string[];
+        } | null;
     } | null;
 }
 
@@ -176,6 +182,85 @@ export default function SocialCommandCenter() {
         () => normalizeLinkedInScopes(selectedLinkedInIntegration?.scopes).includes('w_organization_social'),
         [selectedLinkedInIntegration],
     );
+    const hasLinkedInOrgReadScope = useMemo(() => {
+        const scopes = normalizeLinkedInScopes(selectedLinkedInIntegration?.scopes);
+        return (
+            scopes.includes('r_organization_admin') ||
+            scopes.includes('r_organization_social') ||
+            scopes.includes('rw_organization_admin')
+        );
+    }, [selectedLinkedInIntegration]);
+    const linkedInCompanyPagesHint = useMemo(() => {
+        const diagnostics = selectedLinkedInIntegration?.metadata?.company_pages_diagnostics;
+        if (diagnostics?.hint) return diagnostics.hint;
+        if (diagnostics?.apiForbidden) {
+            return 'LinkedIn blocked organization page lookup. Your LinkedIn Developer app may need the Community Management API product approved.';
+        }
+        if (selectedLinkedInIntegration?.is_active && linkedInCompanyPages.length === 0) {
+            return hasLinkedInOrgReadScope
+                ? 'LinkedIn returned zero pages. Use Link page manually below with your company URL.'
+                : 'Reconnect and approve organization permissions (r_organization_admin / rw_organization_admin).';
+        }
+        return null;
+    }, [selectedLinkedInIntegration, linkedInCompanyPages.length, hasLinkedInOrgReadScope]);
+    const grantedLinkedInScopes = useMemo(
+        () => normalizeLinkedInScopes(selectedLinkedInIntegration?.scopes),
+        [selectedLinkedInIntegration],
+    );
+
+    const handleRefreshLinkedInCompanyPages = async () => {
+        if (!currentTenant?.id || !selectedLinkedInId) return;
+        try {
+            const res = await fetch('/api/linkedin/refresh-pages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    linkedinMemberId: selectedLinkedInId,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data?.success) {
+                toast.error(data?.error || data?.hint || 'Could not refresh LinkedIn company pages');
+                await loadData();
+                return;
+            }
+            toast.success(
+                data.companyPagesCount > 0
+                    ? `Found ${data.companyPagesCount} company page(s)`
+                    : data.hint || 'No pages returned — try linking manually',
+            );
+            await loadData();
+        } catch {
+            toast.error('Failed to refresh company pages');
+        }
+    };
+
+    const handleLinkLinkedInCompanyPage = async (companyInput: string) => {
+        if (!currentTenant?.id || !selectedLinkedInId) return;
+        try {
+            const res = await fetch('/api/linkedin/link-company-page', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId: currentTenant.id,
+                    linkedinMemberId: selectedLinkedInId,
+                    companyInput,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data?.success) {
+                toast.error(data?.error || 'Could not link that LinkedIn company page');
+                return;
+            }
+            toast.success(`Linked ${data.companyPage?.name || data.companyPage?.vanityName || 'company page'}`);
+            setSelectedLinkedInOrganizationId(String(data.companyPage?.id || ''));
+            setSelectedLinkedInIdentity('company');
+            await loadData();
+        } catch {
+            toast.error('Failed to link company page');
+        }
+    };
 
     const handleConnectLinkedIn = async () => {
         try {
@@ -714,8 +799,13 @@ export default function SocialCommandCenter() {
                                     setSelectedLinkedInIdentity(id ? 'company' : 'personal');
                                 }}
                                 hasOrganizationWriteScope={hasLinkedInOrgScope}
+                                hasOrganizationReadScope={hasLinkedInOrgReadScope}
+                                statusHint={linkedInCompanyPagesHint}
+                                grantedScopes={grantedLinkedInScopes}
                                 onConnect={handleConnectLinkedIn}
                                 onReconnect={handleConnectLinkedIn}
+                                onRefreshPages={handleRefreshLinkedInCompanyPages}
+                                onLinkCompanyPage={handleLinkLinkedInCompanyPage}
                             />
                         ) : null}
                         {activeSubView === 'analytics' ? (
@@ -1161,8 +1251,13 @@ export default function SocialCommandCenter() {
                                         setSelectedLinkedInIdentity(id ? 'company' : 'personal');
                                     }}
                                     hasOrganizationWriteScope={hasLinkedInOrgScope}
+                                    hasOrganizationReadScope={hasLinkedInOrgReadScope}
+                                    statusHint={linkedInCompanyPagesHint}
+                                    grantedScopes={grantedLinkedInScopes}
                                     onConnect={handleConnectLinkedIn}
                                     onReconnect={handleConnectLinkedIn}
+                                    onRefreshPages={handleRefreshLinkedInCompanyPages}
+                                    onLinkCompanyPage={handleLinkLinkedInCompanyPage}
                                 />
                             )}
 

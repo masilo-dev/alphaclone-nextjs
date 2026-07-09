@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { refreshLinkedInCompanyPages } from '@/services/linkedin/linkedinIntegrationService';
+import { linkLinkedInCompanyPageManually } from '@/services/linkedin/linkedinIntegrationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const tenantId = String(body.tenantId || '').trim();
+    const companyInput = String(body.companyInput || body.vanityName || body.companyUrl || '').trim();
     const linkedinMemberId =
       typeof body.linkedinMemberId === 'string' && body.linkedinMemberId.trim()
         ? body.linkedinMemberId.trim()
@@ -16,38 +17,30 @@ export async function POST(request: NextRequest) {
     if (!tenantId) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
+    if (!companyInput) {
+      return NextResponse.json({ error: 'companyInput is required' }, { status: 400 });
+    }
 
     const { user } = await requireTenantAccess(tenantId);
-    const result = await refreshLinkedInCompanyPages({
+    const result = await linkLinkedInCompanyPageManually({
       tenantId,
       userId: user.id,
       linkedinMemberId,
+      companyInput,
     });
 
-    if (result.error && result.companyPages.length === 0) {
+    if (!result.companyPage) {
       return NextResponse.json(
-        {
-          success: false,
-          error: result.error,
-          companyPages: [],
-          companyPagesCount: 0,
-          scopes: result.scopes,
-          diagnostics: result.diagnostics ?? null,
-          hint: result.diagnostics?.hint ?? null,
-        },
+        { success: false, error: result.error || 'Could not link that LinkedIn company page.' },
         { status: 400 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      companyPages: result.companyPages,
-      companyPagesCount: result.companyPages.length,
-      scopes: result.scopes,
-      diagnostics: result.diagnostics ?? null,
-      hint: result.diagnostics?.hint ?? null,
+      companyPage: result.companyPage,
     });
   } catch (error) {
-    return routeErrorResponse(error, 'Could not refresh LinkedIn company pages.', request);
+    return routeErrorResponse(error, 'Could not link LinkedIn company page.', request);
   }
 }

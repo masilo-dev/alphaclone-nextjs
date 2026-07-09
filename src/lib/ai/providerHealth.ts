@@ -102,10 +102,20 @@ export function noteAIProviderFailure(provider: AIProviderId, error: unknown): v
   const classification = classifyAIProviderFailure(error);
   if (!classification.shouldCooldown || !classification.reason || !classification.cooldownMs) return;
 
+  if (provider === 'openrouter' && classification.reason === 'billing') {
+    // Paid-model credit errors must not block OpenRouter free-model retries.
+    return;
+  }
+
+  let cooldownMs = classification.cooldownMs;
+  if (provider === 'openrouter' && classification.reason === 'quota') {
+    cooldownMs = 60 * 1000;
+  }
+
   const now = Date.now();
   getStore().set(provider, {
     provider,
-    blockedUntil: now + classification.cooldownMs,
+    blockedUntil: now + cooldownMs,
     reason: classification.reason,
     message: classification.message,
     updatedAt: now,

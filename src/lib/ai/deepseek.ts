@@ -4,7 +4,7 @@
  */
 import { DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
 import { requestOpenRouterCompletion, streamOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
-import { createAIProviderUnavailableError, getAIProviderCooldown, noteAIProviderFailure } from '@/lib/ai/providerHealth';
+import { createAIProviderUnavailableError, clearAIProviderCooldown, getAIProviderCooldown, noteAIProviderFailure } from '@/lib/ai/providerHealth';
 
 export type DeepSeekModel = 'deepseek-chat' | 'deepseek-reasoner';
 
@@ -74,6 +74,7 @@ async function openRouterCompletion(
         maxTokens: options.maxTokens ?? 2000,
         temperature: options.temperature ?? 0.7,
     });
+    clearAIProviderCooldown('openrouter');
     return content;
 }
 
@@ -227,5 +228,6 @@ async function openRouterStream(
         maxTokens: options.maxTokens ?? 2000,
         temperature: options.temperature ?? 0.5,
     }, onToken);
+    clearAIProviderCooldown('openrouter');
     return content;
 }

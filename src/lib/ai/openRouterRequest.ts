@@ -1,9 +1,18 @@
+import { ENV } from '@/config/env';
 import { DEFAULT_OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODELS } from '@/config/aiModels';
 
 export type OpenRouterMessage = {
   role: 'system' | 'user' | 'assistant';
   content: string;
 };
+
+function resolveOpenRouterApiKey(): string {
+  const apiKey = ENV.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY;
+  if (!apiKey?.trim()) {
+    throw new Error('OPENROUTER_API_KEY is not configured');
+  }
+  return apiKey.trim();
+}
 
 function openRouterHeaders(apiKey: string): HeadersInit {
   return {
@@ -14,25 +23,39 @@ function openRouterHeaders(apiKey: string): HeadersInit {
   };
 }
 
+function isRetriableOpenRouterStatus(status: number): boolean {
+  // Try the next model when this one is missing, rate-limited, or requires paid credits.
+  return (
+    status === 402 ||
+    status === 404 ||
+    status === 410 ||
+    status === 429 ||
+    status === 502 ||
+    status === 503 ||
+    status === 524 ||
+    status === 529
+  );
+}
+
 async function parseOpenRouterError(res: Response): Promise<string> {
   const err = await res.text();
   return `OpenRouter API error ${res.status}: ${err}`;
+}
+
+function buildOpenRouterModelList(preferredModel?: string): string[] {
+  const models = [
+    ...(preferredModel ? [preferredModel] : []),
+    ...OPENROUTER_FALLBACK_MODELS.filter((model) => model !== preferredModel),
+  ];
+  return [...new Set(models.length ? models : [DEFAULT_OPENROUTER_MODEL])];
 }
 
 export async function requestOpenRouterCompletion(
   messages: OpenRouterMessage[],
   options: { maxTokens?: number; temperature?: number; model?: string } = {}
 ): Promise<{ content: string; model: string }> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY is not configured');
-  }
-
-  const models = [
-    ...(options.model ? [options.model] : []),
-    ...OPENROUTER_FALLBACK_MODELS.filter((model) => model !== options.model),
-  ];
-  const uniqueModels = [...new Set(models.length ? models : [DEFAULT_OPENROUTER_MODEL])];
+  const apiKey = resolveOpenRouterApiKey();
+  const uniqueModels = buildOpenRouterModelList(options.model);
 
   let lastError = 'OpenRouter request failed';
 
@@ -50,7 +73,7 @@ export async function requestOpenRouterCompletion(
 
     if (!res.ok) {
       lastError = await parseOpenRouterError(res);
-      if (res.status === 404 || res.status === 410) {
+      if (isRetriableOpenRouterStatus(res.status)) {
         continue;
       }
       throw new Error(lastError);
@@ -59,7 +82,7 @@ export async function requestOpenRouterCompletion(
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content;
     if (!content) {
-      lastError = 'OpenRouter returned empty response';
+      lastError = `OpenRouter returned empty response for ${model}`;
       continue;
     }
 
@@ -74,16 +97,8 @@ export async function streamOpenRouterCompletion(
   options: { maxTokens?: number; temperature?: number; model?: string } = {},
   onToken: (chunk: string) => void
 ): Promise<{ content: string; model: string }> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENROUTER_API_KEY is not configured');
-  }
-
-  const models = [
-    ...(options.model ? [options.model] : []),
-    ...OPENROUTER_FALLBACK_MODELS.filter((model) => model !== options.model),
-  ];
-  const uniqueModels = [...new Set(models.length ? models : [DEFAULT_OPENROUTER_MODEL])];
+  const apiKey = resolveOpenRouterApiKey();
+  const uniqueModels = buildOpenRouterModelList(options.model);
 
   let lastError = 'OpenRouter stream failed';
 
@@ -102,7 +117,7 @@ export async function streamOpenRouterCompletion(
 
     if (!res.ok) {
       lastError = await parseOpenRouterError(res);
-      if (res.status === 404 || res.status === 410) {
+      if (isRetriableOpenRouterStatus(res.status)) {
         continue;
       }
       throw new Error(lastError);
@@ -145,7 +160,7 @@ export async function streamOpenRouterCompletion(
       return { content: full, model };
     }
 
-    lastError = 'OpenRouter returned empty stream';
+    lastError = `OpenRouter returned empty stream for ${model}`;
   }
 
   throw new Error(lastError);

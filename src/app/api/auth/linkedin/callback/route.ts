@@ -17,6 +17,7 @@ const ALLOWED_LINKEDIN_RETURN = [
 ] as const;
 
 const LINKEDIN_REQUIRED_SCOPES = ['w_member_social', 'w_organization_social'] as const;
+const LINKEDIN_WRITE_SCOPES = ['w_member_social', 'w_organization_social'] as const;
 
 function buildRedirect(appUrl: string, stateData: LinkedInOAuthState | null, result: { ok: true } | { ok: false; errorCode: string }) {
   const path =
@@ -121,6 +122,7 @@ export async function GET(req: NextRequest) {
     const hasOrgWriteScope = scopes.includes('w_organization_social');
     const hasWriteScope = hasMemberWriteScope || hasOrgWriteScope;
     const missingScopes = LINKEDIN_REQUIRED_SCOPES.filter((scope) => !scopes.includes(scope));
+    const hasAnyWriteScope = LINKEDIN_WRITE_SCOPES.some((scope) => scopes.includes(scope));
 
     const profileRes = await linkedInFetch(
       'https://api.linkedin.com/v2/userinfo',
@@ -139,7 +141,15 @@ export async function GET(req: NextRequest) {
     const tokenExpiresAt = tokenData.expires_in
       ? new Date(Date.now() + Number(tokenData.expires_in) * 1000).toISOString()
       : null;
-    const companyPages = await fetchLinkedInCompanyPages(accessToken);
+    let companyPages: Awaited<ReturnType<typeof fetchLinkedInCompanyPages>>['companyPages'] = [];
+    let companyPagesDiagnostics: Awaited<ReturnType<typeof fetchLinkedInCompanyPages>>['diagnostics'] | null = null;
+    try {
+      const fetched = await fetchLinkedInCompanyPages(accessToken, scopes);
+      companyPages = fetched.companyPages;
+      companyPagesDiagnostics = fetched.diagnostics;
+    } catch (err) {
+      console.warn('[linkedin/callback] company page fetch failed:', err);
+    }
 
     let resolvedTenantId: string | null = stateTenantId;
     if (resolvedTenantId) {
@@ -172,7 +182,7 @@ export async function GET(req: NextRequest) {
       accessToken,
       tokenExpiresAt,
       scopes,
-      isActive: hasWriteScope,
+      isActive: hasAnyWriteScope,
       metadata: {
         provider: 'linkedin_oauth_connector',
         name: profileData.name || null,
@@ -186,7 +196,8 @@ export async function GET(req: NextRequest) {
             : null,
         company_pages: companyPages,
         company_pages_count: companyPages.length,
-        write_scope_granted: hasWriteScope,
+        company_pages_diagnostics: companyPagesDiagnostics,
+        write_scope_granted: hasAnyWriteScope,
         missing_required_scopes: missingScopes,
       },
     });

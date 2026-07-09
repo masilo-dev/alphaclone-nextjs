@@ -65,13 +65,21 @@ export const CLAUDE_MODELS: ClaudeModel[] = [
 
 export const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-6-20260217';
 export const DEFAULT_OPENAI_MODEL = 'gpt-4o';
-/** OpenRouter models tried in order when the primary model is unavailable (404/410). */
-export const OPENROUTER_FALLBACK_MODELS = [
-    'openai/gpt-4o-mini',
-    'google/gemini-2.0-flash-001',
-    'anthropic/claude-3.5-sonnet',
-    'meta-llama/llama-3.3-70b-instruct',
+/** Free OpenRouter models — zero credits required (rate limits apply). */
+export const OPENROUTER_FREE_MODELS = [
+    'openrouter/free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemma-4-31b-it:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+    'qwen/qwen-2.5-72b-instruct:free',
 ] as const;
 
-/** Universal fallback model when direct provider keys fail — routed via OpenRouter */
-export const DEFAULT_OPENROUTER_MODEL = OPENROUTER_FALLBACK_MODELS[0];
+/** OpenRouter models tried in order when the primary model is unavailable or out of credits. */
+export const OPENROUTER_FALLBACK_MODELS = [
+    ...OPENROUTER_FREE_MODELS,
+    'openai/gpt-4o-mini',
+    'google/gemini-2.0-flash-001',
+] as const;
+
+/** Universal fallback — OpenRouter free router (no paid credits required). */
+export const DEFAULT_OPENROUTER_MODEL = OPENROUTER_FREE_MODELS[0];

@@ -10,7 +10,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { LinkedInOrgPanel } from './LinkedInOrgPanel';
+import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService } from '@/services/ai/xaiVideoGenerationService';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 
@@ -43,6 +43,12 @@ interface LinkedInIntegrationRow {
       vanityName: string | null;
       logoUrl: string | null;
     }>;
+    company_pages_diagnostics?: {
+      hint?: string | null;
+      apiForbidden?: boolean;
+      missingOrgScopes?: boolean;
+      grantedScopes?: string[];
+    } | null;
   } | null;
 }
 
@@ -329,9 +335,17 @@ export default function LinkedInManagementTab() {
   }, [selectedIntegration, orgIdentities]);
   const hasOrganizationReadScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
-    const normalized = normalizeScopes(scopes);
-    return normalized.includes('r_organization_admin') || normalized.includes('r_organization_social');
+    const normalized = normalizeLinkedInScopes(scopes);
+    return (
+      normalized.includes('r_organization_admin') ||
+      normalized.includes('r_organization_social') ||
+      normalized.includes('rw_organization_admin')
+    );
   }, [integrations, selectedLinkedInMemberId]);
+  const grantedLinkedInScopes = useMemo(
+    () => normalizeLinkedInScopes(selectedIntegration?.scopes),
+    [selectedIntegration?.scopes],
+  );
   const hasOrganizationWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     return normalizeScopes(scopes).includes('w_organization_social');
@@ -343,8 +357,16 @@ export default function LinkedInManagementTab() {
     hasLinkedInProfileConnection && !hasCompanyPageAccess
       ? !hasOrganizationReadScope
         ? 'Your personal LinkedIn profile is connected, but company page access is missing. Reconnect and approve organization permissions.'
-        : 'Your personal LinkedIn profile is connected, but no company pages were returned for this workspace yet. Refresh company pages or reconnect.'
+        : 'Your personal LinkedIn profile is connected, but no company pages were returned for this workspace yet. Refresh company pages, link manually, or reconnect.'
       : null;
+  const companyPagesStatusHint = useMemo(() => {
+    const diagnostics = selectedIntegration?.metadata?.company_pages_diagnostics;
+    if (diagnostics?.hint) return diagnostics.hint;
+    if (diagnostics?.apiForbidden) {
+      return 'LinkedIn blocked organization page lookup. Your LinkedIn Developer app may need the Community Management API product approved.';
+    }
+    return linkedInOrgStatusMessage;
+  }, [selectedIntegration?.metadata?.company_pages_diagnostics, linkedInOrgStatusMessage]);
 
   const linkedInTokenExpiryWarning = useMemo(() => {
     const exp = selectedIntegration?.token_expires_at;
@@ -380,19 +402,45 @@ export default function LinkedInManagementTab() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) {
-        toast.error(data?.error || 'Could not load company pages from LinkedIn');
+        toast.error(data?.error || data?.hint || 'Could not load company pages from LinkedIn');
+        await loadData();
         return;
       }
       toast.success(
         data.companyPagesCount > 0
           ? `Found ${data.companyPagesCount} company page(s)`
-          : 'No company pages returned — see notice below'
+          : data.hint || 'No company pages returned — try linking your page manually below'
       );
       await loadData();
     } catch {
       toast.error('Failed to refresh company pages');
     } finally {
       setRefreshingCompanyPages(false);
+    }
+  };
+
+  const handleLinkCompanyPage = async (companyInput: string) => {
+    if (!currentTenant?.id || !selectedLinkedInMemberId) return;
+    try {
+      const res = await fetch('/api/linkedin/link-company-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          linkedinMemberId: selectedLinkedInMemberId,
+          companyInput,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.success) {
+        toast.error(data?.error || 'Could not link that LinkedIn company page');
+        return;
+      }
+      toast.success(`Linked ${data.companyPage?.name || data.companyPage?.vanityName || 'company page'}`);
+      setSelectedLinkedInOrganizationId(String(data.companyPage?.id || ''));
+      await loadData();
+    } catch {
+      toast.error('Failed to link company page');
     }
   };
 
@@ -1170,8 +1218,13 @@ ${parentContext}Return only the comment text.`;
         selectedOrgId={selectedLinkedInOrganizationId}
         onSelectOrg={setSelectedLinkedInOrganizationId}
         hasOrganizationWriteScope={hasOrganizationWriteScope}
+        hasOrganizationReadScope={hasOrganizationReadScope}
+        statusHint={companyPagesStatusHint}
+        grantedScopes={grantedLinkedInScopes}
         onConnect={handleConnectLinkedIn}
         onReconnect={handleConnectLinkedIn}
+        onRefreshPages={handleRefreshCompanyPages}
+        onLinkCompanyPage={handleLinkCompanyPage}
       />
 
       {schemaWarning && (

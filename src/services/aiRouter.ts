@@ -14,9 +14,10 @@ import OpenAI from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ENV } from '@/config/env';
 import { CLAUDE_MODELS, DEFAULT_CLAUDE_MODEL, DEFAULT_OPENAI_MODEL, DEFAULT_OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODELS } from '@/config/aiModels';
-import { requestOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
+import { requestOpenRouterCompletion, streamOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
 import {
   clearAIProviderCooldown,
+  classifyAIProviderFailure,
   createAIProviderUnavailableError,
   getAIProviderCooldown,
   noteAIProviderFailure,
@@ -186,6 +187,11 @@ function providerLabel(provider: AIProviderId): string {
   }
 }
 
+function isBillingLikeFailure(error: unknown): boolean {
+  const classification = classifyAIProviderFailure(error);
+  return classification.reason === 'billing' || classification.reason === 'quota';
+}
+
 function appendCooldownSkip(errors: string[], provider: AIProviderId): boolean {
   const cooldown = getAIProviderCooldown(provider);
   if (!cooldown) return false;
@@ -312,10 +318,34 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
       return response;
     } catch (error: any) {
       recordProviderFailure(errors, 'deepseek', '', error);
+      if (isBillingLikeFailure(error) && openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
+        try {
+          console.log('[AI Router] Paid provider out of credits — trying OpenRouter free models...');
+          const response = await completeWithOpenRouter(options);
+          console.log('[AI Router] ✓ OpenRouter succeeded');
+          recordProviderSuccess('openrouter');
+          return response;
+        } catch (openRouterError: any) {
+          recordProviderFailure(errors, 'openrouter', '', openRouterError);
+        }
+      }
     }
   }
 
-  // Priority 2: Try Anthropic
+  // Priority 2: OpenRouter free / universal fallback (before other paid providers)
+  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
+    try {
+      console.log('[AI Router] Attempting OpenRouter...');
+      const response = await completeWithOpenRouter(options);
+      console.log('[AI Router] ✓ OpenRouter succeeded');
+      recordProviderSuccess('openrouter');
+      return response;
+    } catch (error: any) {
+      recordProviderFailure(errors, 'openrouter', '', error);
+    }
+  }
+
+  // Priority 3: Try Anthropic
   if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic (Claude)...');
@@ -367,18 +397,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
-  // Priority 5: OpenRouter (universal fallback when direct keys fail or are missing)
-  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
-    try {
-      console.log('[AI Router] Attempting OpenRouter fallback...');
-      const response = await completeWithOpenRouter(options);
-      console.log('[AI Router] ✓ OpenRouter succeeded');
-      recordProviderSuccess('openrouter');
-      return response;
-    } catch (error: any) {
-      recordProviderFailure(errors, 'openrouter', '', error);
-    }
-  }
+  // Final OpenRouter attempt removed — already tried at priority 2
 
   // All providers failed
   if (errors.length > 0) {
@@ -508,7 +527,23 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
     }
   }
 
-  // Priority 2: Try Anthropic
+  // Priority 2: OpenRouter free / universal fallback
+  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
+    try {
+      console.log('[AI Router] Attempting OpenRouter stream...');
+      return {
+        stream: await streamWithOpenRouter(options),
+        provider: 'openrouter',
+        model: options.model || DEFAULT_OPENROUTER_MODEL,
+      };
+    } catch (error) {
+      noteAIProviderFailure('openrouter', error);
+      console.warn('[AI Router] OpenRouter stream failed, falling back...');
+      errors.push(`OpenRouter stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
+    }
+  }
+
+  // Priority 3: Try Anthropic
   if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic stream...');
@@ -569,22 +604,6 @@ export async function streamAIRequest(options: AIRequestOptions): Promise<AIStre
       noteAIProviderFailure('gemini', error);
       console.warn('[AI Router] Gemini stream failed, falling back...');
       errors.push(`Gemini stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
-    }
-  }
-
-  // Priority 5: OpenRouter stream fallback
-  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
-    try {
-      console.log('[AI Router] Attempting OpenRouter stream fallback...');
-      return {
-        stream: await streamWithOpenRouter(options),
-        provider: 'openrouter',
-        model: options.model || DEFAULT_OPENROUTER_MODEL,
-      };
-    } catch (error) {
-      noteAIProviderFailure('openrouter', error);
-      console.warn('[AI Router] OpenRouter stream failed:', error);
-      errors.push(`OpenRouter stream failed: ${error instanceof Error ? error.message : 'stream failed'}`);
     }
   }
 
@@ -804,10 +823,33 @@ export async function routeAIChat(
       return response;
     } catch (error: any) {
       recordProviderFailure(errors, 'deepseek', 'chat', error);
+      if (isBillingLikeFailure(error) && openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
+        try {
+          console.log('[AI Router] Paid provider out of credits — trying OpenRouter free chat...');
+          const response = await chatWithOpenRouter(history, message, systemPrompt, model);
+          recordProviderSuccess('openrouter');
+          return response;
+        } catch (openRouterError: any) {
+          recordProviderFailure(errors, 'openrouter', 'chat', openRouterError);
+        }
+      }
     }
   }
 
-  // Priority 2: Try Anthropic
+  // Priority 2: OpenRouter free / universal fallback
+  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
+    try {
+      console.log('[AI Router] Attempting OpenRouter chat...');
+      const response = await chatWithOpenRouter(history, message, systemPrompt, model);
+      console.log('[AI Router] ✓ OpenRouter chat succeeded');
+      recordProviderSuccess('openrouter');
+      return response;
+    } catch (error: any) {
+      recordProviderFailure(errors, 'openrouter', 'chat', error);
+    }
+  }
+
+  // Priority 3: Try Anthropic
   if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic chat...');
@@ -856,19 +898,6 @@ export async function routeAIChat(
       return response;
     } catch (error: any) {
       recordProviderFailure(errors, 'gemini', 'chat', error);
-    }
-  }
-
-  // Priority 5: OpenRouter fallback
-  if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
-    try {
-      console.log('[AI Router] Attempting OpenRouter chat fallback...');
-      const response = await chatWithOpenRouter(history, message, systemPrompt, model);
-      console.log('[AI Router] ✓ OpenRouter chat succeeded');
-      recordProviderSuccess('openrouter');
-      return response;
-    } catch (error: any) {
-      recordProviderFailure(errors, 'openrouter', 'chat', error);
     }
   }
 
@@ -1356,27 +1385,29 @@ async function streamWithOpenRouter(options: AIRequestOptions): Promise<Readable
   }
 
   const encoder = new TextEncoder();
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+  if (options.systemPrompt) {
+    messages.push({ role: 'system', content: options.systemPrompt });
+  }
+  messages.push({ role: 'user', content: options.prompt });
 
   return new ReadableStream({
     async start(controller) {
-      const stream = await openRouterClient.chat.completions.create({
-        model,
-        messages: [
-          ...(options.systemPrompt ? [{ role: 'system' as const, content: options.systemPrompt }] : []),
-          { role: 'user' as const, content: options.prompt },
-        ],
-        max_tokens: options.maxTokens || 4096,
-        temperature: options.temperature || 0.7,
-        stream: true,
-      });
-
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content || '';
-        if (content) {
-          controller.enqueue(encoder.encode(content));
-        }
+      try {
+        await streamOpenRouterCompletion(
+          messages,
+          {
+            model,
+            maxTokens: options.maxTokens || 4096,
+            temperature: options.temperature || 0.7,
+          },
+          (chunk) => {
+            controller.enqueue(encoder.encode(chunk));
+          }
+        );
+      } finally {
+        controller.close();
       }
-      controller.close();
     },
   });
 }

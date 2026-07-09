@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { AlertTriangle, Building2, Linkedin, RefreshCw, User } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
@@ -17,8 +18,13 @@ interface LinkedInOrgPanelProps {
   selectedOrgId: string;
   onSelectOrg: (id: string) => void;
   hasOrganizationWriteScope: boolean;
+  hasOrganizationReadScope?: boolean;
+  statusHint?: string | null;
+  grantedScopes?: string[];
   onConnect: () => void;
   onReconnect?: () => void;
+  onRefreshPages?: () => void | Promise<void>;
+  onLinkCompanyPage?: (companyInput: string) => void | Promise<void>;
   className?: string;
 }
 
@@ -28,11 +34,18 @@ export function LinkedInOrgPanel({
   selectedOrgId,
   onSelectOrg,
   hasOrganizationWriteScope,
+  hasOrganizationReadScope = false,
+  statusHint,
+  grantedScopes = [],
   onConnect,
   onReconnect,
+  onRefreshPages,
+  onLinkCompanyPage,
   className,
 }: LinkedInOrgPanelProps) {
   const reconnect = onReconnect ?? onConnect;
+  const [manualInput, setManualInput] = useState('');
+  const [linking, setLinking] = useState(false);
 
   if (!isConnected) {
     return (
@@ -59,6 +72,17 @@ export function LinkedInOrgPanel({
     );
   }
 
+  const handleManualLink = async () => {
+    if (!onLinkCompanyPage || !manualInput.trim()) return;
+    setLinking(true);
+    try {
+      await onLinkCompanyPage(manualInput.trim());
+      setManualInput('');
+    } finally {
+      setLinking(false);
+    }
+  };
+
   return (
     <div className={cn(WORKSPACE.panel.base, WORKSPACE.panel.padding, 'space-y-3', className)}>
       <div className="flex items-center justify-between gap-2">
@@ -66,14 +90,18 @@ export function LinkedInOrgPanel({
           <h3 className={WORKSPACE.typography.panelTitle}>Post as</h3>
           <p className={WORKSPACE.typography.panelSubtitle}>Personal profile or company page</p>
         </div>
-        <button
-          type="button"
-          onClick={reconnect}
-          className="ac-workspace-action-btn text-[11px] shrink-0"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Reconnect
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {onRefreshPages ? (
+            <button type="button" onClick={() => void onRefreshPages()} className="ac-workspace-action-btn text-[11px]">
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refresh pages
+            </button>
+          ) : null}
+          <button type="button" onClick={reconnect} className="ac-workspace-action-btn text-[11px]">
+            <RefreshCw className="w-3.5 h-3.5" />
+            Reconnect
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -122,14 +150,54 @@ export function LinkedInOrgPanel({
       </div>
 
       {companyPages.length === 0 ? (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-200 text-[12px]">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-medium">No company pages found</p>
-            <p className="mt-1 text-amber-200/80">
-              You must be a LinkedIn Page administrator. Reconnect and approve organization permissions.
-            </p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-200 text-[12px]">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <p className="font-medium">No company pages found from LinkedIn yet</p>
+              <p className="text-amber-200/80 leading-relaxed">
+                {statusHint ||
+                  'If you are a Page Super Admin or Content Admin, LinkedIn may still block page discovery until organization permissions are approved on reconnect.'}
+              </p>
+              {!hasOrganizationReadScope ? (
+                <p className="text-amber-100/90">
+                  Missing organization read scopes on this connection. Reconnect and approve{' '}
+                  <span className="font-semibold">r_organization_admin</span> /{' '}
+                  <span className="font-semibold">rw_organization_admin</span>.
+                </p>
+              ) : null}
+              {grantedScopes.length > 0 ? (
+                <p className="text-[10px] text-amber-100/70 break-words">
+                  Granted scopes: {grantedScopes.join(', ')}
+                </p>
+              ) : null}
+            </div>
           </div>
+
+          {onLinkCompanyPage ? (
+            <div className="rounded-lg border border-[var(--ws-border)] bg-[var(--ws-toolbar)] p-3 space-y-2">
+              <p className="text-[12px] font-semibold text-white">Link page manually</p>
+              <p className="text-[11px] text-[var(--ws-text-tertiary)]">
+                Paste your company URL (for example linkedin.com/company/your-page) if you already manage the Page.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  placeholder="linkedin.com/company/your-page"
+                  className="flex-1 h-11 rounded-lg border border-[var(--ws-border)] bg-slate-950 px-3 text-base text-white focus:outline-none focus:border-teal-500/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleManualLink()}
+                  disabled={linking || !manualInput.trim()}
+                  className="ac-workspace-action-btn ac-workspace-action-btn--primary h-11 px-4 disabled:opacity-50"
+                >
+                  {linking ? 'Linking…' : 'Link page'}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -139,7 +207,7 @@ export function LinkedInOrgPanel({
           <div>
             <p className="font-medium">Missing organization posting permission</p>
             <p className="mt-1 text-rose-200/80">
-              Reconnect LinkedIn and approve company page posting scopes.
+              Reconnect LinkedIn and approve <span className="font-semibold">w_organization_social</span>.
             </p>
             <button type="button" onClick={reconnect} className="mt-2 underline font-semibold">
               Reconnect with org permissions

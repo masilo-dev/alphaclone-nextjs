@@ -19,6 +19,7 @@ const LINKEDIN_REQUESTED_SCOPES = [
   'w_organization_social',
   'r_organization_social',
   'r_organization_admin',
+  'rw_organization_admin',
   'r_ads',
   'r_ads_reporting',
   'rw_events',

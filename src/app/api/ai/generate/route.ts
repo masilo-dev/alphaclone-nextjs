@@ -98,7 +98,7 @@ export async function POST(req: Request) {
         if (isAIProviderUnavailableError(error)) {
             return NextResponse.json(
                 {
-                    error: 'AI provider layer is temporarily unavailable. Please retry after the cooldown window.',
+                    error: 'AI is temporarily unavailable. OpenRouter free models may be rate-limited — wait a minute and retry, or verify OPENROUTER_API_KEY is set in production.',
                     code: 'AI_PROVIDER_UNAVAILABLE',
                     retryAfter: error.retryAfterSeconds,
                 },
