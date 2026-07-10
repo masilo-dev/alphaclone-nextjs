@@ -43,13 +43,22 @@ export async function GET(req: NextRequest) {
     const { admin, user } = await getAuthedClient(req);
     const { data, error } = await admin.from('profiles').select('communication_prefs, gdpr_consent_date, gdpr_consent_ip').eq('id', user.id).maybeSingle();
     if (error) throw error;
+    if (!data) {
+      return NextResponse.json({
+        communicationPrefs: normalizePrefs(null),
+        gdprConsentDate: null,
+        gdprConsentIp: null,
+      });
+    }
     return NextResponse.json({
       communicationPrefs: normalizePrefs(data?.communication_prefs),
       gdprConsentDate: data?.gdpr_consent_date ?? null,
       gdprConsentIp: data?.gdpr_consent_ip ?? null,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unexpected error' }, { status: 401 });
+    const message = error instanceof Error ? error.message : 'Unexpected error';
+    const status = message.includes('Authentication') ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -83,7 +92,6 @@ export async function POST(req: NextRequest) {
       const consentAt = new Date().toISOString();
       updatePayload.gdpr_consent_date = consentAt;
       updatePayload.gdpr_consent_ip = consentIp;
-      // Versioned, auditable record of exactly what the user agreed to.
       updatePayload.communication_prefs.legal_acceptance = {
         accepted_at: consentAt,
         policy_version: LEGAL_POLICY_VERSION,
@@ -96,7 +104,17 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    const { error } = await admin.from('profiles').update(updatePayload).eq('id', user.id);
+    const profileName = String(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
+    const { error } = await admin.from('profiles').upsert(
+      {
+        id: user.id,
+        email: user.email,
+        name: profileName,
+        role: 'tenant_admin',
+        ...updatePayload,
+      },
+      { onConflict: 'id' }
+    );
     if (error) throw error;
 
     return NextResponse.json({ success: true, communicationPrefs: updatePayload.communication_prefs });

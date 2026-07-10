@@ -167,7 +167,7 @@ export const authService = {
     /**
      * Sign up new user
      */
-    async signUp(email: string, password: string, name: string, role: UserRole = 'client'): Promise<{ user: User | null; error: string | null }> {
+    async signUp(email: string, password: string, name: string, role: UserRole = 'tenant_admin'): Promise<{ user: User | null; error: string | null }> {
         try {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
@@ -204,7 +204,8 @@ export const authService = {
                 options: {
                     data: {
                         name: validated.name,
-                        role: role,
+                        role,
+                        account_type: 'business_owner',
                         registration_country: registrationCountry,
                     },
                 },
@@ -226,9 +227,25 @@ export const authService = {
                 id: data.user.id,
                 email: validated.email,
                 name: validated.name,
-                role: role,
+                role: role === 'client' ? 'tenant_admin' : role,
                 avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${validated.email}`,
             };
+
+            if (data.session) {
+                try {
+                    await fetch('/api/tenant/bootstrap', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            name: `${validated.name}'s Organization`,
+                            plan: 'free',
+                        }),
+                    });
+                } catch (bootstrapErr) {
+                    console.warn('[authService] tenant bootstrap after signup failed:', bootstrapErr);
+                }
+            }
 
             // Welcome email is sent after workspace provisioning on the login/register page,
             // or via auth/callback for email-confirmation signups — not here (avoids duplicates).

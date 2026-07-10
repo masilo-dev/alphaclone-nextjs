@@ -27,21 +27,9 @@ export const TenantContext = createContext<TenantContextType | undefined>(undefi
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(() => {
-    // Synchronously read from cache so the dashboard renders immediately
-    if (typeof window !== 'undefined') {
-      return tenantService.getCachedCurrentTenant() || null;
-    }
-    return null;
-  });
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [userTenants, setUserTenants] = useState<Array<Tenant & { role: string }>>([]);
-  // Start as false if we already have a cached tenant — no need to block the UI
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !tenantService.getCachedCurrentTenant();
-    }
-    return true;
-  });
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasResolvedOnceRef = useRef(false);
 
@@ -114,8 +102,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         if (savedTenant) {
           console.log('[TenantContext] Using saved tenant:', savedTenant.id);
           setCurrentTenant(savedTenant);
-          // Refresh the full object cache
           tenantService.setCurrentTenant(savedTenant);
+          hasResolvedOnceRef.current = true;
+          setIsLoading(false);
+        } else if (savedTenantId) {
+          console.warn('[TenantContext] Cached tenant not in membership list, clearing stale cache:', savedTenantId);
+          tenantService.clearCurrentTenant();
+          const firstTenant = tenants[0];
+          setCurrentTenant(firstTenant);
+          tenantService.setCurrentTenant(firstTenant);
           hasResolvedOnceRef.current = true;
           setIsLoading(false);
         } else {
@@ -134,21 +129,21 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         try {
           // Generate tenant name based on role
           // Super admin gets "ALPHACLONE SYSTEMS" as default organization
-          const tenantName = user.role === 'admin'
-            ? 'ALPHACLONE SYSTEMS'
-            : `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
-          const tenantSlug = user.role === 'admin'
-            ? 'alphaclone-systems'
-            : `org-${user.id.substring(0, 8)}`;
+          const tenantName =
+            user.role === 'admin'
+              ? 'ALPHACLONE SYSTEMS'
+              : `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
+          const tenantSlug =
+            user.role === 'admin'
+              ? 'alphaclone-systems'
+              : `org-${user.id.substring(0, 8)}`;
 
           const newTenant = await tenantService.createTenant({
             name: tenantName,
             slug: tenantSlug,
             adminUserId: user.id,
-            plan: 'free'
+            plan: 'free',
           });
-
-          console.log('Default tenant created:', newTenant.id);
 
           // Set as current tenant
           setCurrentTenant(newTenant);
@@ -214,11 +209,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       }
 
       setError(errorMessage);
-      // Keep cached tenant visible during transient failures so the UI stays clickable.
-      if (!tenantService.getCachedCurrentTenant()) {
-        setCurrentTenant(null);
-        setUserTenants([]);
-      }
+      tenantService.clearCurrentTenant();
+      setCurrentTenant(null);
+      setUserTenants([]);
       if (timeoutId) clearTimeout(timeoutId);
       hasResolvedOnceRef.current = true;
       setIsLoading(false);

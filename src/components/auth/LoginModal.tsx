@@ -95,23 +95,24 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
         }
 
         if (user) {
-          // 2. TENANT CREATION (If Business selected)
-          if (businessName) {
-            try {
-              const { tenantService } = await import('../../services/tenancy/TenantService');
-              const slug = businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-              await tenantService.createTenant({
-                name: businessName,
-                slug: slug,
-                adminUserId: user.id
-              });
-
-              // Refresh tenants in context to ensure the new organization is loaded
-              // before we trigger the onLogin/redirect flow
-              await refreshTenants();
-            } catch (tenantErr) {
-              console.error("Tenant Creation Error:", tenantErr);
-            }
+          try {
+            const { tenantService } = await import('../../services/tenancy/TenantService');
+            const orgName = businessName.trim() || `${name}'s Organization`;
+            const randomSuffix = Array.from({ length: 5 }, () =>
+              String.fromCharCode(97 + Math.floor(Math.random() * 26))
+            ).join('');
+            const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + randomSuffix;
+            await tenantService.createTenant({
+              name: orgName,
+              slug,
+              adminUserId: user.id,
+            });
+            await refreshTenants();
+          } catch (tenantErr) {
+            console.error('Tenant Creation Error:', tenantErr);
+            setError('Account created but workspace setup failed. Please refresh or contact support.');
+            setIsLoading(false);
+            return;
           }
           onLogin(user);
         }

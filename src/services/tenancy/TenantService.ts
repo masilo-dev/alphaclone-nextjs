@@ -30,6 +30,26 @@ class TenantService {
             .replace(/^-+|-+$/g, '')
             .slice(0, 72) || `org-${data.adminUserId.slice(0, 8)}`;
 
+        try {
+            const res = await fetch('/api/tenant/bootstrap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    name: data.name,
+                    slug: slugBase,
+                    plan: data.plan || 'free',
+                }),
+            });
+            const payload = await res.json().catch(() => ({}));
+            if (res.ok && payload?.tenant?.id) {
+                return payload.tenant as Tenant;
+            }
+            console.warn('[TenantService] bootstrap API failed, falling back to RPC:', payload?.error || res.status);
+        } catch (apiErr) {
+            console.warn('[TenantService] bootstrap API unreachable, falling back to RPC:', apiErr);
+        }
+
         const { data: tenantId, error } = await supabase.rpc('create_tenant', {
             p_name: data.name,
             p_slug: slugBase,

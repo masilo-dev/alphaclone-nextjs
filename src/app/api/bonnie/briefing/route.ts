@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { getTodayBriefForUser } from '@/services/bonnieMorningBriefService';
 
 export async function GET(req: NextRequest) {
@@ -20,8 +20,7 @@ export async function GET(req: NextRequest) {
     const brief = await getTodayBriefForUser(tenantId, user.id);
     return NextResponse.json({ success: true, brief });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to load briefing';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return routeErrorResponse(err, 'Failed to load briefing', req);
   }
 }
 
@@ -53,7 +52,6 @@ export async function PATCH(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to mark briefing read';
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    return routeErrorResponse(err, 'Failed to mark briefing read', req);
   }
 }

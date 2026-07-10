@@ -239,87 +239,76 @@ function LoginContent() {
                 }
 
                 if (newUser) {
-                    const tenantToastId = toast.loading('Provisioning workspace...', { id: 'workspace' });
-                    let newTenant = null;
+                    toast.loading('Provisioning workspace...', { id: 'workspace' });
                     const trialEndDate = new Date();
-                    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14 Days Trial
+                    trialEndDate.setDate(trialEndDate.getDate() + 14);
 
-                    // 2. TENANT CREATION
-                    if (isBusiness && businessName) {
-                        try {
-                            const { tenantService } = await import('@/services/tenancy/TenantService');
-                            const randomSuffix = Array.from({ length: 5 }, () =>
-                                String.fromCharCode(97 + Math.floor(Math.random() * 26))
-                            ).join('');
-                            const slug = businessName.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
+                    const workspaceName = businessName?.trim() || `${name}'s Organization`;
+                    const randomSuffix = Array.from({ length: 5 }, () =>
+                        String.fromCharCode(97 + Math.floor(Math.random() * 26))
+                    ).join('');
+                    const slug = workspaceName.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
-                            // Create Tenant
-                            newTenant = await tenantService.createTenant({
-                                name: businessName,
-                                slug: slug,
-                                adminUserId: newUser.id,
-                                plan: selectedPlan
-                            });
-                            
-                            toast.success('Workspace provisioned!', { id: 'workspace' });
-                        } catch (tenantErr: any) {
-                            const errorMsg = tenantErr.message || 'Failed to create workspace';
-                            console.error('Tenant creation failed:', tenantErr);
-                            toast.error(`Workspace provisioning failed: ${errorMsg}. Contact support.`, { id: 'workspace' });
-                        }
-
-                        // 2b. SET TRIAL AND PLAN
-                        if (newTenant) {
-                            const trialToastId = toast.loading('Initializing 14-day trial...', { id: 'trial' });
-                            try {
-                                const { tenantService } = await import('@/services/tenancy/TenantService');
-                                await tenantService.updateTenant(newTenant.id, {
-                                    trial_ends_at: trialEndDate,
-                                    subscription_status: 'trial',
-                                    subscription_plan: selectedPlan
-                                });
-                                toast.success('Subscription plan activated!', { id: 'trial' });
-                            } catch (trialErr: any) {
-                                const errorMsg = trialErr.message || 'Failed to setup trial';
-                                console.error('Subscription setup failed:', trialErr);
-                                toast.error(`Subscription setup failed: ${errorMsg}`, { id: 'trial' });
-                            }
-
-                            // 3. Welcome email — authenticated user path only (no arbitrary recipient)
-                            try {
-                                const { supabase } = await import('@/lib/supabase');
-                                const { data: { session } } = await supabase.auth.getSession();
-                                if (session?.access_token) {
-                                    void fetch(`${window.location.origin}/api/email/platform-transactional`, {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                            Authorization: `Bearer ${session.access_token}`,
-                                        },
-                                        body: JSON.stringify({
-                                            templateName: 'Welcome Email',
-                                            variables: {
-                                                name,
-                                                trial_ends_at: trialEndDate.toLocaleDateString(),
-                                                workspace_name: businessName,
-                                            },
-                                        }),
-                                    }).catch((err) => console.warn('Welcome email trigger failed:', err));
-                                }
-                            } catch (emailErr) {
-                                console.warn('Failed to start welcome email network call:', emailErr);
-                            }
-
-                            // Start onboarding workflow (non-blocking)
-                            try {
-                                void triggerOnboardingWorkflow(newTenant.id);
-                            } catch (onboardErr) {
-                                console.warn('Failed to trigger onboarding workflow:', onboardErr);
-                            }
-                        }
+                    let newTenant = null;
+                    try {
+                        const { tenantService } = await import('@/services/tenancy/TenantService');
+                        newTenant = await tenantService.createTenant({
+                            name: workspaceName,
+                            slug,
+                            adminUserId: newUser.id,
+                            plan: selectedPlan,
+                        });
+                        toast.success('Workspace provisioned!', { id: 'workspace' });
+                    } catch (tenantErr: any) {
+                        const errorMsg = tenantErr.message || 'Failed to create workspace';
+                        console.error('Tenant creation failed:', tenantErr);
+                        toast.error(`Workspace provisioning failed: ${errorMsg}. Please try again or contact support.`, { id: 'workspace' });
+                        setError(errorMsg);
+                        setIsLoading(false);
+                        return;
                     }
 
-                    // Success redirect toast
+                    try {
+                        const { tenantService } = await import('@/services/tenancy/TenantService');
+                        await tenantService.updateTenant(newTenant.id, {
+                            trial_ends_at: trialEndDate,
+                            subscription_status: 'trial',
+                            subscription_plan: selectedPlan,
+                        });
+                    } catch (trialErr) {
+                        console.warn('Subscription setup failed:', trialErr);
+                    }
+
+                    try {
+                        const { supabase } = await import('@/lib/supabase');
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (session?.access_token) {
+                            void fetch(`${window.location.origin}/api/email/platform-transactional`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${session.access_token}`,
+                                },
+                                body: JSON.stringify({
+                                    templateName: 'Welcome Email',
+                                    variables: {
+                                        name,
+                                        trial_ends_at: trialEndDate.toLocaleDateString(),
+                                        workspace_name: workspaceName,
+                                    },
+                                }),
+                            }).catch((err) => console.warn('Welcome email trigger failed:', err));
+                        }
+                    } catch (emailErr) {
+                        console.warn('Failed to start welcome email network call:', emailErr);
+                    }
+
+                    try {
+                        void triggerOnboardingWorkflow(newTenant.id);
+                    } catch (onboardErr) {
+                        console.warn('Failed to trigger onboarding workflow:', onboardErr);
+                    }
+
                     toast.success('Welcome to AlphaClone! Redirecting...');
                     router.push('/dashboard/business');
                     return;

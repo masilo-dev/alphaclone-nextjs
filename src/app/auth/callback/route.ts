@@ -57,11 +57,23 @@ export async function GET(request: Request) {
 
                 // Ensure tenant exists BEFORE integration syncs (LinkedIn, etc.)
                 let tenantId = user.user_metadata?.tenant_id as string | undefined;
-                if (!tenantId) {
-                    try {
-                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
-                        const admin = createSupabaseAdminClient();
+                try {
+                    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                    const admin = createSupabaseAdminClient();
 
+                    if (tenantId) {
+                        const { data: metadataMembership } = await admin
+                            .from('tenant_users')
+                            .select('tenant_id')
+                            .eq('user_id', user.id)
+                            .eq('tenant_id', tenantId)
+                            .maybeSingle();
+                        if (!metadataMembership?.tenant_id) {
+                            tenantId = undefined;
+                        }
+                    }
+
+                    if (!tenantId) {
                         const { data: existingMembership } = await admin
                             .from('tenant_users')
                             .select('tenant_id')
@@ -71,6 +83,7 @@ export async function GET(request: Request) {
                         if (existingMembership?.tenant_id) {
                             tenantId = existingMembership.tenant_id;
                         } else {
+                            const { bootstrapTenantForUser } = await import('@/lib/tenant/bootstrapTenantServer');
                             const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
                             const workspaceName = `${name}'s Workspace`;
                             const randomSuffix = Array.from({ length: 5 }, () =>
@@ -78,23 +91,22 @@ export async function GET(request: Request) {
                             ).join('');
                             const slug = name.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
-                            const { data: newTenantId, error: createError } = await admin.rpc('create_tenant', {
-                                p_name: workspaceName,
-                                p_slug: slug,
-                                p_admin_user_id: user.id,
-                                p_plan: 'starter',
+                            const { tenantId: newTenantId } = await bootstrapTenantForUser(admin, user, {
+                                name: workspaceName,
+                                slug,
+                                plan: 'starter',
                             });
 
-                            if (newTenantId && !createError) {
+                            if (newTenantId) {
                                 await admin.auth.admin.updateUserById(user.id, {
-                                    user_metadata: { ...user.user_metadata, tenant_id: newTenantId }
+                                    user_metadata: { ...user.user_metadata, tenant_id: newTenantId },
                                 });
                                 tenantId = newTenantId;
                             }
                         }
-                    } catch (tenantErr) {
-                        console.error('[auth/callback] Failed to ensure tenant for OAuth user:', tenantErr);
                     }
+                } catch (tenantErr) {
+                    console.error('[auth/callback] Failed to ensure tenant for OAuth user:', tenantErr);
                 }
 
                 if (provider === 'linkedin_oidc') {
