@@ -1043,10 +1043,17 @@ const SalesAgent: React.FC = () => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => router.push('/dashboard/marketplace')}
+                        onClick={() => setActiveTab('automation')}
+                        className={`px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'automation' ? 'bg-teal-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        {t('Automation')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => router.push('/dashboard/deals')}
                         className="px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap text-slate-400 hover:text-white"
                     >
-                        {t('Integrations')}
+                        {t('Pipeline')}
                     </button>
                 </div>
                 <div className="md:hidden w-full min-w-0">
@@ -1095,7 +1102,11 @@ const SalesAgent: React.FC = () => {
 
 
 
-            {activeTab === 'omni' ? (
+            {activeTab === 'automation' ? (
+                <div className="flex-1 bg-transparent w-full p-4">
+                    <AutomationBuilder />
+                </div>
+            ) : activeTab === 'omni' ? (
                 <div className="flex-1 bg-transparent w-full">
                     <OmniLeadFinder />
                 </div>

@@ -113,6 +113,7 @@ const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
 const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
 const SalesConsole = React.lazy(() => import('../crm/SalesConsole'));
 const CRMReportsTab = React.lazy(() => import('../crm/CRMReportsTab'));
+const FollowUpQueue = React.lazy(() => import('../crm/FollowUpQueue'));
 const BankingCenterPage = React.lazy(() => import('../accounting/BankingCenterPage'));
 const BillsPayablePage = React.lazy(() => import('../accounting/BillsPayablePage'));
 const PeriodClosePage = React.lazy(() => import('../accounting/PeriodClosePage'));
@@ -579,6 +580,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <AccountsPage />
                     </React.Suspense>
                 );
+            case '/dashboard/crm/follow-ups':
+                return (
+                    <React.Suspense fallback={<TabSkeleton />}>
+                        <FollowUpQueue />
+                    </React.Suspense>
+                );
             case '/dashboard/crm/reports':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
@@ -881,6 +888,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/executive': return t('Executive Dashboard');
             case '/dashboard/crm/console': return t('Sales Console');
             case '/dashboard/crm/accounts': return t('Accounts');
+            case '/dashboard/crm/follow-ups': return t('Follow-ups');
             case '/dashboard/crm/reports': return t('CRM Reports');
             case '/dashboard/accounting/banking': return t('Banking');
             case '/dashboard/accounting/bills': return t('Bills Payable');

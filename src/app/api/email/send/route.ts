@@ -16,6 +16,7 @@ const sendEmailSchema = z.object({
   provider: z.enum(['auto', 'zoho', 'gmail', 'brevo', 'sendgrid', 'resend']).optional(),
   document_file_ids: z.array(z.string().uuid()).optional(),
   skipRecipientGate: z.boolean().optional(),
+  isPlatformNotification: z.boolean().optional(),
 }).refine((data) => Boolean(data.body_html?.trim() || data.html?.trim()), {
   message: 'body_html or html is required',
   path: ['body_html'],
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { tenantId, to, subject, contactId, provider, document_file_ids, skipRecipientGate } = parsed.data;
+    const { tenantId, to, subject, contactId, provider, document_file_ids, skipRecipientGate, isPlatformNotification } = parsed.data;
     const body_html = (parsed.data.body_html || parsed.data.html || '').trim();
     const { user } = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       attachments,
       skipRecipientGate: skipRecipientGate ?? Boolean(document_file_ids?.length),
+      isPlatformNotification: isPlatformNotification ?? false,
     }, preferredProvider);
 
     if (!result.success) {

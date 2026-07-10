@@ -340,6 +340,62 @@ export const hubspotService = {
     },
 
     /**
+     * Create or update deal in HubSpot
+     */
+    async syncDealToHubSpot(userId: string, deal: any) {
+        try {
+            const token = await this.getValidToken(userId);
+            const dealName = String(deal?.name || deal?.title || 'AlphaClone Deal').trim();
+            const amount = Number(deal?.value ?? deal?.amount ?? 0) || 0;
+            const stage = String(deal?.stage || 'appointmentscheduled');
+            const closeDate = deal?.expectedCloseDate || deal?.expected_close_date;
+
+            const properties: Record<string, string> = {
+                dealname: dealName,
+                amount: String(amount),
+                dealstage: stage,
+            };
+            if (closeDate) {
+                properties.closedate = new Date(closeDate).toISOString().split('T')[0];
+            }
+
+            const response = await fetch('https://api.hubapi.com/crm/v3/objects/deals', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ properties }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                return { success: true, data };
+            }
+
+            if (response.status === 409 && data?.id) {
+                const updated = await fetch(`https://api.hubapi.com/crm/v3/objects/deals/${data.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ properties }),
+                });
+                const patchData = await updated.json();
+                if (!updated.ok) throw new Error(patchData.message || 'Failed to update deal');
+                return { success: true, data: patchData, message: 'Deal updated' };
+            }
+
+            if (!response.ok) throw new Error(data.message || 'Failed to sync deal');
+            return { success: true, data };
+        } catch (error) {
+            console.error('HubSpot Sync Deal Error:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Delete contact from HubSpot
      */
     async deleteContact(userId: string, contactId: string) {

@@ -3,6 +3,7 @@ import { tenantService } from './tenancy/TenantService';
 import { businessClientService } from './businessClientService';
 import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
+import { requestCrmBridgeSync } from '../lib/crm/crmBridgeClient';
 import { assertLeadStageTransition } from '../lib/stageProgression';
 import { isTerminalLeadStage, normalizeLeadPipelineStage } from '../lib/crmPipelineStages';
 import { intelligenceScoringService } from './intelligence/intelligenceScoringService';
@@ -372,6 +373,7 @@ export const leadService = {
 
             // SYNC TO EXTERNAL CRM
             UnifiedCRMService.syncLead(newLead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
+            void requestCrmBridgeSync(tenantId, 'lead', newLead.id);
 
             return { lead: newLead, error: null };
         } catch (err) {
@@ -564,6 +566,10 @@ export const leadService = {
             this.getLeadById(id).then(({ lead }) => {
                 if (lead) UnifiedCRMService.syncLead(lead).catch((err: any) => console.error('Background CRM Lead Sync Failed:', err));
             });
+        }
+
+        if (!error) {
+            void requestCrmBridgeSync(tenantId, 'lead', id);
         }
 
         return { error: error ? error.message : null };

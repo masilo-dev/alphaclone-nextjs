@@ -11,6 +11,8 @@ import { contractSignedWorkflow } from '@/workflows/contract-flows';
 import { taskOverdueWorkflow, taskCreatedWorkflow } from '@/workflows/task-flows';
 import { tenantCreatedWorkflow } from '@/workflows/tenant-flows';
 import { quantumDealIntelligenceService } from '@/services/intelligence/quantumDealIntelligenceService';
+import { runEnterpriseWorkflowsForTrigger } from '@/lib/crm/crmEnterpriseWorkflowRunner';
+import { syncCrmEntity } from '@/lib/crm/crmBridgeServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,12 +120,20 @@ export async function GET(request: NextRequest) {
             status: 'running'
           });
 
+          await runCrmCoherenceHooks(supabase, event);
+
           await supabase
             .from('business_automation_events')
             .update({ processed: true })
             .eq('id', event.id);
 
           results.push({ eventId: event.id, status: 'dispatched', runId });
+        } else if (await runCrmCoherenceHooks(supabase, event)) {
+          await supabase
+            .from('business_automation_events')
+            .update({ processed: true })
+            .eq('id', event.id);
+          results.push({ eventId: event.id, status: 'hooks_only' });
         } else {
           results.push({ eventId: event.id, status: 'skipped', reason: 'no_workflow' });
         }
@@ -153,4 +163,74 @@ async function logCron(trigger: string, status: string, payload: any, ranAt: str
     ran_at: ranAt,
     error_message: status === 'failed' ? payload.error : null
   });
+}
+
+async function runCrmCoherenceHooks(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  event: { tenant_id: string; event_type: string; payload?: Record<string, unknown> | null }
+): Promise<boolean> {
+  const payload = (event.payload || {}) as Record<string, unknown>;
+  const tenantId = event.tenant_id;
+
+  if (event.event_type === 'deal_stage_changed') {
+    const dealId = String(payload.dealId || '');
+    if (dealId) {
+      await syncCrmEntity(supabase, 'deal', dealId, tenantId).catch((err) => {
+        console.warn('[Automation] deal bridge sync failed:', err);
+      });
+    }
+    await runEnterpriseWorkflowsForTrigger(
+      supabase,
+      tenantId,
+      'deal_stage_changed',
+      { ...payload, tenantId },
+      'deal',
+      dealId || undefined
+    ).catch((err) => console.warn('[Automation] enterprise workflows failed:', err));
+    return true;
+  }
+
+  if (event.event_type === 'lead_created') {
+    const leadId = String(payload.leadId || payload.id || '');
+    if (leadId) {
+      await syncCrmEntity(supabase, 'lead', leadId, tenantId).catch((err) => {
+        console.warn('[Automation] lead bridge sync failed:', err);
+      });
+    }
+    return Boolean(leadId);
+  }
+
+  if (event.event_type === 'contract_signed') {
+    const contractId = String(payload.contractId || '');
+    if (!contractId) return false;
+
+    const { data: contract } = await supabase
+      .from('contracts')
+      .select('client_id, deal_id, metadata')
+      .eq('id', contractId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    const { closeDealFromContractSign, resolveContractDealId } = await import(
+      '@/lib/contracts/contractCoherenceServer'
+    );
+    const dealId = contract ? resolveContractDealId(contract) : null;
+    await closeDealFromContractSign(supabase, tenantId, {
+      dealId,
+      partyId: contract?.client_id,
+    }).catch((err) => console.warn('[Automation] contract sign coherence failed:', err));
+
+    await runEnterpriseWorkflowsForTrigger(
+      supabase,
+      tenantId,
+      'contract_signed',
+      { ...payload, tenantId, dealId },
+      'contract',
+      contractId
+    ).catch((err) => console.warn('[Automation] contract workflows failed:', err));
+
+    return true;
+  }
+
+  return false;
 }

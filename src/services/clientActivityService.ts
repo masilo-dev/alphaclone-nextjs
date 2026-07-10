@@ -44,7 +44,7 @@ class ClientActivityService {
             }
 
             // Get all activities from various sources
-            const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes] = await Promise.all([
+            const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes, crmActivities, portalEvents] = await Promise.all([
                 this.getClientMessages(clientId),
                 this.getClientUnifiedMessages(clientId, client.email),
                 this.getClientEmailLogs(clientId, client.email),
@@ -54,6 +54,8 @@ class ClientActivityService {
                 this.getClientProjects(clientId),
                 this.getClientFiles(clientId),
                 this.getClientNotes(clientId),
+                this.getCrmUnifiedActivities(clientId, client.tenant_id),
+                this.getClientPortalEvents(clientId),
             ]);
 
             // Combine all activities
@@ -67,6 +69,8 @@ class ClientActivityService {
                 ...projects,
                 ...files,
                 ...notes,
+                ...crmActivities,
+                ...portalEvents,
             ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             // Calculate stats
@@ -438,6 +442,94 @@ class ClientActivityService {
     async getClientStats(clientId: string) {
         const { timeline } = await this.getClientTimeline(clientId);
         return timeline?.stats || null;
+    }
+
+    private async getCrmUnifiedActivities(clientId: string, tenantId: string): Promise<ClientActivity[]> {
+        const { data: client } = await supabase
+            .from('business_clients')
+            .select('crm_contact_id, email, company')
+            .eq('id', clientId)
+            .maybeSingle();
+
+        let contactId = client?.crm_contact_id as string | null;
+        if (!contactId && client?.email) {
+            const { data: contact } = await supabase
+                .from('contacts')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .eq('email', client.email)
+                .limit(1)
+                .maybeSingle();
+            contactId = contact?.id || null;
+        }
+
+        const queries = [];
+        if (contactId) {
+            queries.push(
+                supabase
+                    .from('activities')
+                    .select('id, type, subject, description, created_at, created_by')
+                    .eq('tenant_id', tenantId)
+                    .eq('contact_id', contactId)
+                    .order('created_at', { ascending: false })
+                    .limit(30)
+            );
+        }
+
+        const companyName = client?.company;
+        if (companyName) {
+            const { data: company } = await supabase
+                .from('companies')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .ilike('name', companyName)
+                .limit(1)
+                .maybeSingle();
+            if (company?.id) {
+                queries.push(
+                    supabase
+                        .from('activities')
+                        .select('id, type, subject, description, created_at, created_by')
+                        .eq('tenant_id', tenantId)
+                        .eq('company_id', company.id)
+                        .order('created_at', { ascending: false })
+                        .limit(30)
+                );
+            }
+        }
+
+        const results = await Promise.all(queries);
+        const rows = results.flatMap((r) => r.data || []);
+
+        return rows.map((row: any) => ({
+            id: row.id,
+            client_id: clientId,
+            activity_type: 'note' as const,
+            title: row.subject || row.type || 'CRM activity',
+            description: row.description,
+            metadata: { crm_type: row.type },
+            created_at: row.created_at,
+            created_by: row.created_by,
+        }));
+    }
+
+    private async getClientPortalEvents(clientId: string): Promise<ClientActivity[]> {
+        const { data } = await supabase
+            .from('client_portal_events')
+            .select('id, event_type, metadata, created_at')
+            .eq('client_id', clientId)
+            .order('created_at', { ascending: false })
+            .limit(30);
+
+        return (data || []).map((event: any) => ({
+            id: event.id,
+            client_id: clientId,
+            activity_type: 'project_update' as const,
+            title: event.event_type === 'portal_message_sent' ? 'Client portal message' : 'Portal update',
+            description: typeof event.metadata?.author_name === 'string' ? `From ${event.metadata.author_name}` : undefined,
+            metadata: event.metadata || {},
+            created_at: event.created_at,
+        }));
     }
 }
 

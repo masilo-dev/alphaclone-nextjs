@@ -216,6 +216,17 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+
+    const { data: activities, error: actErr } = await supabase
+      .from('activities')
+      .select('id, type, subject, description, created_at, created_by, status, metadata')
+      .eq('tenant_id', args.tenant_id)
+      .eq('contact_id', args.contact_id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (actErr && actErr.code !== '42P01') throw actErr;
+
     const { data: deals, error: dealsErr } = await supabase
       .from('deals')
       .select('id')
@@ -224,28 +235,48 @@ registerTool('crm', {
 
     if (dealsErr) throw dealsErr;
     const dealIds = (deals || []).map((d: { id: string }) => d.id);
-    if (dealIds.length === 0) return [];
 
-    const { data, error } = await supabase
-      .from('deal_activities')
-      .select('*')
-      .eq('tenant_id', args.tenant_id)
-      .in('deal_id', dealIds)
-      .order('created_at', { ascending: false })
-      .limit(50);
+    let dealActivities: unknown[] = [];
+    if (dealIds.length > 0) {
+      const { data, error } = await supabase
+        .from('deal_activities')
+        .select('id, deal_id, activity_type, title, description, created_at, user_id, metadata')
+        .in('deal_id', dealIds)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
-    if (error) {
-      // If table doesn't exist, return empty array
-      if (error.code === '42P01') {
-        return [];
-      }
-      throw error;
+      if (error && error.code !== '42P01') throw error;
+      dealActivities = (data || []).map((row: any) => ({
+        id: row.id,
+        type: row.activity_type,
+        subject: row.title,
+        description: row.description,
+        created_at: row.created_at,
+        created_by: row.user_id,
+        source: 'deal_activity',
+        metadata: { ...(row.metadata || {}), deal_id: row.deal_id },
+      }));
     }
-    return data || [];
+
+    const unified = [
+      ...(activities || []).map((row: any) => ({
+        id: row.id,
+        type: row.type,
+        subject: row.subject,
+        description: row.description,
+        created_at: row.created_at,
+        created_by: row.created_by,
+        source: 'activities',
+        metadata: row.metadata || {},
+      })),
+      ...dealActivities,
+    ].sort((a, b) => new Date(String(b.created_at)).getTime() - new Date(String(a.created_at)).getTime());
+
+    return unified.slice(0, 50);
   },
 });
 
-// 6. log_contact_activity - simplified without crm_activities table
+// 6. log_contact_activity — persisted in activities table
 registerTool('crm', {
   name: 'log_contact_activity',
   description: 'Log an interaction (call, email, meeting, note) with a contact.',
@@ -267,8 +298,8 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    
-    // Update the contact's last_contacted_at and last_activity_at
+    const { logCrmActivityAdmin } = await import('@/lib/crm/crmActivityServer');
+
     const { data: contact, error: contactError } = await supabase
       .from('contacts')
       .update({
@@ -278,20 +309,37 @@ registerTool('crm', {
       })
       .eq('id', args.contact_id)
       .eq('tenant_id', args.tenant_id)
-      .select()
+      .select('id, company_id, first_name, last_name, email')
       .single();
 
     if (contactError) throw contactError;
 
-    // Return a synthetic activity record since we don't have a dedicated activities table
+    const subjectMap: Record<string, string> = {
+      call: 'Call logged',
+      email: 'Email logged',
+      meeting: 'Meeting logged',
+      note: 'Note logged',
+    };
+
+    const activity = await logCrmActivityAdmin(supabase, {
+      tenantId: args.tenant_id,
+      contactId: args.contact_id,
+      companyId: contact.company_id || undefined,
+      type: args.type,
+      subject: subjectMap[args.type] || 'Activity logged',
+      description: args.notes || undefined,
+      source: 'bonnie_mcp',
+      metadata: { channel: args.type },
+    });
+
     return {
-      id: crypto.randomUUID(),
+      id: activity?.id || crypto.randomUUID(),
       contact_id: args.contact_id,
       tenant_id: args.tenant_id,
       type: args.type,
       notes: args.notes || null,
       created_at: new Date().toISOString(),
-      contact_updated: true,
+      persisted: Boolean(activity?.id),
     };
   },
 });

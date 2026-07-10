@@ -13,6 +13,8 @@ import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 import { resolveModuleActions } from '@/config/moduleDashboardActions';
 import { cn } from '@/lib/utils';
 import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
+import { CRMNav } from '../crm/CRMNav';
+import { CrmSyncToolbar } from '../crm/CrmSyncToolbar';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -286,14 +288,18 @@ export function CrmDashboard() {
   }, [router, searchParams]);
 
   return (
-    <ModuleDashboardView
-      moduleId="crm"
-      endpoint="/api/crm/stats"
-      chartType="line"
-      chartColor={DASHBOARD_COLORS.blue}
-      chartTitle="Deals closed"
-      chartSubtitle="Won by month"
-    />
+    <div className="space-y-4 ac-scroll-full ac-module-section">
+      <CRMNav pathname="/dashboard/crm" />
+      <CrmSyncToolbar />
+      <ModuleDashboardView
+        moduleId="crm"
+        endpoint="/api/crm/stats"
+        chartType="line"
+        chartColor={DASHBOARD_COLORS.blue}
+        chartTitle="Deals closed"
+        chartSubtitle="Won by month"
+      />
+    </div>
   );
 }
 

@@ -35,7 +35,11 @@ export async function dealStageWorkflow({ dealId, stage, tenantId }: { dealId: s
 
 async function proposalActions(dealId: string) {
   "use step";
-  console.log(`[deal-stage] Proposal — create/send quote for deal ${dealId}`);
+  const supabase = createSupabaseAdminClient();
+  const { data: deal } = await supabase.from('deals').select('tenant_id').eq('id', dealId).maybeSingle();
+  if (!deal?.tenant_id) return;
+  const { ensureDealProposalArtifacts } = await import('@/lib/crm/dealProposalServer');
+  await ensureDealProposalArtifacts(supabase, dealId, deal.tenant_id);
 }
 
 async function closedWonActions(dealId: string, tenantId: string) {

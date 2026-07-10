@@ -2,6 +2,11 @@ import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceLifecycleWorkflow } from './invoice-lifecycle';
 import crypto from 'crypto';
+import {
+  closeDealFromContractSign,
+  resolveBusinessClientIdForParty,
+  resolveContractDealId,
+} from '@/lib/contracts/contractCoherenceServer';
 
 /**
  * Contract Signed Workflow
@@ -71,9 +76,9 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
       metadata: {
         public_token: publicToken,
         contract_id: contractId,
-        deal_id: contract.metadata?.deal_id,
+        deal_id: resolveContractDealId(contract),
       },
-      notes: `---METADATA---${JSON.stringify({ contract_id: contractId, deal_id: contract.metadata?.deal_id })}---METADATA---`,
+      notes: `---METADATA---${JSON.stringify({ contract_id: contractId, deal_id: resolveContractDealId(contract) })}---METADATA---`,
     })
     .select()
     .single();
@@ -111,7 +116,7 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
     }
   }
 
-  const dealId = contract?.metadata?.deal_id;
+  const dealId = resolveContractDealId(contract);
   let clientId = contract.client_id || null;
   let ownerId: string | null = null;
   let ownerName: string | null = null;
@@ -122,9 +127,11 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
       .select('contact_id, owner_id, name')
       .eq('id', dealId)
       .maybeSingle();
-    clientId = clientId || deal?.contact_id || null;
     ownerId = deal?.owner_id || null;
+    clientId = clientId || deal?.contact_id || null;
   }
+
+  const businessClientId = await resolveBusinessClientIdForParty(supabase, tenantId, clientId);
 
   const { data: project } = await supabase
     .from('projects')
@@ -133,7 +140,7 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
       name: `Project: ${contract?.title || 'Signed Project'}`,
       contract_id: contractId,
       deal_id: dealId || null,
-      client_id: clientId,
+      client_id: businessClientId,
       owner_id: ownerId,
       owner_name: ownerName,
       category: 'Client Delivery',
@@ -181,18 +188,21 @@ async function syncDealStatusStep(contractId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  const { data: contract } = await supabase.from('contracts').select('metadata, project_id').eq('id', contractId).single();
-  const dealId = contract?.metadata?.deal_id;
+  const { data: contract } = await supabase.from('contracts').select('metadata, project_id, client_id, deal_id').eq('id', contractId).single();
+  const dealId = contract ? resolveContractDealId(contract) : null;
 
   if (dealId) {
-    await supabase.from('deals').update({ stage: 'closed_won', updated_at: new Date().toISOString() }).eq('id', dealId);
+    await closeDealFromContractSign(supabase, tenantId, {
+      dealId,
+      partyId: contract?.client_id,
+    });
     return;
   }
 
   if (contract?.project_id) {
     const { data: project } = await supabase.from('projects').select('deal_id').eq('id', contract.project_id).single();
     if (project?.deal_id) {
-      await supabase.from('deals').update({ stage: 'closed_won', updated_at: new Date().toISOString() }).eq('id', project.deal_id);
+      await closeDealFromContractSign(supabase, tenantId, { dealId: project.deal_id });
     }
   }
 }

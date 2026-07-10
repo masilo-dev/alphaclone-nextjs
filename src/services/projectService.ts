@@ -353,6 +353,17 @@ export const projectService = {
         try {
             const tenantId = this.getTenantId();
 
+            let previousStage: string | null = null;
+            if (updates.currentStage !== undefined && tenantId) {
+                const { data: existing } = await supabase
+                    .from('projects')
+                    .select('current_stage')
+                    .eq('id', projectId)
+                    .eq('tenant_id', tenantId)
+                    .maybeSingle();
+                previousStage = existing?.current_stage ?? null;
+            }
+
             const updateData: Record<string, unknown> = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;
@@ -438,6 +449,14 @@ export const projectService = {
                     .catch((err) => console.error('[projectService] native calendar sync failed:', err));
             }
 
+            if (
+                updates.currentStage !== undefined &&
+                previousStage &&
+                previousStage !== updates.currentStage
+            ) {
+                void this.notifyClientStageChange(projectId, previousStage, updates.currentStage);
+            }
+
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error' };
@@ -473,10 +492,81 @@ export const projectService = {
     },
 
     /**
+     * Best-effort no-reply email to linked client when portal is public.
+     */
+    async notifyClientByApi(
+        projectId: string,
+        body: Record<string, unknown>
+    ): Promise<{ sent?: boolean; skipped?: string } | null> {
+        const tenantId = this.getTenantId();
+        if (!tenantId) return null;
+        try {
+            const res = await fetch(`/api/projects/${projectId}/client-notify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ tenantId, ...body }),
+            });
+            return await res.json().catch(() => null);
+        } catch (err) {
+            console.warn('[projectService] client notify failed:', err);
+            return null;
+        }
+    },
+
+    async notifyClientProgressChange(
+        projectId: string,
+        previousProgress: number | null,
+        newProgress: number,
+        trigger: 'progress_change' | 'milestone' | 'manual' = 'progress_change'
+    ): Promise<void> {
+        if (previousProgress === newProgress) return;
+        await this.notifyClientByApi(projectId, {
+            type: 'progress',
+            previousProgress,
+            newProgress,
+            trigger,
+        });
+    },
+
+    async notifyClientStageChange(
+        projectId: string,
+        previousStage: string,
+        newStage: string
+    ): Promise<void> {
+        if (previousStage === newStage) return;
+        await this.notifyClientByApi(projectId, {
+            type: 'stage',
+            previousStage,
+            newStage,
+        });
+    },
+
+    async notifyClientProjectNote(
+        projectId: string,
+        noteContent: string,
+        authorName?: string
+    ): Promise<{ sent?: boolean; skipped?: string } | null> {
+        return this.notifyClientByApi(projectId, {
+            type: 'note',
+            noteContent,
+            authorName,
+        });
+    },
+
+    /**
      * Recalculate project progress from milestones (preferred) or completed tasks.
      */
     async recalculateProjectProgress(projectId: string): Promise<{ progress: number; error: string | null }> {
         try {
+            const { data: beforeRow } = await supabase
+                .from('projects')
+                .select('progress')
+                .eq('id', projectId)
+                .maybeSingle();
+            const previousProgress =
+                typeof beforeRow?.progress === 'number' ? beforeRow.progress : null;
+
             const { data: milestones, error: milestoneError } = await supabase
                 .from('project_milestones')
                 .select('status')
@@ -488,6 +578,7 @@ export const projectService = {
                 const completed = milestones.filter((m: { status: string }) => m.status === 'completed').length;
                 const progress = Math.round((completed / milestones.length) * 100);
                 await this.updateProject(projectId, { progress });
+                void this.notifyClientProgressChange(projectId, previousProgress, progress, 'milestone');
                 return { progress, error: null };
             }
 
@@ -500,12 +591,14 @@ export const projectService = {
 
             if (!tasks || tasks.length === 0) {
                 await this.updateProject(projectId, { progress: 0 });
+                void this.notifyClientProgressChange(projectId, previousProgress, 0, 'progress_change');
                 return { progress: 0, error: null };
             }
 
             const completedTasks = tasks.filter((t: { status: string }) => t.status === 'completed').length;
             const progress = Math.round((completedTasks / tasks.length) * 100);
             await this.updateProject(projectId, { progress });
+            void this.notifyClientProgressChange(projectId, previousProgress, progress, 'progress_change');
 
             return { progress, error: null };
         } catch (err) {

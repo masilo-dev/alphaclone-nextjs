@@ -14,6 +14,7 @@ import {
   FileText,
   Search,
   CheckSquare,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,7 @@ export const SALES_WORKSPACE_TABS: SalesWorkspaceTab[] = [
   { label: 'Console', href: '/dashboard/crm/console', icon: MessageCircle },
   { label: 'Reports', href: '/dashboard/crm/reports', icon: FileText },
   { label: 'Lead Finder', shortLabel: 'Finder', href: '/dashboard/leads/campaigns', icon: Search },
+  { label: 'Follow-ups', href: '/dashboard/crm/follow-ups', icon: Bell },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
 ];
 

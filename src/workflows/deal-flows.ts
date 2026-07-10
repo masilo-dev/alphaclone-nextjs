@@ -33,7 +33,8 @@ async function proposalActions(dealId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  console.log(`[deal-flows] Proposal stage — ensure quote/proposal exists for deal ${dealId}`);
+  const { ensureDealProposalArtifacts } = await import('@/lib/crm/dealProposalServer');
+  await ensureDealProposalArtifacts(supabase, dealId, tenantId);
 }
 
 async function createContractDraftStep(dealId: string, tenantId: string) {

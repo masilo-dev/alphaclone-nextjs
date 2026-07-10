@@ -9,6 +9,11 @@ import RecordPageShell from './RecordPageShell';
 import RecordFilesTab from './RecordFilesTab';
 import EmptyState from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
+import { CRMNav } from './CRMNav';
+import { usePathname } from 'next/navigation';
+import { AccountFormModal } from './AccountFormModal';
+import { useTenant } from '@/contexts/TenantContext';
+import { CrmSyncToolbar } from './CrmSyncToolbar';
 
 const STAGE_FILTERS = [
   { value: 'all', label: 'All' },
@@ -20,6 +25,7 @@ const STAGE_FILTERS = [
 
 export default function AccountsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -28,6 +34,10 @@ export default function AccountsPage() {
   const [detailTab, setDetailTab] = useState('overview');
   const [relations, setRelations] = useState<{ contacts: unknown[]; opportunities: unknown[]; activities: unknown[] } | null>(null);
   const [creating, setCreating] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState('');
+  const { currentTenant } = useTenant();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,16 +60,15 @@ export default function AccountsPage() {
     load();
   }, [load]);
 
-  const handleCreateAccount = async () => {
-    const name = window.prompt('Company / account name');
-    if (!name?.trim()) return;
+  const handleCreateAccount = async (name: string) => {
     setCreating(true);
     try {
       const company = await companyService.create({
-        name: name.trim(),
+        name,
         lifecycle_stage: 'lead',
       });
       setCompanies((prev) => [company, ...prev]);
+      setCreateOpen(false);
       toast.success('Account created');
     } catch {
       toast.error('Failed to create account');
@@ -68,17 +77,39 @@ export default function AccountsPage() {
     }
   };
 
-  const handleEditAccount = async () => {
+  const handleEditAccount = async (name: string) => {
     if (!selected) return;
-    const name = window.prompt('Account name', selected.name);
-    if (!name?.trim() || name.trim() === selected.name) return;
     try {
-      const updated = await companyService.update(selected.id, { name: name.trim() });
+      const updated = await companyService.update(selected.id, { name });
       setSelected(updated);
       setCompanies((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      setEditOpen(false);
       toast.success('Account updated');
     } catch {
       toast.error('Failed to update account');
+    }
+  };
+
+  const handleScheduleFollowUp = async () => {
+    if (!selected || !currentTenant?.id || !followUpDate) return;
+    try {
+      const res = await fetch('/api/crm/follow-ups/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          entityType: 'company',
+          entityId: selected.id,
+          followUpAt: new Date(followUpDate).toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      toast.success('Follow-up scheduled');
+      setFollowUpDate('');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to schedule follow-up');
     }
   };
 
@@ -99,6 +130,7 @@ export default function AccountsPage() {
 
   if (selected) {
     return (
+      <>
       <RecordPageShell
         icon={Building2}
         name={selected.name}
@@ -116,7 +148,7 @@ export default function AccountsPage() {
         ]}
         activeTab={detailTab}
         onTabChange={setDetailTab}
-        onEdit={handleEditAccount}
+        onEdit={() => setEditOpen(true)}
       >
         <div className="p-4 space-y-4">
           {detailTab === 'overview' && (
@@ -134,11 +166,41 @@ export default function AccountsPage() {
               ))}
             </dl>
           )}
+          {detailTab === 'overview' && (
+            <div className="flex flex-wrap items-end gap-2 pt-2">
+              <input
+                type="datetime-local"
+                value={followUpDate}
+                onChange={(e) => setFollowUpDate(e.target.value)}
+                className="px-3 py-2 rounded-xl bg-slate-800 border border-white/10 text-white text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => void handleScheduleFollowUp()}
+                disabled={!followUpDate}
+                className="px-3 py-2 rounded-xl bg-teal-600 text-white text-xs font-bold disabled:opacity-50"
+              >
+                Schedule follow-up
+              </button>
+            </div>
+          )}
           {detailTab === 'contacts' && (
             <RelatedList items={relations?.contacts || []} labelKey="email" fallback="Contact" />
           )}
           {detailTab === 'deals' && (
-            <RelatedList items={relations?.opportunities || []} labelKey="name" fallback="Opportunity" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-slate-400">Unified opportunities stay in sync with the deals pipeline.</p>
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/deals')}
+                  className="text-xs font-bold text-teal-400 hover:text-teal-300"
+                >
+                  Open pipeline →
+                </button>
+              </div>
+              <RelatedList items={relations?.opportunities || []} labelKey="name" fallback="Opportunity" />
+            </div>
           )}
           {detailTab === 'files' && <RecordFilesTab companyId={selected.id} />}
           {detailTab === 'activity' && (
@@ -153,11 +215,23 @@ export default function AccountsPage() {
           </button>
         </div>
       </RecordPageShell>
+      <AccountFormModal
+        open={editOpen}
+        title="Edit account"
+        initialName={selected.name}
+        submitLabel="Save"
+        onClose={() => setEditOpen(false)}
+        onSubmit={handleEditAccount}
+      />
+      </>
     );
   }
 
   return (
+    <>
     <div className="p-4 space-y-4 overflow-y-auto pb-24">
+      <CRMNav pathname={pathname || '/dashboard/crm/accounts'} />
+      <CrmSyncToolbar />
       <ListViewToolbar
         search={search}
         onSearchChange={setSearch}
@@ -169,7 +243,7 @@ export default function AccountsPage() {
           <button
             type="button"
             disabled={creating}
-            onClick={handleCreateAccount}
+            onClick={() => setCreateOpen(true)}
             className="h-10 px-3 rounded-xl bg-teal-500 text-white text-xs font-bold flex items-center gap-1 disabled:opacity-50"
           >
             <Plus className="w-4 h-4" /> New
@@ -210,6 +284,15 @@ export default function AccountsPage() {
         </div>
       )}
     </div>
+    <AccountFormModal
+      open={createOpen}
+      title="New account"
+      submitLabel="Create"
+      loading={creating}
+      onClose={() => setCreateOpen(false)}
+      onSubmit={handleCreateAccount}
+    />
+    </>
   );
 }
 

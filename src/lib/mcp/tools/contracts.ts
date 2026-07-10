@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { AppUrls } from '@/lib/urls';
 import { notifyContractCreated, notifyContractSent } from '@/services/contractNotificationService';
+import { resolvePartyEmail } from '@/lib/contracts/contractCoherenceServer';
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -157,12 +158,7 @@ registerTool('contracts', {
 
     let clientEmail = '';
     if (contract.client_id) {
-      const { data: client } = await supabase
-        .from('business_clients')
-        .select('email')
-        .eq('id', contract.client_id)
-        .maybeSingle();
-      clientEmail = String(client?.email || '').trim().toLowerCase();
+      clientEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || '';
     }
 
     const { error: tokenError } = await supabase.from('contract_signing_tokens').insert({
@@ -223,14 +219,7 @@ registerTool('contracts', {
         .single();
       
       if (contract?.client_id) {
-        const { data: client } = await supabase
-          .from('clients')
-          .select('email')
-          .eq('id', contract.client_id)
-          .single();
-        if (client?.email) {
-          toEmail = client.email;
-        }
+        toEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || undefined;
       }
     }
 

@@ -64,6 +64,42 @@ export default function RecordFilesTab({ clientId, dealId, companyId }: RecordFi
         }
       }
 
+      if (companyId) {
+        const { data: contacts } = await supabase
+          .from('contacts')
+          .select('id')
+          .eq('tenant_id', currentTenant.id)
+          .eq('company_id', companyId);
+        const contactIds = (contacts || []).map((c: { id: string }) => c.id);
+        const partyIds = new Set<string>(contactIds);
+        if (contactIds.length) {
+          const { data: clients } = await supabase
+            .from('business_clients')
+            .select('id')
+            .eq('tenant_id', currentTenant.id)
+            .in('crm_contact_id', contactIds);
+          for (const client of clients || []) partyIds.add(client.id);
+        }
+        if (partyIds.size) {
+          const { data: contracts } = await supabase
+            .from('contracts')
+            .select('id, title, created_at')
+            .eq('tenant_id', currentTenant.id)
+            .in('client_id', [...partyIds])
+            .order('created_at', { ascending: false })
+            .limit(20);
+          for (const c of contracts || []) {
+            if (results.some((r) => r.id === c.id && r.source === 'contract')) continue;
+            results.push({
+              id: c.id,
+              name: c.title || 'Contract',
+              created_at: c.created_at,
+              source: 'contract',
+            });
+          }
+        }
+      }
+
       setFiles(results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     } finally {
       setLoading(false);

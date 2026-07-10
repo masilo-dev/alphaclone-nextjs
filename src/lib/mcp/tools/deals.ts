@@ -1,6 +1,35 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { syncDealToUnified, logDealStageActivity } from '@/lib/crm/crmBridgeServer';
+import { emitBusinessEvent } from '@/lib/automation/emit-event';
+
+async function afterDealWrite(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  tenantId: string,
+  dealId: string,
+  options?: { stageChanged?: boolean; oldStage?: string; newStage?: string; userId?: string | null }
+) {
+  await syncDealToUnified(supabase, dealId, tenantId).catch((err) => {
+    console.warn('[MCP deals] bridge sync failed:', err);
+  });
+
+  if (options?.stageChanged && options.oldStage && options.newStage) {
+    await logDealStageActivity(supabase, {
+      tenantId,
+      dealId,
+      fromStage: options.oldStage,
+      toStage: options.newStage,
+      userId: options.userId || undefined,
+    }).catch((err) => console.warn('[MCP deals] stage activity failed:', err));
+
+    await emitBusinessEvent(tenantId, 'deal_stage_changed', {
+      dealId,
+      oldStage: options.oldStage,
+      newStage: options.newStage,
+    }).catch((err) => console.warn('[MCP deals] event emit failed:', err));
+  }
+}
 
 // 1. get_deals
 registerTool('deals', {
@@ -102,6 +131,7 @@ registerTool('deals', {
     if (error) {
       throw new Error(`create_deal failed: ${error.message}`);
     }
+    await afterDealWrite(supabase, tenantId, data.id);
     return data;
   },
 });
@@ -140,6 +170,13 @@ registerTool('deals', {
     const supabase = createSupabaseAdminClient();
     const tenantId = args.tenant_id || ctx.tenantId;
     if (!tenantId) throw new Error('tenant_id is required');
+    const { data: existing } = await supabase
+      .from('deals')
+      .select('stage')
+      .eq('id', args.deal_id)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
     const { data, error } = await supabase
       .from('deals')
       .update({
@@ -152,6 +189,14 @@ registerTool('deals', {
       .single();
 
     if (error) throw error;
+
+    const stageChanged = Boolean(args.fields.stage && existing?.stage && existing.stage !== args.fields.stage);
+    await afterDealWrite(supabase, tenantId, args.deal_id, {
+      stageChanged,
+      oldStage: existing?.stage,
+      newStage: args.fields.stage,
+      userId: ctx.userId || null,
+    });
     return data;
   },
 });
@@ -216,6 +261,13 @@ registerTool('deals', {
     if (historyError) {
       console.error('Failed to log deal stage history:', historyError);
     }
+
+    await afterDealWrite(supabase, tenantId, args.deal_id, {
+      stageChanged: true,
+      oldStage,
+      newStage: args.new_stage,
+      userId: ctx.userId || null,
+    });
 
     return updatedDeal;
   },

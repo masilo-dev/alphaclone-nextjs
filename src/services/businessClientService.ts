@@ -1,8 +1,9 @@
 import { supabase } from '../lib/supabase';
 import { quotaService } from './quotaService';
+import { activityService } from './activityService';
 import { assertContactSalesStageTransition } from '../lib/stageProgression';
 import { tenantService } from './tenancy/TenantService';
-import { activityService } from './activityService';
+import { requestCrmBridgeSync } from '../lib/crm/crmBridgeClient';
 import {
     softDeleteClientById,
     restoreClientById,
@@ -256,6 +257,8 @@ export const businessClientService = {
                 }
             }
 
+            void requestCrmBridgeSync(tenantId, 'client', newClient.id);
+
             return { client: newClient, error: null };
         } catch (err: any) {
             console.error('Error creating client:', err);
@@ -431,6 +434,8 @@ export const businessClientService = {
                     });
                 }
             }
+
+            void requestCrmBridgeSync(currentClient.tenant_id, 'client', clientId);
 
             return { error: null };
         } catch (err: any) {

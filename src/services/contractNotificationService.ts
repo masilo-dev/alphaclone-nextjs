@@ -1,6 +1,10 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { notifyTenantOwners } from '@/lib/notifyTenantOwners';
 import { AppUrls } from '@/lib/urls';
+import {
+  closeDealFromContractSign,
+  resolveOpenDealForParty,
+} from '@/lib/contracts/contractCoherenceServer';
 
 type DraftReminderTier = '24h' | '72h';
 
@@ -156,28 +160,14 @@ export async function onContractSignedSideEffects(options: {
   }
 
   if (options.dealId) {
-    await admin
-      .from('deals')
-      .update({ stage: 'closed_won', updated_at: new Date().toISOString() })
-      .eq('id', options.dealId)
-      .eq('tenant_id', options.tenantId);
+    await closeDealFromContractSign(admin, options.tenantId, {
+      dealId: options.dealId,
+      partyId: options.clientId,
+    });
   } else if (options.clientId) {
-    const { data: openDeal } = await admin
-      .from('deals')
-      .select('id')
-      .eq('tenant_id', options.tenantId)
-      .eq('client_id', options.clientId)
-      .not('stage', 'in', '("closed_won","closed_lost")')
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (openDeal?.id) {
-      await admin
-        .from('deals')
-        .update({ stage: 'closed_won', updated_at: new Date().toISOString() })
-        .eq('id', openDeal.id)
-        .eq('tenant_id', options.tenantId);
+    const openDealId = await resolveOpenDealForParty(admin, options.tenantId, options.clientId);
+    if (openDealId) {
+      await closeDealFromContractSign(admin, options.tenantId, { dealId: openDealId });
     }
   }
 }

@@ -5,6 +5,7 @@ import { fileUploadService } from './fileUploadService';
 import { journalEntryService } from './accounting/journalEntryService';
 import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
+import { requestCrmBridgeSync } from '../lib/crm/crmBridgeClient';
 import { assertDealStageTransition } from '../lib/stageProgression';
 
 export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
@@ -404,6 +405,7 @@ export const dealService: DealService = {
             // SYNC TO EXTERNAL CRM
             // Non-blocking sync to avoid UI delay
             UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
+            void requestCrmBridgeSync(tenantId, 'deal', deal.id);
             triggerDealIntelligenceRecompute(tenantId, deal.id);
             
             // AUTO DEAL INTELLIGENCE
@@ -589,7 +591,7 @@ export const dealService: DealService = {
             };
 
             // EMIT AUTOMATION EVENT
-            if (updates.stage) {
+            if (stageChanged && existingDeal && updates.stage) {
                 const { requestBusinessEvent } = await import('../lib/automation/request-event');
                 await requestBusinessEvent(tenantId, 'deal_stage_changed', {
                     dealId,
@@ -599,8 +601,26 @@ export const dealService: DealService = {
                     name: data.name
                 }).catch(err => console.error('Failed to emit deal_stage_changed event:', err));
 
+                void fetch('/api/crm/activities', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        tenantId,
+                        dealId,
+                        type: 'stage_change',
+                        subject: `Stage: ${existingDeal.stage} → ${updates.stage}`,
+                        fromStage: existingDeal.stage,
+                        toStage: updates.stage,
+                    }),
+                }).catch((err) => console.warn('[dealService] stage activity log failed:', err));
+
+                triggerDealIntelligence(tenantId, dealId, updates.stage);
+            } else if (updates.stage) {
                 triggerDealIntelligence(tenantId, dealId, updates.stage);
             }
+
+            void requestCrmBridgeSync(tenantId, 'deal', dealId);
 
             return { deal, error: null };
         } catch (err) {
@@ -751,6 +771,22 @@ export const dealService: DealService = {
                 .single();
 
             if (error) throw error;
+
+            void fetch('/api/crm/activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    tenantId,
+                    dealId,
+                    type: activityType === 'call' || activityType === 'email' || activityType === 'meeting' || activityType === 'note'
+                        ? activityType
+                        : 'note',
+                    subject: title,
+                    description: options?.description,
+                    metadata: options?.metadata,
+                }),
+            }).catch((err) => console.warn('[dealService] unified activity log failed:', err));
 
             const activity: DealActivity = {
                 id: data.id,

@@ -995,53 +995,22 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 setComments((prev) => [...prev, data as any]);
                 setCommentDraft('');
 
-                if (clientEmail) {
-                    const threadTag = project.portalToken ? `AC-PROJ:${project.portalToken.slice(0, 8)}` : `AC-PROJ:${project.name?.slice(0, 12) || 'project'}`;
-                    const subject = `Project update: ${project.name} [${threadTag}]`;
-                    const portalRef = project.portalToken || '';
-                    const publicUrl = project.isPublic && portalRef ? `${window.location.origin}/p/${portalRef}` : '';
-                    const updateLines = [
-                        `Hi ${clientName || 'there'},`,
-                        '',
-                        `We have a new project update for "${project.name}".`,
-                        '',
-                        content,
-                        '',
-                        `Thread marker: ${threadTag}`,
-                        publicUrl ? `View project portal: ${publicUrl}` : '',
-                        '',
-                        `Sent by ${authorName} via AlphaClone Systems.`,
-                    ].filter(Boolean);
-
-                    const emailRes = await fetch('/api/email/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tenantId,
-                            to: clientEmail,
-                            subject,
-                            message: updateLines.join('\n'),
-                            fromName: currentUser.name || 'AlphaClone Systems',
-                            replyTo: commentAuthorEmail.trim() || currentUser.email,
-                            isPlatformNotification: false,
-                        }),
-                    });
-
-                    if (!emailRes.ok) {
-                        const payload = await emailRes.json().catch(() => ({}));
-                        import('react-hot-toast').then(({ toast }) => {
-                            toast.error(payload.error || 'Note saved, but email delivery failed');
-                        });
+                const notifyResult = await projectService.notifyClientProjectNote(
+                    project.id,
+                    content,
+                    authorName
+                );
+                import('react-hot-toast').then(({ toast }) => {
+                    if (notifyResult?.sent) {
+                        toast.success('Note saved and emailed to the client');
+                    } else if (notifyResult?.skipped === 'no_client_email' && clientEmail) {
+                        toast.success('Note saved (client has no email on file)');
+                    } else if (notifyResult?.skipped === 'portal_not_enabled') {
+                        toast.success('Note saved (enable client portal to auto-email)');
                     } else {
-                        import('react-hot-toast').then(({ toast }) => {
-                            toast.success('Note saved and emailed to the client');
-                        });
-                    }
-                } else {
-                    import('react-hot-toast').then(({ toast }) => {
                         toast.success('Note saved');
-                    });
-                }
+                    }
+                });
             }
         } catch (err: any) {
             import('react-hot-toast').then(({ toast }) => toast.error(err?.message || 'Failed to add note'));

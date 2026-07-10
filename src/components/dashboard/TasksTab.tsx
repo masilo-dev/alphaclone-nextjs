@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   Plus, ChevronDown, ChevronRight, Calendar, Briefcase,
   Trash2, RefreshCw, LayoutGrid, List,
-  ListChecks, CalendarClock, AlertTriangle, CheckCircle2
+  ListChecks, CalendarClock, AlertTriangle, CheckCircle2,
+  Target, User, TrendingUp,
 } from 'lucide-react';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
@@ -35,6 +36,12 @@ interface Task {
   due_date?: string;
   project_name?: string;
   project_id?: string;
+  related_to_deal?: string | null;
+  related_to_contact?: string | null;
+  related_to_lead?: string | null;
+  deal_name?: string;
+  contact_name?: string;
+  lead_name?: string;
   notes?: string;
   tenant_id: string;
   created_at: string;
@@ -155,9 +162,18 @@ const SwipeableTaskRow: React.FC<{
             <span className={`text-[15px] flex-1 truncate ${done ? 'line-through text-slate-500 opacity-40' : 'text-white'}`}>{task.title}</span>
             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${PRIORITY_DOT[task.priority]}`} />
           </div>
-          <div className="flex items-center gap-2 mt-0.5 pr-4">
+          <div className="flex items-center gap-2 mt-0.5 pr-4 flex-wrap">
             {task.project_name && (
               <span className="text-[11px] px-1.5 py-0.5 bg-slate-800 rounded-full text-slate-400 truncate">{task.project_name}</span>
+            )}
+            {task.deal_name && (
+              <span className="text-[11px] px-1.5 py-0.5 bg-purple-500/10 rounded-full text-purple-300 truncate">{task.deal_name}</span>
+            )}
+            {task.contact_name && (
+              <span className="text-[11px] px-1.5 py-0.5 bg-blue-500/10 rounded-full text-blue-300 truncate">{task.contact_name}</span>
+            )}
+            {task.lead_name && (
+              <span className="text-[11px] px-1.5 py-0.5 bg-amber-500/10 rounded-full text-amber-300 truncate">{task.lead_name}</span>
             )}
             {task.due_date && (
               <span className={`text-[13px] opacity-55 ${done ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -210,6 +226,24 @@ const TaskDetailContent: React.FC<{
         <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
           <Briefcase className="w-5 h-5 text-slate-500" />
           <span className="text-sm text-slate-300">{task.project_name}</span>
+        </div>
+      )}
+      {task.deal_name && (
+        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+          <Target className="w-5 h-5 text-purple-400" />
+          <span className="text-sm text-slate-300">{task.deal_name}</span>
+        </div>
+      )}
+      {task.contact_name && (
+        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+          <User className="w-5 h-5 text-blue-400" />
+          <span className="text-sm text-slate-300">{task.contact_name}</span>
+        </div>
+      )}
+      {task.lead_name && (
+        <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl">
+          <TrendingUp className="w-5 h-5 text-amber-400" />
+          <span className="text-sm text-slate-300">{task.lead_name}</span>
         </div>
       )}
       <div>
@@ -282,20 +316,58 @@ const TaskSection: React.FC<{
 };
 
 const TaskCreateContent: React.FC<{
-  onCreate: (data: { title: string; due_date?: string; priority: Priority }) => Promise<void>;
+  onCreate: (data: {
+    title: string;
+    due_date?: string;
+    priority: Priority;
+    related_to_deal?: string;
+    related_to_contact?: string;
+    related_to_lead?: string;
+  }) => Promise<void>;
   creating: boolean;
   onClose: () => void;
-}> = ({ onCreate, creating, onClose }) => {
+  tenantId?: string;
+}> = ({ onCreate, creating, onClose, tenantId }) => {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState('');
+  const [dealId, setDealId] = useState('');
+  const [contactId, setContactId] = useState('');
+  const [leadId, setLeadId] = useState('');
+  const [deals, setDeals] = useState<Array<{ id: string; name: string }>>([]);
+  const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([]);
+  const [leads, setLeads] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    void (async () => {
+      const [dealsRes, clientsRes, leadsRes] = await Promise.all([
+        supabase.from('deals').select('id, name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
+        supabase.from('contacts').select('id, first_name, last_name, email').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
+        supabase.from('leads').select('id, business_name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
+      ]);
+      setDeals((dealsRes.data || []).map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
+      setContacts((clientsRes.data || []).map((c: { id: string; first_name?: string; last_name?: string; email?: string }) => ({
+        id: c.id,
+        name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.email || 'Contact',
+      })));
+      setLeads((leadsRes.data || []).map((l: { id: string; business_name: string }) => ({ id: l.id, name: l.business_name })));
+    })();
+  }, [tenantId]);
 
   const submit = async () => {
     if (!title.trim()) {
       toast.error('Task title is required');
       return;
     }
-    await onCreate({ title: title.trim(), due_date: dueDate || undefined, priority });
+    await onCreate({
+      title: title.trim(),
+      due_date: dueDate || undefined,
+      priority,
+      related_to_deal: dealId || undefined,
+      related_to_contact: contactId || undefined,
+      related_to_lead: leadId || undefined,
+    });
     onClose();
   };
 
@@ -330,6 +402,23 @@ const TaskCreateContent: React.FC<{
         onChange={(e) => setDueDate(e.target.value)}
         className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
       />
+      <div className="grid grid-cols-1 gap-2">
+        <label className="text-xs font-medium text-slate-400">Link to deal (optional)</label>
+        <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+          <option value="">None</option>
+          {deals.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+        </select>
+        <label className="text-xs font-medium text-slate-400">Link to contact (optional)</label>
+        <select value={contactId} onChange={(e) => setContactId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+          <option value="">None</option>
+          {contacts.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <label className="text-xs font-medium text-slate-400">Link to lead (optional)</label>
+        <select value={leadId} onChange={(e) => setLeadId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+          <option value="">None</option>
+          {leads.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+        </select>
+      </div>
       <button
         type="button"
         onClick={submit}
@@ -374,13 +463,21 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     const to = from + PAGE_SIZE - 1;
     const { data, count } = await supabase
       .from('tasks')
-      .select('*, projects(name)', { count: 'exact' })
+      .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)', { count: 'exact' })
       .eq('tenant_id', currentTenant.id)
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(from, to);
 
-    const mapped = ((data as any[]) || []).map((t) => ({ ...t, project_name: t.projects?.name }));
+    const mapped = ((data as any[]) || []).map((t) => ({
+      ...t,
+      project_name: t.projects?.name,
+      deal_name: t.deals?.name,
+      contact_name: t.contacts
+        ? [t.contacts.first_name, t.contacts.last_name].filter(Boolean).join(' ') || t.contacts.email
+        : undefined,
+      lead_name: t.leads?.business_name,
+    }));
     setTotalCount(typeof count === 'number' ? count : null);
     setHasMore(typeof count === 'number' ? to + 1 < count : mapped.length === PAGE_SIZE);
 
@@ -464,7 +561,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     toast.success(`${ids.length} task(s) completed`);
   };
 
-  const handleCreateTask = async (data: { title: string; due_date?: string; priority: Priority }) => {
+  const handleCreateTask = async (data: {
+    title: string;
+    due_date?: string;
+    priority: Priority;
+    related_to_deal?: string;
+    related_to_contact?: string;
+    related_to_lead?: string;
+  }) => {
     if (!currentTenant?.id) return;
     setCreating(true);
     try {
@@ -476,11 +580,23 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           status: 'todo',
           priority: data.priority,
           due_date: data.due_date || null,
+          related_to_deal: data.related_to_deal || null,
+          related_to_contact: data.related_to_contact || null,
+          related_to_lead: data.related_to_lead || null,
         })
-        .select('*, projects(name)')
+        .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)')
         .single();
       if (error) throw error;
-      const mapped = { ...(row as any), project_name: (row as any).projects?.name } as Task;
+      const mapped = {
+        ...(row as any),
+        project_name: (row as any).projects?.name,
+        deal_name: (row as any).deals?.name,
+        contact_name: (row as any).contacts
+          ? [(row as any).contacts.first_name, (row as any).contacts.last_name].filter(Boolean).join(' ')
+            || (row as any).contacts.email
+          : undefined,
+        lead_name: (row as any).leads?.business_name,
+      } as Task;
       setTasks((prev) => [mapped, ...prev]);
       setCreateOpen(false);
       toast.success('Task created');
@@ -684,7 +800,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </button>
 
       <DetailDrawer open={createOpen} onOpenChange={setCreateOpen} title="New task">
-        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} />
+        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} />
       </DetailDrawer>
 
       <DetailDrawer

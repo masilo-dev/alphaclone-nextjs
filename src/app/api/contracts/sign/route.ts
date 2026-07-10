@@ -5,6 +5,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { contractServerService } from '@/services/server/contractServerService';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
+import { resolveContractDealId } from '@/lib/contracts/contractCoherenceServer';
 
 function getClientIpAddress(req: NextRequest): string {
     const forwarded = req.headers.get('x-forwarded-for');
@@ -171,7 +172,7 @@ export async function POST(req: NextRequest) {
                     title: updatedContract.title,
                     clientId: updatedContract.client_id,
                     clientName: signerNameForMail,
-                    dealId: updatedContract.deal_id,
+                    dealId: resolveContractDealId(updatedContract),
                     createdBy: updatedContract.created_by,
                 }).catch((err) => console.error('Contract signed side effects failed:', err));
             }

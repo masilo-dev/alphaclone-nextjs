@@ -34,6 +34,7 @@ import {
 import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
 import { showDealStageNextSteps } from '@/lib/dealStageActions';
 import { CRMNav } from './crm/CRMNav';
+import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { usePathname } from 'next/navigation';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
@@ -1052,6 +1053,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950">
       <div className="px-4 pt-3 shrink-0 space-y-2.5">
         <CRMNav pathname={pathname} />
+        <CrmSyncToolbar />
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
       </div>
       <ModulePageLayout

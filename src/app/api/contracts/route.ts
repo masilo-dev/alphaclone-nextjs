@@ -23,15 +23,24 @@ export async function POST(req: NextRequest) {
     const { user } = await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
 
-    // 1. Verify client belongs to tenant
-    const { data: client, error: clientError } = await admin
+    // 1. Verify party belongs to tenant (unified contact or legacy business client)
+    const { data: contact, error: contactError } = await admin
       .from('contacts')
       .select('id')
       .eq('id', client_id)
       .eq('tenant_id', tenantId)
       .maybeSingle();
 
-    if (clientError || !client) {
+    const { data: businessClient } = !contact
+      ? await admin
+          .from('business_clients')
+          .select('id')
+          .eq('id', client_id)
+          .eq('tenant_id', tenantId)
+          .maybeSingle()
+      : { data: null };
+
+    if (contactError || (!contact && !businessClient)) {
       return NextResponse.json({ error: 'Invalid client_id for this tenant' }, { status: 422 });
     }
 

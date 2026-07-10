@@ -205,8 +205,16 @@ class ProjectStageService {
                 { stage: newStage, reason, forced: forceUpdate }
             );
 
-            // Notify client of stage change
-            await this.notifyClientOfStageChange(project, currentStage, newStage);
+            // Notify linked CRM client via no-reply email when portal is shared
+            try {
+                const { projectService } = await import('./projectService');
+                await projectService.notifyClientStageChange(projectId, currentStage, newStage);
+            } catch (notifyErr) {
+                console.warn('[projectStageService] client stage notify failed:', notifyErr);
+            }
+
+            // Internal owner notification (in-app + review email)
+            await this.notifyInternalOwnerOfStageChange(project, currentStage, newStage);
 
             return { success: true, transition };
         } catch (error) {
@@ -240,9 +248,9 @@ class ProjectStageService {
     }
 
     /**
-     * Notify client of stage change
+     * Notify internal project owner of stage change
      */
-    private async notifyClientOfStageChange(
+    private async notifyInternalOwnerOfStageChange(
         project: any,
         oldStage: string,
         newStage: string

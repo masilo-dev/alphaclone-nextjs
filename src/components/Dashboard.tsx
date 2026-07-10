@@ -135,6 +135,8 @@ const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskSchedule
 const ScraperCampaignsPage = React.lazy(() => import('./dashboard/leads/ScraperCampaignsPage'));
 const CRMReportsTab = React.lazy(() => import('./dashboard/crm/CRMReportsTab'));
 const AccountsPage = React.lazy(() => import('./dashboard/crm/AccountsPage'));
+const FollowUpQueue = React.lazy(() => import('./dashboard/crm/FollowUpQueue'));
+const WorkflowDashboard = React.lazy(() => import('./dashboard/engine/WorkflowDashboard'));
 const SalesConsole = React.lazy(() => import('./dashboard/crm/SalesConsole'));
 const CashFlowForecastTab = React.lazy(() => import('./dashboard/business/CashFlowForecastTab'));
 const ExpenseTrackerTab = React.lazy(() => import('./dashboard/business/ExpenseTrackerTab'));
@@ -1360,6 +1362,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/crm/follow-ups':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <FollowUpQueue />
+          </React.Suspense>
+        );
+
       case '/dashboard/business/cash-flow':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -1386,6 +1395,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
             <TaskScheduler />
+          </React.Suspense>
+        );
+
+      case '/dashboard/business/workflows':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <WorkflowDashboard />
           </React.Suspense>
         );
 

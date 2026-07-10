@@ -30,6 +30,7 @@ import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { CRMActionChips } from './crm/CRMActionChips';
+import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { ResponsiveTableDesktop, ResponsiveTableMobile, MobileDataCard } from '../ui/ResponsiveTable';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
@@ -2103,6 +2104,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   Lead Board
                 </button>
                 <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+              </div>
+              <div className="mt-2">
+                <CrmSyncToolbar />
               </div>
             </div>
           </div>

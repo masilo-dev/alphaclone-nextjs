@@ -257,11 +257,14 @@ export const notificationService = {
                 } else {
                     await fetch(`${baseUrl}/api/email/send`, {
                         method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'x-internal-api-key': process.env.INTERNAL_API_KEY || ''
-                        },
-                        body: JSON.stringify(emailParams)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tenantId: params.tenantId,
+                            to: profile.email,
+                            subject: params.title,
+                            body_html: emailParams.html,
+                            isPlatformNotification: true,
+                        }),
                     });
                 }
             }

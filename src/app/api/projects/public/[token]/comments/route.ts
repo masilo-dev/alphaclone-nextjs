@@ -1,100 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { evaluatePortalAccess, resolvePortalProject } from '@/lib/projects/portalAccess';
-import { routeErrorResponse } from '@/lib/apiAuth';
+import {
+  loadPublicPortalContext,
+  readPortalPassword,
+} from '@/lib/projects/portalPublicHandlers';
 
-function passwordFromRequest(req: NextRequest, body?: { password?: string }): string | undefined {
-  const header = req.headers.get('x-portal-password')?.trim();
-  const query = req.nextUrl.searchParams.get('password')?.trim();
-  const fromBody = body?.password?.trim();
-  return fromBody || header || query || undefined;
-}
+type RouteContext = { params: Promise<{ token: string }> };
 
-async function assertPortalAccess(req: NextRequest, token: string, body?: { password?: string }) {
+const commentSchema = z.object({
+  authorName: z.string().min(1).max(200),
+  authorEmail: z.string().email().optional().or(z.literal('')),
+  content: z.string().min(1).max(8000),
+  isClient: z.boolean().optional(),
+  password: z.string().optional(),
+});
+
+export async function GET(req: NextRequest, context: RouteContext) {
+  const { token } = await context.params;
+  if (!token?.trim()) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+  }
+
   const admin = createSupabaseAdminClient();
-  const { project, error } = await resolvePortalProject(admin, token);
-  if (error || !project) {
-    return { admin, project: null, error: 'Project not found', status: 404 as const };
+  const password = readPortalPassword(req);
+  const ctx = await loadPublicPortalContext(admin, token.trim(), password);
+  if (!ctx.ok) {
+    return NextResponse.json(ctx.body, { status: ctx.status });
   }
 
-  const access = evaluatePortalAccess(project, passwordFromRequest(req, body));
-  if (!access.ok) {
-    const status = access.reason === 'expired' ? 410 : access.reason === 'password_invalid' ? 403 : 401;
-    const message =
-      access.reason === 'expired'
-        ? 'This client link has expired'
-        : access.reason === 'password_invalid'
-          ? 'Incorrect password'
-          : 'Password required';
-    return { admin, project: null, error: message, status };
+  const { data, error } = await admin
+    .from('project_comments')
+    .select('id, author_name, author_email, content, is_client, created_at')
+    .eq('project_id', ctx.project.id)
+    .eq('tenant_id', ctx.project.tenant_id)
+    .order('created_at', { ascending: true })
+    .limit(200);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return { admin, project, error: null, status: 200 as const };
+  return NextResponse.json({ success: true, comments: data || [] });
 }
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  try {
-    const { token } = await params;
-    const gate = await assertPortalAccess(req, token);
-    if (!gate.project) {
-      return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
-    }
-
-    const { data, error } = await gate.admin
-      .from('project_comments')
-      .select('id, author_name, author_email, content, is_client, created_at')
-      .eq('project_id', gate.project.id)
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, comments: data || [], projectName: gate.project.name });
-  } catch (error) {
-    return routeErrorResponse(error, 'Failed to load comments', req);
+export async function POST(req: NextRequest, context: RouteContext) {
+  const { token } = await context.params;
+  if (!token?.trim()) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
   }
-}
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
-  try {
-    const { token } = await params;
-    const body = await req.json().catch(() => ({}));
-    const authorName = String(body.authorName || body.author_name || '').trim();
-    const content = String(body.content || '').trim();
-    const authorEmail = body.authorEmail || body.author_email
-      ? String(body.authorEmail || body.author_email).trim()
-      : null;
-    const isClient = body.isClient !== false;
-
-    if (!authorName || !content) {
-      return NextResponse.json({ success: false, error: 'Name and message are required' }, { status: 400 });
-    }
-
-    const gate = await assertPortalAccess(req, token, body);
-    if (!gate.project) {
-      return NextResponse.json({ success: false, error: gate.error }, { status: gate.status });
-    }
-
-    const { data, error } = await gate.admin
-      .from('project_comments')
-      .insert({
-        tenant_id: gate.project.tenant_id,
-        project_id: gate.project.id,
-        author_name: authorName,
-        author_email: authorEmail,
-        content,
-        is_client: isClient,
-      })
-      .select('id, author_name, author_email, content, is_client, created_at')
-      .single();
-
-    if (error) {
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, comment: data });
-  } catch (error) {
-    return routeErrorResponse(error, 'Failed to post comment', req);
+  const body = await req.json().catch(() => ({}));
+  const parsed = commentSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid comment', details: parsed.error.flatten() }, { status: 422 });
   }
+
+  const admin = createSupabaseAdminClient();
+  const password = readPortalPassword(req, parsed.data.password);
+  const ctx = await loadPublicPortalContext(admin, token.trim(), password);
+  if (!ctx.ok) {
+    return NextResponse.json(ctx.body, { status: ctx.status });
+  }
+
+  const { data, error } = await admin
+    .from('project_comments')
+    .insert({
+      tenant_id: ctx.project.tenant_id,
+      project_id: ctx.project.id,
+      author_name: parsed.data.authorName.trim(),
+      author_email: parsed.data.authorEmail?.trim() || null,
+      content: parsed.data.content.trim(),
+      is_client: parsed.data.isClient !== false,
+    })
+    .select('id, author_name, author_email, content, is_client, created_at')
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  await admin.from('client_portal_events').insert({
+    tenant_id: ctx.project.tenant_id,
+    project_id: ctx.project.id,
+    event_type: 'portal_message_sent',
+    metadata: {
+      comment_id: data.id,
+      author_name: data.author_name,
+      from_client: true,
+    },
+  });
+
+  if (parsed.data.isClient !== false) {
+    try {
+      const { notifyProjectTeamClientPortalMessage } = await import('@/lib/projects/projectClientNotification');
+      await notifyProjectTeamClientPortalMessage({
+        admin,
+        projectId: ctx.project.id,
+        tenantId: ctx.project.tenant_id,
+        projectName: ctx.project.name,
+        authorName: data.author_name,
+        content: data.content,
+        origin: req.nextUrl.origin,
+      });
+    } catch (notifyErr) {
+      console.warn('[portal/comments] team notify failed:', notifyErr);
+    }
+  }
+
+  return NextResponse.json({ success: true, comment: data });
 }

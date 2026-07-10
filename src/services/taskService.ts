@@ -13,10 +13,20 @@ async function sendNotificationEmail(params: {
     templateName: string;
     html: string;
 }) {
+    const emailPayload = {
+        tenantId: params.tenantId,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        isPlatformNotification: true,
+        fromName: 'AlphaClone Tasks',
+        templateName: params.templateName,
+    };
+
     if (typeof window === 'undefined') {
         try {
             const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
-            await sendEmailServer(params);
+            await sendEmailServer(emailPayload);
         } catch (err) {
             console.error('Error sending email programmatically:', err);
         }
@@ -25,7 +35,13 @@ async function sendNotificationEmail(params: {
             await fetch('/api/email/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(params)
+                body: JSON.stringify({
+                    tenantId: params.tenantId,
+                    to: params.to,
+                    subject: params.subject,
+                    body_html: params.html,
+                    isPlatformNotification: true,
+                }),
             });
         } catch (err) {
             console.error('Error sending email via fetch:', err);
