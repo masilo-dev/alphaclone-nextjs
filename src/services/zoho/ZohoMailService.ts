@@ -53,6 +53,15 @@ function normalizeReplySubject(subject: string): string {
     return /^re:/i.test(cleaned) ? cleaned : `Re: ${cleaned}`;
 }
 
+function autoReplyCooldownDays(): number {
+    const parsed = Number(process.env.EMAIL_AUTO_REPLY_COOLDOWN_DAYS || '7');
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 7;
+}
+
+function normalizeSenderEmail(email: string): string {
+    return String(email || '').trim().toLowerCase();
+}
+
 export class ZohoMailService extends ZohoService {
     private async ensureAccountId() {
         const accessToken = await this.getValidAccessToken();
@@ -385,6 +394,43 @@ export class ZohoMailService extends ZohoService {
         );
     }
 
+    private async resolveIncomingMessageMeta(
+        messageId: string,
+        folderId: string
+    ): Promise<{ sender: string; subject: string; senderEmail: string }> {
+        const { base } = await this.getMailBase();
+        const detailsUrl = `${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}`;
+        try {
+            const data = await this.callZohoAPI(detailsUrl);
+            const message = (data?.data ?? data) as Record<string, unknown>;
+            const sender = formatMailFrom({
+                name: String(message.fromName || message.senderName || ''),
+                address: String(message.fromAddress || message.sender || message.from || ''),
+                raw: String(message.sender || message.fromAddress || message.from || ''),
+            });
+            const subject = String(message.subject || 'No Subject');
+            const senderEmail = extractEmailAddress(sender);
+            if (senderEmail) {
+                return { sender, subject, senderEmail };
+            }
+        } catch {
+            // Fall back to inbox listing below.
+        }
+
+        const recent = await this.getMessages(folderId, 50, 1);
+        const hit = recent.find((message) => message.messageId === messageId);
+        if (hit) {
+            const senderEmail = extractEmailAddress(hit.sender);
+            return {
+                sender: hit.sender,
+                subject: hit.subject || 'No Subject',
+                senderEmail,
+            };
+        }
+
+        return { sender: 'Unknown', subject: 'No Subject', senderEmail: '' };
+    }
+
     async markAsRead(messageId: string, folderId: string, isRead = true) {
         const { base } = await this.getMailBase();
         return await this.callZohoAPI(
@@ -401,17 +447,88 @@ export class ZohoMailService extends ZohoService {
 
     async triageIncomingEmail(messageId: string, folderId: string) {
         try {
-            const { content } = await this.getMessageContent(messageId, folderId);
-            const messages = await this.getMessages(folderId, 1, 1);
-            const meta = messages.find(m => m.messageId === messageId);
-            const subject = meta?.subject || 'No Subject';
-            const sender = meta?.sender || 'Unknown';
-            const senderEmail = extractEmailAddress(sender);
+            const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+            const supabase = createSupabaseAdminClient();
 
-            if (!content) return { status: 'ignored' };
+            const { data: existingLog } = await supabase
+                .from('zoho_auto_responder_logs')
+                .select('id, triage_status')
+                .eq('user_id', this.userId)
+                .eq('message_id', messageId)
+                .in('triage_status', ['scheduled', 'replied', 'pending', 'qualified', 'ignored', 'error'])
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (existingLog) {
+                return { status: 'already_processed', triage_status: existingLog.triage_status };
+            }
+
+            const { content } = await this.getMessageContent(messageId, folderId);
+            const { sender, subject, senderEmail } = await this.resolveIncomingMessageMeta(messageId, folderId);
+            const normalizedSenderEmail = normalizeSenderEmail(senderEmail);
+
+            if (!content) return { status: 'ignored', reason: 'empty_content' };
+
+            if (!normalizedSenderEmail.includes('@')) {
+                await supabase.from('zoho_auto_responder_logs').insert({
+                    user_id: this.userId,
+                    message_id: messageId,
+                    sender,
+                    sender_email: null,
+                    subject,
+                    triage_status: 'ignored',
+                    ai_analysis: { reason: 'invalid_sender_email' },
+                });
+                return { status: 'ignored', reason: 'invalid_sender_email' };
+            }
+
+            const ownAddresses = (await this.getSenderAddresses())
+                .map((address) => normalizeSenderEmail(address))
+                .filter(Boolean);
+            if (ownAddresses.includes(normalizedSenderEmail)) {
+                await supabase.from('zoho_auto_responder_logs').insert({
+                    user_id: this.userId,
+                    message_id: messageId,
+                    sender,
+                    sender_email: normalizedSenderEmail,
+                    subject,
+                    triage_status: 'ignored',
+                    ai_analysis: { reason: 'self_sent' },
+                });
+                return { status: 'ignored', reason: 'self_sent' };
+            }
+
+            const cooldownSince = new Date();
+            cooldownSince.setDate(cooldownSince.getDate() - autoReplyCooldownDays());
+            const { data: recentRecipientReply } = await supabase
+                .from('zoho_auto_responder_logs')
+                .select('id')
+                .eq('user_id', this.userId)
+                .eq('sender_email', normalizedSenderEmail)
+                .in('triage_status', ['scheduled', 'replied'])
+                .gte('created_at', cooldownSince.toISOString())
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (recentRecipientReply) {
+                await supabase.from('zoho_auto_responder_logs').insert({
+                    user_id: this.userId,
+                    message_id: messageId,
+                    sender,
+                    sender_email: normalizedSenderEmail,
+                    subject,
+                    triage_status: 'ignored',
+                    ai_analysis: {
+                        reason: 'recipient_cooldown',
+                        cooldown_days: autoReplyCooldownDays(),
+                    },
+                });
+                return { status: 'ignored', reason: 'recipient_cooldown' };
+            }
 
             try {
-                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
                 const { captureUnifiedMessageFromWebhook } = await import('@/services/intelligence/signalCaptureAdminService');
                 const admin = createSupabaseAdminClient();
                 const { data: zohoIntegration } = await admin
@@ -432,7 +549,7 @@ export class ZohoMailService extends ZohoService {
                         direction: 'inbound',
                         externalId: messageId,
                         threadId: messageId,
-                        from: senderEmail || sender,
+                        from: normalizedSenderEmail || sender,
                         to: `zoho:${this.userId}`,
                         subject,
                         text: content,
@@ -488,16 +605,28 @@ Rules:
             const data = JSON.parse(cleaned || '{"status":"ignored"}');
 
             if (data.status === 'qualified') {
-                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
-                const supabase = createSupabaseAdminClient();
+                const draftReply = ensureFooter(String(data.draft_reply || '').trim());
+                if (!draftReply) {
+                    await supabase.from('zoho_auto_responder_logs').insert({
+                        user_id: this.userId,
+                        message_id: messageId,
+                        sender,
+                        sender_email: normalizedSenderEmail,
+                        subject,
+                        triage_status: 'ignored',
+                        ai_analysis: { classification: 'qualified', reason: 'empty_draft_reply' },
+                    });
+                    return { status: 'ignored', reason: 'empty_draft_reply' };
+                }
+
                 const { data: log } = await supabase.from('zoho_auto_responder_logs').insert({
                     user_id: this.userId,
                     message_id: messageId,
                     sender,
-                    sender_email: senderEmail || null,
+                    sender_email: normalizedSenderEmail,
                     subject,
                     triage_status: 'scheduled',
-                    draft_reply: data.draft_reply,
+                    draft_reply: draftReply,
                     ai_analysis: { classification: 'qualified' },
                 }).select().single();
 
@@ -511,14 +640,24 @@ Rules:
                             userId: this.userId,
                             messageId,
                             folderId,
-                            senderEmail: extractEmailAddress(sender),
+                            senderEmail: normalizedSenderEmail,
                             originalSubject: normalizeReplySubject(subject),
-                            replyText: ensureFooter(String(data.draft_reply || '').trim()),
+                            replyText: draftReply,
                             logId: log.id,
                         },
                         delay: autoReplyDelaySeconds,
                     });
                 }
+            } else {
+                await supabase.from('zoho_auto_responder_logs').insert({
+                    user_id: this.userId,
+                    message_id: messageId,
+                    sender,
+                    sender_email: normalizedSenderEmail,
+                    subject,
+                    triage_status: 'ignored',
+                    ai_analysis: { classification: 'ignored' },
+                });
             }
             return data;
         } catch (e) {

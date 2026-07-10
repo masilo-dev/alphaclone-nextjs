@@ -24,6 +24,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 async function syncUserInbox(userId: string, tenantId: string) {
   try {
+    const admin = createSupabaseAdminClient();
     const zoho = new ZohoMailService(userId);
     const folders = await withTimeout(zoho.getFolders(), PER_USER_TIMEOUT_MS);
     const inbox = folders.find((f) => f.folderName?.toLowerCase() === 'inbox') || folders[0];
@@ -32,9 +33,21 @@ async function syncUserInbox(userId: string, tenantId: string) {
     }
 
     const messages = await withTimeout(zoho.getMessages(inbox.folderId, 20, 1), PER_USER_TIMEOUT_MS);
+    const messageIds = messages.map((msg) => msg.messageId).filter(Boolean);
+    const { data: processedLogs } = messageIds.length
+      ? await admin
+          .from('zoho_auto_responder_logs')
+          .select('message_id')
+          .eq('user_id', userId)
+          .in('message_id', messageIds)
+      : { data: [] as Array<{ message_id: string }> };
+    const processedIds = new Set(
+      ((processedLogs || []) as Array<{ message_id: string }>).map((row) => row.message_id)
+    );
     let synced = 0;
 
     for (const msg of messages) {
+      if (processedIds.has(msg.messageId)) continue;
       try {
         await withTimeout(zoho.triageIncomingEmail(msg.messageId, inbox.folderId), PER_USER_TIMEOUT_MS);
         synced++;

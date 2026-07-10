@@ -5,6 +5,7 @@ import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { Receiver } from '@upstash/qstash';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+import { extractEmailAddress } from '@/lib/email/parseEmailHeader';
 
 const receiver = new Receiver({
     currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || '',
@@ -50,10 +51,29 @@ export async function POST(req: NextRequest) {
         if (!normalizedReply) {
             return NextResponse.json({ error: 'Reply text is empty' }, { status: 400 });
         }
+
+        const recipientEmail = extractEmailAddress(senderEmail || '');
+        if (!recipientEmail.includes('@')) {
+            if (logId) {
+                await supabase
+                    .from('zoho_auto_responder_logs')
+                    .update({
+                        triage_status: 'error',
+                        error_message: 'invalid_recipient_email',
+                    })
+                    .eq('id', logId);
+            }
+            console.warn('[Zoho Auto-Responder Worker] Skipping reply: invalid recipient email', {
+                senderEmail,
+                messageId,
+                logId,
+            });
+            return NextResponse.json({ success: false, skipped: true, reason: 'invalid_recipient_email' });
+        }
         
         // 2. Send the reply
         await zohoMail.sendEmail({
-            toAddress: senderEmail,
+            toAddress: recipientEmail,
             subject: normalizedSubject,
             content: normalizedReply,
         });
@@ -79,7 +99,7 @@ export async function POST(req: NextRequest) {
                 externalId: messageId || null,
                 threadId: messageId || null,
                 from: `zoho:${userId}`,
-                to: senderEmail || '',
+                to: recipientEmail,
                 subject: normalizedSubject,
                 text: normalizedReply,
                 html: null,
