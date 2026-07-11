@@ -8,13 +8,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, LogIn, UserPlus, FileText, CheckCircle2, Shield, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, LogIn, UserPlus, FileText, Shield, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import Image from 'next/image';
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
+import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -59,7 +60,6 @@ function LoginContent() {
     const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState('');
     const [businessName, setBusinessName] = useState(businessNameParam || '');
-    const [isBusiness] = useState(true);
     const [selectedPlan] = useState<SubscriptionPlan>(
         (['free', 'starter', 'pro', 'enterprise'] as const).includes(planParam as never)
             ? (planParam as SubscriptionPlan)
@@ -168,12 +168,6 @@ function LoginContent() {
 
                 if (isEuLikeRegistration && (!euConsent || !ageConfirmed)) {
                     setError('EU/UK consent and age confirmation are required to continue.');
-                    setIsLoading(false);
-                    return;
-                }
-
-                if (isBusiness && !businessName) {
-                    setError('Business Name is required.');
                     setIsLoading(false);
                     return;
                 }
@@ -561,356 +555,227 @@ function LoginContent() {
     }
 
     return (
-        <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-3 py-4 sm:py-6 relative overflow-x-hidden overflow-y-auto">
+        <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
             {/* Background Effects */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <HeroBackground />
             </div>
 
-            <div className={`w-full bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 max-w-md`}>
-                <div className="mb-4 text-center">
+            <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
+                <div className="mb-3 text-center">
                     {isPWA ? (
-                        <div className="mx-auto mb-3 flex justify-center inline-block">
+                        <div className="mx-auto mb-2 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                width={48}
-                                height={48}
+                                width={40}
+                                height={40}
                                 className="object-contain"
                                 priority
                             />
                         </div>
                     ) : (
-                        <Link href="/" className="mx-auto mb-3 flex justify-center inline-block">
+                        <Link href="/" className="mx-auto mb-2 flex justify-center inline-block">
                             <Image
                                 src={LOGO_URL}
                                 alt="AlphaClone Logo"
-                                width={48}
-                                height={48}
+                                width={40}
+                                height={40}
                                 className="object-contain hover:scale-105 transition-transform"
                                 priority
                             />
                         </Link>
                     )}
-                    <h1 className="text-lg font-bold text-white mb-1">AlphaClone Systems</h1>
-                    <p className="text-slate-400 text-xs">
+                    <h1 className="text-base font-bold text-white mb-0.5">AlphaClone Systems</h1>
+                    <p className="text-slate-400 text-[11px]">
                         {isRegistering
-                            ? 'Welcome! Set up your free 14-day workspace — no card needed.'
-                            : 'Welcome back! Sign in to your dashboard.'}
+                            ? '14-day free trial · workspace ready in seconds'
+                            : 'Sign in to your business workspace'}
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <SocialAuthButtons
+                    isLoading={isLoading}
+                    onError={setError}
+                    onLoadingChange={setIsLoading}
+                    className="mb-3"
+                />
+
+                <div className="relative my-3">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-800" />
+                    </div>
+                    <div className="relative flex justify-center text-[10px] uppercase tracking-wide">
+                        <span className="bg-slate-900/80 px-2 text-slate-500">Or use email</span>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-2">
                     {isRegistering && (
-                        <div className="animate-slide-up space-y-2">
-                            <div className="max-w-md mx-auto rounded-lg border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-center">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-300">✓ 14 Days Free Trial</p>
-                                <p className="mt-0.5 text-xs text-slate-300">Your full workspace is ready in seconds. No credit card required.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <Input
+                                label="Full Name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="John Doe"
+                                required={isRegistering}
+                            />
+                            <Input
+                                label="Business Name"
+                                value={businessName}
+                                onChange={(e) => setBusinessName(e.target.value)}
+                                placeholder="Optional"
+                            />
+                        </div>
+                    )}
+
+                    <Input
+                        label="Email Address"
+                        type="email"
+                        value={email}
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                            if (passwordResetSentTo) setPasswordResetSentTo('');
+                        }}
+                        placeholder="name@company.com"
+                        required
+                        autoComplete="email"
+                    />
+
+                    <div className="relative">
+                        <Input
+                            label="Password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
+                            required
+                            className={!isRegistering ? 'pr-20' : 'pr-12'}
+                            autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            className={`absolute top-9 ${!isRegistering ? 'right-16' : 'right-3'} text-slate-400 hover:text-teal-400 transition-colors`}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            title={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                        {!isRegistering && (
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    if (!email) {
+                                        setError('Please enter your email address first to reset your password.');
+                                        return;
+                                    }
+                                    setIsLoading(true);
+                                    const { authService } = await import('@/services/authService');
+                                    const { error: resetErr } = await authService.resetPassword(email);
+                                    if (resetErr) {
+                                        setError(resetErr);
+                                        setPasswordResetSentTo('');
+                                    } else {
+                                        setError('');
+                                        setPasswordResetSentTo(email);
+                                        toast.success('Password reset link sent to your email!');
+                                    }
+                                    setIsLoading(false);
+                                }}
+                                className="absolute right-0 top-0 text-[10px] text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
+                            >
+                                Forgot?
+                            </button>
+                        )}
+                    </div>
+
+                    {!isRegistering && passwordResetSentTo && (
+                        <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-2 text-teal-300 text-xs">
+                            Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>.
+                        </div>
+                    )}
+
+                    {isRegistering && (
+                        <div className="flex flex-wrap gap-x-2 gap-y-0.5 py-0.5">
+                            <div className={`flex items-center gap-1 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                8+ chars
                             </div>
-
-                            <div className="max-w-md mx-auto w-full">
-                                <Input
-                                    label="Full Name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="John Doe"
-                                    required={isRegistering}
-                                />
+                            <div className={`flex items-center gap-1 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                Upper
                             </div>
-
-                        <div className="animate-slide-up space-y-4">
-                            <div className="max-w-md mx-auto w-full">
-                                <Input
-                                    label="Business Name"
-                                    value={businessName}
-                                        onChange={(e) => setBusinessName(e.target.value)}
-                                        placeholder="AlphaCorp Industries"
-                                        required={isBusiness}
-                                    />
-                                </div>
-
-
+                            <div className={`flex items-center gap-1 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                Number
+                            </div>
+                            <div className={`flex items-center gap-1 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                Special
                             </div>
                         </div>
                     )}
 
-                    <div className="max-w-md mx-auto w-full space-y-4">
-                        <Input
-                            label="Email Address"
-                            type="email"
-                            value={email}
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                if (passwordResetSentTo) setPasswordResetSentTo('');
-                            }}
-                            placeholder="name@company.com"
-                            required
-                            autoComplete="email"
-                        />
-
-                        <div className="relative">
-                            <Input
-                                label="Password"
-                                type={showPassword ? "text" : "password"}
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                className={!isRegistering ? 'pr-20' : 'pr-12'}
-                                autoComplete={isRegistering ? "new-password" : "current-password"}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword((prev) => !prev)}
-                                className={`absolute top-9 ${!isRegistering ? 'right-16' : 'right-3'} text-slate-400 hover:text-teal-400 transition-colors`}
-                                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                title={showPassword ? 'Hide password' : 'Show password'}
-                            >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
-                            {!isRegistering && (
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        if (!email) {
-                                            setError('Please enter your email address first to reset your password.');
-                                            return;
-                                        }
-                                        setIsLoading(true);
-                                        const { authService } = await import('@/services/authService');
-                                        const { error: resetErr } = await authService.resetPassword(email);
-                                        if (resetErr) {
-                                            setError(resetErr);
-                                            setPasswordResetSentTo('');
-                                        } else {
-                                            setError('');
-                                            setPasswordResetSentTo(email);
-                                            toast.success('Password reset link sent to your email!');
-                                        }
-                                        setIsLoading(false);
-                                    }}
-                                    className="absolute right-0 top-0 text-xs text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
-                                >
-                                    Forgot?
-                                </button>
-                            )}
-                        </div>
-
-                        {!isRegistering && passwordResetSentTo && (
-                            <div className="bg-teal-500/10 border border-teal-500/20 rounded-lg p-3 text-teal-300 text-sm">
-                                Reset link sent to <span className="font-semibold">{passwordResetSentTo}</span>. Open the email, set a new password, then return here to sign in.
-                            </div>
-                        )}
-
-                        {isRegistering && (
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 py-1">
-                                <div className={`flex items-center gap-1.5 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    8+ Chars
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    Upper
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[10px] ${/[0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    Number
-                                </div>
-                                <div className={`flex items-center gap-1.5 text-[10px] ${/[^A-Za-z0-9]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
-                                    <div className={`w-1 h-1 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                    Special
-                                </div>
-                            </div>
-                        )}
-
-                        {isRegistering && (
-                            <label className="flex items-start gap-3 cursor-pointer group">
-                                <div className="relative flex-shrink-0 mt-0.5">
-                                    <input
-                                        type="checkbox"
-                                        checked={legalAccepted}
-                                        onChange={(e) => setLegalAccepted(e.target.checked)}
-                                        className="peer sr-only"
-                                    />
-                                    <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
-                                    <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                </div>
-                                <span className="text-xs text-slate-400 leading-relaxed">
-                                    By creating an account, you agree to our{' '}
-                                    <Link href="/terms-of-service" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Terms of Service</Link>
+                    {isRegistering && (
+                        <div className="space-y-1.5 text-[11px] text-slate-400">
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={legalAccepted}
+                                    onChange={(e) => setLegalAccepted(e.target.checked)}
+                                    className="mt-0.5 accent-teal-500"
+                                />
+                                <span>
+                                    I agree to the{' '}
+                                    <Link href="/terms-of-service" target="_blank" className="text-teal-400 hover:text-teal-300 underline">Terms</Link>
                                     {' '}and{' '}
-                                    <Link href="/privacy-policy" target="_blank" className="text-teal-400 hover:text-teal-300 underline underline-offset-2">Privacy Policy</Link>.
+                                    <Link href="/privacy-policy" target="_blank" className="text-teal-400 hover:text-teal-300 underline">Privacy Policy</Link>.
                                 </span>
                             </label>
-                        )}
-
-                        {isRegistering && (
-                            <label className="flex items-start gap-3 cursor-pointer group">
-                                <div className="relative flex-shrink-0 mt-0.5">
-                                    <input
-                                        type="checkbox"
-                                        checked={marketingOptIn}
-                                        onChange={(e) => setMarketingOptIn(e.target.checked)}
-                                        className="peer sr-only"
-                                    />
-                                    <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
-                                    <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                </div>
-                                <span className="text-xs text-slate-400 leading-relaxed">
-                                    I&apos;d like to receive product updates and news from AlphaClone Systems.
-                                </span>
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={marketingOptIn}
+                                    onChange={(e) => setMarketingOptIn(e.target.checked)}
+                                    className="mt-0.5 accent-teal-500"
+                                />
+                                <span>Send me product updates (optional).</span>
                             </label>
-                        )}
-
-                        {isRegistering && isEuLikeRegistration && (
-                            <div className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300">EU / UK consent</p>
-                                <label className="flex items-start gap-3 cursor-pointer group">
-                                    <div className="relative flex-shrink-0 mt-0.5">
-                                        <input
-                                            type="checkbox"
-                                            checked={euConsent}
-                                            onChange={(e) => setEuConsent(e.target.checked)}
-                                            className="peer sr-only"
-                                        />
-                                        <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
-                                        <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                    </div>
-                                    <span className="text-xs text-slate-400 leading-relaxed">
-                                        I consent to my data being processed as described in the Privacy Policy.
-                                    </span>
-                                </label>
-                                <label className="flex items-start gap-3 cursor-pointer group">
-                                    <div className="relative flex-shrink-0 mt-0.5">
-                                        <input
-                                            type="checkbox"
-                                            checked={ageConfirmed}
-                                            onChange={(e) => setAgeConfirmed(e.target.checked)}
-                                            className="peer sr-only"
-                                        />
-                                        <div className="w-4 h-4 border-2 border-slate-600 rounded peer-checked:bg-teal-500 peer-checked:border-teal-500 transition-all" />
-                                        <CheckCircle2 className="w-2.5 h-2.5 text-white absolute top-0.5 left-0.5 opacity-0 peer-checked:opacity-100 transition-opacity" />
-                                    </div>
-                                    <span className="text-xs text-slate-400 leading-relaxed">
-                                        I am 16 years of age or older.
-                                    </span>
-                                </label>
-                            </div>
-                        )}
-
-                        {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm flex items-start gap-2 animate-fade-in">
-                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        <Button
-                            type="submit"
-                            className="w-full h-10 text-base font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
-                            isLoading={isLoading}
-                        >
-                            {isRegistering ? 'Create Account' : 'Sign In'}
-                        </Button>
-                    </div>
-
-                    <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-slate-800"></div>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-slate-900/60 px-2 text-slate-500">Or continue with</span>
+                    )}
+
+                    {isRegistering && isEuLikeRegistration && (
+                        <div className="space-y-1.5 rounded-lg border border-slate-800 bg-slate-900/60 p-2 text-[11px] text-slate-400">
+                            <p className="font-semibold text-teal-300 uppercase tracking-wide text-[10px]">EU / UK consent</p>
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" checked={euConsent} onChange={(e) => setEuConsent(e.target.checked)} className="mt-0.5 accent-teal-500" />
+                                <span>I consent to data processing per the Privacy Policy.</span>
+                            </label>
+                            <label className="flex items-start gap-2 cursor-pointer">
+                                <input type="checkbox" checked={ageConfirmed} onChange={(e) => setAgeConfirmed(e.target.checked)} className="mt-0.5 accent-teal-500" />
+                                <span>I am 16 years of age or older.</span>
+                            </label>
                         </div>
-                    </div>
+                    )}
 
-                    <div className="flex items-center justify-center gap-3">
-                        <button
-                            type="button"
-                            aria-label="Sign in with Google"
-                            title="Sign in with Google"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                setError('');
-                                try {
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: googleError } = await authService.signInWithGoogle();
-                                    if (googleError) {
-                                        setError(googleError);
-                                        setIsLoading(false);
-                                    }
-                                } catch {
-                                    setError('Failed to initialize Google sign-in');
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                            className="w-9 h-9 flex items-center justify-center bg-white hover:bg-gray-50 rounded-full border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                            </svg>
-                        </button>
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-red-400 text-xs flex items-start gap-2 animate-fade-in">
+                            <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                    )}
 
-                        <button
-                            type="button"
-                            aria-label="Sign in with LinkedIn"
-                            title="Sign in with LinkedIn"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                setError('');
-                                try {
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: linkedInError } = await authService.signInWithLinkedIn();
-                                    if (linkedInError) {
-                                        setError(linkedInError);
-                                        setIsLoading(false);
-                                    }
-                                } catch {
-                                    setError('Failed to initialize LinkedIn sign-in');
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                            className="w-9 h-9 flex items-center justify-center bg-[#0A66C2] hover:bg-[#0958A8] text-white rounded-full border border-[#0A66C2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.03-1.84-3.03-1.85 0-2.13 1.45-2.13 2.94v5.66H9.36V9h3.42v1.56h.05c.48-.9 1.64-1.84 3.37-1.84 3.6 0 4.26 2.37 4.26 5.46v6.27zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
-                            </svg>
-                        </button>
-
-                        <button
-                            type="button"
-                            aria-label="Sign in with Facebook"
-                            title="Sign in with Facebook"
-                            onClick={async () => {
-                                setIsLoading(true);
-                                setError('');
-                                try {
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: facebookError } = await authService.signInWithFacebook();
-                                    if (facebookError) {
-                                        setError(facebookError);
-                                        setIsLoading(false);
-                                    }
-                                } catch {
-                                    setError('Failed to initialize Facebook sign-in');
-                                    setIsLoading(false);
-                                }
-                            }}
-                            disabled={isLoading}
-                            className="w-9 h-9 flex items-center justify-center bg-[#1877F2] hover:bg-[#166FE5] text-white rounded-full border border-[#1877F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.03 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79V24C19.61 23.09 24 18.1 24 12.07z" />
-                            </svg>
-                        </button>
-                    </div>
+                    <Button
+                        type="submit"
+                        className="w-full h-9 text-sm font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
+                        isLoading={isLoading}
+                    >
+                        {isRegistering ? 'Create Account with Email' : 'Sign In with Email'}
+                    </Button>
                 </form>
 
-                <div className="mt-4 pt-3 border-t border-slate-800 text-center space-y-2">
+                <div className="mt-3 pt-2 border-t border-slate-800 text-center space-y-1.5">
                     <button
                         onClick={() => {
                             if (!registrationOpen && !isRegistering) {
