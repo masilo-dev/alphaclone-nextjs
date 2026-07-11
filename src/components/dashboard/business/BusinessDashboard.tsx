@@ -143,6 +143,7 @@ import OnboardingFlow from '../../onboarding/OnboardingFlow';
 import { BusinessWelcomeModal } from './BusinessWelcomeModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
+import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
@@ -174,8 +175,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         () => normalizeBusinessRoute(activeTab, user.role),
         [activeTab, user.role],
     );
-    const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats } = useTenant();
+    const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats, refreshTenants, error: tenantError } = useTenant();
     const currentTenant = propTenant || contextTenant;
+    const [bootstrappingOrg, setBootstrappingOrg] = useState(false);
     usePrefetchDashboardStats(currentTenant?.id);
     const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
     if (currentTenant) {
@@ -965,19 +967,48 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     // Show error state if no tenant after loading completes
     if (!currentTenant) {
+        const handleCreateWorkspace = async () => {
+            setBootstrappingOrg(true);
+            try {
+                const orgName = `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
+                const { tenant, error } = await bootstrapTenantViaApi({ name: orgName, plan: 'free' });
+                if (!tenant?.id) {
+                    toast.error(error || 'Could not create workspace. Please try again.');
+                    return;
+                }
+                await refreshTenants();
+                window.location.reload();
+            } catch (err) {
+                toast.error(err instanceof Error ? err.message : 'Workspace setup failed');
+            } finally {
+                setBootstrappingOrg(false);
+            }
+        };
+
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
                 <div id="main-content" className="text-center max-w-md p-8">
                     <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
                     <div className="text-slate-400 mb-6">
-                        {user.role === 'client'
+                        {tenantError
+                            ? tenantError
+                            : user.role === 'client'
                             ? t("You don't have access to this business dashboard. If you're a business owner, please contact support.")
-                            : t('Unable to load your organization. This may be a temporary issue.')}
+                            : t('Your business workspace was not set up yet. Create one below to continue.')}
                     </div>
                     <div className="flex flex-col gap-3">
+                        {user.role !== 'client' && (
+                            <button
+                                onClick={handleCreateWorkspace}
+                                disabled={bootstrappingOrg}
+                                className="px-6 py-2 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
+                            >
+                                {bootstrappingOrg ? t('Creating workspace...') : t('Create My Workspace')}
+                            </button>
+                        )}
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors font-medium border border-teal-400/20"
+                            className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors font-medium border border-slate-700"
                         >
                             {t('Retry Loading')}
                         </button>

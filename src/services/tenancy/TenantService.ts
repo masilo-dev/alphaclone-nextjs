@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../../lib/supabase';
+import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import type {
     Tenant,
     TenantUser,
@@ -31,21 +32,15 @@ class TenantService {
             .slice(0, 72) || `org-${data.adminUserId.slice(0, 8)}`;
 
         try {
-            const res = await fetch('/api/tenant/bootstrap', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    name: data.name,
-                    slug: slugBase,
-                    plan: data.plan || 'free',
-                }),
+            const { tenant, error: bootstrapError } = await bootstrapTenantViaApi({
+                name: data.name,
+                slug: slugBase,
+                plan: data.plan || 'free',
             });
-            const payload = await res.json().catch(() => ({}));
-            if (res.ok && payload?.tenant?.id) {
-                return payload.tenant as Tenant;
+            if (tenant?.id) {
+                return tenant;
             }
-            console.warn('[TenantService] bootstrap API failed, falling back to RPC:', payload?.error || res.status);
+            console.warn('[TenantService] bootstrap API failed, falling back to RPC:', bootstrapError);
         } catch (apiErr) {
             console.warn('[TenantService] bootstrap API unreachable, falling back to RPC:', apiErr);
         }

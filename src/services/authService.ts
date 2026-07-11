@@ -154,6 +154,19 @@ export const authService = {
                 console.error("MFA check error", e);
             }
 
+            if (!needsMfa && (user.role === 'tenant_admin' || user.role === 'business_dashboard')) {
+                try {
+                    const { bootstrapTenantViaApi } = await import('@/lib/tenant/bootstrapTenantClient');
+                    await bootstrapTenantViaApi({
+                        name:
+                            (metadata?.business_name as string | undefined)?.trim() ||
+                            `${user.name}'s Organization`,
+                    });
+                } catch (bootstrapErr) {
+                    console.warn('[authService] post-login tenant bootstrap failed:', bootstrapErr);
+                }
+            }
+
             // Return user immediately without waiting for activity tracking
             return { user, error: null, needsMfa };
         } catch (err: any) {
@@ -167,7 +180,13 @@ export const authService = {
     /**
      * Sign up new user
      */
-    async signUp(email: string, password: string, name: string, role: UserRole = 'tenant_admin'): Promise<{ user: User | null; error: string | null }> {
+    async signUp(
+        email: string,
+        password: string,
+        name: string,
+        role: UserRole = 'tenant_admin',
+        options?: { businessName?: string; plan?: string }
+    ): Promise<{ user: User | null; error: string | null; needsEmailConfirmation?: boolean }> {
         try {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
@@ -207,6 +226,8 @@ export const authService = {
                         role,
                         account_type: 'business_owner',
                         registration_country: registrationCountry,
+                        business_name: options?.businessName?.trim() || undefined,
+                        plan: options?.plan || 'free',
                     },
                 },
             }));
@@ -233,14 +254,11 @@ export const authService = {
 
             if (data.session) {
                 try {
-                    await fetch('/api/tenant/bootstrap', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            name: `${validated.name}'s Organization`,
-                            plan: 'free',
-                        }),
+                    const { bootstrapTenantViaApi } = await import('@/lib/tenant/bootstrapTenantClient');
+                    const orgName = options?.businessName?.trim() || `${validated.name}'s Organization`;
+                    await bootstrapTenantViaApi({
+                        name: orgName,
+                        plan: options?.plan || 'free',
                     });
                 } catch (bootstrapErr) {
                     console.warn('[authService] tenant bootstrap after signup failed:', bootstrapErr);
@@ -249,7 +267,7 @@ export const authService = {
 
             // Welcome email is sent after workspace provisioning on the login/register page,
             // or via auth/callback for email-confirmation signups — not here (avoids duplicates).
-            return { user, error: null };
+            return { user, error: null, needsEmailConfirmation: !data.session };
         } catch (err: any) {
             if (err.name === 'ZodError') {
                 return { user: null, error: err.errors[0]?.message || 'Validation failed' };
@@ -336,7 +354,7 @@ export const authService = {
     /**
      * Sign in with Google OAuth
      */
-    async signInWithGoogle(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {
+    async signInWithGoogle(nextPath?: string): Promise<{ error: string | null }> {
         try {
             // Set a flag to help AuthContext/AuthService identify that we are in a callback loop
             // and should be more persistent with session discovery.
@@ -344,10 +362,14 @@ export const authService = {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
+            const redirectTo = nextPath
+                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+                : `${window.location.origin}/auth/callback`;
+
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+                    redirectTo,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'consent',
@@ -375,16 +397,20 @@ export const authService = {
     /**
      * Sign in with LinkedIn OAuth
      */
-    async signInWithLinkedIn(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {
+    async signInWithLinkedIn(nextPath?: string): Promise<{ error: string | null }> {
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
+            const redirectTo = nextPath
+                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+                : `${window.location.origin}/auth/callback`;
+
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'linkedin_oidc',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+                    redirectTo,
                     queryParams: {
                         prompt: 'consent',
                     },
@@ -469,16 +495,20 @@ export const authService = {
     /**
      * Sign in with Facebook OAuth
      */
-    async signInWithFacebook(nextPath: string = '/dashboard/business'): Promise<{ error: string | null }> {
+    async signInWithFacebook(nextPath?: string): Promise<{ error: string | null }> {
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
+            const redirectTo = nextPath
+                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+                : `${window.location.origin}/auth/callback`;
+
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'facebook',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+                    redirectTo,
                 },
             }), 5000);
 

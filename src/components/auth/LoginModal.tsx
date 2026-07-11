@@ -85,12 +85,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 
         const { authService } = await import('../../services/authService');
         const role = 'tenant_admin';
-        const { user, error: signUpError } = await authService.signUp(email, password, name, role);
+        const { user, error: signUpError, needsEmailConfirmation } = await authService.signUp(email, password, name, role, {
+          businessName,
+        });
 
         if (signUpError) {
           console.error("LoginModal SignUp Error:", signUpError);
           setError(signUpError);
           setIsLoading(false);
+          return;
+        }
+
+        if (needsEmailConfirmation) {
+          setError('');
+          onClose();
           return;
         }
 

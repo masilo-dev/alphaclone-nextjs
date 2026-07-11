@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient } from './supabase-admin';
 import { clientErrorResponse } from './api/clientErrorResponse';
 import { RouteAuthError } from './api/routeAuthError';
+import { ENV } from '@/config/env';
 
 export { RouteAuthError };
 
@@ -25,10 +27,26 @@ async function getSupabaseServerClient() {
 }
 
 /**
- * Ensures the request is authenticated.
+ * Ensures the request is authenticated (cookie session or Authorization Bearer).
  * NOTE: This is designed for App Router API routes/Server Actions.
  */
-export async function requireAuthenticatedUser() {
+export async function requireAuthenticatedUser(req?: Request) {
+    const bearer = req?.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
+    if (bearer) {
+        if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+            throw new RouteAuthError(500, 'Server configuration error', 'INTERNAL_ERROR');
+        }
+        const admin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+        });
+        const { data, error } = await admin.auth.getUser(bearer);
+        if (error || !data?.user?.id) {
+            throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
+        }
+        const supabase = await getSupabaseServerClient();
+        return { supabase, user: data.user };
+    }
+
     const supabase = await getSupabaseServerClient();
     const { data, error } = await supabase.auth.getUser();
 

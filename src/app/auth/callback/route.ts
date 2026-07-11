@@ -2,10 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect'
+
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    const next = searchParams.get('next') ?? '/dashboard/business'
+    const requestedNext = searchParams.get('next')
 
     if (code) {
         try {
@@ -186,6 +188,22 @@ export async function GET(request: Request) {
                         })
                     } catch (welcomeErr) {
                         console.error('[auth/callback] Welcome email:', welcomeErr)
+                    }
+                }
+
+                let next = requestedNext ?? '/dashboard'
+                if (!requestedNext) {
+                    try {
+                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
+                        const admin = createSupabaseAdminClient()
+                        const { data: profile } = await admin
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', user.id)
+                            .maybeSingle()
+                        next = getPostAuthDashboardPath(profile?.role)
+                    } catch {
+                        next = '/dashboard'
                     }
                 }
 

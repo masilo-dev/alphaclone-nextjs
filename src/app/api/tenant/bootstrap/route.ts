@@ -14,7 +14,7 @@ const bodySchema = z
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await requireAuthenticatedUser();
+    const { user } = await requireAuthenticatedUser(req);
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const admin = createSupabaseAdminClient();
 

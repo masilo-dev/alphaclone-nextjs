@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import Image from 'next/image';
+import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -38,17 +39,19 @@ function LoginContent() {
     const businessNameParam = searchParams?.get('businessName');
     const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
 
-    const postLoginRedirect = (() => {
+    const resolveExplicitNextRedirect = (): string | null => {
       if (nextParam) {
         try {
           const decoded = decodeURIComponent(nextParam);
-          if (decoded.startsWith('/oauth/') || decoded.startsWith('/authorize')) return decoded;
+          if (decoded.startsWith('/oauth/') || decoded.startsWith('/authorize') || decoded.startsWith('/dashboard')) {
+            return decoded;
+          }
         } catch {
           // ignore malformed next param
         }
       }
-      return '/dashboard/business';
-    })();
+      return null;
+    };
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
@@ -181,12 +184,25 @@ function LoginContent() {
                 try {
                     const { authService } = await import('@/services/authService');
                     const role = 'tenant_admin';
-                    const signupResult = await authService.signUp(email, password, name, role);
+                    const signupResult = await authService.signUp(email, password, name, role, {
+                        businessName,
+                        plan: selectedPlan,
+                    });
                     
                     if (signupResult.error) {
                         throw new Error(signupResult.error);
                     }
                     newUser = signupResult.user;
+
+                    if (signupResult.needsEmailConfirmation) {
+                        toast.success('Account created! Check your email to confirm, then sign in.', {
+                            id: 'registration',
+                            duration: 10000,
+                        });
+                        setIsRegistering(false);
+                        setIsLoading(false);
+                        return;
+                    }
 
                     try {
                         const { supabase } = await import('@/lib/supabase');
@@ -310,7 +326,7 @@ function LoginContent() {
                     }
 
                     toast.success('Welcome to AlphaClone! Redirecting...');
-                    router.push('/dashboard/business');
+                    router.push(getPostAuthDashboardPath('tenant_admin'));
                     return;
                 }
                 setIsLoading(false);
@@ -344,7 +360,7 @@ function LoginContent() {
             }
 
             if (loggedInUser) {
-                router.push(postLoginRedirect);
+                router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath(loggedInUser.role));
             }
             setIsLoading(false);
         } catch (err) {
@@ -382,7 +398,7 @@ function LoginContent() {
                 subscription_status: 'active'
             });
 
-            router.push('/dashboard/business');
+            router.push(getPostAuthDashboardPath('tenant_admin'));
         } catch (err: any) {
             setError(`Payment failed: ${err.message}. Please try again.`);
         } finally {
@@ -417,7 +433,9 @@ function LoginContent() {
 
             if (verifyResponse.error) throw verifyResponse.error;
 
-            router.push(postLoginRedirect);
+            const { authService: postMfaAuth } = await import('@/services/authService');
+            const { user: verifiedUser } = await postMfaAuth.getCurrentUser();
+            router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath(verifiedUser?.role));
         } catch (err: any) {
             setError(err.message || 'Invalid verification code');
         } finally {
@@ -467,7 +485,7 @@ function LoginContent() {
                     )}
 
                     <Button
-                        onClick={() => { window.location.href = '/dashboard/business'; }}
+                        onClick={() => { window.location.href = '/dashboard'; }}
                         className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
                     >
                         Go to Dashboard
