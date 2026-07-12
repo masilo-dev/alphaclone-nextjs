@@ -1,3 +1,6 @@
-# Web app (Next.js) is deployed on Vercel — not Railway.
-# Scraper config: alphaclone-scraper/railway.toml
+# Configuration for deploying the entire Alphaclone platform on Railway.
+# This repository contains both:
+#   1. alphaclone-web (Next.js in root)
+#   2. alphaclone-scraper (Python FastAPI in alphaclone-scraper/)
+# Both are configured in the root railway.json file.
 # Docs: docs/RAILWAY_DEPLOY.md

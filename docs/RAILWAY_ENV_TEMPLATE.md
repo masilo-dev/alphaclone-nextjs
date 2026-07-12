@@ -1,28 +1,15 @@
 # Railway Environment Variables Template
 
-**Vercel** = full web app (see your Vercel dashboard for all existing vars).  
-**Railway** = **`alphaclone-scraper` only** (this file’s scraper section).
+This template outlines the environment variables needed for both **Full Deployment** (both web and scraper on Railway) and **Split Deployment** (web on Vercel, scraper on Railway).
 
-Do not copy the whole web env to Railway unless you deploy `alphaclone-web` (not recommended — use Vercel for web).
-
----
-
-## Vercel — add these for Railway bridge
-
-Add to **existing** Vercel Production env (everything else stays):
-
-| Variable | Description |
-|----------|-------------|
-| `SCRAPER_SERVICE_URL` | `https://<scraper>.up.railway.app` |
-| `INTERNAL_API_KEY` | Random secret — **same value** on Vercel + Railway scraper |
-
-All other vars (Supabase, Stripe, OAuth, AI keys, crons) remain on **Vercel only**.
+- **Full Deployment**: Apply the `alphaclone-web` variables to your `alphaclone-web` service on Railway, and the `alphaclone-scraper` variables to your `alphaclone-scraper` service.
+- **Split Deployment**: Apply the `alphaclone-web` variables to Vercel, and the `alphaclone-scraper` variables to Railway.
 
 ---
 
-## alphaclone-web (Vercel only — reference)
+## 1. Web Service Variables (`alphaclone-web`)
 
-These live on **Vercel**, not Railway, in the scraper-only setup:
+These variables configure the main Next.js web application. Apply these to Vercel (for Split Deployment) or to the `alphaclone-web` service on Railway (for Full Deployment).
 
 ### Required — Core
 | Variable | Description |
@@ -127,8 +114,8 @@ These live on **Vercel**, not Railway, in the scraper-only setup:
 | `WORKER_CONCURRENCY` | **Railway scraper** | `2`–`3` |
 | `ENABLE_ML_SCORING` | **Railway scraper** | `false` unless needed |
 
-**Railway runs:** Playwright scraper + campaign poll cron only.  
-**Vercel runs:** web, MCP, webhooks, Lead Finder UI, all other crons.
+**Split Deployment:** Railway runs the scraper while Vercel runs the web frontend, MCP, webhooks, and core crons.
+**Full Deployment:** Railway hosts both the web frontend (`alphaclone-web`) and scraper (`alphaclone-scraper`) services.
 
 ### Optional enrichment (legacy in-app routes)
 
@@ -182,5 +169,5 @@ railway variables set MCP_SYNC_URL=https://alphaclonesystems.com/api/internal/le
 
 ## Cron jobs
 
-**Vercel:** all app crons — see `vercel.json`  
-**Railway:** scraper poll only — see `docs/RAILWAY_CRON_JOBS.md`
+- **Split Deployment**: All app crons are hosted on Vercel (see `vercel.json`). Only the scraper poll runs on Railway (see `docs/RAILWAY_CRON_JOBS.md`).
+- **Full Deployment**: Web app crons are managed through Railway crons (see `railway.crons.json` for path reference). Scraper poll runs on the scraper service.

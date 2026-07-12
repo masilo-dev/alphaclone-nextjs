@@ -1,12 +1,56 @@
-# Railway Deployment Guide (scraper-only)
+# Railway Deployment Guide
 
-**Vercel** hosts the full Next.js app (domain, dashboard, MCP, crons, webhooks).  
-**Railway** runs **`alphaclone-scraper` only** — Playwright lead scraping, enrichment, and campaign polling.
+This guide covers deploying the Alphaclone platform on **Railway**. The repository is configured to support two deployment architectures:
 
-This saves cost and avoids running two web hosts.
+1. **Full Deployment (Recommended for Single-Cloud)**: Both the Next.js web application (`alphaclone-web`) and the Python Playwright scraper (`alphaclone-scraper`) run on Railway.
+2. **Split Deployment (Recommended for Cost Savings)**: The web application is hosted on Vercel, while the scraper is hosted on Railway.
 
-## Architecture
+---
 
+## 1. Full Deployment on Railway (All Services)
+
+In this architecture, Railway hosts the entire stack.
+
+### Architecture
+```
+Users → alphaclone-web (Railway)
+              │
+              │  SCRAPER_SERVICE_URL
+              ▼
+        alphaclone-scraper (Railway)
+              │
+              ▼
+        Supabase + CRM (shared)
+```
+
+### Services Configured in `railway.json`
+- **`alphaclone-web`**: Next.js web application.
+  - **Root Directory**: `/`
+  - **Builder**: `Dockerfile` (using root `Dockerfile`)
+  - **Health Check**: `/api/health`
+- **`alphaclone-scraper`**: Python FastAPI scraper service.
+  - **Root Directory**: `alphaclone-scraper`
+  - **Builder**: `Dockerfile` (using `alphaclone-scraper/Dockerfile`)
+  - **Health Check**: `/health`
+
+### Setup Instructions
+1. **Create/Connect Project**: Create a new project in Railway and link it to your GitHub repository: `masilo-dev/alphaclone-nextjs`.
+2. **Auto-Discovery**: Railway will automatically detect the two services defined in `railway.json`: `alphaclone-web` and `alphaclone-scraper`.
+3. **Environment Variables**:
+   - Provide all frontend & database variables to `alphaclone-web`.
+   - Provide database and scraper API variables to `alphaclone-scraper`.
+   - Refer to `docs/RAILWAY_ENV_TEMPLATE.md` for the template.
+4. **Cron Setup**:
+   - For `alphaclone-web`, crons are defined in `railway.crons.json`.
+   - For `alphaclone-scraper`, a cron endpoint should poll campaign tasks.
+
+---
+
+## 2. Split Deployment (Vercel + Railway Scraper)
+
+In this cost-efficient setup, Vercel hosts the Next.js web application while Railway runs the resource-heavy Playwright scraper.
+
+### Architecture
 ```
 Users → alphaclonesystems.com (Vercel)
               │
@@ -19,114 +63,37 @@ Users → alphaclonesystems.com (Vercel)
         Supabase + CRM (shared)
 ```
 
-| Component | Host |
-|-----------|------|
-| Website, dashboard, Lead Finder UI | **Vercel** |
-| MCP, Stripe/webhooks, OAuth callbacks | **Vercel** |
-| Crons (invoices, social, zoho, automation) | **Vercel** (`vercel.json`) |
-| Playwright scraping + lead campaigns | **Railway** (`alphaclone-scraper`) |
-| Campaign poll cron | **Railway** scraper service |
+### Setup Instructions
+1. **Remove `alphaclone-web` on Railway**: If present, delete or pause the `alphaclone-web` service on Railway.
+2. **Configure `alphaclone-scraper`**:
+   - Set **Root Directory** to `alphaclone-scraper`.
+   - Set **Builder** to `Dockerfile` (`alphaclone-scraper/Dockerfile`).
+   - Set **Health check** to `/health`.
+3. **Scraper Environment Variables**: Set `SUPABASE_URL`, `SUPABASE_KEY`, `INTERNAL_API_KEY`, and `MCP_SYNC_URL` (pointing to Vercel).
+4. **Vercel Bridge Variables**: Set `SCRAPER_SERVICE_URL` and `INTERNAL_API_KEY` in Vercel to point to the scraper.
 
-## Railway setup (one service)
+---
 
-### 1. Remove or disable `alphaclone-web` on Railway
+## CLI Deployment & Verification
 
-In Railway dashboard:
-
-1. Open project → **alphaclone-web** service (if it exists)
-2. **Settings** → **Danger** → **Remove service** (or pause deployments)
-3. Keep only **alphaclone-scraper**
-
-### 2. Configure `alphaclone-scraper`
-
-| Setting | Value |
-|---------|--------|
-| **Root Directory** | `alphaclone-scraper` |
-| **Builder** | Dockerfile |
-| **Dockerfile** | `Dockerfile` (inside that folder) |
-| **Health check** | `/health` |
-
-Connect repo: `masilo-dev/alphaclone-nextjs`, branch `master`.
-
-### 3. Scraper environment variables
-
-See `docs/RAILWAY_ENV_TEMPLATE.md` → **alphaclone-scraper** section.
-
-Required:
-
-| Variable | Value |
-|----------|--------|
-| `SUPABASE_URL` | Same as Vercel `NEXT_PUBLIC_SUPABASE_URL` |
-| `SUPABASE_KEY` | Same as Vercel `SUPABASE_SERVICE_ROLE_KEY` |
-| `INTERNAL_API_KEY` | **Must match Vercel** |
-| `MCP_SYNC_URL` | `https://alphaclonesystems.com/api/internal/leads/mcp-sync` |
-
-Optional: `APOLLO_API_KEY`, `HUNTER_API_KEY`, `WORKER_CONCURRENCY=2`, `ENABLE_ML_SCORING=false`
-
-### 4. Vercel — add bridge vars
-
-In Vercel → **Environment Variables** → Production:
-
-| Variable | Value |
-|----------|--------|
-| `SCRAPER_SERVICE_URL` | `https://<scraper>.up.railway.app` |
-| `INTERNAL_API_KEY` | Same as Railway scraper |
-
-Redeploy Vercel after saving.
-
-### 5. Scraper cron (Railway only)
-
-Railway → **alphaclone-scraper** → **Cron**:
-
-| Schedule | Method | Path | Auth |
-|----------|--------|------|------|
-| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` | Header `x-internal-api-key: $INTERNAL_API_KEY` |
-
-Do **not** duplicate Vercel crons on Railway.
-
-## Pre-flight checklist
-
-- [ ] `npm run supabase:push` (scraper tables migration)
-- [ ] Railway: only `alphaclone-scraper` service active
-- [ ] Vercel: `SCRAPER_SERVICE_URL` + `INTERNAL_API_KEY` set
-- [ ] Scraper: `MCP_SYNC_URL` points to **Vercel** domain
-- [ ] Health checks pass (below)
-
-## Health checks
-
-```bash
-# Vercel (primary web)
-curl https://alphaclonesystems.com/api/health
-curl https://alphaclonesystems.com/api/mcp/health
-
-# Railway scraper
-curl https://<scraper>.up.railway.app/health
-```
-
-## Test Lead Finder end-to-end
-
-1. Log in on **Vercel** → **Sales Hub** → **Lead Finder**
-2. Run a chat search (e.g. “Find SMB dental clinics in Austin”)
-3. Railway scraper logs should show campaign activity
-4. Leads appear in UI; outreach + “contacted” still run on Vercel
-
-If Railway is down, Lead Finder falls back to light OSM search on Vercel.
-
-## Optional: full web on Railway later
-
-Root `Dockerfile` + `nixpacks.toml` remain in the repo for a future full migration. They are **not** used in the scraper-only setup. See git history / `railway.json` in older commits if you ever move web off Vercel.
-
-## CLI
-
+### Railway CLI Setup
 ```bash
 npm i -g @railway/cli
 railway login
 railway link
-railway logs --service alphaclone-scraper
 ```
 
-## Database migration
+### Health Check Endpoints
+```bash
+# Web application (Next.js)
+curl https://<your-web-service>.up.railway.app/api/health
 
+# Scraper service
+curl https://<your-scraper-service>.up.railway.app/health
+```
+
+### Database Migrations
+Always ensure the database matches the latest schema:
 ```bash
 npm run supabase:push
 ```

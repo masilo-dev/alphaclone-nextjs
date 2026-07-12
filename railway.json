@@ -1,7 +1,20 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "_comment": "Vercel hosts alphaclone-web. Railway runs alphaclone-scraper only (lead + heavy AI).",
+  "_comment": "Railway runs both alphaclone-web (Next.js) and alphaclone-scraper (Python FastAPI).",
   "services": {
+    "alphaclone-web": {
+      "source": {
+        "repo": ".",
+        "rootDirectory": "/"
+      },
+      "build": {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "Dockerfile"
+      },
+      "deploy": {
+        "healthcheckPath": "/api/health"
+      }
+    },
     "alphaclone-scraper": {
       "source": {
         "repo": ".",
