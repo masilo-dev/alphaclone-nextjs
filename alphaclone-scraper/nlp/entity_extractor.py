@@ -37,11 +37,28 @@ class MLExtractor:
             from utils.config import get_settings
             if not get_settings().enable_ml_scoring:
                 return None
-            from transformers import pipeline
-            self._classifier = pipeline(
-                "zero-shot-classification",
-                model="facebook/bart-large-mnli",
-            )
+            # Transformers needs torch OR tensorflow as a backend.
+            # On Railway we ship without torch to keep the image small,
+            # so we probe for availability before loading the pipeline.
+            try:
+                import importlib.util as _ilu
+                _has_torch = _ilu.find_spec("torch") is not None
+                _has_tf = _ilu.find_spec("tensorflow") is not None
+                if not (_has_torch or _has_tf):
+                    log.warning(
+                        "ENABLE_ML_SCORING=true but neither torch nor tensorflow "
+                        "is installed — ML classifier disabled. Set ENABLE_ML_SCORING=false "
+                        "to silence this warning."
+                    )
+                    return None
+                from transformers import pipeline
+                self._classifier = pipeline(
+                    "zero-shot-classification",
+                    model="facebook/bart-large-mnli",
+                )
+            except Exception as exc:
+                log.warning(f"ML classifier load failed: {exc}")
+                return None
         return self._classifier
 
     async def extract_entities(self, raw_leads: list[dict[str, Any]]) -> list[dict[str, Any]]:

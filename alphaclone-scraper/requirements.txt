@@ -1,17 +1,34 @@
+# ── Web framework ─────────────────────────────────────────────────────────────
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
+
+# ── Browser automation ────────────────────────────────────────────────────────
 playwright==1.40.0
+
+# ── HTML parsing ──────────────────────────────────────────────────────────────
 beautifulsoup4==4.12.3
+
+# ── HTTP clients ─────────────────────────────────────────────────────────────
 aiohttp==3.10.5
 httpx==0.27.2
+
+# ── NLP — CPU-only; torch is NOT included (saves ~3 GB build / 10 min) ───────
 spacy==3.7.5
+# transformers CPU inference (no torch training needed)
 transformers==4.44.2
-torch==2.4.1
+
+# ── Language utilities ────────────────────────────────────────────────────────
 langdetect==1.0.9
+
+# ── Contact validation ────────────────────────────────────────────────────────
 email-validator==2.2.0
 dnspython==2.6.1
+
+# ── Cache / DB ────────────────────────────────────────────────────────────────
 redis==5.0.8
 supabase==2.7.4
+
+# ── Config ────────────────────────────────────────────────────────────────────
 pydantic==2.9.2
 pydantic-settings==2.5.2
 python-dotenv==1.0.1
