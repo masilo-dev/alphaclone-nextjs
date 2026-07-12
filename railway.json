@@ -1,6 +1,6 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "_comment": "Railway runs both alphaclone-web (Next.js) and alphaclone-scraper (Python FastAPI).",
+  "_comment": "Railway runs both alphaclone-web (Next.js) and alphaclone-scraper (Python FastAPI). alphaclone-web uses Nixpacks so NEXT_PUBLIC_* env vars are available at build time.",
   "services": {
     "alphaclone-web": {
       "source": {
@@ -8,10 +8,12 @@
         "rootDirectory": "/"
       },
       "build": {
-        "builder": "DOCKERFILE",
-        "dockerfilePath": "Dockerfile"
+        "builder": "NIXPACKS",
+        "buildCommand": "npm ci && npm run build",
+        "watchPatterns": ["src/**", "public/**", "package.json", "next.config.*"]
       },
       "deploy": {
+        "startCommand": "npm run start",
         "healthcheckPath": "/api/health"
       }
     },
