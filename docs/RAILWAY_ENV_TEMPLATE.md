@@ -104,13 +104,13 @@ These variables configure the main Next.js web application. Apply these to Verce
 | `UPSTASH_REDIS_REST_TOKEN` | |
 | `SENTRY_DSN` | Server Sentry |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client Sentry |
-| `SCRAPER_SERVICE_URL` | On **Vercel** — public Railway URL, e.g. `https://alphaclone-nextjs-production.up.railway.app` (must include `https://`; not `.railway.internal`) |
+| `SCRAPER_SERVICE_URL` | Scraper service endpoint. For **Split Deployment** (on Vercel), use the public URL (`https://<scraper>.up.railway.app`). For **Full Deployment** (both on Railway), you can use the internal private URL (e.g., `http://alphaclone-scraper.railway.internal:8000` or custom port). |
 
 ### Cost control
 
 | Variable | Where | Description |
 |----------|--------|-------------|
-| `SCRAPER_SERVICE_URL` | **Vercel** | Points to Railway `alphaclone-scraper` |
+| `SCRAPER_SERVICE_URL` | **Web App** | Points to Railway `alphaclone-scraper` |
 | `WORKER_CONCURRENCY` | **Railway scraper** | `2`–`3` |
 | `ENABLE_ML_SCORING` | **Railway scraper** | `false` unless needed |
 

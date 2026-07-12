@@ -1,11 +1,17 @@
 import { z } from 'zod';
 
-/** Normalize Railway scraper URL for Vercel — accepts host-only values, rejects internal hostnames. */
+/** Normalize Railway scraper URL for Vercel — accepts host-only values, rejects internal hostnames unless running in Railway. */
 function normalizeScraperServiceUrl(value: string | undefined): string | undefined {
     const trimmed = value?.trim();
     if (!trimmed) return undefined;
 
-    if (trimmed.includes('.railway.internal')) {
+    const isRailway = !!(
+        process.env.RAILWAY_STATIC_URL ||
+        process.env.RAILWAY_ENVIRONMENT_NAME ||
+        process.env.RAILWAY_SERVICE_ID
+    );
+
+    if (trimmed.includes('.railway.internal') && !isRailway) {
         console.warn(
             '[env] SCRAPER_SERVICE_URL cannot be a .railway.internal hostname from Vercel; use the public https://….up.railway.app URL'
         );
