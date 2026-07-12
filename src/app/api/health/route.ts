@@ -1,15 +1,49 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { redis } from '@/lib/cache/redis';
 
 /**
- * Health check endpoint for monitoring
- * Returns system health status
+ * Liveness endpoint for Railway and external monitors.
+ * Deep diagnostics are available with `?deep=1`.
  */
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     const startTime = Date.now();
+    const deepDiagnostics = ['1', 'true', 'yes'].includes(
+        (request.nextUrl.searchParams.get('deep') || '').toLowerCase()
+    );
+
+    const baseChecks = {
+        runtime: {
+            status: 'healthy',
+            responseTime: Date.now() - startTime,
+        },
+        system: {
+            uptime: process.uptime(),
+            memory: {
+                used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+                unit: 'MB',
+            },
+            nodeVersion: process.version,
+            platform: process.platform,
+        },
+    };
+
+    if (!deepDiagnostics) {
+        return NextResponse.json(
+            {
+                status: 'healthy',
+                timestamp: new Date().toISOString(),
+                responseTime: Date.now() - startTime,
+                checks: baseChecks,
+                version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+            },
+            { status: 200 }
+        );
+    }
+
     const checks: Record<string, any> = {};
     const supabaseConfigured = !!ENV.VITE_SUPABASE_URL && !!ENV.SUPABASE_SERVICE_ROLE_KEY;
     const stripeConfigured = !!ENV.STRIPE_SECRET_KEY;

@@ -1,54 +1,37 @@
-# Railway Cron Jobs (scraper-only setup)
+# Railway Cron Jobs
 
-**Vercel** runs all app crons — see `vercel.json` and `vercel.pro.crons.json`.  
-**Railway** runs **one cron** on `alphaclone-scraper` in the recommended split.
+Railway runs the application crons for the web service and the polling cron for the scraper service.
 
-Do not duplicate Vercel crons on Railway (double invoices, emails, social posts).
+## Web service crons
 
----
+Use the path list in `railway.crons.json` for the `alphaclone-web` service.
 
-## Railway — alphaclone-scraper
+Typical jobs include:
 
-Configure in Railway dashboard → **alphaclone-scraper** → Cron Jobs.
+- Daily cleanup and sync jobs
+- Invoice processing
+- Social publishing
+- Token health checks
+- MCP event queue processing
 
-| Schedule | Method | Path | Purpose |
-|----------|--------|------|---------|
-| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` | Poll active lead campaigns |
+## Scraper service cron
 
-**Auth header:**
-```
+Configure one cron on `alphaclone-scraper`:
+
+| Schedule | Method | Path |
+|----------|--------|------|
+| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` |
+
+## Auth header
+
+```text
 x-internal-api-key: $INTERNAL_API_KEY
 ```
 
-### Test manually
+## Verification
 
 ```bash
 curl -X POST \
   -H "x-internal-api-key: $INTERNAL_API_KEY" \
   https://<scraper>.up.railway.app/api/scraper/campaign/poll
 ```
-
----
-
-## Vercel — all other crons (reference)
-
-These stay on **Vercel**, not Railway.
-
-### Active (`vercel.json`)
-
-| Schedule | Path |
-|----------|------|
-| `0 0 * * *` | `/api/cron/process-recurring-invoices` |
-| `0 1 * * *` | `/api/cron/process-invoice-overdue-reminders` |
-| `0 2 * * *` | `/api/cron/bonnie-dream` |
-| `0 3 * * *` | `/api/cron/daily` |
-| `0 4 * * *` | `/api/cron/intelligence-snapshots` |
-| `*/5 * * * *` | `/api/cron/social-publish` |
-| `*/15 * * * *` | `/api/cron/publish-linkedin` |
-| `*/5 * * * *` | `/api/cron/sync-zoho-inbox` |
-
-### Pro-tier (`vercel.pro.crons.json`)
-
-Includes `process-events`, `sequence-worker`, `process-campaigns`, and other automation crons — enable on Vercel when on Pro plan.
-
-**Auth:** `Authorization: Bearer $CRON_SECRET` or `x-railway-cron: 1` (if using external cron caller).

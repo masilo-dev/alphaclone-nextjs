@@ -1,6 +1,9 @@
-# Configuration for deploying the entire Alphaclone platform on Railway.
-# This repository contains both:
-#   1. alphaclone-web (Next.js in root)
-#   2. alphaclone-scraper (Python FastAPI in alphaclone-scraper/)
-# Both are configured in the root railway.json file.
-# Docs: docs/RAILWAY_DEPLOY.md
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm ci && npm run build"
+
+[deploy]
+startCommand = "npx next start -H 0.0.0.0 -p ${PORT:-3000}"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"

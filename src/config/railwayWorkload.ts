@@ -1,5 +1,7 @@
 /**
- * Vercel hosts the web app. Railway runs alphaclone-scraper only (Playwright, lead campaigns).
+ * Railway is the primary host for the web app and scraper in the current deployment model.
+ * These routes are the heavier lead-generation workloads that should stay paired with Railway
+ * whenever SCRAPER_SERVICE_URL is configured.
  */
 
 import { ENV } from './env';
@@ -27,14 +29,14 @@ export function isRailwayHeavyCron(path: string): boolean {
   return RAILWAY_HEAVY_ROUTES.some((r) => path.startsWith(r));
 }
 
-/** True when scraper microservice URL is configured (Railway alphaclone-scraper). */
+/** True when the Railway scraper microservice URL is configured. */
 export function hasRailwayScraper(): boolean {
   return Boolean(ENV.SCRAPER_SERVICE_URL);
 }
 
 /**
- * Prefer Railway for Playwright scraping, enrichment, and campaign runs.
- * On Vercel without SCRAPER_SERVICE_URL, callers should use OSM fallback.
+ * Prefer the Railway scraper for Playwright scraping, enrichment, and campaign runs.
+ * If the scraper is unavailable, callers should fall back to local/free sources.
  */
 export function shouldProxyHeavyWorkToRailway(): boolean {
   if (process.env.FORCE_LOCAL_HEAVY_WORK === 'true') return false;

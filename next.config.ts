@@ -138,8 +138,8 @@ const nextConfig: NextConfig = {
     const isDev = process.env.NODE_ENV === 'development';
     const cspHeader = `
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
-      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://va.vercel-scripts.com https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src-elem 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' blob: https://*.supabase.co https://*.stripe.com https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://*.daily.co https://*.sentry.io https://challenges.cloudflare.com https://*.claude.ai https://assets.calendly.com https://www.googletagmanager.com https://www.google-analytics.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com;
       img-src 'self' blob: data: https: http:;
       media-src 'self' blob: data: https:;
@@ -147,7 +147,7 @@ const nextConfig: NextConfig = {
       object-src 'none';
       base-uri 'self';
       form-action 'self';
-      frame-ancestors 'self' https://*.zoom.us https://zoom.us https://vercel.com https://*.vercel.app;
+      frame-ancestors 'self' https://*.zoom.us https://zoom.us https://alphaclonesystems.com https://*.railway.app;
       frame-src 'self' blob: data: https://*.stripe.com https://js.stripe.com https://*.daily.co https://challenges.cloudflare.com https://www.loom.com https://*.loom.com https://*.claude.ai https://*.segment.com https://calendly.com https://*.calendly.com;
       connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co *.upstash.io *.stripe.com https://*.dicebear.com https://*.daily.co wss://*.daily.co https://*.livekit.cloud wss://*.livekit.cloud https://*.sentry.io https://cdn.jsdelivr.net https://challenges.cloudflare.com https://*.hubspot.com https://images.unsplash.com https://api.anthropic.com https://api.openai.com https://openrouter.ai https://*.claude.ai https://nominatim.openstreetmap.org https://screendemos.com https://*.fbcdn.net https://*.xx.fbcdn.net https://*.facebook.com https://*.instagram.com https://*.basemaps.cartocdn.com https://raw.githubusercontent.com https://unpkg.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://graph.microsoft.com https://login.microsoftonline.com https://*.linkedin.com https://api.linkedin.com https://*.twitter.com https://api.twitter.com https://*.x.com https://api.x.com https://*.googleusercontent.com https://assets.mixkit.co https://files.manuscdn.com https://*.manuscdn.com https://*.zohostatic.eu https://*.zohostatic.com https://mailtrack.io https://*.mailtrack.io;
       worker-src 'self' blob: https://unpkg.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net;

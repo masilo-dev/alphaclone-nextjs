@@ -1,173 +1,79 @@
 # Railway Environment Variables Template
 
-This template outlines the environment variables needed for both **Full Deployment** (both web and scraper on Railway) and **Split Deployment** (web on Vercel, scraper on Railway).
+This template covers the full Railway deployment for AlphaClone.
 
-- **Full Deployment**: Apply the `alphaclone-web` variables to your `alphaclone-web` service on Railway, and the `alphaclone-scraper` variables to your `alphaclone-scraper` service.
-- **Split Deployment**: Apply the `alphaclone-web` variables to Vercel, and the `alphaclone-scraper` variables to Railway.
+## Web service (`alphaclone-web`)
 
----
+### Core
 
-## 1. Web Service Variables (`alphaclone-web`)
-
-These variables configure the main Next.js web application. Apply these to Vercel (for Split Deployment) or to the `alphaclone-web` service on Railway (for Full Deployment).
-
-### Required — Core
 | Variable | Description |
 |----------|-------------|
 | `NODE_ENV` | `production` |
-| `NEXT_PUBLIC_APP_URL` | `https://alphaclonesystems.com` (update after custom domain) |
+| `NEXT_PUBLIC_APP_URL` | `https://alphaclonesystems.com` |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role (server only) |
-| `CRON_SECRET` | Random secret for cron HTTP auth |
-| `INTERNAL_API_KEY` | Service-to-service auth (scraper, engine) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `CRON_SECRET` | Secret for cron auth |
+| `INTERNAL_API_KEY` | Service-to-service auth |
 | `ENCRYPTION_SECRET` | Exactly 32 characters |
 
-### AI
+### Common integrations
+
 | Variable | Description |
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | Claude API |
 | `DEEPSEEK_API_KEY` | DeepSeek API |
 | `OPENAI_API_KEY` | OpenAI |
 | `OPENROUTER_API_KEY` | OpenRouter |
-| `APOLLO_API_KEY` | Apollo.io enrichment |
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
+| `GOOGLE_CLIENT_ID` | Google OAuth |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `AZURE_CLIENT_ID` | Microsoft OAuth |
+| `AZURE_CLIENT_SECRET` | Microsoft OAuth |
+| `LINKEDIN_CLIENT_ID` | LinkedIn OAuth |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth |
+| `ZOHO_CLIENT_ID` | Zoho OAuth |
+| `ZOHO_CLIENT_SECRET` | Zoho OAuth |
+| `ZOHO_REDIRECT_URI` | Zoho callback URL |
+| `ZOHO_REGION` | `US`, `EU`, `IN`, `AU`, `JP`, or `CA` |
+| `ZOHO_ENCRYPTION_SECRET` | Exactly 32 characters |
 
-### Payments
-| Variable | Description |
-|----------|-------------|
-| `STRIPE_SECRET_KEY` | Stripe secret |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable |
-
-### OAuth — Google
-| Variable | Description |
-|----------|-------------|
-| `GOOGLE_CLIENT_ID` | |
-| `GOOGLE_CLIENT_SECRET` | |
-
-### OAuth — Microsoft
-| Variable | Description |
-|----------|-------------|
-| `AZURE_CLIENT_ID` | |
-| `AZURE_CLIENT_SECRET` | |
-
-### OAuth — LinkedIn
-| Variable | Description |
-|----------|-------------|
-| `LINKEDIN_CLIENT_ID` | |
-| `LINKEDIN_CLIENT_SECRET` | |
-| `LINKEDIN_REDIRECT_URI` | `{APP_URL}/api/auth/linkedin/callback` |
-
-### OAuth — Zoho (set region-specific keys as needed)
-| Variable | Description |
-|----------|-------------|
-| `ZOHO_CLIENT_ID` | |
-| `ZOHO_CLIENT_SECRET` | |
-| `ZOHO_REDIRECT_URI` | |
-| `ZOHO_REGION` | `US` / `EU` / `IN` / `AU` / `JP` / `CA` |
-| `ZOHO_ENCRYPTION_SECRET` | 32 chars |
-
-### OAuth — Calendly, Zoom, HubSpot, X
-| Variable | Description |
-|----------|-------------|
-| `CALENDLY_CLIENT_SECRET` | |
-| `CALENDLY_WEBHOOK_SIGNING_KEY` | |
-| `ZOOM_CLIENT_ID` | |
-| `ZOOM_CLIENT_SECRET` | |
-| `ZOOM_WEBHOOK_SECRET_TOKEN` | |
-| `HUBSPOT_CLIENT_ID` | |
-| `HUBSPOT_CLIENT_SECRET` | |
-| `X_CLIENT_ID` | |
-| `X_CLIENT_SECRET` | |
-
-### Meta / WhatsApp
-| Variable | Description |
-|----------|-------------|
-| `FACEBOOK_APP_SECRET` | |
-| `FACEBOOK_VERIFY_TOKEN` | |
-| `FACEBOOK_PAGE_ACCESS_TOKEN` | |
-| `WHATSAPP_PHONE_NUMBER_ID` | |
-| `WHATSAPP_ACCESS_TOKEN` | |
-
-### Email & Messaging
-| Variable | Description |
-|----------|-------------|
-| `RESEND_API_KEY` | |
-| `BREVO_API_KEY` | |
-| `QSTASH_TOKEN` | |
-| `QSTASH_URL` | `https://qstash.upstash.io` |
-
-### Infrastructure
-| Variable | Description |
-|----------|-------------|
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis |
-| `UPSTASH_REDIS_REST_TOKEN` | |
-| `SENTRY_DSN` | Server Sentry |
-| `NEXT_PUBLIC_SENTRY_DSN` | Client Sentry |
-| `SCRAPER_SERVICE_URL` | Scraper service endpoint. For **Split Deployment** (on Vercel), use the public URL (`https://<scraper>.up.railway.app`). For **Full Deployment** (both on Railway), you can use the internal private URL (e.g., `http://alphaclone-scraper.railway.internal:8000` or custom port). |
-
-### Cost control
-
-| Variable | Where | Description |
-|----------|--------|-------------|
-| `SCRAPER_SERVICE_URL` | **Web App** | Points to Railway `alphaclone-scraper` |
-| `WORKER_CONCURRENCY` | **Railway scraper** | `2`–`3` |
-| `ENABLE_ML_SCORING` | **Railway scraper** | `false` unless needed |
-
-**Split Deployment:** Railway runs the scraper while Vercel runs the web frontend, MCP, webhooks, and core crons.
-**Full Deployment:** Railway hosts both the web frontend (`alphaclone-web`) and scraper (`alphaclone-scraper`) services.
-
-### Optional enrichment (legacy in-app routes)
+### Messaging and infra
 
 | Variable | Description |
 |----------|-------------|
-| `FIRECRAWL_API_KEY` | |
-| `HERE_API_KEY` | |
-| `HUNTER_API_KEY` | |
-| `BUILTWITH_API_KEY` | |
+| `RESEND_API_KEY` | Email delivery |
+| `BREVO_API_KEY` | Email delivery |
+| `QSTASH_TOKEN` | Queue auth |
+| `QSTASH_URL` | Queue URL |
+| `UPSTASH_REDIS_REST_URL` | Redis URL |
+| `UPSTASH_REDIS_REST_TOKEN` | Redis token |
+| `SENTRY_DSN` | Error tracking |
+| `NEXT_PUBLIC_SENTRY_DSN` | Client error tracking |
+| `SCRAPER_SERVICE_URL` | Railway scraper public URL |
 
----
-
-## alphaclone-scraper (Python FastAPI)
+## Scraper service (`alphaclone-scraper`)
 
 | Variable | Description |
 |----------|-------------|
-| `PORT` | Set by Railway automatically |
-| `SUPABASE_URL` | Same as `NEXT_PUBLIC_SUPABASE_URL` |
-| `SUPABASE_KEY` | `SUPABASE_SERVICE_ROLE_KEY` |
-| `INTERNAL_API_KEY` | Must match web service |
-| `MCP_SYNC_URL` | `https://<web-host>/api/internal/leads/mcp-sync` |
-| `APOLLO_API_KEY` | Apollo.io |
-| `HUNTER_API_KEY` | Optional |
-| `PROXY_LIST` | Comma-separated proxy URLs (optional) |
-| `WORKER_CONCURRENCY` | `2`–`5` (Chromium instances) |
-| `SCRAPE_DELAY_MIN` | `2` |
-| `SCRAPE_DELAY_MAX` | `10` |
-| `ENABLE_ML_SCORING` | `false` (set `true` for BERT classifier) |
-| `UPSTASH_REDIS_REST_URL` | Optional campaign status cache |
-| `UPSTASH_REDIS_REST_TOKEN` | |
+| `SUPABASE_URL` | Same Supabase URL |
+| `SUPABASE_KEY` | Same service role key |
+| `INTERNAL_API_KEY` | Must match the web service |
+| `MCP_SYNC_URL` | Web service sync endpoint |
+| `APOLLO_API_KEY` | Apollo enrichment |
+| `HUNTER_API_KEY` | Optional enrichment |
+| `WORKER_CONCURRENCY` | Typically `2` to `5` |
+| `ENABLE_ML_SCORING` | Usually `false` |
+| `UPSTASH_REDIS_REST_URL` | Optional cache |
+| `UPSTASH_REDIS_REST_TOKEN` | Optional cache |
 
----
+## Suggested Railway values
 
-## CLI setup (scraper only)
+| Variable | Where | Suggested value |
+|----------|-------|-----------------|
+| `SCRAPER_SERVICE_URL` | Web | `https://<scraper>.up.railway.app` |
+| `MCP_SYNC_URL` | Scraper | `https://alphaclonesystems.com/api/internal/leads/mcp-sync` |
+| `PORT` | Both | Set by Railway |
 
-```bash
-npm i -g @railway.cli
-railway login
-railway link
-
-# Scraper service only
-railway variables set SUPABASE_URL=... --service alphaclone-scraper
-railway variables set SUPABASE_KEY=... --service alphaclone-scraper
-railway variables set INTERNAL_API_KEY=... --service alphaclone-scraper
-railway variables set MCP_SYNC_URL=https://alphaclonesystems.com/api/internal/leads/mcp-sync --service alphaclone-scraper
-
-# Then on Vercel (dashboard or CLI):
-# SCRAPER_SERVICE_URL=https://<scraper>.up.railway.app
-# INTERNAL_API_KEY=<same secret>
-```
-
-## Cron jobs
-
-- **Split Deployment**: All app crons are hosted on Vercel (see `vercel.json`). Only the scraper poll runs on Railway (see `docs/RAILWAY_CRON_JOBS.md`).
-- **Full Deployment**: Web app crons are managed through Railway crons (see `railway.crons.json` for path reference). Scraper poll runs on the scraper service.

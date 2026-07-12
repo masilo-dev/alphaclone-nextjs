@@ -1,4 +1,4 @@
-# alphaclone-scraper only — web app stays on Vercel.
+# Railway service config for alphaclone-scraper.
 # Railway dashboard: set service Root Directory to alphaclone-scraper.
 
 [build]

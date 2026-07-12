@@ -2,7 +2,7 @@ import {
   fetchSerpLeadsViaBrowser,
   hasRemoteBrowserConfigured,
 } from '@/lib/scraper/browserSerpLeads';
-import { googlePlacesService } from '@/services/googlePlacesService';
+import { freePlacesService } from '@/services/freePlacesService';
 
 export interface LeadResult {
   business_name: string;
@@ -95,38 +95,24 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
     }));
 }
 
-function resolveGooglePlacesApiKey(): string | null {
-  return (
-    process.env.GOOGLE_PLACES_API_KEY ||
-    process.env.GOOGLE_MAPS_API_KEY ||
-    process.env.GOOGLE_API_KEY ||
-    process.env.Google_Places_API ||
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-    null
-  );
-}
-
-async function fetchGooglePlaces(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
-  const apiKey = resolveGooglePlacesApiKey();
-  if (!apiKey) throw new Error('Google Places API key not configured');
-
-  const res = await googlePlacesService.searchPlacesForLeads(niche, location || 'United States', apiKey, {
+async function fetchFreePlaces(niche: string, location: string, limit = 20, radiusKm = 40): Promise<LeadResult[]> {
+  const res = await freePlacesService.searchPlacesForLeads(niche, location || 'United States', undefined, {
     radiusKm: Math.min(Math.max(radiusKm, 1), 100),
-    maxResults: Math.min(limit, 20),
+    maxResults: Math.min(limit, 50),
   });
 
-  if (res.error) throw new Error(res.error);
+  if (res.error && res.places.length === 0) throw new Error(res.error);
 
   return res.places.map((p): LeadResult => ({
     business_name: p.businessName,
     website: p.website || '',
-    snippet: p.industry || 'Google Place',
+    snippet: p.industry || 'Business',
     phone: p.phone || '',
     email: '',
     address: p.formattedAddress || '',
     rating: p.rating,
     category: p.industry || '',
-    source: 'google',
+    source: p.source === 'Google Maps Scrape' ? 'browser' : 'osm',
     lat: p.lat,
     lng: p.lng,
     hasContact: false,
@@ -360,7 +346,7 @@ export async function runLeadStep(input: {
     const need = Math.max(0, LEADS_PER_SEARCH - partial.length) + 5;
     
     const [googleRes] = await Promise.allSettled([
-      fetchGooglePlaces(input.niche, input.location, need, input.radiusKm)
+      fetchFreePlaces(input.niche, input.location, need, input.radiusKm)
     ]);
 
     if (googleRes.status === 'fulfilled') {
@@ -369,9 +355,9 @@ export async function runLeadStep(input: {
     } else {
       const msg = googleRes.reason instanceof Error ? googleRes.reason.message : String(googleRes.reason);
       if (msg.toLowerCase().includes('billing') || msg.toLowerCase().includes('credit') || msg.toLowerCase().includes('authorized')) {
-        sourceErrors.google = 'Google Maps Billing Error: Please verify your Google Cloud console billing.';
+        sourceErrors.google = 'Free places fallback billing issue. Verify external provider billing or API limits.';
       } else {
-        sourceErrors.google = 'Google Places unavailable';
+        sourceErrors.google = 'Free places fallback unavailable';
       }
     }
     return {
