@@ -63,14 +63,14 @@ export default function JobsQueueTab() {
         .order('ran_at', { ascending: false })
         .limit(30)
         .then((r: { data: unknown[] | null; error: unknown }) => r)
-        .catch((error) => ({ data: [], error })),
+        .catch((error: unknown) => ({ data: [], error })),
       supabase
         .from('lead_run_log')
         .select('id, campaign_id, market, category, status, errors, created_at')
         .order('created_at', { ascending: false })
         .limit(30)
         .then((r: { data: unknown[] | null; error: unknown }) => r)
-        .catch((error) => ({ data: [], error })),
+        .catch((error: unknown) => ({ data: [], error })),
     ]);
 
     const merged: QueueRow[] = [
