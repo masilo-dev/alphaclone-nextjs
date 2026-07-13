@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 import type { FormField } from '@/types/tenantForms';
 
 export const dynamic = 'force-dynamic';
@@ -25,9 +26,6 @@ function pickValue(data: Record<string, string>, fields: FormField[], keys: stri
 
 export async function POST(req: NextRequest) {
   try {
-    const limited = await rateLimitMiddleware(req, rateLimitConfigs.public.contact);
-    if (limited) return limited;
-
     const body = await req.json();
     const parsed = submitSchema.safeParse(body);
     if (!parsed.success) {
@@ -35,6 +33,10 @@ export async function POST(req: NextRequest) {
     }
 
     const { tenantSlug, formSlug = 'contact', data: rawData, _hp } = parsed.data;
+    const emailCandidate = Object.values(rawData).find((value) => /@/.test(String(value || '')));
+    const rateLimitKey = `form:${tenantSlug}:${String(emailCandidate || req.headers.get('x-forwarded-for') || 'anonymous')}`;
+    const limited = await rateLimitMiddleware(req, rateLimitConfigs.public.contact, rateLimitKey);
+    if (limited) return limited;
 
     if (_hp && String(_hp).trim().length > 0) {
       return NextResponse.json({ success: true, thankYouMessage: 'Thank you!', submissionId: 'ignored' });
@@ -61,6 +63,17 @@ export async function POST(req: NextRequest) {
     const { data: form } = await formQuery.order('is_default', { ascending: false }).limit(1).maybeSingle();
     if (!form) {
       return NextResponse.json({ error: 'Form not found or inactive' }, { status: 404 });
+    }
+
+    if (isTurnstileEnforced()) {
+      const turnstileToken = readTurnstileToken(data);
+      if (!turnstileToken) {
+        return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
+      }
+      const ok = await verifyTurnstileToken(turnstileToken);
+      if (!ok) {
+        return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+      }
     }
 
     const fields = (form.fields || []) as FormField[];

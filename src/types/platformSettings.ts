@@ -48,6 +48,7 @@ export type PlatformEnvStatus = {
   instagram: boolean;
   twitter: boolean;
   zoho: boolean;
+  microsoft365: boolean;
   outlook: boolean;
   gmail: boolean;
   deepseek: boolean;

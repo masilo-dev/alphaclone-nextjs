@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
 import { Button } from '@/components/ui/UIComponents';
 import toast from 'react-hot-toast';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 const PAID_PLANS: SubscriptionPlan[] = ['starter', 'pro', 'enterprise'];
 
@@ -27,6 +28,9 @@ export default function UpgradePage() {
     const router = useRouter();
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileNonce, setTurnstileNonce] = useState(0);
+    const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
     if (tenantLoading || authLoading) {
         return (
@@ -57,6 +61,7 @@ export default function UpgradePage() {
                     plan: selectedPlan,
                     tenantId: currentTenant.id,
                     userId: user.id,
+                    turnstileToken: turnstileToken || undefined,
                 }),
             });
             const data = await response.json();
@@ -68,6 +73,9 @@ export default function UpgradePage() {
         } catch (error) {
             console.error('Upgrade error:', error);
             toast.error('Failed to initiate checkout. Please try again.');
+        } finally {
+            setTurnstileToken('');
+            setTurnstileNonce((value) => value + 1);
             setIsProcessing(false);
         }
     };

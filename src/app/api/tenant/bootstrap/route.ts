@@ -9,6 +9,7 @@ const bodySchema = z
     name: z.string().min(1).max(200).optional(),
     slug: z.string().min(1).max(100).optional(),
     plan: z.string().optional(),
+    referralCode: z.string().min(1).max(100).optional(),
   })
   .optional();
 

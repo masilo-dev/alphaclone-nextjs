@@ -45,7 +45,7 @@ export async function ensureUserProfile(
 export async function bootstrapTenantForUser(
   admin: SupabaseClient,
   user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> },
-  options?: { name?: string; slug?: string; plan?: string }
+  options?: { name?: string; slug?: string; plan?: string; referralCode?: string }
 ): Promise<{ tenantId: string; created: boolean }> {
   await ensureUserProfile(admin, user);
 
@@ -125,6 +125,7 @@ export async function bootstrapTenantForUser(
         name: displayName,
         adminUserId: user.id,
         source: 'bootstrap_api',
+        referralCode: options?.referralCode || null,
       },
     });
   } catch {

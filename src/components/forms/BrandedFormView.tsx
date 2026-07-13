@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Loader2, Send, CheckCircle2 } from 'lucide-react';
 import type { FormField } from '@/types/tenantForms';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 interface BrandedFormViewProps {
   tenant: { name: string; slug: string; logoUrl?: string | null; brandColor: string };
@@ -49,6 +50,9 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
   const [thankYou, setThankYou] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   const onSubmit = async (values: Record<string, string>) => {
     setError(null);
@@ -73,15 +77,20 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
           formSlug: form.slug,
           data,
           _hp,
+          turnstileToken: turnstileToken || undefined,
         }),
       });
       const payload = await res.json();
       if (!res.ok || !payload.success) throw new Error(payload.error || 'Submission failed');
       setThankYou(payload.thankYouMessage || 'Thank you!');
       setDone(true);
+      setTurnstileToken('');
+      setTurnstileNonce((value) => value + 1);
       reset();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
+      setTurnstileToken('');
+      setTurnstileNonce((value) => value + 1);
     }
   };
 
@@ -157,11 +166,21 @@ export default function BrandedFormView({ tenant, form }: BrandedFormViewProps) 
             </div>
           ))}
 
+          {turnstileEnabled && (
+            <TurnstileWidget
+              key={turnstileNonce}
+              className="flex justify-center"
+              onTokenChange={setTurnstileToken}
+              onExpire={() => setTurnstileToken('')}
+              onError={() => setTurnstileToken('')}
+            />
+          )}
+
           {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || (turnstileEnabled && !turnstileToken)}
             className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 transition-transform active:scale-[0.98]"
             style={{ backgroundColor: accent }}
           >

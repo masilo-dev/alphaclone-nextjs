@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 export default function DataRequestForm() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,9 @@ export default function DataRequestForm() {
   const [details, setDetails] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -17,7 +21,7 @@ export default function DataRequestForm() {
       const response = await fetch('/api/legal/data-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, requestType, details }),
+        body: JSON.stringify({ email, requestType, details, turnstileToken: turnstileToken || undefined }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -26,8 +30,12 @@ export default function DataRequestForm() {
       setStatus('Request submitted. We process all requests within 30 days.');
       setEmail('');
       setDetails('');
+      setTurnstileToken('');
+      setTurnstileNonce((value) => value + 1);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Request failed');
+      setTurnstileToken('');
+      setTurnstileNonce((value) => value + 1);
     } finally {
       setLoading(false);
     }
@@ -67,9 +75,18 @@ export default function DataRequestForm() {
           className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 outline-none focus:border-teal-500"
         />
       </div>
+      {turnstileEnabled && (
+        <TurnstileWidget
+          key={turnstileNonce}
+          className="flex justify-center"
+          onTokenChange={setTurnstileToken}
+          onExpire={() => setTurnstileToken('')}
+          onError={() => setTurnstileToken('')}
+        />
+      )}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || (turnstileEnabled && !turnstileToken)}
         className="rounded-lg bg-teal-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-teal-400 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? 'Submitting...' : 'Submit request'}

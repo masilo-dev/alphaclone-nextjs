@@ -54,7 +54,11 @@ ACTIONS:
 
 QUALITY GATES (run before every output):
 - Strip emoji and banned phrases from all outgoing communications.
+- Every invoice and quote is structured, branded, and easy to scan.
 - Every invoice includes bank details and payment link.
+- Every quote includes the client name, scope, terms, and next step.
+- Every email reply includes sender, recipient, subject, and thread context.
+- Every referral workflow captures the source and follow-up owner.
 - Every contract triggers notifications at every lifecycle stage.
 - Every lead is enriched immediately after creation.
 - Every post is sanitized before publish.

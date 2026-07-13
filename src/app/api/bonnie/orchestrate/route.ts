@@ -4,9 +4,7 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-
-type SubagentResult = {
+    type SubagentResult = {
   name: string;
   role: string;
   result: string;
@@ -48,45 +46,25 @@ export async function POST(req: NextRequest) {
             let success = false;
             let executionMode: SubagentResult['execution_mode'] = 'unavailable';
 
-            if (ANTHROPIC_API_KEY) {
-              try {
-                const res = await fetch('https://api.anthropic.com/v1/messages', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': ANTHROPIC_API_KEY,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-beta': 'managed-agents-2026-04-01',
-                  },
-                  body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 512,
-                    system: `You are ${subagent.name}, role: ${subagent.role}. Return results as JSON with keys: outcome, details, next_steps.`,
-                    messages: [
-                      {
-                        role: 'user',
-                        content: `Main task: ${task}\n\nYour instructions: ${subagent.instructions}`,
-                      },
-                    ],
-                    metadata: { session_type: 'multiagent' },
-                  }),
-                });
-                if (res.ok) {
-                  const data = await res.json();
-                  result = data.content?.[0]?.text || '';
-                  success = true;
-                  executionMode = 'live';
-                } else {
-                  result = `API error: ${res.status}`;
-                }
-              } catch (e: unknown) {
-                result = `Subagent error: ${e instanceof Error ? e.message : String(e)}`;
-              }
-            } else {
+            try {
+              const { routeAIRequest } = await import('@/services/aiRouter');
+              const aiResponse = await routeAIRequest({
+                prompt: `Main task: ${task}\n\nYour instructions: ${subagent.instructions}`,
+                systemPrompt: `You are ${subagent.name}, role: ${subagent.role}. Return results as JSON with keys: outcome, details, next_steps.`,
+                model: 'deepseek-chat',
+                maxTokens: 512,
+              });
+              result = aiResponse.content || '';
+              success = true;
+              executionMode = 'live';
+            } catch (e: unknown) {
+              result = `Subagent error: ${e instanceof Error ? e.message : String(e)}`;
+            }
+            if (!success) {
               result = JSON.stringify({
                 outcome: 'not_run',
-                details: `${subagent.name} was not executed because ANTHROPIC_API_KEY is not configured.`,
-                next_steps: ['Configure ANTHROPIC_API_KEY or route this task through a connected live agent provider.'],
+                details: `${subagent.name} could not execute with the configured AI router.`,
+                next_steps: ['Check DeepSeek, OpenRouter, or other AI provider availability.'],
               });
               success = false;
             }

@@ -19,6 +19,7 @@ import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiV
 import { motion, AnimatePresence } from 'framer-motion';
 import EmptyState from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
+import { buildBusinessSocialPrompt } from '@/lib/ai/businessContext';
 
 interface SocialPost {
     id: string;
@@ -488,8 +489,14 @@ export default function SocialCommandCenter() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write an engaging social media post caption about: "${aiPromptText}". Return only the plain caption text. Keep it under 250 characters.`,
-                    systemPrompt: 'You are an expert social media manager. Return ONLY the copy text.',
+                    prompt: buildBusinessSocialPrompt({
+                        brandName: currentTenant?.name || 'the business',
+                        platform: activePlatform,
+                        topic: aiPromptText,
+                        goal: 'Create a post that feels native to the brand and useful to customers.',
+                        tone: 'clear, confident, and human',
+                    }),
+                    systemPrompt: 'You are an expert social media manager. Return only the caption text and keep it aligned to the client brand.',
                 })
             });
             const data = await res.json();

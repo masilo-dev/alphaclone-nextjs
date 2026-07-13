@@ -22,7 +22,7 @@ export const aiEnhancementService = {
         try {
             const prompt = `Based on this project description: "${description}", suggest 5 professional, concise project names. Return only a JSON array of strings, no markdown formatting.`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { suggestions: [], error: 'Failed to generate suggestions' };
             }
@@ -51,7 +51,7 @@ export const aiEnhancementService = {
         try {
             const prompt = `Generate a professional, detailed project description for a ${projectType} project based on this brief: "${brief}". Make it comprehensive, clear, and suitable for client presentation.`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { description: '', error: 'Failed to generate description' };
             }
@@ -77,7 +77,7 @@ export const aiEnhancementService = {
 
             const prompt = `Based on this conversation history:\n${history}\n\nAnd this latest message: "${message.text}"\n\nGenerate 3 professional, helpful reply suggestions. Return only a JSON array of strings.`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { suggestions: [], error: 'Failed to generate suggestions' };
             }
@@ -128,7 +128,7 @@ export const aiEnhancementService = {
                 prompt += `\n\nContext: ${JSON.stringify(config.context, null, 2)}`;
             }
 
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { content: '', error: 'Failed to generate content' };
             }
@@ -149,7 +149,7 @@ export const aiEnhancementService = {
         try {
             const prompt = `Analyze this project and provide actionable suggestions:\n\nName: ${project.name}\nDescription: ${project.description || 'N/A'}\nStatus: ${project.status}\nProgress: ${project.progress || 0}%\nCategory: ${project.category}\n\nProvide 3-5 specific, actionable suggestions to improve this project. Return JSON array with objects: {type: string, content: string, confidence: number}`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { suggestions: [], error: 'Failed to analyze project' };
             }
@@ -179,7 +179,7 @@ export const aiEnhancementService = {
         try {
             const prompt = `Generate ${maxTags} relevant tags for this content: "${content.substring(0, 500)}". Return only a JSON array of tag strings, no markdown formatting.`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { tags: [], error: 'Failed to generate tags' };
             }
@@ -209,7 +209,7 @@ export const aiEnhancementService = {
         try {
             const prompt = `Summarize the following content in ${maxLength} words or less:\n\n${content}`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { summary: '', error: 'Failed to generate summary' };
             }
@@ -230,7 +230,7 @@ export const aiEnhancementService = {
         try {
             const prompt = `Analyze this data and extract 5 key insights:\n\n${JSON.stringify(data, null, 2)}\n\nReturn only a JSON array of insight strings.`;
             
-            const { text, error } = await generateText(prompt, 2048);
+            const { text, error } = await generateText(prompt, 2048, 'deepseek-chat');
             if (error || !text) {
                 return { insights: [], error: 'Failed to extract insights' };
             }
@@ -253,4 +253,3 @@ export const aiEnhancementService = {
         }
     },
 };
-

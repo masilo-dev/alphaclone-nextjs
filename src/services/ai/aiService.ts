@@ -39,7 +39,7 @@ class AIService {
             systemPrompt: request.systemPrompt,
             maxTokens: request.maxTokens,
             temperature: request.temperature,
-            model: request.model || (request.provider === 'anthropic' ? 'claude-sonnet-4-20250514' : undefined)
+            model: request.model || 'deepseek-chat'
         });
 
 
@@ -94,8 +94,7 @@ Include all standard legal clauses and make it ready to sign.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a legal contract expert. Generate professional, legally sound contracts.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
             maxTokens: 4000,
         });
 
@@ -125,8 +124,7 @@ Return as JSON with keys: summary, keyPoints, entities, sentiment`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a document analysis expert. Extract structured information from documents.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
             temperature: 0.3,
         });
 
@@ -163,8 +161,7 @@ Return as JSON with keys: subject, body`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a professional email writer. Draft clear, concise, and effective emails.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
             temperature: 0.7,
         });
 
@@ -199,8 +196,7 @@ Make it clear, comprehensive, and action-oriented.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a project management expert. Write clear project descriptions.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
         });
 
         return response.content;
@@ -230,8 +226,7 @@ Return as JSON with keys: summary, decisions, actionItems, nextSteps`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a meeting facilitator. Extract structured information from meeting notes.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
             temperature: 0.3,
         });
 
@@ -263,8 +258,7 @@ Return as JSON with the requested fields.`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a data extraction expert. Extract structured data accurately.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
             temperature: 0.2,
         });
 
@@ -286,8 +280,7 @@ ${text}`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a professional translator. Provide accurate translations.',
-            provider: 'openai',
-            model: 'gpt-4o',
+            provider: 'auto',
         });
 
         return response.content;
@@ -304,8 +297,7 @@ ${text}`;
         const response = await aiService.complete({
             prompt,
             systemPrompt: 'You are a helpful business assistant. Provide clear, actionable advice.',
-            provider: 'anthropic',
-            model: 'claude-sonnet-4-6-20260217',
+            provider: 'auto',
         });
 
         return response.content;

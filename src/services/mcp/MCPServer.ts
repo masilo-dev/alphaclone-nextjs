@@ -108,7 +108,7 @@ function isUuidString(value: unknown): value is string {
 async function generateContractDraftText(contractType: string, clientName: string, keyTerms?: string) {
   const response = await routeAIRequest({
     prompt: `Draft a professional ${contractType} for a client named "${clientName}". Key terms and scope: ${keyTerms || 'Standard professional terms'}. Write a complete, legally-structured contract with all standard sections (parties, recitals, terms, obligations, payment, termination, governing law). Use plain, professional language.`,
-    model: 'claude-sonnet-4-6-20260217',
+    model: 'deepseek-reasoner',
     maxTokens: 2048,
   });
 
@@ -2041,15 +2041,19 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const owner_id = this.requireProfileUser(a);
-          const { business_name, contact_name, email, phone, industry, location, source, notes, linkedin_url, decision_maker_name } = a;
+          const { business_name, contact_name, email, phone, industry, location, source, source_id, source_url, notes, linkedin_url, decision_maker_name } = a;
           const resolvedSource = inferMcpLeadSource(source, this.ctx);
           const primaryName = (business_name || contact_name || '').trim();
           if (!primaryName) throw new Error('create_lead requires contact_name or business_name');
+          const traceSourceId = typeof source_id === 'string' ? source_id.trim() : '';
+          const traceSourceUrl = typeof source_url === 'string' ? source_url.trim() : '';
 
           // Build enriched notes if extra contact intel is provided
           const enrichmentLines: string[] = [];
           if (decision_maker_name) enrichmentLines.push(`Decision Maker: ${decision_maker_name}`);
           if (linkedin_url) enrichmentLines.push(`LinkedIn: ${linkedin_url}`);
+          if (traceSourceId) enrichmentLines.push(`Source ID: ${traceSourceId}`);
+          if (traceSourceUrl) enrichmentLines.push(`Source URL: ${traceSourceUrl}`);
           const enrichedNotes = [notes, ...enrichmentLines].filter(Boolean).join('\n') || null;
 
           // Deduplication check
@@ -2089,6 +2093,10 @@ class AlphaCloneMCPServer {
                 stage: 'lead',
                 source: resolvedSource,
                 notes: enrichedNotes,
+                metadata: {
+                  source_id: traceSourceId || null,
+                  source_url: traceSourceUrl || null,
+                },
                 linkedin_url: linkedin_url || null,
                 decision_maker_name: decision_maker_name || null,
               }))
@@ -2110,6 +2118,10 @@ class AlphaCloneMCPServer {
                   location: location || null,
                   source: resolvedSource,
                   notes: notes || null,
+                  metadata: {
+                    source_id: traceSourceId || null,
+                    source_url: traceSourceUrl || null,
+                  },
                 })
                 .select('id, business_name, email, status')
                 .single();

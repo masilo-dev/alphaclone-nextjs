@@ -3,7 +3,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { isTurnstileEnforced, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: NextRequest) {
     const authClient = await createSupabaseServerClient();
@@ -11,7 +11,9 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const { plan, tenantId, turnstileToken } = await req.json();
+        const body = await req.json();
+        const { plan, tenantId } = body;
+        const turnstileToken = readTurnstileToken(body);
         const userId = user.id;
 
         if (!plan || !tenantId) {

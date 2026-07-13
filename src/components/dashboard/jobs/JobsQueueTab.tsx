@@ -21,6 +21,11 @@ type QueueRow = {
   created_at: string;
 };
 
+function isMissingTableError(error: unknown): boolean {
+  const code = (error as { code?: string })?.code;
+  return code === '42P01' || code === 'PGRST205';
+}
+
 export default function JobsQueueTab() {
   const { currentTenant } = useTenant();
   const [rows, setRows] = useState<QueueRow[]>([]);
@@ -31,7 +36,7 @@ export default function JobsQueueTab() {
     setLoading(true);
     const tenantId = currentTenant.id;
 
-    const [eventsRes, runsRes, scraperRes] = await Promise.all([
+    const [eventsRes, runsRes, scraperRes, cronRes, leadRunsRes] = await Promise.all([
       supabase
         .from('business_automation_events')
         .select('id, event_type, processed, created_at, payload')
@@ -52,6 +57,20 @@ export default function JobsQueueTab() {
         .limit(20)
         .then((r: { data: unknown[] | null; error: unknown }) => r)
         .catch(() => ({ data: [], error: null })),
+      supabase
+        .from('automation_cron_logs')
+        .select('id, trigger_type, status, error_message, ran_at, payload')
+        .order('ran_at', { ascending: false })
+        .limit(30)
+        .then((r: { data: unknown[] | null; error: unknown }) => r)
+        .catch((error) => ({ data: [], error })),
+      supabase
+        .from('lead_run_log')
+        .select('id, campaign_id, market, category, status, errors, created_at')
+        .order('created_at', { ascending: false })
+        .limit(30)
+        .then((r: { data: unknown[] | null; error: unknown }) => r)
+        .catch((error) => ({ data: [], error })),
     ]);
 
     const merged: QueueRow[] = [
@@ -76,6 +95,24 @@ export default function JobsQueueTab() {
         detail: j.error_message || 'Lead search',
         created_at: j.created_at,
       })),
+      ...(isMissingTableError((cronRes as { error?: unknown }).error)
+        ? []
+        : ((cronRes as { data: { id: string; trigger_type: string; status: string; error_message: string | null; ran_at: string }[] | null }).data || []).map((c) => ({
+            id: c.id,
+            kind: 'cron_job',
+            status: c.status || 'unknown',
+            detail: c.error_message || c.trigger_type || 'cron',
+            created_at: c.ran_at,
+          }))),
+      ...(isMissingTableError((leadRunsRes as { error?: unknown }).error)
+        ? []
+        : ((leadRunsRes as { data: { id: string; market: string | null; category: string | null; status: string; created_at: string }[] | null }).data || []).map((r) => ({
+            id: r.id,
+            kind: 'lead_run',
+            status: r.status || 'unknown',
+            detail: [r.market, r.category].filter(Boolean).join(' · ') || 'lead run',
+            created_at: r.created_at,
+          }))),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     setRows(merged.slice(0, 50));

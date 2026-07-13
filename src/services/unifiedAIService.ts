@@ -290,7 +290,7 @@ STRICT FORMATTING RULES:
 - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.
 - No bullet point dashes. Write in natural paragraphs.`;
 
-    const { text } = await generateText(prompt, 600, 'claude-sonnet-4-6-20260217');
+    const { text } = await generateText(prompt, 600, 'deepseek-chat');
     return text || "Personalized draft generation failed.";
 };
 
@@ -312,7 +312,7 @@ export const generateEmailReply = async (emailContent: string, context?: string)
     - Use simple paragraphs separated by line breaks.
     - Do not include subject lines or signatures.`;
 
-    const { text } = await generateText(prompt, 1000);
+    const { text } = await generateText(prompt, 1000, 'deepseek-chat');
     return text || "AI reply generation failed.";
 };
 
@@ -343,7 +343,7 @@ export const generateEmailDraft = async (instructions: string, recipientInfo?: s
     - Do NOT include the subject line in the body.
     - Do NOT include any placeholders like [Your Name]. Leave space for a signature but don't add the bracketed placeholders.`;
 
-    const { text } = await generateText(prompt, 1200);
+    const { text } = await generateText(prompt, 1200, 'deepseek-chat');
     return text || "AI draft generation failed.";
 };
 
@@ -372,7 +372,7 @@ export const generateMessengerReply = async (messageContent: string, context?: s
     - Write in plain text only. No markdown.
     - Do NOT use asterisks (**), hashtags (#), underscores (_), or any special formatting symbols.`;
 
-    const { text } = await generateText(prompt, 600);
+    const { text } = await generateText(prompt, 600, 'deepseek-chat');
     return text || "AI reply generation failed.";
 };
 
@@ -403,7 +403,7 @@ export const enrichLeadData = async (lead: any): Promise<string> => {
     - Use standard numbering (1., 2., 3.) for lists, not dashes or asterisks.
     - Use clear paragraph breaks for structure.`;
 
-    const { text } = await generateText(prompt, 800);
+    const { text } = await generateText(prompt, 800, 'deepseek-chat');
     return text || "Intelligence gathering failed. Please try again later.";
 };
 
@@ -520,7 +520,7 @@ export const optimizeSalesMessage = async (originalMessage: string, context?: st
     - No markdown formatting within the message body itself (plain text).
     - No asterisks or special symbols.`;
 
-    const { text } = await generateText(prompt, 1200);
+    const { text } = await generateText(prompt, 1200, 'deepseek-chat');
     return text || "Optimization failed.";
 };
 

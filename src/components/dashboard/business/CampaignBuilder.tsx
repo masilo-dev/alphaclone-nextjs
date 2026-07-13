@@ -771,14 +771,9 @@ Request: ${userMsg}`,
         if (!form.subject) { toast.error('Enter a subject line first'); return; }
         setAiGenerating(true);
         try {
-            // Try DeepSeek first if API key is configured
-            const deepSeekKey = typeof process !== 'undefined' && 
-                (process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY);
-
-            if (deepSeekKey) {
-                try {
-                    const { callDeepSeek } = await import('@/lib/ai/deepseek');
-                    const prompt = `You are the best email copywriter alive — warm, human, and impossible to ignore. Write a high-converting marketing email body.
+            try {
+                const { callDeepSeek } = await import('@/lib/ai/deepseek');
+                const prompt = `You are the best email copywriter alive — warm, human, and impossible to ignore. Write a high-converting marketing email body.
 Campaign goal: ${campaignGoal || 'Keep it simple and useful.'}
 Subject: "${form.subject}"
 ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}
@@ -790,20 +785,19 @@ Voice & rules:
 - Be specific and benefit-driven; make the reader feel something.
 - Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`;
 
-                    const text = await callDeepSeek(prompt, {
-                        model: 'deepseek-chat',
-                        maxTokens: 2048,
-                        temperature: 0.7,
-                    });
+                const text = await callDeepSeek(prompt, {
+                    model: 'deepseek-chat',
+                    maxTokens: 2048,
+                    temperature: 0.7,
+                });
 
-                    if (text) {
-                        setForm(f => ({ ...f, bodyHtml: text }));
-                        setAiGenerating(false);
-                        return;
-                    }
-                } catch (deepSeekError) {
-                    console.warn('DeepSeek generation failed, falling back:', deepSeekError);
+                if (text) {
+                    setForm(f => ({ ...f, bodyHtml: text }));
+                    setAiGenerating(false);
+                    return;
                 }
+            } catch (deepSeekError) {
+                console.warn('DeepSeek generation failed, falling back:', deepSeekError);
             }
 
             const response = await fetch('/api/ai/generate', {

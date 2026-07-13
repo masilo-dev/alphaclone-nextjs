@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -22,8 +23,11 @@ const ContactPage: React.FC = () => {
     const router = useRouter();
     const [, setIsLoginOpen] = React.useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileNonce, setTurnstileNonce] = useState(0);
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [validationError, setValidationError] = useState<string>('');
+    const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,6 +56,7 @@ const ContactPage: React.FC = () => {
                 email: formData.email,
                 subject: formData.subject || 'General Inquiry',
                 message: formData.message,
+                turnstileToken: turnstileToken || undefined,
             }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -59,10 +64,14 @@ const ContactPage: React.FC = () => {
         if (response.ok && payload?.success) {
             setStatus('success');
             setFormData({ name: '', email: '', subject: '', message: '' });
+            setTurnstileToken('');
+            setTurnstileNonce((value) => value + 1);
             setTimeout(() => setStatus('idle'), 5000);
         } else {
             setStatus('error');
             setValidationError(payload?.error || 'Failed to send message');
+            setTurnstileToken('');
+            setTurnstileNonce((value) => value + 1);
             setTimeout(() => { setStatus('idle'); setValidationError(''); }, 5000);
         }
     };
@@ -208,7 +217,17 @@ const ContactPage: React.FC = () => {
                                     />
                                 </div>
 
+                                {turnstileEnabled && (
+                                    <TurnstileWidget
+                                        key={turnstileNonce}
+                                        className="flex justify-center"
+                                        onTokenChange={setTurnstileToken}
+                                        onExpire={() => setTurnstileToken('')}
+                                        onError={() => setTurnstileToken('')}
+                                    />
+                                )}
 
+                                
                                 {status === 'success' && (
                                     <div className="flex items-center gap-2 text-green-400 bg-green-400/10 p-4 rounded-lg">
                                         <CheckCircle2 className="w-5 h-5" />
@@ -223,7 +242,7 @@ const ContactPage: React.FC = () => {
                                 )}
                                 <Button
                                     type="submit"
-                                    disabled={status === 'sending'}
+                                    disabled={status === 'sending' || (turnstileEnabled && !turnstileToken)}
                                     isLoading={status === 'sending'}
                                     size="lg"
                                     className="w-full font-marketing-heading uppercase tracking-tight button-fill-hover bg-teal-500 text-slate-950"

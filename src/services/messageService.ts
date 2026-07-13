@@ -4,6 +4,8 @@ import { messageSchema } from '../schemas/validation';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
 import { linkValidator } from '../utils/linkValidator';
+import { routeAIRequest } from '@/services/aiRouter';
+import { buildBusinessReplyPrompt } from '@/lib/ai/businessContext';
 
 function isExpectedRealtimeCloseError(error: unknown): boolean {
     if (!error) return false;
@@ -761,19 +763,22 @@ export const messageService = {
         senderName: string
     ): Promise<{ autoReply: ChatMessage | null; error: string | null }> {
         try {
-            // Import dynamically
-            const { generateText } = await import('./unifiedAIService');
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: senderName },
+                recipient: { name: 'AlphaClone team' },
+                message: message.text,
+                channel: 'chat',
+                context: 'Draft a concise customer-facing reply from the business. Keep the tone professional, helpful, and specific to the message content.',
+            });
 
-            // 1. Generate text
-            const prompt = `You are an AI assistant for a professional digital agency.
-            A client named ${senderName} sent this message: "${message.text}".
-            Draft a polite, professional, and concise reply.
-            If the message is a greeting, reply warmly.
-            If it's a specific question, acknowledge it and say the team will review it.
-            Keep it under 3 sentences.`;
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are an AI assistant for a professional digital agency. Keep replies short, helpful, and human.',
+                maxTokens: 256,
+                temperature: 0.4,
+            });
 
-            const { text: replyText } = await generateText(prompt, 256, 'claude-sonnet-4-5-20250929');
-
+            const replyText = response.content.trim();
             if (!replyText) return { autoReply: null, error: 'Failed to generate reply' };
 
             // 2. Send the message as 'model' (AI Agent)
@@ -803,16 +808,21 @@ export const messageService = {
         senderName: string
     ): Promise<{ reply: string | null; error: string | null }> {
         try {
-            // Import dynamically to avoid circular dependencies if any
-            const { generateText } = await import('./unifiedAIService');
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: senderName },
+                recipient: { name: 'AlphaClone team' },
+                message: incomingText,
+                channel: 'chat',
+                context: 'Draft the reply as a short, polished business response. Keep it under 3 sentences unless more detail is required.',
+            });
 
-            const prompt = `You are an AI assistant for a professional digital agency.
-            A client named ${senderName} sent this message: "${incomingText}".
-            Draft a polite, professional, and concise reply. 
-            Keep it under 3 sentences.`;
-
-            const { text: reply } = await generateText(prompt, 256, 'claude-sonnet-4-5-20250929');
-            return { reply, error: null };
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are an AI assistant for a professional digital agency. Keep replies short, helpful, and human.',
+                maxTokens: 256,
+                temperature: 0.4,
+            });
+            return { reply: response.content.trim() || null, error: null };
         } catch (err) {
             return { reply: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }

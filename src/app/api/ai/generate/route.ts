@@ -10,6 +10,7 @@ import {
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
 import { routeAIRequest, streamAIRequest } from '@/services/aiRouter';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
@@ -51,6 +52,9 @@ export async function POST(req: Request) {
             }
             tenantId = ctx.tenantId;
             plan = ctx.plan;
+
+            const limited = await rateLimitMiddleware(req as any, rateLimitConfigs.api.heavy, `ai-generate:${tenantId}:${user.id}`);
+            if (limited) return limited;
 
             const units = unitsForTextGeneration(maxTokens);
             const blocked = await consumeAiUnitsOr429(admin, tenantId, plan, units);

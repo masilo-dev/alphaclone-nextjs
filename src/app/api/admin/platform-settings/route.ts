@@ -24,7 +24,14 @@ function buildEnvStatus(): PlatformEnvStatus {
     instagram: !!(process.env.INSTAGRAM_ACCESS_TOKEN),
     twitter: !!(process.env.TWITTER_API_KEY && process.env.TWITTER_API_SECRET),
     zoho: !!(process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET),
-    outlook: !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET),
+    microsoft365: !!(
+      (ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID) &&
+      (ENV.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET)
+    ),
+    outlook: !!(
+      (ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID) &&
+      (ENV.AZURE_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET)
+    ),
     gmail: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     deepseek: !!process.env.DEEPSEEK_API_KEY,
   };

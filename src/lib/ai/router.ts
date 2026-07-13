@@ -23,7 +23,8 @@ export async function callClaude(prompt: string, model: string, systemPrompt?: s
  * Uses DeepSeek for cost-sensitive tasks and Claude for complex/creative tasks.
  */
 export async function callAI(task: AITask, prompt: string, systemPrompt?: string): Promise<string> {
-    if (process.env.DEEPSEEK_API_KEY) {
+    const prefersDeepSeek = task === 'summarize' || task === 'enrich' || task === 'generate' || task === 'reason';
+    if (prefersDeepSeek) {
         try {
             const model: DeepSeekModel = task === 'reason' || task === 'generate' ? 'deepseek-reasoner' : 'deepseek-chat';
             return await callDeepSeek(prompt, { model, systemPrompt });
@@ -36,7 +37,7 @@ export async function callAI(task: AITask, prompt: string, systemPrompt?: string
         case 'summarize':
         case 'enrich':
             // DeepSeek is cheap and fast — ideal for high-volume tasks
-            return callDeepSeek(prompt, { systemPrompt });
+            return callClaude(prompt, 'claude-sonnet-4-20250514', systemPrompt);
 
         case 'draft':
             // Claude Sonnet is balanced for general drafting
@@ -51,4 +52,3 @@ export async function callAI(task: AITask, prompt: string, systemPrompt?: string
             return callClaude(prompt, 'claude-sonnet-4-20250514', systemPrompt);
     }
 }
-

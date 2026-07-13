@@ -16,6 +16,7 @@ export type LeadSearchCriteria = {
 };
 
 function mapPlaceToLead(place: {
+  placeId?: string;
   businessName: string;
   phone: string;
   website: string;
@@ -33,6 +34,8 @@ function mapPlaceToLead(place: {
     rating: place.rating,
     category: place.industry,
     source: place.source,
+    source_id: place.placeId || `${place.source}:${place.businessName}`.toLowerCase().replace(/\s+/g, '-'),
+    source_url: place.website || '',
   };
 }
 
@@ -114,7 +117,7 @@ export async function bonnieFindAndQualifyLeads(
         industry: niche,
         source: 'bonnie_find_leads',
         stage: lead.qualification.tier === 'hot' ? 'qualified' : 'lead',
-        metadata: { qualification: lead.qualification },
+        metadata: { qualification: lead.qualification, source_id: lead.source_id, source_url: lead.source_url },
       });
       if (!error) savedToCrm += 1;
     }

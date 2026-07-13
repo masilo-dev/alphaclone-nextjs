@@ -10,6 +10,7 @@ import {
 } from '@/lib/scraper/nicheSearchAdvisor';
 import {
   fallbackLocalSearch,
+  logLeadRun,
   scraperRunAccepted,
   saveLeadsToCrm,
   startLeadOutreachAutomation,
@@ -58,6 +59,17 @@ async function createAndRunCampaign(
     throw new Error(error?.message || 'Failed to create campaign');
   }
 
+  await logLeadRun({
+    tenantId,
+    campaignId: campaign.id,
+    market: formatSearchLocation(intent),
+    category: formatSearchNiche(intent),
+    status: 'running',
+    sourceCount: 0,
+    enrichedCount: 0,
+    createdCount: 0,
+  });
+
   let scraperStarted = false;
   try {
     const scraperRes = await callScraperService('/api/scraper/campaign/run', {
@@ -84,6 +96,16 @@ async function createAndRunCampaign(
   }
 
   const completed = fallbackCount > 0 && !scraperStarted;
+  await logLeadRun({
+    tenantId,
+    campaignId: campaign.id,
+    market: formatSearchLocation(intent),
+    category: formatSearchNiche(intent),
+    status: completed ? 'completed' : 'running',
+    sourceCount: fallbackCount,
+    enrichedCount: fallbackCount,
+    createdCount: fallbackCount,
+  });
   await supabase.from('lead_campaign_runs').insert({
     campaign_id: campaign.id,
     tenant_id: tenantId,

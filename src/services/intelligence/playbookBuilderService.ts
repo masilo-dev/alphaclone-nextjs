@@ -174,7 +174,7 @@ class PlaybookBuilderService {
       if (step.action_type === 'draft_outreach') {
         // Trigger specialized SDR agent to draft personalized email
         const userPrompt = `Draft an outreach email body for entity: ${JSON.stringify(entity)}`;
-        const { text } = await generateText(userPrompt, 800, 'claude-sonnet-4-6-20260217', tenantId);
+        const { text } = await generateText(userPrompt, 800, 'deepseek-chat', tenantId);
 
         if (text) {
           // Store draft in approvals table for the user

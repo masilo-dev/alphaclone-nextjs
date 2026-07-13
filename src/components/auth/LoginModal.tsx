@@ -84,10 +84,15 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
           return;
         }
 
+        const referralCode = typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('ref')?.trim() || undefined
+          : undefined;
+
         const { authService } = await import('../../services/authService');
         const role = 'tenant_admin';
         const { user, error: signUpError, needsEmailConfirmation } = await authService.signUp(email, password, name, role, {
           businessName,
+          referralCode,
         });
 
         if (signUpError) {
@@ -314,4 +319,3 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin }) => 
 };
 
 export default LoginModal;
-

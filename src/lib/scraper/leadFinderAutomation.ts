@@ -23,6 +23,41 @@ function formatSearchLocation(intent: ParsedLeadIntent): string {
   return 'United States';
 }
 
+function normalizeTraceValue(value: unknown): string {
+  return String(value || '').trim();
+}
+
+export async function logLeadRun(input: {
+  tenantId: string;
+  campaignId: string;
+  market: string;
+  category: string;
+  status: 'running' | 'completed' | 'failed';
+  sourceCount: number;
+  enrichedCount: number;
+  createdCount: number;
+  errors?: Array<{ stage: string; message: string }>;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const payload = {
+    tenant_id: input.tenantId,
+    campaign_id: input.campaignId,
+    market: input.market,
+    category: input.category,
+    status: input.status,
+    source_count: input.sourceCount,
+    enriched_count: input.enrichedCount,
+    created_count: input.createdCount,
+    errors: input.errors || [],
+    created_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from('lead_run_log').insert(payload);
+  if (error) {
+    console.warn('[lead_run_log] insert failed:', error.message);
+  }
+}
+
 export async function scraperRunAccepted(res: Response): Promise<boolean> {
   if (!res.ok) return false;
   try {
@@ -69,6 +104,8 @@ export async function fallbackLocalSearch(
       phone: place?.phone,
       company_website: place?.website,
       industry: niche,
+      source_id: normalizeTraceValue(place?.placeId || `${place?.source || 'directory'}:${place?.businessName}`),
+      source_url: normalizeTraceValue(place?.website),
       source: 'directory',
       score: place?.phone || place?.website ? 55 : 40,
       grade: 'C',
@@ -79,6 +116,16 @@ export async function fallbackLocalSearch(
 
   const { error } = await supabase.from('scraper_leads').insert(rows);
   if (error) throw error;
+  await logLeadRun({
+    tenantId,
+    campaignId,
+    market: location,
+    category: niche,
+    status: 'completed',
+    sourceCount: places.length,
+    enrichedCount: rows.length,
+    createdCount: rows.length,
+  });
   return rows.length;
 }
 
@@ -90,18 +137,25 @@ export async function saveLeadsToCrm(
   const created: Array<{ scraper_lead_id?: string; crm_lead_id?: string }> = [];
 
   for (const lead of leads) {
+    const leadData = lead as Record<string, any>;
+    const sourceId = normalizeTraceValue(leadData.source_id || leadData.sourceId);
+    if (!sourceId) {
+      throw new Error(`Lead "${String(leadData.name || leadData.company || 'unknown')}" is missing source_id`);
+    }
     const result = await executeSingleBonnieTool({
       tenantId,
       userId,
       tool: 'create_lead',
       args: {
-        contact_name: lead.name || lead.company,
-        email: lead.email,
-        phone: lead.phone,
-        business_name: lead.company,
-        industry: lead.industry,
-        source: lead.source || 'lead_finder_chat',
-        notes: `Score: ${lead.score ?? 'N/A'}, Grade: ${lead.grade ?? 'N/A'}`,
+        contact_name: leadData.name || leadData.company,
+        email: leadData.email,
+        phone: leadData.phone,
+        business_name: leadData.company,
+        industry: leadData.industry,
+        source: leadData.source || 'lead_finder_chat',
+        source_id: sourceId,
+        source_url: normalizeTraceValue(leadData.source_url || leadData.website || leadData.company_website),
+        notes: `Score: ${leadData.score ?? 'N/A'}, Grade: ${leadData.grade ?? 'N/A'}\nSource ID: ${sourceId}\nSource URL: ${normalizeTraceValue(leadData.source_url || leadData.website || leadData.company_website)}`,
       },
       skipPolicy: true,
       policySource: 'mcp',
@@ -118,12 +172,12 @@ export async function saveLeadsToCrm(
       }
     }
 
-    if (lead.id && crmLeadId) {
+    if (leadData.id && crmLeadId) {
       const supabase = createSupabaseAdminClient();
       await supabase
         .from('scraper_leads')
         .update({ crm_lead_id: crmLeadId, status: 'synced' })
-        .eq('id', lead.id)
+        .eq('id', leadData.id)
         .eq('tenant_id', tenantId);
 
       await emitBusinessEvent(tenantId, 'lead_created', {
@@ -132,7 +186,7 @@ export async function saveLeadsToCrm(
       });
     }
 
-    created.push({ scraper_lead_id: String(lead.id || ''), crm_lead_id: crmLeadId });
+    created.push({ scraper_lead_id: String(leadData.id || ''), crm_lead_id: crmLeadId });
   }
 
   return created;

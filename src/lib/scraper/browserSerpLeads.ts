@@ -4,6 +4,8 @@ export interface BrowserSerpLeadRow {
   business_name: string;
   website: string;
   snippet: string;
+  source_id: string;
+  source_url?: string;
   phone?: string;
   email?: string;
   address?: string;
@@ -120,6 +122,8 @@ export async function fetchSerpLeadsViaBrowser(
           business_name: name,
           website: website || row.cite || '',
           snippet: row.caption || row.body.slice(0, 200),
+          source_id: `browser:${encodeURIComponent((website || row.cite || name).toLowerCase())}`,
+          source_url: website || row.link || row.cite || '',
           phone,
           email,
           source: 'browser',

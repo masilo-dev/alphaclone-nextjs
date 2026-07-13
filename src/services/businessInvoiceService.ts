@@ -7,6 +7,25 @@ import { chartOfAccountsService } from './accounting/chartOfAccountsService';
 import { activityService } from './activityService';
 import { quotaService } from './quotaService';
 
+function drawWrappedText(
+    doc: any,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    options: { align?: 'left' | 'center' | 'right'; fontSize?: number; maxLines?: number } = {}
+): number {
+    const lines = doc.splitTextToSize(String(text || '').trim(), maxWidth);
+    const safeLines = Array.isArray(lines) ? lines : [String(lines || '')];
+    const trimmedLines = options.maxLines ? safeLines.slice(0, options.maxLines) : safeLines;
+    const displayLines = trimmedLines.length ? trimmedLines : [''];
+    if (options.fontSize) {
+        doc.setFontSize(options.fontSize);
+    }
+    doc.text(displayLines, x, y, { align: options.align || 'left' });
+    return displayLines.length;
+}
+
 export interface BusinessInvoice {
     id: string;
     tenantId: string;
@@ -807,7 +826,7 @@ export const businessInvoiceService = {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(20);
                 doc.setTextColor(colors.white);
-                doc.text(senderName, margin + 28, 22);
+                drawWrappedText(doc, senderName, margin + 28, 18, 80, { fontSize: 20, maxLines: 2 });
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
@@ -819,13 +838,13 @@ export const businessInvoiceService = {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(24);
                 doc.setTextColor(colors.white);
-                doc.text(senderName, margin, 25);
+                drawWrappedText(doc, senderName, margin, 21, 90, { fontSize: 24, maxLines: 2 });
             }
         } else {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(24);
             doc.setTextColor(colors.white);
-            doc.text(senderName, margin, 25);
+            drawWrappedText(doc, senderName, margin, 21, 90, { fontSize: 24, maxLines: 2 });
         }
 
         // Invoice Label & Number (Right Aligned in header)
@@ -859,7 +878,7 @@ export const businessInvoiceService = {
         
         doc.setFontSize(10);
         doc.setTextColor(colors.dark);
-        doc.text(senderName, margin + 5, currentY + 16);
+        drawWrappedText(doc, senderName, margin + 5, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
@@ -894,7 +913,7 @@ export const businessInvoiceService = {
         doc.setFontSize(10);
         doc.setTextColor(colors.dark);
         const clientName = client?.name || invoice.client?.name || 'Valued Client';
-        doc.text(clientName, margin + colWidth + 10, currentY + 16);
+        drawWrappedText(doc, clientName, margin + colWidth + 10, currentY + 16, colWidth - 10, { fontSize: 10, maxLines: 2 });
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);

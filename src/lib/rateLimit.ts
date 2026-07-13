@@ -275,7 +275,9 @@ export async function rateLimitMiddleware(
     if (!result.success) {
         // SECURITY SHIELD: Log the rate limit violation as a security event
         const ip = request ? (request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1') : '127.0.0.1';
-        const pathname = request ? request.nextUrl.pathname : '/unknown';
+        const pathname = request && 'nextUrl' in request && (request as any).nextUrl?.pathname
+            ? (request as any).nextUrl.pathname
+            : '/unknown';
         
         // Fire and forget (don't block the 429 response)
         securityLogService.logEvent({

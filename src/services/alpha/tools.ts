@@ -33,8 +33,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             const res = await aiService.complete({
                 prompt,
                 systemPrompt: 'Executive Lead Prospector. Semantic accuracy and speed prioritizing.',
-                provider: 'anthropic',
-                model: 'claude-sonnet-4-5-20250929'
+                provider: 'auto'
             });
 
             const normalizeAiLeads = (content: string): Array<{
@@ -301,8 +300,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             const res = await aiService.complete({
                 prompt: `Semantic retrieval for: ${query}. Provide 1-line instant solution.`,
                 systemPrompt: 'Alpha Semantic Assistant. Precision only.',
-                provider: 'anthropic',
-                model: 'claude-3-haiku-20240307'
+                provider: 'auto'
             });
             return { solution: res.content };
         }
@@ -325,8 +323,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             const res = await aiService.complete({
                 prompt,
                 systemPrompt: 'Legal Contract Drafter. Professional tone.',
-                provider: 'anthropic',
-                model: 'claude-3-haiku-20240307'
+                provider: 'auto'
             });
 
             if (tenantId) {

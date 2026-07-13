@@ -4,6 +4,7 @@ export type BootstrapTenantOptions = {
   name?: string;
   slug?: string;
   plan?: string;
+  referralCode?: string;
 };
 
 async function authHeaders(): Promise<Record<string, string>> {

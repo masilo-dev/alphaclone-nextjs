@@ -16,6 +16,25 @@ function hexToRgb(hex: string): [number, number, number] {
     return [r || 0, g || 0, b || 0];
 }
 
+function drawWrappedText(
+    doc: jsPDF,
+    text: string,
+    x: number,
+    y: number,
+    maxWidth: number,
+    options: { align?: 'left' | 'center' | 'right'; fontSize?: number; maxLines?: number } = {}
+): number {
+    const lines = doc.splitTextToSize(String(text || '').trim(), maxWidth);
+    const safeLines = Array.isArray(lines) ? lines : [String(lines || '')];
+    const trimmedLines = options.maxLines ? safeLines.slice(0, options.maxLines) : safeLines;
+    const displayLines = trimmedLines.length ? trimmedLines : [''];
+    if (options.fontSize) {
+        doc.setFontSize(options.fontSize);
+    }
+    doc.text(displayLines, x, y, { align: options.align || 'left' });
+    return displayLines.length;
+}
+
 export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenant) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
@@ -86,7 +105,7 @@ export const generateQuotePDF = (quote: Quote, items: QuoteItem[], tenant: Tenan
         doc.setFont('helvetica', 'normal');
     };
 
-    chip('Client', quote.name, 20, 55);
+    chip('Client', quote.name.length > 28 ? `${quote.name.slice(0, 28).trim()}…` : quote.name, 20, 55);
     chip('Valid until', quote.validUntil ? new Date(quote.validUntil).toLocaleDateString() : 'Open', 78, 44);
     chip('Currency', quote.currency || 'USD', 124, 30);
     chip('Status', quote.status, 156, 34);
@@ -747,7 +766,7 @@ export const generateInvoicePDF = (
     // Company name
     doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
-    doc.text(displayName, 20, 22);
+    drawWrappedText(doc, displayName, 20, 22, 80, { fontSize: 16, maxLines: 2 });
 
     // Meta chips
     const chipY = 44;

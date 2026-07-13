@@ -1,5 +1,6 @@
-import { aiService } from './aiService';
+import { routeAIRequest } from '@/services/aiRouter';
 import { gmailService } from '../gmailService';
+import { buildBusinessReplyPrompt } from '@/lib/ai/businessContext';
 
 
 export interface EmailMessage {
@@ -54,33 +55,28 @@ export const aiEmailService = {
     async generateAutonomousResponse(message: EmailMessage): Promise<{ subject: string; body: string } | null> {
         if (!this.shouldAutoRespond(message)) return null;
 
-        const prompt = `You are a professional business assistant for AlphaClone Systems. 
-Draft a professional, helpful, and concise response to the following email from ${message.from}.
-
-Email Subject: ${message.subject}
-Email Content:
-${message.body}
-
-Guidelines:
-- Maintain a premium, professional tone.
-- Be helpful and address the sender's points.
-- If it's a sales inquiry, be welcoming.
-- If it's a support request, offer assistance.
-- Keep it brief (under 150 words).
-
-Return the response in JSON format with "subject" and "body" keys.`;
-
-        try {
-            const response = await aiService.complete({
-                prompt,
-                systemPrompt: 'You are a professional inbox manager. You respond autonomously to professional business inquiries.',
-                temperature: 0.7,
+            const prompt = buildBusinessReplyPrompt({
+                sender: { name: message.from },
+                recipient: { name: 'AlphaClone team' },
+                subject: message.subject,
+                message: message.body,
+                channel: 'email',
+                context: 'Draft the reply as a concise professional response. If the sender asks a question, answer it directly. If more details are needed, ask one clear follow-up question.',
             });
 
-            const parsed = JSON.parse(response.content);
+            try {
+            const response = await routeAIRequest({
+                prompt,
+                systemPrompt: 'You are a professional inbox manager. You respond autonomously to professional business inquiries.',
+                temperature: 0.5,
+                maxTokens: 400,
+            });
+
+            const content = response.content.trim();
+            const parsed = content.startsWith('{') ? JSON.parse(content) : null;
             return {
-                subject: parsed.subject || `Re: ${message.subject}`,
-                body: parsed.body
+                subject: parsed?.subject || `Re: ${message.subject}`,
+                body: parsed?.body || content
             };
         } catch (err) {
             console.error('AI Response Generation Failed:', err);

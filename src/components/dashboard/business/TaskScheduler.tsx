@@ -109,33 +109,27 @@ Execute this task thoroughly and return the result following these rules.`;
 
   const userPrompt = task.aiPrompt || DEFAULT_AI_PROMPTS[task.type] || task.description;
 
-  // Try DeepSeek first if API key is configured
-  const deepSeekKey = typeof process !== 'undefined' && 
-    (process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY);
+  try {
+    const { callDeepSeek } = await import('@/lib/ai/deepseek');
+    const text = await callDeepSeek(`${systemContext}\n\n${userPrompt}`, {
+      model: 'deepseek-chat',
+      maxTokens: 1024,
+      temperature: 0.7,
+    });
 
-  if (deepSeekKey) {
-    try {
-      const { callDeepSeek } = await import('@/lib/ai/deepseek');
-      const text = await callDeepSeek(`${systemContext}\n\n${userPrompt}`, {
-        model: 'deepseek-chat',
-        maxTokens: 1024,
-        temperature: 0.7,
-      });
-
-      if (!text) {
-        throw new Error('DeepSeek returned no output');
-      }
-
-      return {
-        total: 1,
-        successful: 1,
-        failed: 0,
-        output: text,
-        executedAt: new Date().toISOString(),
-      };
-    } catch (deepSeekError) {
-      console.warn('DeepSeek failed, falling back to unified AI:', deepSeekError);
+    if (!text) {
+      throw new Error('DeepSeek returned no output');
     }
+
+    return {
+      total: 1,
+      successful: 1,
+      failed: 0,
+      output: text,
+      executedAt: new Date().toISOString(),
+    };
+  } catch (deepSeekError) {
+    console.warn('DeepSeek failed, falling back to unified AI:', deepSeekError);
   }
 
   const { text, error } = await generateText(`${systemContext}\n\n${userPrompt}`, 1024);

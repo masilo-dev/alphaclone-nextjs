@@ -42,6 +42,8 @@ export interface LeadResult {
   business_name: string;
   website:       string;
   snippet:       string;
+  source_id:     string;
+  source_url?:   string;
   phone?:        string;
   email?:        string;
   address?:      string;
@@ -102,6 +104,8 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
       business_name: item.title,
       website:       item.contacts?.[0]?.www?.[0]?.value || '',
       snippet:       item.categories?.[0]?.name || 'Business',
+      source_id:     `here:${encodeURIComponent(String(item.id || item.title || item.position?.lat || 'unknown'))}`,
+      source_url:    item.contacts?.[0]?.www?.[0]?.value || '',
       phone:         item.contacts?.[0]?.phone?.[0]?.value || '',
       email:         item.contacts?.[0]?.email?.[0]?.value || '',
       address:       item.address?.label || '',
@@ -157,6 +161,8 @@ async function fetchFoursquare(niche: string, location: string, limit = 20, radi
       business_name: place.name || 'Unknown',
       website:       place.website || '',
       snippet:       place.categories?.[0]?.name || 'Business',
+      source_id:     `foursquare:${encodeURIComponent(String(place.fsq_id || place.name || 'unknown'))}`,
+      source_url:    place.website || '',
       phone:         place.tel || '',
       email:         '',
       address:       addressStr,
@@ -217,6 +223,8 @@ async function fetchDuckDuckGoLeads(niche: string, location: string, limit = 20)
       business_name: name,
       website,
       snippet: snippet || 'Found via web search',
+      source_id: `duckduckgo:${encodeURIComponent(website || name)}`,
+      source_url: website || link,
       phone,
       email,
       address: '',
@@ -246,6 +254,8 @@ async function fetchFreePlacesFallback(niche: string, location: string, limit = 
       business_name: p.businessName,
       website: p.website || '',
       snippet: p.industry || 'Business',
+      source_id: p.placeId || `places:${encodeURIComponent(`${p.businessName}:${p.formattedAddress}`)}`,
+      source_url: p.website || '',
       phone: p.phone || '',
       email: '',
       address: p.formattedAddress || '',
@@ -340,29 +350,7 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
     centerLat = parseFloat(nomData[0].lat);
     centerLon = parseFloat(nomData[0].lon);
   } else {
-    // Fallback: Try HERE geocoding if available
-    try {
-      const hereApiKey = process.env.HERE_API_KEY;
-      if (hereApiKey && !hereApiKey.startsWith('your_')) {
-        const hereGeoRes = await fetch(
-          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereApiKey}`,
-          { 
-            headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
-            signal: AbortSignal.timeout(8000) 
-          }
-        );
-        if (hereGeoRes.ok) {
-          const hereData = await hereGeoRes.json();
-          const pos = hereData.items?.[0]?.position;
-          if (pos) {
-            centerLat = pos.lat;
-            centerLon = pos.lng;
-          } else throw new Error('HERE geocode no results');
-        } else throw new Error('HERE geocode failed');
-      } else throw new Error('No HERE key');
-    } catch (err) {
-      throw new Error(`Location not found: "${location}". OSM and fallbacks failed to geocode.`);
-    }
+    throw new Error(`Location not found: "${location}". OSM and fallbacks failed to geocode.`);
   }
 
   // 2. Adaptive Bounding Box (Progressively widen)
@@ -463,6 +451,8 @@ out center ${fetchLimit};
     business_name: el.tags.name,
     website:  el.tags.website || el.tags.url || el.tags['contact:website'] || '',
     snippet:  el.tags.amenity || el.tags.shop || el.tags.office || el.tags.craft || 'Local business',
+    source_id: `osm:${encodeURIComponent(String(el.type || 'node'))}:${encodeURIComponent(String(el.id))}`,
+    source_url: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
     phone:    el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '',
     email:    el.tags.email || el.tags['contact:email'] || '',
     address:  [
@@ -707,7 +697,7 @@ export async function POST(request: Request) {
 
     // Deduplicate by normalised name
     const unique = Array.from(
-      new Map(results.map(r => [(r.business_name || '').toLowerCase().trim(), r])).values()
+      new Map(results.map(r => [`${(r.source_id || '').trim()}::${(r.business_name || '').toLowerCase().trim()}`, r])).values()
     );
 
     // Apply sort

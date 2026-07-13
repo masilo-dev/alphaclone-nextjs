@@ -3,13 +3,14 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
 // Initialize Clients
 // Initialize Clients inside handler to avoid build-time errors if env vars missing
 // const supabase = createClient(...);
 
 import { ENV } from '@/config/env';
-import { isTurnstileEnforced, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
     try {
@@ -31,15 +32,22 @@ export async function POST(req: Request) {
             client_notes,
             time_zone,
             booking_type_name,
-            turnstile_token,
         } = body;
+
+        const limited = await rateLimitMiddleware(
+            req as any,
+            rateLimitConfigs.public.contact,
+            `booking:${tenant_id}:${client_email || req.headers.get('x-forwarded-for') || 'anonymous'}`
+        );
+        if (limited) return limited;
 
         if (!tenant_id || !booking_type_id || !start_time || !client_email) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
         if (isTurnstileEnforced()) {
-            if (!turnstile_token?.trim()) {
+            const turnstile_token = readTurnstileToken(body);
+            if (!turnstile_token) {
                 return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
             }
             const ok = await verifyTurnstileToken(turnstile_token);

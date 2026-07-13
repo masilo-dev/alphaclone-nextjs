@@ -10,6 +10,7 @@ import { consumeAiUnitsOr429 } from '@/lib/quotas/tenantAiUnitsQuota';
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
 import { routeAIChat } from '@/services/aiRouter';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
@@ -46,6 +47,8 @@ export async function POST(req: Request) {
                     { status: 400 }
                 );
             }
+            const limited = await rateLimitMiddleware(req as any, rateLimitConfigs.api.heavy, `ai-chat:${ctx.tenantId}:${user.id}`);
+            if (limited) return limited;
             const blocked = await consumeAiUnitsOr429(admin, ctx.tenantId, ctx.plan, UNITS_PER_CHAT_TURN);
             if (blocked) return blocked;
         }

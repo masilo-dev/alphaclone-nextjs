@@ -42,7 +42,7 @@ Output ONLY valid JSON:
 }`;
 
     try {
-      const response = await generateText(prompt, 400, 'claude-sonnet-4-6-20260217', tenantId);
+      const response = await generateText(prompt, 400, 'deepseek-chat', tenantId);
       const text = response.text || '';
       const start = text.indexOf('{');
       const end = text.lastIndexOf('}') + 1;

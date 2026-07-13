@@ -236,7 +236,7 @@ ${replaceVariables(prompt, context)}`;
 
     try {
         // 2. Call AI Service
-        const { text, error } = await generateText(`${systemPrompt}\n\n${userPrompt}`, 1024);
+        const { text, error } = await generateText(`${systemPrompt}\n\n${userPrompt}`, 1024, 'deepseek-chat');
 
         if (error || !text) {
             throw new Error(error || 'AI returned no decision text');

@@ -8,6 +8,8 @@ export interface LeadResult {
   business_name: string;
   website: string;
   snippet: string;
+  source_id: string;
+  source_url?: string;
   phone?: string;
   email?: string;
   address?: string;
@@ -48,9 +50,19 @@ function enrichWithContactFlag(leads: Array<Omit<LeadResult, 'hasContact'> & Par
   return leads.map((l) => ({ ...l, hasContact: hasContactInfo(l) }));
 }
 
+function makeTraceableSourceId(source: string, seed: string): string {
+  const normalized = seed.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return `${source}:${normalized || 'unknown'}`;
+}
+
 export function dedupeAndSort(results: LeadResult[], sortBy: string): LeadResult[] {
   const unique = Array.from(
-    new Map(results.map((r) => [`${(r.business_name || '').toLowerCase().trim()}::${(r.phone || '').trim()}::${(r.website || '').trim()}`, r])).values()
+    new Map(
+      results.map((r) => [
+        `${(r.source_id || '').trim()}::${(r.business_name || '').toLowerCase().trim()}::${(r.phone || '').trim()}::${(r.website || '').trim()}`,
+        r,
+      ])
+    ).values()
   );
   if (sortBy === 'rating_desc') return unique.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   if (sortBy === 'rating_asc') return unique.sort((a, b) => (a.rating ?? 0) - (b.rating ?? 0));
@@ -83,6 +95,8 @@ async function fetchHERE(niche: string, location: string, limit = 50, radiusKm =
       business_name: item.title,
       website: item.contacts?.[0]?.www?.[0]?.value || '',
       snippet: item.categories?.[0]?.name || 'Business',
+      source_id: makeTraceableSourceId('here', item.id || item.title || `${item.position?.lat},${item.position?.lng}`),
+      source_url: item.contacts?.[0]?.www?.[0]?.value || '',
       phone: item.contacts?.[0]?.phone?.[0]?.value || '',
       email: item.contacts?.[0]?.email?.[0]?.value || '',
       address: item.address?.label || '',
@@ -107,6 +121,8 @@ async function fetchFreePlaces(niche: string, location: string, limit = 20, radi
     business_name: p.businessName,
     website: p.website || '',
     snippet: p.industry || 'Business',
+    source_id: p.placeId || makeTraceableSourceId('places', `${p.businessName}:${p.formattedAddress}`),
+    source_url: p.website || '',
     phone: p.phone || '',
     email: '',
     address: p.formattedAddress || '',
@@ -170,26 +186,7 @@ async function fetchOpenStreetMap(
     centerLat = parseFloat(nomData[0].lat);
     centerLon = parseFloat(nomData[0].lon);
   } else {
-    // Fallback: HERE Geocoding
-    try {
-      const hereKey = process.env.HERE_API_KEY;
-      if (hereKey && !hereKey.startsWith('your_')) {
-        const hRes = await fetch(
-          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereKey}`,
-          { signal: AbortSignal.timeout(6000) }
-        );
-        if (hRes.ok) {
-          const hData = await hRes.json();
-          const pos = hData.items?.[0]?.position;
-          if (pos) {
-            centerLat = pos.lat;
-            centerLon = pos.lng;
-          } else throw new Error('no results');
-        } else throw new Error('here failed');
-      } else throw new Error('no key');
-    } catch (err) {
-      throw new Error(`Location geocoding failed for "${location}". Please try a more specific city.`);
-    }
+    throw new Error(`Location geocoding failed for "${location}". Please try a more specific city.`);
   }
   const isBroad = isGlobal || /state|province|country|usa|uk|canada|europe/i.test(location);
   const baseDelta = Math.min(Math.max(radiusKm / 111, 0.01), 1.2);
@@ -250,6 +247,8 @@ out center ${fetchLimit};`.trim();
     business_name: el.tags.name,
     website: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
     snippet: el.tags.amenity || el.tags.shop || el.tags.office || 'Local business',
+    source_id: makeTraceableSourceId('osm', `${el.type || 'node'}:${el.id}`),
+    source_url: el.tags.website || el.tags.url || el.tags['contact:website'] || '',
     phone: el.tags.phone || el.tags['contact:phone'] || el.tags['phone:mobile'] || '',
     email: el.tags.email || el.tags['contact:email'] || '',
     address: [el.tags['addr:housenumber'], el.tags['addr:street'], el.tags['addr:city'], el.tags['addr:country']].filter(Boolean).join(' '),
@@ -291,9 +290,8 @@ export async function runLeadStep(input: {
 
   if (input.step === 'init') {
     try {
-      const [osmRes, hereRes, firecrawlRes, browserRes] = await Promise.allSettled([
+      const [osmRes, firecrawlRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
-        fetchHERE(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
         import('@/services/firecrawlService').then(m => m.firecrawlService.searchLeads(`${input.niche} businesses in ${input.location} contact info`, LEADS_PER_SEARCH)),
         input.usePlaywright && hasRemoteBrowserConfigured() 
           ? fetchSerpLeadsViaBrowser(input.niche, input.location, LEADS_PER_SEARCH) 
@@ -303,10 +301,6 @@ export async function runLeadStep(input: {
       if (osmRes.status === 'fulfilled') {
         partial.push(...enrichWithContactFlag(osmRes.value));
         sourceStats.osm = osmRes.value.length;
-      }
-      if (hereRes.status === 'fulfilled') {
-        partial.push(...enrichWithContactFlag(hereRes.value));
-        sourceStats.here = hereRes.value.length;
       }
       if (firecrawlRes.status === 'fulfilled') {
         partial.push(...enrichWithContactFlag(firecrawlRes.value));

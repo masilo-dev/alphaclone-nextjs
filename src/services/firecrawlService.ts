@@ -43,6 +43,8 @@ export const firecrawlService = {
         business_name: item.title || 'Unknown Business',
         website: item.url || '',
         snippet: item.description || item.snippet || 'Found via AI web search',
+        source_id: `firecrawl:${encodeURIComponent((item.url || item.title || query).toLowerCase())}`,
+        source_url: item.url || '',
         phone: '', // Firecrawl search doesn't usually provide phone directly
         email: '', // Needs deeper scraping
         address: '',

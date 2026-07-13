@@ -185,7 +185,7 @@ export const authService = {
         password: string,
         name: string,
         role: UserRole = 'tenant_admin',
-        options?: { businessName?: string; plan?: string }
+        options?: { businessName?: string; plan?: string; referralCode?: string }
     ): Promise<{ user: User | null; error: string | null; needsEmailConfirmation?: boolean }> {
         try {
             // Validate input
@@ -228,6 +228,7 @@ export const authService = {
                         registration_country: registrationCountry,
                         business_name: options?.businessName?.trim() || undefined,
                         plan: options?.plan || 'free',
+                        referral_code: options?.referralCode?.trim() || undefined,
                     },
                 },
             }));
@@ -259,9 +260,25 @@ export const authService = {
                     await bootstrapTenantViaApi({
                         name: orgName,
                         plan: options?.plan || 'free',
+                        referralCode: options?.referralCode?.trim() || undefined,
                     });
                 } catch (bootstrapErr) {
                     console.warn('[authService] tenant bootstrap after signup failed:', bootstrapErr);
+                }
+            }
+
+            if (options?.referralCode?.trim()) {
+                try {
+                    await fetch('/api/referrals/claim', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            referralCode: options.referralCode.trim(),
+                            referredEmail: validated.email,
+                        }),
+                    });
+                } catch (refErr) {
+                    console.warn('[authService] referral claim record failed:', refErr);
                 }
             }
 

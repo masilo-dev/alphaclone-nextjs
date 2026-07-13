@@ -30,13 +30,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Failed to fetch sessions: ${sessErr.message}` }, { status: 500 });
     }
 
-    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
     let patternsExtracted: any[] = [];
     let memoryUpdates: any[] = [];
 
-    if (ANTHROPIC_API_KEY) {
-      try {
-        const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
+    try {
+      const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
 Analyze the following session data and extract:
 1. Common failure patterns (tools that often fail, error themes)
 2. Performance insights (slow tools, high success rate tools)
@@ -51,37 +49,19 @@ Return ONLY valid JSON with:
 - "memory_updates": array of { category, insight, action_recommendation }
 - "summary": one-sentence summary`;
 
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'managed-agents-2026-04-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 2048,
-            messages: [{ role: 'user', content: dreamPrompt }],
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          const rawText = data.content?.[0]?.text || '{}';
-          const cleanText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-          const parsed = JSON.parse(cleanText);
-          patternsExtracted = parsed.patterns_extracted || [];
-          memoryUpdates = parsed.memory_updates || [];
-        } else {
-          throw new Error(`Anthropic API returned status ${res.status}`);
-        }
-      } catch (e) {
-        console.warn('[bonnie/dream] Dreaming endpoint failed, synthesizing from data:', e);
-        runFallbackSynthesis();
-      }
-    } else {
-      console.warn('[bonnie/dream] ANTHROPIC_API_KEY missing, using fallback synthesis');
+      const { routeAIRequest } = await import('@/services/aiRouter');
+      const aiResponse = await routeAIRequest({
+        prompt: dreamPrompt,
+        model: 'deepseek-reasoner',
+        maxTokens: 2048,
+      });
+      const rawText = aiResponse.content || '{}';
+      const cleanText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+      const parsed = JSON.parse(cleanText);
+      patternsExtracted = parsed.patterns_extracted || [];
+      memoryUpdates = parsed.memory_updates || [];
+    } catch (e) {
+      console.warn('[bonnie/dream] Dreaming endpoint failed, synthesizing from data:', e);
       runFallbackSynthesis();
     }
 

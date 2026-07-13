@@ -38,6 +38,7 @@ function LoginContent() {
     const typeParam = searchParams?.get('type');
     const planParam = searchParams?.get('plan') as SubscriptionPlan | null;
     const businessNameParam = searchParams?.get('businessName');
+    const referralCodeParam = searchParams?.get('ref')?.trim() || undefined;
     const nextParam = searchParams?.get('next') || searchParams?.get('returnTo') || null;
 
     const resolveExplicitNextRedirect = (): string | null => {
@@ -179,8 +180,9 @@ function LoginContent() {
                     const { authService } = await import('@/services/authService');
                     const role = 'tenant_admin';
                     const signupResult = await authService.signUp(email, password, name, role, {
-                        businessName,
-                        plan: selectedPlan,
+                      businessName,
+                      plan: selectedPlan,
+                      referralCode: referralCodeParam,
                     });
                     
                     if (signupResult.error) {

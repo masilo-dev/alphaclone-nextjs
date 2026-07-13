@@ -1,6 +1,6 @@
 /**
  * AI Router Service
- * Smart routing with fallback chain: Anthropic → xAI → OpenAI → Gemini → OpenRouter
+ * Smart routing with fallback chain: DeepSeek → OpenRouter → Anthropic → xAI → OpenAI → Gemini
  *
  * Priority Order:
  * 1. Anthropic Claude (primary - best for contracts, legal, analysis)
@@ -229,17 +229,17 @@ export type AIStrengthTask = 'legal' | 'strategy' | 'social_article' | 'social_c
 
 /**
  * Route by strength mapping:
- * - legal/strategy -> Anthropic
- * - social_article/caption/inbox -> Grok
- * - creative_media -> OpenAI
+ * - legal/strategy -> DeepSeek reasoning
+ * - social_article/caption/inbox -> DeepSeek chat
+ * - creative_media -> DeepSeek chat
  */
-const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'anthropic' | 'xai' | 'openai'; model: string }> = {
-  'legal': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
-  'strategy': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
-  'social_article': { provider: 'xai', model: 'grok-4.3' },
-  'social_caption': { provider: 'xai', model: 'grok-4.3' },
-  'inbox_reply': { provider: 'xai', model: 'grok-4.3' },
-  'creative_media': { provider: 'openai', model: 'gpt-4o' }
+const TASK_STRENGTH_MAP: Record<AIStrengthTask, { provider: 'deepseek' | 'anthropic' | 'xai' | 'openai'; model: string }> = {
+  'legal': { provider: 'deepseek', model: 'deepseek-reasoner' },
+  'strategy': { provider: 'deepseek', model: 'deepseek-reasoner' },
+  'social_article': { provider: 'deepseek', model: 'deepseek-chat' },
+  'social_caption': { provider: 'deepseek', model: 'deepseek-chat' },
+  'inbox_reply': { provider: 'deepseek', model: 'deepseek-chat' },
+  'creative_media': { provider: 'deepseek', model: 'deepseek-chat' }
 };
 
 /**
@@ -1270,19 +1270,19 @@ export function getClaudeModels() {
 /**
  * Get model recommendations based on task
  */
-export function getRecommendedModel(taskType: string): { provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter'; model: string } {
-  const recommendations: Record<string, { provider: 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter'; model: string }> = {
-    'contract_generation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'document_analysis': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'code_generation': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
-    'email_drafting': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'summarization': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
-    'chat': { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' },
-    'quick_task': { provider: 'anthropic', model: 'claude-haiku-4-5-20251015' },
-    'translation': { provider: 'anthropic', model: 'claude-sonnet-4-5-20250929' },
+export function getRecommendedModel(taskType: string): { provider: 'deepseek' | 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter'; model: string } {
+  const recommendations: Record<string, { provider: 'deepseek' | 'anthropic' | 'xai' | 'openai' | 'gemini' | 'openrouter'; model: string }> = {
+    'contract_generation': { provider: 'deepseek', model: 'deepseek-reasoner' },
+    'document_analysis': { provider: 'deepseek', model: 'deepseek-reasoner' },
+    'code_generation': { provider: 'deepseek', model: 'deepseek-reasoner' },
+    'email_drafting': { provider: 'deepseek', model: 'deepseek-chat' },
+    'summarization': { provider: 'deepseek', model: 'deepseek-chat' },
+    'chat': { provider: 'deepseek', model: 'deepseek-chat' },
+    'quick_task': { provider: 'deepseek', model: 'deepseek-chat' },
+    'translation': { provider: 'deepseek', model: 'deepseek-chat' },
   };
 
-  return recommendations[taskType] || { provider: 'anthropic', model: 'claude-sonnet-4-6-20260217' };
+  return recommendations[taskType] || { provider: 'deepseek', model: 'deepseek-chat' };
 }
 
 /**
@@ -1674,4 +1674,3 @@ async function chatWithDeepSeek(
     success: true,
   };
 }
-

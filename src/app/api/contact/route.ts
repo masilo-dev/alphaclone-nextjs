@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 import { contactSchema } from '@/schemas/validation';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +16,23 @@ export async function POST(request: NextRequest) {
       );
     }
     const { name, email, subject, message, company } = parsed.data;
+    const limited = await rateLimitMiddleware(
+      request,
+      rateLimitConfigs.public.contact,
+      `contact:${email || request.headers.get('x-forwarded-for') || 'anonymous'}`
+    );
+    if (limited) return limited;
+
+    if (isTurnstileEnforced()) {
+      const turnstileToken = readTurnstileToken(body);
+      if (!turnstileToken) {
+        return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
+      }
+      const ok = await verifyTurnstileToken(turnstileToken);
+      if (!ok) {
+        return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+      }
+    }
 
     const supabase = createAdminSupabaseClientOrThrow();
     const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();

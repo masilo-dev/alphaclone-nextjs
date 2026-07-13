@@ -53,7 +53,6 @@ Format as JSON with these exact keys: strategy, tactics (array), timeline, budge
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.7 
       });
       const response = result.content;
@@ -111,7 +110,6 @@ Make it professional, legally sound, and clear.
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-sonnet-4-6-20260217',
         temperature: 0.3 
       });
       const contract = result.content;
@@ -174,7 +172,6 @@ Format as JSON with keys: summary, message, nextSteps (array)
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
@@ -223,7 +220,6 @@ Keep each reply under 100 words. Format as array of strings.
     try {
       const result = await routeAIRequest({ 
         prompt, 
-        model: 'claude-sonnet-4-5-20250929'
       });
       const response = result.content;
 
@@ -275,8 +271,7 @@ Return JSON array with: title, description, priority, estimatedHours
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-5-20250929'
+        prompt
       });
       const response = result.content;
 
@@ -333,8 +328,7 @@ Format as JSON with keys: summary, strengths, improvements, recommendations (all
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-5-20250929'
+        prompt
       });
       const response = result.content;
 
@@ -383,8 +377,7 @@ Format as JSON with keys: subject, preview, body, variations (array of {subject,
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-6-20260217',
+        prompt,
         temperature: 0.8 
       });
       const response = result.content;
@@ -472,8 +465,7 @@ Format as JSON with: successProbability (number), factors (array of {factor, imp
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-5-20250929'
+        prompt
       });
       const response = result.content;
 
@@ -558,8 +550,7 @@ Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handl
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-6-20260217',
+        prompt,
         temperature: 0.6 
       });
       const response = result.content;
@@ -609,8 +600,7 @@ Rules:
 
     try {
       const result = await routeAIRequest({ 
-        prompt, 
-        model: 'claude-sonnet-4-6-20260217',
+        prompt,
         temperature: 0.7 
       });
       const response = result.content;

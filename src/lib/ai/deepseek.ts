@@ -4,7 +4,12 @@
  */
 import { DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
 import { requestOpenRouterCompletion, streamOpenRouterCompletion } from '@/lib/ai/openRouterRequest';
-import { createAIProviderUnavailableError, clearAIProviderCooldown, getAIProviderCooldown, noteAIProviderFailure } from '@/lib/ai/providerHealth';
+import {
+  createAIProviderUnavailableError,
+  clearAIProviderCooldown,
+  getAIProviderCooldown,
+  noteAIProviderFailure,
+} from '@/lib/ai/providerHealth';
 
 export type DeepSeekModel = 'deepseek-chat' | 'deepseek-reasoner';
 
@@ -19,6 +24,10 @@ export type DeepSeekMessage = {
     role: 'system' | 'user' | 'assistant';
     content: string;
 };
+
+function isServerRuntime(): boolean {
+    return typeof window === 'undefined';
+}
 
 async function deepSeekCompletion(
     messages: DeepSeekMessage[],
@@ -35,27 +44,20 @@ async function deepSeekCompletion(
         temperature = 0.7,
     } = options;
 
-    const res = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model,
-            messages,
-            max_tokens: maxTokens,
-            temperature,
-        }),
+    const { default: OpenAI } = await import('openai');
+    const client = new OpenAI({
+        apiKey,
+        baseURL: 'https://api.deepseek.com',
     });
 
-    if (!res.ok) {
-        const err = await res.text();
-        throw new Error(`DeepSeek API error ${res.status}: ${err}`);
-    }
+    const response = await client.chat.completions.create({
+        model,
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+    });
 
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
+    const content = response?.choices?.[0]?.message?.content;
     if (!content) {
         throw new Error('DeepSeek returned empty response');
     }
@@ -82,6 +84,28 @@ export async function callDeepSeek(
     prompt: string,
     options: DeepSeekOptions = {}
 ): Promise<string> {
+    if (!isServerRuntime()) {
+        const response = await fetch('/api/ai/deepseek', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                prompt,
+                options,
+            }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload?.error || 'DeepSeek request failed');
+        }
+
+        if (typeof payload?.content !== 'string' || !payload.content) {
+            throw new Error('DeepSeek returned empty response');
+        }
+
+        return payload.content;
+    }
+
     const messages: DeepSeekMessage[] = [];
     if (options.systemPrompt) {
         messages.push({ role: 'system', content: options.systemPrompt });
@@ -154,51 +178,25 @@ export async function streamDeepSeek(
         if (getAIProviderCooldown('deepseek')) {
             return await openRouterStream(messages, options, onToken);
         }
-        const res = await fetch('https://api.deepseek.com/chat/completions', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: options.model || 'deepseek-chat',
-                messages,
-                max_tokens: options.maxTokens ?? 2000,
-                temperature: options.temperature ?? 0.5,
-                stream: true,
-            }),
+        const { default: OpenAI } = await import('openai');
+        const client = new OpenAI({
+            apiKey,
+            baseURL: 'https://api.deepseek.com',
+        });
+        const stream = await client.chat.completions.create({
+            model: options.model || 'deepseek-chat',
+            messages,
+            max_tokens: options.maxTokens ?? 2000,
+            temperature: options.temperature ?? 0.5,
+            stream: true,
         });
 
-        if (!res.ok) {
-            const err = await res.text();
-            throw new Error(`DeepSeek stream error ${res.status}: ${err}`);
-        }
-
-        const reader = res.body?.getReader();
-        if (!reader) throw new Error('DeepSeek stream unavailable');
-
-        const decoder = new TextDecoder();
         let full = '';
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const block = decoder.decode(value, { stream: true });
-            for (const line of block.split('\n')) {
-                const trimmed = line.trim();
-                if (!trimmed.startsWith('data:')) continue;
-                const payload = trimmed.slice(5).trim();
-                if (payload === '[DONE]') continue;
-                try {
-                    const parsed = JSON.parse(payload);
-                    const delta = parsed?.choices?.[0]?.delta?.content;
-                    if (delta) {
-                        full += delta;
-                        onToken(delta);
-                    }
-                } catch {
-                    // ignore malformed SSE chunks
-                }
+        for await (const chunk of stream) {
+            const delta = chunk.choices?.[0]?.delta?.content;
+            if (delta) {
+                full += delta;
+                onToken(delta);
             }
         }
 

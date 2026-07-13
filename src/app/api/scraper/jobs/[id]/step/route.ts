@@ -19,6 +19,7 @@ function parseJsonObject(value: unknown): Record<string, any> {
 
 function leadIdentityKey(lead: LeadResult): string {
   return [
+    (lead.source_id || '').trim().toLowerCase(),
     (lead.business_name || '').trim().toLowerCase(),
     (lead.website || '').trim().toLowerCase(),
     (lead.phone || '').replace(/\D/g, ''),

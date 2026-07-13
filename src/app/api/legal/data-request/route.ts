@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
 import { emailFooterText } from '@/components/legal/EmailFooter';
+import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,17 @@ export async function POST(req: NextRequest) {
 
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+    }
+
+    if (isTurnstileEnforced()) {
+      const turnstileToken = readTurnstileToken(payload);
+      if (!turnstileToken) {
+        return NextResponse.json({ error: 'Security verification required.' }, { status: 400 });
+      }
+      const ok = await verifyTurnstileToken(turnstileToken);
+      if (!ok) {
+        return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
+      }
     }
 
     const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);

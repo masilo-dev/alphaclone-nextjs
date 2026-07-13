@@ -7,6 +7,12 @@ export function isTurnstileEnforced(): boolean {
     return !!process.env.TURNSTILE_SECRET_KEY && process.env.TURNSTILE_SECRET_KEY !== 'placeholder';
 }
 
+export function readTurnstileToken(payload: unknown): string {
+    if (!payload || typeof payload !== 'object') return '';
+    const record = payload as Record<string, unknown>;
+    return String(record.turnstileToken || record.turnstile_token || '').trim();
+}
+
 export async function verifyTurnstileToken(token: string | undefined): Promise<boolean> {
     if (!isTurnstileEnforced()) {
         return true;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { aiService } from '@/services/ai/aiService';
+import { routeAIRequest } from '@/services/aiRouter';
+import { buildBusinessReplyPrompt } from '@/lib/ai/businessContext';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +10,7 @@ export async function POST(req: NextRequest) {
 
     let messageBody = text || '';
     let senderName = fromName || 'Client';
+    let subjectLine = typeof body?.subject === 'string' ? body.subject : '';
 
     if (messageId) {
       const supabase = await createSupabaseServerClient();
@@ -24,28 +26,27 @@ export async function POST(req: NextRequest) {
 
       messageBody = msg.body || msg.html_body || '';
       senderName = msg.from_name || msg.from_address || 'Client';
+      subjectLine = msg.subject || subjectLine;
     }
 
     if (!messageBody) {
       return NextResponse.json({ error: 'Message body or text is required' }, { status: 400 });
     }
 
-    const draftPrompt = `
-      You are an AI business assistant for a solopreneur. Draft a polite, professional, and helpful response to the message below.
-      
-      From: ${senderName}
-      Message:
-      ${messageBody}
-      
-      ${context ? `Additional Context/Instructions: ${context}` : ''}
-      
-      Return only the response content. Do not include subject lines or greetings like "Dear X" unless necessary. Maintain a friendly and concise tone.
-    `;
+    const draftPrompt = buildBusinessReplyPrompt({
+      sender: { name: senderName },
+      recipient: { name: 'AlphaClone team' },
+      subject: subjectLine,
+      message: messageBody,
+      replyTo: body?.replyTo ? { name: String(body.replyTo) } : undefined,
+      channel: 'email',
+      context: context ? `Additional context: ${context}` : undefined,
+    });
 
-    const response = await aiService.complete({
+    const response = await routeAIRequest({
       prompt: draftPrompt,
       systemPrompt: 'You are an advanced business communication expert assisting a solopreneur.',
-      temperature: 0.7,
+      temperature: 0.45,
       maxTokens: 500,
     });
 

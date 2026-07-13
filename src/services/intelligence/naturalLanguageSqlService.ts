@@ -163,7 +163,7 @@ STRICT INSTRUCTIONS:
 3. Keep the query simple and clean. Match text patterns using ILIKE where appropriate.`;
 
     try {
-      const response = await generateText(prompt, 1000, 'claude-sonnet-4-6-20260217', tenantId);
+      const response = await generateText(prompt, 1000, 'deepseek-chat', tenantId);
       const text = response.text || '';
 
       // Extract JSON block in case of conversational wrapper

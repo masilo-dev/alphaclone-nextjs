@@ -286,6 +286,12 @@ const GlobalSettingsTab: React.FC = () => {
                                         details="LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET"
                                     />
                                     <IntegrationItem
+                                        name="Microsoft 365"
+                                        configured={envStatus.microsoft365 || envStatus.outlook}
+                                        description="Outlook mail, calendar, and Teams integration."
+                                        details="AZURE_CLIENT_ID / AZURE_CLIENT_SECRET (or the MICROSOFT_* aliases)"
+                                    />
+                                    <IntegrationItem
                                         name="Instagram"
                                         configured={envStatus.instagram}
                                         description="Instagram Graph API for posting."
@@ -488,4 +494,3 @@ const Toggle = ({
 );
 
 export default GlobalSettingsTab;
-

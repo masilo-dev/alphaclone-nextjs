@@ -102,6 +102,57 @@ const initialEdges: Edge[] = [
   { id: 'e1-2', source: 'trigger-1', target: 'action-1', animated: true, style: { stroke: '#0d9488', strokeWidth: 2 } },
 ];
 
+const starterWorkflowTemplates = [
+  {
+    id: 'referral-followup',
+    name: 'Referral Follow-up',
+    category: 'Revenue',
+    icon: '🤝',
+    description: 'When a referral arrives, create the lead, notify the team, and send a warm thank-you.',
+    definition: {
+      description: 'Referral lead intake and follow-up sequence',
+      trigger: { event: 'New referral captured' },
+      steps: [
+        { id: 'create-lead', type: 'zoho', config: { template: 'Create lead with referral source' } },
+        { id: 'notify-team', type: 'notify', config: { template: 'Alert owner and assign follow-up' } },
+        { id: 'send-thanks', type: 'email', config: { template: 'Send referral thank-you email' } },
+      ],
+    },
+  },
+  {
+    id: 'invoice-followup',
+    name: 'Invoice Follow-up',
+    category: 'Finance',
+    icon: '💳',
+    description: 'Track invoice status, notify the owner, and send a polite payment reminder.',
+    definition: {
+      description: 'Invoice reminder and collections sequence',
+      trigger: { event: 'Invoice overdue' },
+      steps: [
+        { id: 'notify-owner', type: 'notify', config: { template: 'Notify team when invoice is overdue' } },
+        { id: 'generate-reminder', type: 'ai', config: { template: 'Draft payment reminder email' } },
+        { id: 'send-reminder', type: 'email', config: { template: 'Send payment reminder' } },
+      ],
+    },
+  },
+  {
+    id: 'lead-nurture',
+    name: 'Lead Nurture',
+    category: 'Sales',
+    icon: '🚀',
+    description: 'Score a new lead, create a task, and launch a personalized outreach email.',
+    definition: {
+      description: 'Lead scoring and outreach sequence',
+      trigger: { event: 'New lead captured' },
+      steps: [
+        { id: 'score-lead', type: 'ai', config: { template: 'Score lead and identify fit' } },
+        { id: 'create-task', type: 'task', config: { template: 'Create follow-up task for owner' } },
+        { id: 'send-outreach', type: 'email', config: { template: 'Send personalized outreach email' } },
+      ],
+    },
+  },
+];
+
 export default function AutomationBuilder() {
   const { currentTenant } = useTenant();
   const [userId, setUserId] = useState<string>('');
@@ -149,7 +200,8 @@ export default function AutomationBuilder() {
   const fetchTemplates = useCallback(async () => {
     setLoadingTemplates(true);
     const { templates, error } = await workflowService.getWorkflowTemplates();
-    if (!error) setWorkflowTemplates(templates);
+    if (!error && templates.length > 0) setWorkflowTemplates(templates);
+    else setWorkflowTemplates(starterWorkflowTemplates);
     setLoadingTemplates(false);
   }, []);
 
@@ -727,7 +779,7 @@ export default function AutomationBuilder() {
                     <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
                         <LayoutTemplate className="w-6 h-6 text-indigo-500" /> Automation Templates
                     </h2>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">Quick-start with industry-standard patterns</p>
+                            <p className="text-slate-500 dark:text-slate-400 mt-1">Quick-start with business-ready patterns like referrals, invoicing, and lead nurture</p>
                 </div>
 
                 {loadingTemplates ? (
@@ -770,4 +822,3 @@ export default function AutomationBuilder() {
     </div>
   );
 }
-
