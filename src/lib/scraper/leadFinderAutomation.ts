@@ -5,7 +5,7 @@ import { freePlacesService } from '@/services/freePlacesService';
 import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
 import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
 
-function formatSearchNiche(intent: ParsedLeadIntent): string {
+export function formatSearchNiche(intent: ParsedLeadIntent): string {
   return (
     intent.niche ||
     intent.industry?.[0] ||
@@ -14,7 +14,7 @@ function formatSearchNiche(intent: ParsedLeadIntent): string {
   );
 }
 
-function formatSearchLocation(intent: ParsedLeadIntent): string {
+export function formatSearchLocation(intent: ParsedLeadIntent): string {
   const loc = intent.location || {};
   const parts = [loc.city, loc.country].filter(Boolean);
   if (parts.length) return parts.join(', ');

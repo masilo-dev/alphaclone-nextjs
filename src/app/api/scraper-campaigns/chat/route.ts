@@ -17,6 +17,8 @@ import {
   triggerNexusAutomation,
   prepareLeadsForOutreach,
   markLeadsAsContacted,
+  formatSearchLocation,
+  formatSearchNiche,
 } from '@/lib/scraper/leadFinderAutomation';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
