@@ -445,6 +445,19 @@ export const autonomousRunnerService = {
         await recordAction('overdue_invoices_escalation', 'failed', error instanceof Error ? error.message : 'Unknown error');
       }
 
+      // 3b) Branching invoice chase + lead follow-up
+      try {
+        const { runInvoiceChasingBranches, runLeadFollowUpBranches } = await import('@/lib/automation/workflowBranching');
+        const invoiceBranches = await runInvoiceChasingBranches(tenantId);
+        const leadBranches = await runLeadFollowUpBranches(tenantId);
+        await recordAction('workflow_branching', 'success', `Invoice branches: ${invoiceBranches.actions.length}, lead branches: ${leadBranches.actions.length}`, {
+          invoiceBranches: invoiceBranches.actions.length,
+          leadBranches: leadBranches.actions.length,
+        });
+      } catch (error) {
+        await recordAction('workflow_branching', 'failed', error instanceof Error ? error.message : 'Unknown error');
+      }
+
       // 4) No social posts in 3 days -> create proactive drafts
       try {
         const threeDaysAgo = new Date(Date.now() - rules.social_inactivity_days * 24 * 60 * 60 * 1000).toISOString();

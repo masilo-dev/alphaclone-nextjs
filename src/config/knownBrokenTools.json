@@ -1,0 +1,77 @@
+{
+  "create_deal": {
+    "symptom": "INTERNAL_ERROR",
+    "action": "block_automation",
+    "reason": "Deal creation fails intermittently; use manual task escalation in automated playbooks.",
+    "workaround": null
+  },
+  "schedule_social_post": {
+    "symptom": "missing DB table",
+    "action": "redirect",
+    "reason": "schedule_social_post table missing; use create_social_post with scheduled_at.",
+    "workaround": {
+      "tool": "create_social_post",
+      "argMap": {
+        "scheduled_at": "scheduled_at",
+        "caption": "caption",
+        "platforms": "platforms"
+      }
+    }
+  },
+  "create_post_with_ai_image": {
+    "symptom": "invalid hd param",
+    "action": "sanitize_args",
+    "reason": "Strip unsupported hd param before image generation.",
+    "workaround": {
+      "stripArgs": ["hd"]
+    }
+  },
+  "generate_contract_draft": {
+    "symptom": "timeout",
+    "action": "redirect",
+    "reason": "Contract draft times out; prefer nexus_contract_drafter.",
+    "workaround": {
+      "tool": "nexus_contract_drafter"
+    }
+  },
+  "send_invoice": {
+    "symptom": "broken",
+    "action": "redirect",
+    "reason": "send_invoice is broken; use start_invoice_lifecycle.",
+    "workaround": {
+      "tool": "start_invoice_lifecycle",
+      "argMap": {
+        "invoice_id": "invoice_id"
+      }
+    }
+  },
+  "send_batch_outreach": {
+    "symptom": "silent ~5 lead cap",
+    "action": "chunk",
+    "reason": "Batch outreach silently caps at ~5 leads; chunk into groups of 5.",
+    "workaround": {
+      "chunkSize": 5,
+      "listArg": "lead_ids"
+    }
+  },
+  "update_lead": {
+    "symptom": "INTERNAL_ERROR under load",
+    "action": "block_automation",
+    "reason": "Embed enrichment in create_lead notes at creation instead of patching after.",
+    "workaround": null
+  },
+  "gmail_send_email": {
+    "symptom": "broken",
+    "action": "block_with_hint",
+    "reason": "Use create_client then send_bulk_email_campaign for single-recipient email.",
+    "workaround": null
+  },
+  "get_account_overview": {
+    "symptom": "broken",
+    "action": "redirect",
+    "reason": "Aggregator broken; use get_business_snapshot.",
+    "workaround": {
+      "tool": "get_business_snapshot"
+    }
+  }
+}

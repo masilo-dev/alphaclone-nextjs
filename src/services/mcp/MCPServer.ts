@@ -1072,16 +1072,23 @@ class AlphaCloneMCPServer {
     }
 
     // Check new registry first
+    const telemetryStart = Date.now();
+    let telemetrySuccess = false;
+    let telemetryError: string | undefined;
+    let executedViaRegistry = false;
+
     try {
       const { hasTool, executeTool, initializeRegistry } = await import('@/lib/mcp/tool-registry');
       initializeRegistry();
       if (hasTool(name)) {
+        executedViaRegistry = true;
         const tenantId = this.requireTenant((args || {}) as Record<string, any>);
         const userId = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
         return await executeTool(tenantId, userId, name, (args || {}) as Record<string, any>);
       }
     } catch (regErr: any) {
       console.error(`Registry execution error for tool ${name}:`, regErr);
+      telemetryError = regErr.message;
       return {
         content: [{ type: 'text', text: JSON.stringify({ error: true, message: regErr.message }) }],
         isError: true
@@ -1112,7 +1119,7 @@ class AlphaCloneMCPServer {
           if (draftInvoices && draftInvoices.length > 0) {
             for (const inv of draftInvoices) {
               try {
-                await this.executeToolInternal('send_invoice', { tenant_id, invoice_id: inv.id, user_id }, traceId, supabaseAdmin);
+                await this.executeToolInternal('start_invoice_lifecycle', { tenant_id, invoice_id: inv.id, user_id }, traceId, supabaseAdmin);
                 sentDraftInvoices.push(inv.invoice_number);
               } catch (err: any) {
                 console.error(`Failed to send invoice ${inv.invoice_number}:`, err);
@@ -1162,6 +1169,18 @@ class AlphaCloneMCPServer {
                 stage: 'qualified',
                 description: `Auto-created deal from lead ${lead.id}.`
               }, traceId, supabaseAdmin);
+
+              if (dealResult?.isError) {
+                await supabaseAdmin.from('tasks').insert({
+                  tenant_id,
+                  title: `[Chief of Staff] Deal creation failed for ${lead.business_name || lead.id}`,
+                  description: 'create_deal returned an error during automation. Create the deal manually and link it to the lead.',
+                  priority: 'high',
+                  status: 'todo',
+                  metadata: { source: 'chief_of_staff', lead_id: lead.id, autoSourceKey: `deal_fail:${lead.id}` },
+                });
+                continue;
+              }
 
               const text = dealResult?.content?.[0]?.text || '';
               const match = text.match(/Deal created: (\{.*?\})/);
@@ -1263,7 +1282,7 @@ class AlphaCloneMCPServer {
           if (remainingDrafts && remainingDrafts.length > 0) {
             for (const inv of remainingDrafts) {
               try {
-                await this.executeToolInternal('send_invoice', { tenant_id, invoice_id: inv.id, user_id }, traceId, supabaseAdmin);
+                await this.executeToolInternal('start_invoice_lifecycle', { tenant_id, invoice_id: inv.id, user_id }, traceId, supabaseAdmin);
                 remainingSentDrafts.push(inv.invoice_number);
               } catch (err) {
                 console.error(`Failed to send remaining draft ${inv.invoice_number}:`, err);
@@ -1284,6 +1303,18 @@ class AlphaCloneMCPServer {
                 stage: 'lead',
                 description: `Auto-created deal from lead ${lead.id}.`
               }, traceId, supabaseAdmin);
+
+              if (dealResult?.isError) {
+                await supabaseAdmin.from('tasks').insert({
+                  tenant_id,
+                  title: `[Chief of Staff] Deal creation failed for ${lead.business_name || lead.id}`,
+                  description: 'create_deal returned an error during pipeline automation. Create the deal manually.',
+                  priority: 'high',
+                  status: 'todo',
+                  metadata: { source: 'chief_of_staff', lead_id: lead.id, autoSourceKey: `deal_fail:${lead.id}` },
+                });
+                continue;
+              }
 
               const text = dealResult?.content?.[0]?.text || '';
               const match = text.match(/Deal created: (\{.*?\})/);
@@ -1681,76 +1712,23 @@ class AlphaCloneMCPServer {
         case 'get_leads': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const { status, stage, source, assigned_to, limit = 20, offset = 0, cursor, sort_by, sort_order, fields } = a;
-          const cursorOffset =
-            typeof cursor === 'string' && cursor.trim()
-              ? Number(Buffer.from(cursor, 'base64').toString('utf8')) || 0
-              : 0;
-          const pageSize = Math.min(Math.max(Number(limit) || 20, 1), 100);
-          const pageOffset = Math.max(Number(offset) || cursorOffset || 0, 0);
-          const selectable = typeof fields === 'string' && fields.trim()
-            ? fields.split(',').map((f: string) => f.trim()).filter(Boolean).join(', ')
-            : 'id, business_name, email, phone, industry, location, status, stage, source, owner_id, notes, created_at';
-          const orderBy = ['created_at', 'status', 'stage', 'business_name'].includes(String(sort_by || '')) ? String(sort_by) : 'created_at';
-          const asc = String(sort_order || 'desc').toLowerCase() === 'asc';
-          let query = supabaseAdmin
-            .from('leads')
-            .select(selectable)
-            .eq('tenant_id', tenant_id)
-            .order(orderBy, { ascending: asc })
-            .range(pageOffset, pageOffset + pageSize - 1);
-          if (status) query = query.eq('status', status);
-          if (stage) query = query.eq('stage', stage);
-          if (source) query = query.ilike('source', `%${String(source).trim()}%`);
-          if (assigned_to) query = query.eq('owner_id', String(assigned_to).trim());
-          let data: any;
-          let error: any;
-          ({ data, error } = await query);
-          if (error && isSchemaOrRelationError(error)) {
-            // Legacy fallback for reduced schemas
-            let legacy = supabaseAdmin
-              .from('leads')
-              .select('id, business_name, email, phone, stage, notes, created_at')
-              .eq('tenant_id', tenant_id)
-              .order('created_at', { ascending: false })
-              .range(pageOffset, pageOffset + pageSize - 1);
-            if (stage) legacy = legacy.eq('stage', stage);
-            ({ data, error } = await legacy);
-          }
-          if (error) throw supabaseErrorToMcpClientError('get_leads', (error as { message?: string }).message || 'Failed to fetch leads');
-          const rows = (Array.isArray(data) ? data : []).map((row: Record<string, unknown>) => {
-            const phone = row.phone;
-            const normalizedPhone = normalizePhoneForStorage(phone);
-            return {
-              ...row,
-              phone: normalizedPhone || phone || null,
-              phone_has_country_code: hasCountryCode(normalizedPhone || phone),
-            };
+          const { fetchLeadsPaginated } = await import('@/lib/crm/fetchLeads');
+          const payload = await fetchLeadsPaginated({
+            tenantId: tenant_id,
+            status: a.status,
+            stage: a.stage,
+            source: a.source,
+            assignedTo: a.assigned_to,
+            limit: a.limit,
+            offset: a.offset,
+            cursor: a.cursor,
+            sortBy: a.sort_by,
+            sortOrder: a.sort_order,
+            fields: a.fields,
+            excludeConverted: a.exclude_converted !== false,
           });
-          const missingCountryCode = rows.filter((row) => !row.phone_has_country_code && row.phone).length;
           result = {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(
-                  {
-                    items: rows,
-                    pagination: {
-                      limit: pageSize,
-                      offset: pageOffset,
-                      cursor: Buffer.from(String(pageOffset)).toString('base64'),
-                      returned: rows.length,
-                      has_more: rows.length === pageSize,
-                      next_offset: rows.length === pageSize ? pageOffset + pageSize : null,
-                      next_cursor: rows.length === pageSize ? Buffer.from(String(pageOffset + pageSize)).toString('base64') : null,
-                    },
-                    contacts_missing_country_code_count: missingCountryCode,
-                  },
-                  null,
-                  2
-                ),
-              },
-            ],
+            content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
           };
           break;
         }
@@ -3735,6 +3713,14 @@ class AlphaCloneMCPServer {
 
           if (hasFacebook && (!integration?.pageAccessToken || integration?.metadata?.no_pages || !canPublishFacebookPage(integration))) {
             throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
+          }
+
+          const { findDuplicateScheduledCaption } = await import('@/lib/automation/platformHardening');
+          const duplicate = await findDuplicateScheduledCaption(tenant_id, finalCaption);
+          if (duplicate) {
+            throw new Error(
+              `Duplicate caption blocked (${duplicate.similarity}). Regenerate content instead of re-queuing near-identical post (matches post ${duplicate.id}).`
+            );
           }
 
           let status: 'scheduled' | 'queued' | 'published' = publish_now ? 'queued' : 'scheduled';
@@ -6825,6 +6811,7 @@ Return ONLY a JSON array of 60 objects:
         // â”€â”€ create_post_with_ai_image â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'create_post_with_ai_image': {
           const a = args as Record<string, any>;
+          delete a.hd;
           const tenant_id = this.requireTenant(a);
           const userId = this.requireProfileUser(a);
           const { topic, image_prompt, image_provider = 'openai', provided_image_url, platforms = ['facebook', 'linkedin'], scheduled_at } = a;
@@ -8400,8 +8387,27 @@ Return ONLY a JSON array of 60 objects:
         return wrapMcpSuccess(name, traceId, result);
       } catch (error: unknown) {
         console.error(`MCP Tool Execution Error [${name}]:`, error);
+        telemetryError = error instanceof Error ? error.message : String(error);
         const payload = toMcpErrorPayload(name, traceId, error);
         throw new Error(payload);
+      } finally {
+        if (!executedViaRegistry) {
+          telemetrySuccess = !telemetryError;
+          const tenantForLog =
+            this.ctx?.tenantId ||
+            ((args as Record<string, any>)?.tenant_id ? String((args as Record<string, any>).tenant_id) : '');
+          if (tenantForLog) {
+            const { logMcpToolExecution, normalizeToolName } = await import('@/lib/mcp/mcpToolTelemetry');
+            await logMcpToolExecution({
+              tenantId: tenantForLog,
+              userId: this.ctx?.userId || (args as Record<string, any>)?.user_id || null,
+              toolName: normalizeToolName(name),
+              durationMs: Date.now() - telemetryStart,
+              success: telemetrySuccess,
+              errorMessage: telemetryError || null,
+            });
+          }
+        }
       }
   }
 

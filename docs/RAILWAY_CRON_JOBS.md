@@ -13,6 +13,8 @@ Typical jobs include:
 - Social publishing
 - Token health checks
 - MCP event queue processing
+- **Activity digest** (`/api/cron/activity-digest`, every 3 hours) — email + in-app summary per user
+- Platform hardening (`chief-of-staff`, `automation-heartbeat`, `resolve-stuck-social-posts`)
 
 ## Scraper service cron
 

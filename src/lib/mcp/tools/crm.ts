@@ -484,3 +484,58 @@ registerTool('crm', {
     return data;
   },
 });
+
+registerTool('crm', {
+  name: 'get_leads',
+  description:
+    'Retrieve leads from the CRM pipeline with accurate pagination and total counts. Excludes converted/closed-lost by default.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    status: z.string().optional(),
+    stage: z.string().optional(),
+    source: z.string().optional(),
+    assigned_to: z.string().uuid().optional(),
+    limit: z.number().int().min(1).max(100).optional().default(20),
+    offset: z.number().int().min(0).optional().default(0),
+    cursor: z.string().optional(),
+    sort_by: z.enum(['created_at', 'status', 'stage', 'business_name', 'updated_at']).optional(),
+    sort_order: z.enum(['asc', 'desc']).optional(),
+    fields: z.string().optional(),
+    exclude_converted: z.boolean().optional().default(true),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+      status: { type: 'string' },
+      stage: { type: 'string' },
+      source: { type: 'string' },
+      assigned_to: { type: 'string', format: 'uuid' },
+      limit: { type: 'number' },
+      offset: { type: 'number' },
+      cursor: { type: 'string' },
+      sort_by: { type: 'string' },
+      sort_order: { type: 'string', enum: ['asc', 'desc'] },
+      fields: { type: 'string' },
+      exclude_converted: { type: 'boolean', default: true },
+    },
+    required: ['tenant_id'],
+  },
+  handler: async (args) => {
+    const { fetchLeadsPaginated } = await import('@/lib/crm/fetchLeads');
+    return fetchLeadsPaginated({
+      tenantId: args.tenant_id,
+      status: args.status,
+      stage: args.stage,
+      source: args.source,
+      assignedTo: args.assigned_to,
+      limit: args.limit,
+      offset: args.offset,
+      cursor: args.cursor,
+      sortBy: args.sort_by,
+      sortOrder: args.sort_order,
+      fields: args.fields,
+      excludeConverted: args.exclude_converted,
+    });
+  },
+});

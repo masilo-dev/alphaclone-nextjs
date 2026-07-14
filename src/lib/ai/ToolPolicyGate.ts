@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { mcpStore } from '@/services/mcp/mcpStore';
 import type { BusinessAIAgentMode } from '@/services/mcp/businessAIState';
 import { resolveEffectiveAgentMode } from '@/lib/ai/resolveEffectiveAgentMode';
+import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
 
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
 export type PolicySource = 'bonnie' | 'mcp' | 'playbook';
@@ -138,7 +139,24 @@ export async function evaluateToolPolicy(params: {
     };
   }
 
-  const needsApproval = requiresApproval(agentMode, riskClass, highRiskRequired);
+  let needsApproval = requiresApproval(agentMode, riskClass, highRiskRequired);
+  let readinessReason: string | undefined;
+
+  if (agentMode === 'autonomous' && riskClass !== 'read') {
+    const evaluation = evaluateBusinessAIState(aiState, {
+      requires_external_action: riskClass === 'send' || riskClass === 'bulk',
+      requires_financial_action: riskClass === 'financial',
+      requires_customer_facing_action: riskClass === 'send',
+      task_category: source,
+    });
+    if (
+      evaluation.recommended_mode !== 'autonomous' &&
+      (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')
+    ) {
+      needsApproval = true;
+      readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
+    }
+  }
 
   if (!needsApproval) {
     return { outcome: 'allow', riskClass, reason: 'Policy allows execution.' };
@@ -153,7 +171,7 @@ export async function evaluateToolPolicy(params: {
       risk_level: riskClass === 'bulk' || riskClass === 'financial' ? 'high' : 'medium',
       confidence_score: 70,
       status: 'pending',
-      reason: `${source.toUpperCase()} requested "${toolName}" (${riskClass}) — approval required by policy.`,
+      reason: readinessReason || `${source.toUpperCase()} requested "${toolName}" (${riskClass}) — approval required by policy.`,
       payload: {
         source,
         tool_name: toolName,

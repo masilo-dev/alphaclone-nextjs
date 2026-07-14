@@ -28,6 +28,39 @@ function slugKey(text: string): string {
     .slice(0, 80) || 'memory_item';
 }
 
+const MEMORY_SUMMARY_MAX = 2000;
+
+function segmentExists(segments: string[], candidate: string): boolean {
+  const normalized = candidate.trim().toLowerCase();
+  if (!normalized) return true;
+  return segments.some(
+    (segment) =>
+      segment.trim().toLowerCase() === normalized ||
+      segment.includes(candidate) ||
+      candidate.includes(segment)
+  );
+}
+
+/** Merge summary text without duplicating identical insight lines. */
+export function mergeMemorySummary(prior: string, addition: string, maxLen = MEMORY_SUMMARY_MAX): string {
+  const segments = prior
+    .split(' | ')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  for (const piece of addition.split('; ').map((s) => s.trim()).filter(Boolean)) {
+    if (!segmentExists(segments, piece)) {
+      segments.push(piece);
+    }
+  }
+
+  while (segments.join(' | ').length > maxLen && segments.length > 1) {
+    segments.shift();
+  }
+
+  return segments.join(' | ').slice(0, maxLen);
+}
+
 export async function getMemory(
   tenantId: string,
   opts?: { category?: NexusMemoryCategory; key?: string; limit?: number }
@@ -134,13 +167,26 @@ export async function mergeDreamSession(
     if (!description) continue;
 
     const key = slugKey(`pattern_${description.slice(0, 40)}`);
+    const { data: existingPattern } = await admin
+      .from('nexus_memory')
+      .select('value')
+      .eq('tenant_id', tenantId)
+      .eq('category', 'pattern')
+      .eq('key', key)
+      .maybeSingle();
+
+    const priorFrequency =
+      typeof existingPattern?.value?.frequency === 'number' ? existingPattern.value.frequency : 0;
+    const nextFrequency =
+      typeof obj.frequency === 'number' ? Math.max(priorFrequency, obj.frequency) : priorFrequency + 1;
+
     await upsertMemory(tenantId, {
       category: 'pattern',
       key,
       value: {
         description,
         type: obj.type,
-        frequency: obj.frequency,
+        frequency: nextFrequency,
         severity: obj.severity,
       },
       source: 'dream',
@@ -153,7 +199,7 @@ export async function mergeDreamSession(
   const existing = await mcpStore.getBusinessAIState(tenantId, userId);
   const prior = existing.memory_summary || '';
   const addition = summaryLines.slice(0, 8).join('; ');
-  const memorySummary = [prior, addition].filter(Boolean).join(' | ').slice(0, 2000);
+  const memorySummary = mergeMemorySummary(prior, addition);
 
   await mcpStore.updateBusinessAIState(tenantId, userId, { memory_summary: memorySummary });
 

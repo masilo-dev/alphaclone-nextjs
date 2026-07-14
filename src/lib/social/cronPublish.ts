@@ -234,8 +234,23 @@ export async function publishSocialPost(postId: string) {
     .maybeSingle();
 
   if (!currentPost) return;
-  if (currentPost.status === 'published' || currentPost.status === 'publishing') return;
+  if (currentPost.status === 'published') return;
   if (currentPost.linkedin_post_urn) return;
+
+  if (currentPost.status === 'publishing') {
+    const { data: full } = await adminClient
+      .from('social_posts')
+      .select('updated_at')
+      .eq('id', postId)
+      .maybeSingle();
+    const updatedAt = full?.updated_at ? new Date(full.updated_at).getTime() : 0;
+    const stuckMs = Date.now() - updatedAt;
+    if (stuckMs < 15 * 60 * 1000) return;
+    await updateSocialPostStatusWithFallback(postId, {
+      status: 'scheduled',
+      error_message: 'Reclaimed from stuck publishing state',
+    });
+  }
 
   const claimResult = await updateSocialPostStatusWithFallback(postId, {
     status: 'publishing',

@@ -106,6 +106,9 @@ export class AlphaNexus {
     }
 
     private async handleInvoiceChasing(_params: Record<string, unknown>) {
+        const { runInvoiceChasingBranches } = await import('@/lib/automation/workflowBranching');
+        const branchResult = await runInvoiceChasingBranches(this.tenantId);
+
         const now = new Date().toISOString().split('T')[0];
         const { data: overdue } = await this.admin
             .from('business_invoices')
@@ -129,7 +132,8 @@ export class AlphaNexus {
                 total: inv.total,
                 days_overdue: Math.floor((Date.now() - new Date(inv.due_date).getTime()) / 86400000),
             })),
-            message: `${overdue?.length ?? 0} overdue invoice(s) totalling $${total.toFixed(2)}. Use send_invoice tool to send reminders.`,
+            branches_executed: branchResult.actions,
+            message: `${overdue?.length ?? 0} overdue invoice(s) totalling $${total.toFixed(2)}. Branched actions: ${branchResult.actions.length}.`,
             action_required: (overdue?.length ?? 0) > 0,
         };
     }

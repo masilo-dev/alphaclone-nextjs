@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { synthesizeBonnieDreamFromSessions } from '@/lib/bonnie/bonnieDreamSynthesis';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
         }
 
         const results = [];
+
         for (const tenant of tenants) {
             const tenantId = tenant.id;
 
@@ -41,53 +43,12 @@ export async function GET(req: NextRequest) {
                 continue;
             }
 
-            // 2. Call DeepSeek dreaming endpoint or use fallback
             let patternsExtracted: any[] = [];
             let memoryUpdates: any[] = [];
 
-            try {
-                const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
-Analyze the following session data and extract:
-1. Common failure patterns (tools that often fail, error themes)
-2. Performance insights (slow tools, high success rate tools)
-3. Behavioral patterns (most used tools, usage trends)
-4. Memory improvements (what the agent should do better next time)
-
-Session data (last ${sessions?.length || 0} sessions):
-${JSON.stringify(sessions || [], null, 2)}
-
-Return ONLY valid JSON with:
-- "patterns_extracted": array of { type, description, frequency, severity }
-- "memory_updates": array of { category, insight, action_recommendation }
-- "summary": one-sentence summary`;
-
-                const { routeAIRequest } = await import('@/services/aiRouter');
-                const aiResponse = await routeAIRequest({
-                    prompt: dreamPrompt,
-                    model: 'deepseek-reasoner',
-                    maxTokens: 2048,
-                });
-                const rawText = aiResponse.content || '{}';
-                const cleanText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-                const parsed = JSON.parse(cleanText);
-                patternsExtracted = parsed.patterns_extracted || [];
-                memoryUpdates = parsed.memory_updates || [];
-            } catch (e) {
-                console.warn(`[bonnie-dream-cron] Dreaming API call failed for tenant ${tenantId}, using fallback:`, e);
-                runFallback();
-            }
-
-            function runFallback() {
-                const failedTools: string[] = (sessions || []).filter((s: any) => !s.success).map((s: any) => s.tool_name as string);
-                const uniqueFailed: string[] = Array.from(new Set(failedTools));
-                patternsExtracted = uniqueFailed.map((tool: string) => ({
-                    type: 'failure_pattern',
-                    description: `Tool "${tool}" has recurring failures`,
-                    frequency: failedTools.filter((t: string) => t === tool).length,
-                    severity: 'medium',
-                }));
-                memoryUpdates = [{ category: 'reliability', insight: 'Some tools have recurring failures', action_recommendation: 'Review tool implementations' }];
-            }
+            const synthesis = await synthesizeBonnieDreamFromSessions(sessions || []);
+            patternsExtracted = synthesis.patterns_extracted;
+            memoryUpdates = synthesis.memory_updates;
 
             // 3. Store dream session
             const { data: dreamSession, error: insertErr } = await supabase
@@ -106,6 +67,48 @@ Return ONLY valid JSON with:
             if (insertErr) {
                 results.push({ tenantId, success: false, error: `Failed to save dream session: ${insertErr.message}` });
                 continue;
+            }
+
+            // Auto-approve low-risk reliability insights so dream → memory loop closes nightly
+            const lowRiskReliability =
+              (memoryUpdates.length === 0 || memoryUpdates.every((u: any) => u?.category === 'reliability')) &&
+              (patternsExtracted.length === 0 ||
+                patternsExtracted.every((p: any) => String(p?.severity || 'medium') !== 'high'));
+
+            if (lowRiskReliability && dreamSession?.id) {
+                try {
+                    const { data: owner } = await supabase
+                        .from('tenant_users')
+                        .select('user_id')
+                        .eq('tenant_id', tenantId)
+                        .in('role', ['owner', 'admin'])
+                        .order('created_at', { ascending: true })
+                        .limit(1)
+                        .maybeSingle();
+
+                    const { mergeDreamSession } = await import('@/services/nexusMemoryService');
+                    await mergeDreamSession(tenantId, dreamSession.id, owner?.user_id || null);
+                    await supabase
+                        .from('bonnie_dream_sessions')
+                        .update({ status: 'applied', applied_at: new Date().toISOString() })
+                        .eq('id', dreamSession.id);
+                } catch (autoApplyErr) {
+                    console.warn(`[bonnie-dream-cron] auto-apply failed for tenant ${tenantId}:`, autoApplyErr);
+                }
+            }
+
+            if (!lowRiskReliability && patternsExtracted.some((p: any) => String(p?.severity || '') === 'high')) {
+                try {
+                    const { notifyTenantOwner } = await import('@/lib/automation/platformHardening');
+                    await notifyTenantOwner(tenantId, {
+                        title: 'Dream session: high-severity pattern detected',
+                        message: `Bonnie dream found high-severity patterns requiring review. Session: ${dreamSession?.id}`,
+                        link: '/dashboard/settings/automation',
+                        sendEmail: true,
+                    });
+                } catch (alertErr) {
+                    console.warn(`[bonnie-dream-cron] high-severity alert failed for ${tenantId}:`, alertErr);
+                }
             }
 
             // 4. Create tasks (with deduplication)

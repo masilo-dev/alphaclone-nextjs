@@ -138,19 +138,29 @@ registerTool('messaging', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('notifications')
-      .insert({
-        tenant_id: args.tenant_id,
-        user_id: args.user_id,
-        title: args.title,
-        message: args.message,
-        type: args.type,
-        link: args.link || null,
-        read: false,
-      })
-      .select()
-      .single();
+    const row: Record<string, unknown> = {
+      user_id: args.user_id,
+      title: args.title,
+      message: args.message,
+      type: args.type,
+      read: false,
+    };
+
+    if (args.tenant_id) row.tenant_id = args.tenant_id;
+    if (args.link) {
+      row.link = args.link;
+      row.action_url = args.link;
+    }
+
+    let { data, error } = await supabase.from('notifications').insert(row).select().single();
+
+    // Schema drift fallback: older DBs may only have action_url (no link column in cache)
+    if (error?.message?.includes("'link'")) {
+      const fallbackRow = { ...row };
+      delete fallbackRow.link;
+      if (args.link) fallbackRow.action_url = args.link;
+      ({ data, error } = await supabase.from('notifications').insert(fallbackRow).select().single());
+    }
 
     if (error) throw error;
     return data;

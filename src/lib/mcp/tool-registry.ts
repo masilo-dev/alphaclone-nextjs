@@ -2,6 +2,13 @@ import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { MCPTool, MCPToolExecutionResult } from '@/types/mcp';
 import { mergeSessionArgs, sanitizeToolSchemaForClient } from '@/lib/mcp/sanitizeToolSchema';
+import {
+  isTransientToolError,
+  resolveToolWorkaround,
+  shouldChunkOutreach,
+  sleep,
+} from '@/lib/mcp/knownBrokenTools';
+import { logMcpToolExecution, normalizeToolName } from '@/lib/mcp/mcpToolTelemetry';
 
 const registry = new Map<string, MCPTool>();
 
@@ -26,39 +33,123 @@ export function listTools(sanitizeForClient = false) {
   }));
 }
 
+async function invokeToolHandler(
+  tool: MCPTool,
+  tenantId: string,
+  userId: string,
+  args: Record<string, any>
+): Promise<MCPToolExecutionResult> {
+  const validatedArgs = tool.inputSchema.parse(
+    mergeSessionArgs(args, { tenantId, userId })
+  );
+  const rawResult = await tool.handler(validatedArgs, { tenantId, userId });
+
+  if (rawResult && typeof rawResult === 'object' && 'content' in rawResult) {
+    return rawResult as MCPToolExecutionResult;
+  }
+  const text = typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult, null, 2);
+  return { content: [{ type: 'text', text }] };
+}
+
+async function executeChunkedOutreach(
+  tenantId: string,
+  userId: string,
+  toolName: string,
+  args: Record<string, any>,
+  chunkSize: number,
+  listArg: string
+): Promise<MCPToolExecutionResult> {
+  const tool = registry.get(toolName);
+  if (!tool) throw new Error(`Tool not found in registry: ${toolName}`);
+
+  const leadIds = Array.isArray(args[listArg]) ? [...args[listArg]] : [];
+  if (leadIds.length <= chunkSize) {
+    return invokeToolHandler(tool, tenantId, userId, args);
+  }
+
+  const chunks: string[][] = [];
+  for (let i = 0; i < leadIds.length; i += chunkSize) {
+    chunks.push(leadIds.slice(i, i + chunkSize));
+  }
+
+  const results: unknown[] = [];
+  for (const chunk of chunks) {
+    const chunkArgs = { ...args, [listArg]: chunk };
+    const chunkResult = await invokeToolHandler(tool, tenantId, userId, chunkArgs);
+    if (chunkResult.isError) return chunkResult;
+    results.push(chunkResult.content?.[0]?.text || chunkResult);
+  }
+
+  return {
+    content: [{
+      type: 'text',
+      text: JSON.stringify({
+        success: true,
+        chunked: true,
+        chunks: chunks.length,
+        chunk_size: chunkSize,
+        results,
+      }, null, 2),
+    }],
+  };
+}
+
 export async function executeTool(
   tenantId: string,
   userId: string,
   toolName: string,
   args: Record<string, any>
 ): Promise<MCPToolExecutionResult> {
-  const tool = registry.get(toolName);
-  if (!tool) {
-    throw new Error(`Tool not found in registry: ${toolName}`);
-  }
-
+  const requestedTool = normalizeToolName(toolName);
   const startTime = Date.now();
   let success = false;
   let errorMessage: string | undefined;
+  let resolvedToolName = requestedTool;
 
   try {
-    // 1. Merge session context (tenant + user) before Zod validation
-    const validatedArgs = tool.inputSchema.parse(
-      mergeSessionArgs(args, { tenantId, userId })
-    );
-
-    // 2. Call handler
-    const rawResult = await tool.handler(validatedArgs, { tenantId, userId });
-    success = true;
-
-    // 3. Format result
-    if (rawResult && typeof rawResult === 'object' && 'content' in rawResult) {
-      return rawResult as MCPToolExecutionResult;
+    const chunkConfig = shouldChunkOutreach(requestedTool);
+    if (chunkConfig) {
+      const result = await executeChunkedOutreach(
+        tenantId,
+        userId,
+        requestedTool,
+        args,
+        chunkConfig.chunkSize,
+        chunkConfig.listArg
+      );
+      success = !result.isError;
+      if (result.isError) {
+        errorMessage = result.content?.[0]?.text;
+      }
+      return result;
     }
-    const text = typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult, null, 2);
-    return {
-      content: [{ type: 'text', text }],
-    };
+
+    const resolved = resolveToolWorkaround(requestedTool, args);
+    resolvedToolName = normalizeToolName(resolved.toolName);
+    if (resolved.note) {
+      console.info(`[tool-registry] ${resolved.note}`);
+    }
+
+    const tool = registry.get(resolvedToolName);
+    if (!tool) {
+      throw new Error(`Tool not found in registry: ${resolvedToolName}`);
+    }
+
+    let result: MCPToolExecutionResult;
+    try {
+      result = await invokeToolHandler(tool, tenantId, userId, resolved.args);
+    } catch (firstErr: any) {
+      const firstMessage = firstErr?.message || 'Unknown error';
+      if (!isTransientToolError(firstMessage)) throw firstErr;
+      await sleep(1000);
+      result = await invokeToolHandler(tool, tenantId, userId, resolved.args);
+    }
+
+    success = !result.isError;
+    if (result.isError) {
+      errorMessage = result.content?.[0]?.text;
+    }
+    return result;
   } catch (err: any) {
     errorMessage = err.message || 'Unknown error';
     return {
@@ -68,7 +159,8 @@ export async function executeTool(
           text: JSON.stringify({
             error: true,
             message: errorMessage,
-            tool: toolName,
+            tool: resolvedToolName,
+            requested_tool: requestedTool,
           }),
         },
       ],
@@ -76,25 +168,15 @@ export async function executeTool(
     };
   } finally {
     const durationMs = Date.now() - startTime;
-
-    // 4. Log to mcp_sessions
-    try {
-      const supabaseAdmin = createSupabaseAdminClient();
-      const expiresAt = new Date(Date.now() + 1000 * 60).toISOString();
-      await supabaseAdmin.from('mcp_sessions').insert({
-        tenant_id: tenantId,
-        user_id: userId || null,
-        expires_at: expiresAt,
-        tool_name: toolName,
-        duration_ms: durationMs,
-        tool_latency_ms: durationMs,
-        success,
-        tool_success: success,
-        error_message: errorMessage || null,
-      });
-    } catch (logErr) {
-      console.error('Failed to log tool execution to mcp_sessions:', logErr);
-    }
+    await logMcpToolExecution({
+      tenantId,
+      userId,
+      toolName: resolvedToolName,
+      durationMs,
+      success,
+      errorMessage,
+      metadata: requestedTool !== resolvedToolName ? { requested_tool: requestedTool } : {},
+    });
   }
 }
 

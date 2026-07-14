@@ -1,10 +1,17 @@
 /**
  * Railway is the primary host for the web app and scraper in the current deployment model.
- * These routes are the heavier lead-generation workloads that should stay paired with Railway
- * whenever SCRAPER_SERVICE_URL is configured.
+ * Lead Finder runs in-process on alphaclone-web by default; optional SCRAPER_SERVICE_URL for legacy scraper.
  */
 
 import { ENV } from './env';
+
+export function isRailwayHost(): boolean {
+  return Boolean(
+    process.env.RAILWAY_ENVIRONMENT ||
+      process.env.RAILWAY_PROJECT_ID ||
+      process.env.RAILWAY_SERVICE_NAME
+  );
+}
 
 export const RAILWAY_HEAVY_ROUTES = [
   '/api/scraper-campaigns',
@@ -31,13 +38,19 @@ export function isRailwayHeavyCron(path: string): boolean {
 
 /** True when the Railway scraper microservice URL is configured. */
 export function hasRailwayScraper(): boolean {
-  return Boolean(ENV.SCRAPER_SERVICE_URL);
+  return Boolean(
+    ENV.SCRAPER_SERVICE_URL ||
+      process.env.RAILWAY_SCRAPER_SERVICE_URL ||
+      process.env.SCRAPER_SERVICE_INTERNAL_URL
+  );
 }
 
-/**
- * Prefer the Railway scraper for Playwright scraping, enrichment, and campaign runs.
- * If the scraper is unavailable, callers should fall back to local/free sources.
- */
+/** Lead Finder defaults to in-process search on the web service. */
+export function shouldUseExternalScraper(): boolean {
+  return false;
+}
+
+/** Heavy work stays on the web service unless an external scraper is explicitly enabled. */
 export function shouldProxyHeavyWorkToRailway(): boolean {
   if (process.env.FORCE_LOCAL_HEAVY_WORK === 'true') return false;
   return hasRailwayScraper();

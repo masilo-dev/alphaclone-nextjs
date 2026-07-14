@@ -27,7 +27,8 @@ async function collectOperatingSignals(tenantId: string, lookbackDays = 30) {
   const supabase = createSupabaseAdminClient();
   const since = isoDaysAgo(lookbackDays);
 
-  const [invoiceRes, quoteRes, dealRes, taskRes, leadRes, submissionRes, sessionRes] = await Promise.all([
+  const [invoiceRes, quoteRes, dealRes, taskRes, leadRes, submissionRes, sessionRes, leadCountRes, taskCountRes] =
+    await Promise.all([
     supabase
       .from('business_invoices')
       .select('id, invoice_number, status, total_amount, due_date, created_at, client_id')
@@ -71,8 +72,15 @@ async function collectOperatingSignals(tenantId: string, lookbackDays = 30) {
       .select('tool_name, success, duration_ms, created_at')
       .eq('tenant_id', tenantId)
       .gte('created_at', since)
+      .not('tool_name', 'is', null)
       .order('created_at', { ascending: false })
       .limit(300),
+    supabase.from('leads').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    supabase
+      .from('tasks')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .neq('status', 'completed'),
   ]);
 
   const invoices = invoiceRes.data || [];
@@ -82,6 +90,8 @@ async function collectOperatingSignals(tenantId: string, lookbackDays = 30) {
   const leads = leadRes.data || [];
   const submissions = submissionRes.data || [];
   const sessions = sessionRes.data || [];
+  const leadTotalCount = leadCountRes.count ?? leads.length;
+  const taskTotalCount = taskCountRes.count ?? tasks.length;
   const now = Date.now();
 
   return {
@@ -92,6 +102,12 @@ async function collectOperatingSignals(tenantId: string, lookbackDays = 30) {
     leads,
     submissions,
     sessions,
+    entity_counts: {
+      leads_total: leadTotalCount,
+      tasks_pending_total: taskTotalCount,
+      deals_sampled: deals.length,
+      invoices_sampled: invoices.length,
+    },
     overdue_invoices: invoices.filter((invoice) => {
       const due = invoice.due_date ? new Date(invoice.due_date).getTime() : 0;
       return String(invoice.status).toLowerCase() === 'overdue' || (due && due < now && String(invoice.status).toLowerCase() !== 'paid');
@@ -452,7 +468,11 @@ registerTool('platform-advantage', {
     const signals = await collectOperatingSignals(args.tenant_id, 30);
     const state = await mcpStore.getBusinessAIState(context.tenantId, context.userId);
     const successRate = signals.sessions.length
-      ? Math.round((signals.sessions.filter((s) => s.success).length / signals.sessions.length) * 100)
+      ? Math.round(
+          (signals.sessions.filter((s) => s.success === true || (s as { tool_success?: boolean }).tool_success === true).length /
+            signals.sessions.length) *
+            100
+        )
       : 100;
     const evaluation = evaluateBusinessAIState(state, {
       task: 'Increase automation level for the business',
@@ -467,10 +487,10 @@ registerTool('platform-advantage', {
           business_ai_state: summarizeBusinessAIState(state),
           tool_success_rate_percent: successRate,
           data_signals: {
-            invoices: signals.invoices.length,
-            deals: signals.deals.length,
-            leads: signals.leads.length,
-            tasks: signals.tasks.length,
+            invoices: signals.entity_counts?.invoices_sampled ?? signals.invoices.length,
+            deals: signals.entity_counts?.deals_sampled ?? signals.deals.length,
+            leads: signals.entity_counts?.leads_total ?? signals.leads.length,
+            tasks: signals.entity_counts?.tasks_pending_total ?? signals.open_tasks.length,
           },
           recommendation:
             successRate < 80
