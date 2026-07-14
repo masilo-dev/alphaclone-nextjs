@@ -1,4 +1,4 @@
-import { routeAIRequest } from '@/services/aiRouter';
+import { callDeepSeek } from '@/lib/ai/deepseek';
 import { SMB_DEFAULTS, applySmbDefaults } from '@/lib/scraper/smbLeadFilters';
 import { extractNicheFromMessage } from '@/lib/scraper/nicheSearchAdvisor';
 
@@ -121,6 +121,39 @@ function normalizeIntent(data: Record<string, unknown>, userMessage: string): Pa
   }) as ParsedLeadIntent;
 }
 
+/** Rule-based intent when AI is unavailable — keeps Lead Finder working without paid providers. */
+export function parseLeadIntentHeuristic(userMessage: string): ParsedLeadIntent {
+  const niche =
+    extractNicheFromMessage(userMessage) ||
+    userMessage.match(/find\s+(.+?)\s+(?:in|near|around|at)\s+/i)?.[1]?.trim() ||
+    userMessage.replace(/find|leads|businesses|companies|owners?/gi, '').trim().slice(0, 80) ||
+    'local business';
+
+  const locationMatch = userMessage.match(/\b(?:in|near|around|at)\s+([^.!?\n,]+)/i);
+  const locationRaw = locationMatch?.[1]?.trim() || '';
+  const parts = locationRaw.split(',').map((p) => p.trim()).filter(Boolean);
+  const location: ParsedLeadIntent['location'] = {};
+  if (parts.length >= 2) {
+    location.city = parts[0];
+    location.country = parts[parts.length - 1];
+  } else if (locationRaw) {
+    location.city = locationRaw;
+  }
+  location.radius_km = 25;
+
+  const industry = niche.split(/\s+/).slice(0, 3).join(' ');
+
+  return applySmbDefaults({
+    ...DEFAULT_INTENT,
+    name: `Search: ${niche.slice(0, 50)}`,
+    niche,
+    industry: industry ? [industry] : [],
+    location,
+    search_query: userMessage,
+    summary: `SMB ${niche}${locationRaw ? ` in ${locationRaw}` : ''}`,
+  }) as ParsedLeadIntent;
+}
+
 export async function parseLeadIntentFromChat(
   userMessage: string,
   conversationHistory: Array<{ role: string; content: string }> = []
@@ -167,20 +200,29 @@ Respond with ONLY valid JSON:
 }`;
 
   try {
-    const aiResponse = await routeAIRequest({
-      prompt,
-      maxTokens: 1200,
-      temperature: 0.2,
-    });
-
-    const text = aiResponse.content || '';
+    let text = '';
+    try {
+      text = await callDeepSeek(prompt, {
+        model: 'deepseek-chat',
+        maxTokens: 1200,
+        temperature: 0.2,
+      });
+    } catch (aiErr) {
+      console.warn('[parseLeadIntent] DeepSeek failed, using heuristic parser:', aiErr);
+      const intent = parseLeadIntentHeuristic(userMessage);
+      return {
+        intent,
+        assistantReply: `I'll search for **${intent.niche || intent.summary}** using directory and website sources. Click **Start search** when ready.`,
+      };
+    }
 
     const parsed = extractJson(text);
     if (!parsed) {
+      const intent = parseLeadIntentHeuristic(userMessage);
       return {
-        intent: { ...DEFAULT_INTENT, search_query: userMessage, name: `Search: ${userMessage.slice(0, 50)}` },
+        intent,
         assistantReply:
-          "I understood your request. I'll search business directories and company websites for matching leads. Click **Start search** when you're ready.",
+          "I parsed your request locally. I'll search business directories and company websites for matching SMB leads. Click **Start search** when you're ready.",
       };
     }
 
@@ -192,8 +234,9 @@ Respond with ONLY valid JSON:
 
     return { intent, assistantReply };
   } catch {
+    const intent = parseLeadIntentHeuristic(userMessage);
     return {
-      intent: { ...DEFAULT_INTENT, search_query: userMessage },
+      intent,
       assistantReply:
         "I'll run a lead search using directories and company websites based on your description. Click **Start search** to begin.",
     };

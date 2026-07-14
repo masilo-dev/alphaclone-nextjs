@@ -3,6 +3,7 @@ import { emitBusinessEvent } from '@/lib/automation/emit-event';
 import { executeSingleBonnieTool } from '@/lib/bonnie/executeSingleBonnieTool';
 import { freePlacesService } from '@/services/freePlacesService';
 import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
+import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
 import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
 
 export function formatSearchNiche(intent: ParsedLeadIntent): string {
@@ -110,7 +111,7 @@ export async function fallbackLocalSearch(
       score: place?.phone || place?.website ? 55 : 40,
       grade: 'C',
       status: 'new',
-      quality_reason: 'SMB local search (Vercel/Railway fallback)',
+      quality_reason: 'SMB local directory search (Railway fallback)',
     };
   });
 
@@ -127,6 +128,97 @@ export async function fallbackLocalSearch(
     createdCount: rows.length,
   });
   return rows.length;
+}
+
+function scoreFromLeadResult(lead: LeadResult): { score: number; grade: string } {
+  let score = 40;
+  if (lead.phone) score += 15;
+  if (lead.email) score += 20;
+  if (lead.website) score += 10;
+  if (lead.rating && lead.rating >= 4) score += 10;
+  const grade = score >= 75 ? 'A' : score >= 60 ? 'B' : score >= 45 ? 'C' : 'D';
+  return { score, grade };
+}
+
+/** Full in-app lead search — no external scraper URL required (Railway monolith). */
+export async function runInProcessLeadCampaign(
+  tenantId: string,
+  campaignId: string,
+  intent: ParsedLeadIntent
+): Promise<{ count: number; sourceStats: Record<string, number> }> {
+  const supabase = createSupabaseAdminClient();
+  const niche = formatSearchNiche(intent);
+  const location = formatSearchLocation(intent);
+  const radiusKm = intent.location?.radius_km || 25;
+
+  let step: 'init' | 'fallbacks' | 'browser' | 'finalize' = 'init';
+  let partial: LeadResult[] = [];
+  let sourceStats: Record<string, number> = {};
+  let sourceErrors: Record<string, string> = {};
+  let finalResults: LeadResult[] = [];
+
+  while (true) {
+    const result = await runLeadStep({
+      step,
+      niche,
+      location,
+      radiusKm,
+      sortBy: 'default',
+      usePlaywright: Boolean(process.env.BROWSERBASE_API_KEY),
+      partialResults: partial,
+      sourceStats,
+      sourceErrors,
+    });
+    partial = result.partialResults;
+    sourceStats = result.sourceStats;
+    sourceErrors = result.sourceErrors;
+    if (result.nextStep === 'completed') {
+      finalResults = result.finalResults.length ? result.finalResults : result.partialResults;
+      break;
+    }
+    step = result.nextStep;
+  }
+
+  if (!finalResults.length) {
+    const placesCount = await fallbackLocalSearch(tenantId, campaignId, intent);
+    return { count: placesCount, sourceStats: { ...sourceStats, directory: placesCount } };
+  }
+
+  const candidates = finalResults.map((lead) => ({
+    lead,
+    name: lead.business_name,
+    company: lead.business_name,
+    company_website: lead.website,
+    email: lead.email,
+    phone: lead.phone,
+  }));
+  const smb = filterSmbLeads(candidates);
+
+  const rows = smb.slice(0, intent.daily_limit).map((entry) => {
+    const lead = entry.lead;
+    const { score, grade } = scoreFromLeadResult(lead);
+    return {
+      campaign_id: campaignId,
+      tenant_id: tenantId,
+      name: lead.business_name,
+      company: lead.business_name,
+      phone: lead.phone,
+      email: lead.email,
+      company_website: lead.website,
+      industry: niche,
+      source: lead.source || 'directory',
+      score,
+      grade,
+      status: 'new',
+      quality_reason: 'In-app lead search (Railway)',
+    };
+  });
+
+  if (!rows.length) return { count: 0, sourceStats };
+
+  const { error } = await supabase.from('scraper_leads').insert(rows);
+  if (error) throw error;
+  return { count: rows.length, sourceStats };
 }
 
 export async function saveLeadsToCrm(

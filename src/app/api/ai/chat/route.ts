@@ -16,9 +16,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 60; // Maximize serverless timeout for heavy LLM operations
 
 /**
- * AI Chat API Route
- * Now uses smart routing: Anthropic (Claude) → OpenAI (GPT-4) → Gemini
- * Automatically falls back if primary provider fails
+ * AI Chat API Route — DeepSeek only (set AI_ALLOW_MULTI_PROVIDER=true for legacy providers).
  */
 export async function POST(req: Request) {
     const supabase = await createSupabaseServerClient();
@@ -67,7 +65,7 @@ export async function POST(req: Request) {
         if (isAIProviderUnavailableError(error)) {
             return NextResponse.json(
                 {
-                    error: 'AI is temporarily unavailable. OpenRouter free models may be rate-limited — wait a minute and retry, or verify OPENROUTER_API_KEY is set in production.',
+                    error: 'DeepSeek is temporarily unavailable. Verify DEEPSEEK_API_KEY is set on alphaclone-web and retry in a minute.',
                     code: 'AI_PROVIDER_UNAVAILABLE',
                     retryAfter: error.retryAfterSeconds,
                 },

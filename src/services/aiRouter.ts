@@ -23,6 +23,14 @@ import {
   noteAIProviderFailure,
   type AIProviderId,
 } from '@/lib/ai/providerHealth';
+import {
+  isDeepSeekOnlyMode,
+  isDeepSeekModelName,
+  resolveDeepSeekModel,
+  resolveModelForProvider,
+  stripIncompatibleModelForProvider,
+  deepSeekConfigError,
+} from '@/lib/ai/deepSeekOnly';
 
 const CLAUDE_ALLOWED_MODELS = new Set<string>([
   'claude-sonnet-4-6-20260217',
@@ -38,6 +46,9 @@ const CLAUDE_MODEL_ALIASES: Record<string, string> = {
 };
 
 function normalizeClaudeModel(model?: string): string {
+  if (isDeepSeekModelName(model)) {
+    return DEFAULT_CLAUDE_MODEL;
+  }
   const rawCandidate = (model || DEFAULT_CLAUDE_MODEL).trim();
   const candidate = CLAUDE_MODEL_ALIASES[rawCandidate] || rawCandidate;
   if (CLAUDE_ALLOWED_MODELS.has(candidate)) {
@@ -60,6 +71,9 @@ function isXaiModelError(error: any): boolean {
 }
 
 function normalizeXaiModel(model?: string): string {
+  if (isDeepSeekModelName(model)) {
+    return 'grok-4.3';
+  }
   const candidate = String(model || 'grok-4.3').trim();
   if (!candidate) return 'grok-4.3';
   const aliases: Record<string, string> = {
@@ -278,9 +292,31 @@ export function cleanSocialContent(content: string): string {
 }
 
 /**
- * Main AI routing function with automatic fallback
+ * Main AI routing function with automatic fallback.
+ * Default: DeepSeek only. Set AI_ALLOW_MULTI_PROVIDER=true for legacy multi-provider chain.
  */
 export async function routeAIRequest(options: AIRequestOptions): Promise<AIResponse> {
+  if (isDeepSeekOnlyMode()) {
+    const errors: string[] = [];
+    if (!deepseek) {
+      throw new Error(deepSeekConfigError());
+    }
+    if (appendCooldownSkip(errors, 'deepseek')) {
+      throwAllProvidersUnavailable(errors);
+    }
+    try {
+      const response = await completeWithDeepSeek({
+        ...options,
+        model: resolveDeepSeekModel(options.model),
+      });
+      recordProviderSuccess('deepseek');
+      return response;
+    } catch (error: any) {
+      recordProviderFailure(errors, 'deepseek', '', error);
+      throwAllProvidersUnavailable(errors);
+    }
+  }
+
   const errors: string[] = [];
 
   // Detect provider preference from model name
@@ -336,7 +372,9 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
     try {
       console.log('[AI Router] Attempting OpenRouter...');
-      const response = await completeWithOpenRouter(options);
+      const response = await completeWithOpenRouter(
+        stripIncompatibleModelForProvider('openrouter', options)
+      );
       console.log('[AI Router] ✓ OpenRouter succeeded');
       recordProviderSuccess('openrouter');
       return response;
@@ -345,11 +383,20 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
     }
   }
 
+  if (isDeepSeekOnlyMode()) {
+    if (errors.length > 0) {
+      throwAllProvidersUnavailable(errors);
+    }
+    throw new Error(
+      'DeepSeek is not configured. Set DEEPSEEK_API_KEY on alphaclone-web.'
+    );
+  }
+
   // Priority 3: Try Anthropic
   if (anthropic && !appendCooldownSkip(errors, 'anthropic')) {
     try {
       console.log('[AI Router] Attempting Anthropic (Claude)...');
-      const response = await completeWithAnthropic(options);
+      const response = await completeWithAnthropic(stripIncompatibleModelForProvider('anthropic', options));
       console.log('[AI Router] ✓ Anthropic succeeded');
       recordProviderSuccess('anthropic');
       return response;
@@ -362,7 +409,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   if (xai && !appendCooldownSkip(errors, 'xai')) {
     try {
       console.log('[AI Router] Attempting xAI Grok...');
-      const response = await completeWithXAI(options);
+      const response = await completeWithXAI(stripIncompatibleModelForProvider('xai', options));
       console.log('[AI Router] ✓ xAI Grok succeeded');
       recordProviderSuccess('xai');
       return response;
@@ -375,7 +422,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   if (openai && !appendCooldownSkip(errors, 'openai')) {
     try {
       console.log(`[AI Router] Attempting OpenAI (${DEFAULT_OPENAI_MODEL})...`);
-      const response = await completeWithOpenAI(options);
+      const response = await completeWithOpenAI(stripIncompatibleModelForProvider('openai', options));
       console.log('[AI Router] ✓ OpenAI succeeded');
       recordProviderSuccess('openai');
       return response;
@@ -388,7 +435,7 @@ export async function routeAIRequest(options: AIRequestOptions): Promise<AIRespo
   if (geminiAI && !appendCooldownSkip(errors, 'gemini')) {
     try {
       console.log('[AI Router] Attempting Google Gemini...');
-      const response = await completeWithGemini(options);
+      const response = await completeWithGemini(stripIncompatibleModelForProvider('gemini', options));
       console.log('[AI Router] ✓ Gemini succeeded');
       recordProviderSuccess('gemini');
       return response;
@@ -462,6 +509,25 @@ export async function routeAutonomousTask(task: AIStrengthTask, prompt: string, 
  * Streaming version of AI routing
  */
 export async function streamAIRequest(options: AIRequestOptions): Promise<AIStreamResponse> {
+  if (isDeepSeekOnlyMode()) {
+    if (!deepseek) {
+      throw new Error(deepSeekConfigError());
+    }
+    const errors: string[] = [];
+    if (appendCooldownSkip(errors, 'deepseek')) {
+      throwAllProvidersUnavailable(errors);
+    }
+    try {
+      const model = resolveDeepSeekModel(options.model);
+      const stream = await streamWithDeepSeek({ ...options, model });
+      recordProviderSuccess('deepseek');
+      return { stream, provider: 'deepseek', model };
+    } catch (error: any) {
+      recordProviderFailure(errors, 'deepseek', 'stream', error);
+      throwAllProvidersUnavailable(errors);
+    }
+  }
+
   const errors: string[] = [];
   const requestedModel = options.model?.toLowerCase();
 
@@ -755,7 +821,9 @@ async function completeWithOpenAI(options: AIRequestOptions): Promise<AIResponse
   if (!openai) {
     throw new Error('OpenAI API key not configured');
   }
-  const model = options.model || DEFAULT_OPENAI_MODEL;
+  const model = isDeepSeekModelName(options.model)
+    ? DEFAULT_OPENAI_MODEL
+    : options.model || DEFAULT_OPENAI_MODEL;
 
   const messages: any[] = [];
   if (options.systemPrompt) {
@@ -788,6 +856,25 @@ export async function routeAIChat(
   image?: string,
   model?: string
 ): Promise<AIResponse> {
+  if (isDeepSeekOnlyMode()) {
+    const errors: string[] = [];
+    if (!deepseek) {
+      throw new Error(deepSeekConfigError());
+    }
+    if (appendCooldownSkip(errors, 'deepseek')) {
+      throwAllProvidersUnavailable(errors);
+    }
+    try {
+      const dsModel = resolveDeepSeekModel(model);
+      const response = await chatWithDeepSeek(history, message, systemPrompt, dsModel);
+      recordProviderSuccess('deepseek');
+      return response;
+    } catch (error: any) {
+      recordProviderFailure(errors, 'deepseek', 'chat', error);
+      throwAllProvidersUnavailable(errors);
+    }
+  }
+
   const errors: string[] = [];
 
   // Specific Provider Routing
@@ -840,13 +927,23 @@ export async function routeAIChat(
   if (openRouterClient && !appendCooldownSkip(errors, 'openrouter')) {
     try {
       console.log('[AI Router] Attempting OpenRouter chat...');
-      const response = await chatWithOpenRouter(history, message, systemPrompt, model);
+      const orModel = resolveModelForProvider('openrouter', model) || model;
+      const response = await chatWithOpenRouter(history, message, systemPrompt, orModel);
       console.log('[AI Router] ✓ OpenRouter chat succeeded');
       recordProviderSuccess('openrouter');
       return response;
     } catch (error: any) {
       recordProviderFailure(errors, 'openrouter', 'chat', error);
     }
+  }
+
+  if (isDeepSeekOnlyMode()) {
+    if (errors.length > 0) {
+      throwAllProvidersUnavailable(errors);
+    }
+    throw new Error(
+      'DeepSeek is not configured. Set DEEPSEEK_API_KEY on alphaclone-web.'
+    );
   }
 
   // Priority 3: Try Anthropic
@@ -892,7 +989,7 @@ export async function routeAIChat(
   if (geminiAI && !appendCooldownSkip(errors, 'gemini')) {
     try {
       console.log('[AI Router] Attempting Gemini chat...');
-      const response = await chatWithGemini(history, message, systemPrompt, model);
+      const response = await chatWithGemini(history, message, systemPrompt, isDeepSeekModelName(model) ? undefined : model);
       console.log('[AI Router] ✓ Gemini chat succeeded');
       recordProviderSuccess('gemini');
       return response;
@@ -1133,6 +1230,9 @@ async function completeWithOpenRouter(options: AIRequestOptions): Promise<AIResp
   let model = options.model || DEFAULT_OPENROUTER_MODEL;
   if (model.startsWith('openrouter/')) {
     model = model.replace('openrouter/', '');
+  }
+  if (isDeepSeekModelName(model)) {
+    model = resolveModelForProvider('openrouter', model) || DEFAULT_OPENROUTER_MODEL;
   }
 
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
@@ -1383,6 +1483,9 @@ async function streamWithOpenRouter(options: AIRequestOptions): Promise<Readable
   if (model.startsWith('openrouter/')) {
     model = model.replace('openrouter/', '');
   }
+  if (isDeepSeekModelName(model)) {
+    model = resolveModelForProvider('openrouter', model) || DEFAULT_OPENROUTER_MODEL;
+  }
 
   const encoder = new TextEncoder();
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
@@ -1420,7 +1523,9 @@ async function completeWithGemini(options: AIRequestOptions): Promise<AIResponse
     throw new Error('Gemini API key not configured');
   }
 
-  const modelName = options.model || 'gemini-1.5-flash';
+  const modelName = isDeepSeekModelName(options.model)
+    ? 'gemini-1.5-flash'
+    : options.model || 'gemini-1.5-flash';
   const model = geminiAI.getGenerativeModel({
     model: modelName,
     ...(options.systemPrompt ? { systemInstruction: options.systemPrompt } : {}),
@@ -1568,7 +1673,7 @@ async function completeWithDeepSeek(options: AIRequestOptions): Promise<AIRespon
   if (!deepseek) {
     throw new Error('DeepSeek API key not configured');
   }
-  const model = options.model || 'deepseek-chat';
+  const model = resolveDeepSeekModel(options.model);
 
   const messages: any[] = [];
   if (options.systemPrompt) {

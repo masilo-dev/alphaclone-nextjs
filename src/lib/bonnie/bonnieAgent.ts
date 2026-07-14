@@ -1,5 +1,5 @@
 import { callDeepSeek, chatDeepSeek, streamDeepSeek } from '@/lib/ai/deepseek';
-import { routeAIRequest, cleanProfessionalContent } from '@/services/aiRouter';
+import { cleanProfessionalContent } from '@/services/aiRouter';
 import { buildBonnieSystemPrompt } from '@/lib/bonnie/bonnieSystemPrompt';
 import { buildBonnieConversationalPrompt } from '@/lib/bonnie/bonnieConversationalPrompt';
 import {
@@ -13,6 +13,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { suggestToolsForQuestion } from '@/lib/bonnie/bonnieTenantDataRules';
 import { warmBonnieWorkspaceContext, formatWarmContextBlock } from '@/lib/bonnie/bonnieWarmContext';
 import { sanitizeBonnieResponse, BONNIE_ANTI_HEDGE_INSTRUCTION } from '@/lib/bonnie/bonnieResponseSanitizer';
+import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
 import {
   BONNIE_MAX_AGENT_ROUNDS,
   looksLikeComplexMission,
@@ -112,6 +113,20 @@ function isProviderBillingOrOutageText(text: string): boolean {
   );
 }
 
+function formatBonniePlanningError(err: unknown): string {
+  if (isAIProviderUnavailableError(err)) {
+    return 'DeepSeek is unavailable. Set DEEPSEEK_API_KEY on Railway (alphaclone-web).';
+  }
+  const msg = err instanceof Error ? err.message : 'planning_failed';
+  if (msg.includes('All AI providers failed') || msg.includes('DEEPSEEK_API_KEY')) {
+    return 'DeepSeek is not configured or is out of credits. Add DEEPSEEK_API_KEY on the Railway web service.';
+  }
+  if (msg.includes('Unexpected token') || msg.includes('JSON')) {
+    return 'Bonnie could not read the AI plan — try a clearer action like "list overdue invoices" or "run autonomous scan".';
+  }
+  return msg;
+}
+
 function detectProviderBlocked(toolResults: BonnieToolResult[]): boolean {
   return toolResults.some((r) => !r.success && isProviderBillingOrOutageText(r.summary || r.details || ''));
 }
@@ -208,37 +223,27 @@ async function conversationalReply(
   const systemPrompt = buildBonnieConversationalPrompt(moduleId, tenantId, snapshot);
   const contextBlock = `Workspace: ${snapshot.module_summary}\n\nUser:\n${instruction}`;
 
-  if (process.env.DEEPSEEK_API_KEY) {
-    const model = 'deepseek-chat';
-    if (onStreamToken) {
-      const text = history?.length
-        ? await streamDeepSeek(history, contextBlock, { systemPrompt, model, maxTokens: 1800, temperature: 0.55 }, onStreamToken)
-        : await streamDeepSeek([], contextBlock, { systemPrompt, model, maxTokens: 1800, temperature: 0.55 }, onStreamToken);
-      return { text: text.trim(), model };
-    }
+  const model = 'deepseek-chat';
+  if (onStreamToken) {
     const text = history?.length
-      ? await chatDeepSeek(history, contextBlock, {
-          systemPrompt,
-          model,
-          maxTokens: 1800,
-          temperature: 0.55,
-        })
-      : await callDeepSeek(contextBlock, {
-          systemPrompt,
-          model,
-          maxTokens: 1800,
-          temperature: 0.55,
-        });
+      ? await streamDeepSeek(history, contextBlock, { systemPrompt, model, maxTokens: 1800, temperature: 0.55 }, onStreamToken)
+      : await streamDeepSeek([], contextBlock, { systemPrompt, model, maxTokens: 1800, temperature: 0.55 }, onStreamToken);
     return { text: text.trim(), model };
   }
-
-  const fallback = await routeAIRequest({
-    prompt: contextBlock,
-    systemPrompt,
-    maxTokens: 1800,
-    temperature: 0.55,
-  });
-  return { text: fallback.content.trim(), model: fallback.model };
+  const text = history?.length
+    ? await chatDeepSeek(history, contextBlock, {
+        systemPrompt,
+        model,
+        maxTokens: 1800,
+        temperature: 0.55,
+      })
+    : await callDeepSeek(contextBlock, {
+        systemPrompt,
+        model,
+        maxTokens: 1800,
+        temperature: 0.55,
+      });
+  return { text: text.trim(), model };
 }
 
 async function planWithDeepSeek(
@@ -281,33 +286,21 @@ ${instruction}${priorBlock}
 
 Plan like a power agent (Cursor/Devin style): fetch tenant data with tools when needed — never ask yes/no to read. Execute end-to-end until done or approval is queued. Round ${round + 1} of ${MAX_AGENT_ROUNDS}.`;
 
-  if (process.env.DEEPSEEK_API_KEY) {
-    const model = 'deepseek-chat';
-    const raw = history?.length && round === 0
-      ? await chatDeepSeek(history, userBlock, {
-          systemPrompt,
-          model,
-          maxTokens: 4096,
-          temperature: 0.35,
-        })
-      : await callDeepSeek(userBlock, {
-          systemPrompt,
-          model,
-          maxTokens: 4096,
-          temperature: 0.35,
-        });
-    return { plan: parseJsonPlan(raw), model };
-  }
-
-  const fallback = await routeAIRequest({
-    prompt: userBlock,
-    systemPrompt,
-    maxTokens: 4096,
-    model: 'deepseek-reasoner',
-    temperature: 0.35,
-  });
-
-  return { plan: parseJsonPlan(fallback.content), model: fallback.model };
+  const model = 'deepseek-chat';
+  const raw = history?.length && round === 0
+    ? await chatDeepSeek(history, userBlock, {
+        systemPrompt,
+        model,
+        maxTokens: 4096,
+        temperature: 0.35,
+      })
+    : await callDeepSeek(userBlock, {
+        systemPrompt,
+        model,
+        maxTokens: 4096,
+        temperature: 0.35,
+      });
+  return { plan: parseJsonPlan(raw), model };
 }
 
 async function synthesizeWithDeepSeek(
@@ -339,35 +332,25 @@ ${toolResults.map((r) => `- ${r.success ? '✓' : '✗'} ${r.tool}: ${sanitizeSu
 Write the final reply: what you did, key results, and clear next step if any. Plain text, concise, professional. No vendor names.
 ${BONNIE_ANTI_HEDGE_INSTRUCTION}`;
 
-  if (process.env.DEEPSEEK_API_KEY) {
-    if (onStreamToken) {
-      // For streaming, we need to clean tokens as they come through
-      const wrappedOnStreamToken = (token: string) => {
-        onStreamToken(cleanProfessionalContent(token));
-      };
-      const result = await streamDeepSeek([], synthesisPrompt, {
-        model: 'deepseek-chat',
-        maxTokens: 1400,
-        temperature: 0.45,
-        systemPrompt: buildBonnieConversationalPrompt(moduleId),
-      }, wrappedOnStreamToken);
-      return result ? cleanProfessionalContent(result) : null;
-    }
-    const result = await callDeepSeek(synthesisPrompt, {
+  if (onStreamToken) {
+    const wrappedOnStreamToken = (token: string) => {
+      onStreamToken(cleanProfessionalContent(token));
+    };
+    const result = await streamDeepSeek([], synthesisPrompt, {
       model: 'deepseek-chat',
       maxTokens: 1400,
       temperature: 0.45,
       systemPrompt: buildBonnieConversationalPrompt(moduleId),
-    });
-    return cleanProfessionalContent(result);
+    }, wrappedOnStreamToken);
+    return result ? cleanProfessionalContent(result) : null;
   }
-
-  const res = await routeAIRequest({
-    prompt: synthesisPrompt,
-    systemPrompt: buildBonnieConversationalPrompt(moduleId),
+  const result = await callDeepSeek(synthesisPrompt, {
+    model: 'deepseek-chat',
     maxTokens: 1400,
+    temperature: 0.45,
+    systemPrompt: buildBonnieConversationalPrompt(moduleId),
   });
-  return cleanProfessionalContent(res.content);
+  return cleanProfessionalContent(result);
 }
 
 async function persistBonnieLogs(tenantId: string, logs: string[]) {
@@ -572,7 +555,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       return {
         response:
           fallbackText ||
-          `Bonnie could not parse that request (${err instanceof Error ? err.message : 'planning_failed'}). Try a clear action, e.g. "run autonomous scan" or "list overdue invoices".`,
+          `Bonnie could not parse that request (${formatBonniePlanningError(err)}). Try a clear action, e.g. "run autonomous scan" or "list overdue invoices".`,
         success: false,
         provider,
         model,

@@ -62,6 +62,7 @@ const GRADE_STYLES: Record<string, string> = {
 };
 
 const STEP_LABELS: Record<string, string> = {
+  init: 'Initializing',
   scraping: 'Scraping sources',
   extracting: 'Extracting entities',
   enriching: 'Enriching contacts',
@@ -71,14 +72,18 @@ const STEP_LABELS: Record<string, string> = {
   done: 'Complete',
 };
 
-export default function LeadFinderChat() {
+interface Props {
+  onActivity?: () => void;
+}
+
+export default function LeadFinderChat({ onActivity }: Props) {
   const tenant = useCurrentTenantSafe();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       role: 'assistant',
       content:
-        "Describe your ideal **SMB leads** in plain English — niche, city, who you want to reach. I skip big corporations (no Fortune 500, no mega-chains).\n\nExample: *Find owner-operated dental clinics in Austin*\n\nWhen leads appear, tap **Outreach** on any row to open the email form — we auto-save to CRM and mark **Contacted** after you send.",
+        "Describe your ideal **SMB leads** in plain English — niche, city, and who you want to reach. Large corporations and franchise chains are filtered out.\n\nExample: *Find owner-operated dental clinics in Austin*\n\nWhen leads appear, use **Outreach** on any row to open the email composer. Leads are saved to CRM and marked **Contacted** after you send.",
     },
   ]);
   const [input, setInput] = useState('');
@@ -95,6 +100,8 @@ export default function LeadFinderChat() {
   const completedNotifiedRef = useRef(false);
   const pollAttemptsRef = useRef(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const onActivityRef = useRef(onActivity);
+  onActivityRef.current = onActivity;
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,6 +117,8 @@ export default function LeadFinderChat() {
       { id: `${Date.now()}-${Math.random()}`, role, content },
     ]);
   };
+
+  const notifyActivity = () => onActivityRef.current?.();
 
   const pollStatusAndLeads = useCallback(
     async (cid: string) => {
@@ -131,6 +140,7 @@ export default function LeadFinderChat() {
       const leadsData = await leadsRes.json();
       if (leadsData.leads?.length) {
         setLeads(leadsData.leads);
+        notifyActivity();
       }
 
       const status = statusData.status;
@@ -354,6 +364,7 @@ export default function LeadFinderChat() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       toast.success(`Saved ${data.count} leads to CRM`);
+      notifyActivity();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
@@ -527,29 +538,29 @@ export default function LeadFinderChat() {
   );
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] min-h-[600px] rounded-xl border border-slate-800 bg-slate-950/80 overflow-hidden">
+    <div className="flex flex-col min-h-[420px] max-h-[min(72dvh,760px)] ac-workspace-panel rounded-xl border border-slate-800">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800 bg-slate-900/60">
-        <div className="w-9 h-9 rounded-lg bg-emerald-600/20 flex items-center justify-center">
-          <Sparkles className="w-5 h-5 text-emerald-400" />
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/80 bg-slate-900/40">
+        <div className="w-9 h-9 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center">
+          <Sparkles className="w-5 h-5 text-teal-400" />
         </div>
-        <div>
-          <h2 className="text-white font-semibold text-sm">Lead Finder Chat</h2>
-          <p className="text-xs text-slate-500">SMB only · chat → scrape → automate</p>
+        <div className="min-w-0">
+          <h2 className="text-white font-semibold text-sm">Lead search assistant</h2>
+          <p className="text-xs text-slate-500 truncate">Natural language → directory scrape → CRM</p>
         </div>
-        <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-900/40 text-amber-300 border border-amber-700/50">
-          No big corps
-        </span>
         {runStatus && runStatus.status === 'running' && (
-          <div className="ml-auto flex items-center gap-2 text-xs text-slate-400">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            {STEP_LABELS[runStatus.current_step || ''] || 'Working'} · {runStatus.progress}%
+          <div className="ml-auto flex items-center gap-2 text-xs text-slate-400 shrink-0">
+            <Loader2 className="w-3 h-3 animate-spin text-teal-400" />
+            <span className="hidden sm:inline">
+              {STEP_LABELS[runStatus.current_step || ''] || 'Processing'}
+            </span>
+            <span className="tabular-nums font-medium text-slate-300">{runStatus.progress}%</span>
           </div>
         )}
       </div>
 
       {/* Messages + leads */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 ac-scroll-full">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -561,10 +572,10 @@ export default function LeadFinderChat() {
               </div>
             )}
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+              className={`max-w-[85%] rounded-xl px-4 py-3 text-sm whitespace-pre-wrap ${
                 msg.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-md'
-                  : 'bg-slate-800 text-slate-200 rounded-bl-md'
+                  ? 'bg-teal-700/80 text-white rounded-br-sm'
+                  : 'bg-slate-800/80 text-slate-200 rounded-bl-sm border border-slate-700/50'
               }`}
             >
               {msg.content}
@@ -579,13 +590,13 @@ export default function LeadFinderChat() {
 
         {/* Pending intent card */}
         {pendingIntent && !campaignId && (
-          <div className="mx-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 p-4 space-y-3">
-            <p className="text-sm text-emerald-200 font-medium">Search plan</p>
-            <p className="text-xs text-slate-400">{pendingIntent.summary}</p>
+          <div className="mx-2 rounded-xl border border-teal-500/25 bg-teal-950/20 p-4 space-y-3">
+            <p className="text-sm text-teal-200 font-medium">Search plan</p>
+            <p className="text-xs text-slate-400 leading-relaxed">{pendingIntent.summary}</p>
             {pendingIntent.niche && (
               <p className="text-xs text-emerald-400">Niche: {pendingIntent.niche}</p>
             )}
-            <p className="text-[10px] text-slate-600">SMB 1–200 employees · enterprise excluded</p>
+            <p className="text-[10px] text-slate-500">Target: SMB (1–200 employees) · enterprise domains excluded</p>
             <div className="flex flex-wrap gap-1">
               {pendingIntent.sources.map((s) => (
                 <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">
@@ -601,7 +612,7 @@ export default function LeadFinderChat() {
             <button
               onClick={handleStartSearch}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium disabled:opacity-50"
             >
               <Search className="w-4 h-4" />
               Start search
@@ -611,17 +622,30 @@ export default function LeadFinderChat() {
 
         {/* Progress bar */}
         {runStatus && runStatus.status === 'running' && (
-          <div className="mx-2 space-y-2">
+          <div className="mx-2 space-y-2 ac-workspace-panel p-3">
+            <div className="flex justify-between text-xs text-slate-400">
+              <span>{STEP_LABELS[runStatus.current_step || ''] || 'Processing'}</span>
+              <span className="tabular-nums text-slate-300">{runStatus.progress ?? 5}%</span>
+            </div>
             <div className="w-full bg-slate-800 rounded-full h-1.5">
               <div
-                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
+                className="bg-teal-500 h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${runStatus.progress || 5}%` }}
               />
             </div>
-            <div className="flex gap-4 text-xs text-slate-500">
-              <span>Found: {runStatus.source_count ?? 0}</span>
-              <span>Enriched: {runStatus.enriched_count ?? 0}</span>
-              <span>CRM: {runStatus.created_count ?? 0}</span>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div>
+                <div className="text-slate-500">Found</div>
+                <div className="text-white font-semibold tabular-nums">{runStatus.source_count ?? 0}</div>
+              </div>
+              <div>
+                <div className="text-slate-500">Enriched</div>
+                <div className="text-white font-semibold tabular-nums">{runStatus.enriched_count ?? 0}</div>
+              </div>
+              <div>
+                <div className="text-slate-500">CRM</div>
+                <div className="text-white font-semibold tabular-nums">{runStatus.created_count ?? 0}</div>
+              </div>
             </div>
           </div>
         )}

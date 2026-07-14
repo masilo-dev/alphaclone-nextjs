@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
     const minScore = searchParams.get('minScore');
     const grade = searchParams.get('grade');
     const status = searchParams.get('status');
+    const hasEmail = searchParams.get('hasEmail') === 'true';
+    const location = searchParams.get('location')?.trim();
     const limit = Math.min(Number(searchParams.get('limit') || 100), 500);
 
     if (!tenantId) {
@@ -30,6 +32,13 @@ export async function GET(req: NextRequest) {
     if (minScore) query = query.gte('score', Number(minScore));
     if (grade) query = query.eq('grade', grade);
     if (status) query = query.eq('status', status);
+    if (hasEmail) query = query.not('email', 'is', null).neq('email', '');
+    if (location) {
+      const pattern = `%${location.replace(/[%_]/g, '')}%`;
+      query = query.or(
+        `company.ilike.${pattern},industry.ilike.${pattern},source_label.ilike.${pattern},name.ilike.${pattern}`
+      );
+    }
 
     const { data, error } = await query;
     if (error) throw error;
