@@ -79,8 +79,8 @@ export default function ScraperCampaignsPage() {
     : [];
 
   return (
-    <div className="relative flex flex-col min-h-0 w-full ac-scroll-full ac-enterprise-module pb-20 md:pb-6">
-      <div className="px-4 md:px-6 pt-4 md:pt-6 space-y-5 flex flex-col min-h-0">
+    <div className="relative flex flex-col h-full min-h-0 w-full ac-scroll-full ac-enterprise-module pb-20 md:pb-6">
+      <div className="px-4 md:px-6 pt-4 md:pt-6 space-y-5 flex flex-col flex-1 min-h-0">
       <div className="flex items-start justify-between gap-4 flex-wrap shrink-0">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white">Lead Finder</h1>
@@ -127,9 +127,9 @@ export default function ScraperCampaignsPage() {
       {tab === 'prospects' && <LeadFinderProspectsView onActivity={onActivity} />}
 
       {tab === 'chat' && (
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] gap-4 md:gap-6 min-h-0">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] gap-4 md:gap-6 flex-1 min-h-0">
           <LeadFinderChat onActivity={onActivity} />
-          <div className="hidden xl:block min-h-0">
+          <div className="hidden xl:flex xl:flex-col min-h-0">
             <LeadFinderSystemPanel />
           </div>
         </div>

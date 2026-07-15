@@ -200,7 +200,9 @@ export async function POST(request: Request) {
     }
 
     // 0.1 HTML Sanitization
-    const sanitizedBody = sanitizeHtml(emailBody, {
+    const isHtml = /<[a-z][\s\S]*>/i.test(emailBody);
+    const bodyToSanitize = isHtml ? emailBody : emailBody.replace(/\r?\n/g, '<br />');
+    const sanitizedBody = sanitizeHtml(bodyToSanitize, {
       allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
@@ -209,8 +211,16 @@ export async function POST(request: Request) {
     });
     const unsubscribeUrl = buildUnsubscribeUrl(leadEmail, tenantId);
 
-    const { data: tenantRow } = await admin.from('tenants').select('name').eq('id', tenantId).maybeSingle();
+    const { data: tenantRow } = await admin.from('tenants').select('name, settings').eq('id', tenantId).maybeSingle();
     const tenantName = tenantRow?.name || 'Your workspace';
+
+    // Resolve Calendly link from tenant settings for {{client_calendly_link}} injection
+    const tenantSettings = (tenantRow?.settings || {}) as Record<string, any>;
+    const tenantCalendlyLink: string =
+      String(tenantSettings?.calendly?.eventUrl || '').trim() ||
+      (tenantSettings?.booking?.slug
+        ? `${String(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/+$/, '')}/book/${tenantSettings.booking.slug}`
+        : '');
 
     const htmlWithTemplate = buildEmail({
       subject: normalizedSubject,
@@ -218,6 +228,8 @@ export async function POST(request: Request) {
       tenantName,
       tenantId,
       recipientEmail: leadEmail,
+      clientName: leadName || undefined,
+      clientCalendlyLink: tenantCalendlyLink || undefined,
     });
 
     if (await isUnsubscribed(leadEmail, tenantId)) {

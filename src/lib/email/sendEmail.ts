@@ -266,14 +266,18 @@ export async function sendEmail(
       .map((a) => String(a.filename || '').trim())
       .filter(Boolean);
 
+    const rawHtml = String(sanitizedHtmlSource || '');
+    const isHtml = /<[a-z][\s\S]*>/i.test(rawHtml);
+    const htmlToSanitize = isHtml ? rawHtml : rawHtml.replace(/\r?\n/g, '<br />');
+
     let normalizedHtml = sanitizedHtmlSource
       ? (shouldAppendFooter
-        ? ensureFooter(sanitizeHtml(String(sanitizedHtmlSource), {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
+        ? ensureFooter(sanitizeHtml(htmlToSanitize, {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }), { unsubscribeUrl })
-        : sanitizeHtml(String(sanitizedHtmlSource), {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style']),
+        : sanitizeHtml(htmlToSanitize, {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }))
       : undefined;

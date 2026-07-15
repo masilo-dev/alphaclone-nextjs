@@ -538,7 +538,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
   );
 
   return (
-    <div className="flex flex-col min-h-[420px] max-h-[min(72dvh,760px)] ac-workspace-panel rounded-xl border border-slate-800">
+    <div className="flex flex-col flex-1 min-h-[420px] h-full ac-workspace-panel rounded-xl border border-slate-800 overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-800/80 bg-slate-900/40">
         <div className="w-9 h-9 rounded-lg bg-teal-500/15 border border-teal-500/25 flex items-center justify-center">

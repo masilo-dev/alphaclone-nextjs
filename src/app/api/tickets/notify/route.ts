@@ -20,7 +20,7 @@ const notifySchema = z.object({
 });
 
 function appBaseUrl(): string {
-  return process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesystems.com';
+  return (process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://');
 }
 
 export async function POST(req: NextRequest) {

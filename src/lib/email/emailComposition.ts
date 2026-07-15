@@ -28,6 +28,7 @@ const FOOTER_MARKERS = [
   'Sent on behalf of',
   'Sent through AlphaClone Systems',
   'Alphaclone Systems',
+  'Simple. Efficient.',
   'The unified AI business operating system',
   'If you received this email in error',
   'Privacy Policy',
@@ -95,6 +96,7 @@ export function hasEmailComplianceFooter(content: string): boolean {
     if (text.includes(marker)) hits++;
   }
   if (hits >= 2) return true;
+  if (/background-color:#0d1b2a/i.test(text) && text.includes('Alphaclone Systems')) return true;
   if (/<table[^>]+role=["']presentation["'][^>]*>[\s\S]*Alphaclone Systems/i.test(text)) return true;
   if (/<div[^>]+border-top:1px solid #e2e8f0/i.test(text) && text.includes('Unsubscribe')) return true;
   return false;

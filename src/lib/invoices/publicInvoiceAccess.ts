@@ -7,7 +7,7 @@ export function buildPublicInvoiceUrl(
   publicToken: string,
   origin?: string
 ): string {
-  const base = (origin || process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesystems.com').replace(/\/$/, '');
+  const base = (origin || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/+$/, '').replace(/^https:\/\/www\./, 'https://');
   return `${base}/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`;
 }
 

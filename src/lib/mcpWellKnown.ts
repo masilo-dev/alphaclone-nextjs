@@ -1,11 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DEFAULT_HOST = 'www.alphaclonesystems.com';
+const DEFAULT_HOST = 'alphaclonesystems.com';
 
+/**
+ * Always returns a valid public-facing HTTPS base URL.
+ * Priority:
+ *   1. NEXT_PUBLIC_SITE_URL  (set in Railway + Vercel)
+ *   2. NEXTAUTH_URL          (set in Railway + Vercel)
+ *   3. NEXT_PUBLIC_APP_URL   (fallback env)
+ *   4. x-forwarded-host / host request headers (dev only)
+ *   5. Hardcoded production default
+ *
+ * This prevents Railway's internal binding (0.0.0.0:8080) from leaking
+ * into OAuth discovery metadata served to external clients.
+ */
 function getBaseUrl(req: NextRequest) {
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || DEFAULT_HOST;
-  const protocol = req.headers.get('x-forwarded-proto') || 'https';
-  return `${protocol}://${host}`;
+  // ── 1. Env vars (most reliable in production) ─────────────────────────────
+  const envUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    '';
+
+  if (envUrl.trim()) {
+    // Strip trailing slash, ensure https in production
+    const cleaned = envUrl.trim().replace(/\/+$/, '');
+    // Force https if the env var somehow has http (Railway sometimes does)
+    return cleaned.startsWith('http://') && !cleaned.includes('localhost')
+      ? cleaned.replace('http://', 'https://')
+      : cleaned;
+  }
+
+  // ── 2. Request headers (dev / reverse-proxy fallback) ─────────────────────
+  const forwardedHost = req.headers.get('x-forwarded-host') || '';
+  const host = req.headers.get('host') || '';
+
+  // Reject any local-binding addresses that shouldn't be public
+  const rawHost = forwardedHost || host;
+  const isInternalBinding =
+    rawHost.startsWith('0.0.0.0') ||
+    rawHost.startsWith('127.0.0.1') ||
+    rawHost.startsWith('localhost');
+
+  if (rawHost && !isInternalBinding) {
+    const protocol = req.headers.get('x-forwarded-proto') || 'https';
+    return `${protocol}://${rawHost}`;
+  }
+
+  // ── 3. Hardcoded production fallback ──────────────────────────────────────
+  return `https://${DEFAULT_HOST}`;
 }
 
 function getDiscoveryHeaders() {

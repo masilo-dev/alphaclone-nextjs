@@ -3,7 +3,7 @@
  * Standardizes redirects and links across email templates, dashboards, and services.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesystems.com';
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://');
 
 export const AppUrls = {
   // Public Signing (canonical native contract portal)

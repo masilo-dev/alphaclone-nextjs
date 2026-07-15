@@ -97,6 +97,8 @@ import { mcpStore } from './mcpStore';
 import { routeAIRequest } from '../aiRouter';
 import { resolveMcpEmailRecipient } from '../../lib/email/resolveMcpEmailRecipient';
 import { resolveEmailAttachmentsFromFileIds } from '../../lib/files/resolveEmailAttachments';
+import { resolveEmailTemplateVars } from '../../lib/email/resolveEmailTemplateVars';
+
 
 const UUID_RE =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -5612,18 +5614,30 @@ class AlphaCloneMCPServer {
             appendSignatureToEmail({ html: a.html, text: a.text }, signature),
             publicDocumentLinks
           );
+
+          // Resolve {{client_name}} and {{client_calendly_link}} from CRM + tenant settings
+          const resolvedBody = await resolveEmailTemplateVars(supabaseAdmin, {
+            html: signedBody.html,
+            text: signedBody.text || (!signedBody.html ? (signedBody as any).fallbackText : undefined),
+            tenantId: tenant_id,
+            clientId: String(a.client_id || '').trim() || undefined,
+            leadId: String(a.lead_id || '').trim() || undefined,
+            contactId: String(a.contact_id || '').trim() || undefined,
+          });
+
           const sendResult = await sendEmailServer({
             tenantId: tenant_id,
             userId: user_id,
             to,
             subject,
             fromName: String(a.from_name || 'AlphaClone Systems'),
-            html: signedBody.html,
-            text: signedBody.text || (!signedBody.html ? signedBody.fallbackText : undefined),
+            html: resolvedBody.html,
+            text: resolvedBody.text,
             attachments: attachments.length > 0 ? attachments : undefined,
             templateName: 'mcpTransactionalEmail',
             preferredProvider: a.provider as any,
           });
+
           if (!sendResult.success) throw new Error(sendResult.error || 'Transactional email failed');
           result = { content: [{ type: 'text', text: JSON.stringify({
             provider: sendResult.provider,
@@ -7043,7 +7057,7 @@ Return ONLY a JSON array of 60 objects:
             calendly_connected: Boolean(calendly.enabled && calendly.accessToken && calendly.calendlyUserUri),
             calendly_event_url: calendly.eventUrl || null,
             local_booking_enabled: Boolean(booking.enabled && booking.slug),
-            local_booking_url: booking.slug ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.alphaclonesystems.com'}/book/${booking.slug}` : null,
+            local_booking_url: booking.slug ? `${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://')}/book/${booking.slug}` : null,
             recommended: calendly.enabled ? 'Run sync_calendly_events to import bookings into AlphaClone calendar.' : 'Connect Calendly or enable the native AlphaClone booking link in Meetings settings.',
           }, null, 2) }] };
           break;
