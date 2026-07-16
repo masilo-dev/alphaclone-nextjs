@@ -1,9 +1,11 @@
 import type { DeepSeekModel } from '@/lib/ai/deepseek';
 import type { AIProviderId } from '@/lib/ai/providerHealth';
 
-/** Platform default: DeepSeek only. Set AI_ALLOW_MULTI_PROVIDER=true to enable other providers. */
+/** Platform default: DeepSeek is aggressively preferred and retried before fallback. */
 export function isDeepSeekOnlyMode(): boolean {
-  return process.env.AI_ALLOW_MULTI_PROVIDER !== 'true';
+  // Always return false so fallback providers are never hard-blocked.
+  // Instead, the router retries DeepSeek multiple times before gracefully falling back.
+  return false;
 }
 
 export function deepSeekConfigError(): string {

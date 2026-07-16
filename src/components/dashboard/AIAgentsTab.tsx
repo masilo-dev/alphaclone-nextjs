@@ -53,6 +53,23 @@ interface RunnerApproval {
   created_at: string;
 }
 
+interface DeferredAction {
+  id: string;
+  action_key: string;
+  payload: Record<string, any>;
+  status: string;
+  error_message: string;
+  created_at: string;
+}
+
+interface DreamSession {
+  id: string;
+  status: 'pending' | 'applied' | 'rejected';
+  patterns_extracted: any[];
+  memory_updates: any[];
+  created_at: string;
+}
+
 interface RunnerRules {
   enabled: boolean;
   auto_send_enabled: boolean;
@@ -92,6 +109,8 @@ const AIAgentsTab: React.FC = () => {
   // Data States
   const [runs, setRuns] = useState<RunnerRun[]>([]);
   const [approvals, setApprovals] = useState<RunnerApproval[]>([]);
+  const [deferredActions, setDeferredActions] = useState<DeferredAction[]>([]);
+  const [pendingDreamSessions, setPendingDreamSessions] = useState<DreamSession[]>([]);
   const [rules, setRules] = useState<RunnerRules>({
     enabled: true,
     auto_send_enabled: false,
@@ -121,6 +140,8 @@ const AIAgentsTab: React.FC = () => {
         const trigData = await trigRes.json();
         setRuns(trigData.runs || []);
         setApprovals(trigData.approvals || []);
+        setDeferredActions(trigData.deferred || []);
+        setPendingDreamSessions(trigData.dreamSessions || []);
       } else {
         console.warn('Autonomous trigger API not available');
       }
@@ -234,6 +255,56 @@ const AIAgentsTab: React.FC = () => {
     }
   };
 
+  // Handle Dreaming Session Approvals
+  const handleApproveDreamSession = async (sessionId: string) => {
+    if (!currentTenant?.id) return;
+    const toastId = toast.loading('Applying dreaming evolutionary updates...');
+    try {
+      const res = await fetch('/api/autonomous/dream/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          sessionId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Success! Merged ${data.memories_merged} updates into agent memory context.`, { id: toastId });
+        await loadData();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to apply dream updates', { id: toastId });
+    }
+  };
+
+  // Handle Cancel Deferred Action
+  const handleCancelDeferredAction = async (actionId: string) => {
+    if (!currentTenant?.id) return;
+    const toastId = toast.loading('Cancelling pending deferred action...');
+    try {
+      const res = await fetch('/api/autonomous/deferred/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          actionId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Deferred action successfully cancelled!', { id: toastId });
+        await loadData();
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to cancel action', { id: toastId });
+    }
+  };
+
   // Update Settings
   const handleUpdateRules = async (updates: Partial<RunnerRules>) => {
     if (!currentTenant?.id) return;
@@ -270,6 +341,7 @@ const AIAgentsTab: React.FC = () => {
     : 100;
   const failures = runs.filter(r => r.status === 'failed').length;
   const pendingApprovalsCount = approvals.filter(a => a.status === 'pending').length;
+  const pendingQueueTotal = pendingApprovalsCount + deferredActions.length + pendingDreamSessions.length;
 
   // Enhance playbooks with real last run data from history
   const enhancedPlaybooks = PLAYBOOKS.map(pb => {
@@ -433,9 +505,9 @@ const AIAgentsTab: React.FC = () => {
             <div className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">Failures</div>
           </div>
           <div className="bg-slate-950/40 p-2.5 rounded-2xl border border-white/5 relative">
-            <div className={`text-[18px] md:text-[22px] font-black ${pendingApprovalsCount > 0 ? 'text-purple-400' : 'text-slate-500'}`}>{pendingApprovalsCount}</div>
+            <div className={`text-[18px] md:text-[22px] font-black ${pendingQueueTotal > 0 ? 'text-purple-400' : 'text-slate-500'}`}>{pendingQueueTotal}</div>
             <div className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">Pending Action</div>
-            {pendingApprovalsCount > 0 && (
+            {pendingQueueTotal > 0 && (
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
             )}
           </div>
@@ -446,7 +518,7 @@ const AIAgentsTab: React.FC = () => {
       <div className="flex border-b border-white/5 bg-slate-950 p-1 gap-1 rounded-2xl">
         {[
           { id: 'playbooks', label: 'Agent Playbooks' },
-          { id: 'approvals', label: 'Approvals Queue', count: pendingApprovalsCount },
+          { id: 'approvals', label: 'Approvals Queue', count: pendingQueueTotal },
           { id: 'history', label: 'Execution Logs' },
           { id: 'settings', label: 'Agent Parameters' }
         ].map((tab) => (
@@ -511,71 +583,177 @@ const AIAgentsTab: React.FC = () => {
         )}
 
         {activeSubTab === 'approvals' && (
-          <div className="space-y-3">
-            <div className="text-[12px] font-black uppercase tracking-wider text-slate-500 px-1">Actions Requiring Authorization</div>
-            {approvals.filter(a => a.status === 'pending').length === 0 ? (
-              <div className="py-12 text-center bg-slate-900/20 rounded-2xl border border-dashed border-white/5">
-                <UserCheck className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-                <h4 className="text-xs font-bold text-slate-400">No pending approvals</h4>
-                <p className="text-[11px] text-slate-600 mt-1 max-w-xs mx-auto">All autonomous outreach and actions are syncing cleanly.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {approvals.filter(a => a.status === 'pending').map((app) => (
-                  <div key={app.id} className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <div>
-                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/25 rounded-md uppercase tracking-wider">
-                          {app.action_key.replace(/_/g, ' ')}
-                        </span>
-                        {(app.payload?.source || app.payload?.tool_name) && (
-                          <span className="ml-2 text-[9px] font-black px-1.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/25 rounded-md uppercase tracking-wider">
-                            {String(app.payload?.source || 'runner')}
-                            {app.payload?.tool_name ? `: ${app.payload.tool_name}` : ''}
-                          </span>
-                        )}
-                        <h4 className="text-xs font-bold text-white mt-1.5">{app.reason}</h4>
-                      </div>
-                      <div className="text-right">
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          app.risk_level === 'high' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-                          app.risk_level === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                          'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        }`}>
-                          {app.risk_level} Risk
-                        </span>
-                        <div className="text-[10px] text-slate-500 font-bold mt-1">Match: {app.confidence_score}%</div>
-                      </div>
-                    </div>
+          <div className="space-y-6">
 
-                    {app.payload && (
-                      <div className="bg-slate-950 p-3 rounded-xl border border-white/5 text-xs text-slate-300 font-mono space-y-1.5 max-h-36 overflow-y-auto">
-                        <div className="text-[10px] text-slate-500 uppercase font-black">Draft Content Preview</div>
-                        {app.payload.messageId && <div className="text-slate-500 text-[10px]">Source Msg ID: {app.payload.messageId}</div>}
-                        <div className="italic leading-relaxed whitespace-pre-wrap">
-                          {app.payload.reply_to || "No preview content compiled. Ready to dispatch default webhook."}
+            {/* 1. Pending Tier 3/4 Approvals */}
+            <div className="space-y-3">
+              <div className="text-[11px] font-black uppercase tracking-wider text-purple-400 px-1 flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5" /> Core Approvals Queue ({pendingApprovalsCount})
+              </div>
+              {approvals.filter(a => a.status === 'pending').length === 0 ? (
+                <div className="py-8 text-center bg-slate-900/20 rounded-2xl border border-dashed border-white/5 text-[11px] text-slate-500">
+                  No pending write approvals in the queue.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {approvals.filter(a => a.status === 'pending').map((app) => {
+                    const isTier3 = app.payload?.tier === 3;
+                    const canCancelDelay = isTier3 && (Date.now() - new Date(app.created_at).getTime() < 5 * 60 * 1000);
+
+                    return (
+                      <div key={app.id} className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3 relative overflow-hidden">
+                        {canCancelDelay && (
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-purple-500 animate-[shimmer_5s_infinite_linear]" style={{ width: '100%' }} />
+                        )}
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/25 rounded-md uppercase tracking-wider">
+                              {app.action_key.replace(/^(bonnie|mcp|playbook):/, '').replace(/_/g, ' ')}
+                            </span>
+                            {app.payload?.tier && (
+                              <span className="ml-2 text-[9px] font-black px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-md uppercase tracking-wider">
+                                Tier {app.payload.tier}
+                              </span>
+                            )}
+                            <h4 className="text-xs font-bold text-white mt-1.5">{app.reason}</h4>
+                            {canCancelDelay && (
+                              <span className="text-[10px] text-amber-400 block mt-1 font-bold">
+                                ⏳ Reversible window active: Auto-approving in 5m unless cancelled.
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                              app.risk_level === 'high' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                              app.risk_level === 'medium' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                              'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                            }`}>
+                              {app.risk_level} Risk
+                            </span>
+                            <div className="text-[10px] text-slate-500 font-bold mt-1">Match: {app.confidence_score}%</div>
+                          </div>
+                        </div>
+
+                        {app.payload && (
+                          <div className="bg-slate-950 p-3 rounded-xl border border-white/5 text-xs text-slate-300 font-mono space-y-1.5 max-h-36 overflow-y-auto">
+                            <div className="text-[10px] text-slate-500 uppercase font-black">Draft Content Preview</div>
+                            <div className="italic leading-relaxed whitespace-pre-wrap">
+                              {app.payload.args?.body || app.payload.args?.content || app.payload.args?.message || app.payload.args?.html || "No parameters preview compiled."}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => handleApprovalStatus(app.id, 'rejected')}
+                            className="px-3.5 py-1.5 bg-slate-950 border border-white/10 hover:bg-slate-800 text-rose-400 text-xs font-bold rounded-xl transition-all"
+                          >
+                            {canCancelDelay ? 'Cancel Execution' : 'Reject'}
+                          </button>
+                          <button
+                            onClick={() => handleApprovalStatus(app.id, 'approved')}
+                            className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl transition-all"
+                          >
+                            Approve & Dispatch
+                          </button>
                         </div>
                       </div>
-                    )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-                    <div className="flex gap-2 justify-end">
-                      <button
-                        onClick={() => handleApprovalStatus(app.id, 'rejected')}
-                        className="px-3.5 py-1.5 bg-slate-950 border border-white/10 hover:bg-slate-800 text-rose-400 text-xs font-bold rounded-xl transition-all"
-                      >
-                        Reject
-                      </button>
-                      <button
-                        onClick={() => handleApprovalStatus(app.id, 'approved')}
-                        className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl transition-all"
-                      >
-                        Approve & Dispatch
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            {/* 2. Deferred AI Actions Queue */}
+            <div className="space-y-3">
+              <div className="text-[11px] font-black uppercase tracking-wider text-amber-400 px-1 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> Deferred AI Actions ({deferredActions.length})
               </div>
-            )}
+              {deferredActions.length === 0 ? (
+                <div className="py-8 text-center bg-slate-900/20 rounded-2xl border border-dashed border-white/5 text-[11px] text-slate-500">
+                  No deferred actions in cooldown queue.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {deferredActions.map((def) => (
+                    <div key={def.id} className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="text-[9px] font-black px-1.5 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-md uppercase tracking-wider">
+                            {def.action_key.replace(/_/g, ' ')}
+                          </span>
+                          <span className="ml-2 text-[9px] font-black px-1.5 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/25 rounded-md uppercase tracking-wider">
+                            Provider Cooldown
+                          </span>
+                          <h4 className="text-xs font-bold text-white mt-1.5">Deferred action scheduled to auto-retry on next run.</h4>
+                          <p className="text-[10px] text-rose-400 mt-1 font-mono">{def.error_message}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => handleCancelDeferredAction(def.id)}
+                          className="px-3.5 py-1.5 bg-slate-950 border border-white/10 hover:bg-slate-800 text-rose-400 text-xs font-bold rounded-xl transition-all"
+                        >
+                          Discard Action
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 3. Bonnie Dreaming Session Approvals */}
+            <div className="space-y-3">
+              <div className="text-[11px] font-black uppercase tracking-wider text-blue-400 px-1 flex items-center gap-1.5">
+                <Brain className="w-3.5 h-3.5" /> Dreaming Evolutionary Sessions ({pendingDreamSessions.length})
+              </div>
+              {pendingDreamSessions.length === 0 ? (
+                <div className="py-8 text-center bg-slate-900/20 rounded-2xl border border-dashed border-white/5 text-[11px] text-slate-500">
+                  No pending dreaming updates ready for review.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingDreamSessions.map((dream) => (
+                    <div key={dream.id} className="p-4 bg-slate-900 border border-white/5 rounded-2xl space-y-3">
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/25 rounded-md uppercase tracking-wider">
+                            Self-Evolutionary Dream
+                          </span>
+                          <h4 className="text-xs font-bold text-white mt-1.5">Extracted patterns and evolutionary insights ready to merge.</h4>
+                        </div>
+                      </div>
+
+                      {dream.patterns_extracted && (
+                        <div className="bg-slate-950 p-3 rounded-xl border border-white/5 text-xs text-slate-300 font-mono space-y-1.5 max-h-36 overflow-y-auto">
+                          <div className="text-[10px] text-slate-500 uppercase font-black">Memory Context Insights ({dream.memory_updates?.length})</div>
+                          <ul className="list-disc pl-4 space-y-1">
+                            {dream.memory_updates?.map((item: any, idx: number) => (
+                              <li key={idx} className="leading-relaxed">
+                                <span className="text-purple-400 font-bold uppercase text-[10px] mr-1">[{item.category}]:</span>
+                                {item.insight} (Rec: {item.action_recommendation})
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => handleApproveDreamSession(dream.id)}
+                          className="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl transition-all"
+                        >
+                          Approve Self-Evolution
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         )}
 
