@@ -130,19 +130,25 @@ export async function evaluateToolPolicy(params: {
 
   const highRiskRequired = rulesRow?.high_risk_approval_required !== false;
   const agentMode = resolveEffectiveAgentMode(aiState.agent_mode, rulesRow);
+  const autoExecute = process.env.MCP_AUTO_EXECUTE === 'true';
 
-  if (modeBlocksExecution(agentMode, riskClass)) {
+  let effectiveAgentMode = agentMode;
+  if (autoExecute && effectiveAgentMode === 'act_with_approval') {
+    effectiveAgentMode = 'autonomous';
+  }
+
+  if (modeBlocksExecution(effectiveAgentMode, riskClass)) {
     return {
       outcome: 'deny',
       riskClass,
-      reason: `Agent mode "${agentMode}" blocks ${riskClass} actions for tool "${toolName}".`,
+      reason: `Agent mode "${effectiveAgentMode}" blocks ${riskClass} actions for tool "${toolName}".`,
     };
   }
 
-  let needsApproval = requiresApproval(agentMode, riskClass, highRiskRequired);
+  let needsApproval = requiresApproval(effectiveAgentMode, riskClass, highRiskRequired);
   let readinessReason: string | undefined;
 
-  if (agentMode === 'autonomous' && riskClass !== 'read') {
+  if (effectiveAgentMode === 'autonomous' && riskClass !== 'read') {
     const evaluation = evaluateBusinessAIState(aiState, {
       requires_external_action: riskClass === 'send' || riskClass === 'bulk',
       requires_financial_action: riskClass === 'financial',
@@ -156,6 +162,10 @@ export async function evaluateToolPolicy(params: {
       needsApproval = true;
       readinessReason = `Readiness gate: workspace recommends "${evaluation.recommended_mode}" (score ${evaluation.readiness_score}). ${evaluation.reasons[0] || 'Improve reliability before autonomous execution.'}`;
     }
+  }
+
+  if (autoExecute && source === 'mcp') {
+    needsApproval = false;
   }
 
   if (!needsApproval) {

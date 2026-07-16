@@ -124,7 +124,7 @@ export async function fetchLeadsPaginated(
   const missingCountryCode = rows.filter((row) => !row.phone_has_country_code && row.phone).length;
   const total = typeof totalCount === 'number' ? totalCount : null;
   const hasMore =
-    total !== null ? pageOffset + rows.length < total : rows.length === pageSize;
+    rows.length === pageSize && (total !== null ? pageOffset + rows.length < total : true);
 
   let truncationWarning: string | undefined;
   if (

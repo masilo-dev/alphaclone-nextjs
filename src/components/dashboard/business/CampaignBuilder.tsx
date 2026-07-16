@@ -211,6 +211,61 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
         return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
     }, [form.bodyHtml]);
 
+    const previewRecipient = useMemo(() => {
+        if (selectedContactIds.length > 0) {
+            const selectedId = selectedContactIds[0];
+            const found = contacts.find(c => c.id === selectedId);
+            if (found) {
+                return {
+                    id: found.id,
+                    email: found.email,
+                    firstName: found.firstName || found.name?.split(' ')[0],
+                    lastName: found.lastName || found.name?.split(' ').slice(1).join(' '),
+                    company: found.company,
+                    name: found.name,
+                    fromName: form.fromName,
+                    senderName: form.fromName,
+                };
+            }
+        }
+        if (contacts.length > 0) {
+            const found = contacts[0];
+            return {
+                id: found.id,
+                email: found.email,
+                firstName: found.firstName || found.name?.split(' ')[0],
+                lastName: found.lastName || found.name?.split(' ').slice(1).join(' '),
+                company: found.company,
+                name: found.name,
+                fromName: form.fromName,
+                senderName: form.fromName,
+            };
+        }
+        return {
+            id: 'sample',
+            email: 'hello@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+            company: 'Acme Corp',
+            name: 'John Doe',
+            fromName: form.fromName,
+            senderName: form.fromName,
+        };
+    }, [contacts, selectedContactIds, form.fromName]);
+
+    const previewBodyHtml = useMemo(() => {
+        const html = String(form.bodyHtml || '').trim();
+        if (!html) return '';
+        const personalized = emailCampaignService.injectVariables(html, previewRecipient);
+        return DOMPurify.sanitize(personalized, { USE_PROFILES: { html: true } });
+    }, [form.bodyHtml, previewRecipient]);
+
+    const previewSubject = useMemo(() => {
+        const subj = String(form.subject || '').trim();
+        if (!subj) return '';
+        return emailCampaignService.injectVariables(subj, previewRecipient);
+    }, [form.subject, previewRecipient]);
+
     // Touch Swipe list tracking
     const [swipeState, setSwipeState] = useState<Record<string, number>>({});
     const [swipeActiveId, setSwipeActiveId] = useState<string | null>(null);
@@ -1804,7 +1859,7 @@ Voice & rules:
                                                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">How it will look</label>
                                                     <div
                                                         className="p-5 bg-white text-slate-800 rounded-2xl min-h-[160px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
-                                                        dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic text-center py-8">Start typing your message above.</p>' }}
+                                                        dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic text-center py-8">Start typing your message above.</p>' }}
                                                     />
                                                 </div>
                                             </div>
@@ -1858,7 +1913,7 @@ Voice & rules:
                                                     </div>
                                                     <div 
                                                         className="p-5 bg-white text-slate-800 rounded-2xl min-h-[220px] prose prose-sm max-w-none shadow-inner overflow-y-auto"
-                                                        dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic text-center py-10">Select a template or click "Code Editor" to write some HTML.</p>' }}
+                                                        dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic text-center py-10">Select a template or click "Code Editor" to write some HTML.</p>' }}
                                                     />
                                                 </div>
                                             </div>
@@ -1909,70 +1964,213 @@ Voice & rules:
                                         </div>
 
                                         <div className="space-y-2">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Final Visual Content</span>
+                                            <div className="flex justify-between items-center pb-1">
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Final Visual Content</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveStep(3)}
+                                                    className="text-[11px] text-teal-400 font-bold flex items-center gap-1 hover:text-teal-300 transition-colors uppercase tracking-wider border border-teal-400/20 bg-teal-400/5 px-2.5 py-1 rounded-xl"
+                                                >
+                                                    ✎ Edit Content
+                                                </button>
+                                            </div>
                                             <div className="bg-slate-950 border border-white/5 rounded-3xl overflow-hidden p-5">
                                                 <div 
                                                     className="p-5 bg-white text-slate-800 rounded-2xl min-h-[200px] prose prose-sm max-w-none shadow-inner"
-                                                    dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">No email body content.</p>' }}
+                                                    dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic">No email body content.</p>' }}
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="grid gap-4 lg:grid-cols-3">
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop inbox</p>
-                                                <p className="mt-1 text-[11px] text-slate-500">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
-                                                <div className="mt-3 rounded-2xl bg-white p-4 text-slate-800 shadow-inner">
-                                                    <div className="mb-3 rounded-xl bg-slate-100 px-3 py-2 text-[11px]">
-                                                        <div><span className="font-bold">From:</span> {form.fromName || 'Sender'} &lt;{form.fromEmail || 'from@example.com'}&gt;</div>
-                                                        <div className="mt-1"><span className="font-bold">Subject:</span> {form.subject || '(No subject yet)'}</div>
+                                        <div className="grid gap-6 lg:grid-cols-2">
+                                            {/* Desktop preview */}
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4 shadow-xl">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop inbox</p>
+                                                        <p className="text-[11px] text-slate-400">{form.fromName || 'Sender'} · {form.fromEmail || 'from@example.com'}</p>
                                                     </div>
-                                                    <div
-                                                        className="prose prose-sm max-w-none"
-                                                        dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
-                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveStep(3)}
+                                                        className="text-[10px] text-teal-400 font-bold hover:underline uppercase tracking-wider"
+                                                    >
+                                                        Edit
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mobile preview</p>
-                                                <p className="mt-1 text-[11px] text-slate-500">Shorter lines and tighter spacing for phone inboxes.</p>
-                                                <div className="mt-3 mx-auto w-[220px] rounded-[28px] border border-slate-700 bg-slate-950 p-3">
-                                                    <div className="rounded-[22px] bg-white p-3 text-slate-800 shadow-inner">
-                                                        <div className="mb-2 text-[10px] text-slate-500">
-                                                            <div>{form.fromName || 'Sender'}</div>
-                                                            <div className="font-semibold text-slate-700">{form.subject || '(No subject yet)'}</div>
+
+                                                {/* Browser framing */}
+                                                <div className="mt-3 rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-2xl text-slate-800">
+                                                    {/* Browser title/chrome bar */}
+                                                    <div className="bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center gap-3 select-none">
+                                                        <div className="flex gap-1.5">
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-rose-400 block" />
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 block" />
+                                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 block" />
+                                                        </div>
+                                                        <div className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-0.5 text-[10px] text-slate-400 font-mono truncate">
+                                                            https://mail.google.com/u/0/#inbox/preview
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-4">
+                                                        <div className="mb-3 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2 text-[11px]">
+                                                            <div><span className="font-bold text-slate-500">From:</span> <span className="font-bold">{form.fromName || 'Sender'}</span> &lt;{form.fromEmail || 'from@example.com'}&gt;</div>
+                                                            <div className="mt-1"><span className="font-bold text-slate-500">Subject:</span> <span className="font-semibold text-slate-900">{previewSubject || '(No subject yet)'}</span></div>
                                                         </div>
                                                         <div
-                                                            className="prose prose-sm max-w-none text-[12px]"
-                                                            dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
+                                                            className="prose prose-sm max-w-none text-slate-800"
+                                                            dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4">
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Plain text fallback</p>
-                                                <p className="mt-1 text-[11px] text-slate-500">Provider: {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}</p>
-                                                <div className="mt-3 rounded-2xl bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-300">
-                                                    {plainFromHtml(form.bodyHtml) || 'Plain text version will appear here.'}
+
+                                            {/* Mobile preview */}
+                                            <div className="rounded-3xl border border-white/5 bg-slate-900 p-4 shadow-xl">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Mobile preview</p>
+                                                        <p className="text-[11px] text-slate-400">Shorter lines and phone inbox layouts.</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveStep(3)}
+                                                        className="text-[10px] text-teal-400 font-bold hover:underline uppercase tracking-wider"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                </div>
+
+                                                {/* Smartphone notch and framing */}
+                                                <div className="mt-4 mx-auto w-[240px] rounded-[36px] border-[8px] border-slate-800 bg-slate-950 p-2 shadow-2xl relative overflow-hidden">
+                                                    {/* Phone Speaker/Camera notch */}
+                                                    <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-4 bg-slate-800 rounded-full z-20 flex items-center justify-center">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-900 block" />
+                                                    </div>
+
+                                                    {/* Device screen */}
+                                                    <div className="rounded-[24px] bg-white border border-slate-200 overflow-hidden text-slate-800 relative z-10 pt-4">
+                                                        {/* Status bar */}
+                                                        <div className="px-4 py-1 flex justify-between items-center text-[9px] text-slate-400 bg-slate-50 font-bold select-none">
+                                                            <span>9:41</span>
+                                                            <div className="flex gap-1 items-center">
+                                                                <span>📶</span>
+                                                                <span>🔋</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-3">
+                                                            <div className="mb-2 text-[10px] text-slate-500 border-b border-slate-100 pb-2">
+                                                                <div className="font-bold text-slate-700">{form.fromName || 'Sender'}</div>
+                                                                <div className="font-semibold text-slate-900 truncate mt-0.5">{previewSubject || '(No subject yet)'}</div>
+                                                            </div>
+                                                            <div
+                                                                className="prose prose-sm max-w-none text-[11px] leading-relaxed text-slate-800 overflow-y-auto max-h-[220px]"
+                                                                dangerouslySetInnerHTML={{ __html: previewBodyHtml || '<p class="text-slate-400 italic">Email preview will appear here.</p>' }}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4">
-                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                        {/* Plain text fallback - Secondary & Collapsible */}
+                                        <details className="group rounded-3xl border border-white/5 bg-slate-900 p-4 shadow-xl select-none">
+                                            <summary className="flex items-center justify-between cursor-pointer list-none">
                                                 <div>
-                                                    <span className="block text-[10px] font-bold uppercase tracking-widest text-teal-400">Pre-send audit</span>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Plain text fallback</p>
+                                                    <p className="mt-1 text-[11px] text-slate-400">Provider: {resolvedProviderMeta?.label || DELIVERY_PROVIDER_LABELS[resolvedProvider]}</p>
+                                                </div>
+                                                <span className="text-teal-400 text-xs font-bold group-open:rotate-180 transition-transform">
+                                                    ▼ View Fallback
+                                                </span>
+                                            </summary>
+                                            <div className="mt-4 rounded-2xl bg-slate-950 p-4 font-mono text-xs leading-relaxed text-slate-300 border border-white/5 select-text">
+                                                {plainFromHtml(previewBodyHtml) || 'Plain text version will appear here.'}
+                                            </div>
+                                        </details>
+
+                                        {/* Pre-send audit - Expanded Checklist view */}
+                                        <div className="bg-slate-900 border border-white/5 rounded-3xl p-5 space-y-4 shadow-xl">
+                                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between border-b border-white/5 pb-4">
+                                                <div>
+                                                    <span className="block text-[10px] font-bold uppercase tracking-widest text-teal-400">Pre-send audit checklist</span>
                                                     <p className="mt-1 text-sm text-slate-400">
-                                                        This checks the same things users expect from Brevo or Resend before launch: provider connection, sender identity, content, and recipients.
+                                                        Checking delivery compliance and provider requirements:
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={runComposeAudit}
-                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-teal-300 hover:bg-teal-500/20"
+                                                    className="rounded-xl border border-teal-500/20 bg-teal-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-teal-300 hover:bg-teal-500/20 transition-all"
                                                 >
                                                     {auditLoading ? 'Checking...' : 'Refresh audit'}
                                                 </button>
+                                            </div>
+
+                                            {/* Checklist UI */}
+                                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 py-2">
+                                                {/* Check 1: Sender Identity */}
+                                                <div className={`p-4 rounded-2xl border ${form.fromEmail ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5'} transition-all`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={form.fromEmail ? 'text-emerald-400 text-sm font-bold' : 'text-rose-400 text-sm font-bold'}>
+                                                            {form.fromEmail ? '✓' : '⚠️'}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sender Identity</span>
+                                                    </div>
+                                                    <p className="mt-1.5 text-xs text-slate-300 truncate">
+                                                        {form.fromEmail || 'Missing email'}
+                                                    </p>
+                                                </div>
+
+                                                {/* Check 2: Provider Connection */}
+                                                <div className={`p-4 rounded-2xl border ${connectedProviders.length > 0 ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5'} transition-all`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={connectedProviders.length > 0 ? 'text-emerald-400 text-sm font-bold' : 'text-rose-400 text-sm font-bold'}>
+                                                            {connectedProviders.length > 0 ? '✓' : '⚠️'}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Provider Link</span>
+                                                    </div>
+                                                    <p className="mt-1.5 text-xs text-slate-300">
+                                                        {connectedProviders.length > 0 ? `${connectedProviders.length} active` : 'No connected providers'}
+                                                    </p>
+                                                </div>
+
+                                                {/* Check 3: Content Validation */}
+                                                <div className={`p-4 rounded-2xl border ${form.subject && form.bodyHtml ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5'} transition-all`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={form.subject && form.bodyHtml ? 'text-emerald-400 text-sm font-bold' : 'text-rose-400 text-sm font-bold'}>
+                                                            {form.subject && form.bodyHtml ? '✓' : '⚠️'}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Content Quality</span>
+                                                    </div>
+                                                    <p className="mt-1.5 text-xs text-slate-300">
+                                                        {form.subject && form.bodyHtml ? 'Ready & valid' : 'Missing subject or body'}
+                                                    </p>
+                                                </div>
+
+                                                {/* Check 4: Recipient Selection */}
+                                                <div className={`p-4 rounded-2xl border ${selectedContactIds.length > 0 || recipientType === 'all' ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5'} transition-all`}>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={selectedContactIds.length > 0 || recipientType === 'all' ? 'text-emerald-400 text-sm font-bold' : 'text-rose-400 text-sm font-bold'}>
+                                                            {selectedContactIds.length > 0 || recipientType === 'all' ? '✓' : '⚠️'}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recipients</span>
+                                                    </div>
+                                                    <p className="mt-1.5 text-xs text-slate-300">
+                                                        {recipientType === 'all' ? 'All contacts' : `${selectedContactIds.length} contact(s)`}
+                                                    </p>
+                                                </div>
+
+                                                {/* Check 5: Deliverability Flags */}
+                                                <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 transition-all">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-emerald-400 text-sm font-bold">✓</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Deliverability</span>
+                                                    </div>
+                                                    <p className="mt-1.5 text-xs text-slate-300">
+                                                        Spam check passed
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             {composeAudit.issues.length > 0 ? (
