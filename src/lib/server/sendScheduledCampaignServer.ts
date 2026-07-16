@@ -449,6 +449,18 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     senderName: fromName,
                 }
             );
+            if (/\{\{[^}]+\}\}/.test(personalizedHtml) || /\{\{[^}]+\}\}/.test(personalizedSubject)) {
+                failedCount += 1;
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'failed',
+                        error_message: 'Blocked: unresolved template variables found in subject or body',
+                    })
+                    .eq('id', recipient.id);
+                continue;
+            }
+
             const preferredProvider = provider.id;
             const sendResult = await sendEmail(String(c.tenant_id || ''), {
                 to: recipient.email,
