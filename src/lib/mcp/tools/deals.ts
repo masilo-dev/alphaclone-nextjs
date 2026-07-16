@@ -36,7 +36,7 @@ registerTool('deals', {
   name: 'get_deals',
   description: 'Retrieve deals matching filters. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(), // injected from session; optional for session-auth clients
+    tenant_id: z.string().uuid().optional(),
     stage: z.string().optional(),
     owner_id: z.string().uuid().optional(),
   }),
@@ -75,7 +75,7 @@ registerTool('deals', {
   name: 'create_deal',
   description: 'Create a new deal in the pipeline. Accepts title or name; value defaults to 0 and stage defaults to lead. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(), // injected from session
+    tenant_id: z.string().uuid().optional(),
     user_id: z.string().uuid().optional(),
     title: z.string().optional(),
     name: z.string().optional(),
@@ -106,7 +106,18 @@ registerTool('deals', {
     const supabase = createSupabaseAdminClient();
     const tenantId = args.tenant_id || ctx.tenantId;
     if (!tenantId) throw new Error('tenant_id is required');
-    const ownerId = ctx.userId || args.user_id || null;
+    let ownerId = ctx.userId || args.user_id || null;
+    if (!ownerId) {
+      const { data: firstOwner } = await supabase
+        .from('tenant_users')
+        .select('user_id')
+        .eq('tenant_id', tenantId)
+        .in('role', ['owner', 'admin', 'tenant_admin'])
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      ownerId = firstOwner?.user_id || null;
+    }
     if (!ownerId) throw new Error('owner_id is required');
 
     const dealName = String(args.title || args.name || '').trim();
@@ -141,7 +152,7 @@ registerTool('deals', {
   name: 'update_deal',
   description: 'Update the fields of a deal. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(), // injected from session
+    tenant_id: z.string().uuid().optional(),
     deal_id: z.string().uuid(),
     fields: z.object({
       name: z.string().optional(),
@@ -206,7 +217,7 @@ registerTool('deals', {
   name: 'move_deal_stage',
   description: 'Change the stage of a deal and log it to stage history. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(), // injected from session
+    tenant_id: z.string().uuid().optional(),
     deal_id: z.string().uuid(),
     new_stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']),
   }),
@@ -222,7 +233,6 @@ registerTool('deals', {
     const supabase = createSupabaseAdminClient();
     const tenantId = args.tenant_id || ctx.tenantId;
     if (!tenantId) throw new Error('tenant_id is required');
-    // 1. Fetch current stage
     const { data: currentDeal, error: fetchError } = await supabase
       .from('deals')
       .select('stage')
@@ -233,7 +243,6 @@ registerTool('deals', {
     if (fetchError) throw fetchError;
     const oldStage = currentDeal.stage;
 
-    // 2. Update stage
     const { data: updatedDeal, error: updateError } = await supabase
       .from('deals')
       .update({
@@ -247,7 +256,6 @@ registerTool('deals', {
 
     if (updateError) throw updateError;
 
-    // 3. Log history
     const { error: historyError } = await supabase
       .from('deal_stage_history')
       .insert({
@@ -278,7 +286,7 @@ registerTool('deals', {
   name: 'get_pipeline_summary',
   description: 'Get total count and value of deals grouped by pipeline stages. Tenant is resolved from session.',
   inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(), // injected from session
+    tenant_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',

@@ -32,10 +32,32 @@ export async function GET(request: NextRequest) {
 
     if (approvalsError) throw approvalsError;
 
+    // Fetch deferred actions (pending_provider)
+    const { data: deferred } = await admin
+      .from('deferred_actions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pending_provider')
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .catch(() => ({ data: [] })); // Graceful fallback if table is still loading
+
+    // Fetch pending dreaming sessions
+    const { data: dreamSessions } = await admin
+      .from('bonnie_dream_sessions')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .catch(() => ({ data: [] }));
+
     return NextResponse.json({
       success: true,
       runs: runs || [],
-      approvals: approvals || []
+      approvals: approvals || [],
+      deferred: deferred || [],
+      dreamSessions: dreamSessions || []
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to load autonomous trigger logs');
