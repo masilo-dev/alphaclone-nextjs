@@ -105,7 +105,7 @@ Return ONLY valid JSON with:
             .insert({
               tenant_id: tenantId,
               title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
-              description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
+              description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop analysis during idle hours.`,
               priority: 'medium',
               status: 'todo',
               created_at: new Date().toISOString(),

@@ -4,45 +4,18 @@ import { tenantService } from '@/services/tenancy/TenantService';
 import { Tenant, TenantSettings } from '@/services/tenancy/types';
 import { Settings, Copy, Plus, X, ExternalLink, Globe, Calendar } from 'lucide-react';
 import { Card, Button } from '@/components/ui/UIComponents';
-import { supabase } from '@/lib/supabase';
 import { PLATFORM_CALENDLY_URL } from '@/constants';
-
-function slugifyMeetingType(name: string): string {
-    const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    return base || 'meeting';
-}
 
 async function syncBookingTypesToDb(
     tenantId: string,
     meetingTypes: Array<{ id: string; name: string; duration: number; price?: number }>,
     enabled: boolean
 ) {
-    if (!enabled) return;
-    for (const mt of meetingTypes) {
-        const slug = slugifyMeetingType(mt.name);
-        const { data: existing } = await supabase
-            .from('booking_types')
-            .select('id')
-            .eq('tenant_id', tenantId)
-            .eq('slug', slug)
-            .maybeSingle();
-
-        const row = {
-            tenant_id: tenantId,
-            name: mt.name,
-            slug,
-            duration: mt.duration || 30,
-            price: mt.price ?? 0,
-            is_active: true,
-            updated_at: new Date().toISOString(),
-        };
-
-        if (existing?.id) {
-            await supabase.from('booking_types').update(row).eq('id', existing.id);
-        } else {
-            await supabase.from('booking_types').insert(row);
-        }
-    }
+    const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/booking-types`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ meetingTypes, enabled }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || 'Booking types could not be saved');
 }
 
 interface BookingSettingsProps {
@@ -411,7 +384,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                         ...settings,
                                         meetingTypes: [
                                             ...settings.meetingTypes,
-                                            { id: Math.random().toString(36).substr(2, 9), name: 'New Meeting', duration: 30, price: 0 }
+                                            { id: crypto.randomUUID(), name: 'New Meeting', duration: 30, price: 0 }
                                         ]
                                     })}
                                     className="text-xs flex items-center gap-2 bg-slate-800 border border-slate-700 hover:border-slate-600 hover:bg-slate-700 px-4 py-2 rounded-xl transition-all font-black uppercase tracking-widest text-white active:scale-95"
@@ -496,4 +469,3 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         </div>
     );
 };
-

@@ -3,12 +3,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Webhook as WebhookIcon, Trash2 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
-import { registerWebhook, type Webhook as WebhookRecord } from '@/services/webhookDeliveryService';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 
 const EVENT_OPTIONS = ['deal.stage_changed', 'invoice.created', 'lead.created', 'contact.created'];
+type WebhookRecord = { id: string; tenantId: string; url: string; events: string[]; isActive: boolean; createdAt: string; updatedAt: string };
 
 export default function WebhooksTab() {
   const { currentTenant } = useTenant();
@@ -16,26 +15,22 @@ export default function WebhooksTab() {
   const [url, setUrl] = useState('');
   const [event, setEvent] = useState(EVENT_OPTIONS[0]);
   const [loading, setLoading] = useState(true);
+  const [newSecret, setNewSecret] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from('webhooks')
-      .select('*')
-      .eq('tenant_id', currentTenant.id)
-      .order('created_at', { ascending: false });
-    if (error) {
-      console.error(error);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/webhooks`, { credentials: 'include' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
       setHooks([]);
     } else {
       setHooks(
-        (data || []).map((w: any) => ({
+        (payload.webhooks || []).map((w: any) => ({
           id: w.id,
           tenantId: w.tenant_id,
           url: w.url,
           events: w.events || [],
-          secret: w.secret,
           isActive: w.is_active,
           createdAt: w.created_at,
           updatedAt: w.updated_at,
@@ -49,17 +44,22 @@ export default function WebhooksTab() {
 
   const handleAdd = async () => {
     if (!url.trim()) return;
-    const { error } = await registerWebhook(url.trim(), [event]);
-    if (error) toast.error(error);
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/webhooks`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url.trim(), events: [event] }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) toast.error(payload.error || 'Webhook could not be registered');
     else {
       toast.success('Webhook registered');
+      setNewSecret(payload.secret || null);
       setUrl('');
       void load();
     }
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('webhooks').delete().eq('id', id);
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/webhooks?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+    if (!response.ok) return toast.error('Webhook could not be deleted');
     void load();
   };
 
@@ -95,6 +95,7 @@ export default function WebhooksTab() {
           <Plus className="w-4 h-4" /> Add webhook
         </button>
       </div>
+      {newSecret && <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4"><p className="text-xs font-semibold text-amber-300">Copy this signing secret now. It will not be shown again.</p><code className="mt-2 block break-all text-xs text-slate-300 select-all">{newSecret}</code><button onClick={() => setNewSecret(null)} className="mt-2 text-xs text-slate-500 hover:text-white">I saved it</button></div>}
 
       <div className="space-y-3 ac-scroll-full pb-24">
         {loading ? (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { pullAndSyncCalendlyEvents, type CalendlyTenantConfig } from '@/lib/calendly/syncToNative';
+import { refreshCalendlyTokenIfNeeded } from '@/services/calendly/calendlyIntegrationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
   const results: Array<{ tenantId: string; synced: number; error?: string }> = [];
 
   for (const tenant of tenants || []) {
-    const cal = tenant.settings?.calendly as CalendlyTenantConfig | undefined;
+    const cal = await refreshCalendlyTokenIfNeeded(admin, tenant.id) as CalendlyTenantConfig | null;
     if (!cal?.accessToken || !cal.calendlyUserUri) continue;
 
     const { data: owner } = await admin

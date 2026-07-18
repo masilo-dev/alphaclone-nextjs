@@ -322,62 +322,19 @@ export const quoteService = {
     ): Promise<{ quote: Quote | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const validUntil = new Date();
-            validUntil.setDate(validUntil.getDate() + (quoteData.validForDays || 30));
-
-            const { data, error } = await supabase
-                .from('quotes')
-                .insert({
-                    tenant_id: tenantId, // ← ASSIGN TO TENANT
-                    name: quoteData.name,
-                    contact_id: quoteData.contactId,
-                    deal_id: quoteData.dealId,
-                    template_id: quoteData.templateId,
-                    currency: quoteData.currency || 'USD',
-                    valid_until: validUntil.toISOString().split('T')[0],
-                    notes: quoteData.notes,
-                    terms_and_conditions: quoteData.termsAndConditions,
-                    created_by: userId,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            const quote: Quote = {
-                id: data.id,
-                quoteNumber: data.quote_number,
-                name: data.name,
-                contactId: data.contact_id,
-                dealId: data.deal_id,
-                templateId: data.template_id,
-                status: data.status,
-                subtotal: data.subtotal,
-                discountAmount: data.discount_amount,
-                discountPercent: data.discount_percent,
-                taxAmount: data.tax_amount,
-                taxPercent: data.tax_percent,
-                totalAmount: data.total_amount,
-                currency: data.currency,
-                validUntil: data.valid_until,
-                sentAt: data.sent_at,
-                viewedAt: data.viewed_at,
-                viewCount: data.view_count,
-                acceptedAt: data.accepted_at,
-                acceptedBy: data.accepted_by,
-                rejectedAt: data.rejected_at,
-                rejectionReason: data.rejection_reason,
-                notes: data.notes,
-                termsAndConditions: data.terms_and_conditions,
-                signatureUrl: data.signature_url,
-                pdfUrl: data.pdf_url,
-                createdBy: data.created_by,
-                metadata: data.metadata || {},
-                createdAt: data.created_at,
-                updatedAt: data.updated_at,
+            const response = await fetch(`/api/tenant/${tenantId}/quotes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(quoteData) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.quote) throw new Error(payload.error || 'Quote could not be created');
+            const apiRow = payload.quote;
+            const mappedQuote: Quote = {
+                id: apiRow.id, quoteNumber: apiRow.quote_number, name: apiRow.name, contactId: apiRow.contact_id, dealId: apiRow.deal_id, templateId: apiRow.template_id,
+                status: apiRow.status, subtotal: apiRow.subtotal, discountAmount: apiRow.discount_amount, discountPercent: apiRow.discount_percent,
+                taxAmount: apiRow.tax_amount, taxPercent: apiRow.tax_percent, totalAmount: apiRow.total_amount, currency: apiRow.currency, validUntil: apiRow.valid_until,
+                sentAt: apiRow.sent_at, viewedAt: apiRow.viewed_at, viewCount: apiRow.view_count, acceptedAt: apiRow.accepted_at, acceptedBy: apiRow.accepted_by,
+                rejectedAt: apiRow.rejected_at, rejectionReason: apiRow.rejection_reason, notes: apiRow.notes, termsAndConditions: apiRow.terms_and_conditions,
+                signatureUrl: apiRow.signature_url, pdfUrl: apiRow.pdf_url, createdBy: apiRow.created_by, metadata: apiRow.metadata || {}, createdAt: apiRow.created_at, updatedAt: apiRow.updated_at,
             };
-
-            return { quote, error: null };
+            return { quote: mappedQuote, error: null };
         } catch (err) {
             return { quote: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -388,76 +345,15 @@ export const quoteService = {
      */
     async updateQuote(quoteId: string, updates: Partial<Quote>): Promise<{ quote: Quote | null; error: string | null }> {
         try {
-            const updateData: any = {};
-
-            if (updates.name !== undefined) updateData.name = updates.name;
-            if (updates.contactId !== undefined) updateData.contact_id = updates.contactId;
-            if (updates.dealId !== undefined) updateData.deal_id = updates.dealId;
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.currency !== undefined) updateData.currency = updates.currency;
-            if (updates.validUntil !== undefined) updateData.valid_until = updates.validUntil;
-            if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
-            if (updates.discountAmount !== undefined) updateData.discount_amount = updates.discountAmount;
-            if (updates.discountPercent !== undefined) updateData.discount_percent = updates.discountPercent;
-            if (updates.taxAmount !== undefined) updateData.tax_amount = updates.taxAmount;
-            if (updates.taxPercent !== undefined) updateData.tax_percent = updates.taxPercent;
-            if (updates.totalAmount !== undefined) updateData.total_amount = updates.totalAmount;
-            if (updates.notes !== undefined) updateData.notes = updates.notes;
-            if (updates.termsAndConditions !== undefined) updateData.terms_and_conditions = updates.termsAndConditions;
-            if (updates.signatureUrl !== undefined) updateData.signature_url = updates.signatureUrl;
-            if (updates.pdfUrl !== undefined) updateData.pdf_url = updates.pdfUrl;
-            if (updates.rejectionReason !== undefined) updateData.rejection_reason = updates.rejectionReason;
-            if (updates.acceptedBy !== undefined) updateData.accepted_by = updates.acceptedBy;
-
-            // Auto-set timestamps based on status changes
-            if (updates.status === 'sent' && !updates.sentAt) {
-                updateData.sent_at = new Date().toISOString();
-            }
-            if (updates.status === 'accepted' && !updates.acceptedAt) {
-                updateData.accepted_at = new Date().toISOString();
-            }
-            if (updates.status === 'rejected' && !updates.rejectedAt) {
-                updateData.rejected_at = new Date().toISOString();
-            }
-
-            const { data, error } = await supabase.from('quotes').update(updateData).eq('id', quoteId).select().single();
-
-            if (error) throw error;
-
-            const quote: Quote = {
-                id: data.id,
-                quoteNumber: data.quote_number,
-                name: data.name,
-                contactId: data.contact_id,
-                dealId: data.deal_id,
-                templateId: data.template_id,
-                status: data.status,
-                subtotal: data.subtotal,
-                discountAmount: data.discount_amount,
-                discountPercent: data.discount_percent,
-                taxAmount: data.tax_amount,
-                taxPercent: data.tax_percent,
-                totalAmount: data.total_amount,
-                currency: data.currency,
-                validUntil: data.valid_until,
-                sentAt: data.sent_at,
-                viewedAt: data.viewed_at,
-                viewCount: data.view_count,
-                acceptedAt: data.accepted_at,
-                acceptedBy: data.accepted_by,
-                rejectedAt: data.rejected_at,
-                rejectionReason: data.rejection_reason,
-                notes: data.notes,
-                termsAndConditions: data.terms_and_conditions,
-                signatureUrl: data.signature_url,
-                pdfUrl: data.pdf_url,
-                createdBy: data.created_by,
-                metadata: data.metadata || {},
-                createdAt: data.created_at,
-                updatedAt: data.updated_at,
-            };
-
-            return { quote, error: null };
+            const tenantId = this.getTenantId();
+            const [{ quote: current, error: currentError }, { items, error: itemsError }] = await Promise.all([this.getQuoteById(quoteId), this.getQuoteItems(quoteId)]);
+            if (currentError || !current) throw new Error(currentError || 'Quote not found');
+            if (itemsError) throw new Error(itemsError);
+            const merged = { ...current, ...updates };
+            const response = await fetch(`/api/tenant/${tenantId}/quotes`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quoteId, name: merged.name, status: merged.status, validUntil: merged.validUntil || null, notes: merged.notes || '', termsAndConditions: merged.termsAndConditions || '', currency: merged.currency, items: items.map((item) => ({ id: item.id, productName: item.productName, description: item.description || '', quantity: item.quantity, unitPrice: item.unitPrice, discountPercent: item.discountPercent, taxPercent: item.taxPercent })) }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Quote could not be updated');
+            return this.getQuoteById(quoteId);
         } catch (err) {
             return { quote: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -565,22 +461,10 @@ export const quoteService = {
         try {
             const tenantId = this.getTenantId();
 
-            // Reclaim storage space
+            const response = await fetch(`/api/tenant/${tenantId}/quotes?quoteId=${encodeURIComponent(quoteId)}`, { method: 'DELETE' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Quote could not be deleted');
             await fileUploadService.deleteFileByEntity('quote', quoteId);
-
-            // Delete the quote - remove status restriction to allow admins to delete any quote
-            const { error, count } = await supabase
-                .from('quotes')
-                .delete({ count: 'exact' })
-                .eq('id', quoteId)
-                .eq('tenant_id', tenantId);
-
-            if (error) throw error;
-
-            if (count === 0) {
-                throw new Error('Quote not found or could not be deleted.');
-            }
-
             return { success: true, error: null };
         } catch (err) {
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -589,10 +473,12 @@ export const quoteService = {
 
     async getQuoteItems(quoteId: string): Promise<{ items: QuoteItem[]; error: string | null }> {
         try {
+            const tenantId = this.getTenantId();
             const { data, error } = await supabase
                 .from('quote_items')
                 .select('*')
                 .eq('quote_id', quoteId)
+                .eq('tenant_id', tenantId)
                 .order('item_order', { ascending: true });
 
             if (error) throw error;
@@ -634,45 +520,12 @@ export const quoteService = {
         }
     ): Promise<{ item: QuoteItem | null; error: string | null }> {
         try {
-            // Get current item count to set order
-            const { data: existingItems } = await supabase.from('quote_items').select('id').eq('quote_id', quoteId);
-
-            const { data, error } = await supabase
-                .from('quote_items')
-                .insert({
-                    quote_id: quoteId,
-                    tenant_id: this.getTenantId(),
-                    product_name: itemData.productName,
-                    description: itemData.description,
-                    quantity: itemData.quantity,
-                    unit_price: itemData.unitPrice,
-                    discount_percent: itemData.discountPercent || 0,
-                    tax_percent: itemData.taxPercent || 0,
-                    item_order: itemData.itemOrder || (existingItems?.length || 0) + 1,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            await this.recalculateQuoteTotals(quoteId).catch(() => undefined);
-
-            const item: QuoteItem = {
-                id: data.id,
-                quoteId: data.quote_id,
-                itemOrder: data.item_order,
-                productName: data.product_name,
-                description: data.description,
-                quantity: data.quantity,
-                unitPrice: data.unit_price,
-                discountPercent: data.discount_percent,
-                taxPercent: data.tax_percent,
-                lineTotal: data.line_total,
-                metadata: data.metadata || {},
-                createdAt: data.created_at,
-            };
-
-            return { item, error: null };
+            const tenantId = this.getTenantId();
+            const response = await fetch(`/api/tenant/${tenantId}/quotes/${encodeURIComponent(quoteId)}/items`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(itemData) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.item) throw new Error(payload.error || 'Quote item could not be added');
+            const apiItem = payload.item;
+            return { item: { id: apiItem.id, quoteId, itemOrder: apiItem.item_order, productName: apiItem.product_name, description: apiItem.description, quantity: apiItem.quantity, unitPrice: apiItem.unit_price, discountPercent: apiItem.discount_percent, taxPercent: apiItem.tax_percent, lineTotal: apiItem.line_total, metadata: apiItem.metadata || {}, createdAt: apiItem.created_at || new Date().toISOString() }, error: null };
         } catch (err) {
             return { item: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -686,37 +539,14 @@ export const quoteService = {
         updates: Partial<QuoteItem>
     ): Promise<{ item: QuoteItem | null; error: string | null }> {
         try {
-            const updateData: any = {};
-
-            if (updates.productName !== undefined) updateData.product_name = updates.productName;
-            if (updates.description !== undefined) updateData.description = updates.description;
-            if (updates.quantity !== undefined) updateData.quantity = updates.quantity;
-            if (updates.unitPrice !== undefined) updateData.unit_price = updates.unitPrice;
-            if (updates.discountPercent !== undefined) updateData.discount_percent = updates.discountPercent;
-            if (updates.taxPercent !== undefined) updateData.tax_percent = updates.taxPercent;
-
-            const { data, error } = await supabase.from('quote_items').update(updateData).eq('id', itemId).select().single();
-
-            if (error) throw error;
-
-            await this.recalculateQuoteTotals(data.quote_id).catch(() => undefined);
-
-            const item: QuoteItem = {
-                id: data.id,
-                quoteId: data.quote_id,
-                itemOrder: data.item_order,
-                productName: data.product_name,
-                description: data.description,
-                quantity: data.quantity,
-                unitPrice: data.unit_price,
-                discountPercent: data.discount_percent,
-                taxPercent: data.tax_percent,
-                lineTotal: data.line_total,
-                metadata: data.metadata || {},
-                createdAt: data.created_at,
-            };
-
-            return { item, error: null };
+            const tenantId = this.getTenantId();
+            const { data: currentItem, error: currentError } = await supabase.from('quote_items').select('quote_id').eq('id', itemId).eq('tenant_id', tenantId).maybeSingle();
+            if (currentError || !currentItem) throw new Error(currentError?.message || 'Quote item not found');
+            const response = await fetch(`/api/tenant/${tenantId}/quotes/${encodeURIComponent(currentItem.quote_id)}/items`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itemId, ...updates }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.item) throw new Error(payload.error || 'Quote item could not be updated');
+            const apiItem = payload.item;
+            return { item: { id: apiItem.id, quoteId: currentItem.quote_id, itemOrder: apiItem.item_order, productName: apiItem.product_name, description: apiItem.description, quantity: apiItem.quantity, unitPrice: apiItem.unit_price, discountPercent: apiItem.discount_percent, taxPercent: apiItem.tax_percent, lineTotal: apiItem.line_total, metadata: {}, createdAt: new Date().toISOString() }, error: null };
         } catch (err) {
             return { item: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -727,21 +557,12 @@ export const quoteService = {
      */
     async deleteQuoteItem(itemId: string): Promise<{ success: boolean; error: string | null }> {
         try {
-            const { data: item, error: lookupError } = await supabase
-                .from('quote_items')
-                .select('quote_id')
-                .eq('id', itemId)
-                .single();
-            if (lookupError) throw lookupError;
-
-            const { error } = await supabase.from('quote_items').delete().eq('id', itemId);
-
-            if (error) throw error;
-
-            if (item?.quote_id) {
-                await this.recalculateQuoteTotals(item.quote_id).catch(() => undefined);
-            }
-
+            const tenantId = this.getTenantId();
+            const { data: currentItem, error: currentError } = await supabase.from('quote_items').select('quote_id').eq('id', itemId).eq('tenant_id', tenantId).maybeSingle();
+            if (currentError || !currentItem) throw new Error(currentError?.message || 'Quote item not found');
+            const response = await fetch(`/api/tenant/${tenantId}/quotes/${encodeURIComponent(currentItem.quote_id)}/items?itemId=${encodeURIComponent(itemId)}`, { method: 'DELETE' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Quote item could not be deleted');
             return { success: true, error: null };
         } catch (err) {
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };

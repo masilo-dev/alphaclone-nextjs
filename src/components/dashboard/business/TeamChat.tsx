@@ -3,7 +3,6 @@ import Image from 'next/image';
 import { Send, MessageCircle, CheckCircle, CheckCheck } from 'lucide-react';
 import { User } from '../../../types';
 import { format } from 'date-fns';
-import { supabase } from '../../../lib/supabase';
 import { taskService } from '../../../services/taskService';
 import { messageService } from '../../../services/messageService';
 import toast from 'react-hot-toast';
@@ -151,13 +150,10 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
     const loadReceiptSummaries = async (messageIds: string[]) => {
         if (!tenantId || messageIds.length === 0) return;
 
-        const { data, error } = await supabase
-            .from('message_receipts')
-            .select('message_id, user_id, delivered_at, read_at')
-            .eq('tenant_id', tenantId)
-            .in('message_id', messageIds);
-
-        if (error || !data) return;
+        const response = await fetch(`/api/tenant/${tenantId}/team-message-receipts?messageIds=${encodeURIComponent(messageIds.join(','))}`, { cache: 'no-store' });
+        if (!response.ok) return;
+        const payload = await response.json();
+        const data = payload.receipts || [];
 
         const grouped: Record<string, DeliverySummary> = {};
         for (const receipt of data as any[]) {
@@ -174,14 +170,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
     const syncMyReceipts = async (messageIds: string[]) => {
         if (!tenantId || messageIds.length === 0) return;
 
-        const nowIso = new Date().toISOString();
-        await supabase
-            .from('message_receipts')
-            .update({ read_at: nowIso })
-            .eq('tenant_id', tenantId)
-            .eq('user_id', user.id)
-            .in('message_id', messageIds)
-            .is('read_at', null);
+        await fetch(`/api/tenant/${tenantId}/team-message-receipts`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messageIds }) });
 
         await loadReceiptSummaries(messageIds);
     };
@@ -244,20 +233,12 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
 
         const deliveredAt = new Date();
         updateMessageDelivery(senderMessageId, { deliveredAt });
-        await supabase.from('messages').update({ delivered_at: deliveredAt.toISOString() }).eq('id', senderMessageId);
-        const receiptRows = recipientMembers.map((member) => ({
-            tenant_id: tenantId,
-            message_id: senderMessageId,
-            user_id: member.user_id,
-            delivery_channel: 'email',
-            delivered_at: deliveredAt.toISOString(),
-            read_at: null,
-        }));
-        if (receiptRows.length > 0) {
-            await supabase
-                .from('message_receipts')
-                .upsert(receiptRows, { onConflict: 'message_id,user_id,delivery_channel' });
-        }
+        const receiptResponse = await fetch(`/api/tenant/${tenantId}/team-message-receipts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messageId: senderMessageId, recipientUserIds: recipientMembers.map((member) => member.user_id), deliveredAt: deliveredAt.toISOString() }),
+        });
+        if (!receiptResponse.ok) throw new Error('Email was sent, but delivery receipts could not be recorded');
         await loadReceiptSummaries([senderMessageId]);
         await persistMessage(`Emailed ${recipients.length} teammate${recipients.length === 1 ? '' : 's'}.`, 'system');
     };

@@ -94,7 +94,7 @@ Once connected, when you click on any client in your CRM, you can see all histor
 **Privacy note:** Your emails are displayed inside AlphaClone but are not stored permanently on our servers. We retrieve them in real time from Gmail's API. If you disconnect Gmail at any time, the email data is immediately removed from your AlphaClone view.`,
             tips: [
                 'You must connect the email address you actually use to communicate with clients',
-                'If you have multiple Gmail accounts, you can connect the primary one for now',
+                'If you have multiple Gmail accounts, connect the account your workspace should send from',
                 'Your personal emails are private — only emails linked to CRM contacts appear contextually',
                 'The connection can be disconnected from Settings > Integrations at any time',
             ],

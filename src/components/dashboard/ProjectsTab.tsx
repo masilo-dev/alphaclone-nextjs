@@ -253,17 +253,13 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
     if (!currentTenant?.id || !newName.trim()) return;
     setCreating(true);
     try {
-      const { error } = await supabase.from('projects').insert({
-        tenant_id: currentTenant.id,
-        owner_id: user.id,
-        owner_name: user.name || 'User',
-        name: newName.trim(),
-        status: 'planning',
-        progress: 0,
-        task_count: 0,
-        completed_tasks: 0,
+      const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() }),
       });
-      if (error) throw error;
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to create project');
       toast.success('Project created');
       setShowCreate(false);
       setNewName('');

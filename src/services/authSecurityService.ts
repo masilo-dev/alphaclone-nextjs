@@ -185,27 +185,6 @@ export const authSecurityService = {
     },
 
     /**
-     * Authenticate via SSO
-     */
-    async authenticateSSO(_providerId: string, _token: string): Promise<{ user: any; error: string | null }> {
-        try {
-            // Verify SSO token and get user info
-            // This would integrate with the actual SSO provider (Google, Microsoft, etc.)
-            // For now, return a placeholder
-
-            return {
-                user: null,
-                error: 'SSO authentication not fully implemented',
-            };
-        } catch (error) {
-            return {
-                user: null,
-                error: error instanceof Error ? error.message : 'SSO authentication failed',
-            };
-        }
-    },
-
-    /**
      * Generate TOTP secret using otplib
      */
     generateSecret(): string {
@@ -316,4 +295,3 @@ export const authSecurityService = {
         }
     },
 };
-

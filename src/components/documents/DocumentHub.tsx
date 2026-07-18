@@ -466,12 +466,9 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         if (!selectedFile) return;
         setIsSaving(true);
         try {
-            const { error } = await supabase
-                .from('file_uploads')
-                .update({ annotations })
-                .eq('id', selectedFile.id);
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant?.id || '')}/files`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'annotations', fileId: selectedFile.id, annotations }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Annotations could not be saved');
             toast.success('Annotations saved');
             loadFiles();
         } catch (error) {
@@ -1223,4 +1220,3 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 };
 
 export default DocumentHub;
-

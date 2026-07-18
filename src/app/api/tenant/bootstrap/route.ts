@@ -8,18 +8,30 @@ const bodySchema = z
   .object({
     name: z.string().min(1).max(200).optional(),
     slug: z.string().min(1).max(100).optional(),
-    plan: z.string().optional(),
+    plan: z.enum(['free', 'starter', 'pro', 'enterprise']).optional(),
     referralCode: z.string().min(1).max(100).optional(),
+    mode: z.enum(['ensure', 'create']).optional().default('ensure'),
+    idempotencyKey: z.string().uuid().optional(),
   })
   .optional();
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await requireAuthenticatedUser(req);
+    const { user } = await requireAuthenticatedUser(req, { allowMissingProfile: true });
     const body = bodySchema.parse(await req.json().catch(() => ({})));
+    const idempotencyKey =
+      req.headers.get('idempotency-key')?.trim() ||
+      body?.idempotencyKey ||
+      'initial-workspace-v1';
+    if (idempotencyKey.length < 8 || idempotencyKey.length > 200) {
+      return NextResponse.json({ error: 'Invalid Idempotency-Key' }, { status: 400 });
+    }
     const admin = createSupabaseAdminClient();
 
-    const { tenantId, created } = await bootstrapTenantForUser(admin, user, body);
+    const { tenantId, created } = await bootstrapTenantForUser(admin, user, {
+      ...body,
+      idempotencyKey,
+    });
 
     const { data: tenant, error } = await admin
       .from('tenants')

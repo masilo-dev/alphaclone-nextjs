@@ -5,6 +5,7 @@ import { tenantService } from '../services/tenancy/TenantService';
 import type { Tenant, SubscriptionPlan } from '../services/tenancy/types';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { resetPlatformState } from '@/lib/platformReset';
 
 export interface TenantContextType {
   currentTenant: Tenant | null;
@@ -56,10 +57,14 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       throw new Error('Tenant not found or no access');
     }
 
-    // Update context
-    setCurrentTenant(tenant);
+    setIsLoading(true);
+    setError(null);
 
-    // Persist to localStorage
+    // Cancel prior-tenant work and clear every protected client cache before
+    // making the new tenant observable to consumers.
+    await resetPlatformState({ reason: 'tenant-switch', clearAuth: false });
+
+    setCurrentTenant(tenant);
     tenantService.setCurrentTenant(tenantId);
 
     // Reload the page to fetch new tenant's data
@@ -123,64 +128,15 @@ export function TenantProvider({ children }: { children: ReactNode }) {
           setIsLoading(false);
         }
       } else {
-        // Any user with no tenants gets a default org auto-created
-        console.log(`[TenantContext] No tenants found for user with role ${user.role}, auto-creating...`);
-
-        try {
-          // Generate tenant name based on role
-          // Super admin gets "ALPHACLONE SYSTEMS" as default organization
-          const tenantName =
-            user.role === 'admin'
-              ? 'ALPHACLONE SYSTEMS'
-              : `${user.name || user.email?.split('@')[0] || 'User'}'s Organization`;
-          const tenantSlug =
-            user.role === 'admin'
-              ? 'alphaclone-systems'
-              : `org-${user.id.substring(0, 8)}`;
-
-          const newTenant = await tenantService.createTenant({
-            name: tenantName,
-            slug: tenantSlug,
-            adminUserId: user.id,
-            plan: 'free',
-          });
-
-          // Set as current tenant
-          setCurrentTenant(newTenant);
-          setUserTenants([{ ...newTenant, role: 'tenant_admin' }]);
-          tenantService.setCurrentTenant(newTenant.id);
-          if (timeoutId) clearTimeout(timeoutId);
-          hasResolvedOnceRef.current = true;
-          setIsLoading(false);
-        } catch (error: any) {
-          console.error('Failed to auto-create default tenant:', error);
-          console.error('Auto-create error details:', {
-            message: error?.message,
-            code: error?.code,
-            details: error?.details,
-            hint: error?.hint
-          });
-
-          // Handle specific function overload error
-          let errorMessage = 'Unable to create your organization. Please contact support.';
-          if (error?.code === 'PGRST203') {
-            errorMessage = 'Database function conflict detected. Please refresh the page and try again.';
-          } else if (error?.message?.includes('Failed to fetch')) {
-            errorMessage = 'Network connection unstable. Please check your internet connection and try again.';
-          }
-
-          // CRITICAL: Set loading to false and error immediately
-          setCurrentTenant(null);
-          setUserTenants([]);
-          tenantService.clearCurrentTenant();
-          setError(errorMessage);
-          if (timeoutId) clearTimeout(timeoutId);
-          hasResolvedOnceRef.current = true;
-          setIsLoading(false);
-
-          // Early return to prevent further execution
-          return;
-        }
+        // No access is a real state, not permission to create data implicitly.
+        // The dashboard presents an explicit workspace-creation action for owners.
+        tenantService.clearCurrentTenant();
+        setCurrentTenant(null);
+        setUserTenants([]);
+        setError('You do not currently have access to a workspace. Create one or ask an owner for an invitation.');
+        if (timeoutId) clearTimeout(timeoutId);
+        hasResolvedOnceRef.current = true;
+        setIsLoading(false);
       }
     } catch (error: any) {
       console.error('Failed to load user tenants:', error);
@@ -296,6 +252,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
       return () => clearTimeout(timeoutId);
     } else {
       hasResolvedOnceRef.current = false;
+      tenantService.clearCurrentTenant();
       setCurrentTenant(null);
       setUserTenants([]);
       setIsLoading(false);

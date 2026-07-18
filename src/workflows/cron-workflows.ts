@@ -238,15 +238,7 @@ export async function processScheduledAiTasks() {
 async function fetchDueAiTasks() {
     "use step";
     const admin = createSupabaseAdminClient();
-    const nowIso = new Date().toISOString();
-
-    const { data, error } = await admin
-        .from('scheduled_ai_tasks')
-        .select('*')
-        .eq('status', 'active')
-        .lte('next_run_at', nowIso)
-        .order('next_run_at', { ascending: true })
-        .limit(20);
+    const { data, error } = await admin.rpc('claim_due_scheduled_ai_tasks', { p_limit: 20 });
 
     if (error) throw error;
     return { tasks: data || [] };

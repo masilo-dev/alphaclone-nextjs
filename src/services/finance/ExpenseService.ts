@@ -34,6 +34,8 @@ export interface Expense {
     billable: boolean;
     receipt_url?: string;
     notes?: string;
+    asset_account_id?: string;
+    receipt_url?: string;
     journal_entry_id?: string;
     zoho_books_id?: string;
     created_by?: string;

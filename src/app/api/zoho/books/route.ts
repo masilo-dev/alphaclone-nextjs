@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZohoBooksService } from '../../../../services/zoho/ZohoBooksService';
 import { ZohoAuthExpiredError } from '../../../../services/zoho/ZohoService';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
 
 async function getUser(req: NextRequest) {
     const supabase = await createSupabaseServerClient();
@@ -36,8 +37,9 @@ export async function GET(req: NextRequest) {
     const tenantId = searchParams.get('tenantId');
 
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+    await requireTenantAccess(tenantId, req);
 
-    const books = new ZohoBooksService(user.id);
+    const books = new ZohoBooksService(user.id, tenantId);
 
     try {
         switch (action) {
@@ -87,8 +89,9 @@ export async function POST(req: NextRequest) {
 
     const { action, tenantId, ...payload } = await req.json();
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
+    await requireTenantAccess(tenantId, req);
 
-    const books = new ZohoBooksService(user.id);
+    const books = new ZohoBooksService(user.id, tenantId);
 
     try {
         switch (action) {

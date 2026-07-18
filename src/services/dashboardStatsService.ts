@@ -772,8 +772,6 @@ export const dashboardStatsService = {
       else contentMap.Image++;
     });
 
-    const totalReach = published30 * 125 + scheduled * 45; // Weighted reach estimate
-    const engagementRate = published30 > 0 ? (Math.random() * 2 + 1.5) : 0; // Dynamic-looking rate
     const postFreq = Math.round((published30 / 30) * 10) / 10;
 
     const feed = await fetchActivityFeed(supabase, tenantId, ['social', 'post'], DASHBOARD_COLORS.red);
@@ -781,9 +779,9 @@ export const dashboardStatsService = {
     return {
       metrics: [
         { label: 'Published (30d)', value: published30 },
-        { label: 'Estimated reach', value: totalReach.toLocaleString(), deltaColor: 'teal' },
+        { label: 'Scheduled', value: scheduled, deltaColor: 'teal' },
         { label: 'Posting rhythm', value: `${postFreq}/day`, deltaColor: postFreq > 0.5 ? 'green' : 'amber', comparisonText: 'Consistency audit' },
-        { label: 'Avg engagement', value: formatPct(engagementRate), deltaColor: engagementRate > 2 ? 'green' : 'amber' },
+        { label: 'Tracking', value: 'Connected metrics only', deltaColor: 'amber' },
       ],
       mainChart: dayKeys.map((k) => ({ label: dayLabel(k), value: reachByDay[k] || 0 })),
       breakdown: Object.entries(platformMap).map(([label, value], i) => ({

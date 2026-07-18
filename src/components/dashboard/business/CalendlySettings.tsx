@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, CheckCircle2, AlertCircle, ExternalLink, RefreshCw, XCircle, Link, Copy, Users, ArrowRightLeft } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
-import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -22,7 +21,7 @@ const CalendlySettings: React.FC = () => {
     const [syncingContacts, setSyncingContacts] = useState(false);
 
     const calendlyConfig = (currentTenant?.settings as any)?.calendly;
-    const isConnected = calendlyConfig?.enabled && calendlyConfig?.accessToken;
+    const isConnected = Boolean(calendlyConfig?.enabled && (calendlyConfig?.calendlyUserUri || calendlyConfig?.isManual));
 
     useEffect(() => {
         if (isConnected && currentTenant) {
@@ -144,25 +143,9 @@ const CalendlySettings: React.FC = () => {
         if (!currentTenant || !window.confirm('Are you sure you want to disconnect Calendly? This will disable the booking page.')) return;
 
         try {
-            const updatedSettings = {
-                ...(currentTenant.settings as any),
-                calendly: {
-                    ...calendlyConfig,
-                    enabled: false,
-                    accessToken: null,
-                    refreshToken: null,
-                    expiresAt: null,
-                    eventUrl: null,
-                    calendlyUserUri: null
-                }
-            };
-
-            const { error } = await supabase
-                .from('tenants')
-                .update({ settings: updatedSettings })
-                .eq('id', currentTenant.id);
-
-            if (error) throw error;
+            const response = await fetch(`/api/calendly/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { method: 'DELETE', credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Calendly could not be disconnected');
             await refreshTenants();
             setEventTypes([]);
             toast.success('Calendly disconnected successfully.');
@@ -176,22 +159,9 @@ const CalendlySettings: React.FC = () => {
         if (!currentTenant || !manualUrl) return;
         setSaving(true);
         try {
-            const updatedSettings = {
-                ...(currentTenant.settings as any),
-                calendly: {
-                    ...(currentTenant.settings as any)?.calendly,
-                    enabled: true,
-                    eventUrl: manualUrl,
-                    isManual: true
-                }
-            };
-
-            const { error } = await supabase
-                .from('tenants')
-                .update({ settings: updatedSettings })
-                .eq('id', currentTenant.id);
-
-            if (error) throw error;
+            const response = await fetch('/api/calendly/status', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: currentTenant.id, eventUrl: manualUrl }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Calendly link could not be saved');
             await refreshTenants();
             setShowManual(false);
             setManualUrl('');
@@ -442,4 +412,3 @@ const CalendlySettings: React.FC = () => {
 };
 
 export default CalendlySettings;
-

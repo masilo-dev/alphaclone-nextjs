@@ -510,21 +510,30 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   const handleComplete = async (id: string) => {
     if (!currentTenant?.id) return;
-    await supabase.from('tasks').update({ status: 'completed' }).eq('id', id).eq('tenant_id', currentTenant.id);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], changes: { status: 'completed' } }),
+    });
+    if (!response.ok) { toast.error('Task could not be completed'); return; }
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' as TaskStatus } : t));
     toast.success('Task completed! 🎉');
   };
 
   const handleDelete = async (id: string) => {
     if (!currentTenant?.id) return;
-    await supabase.from('tasks').delete().eq('id', id).eq('tenant_id', currentTenant.id);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id] }),
+    });
+    if (!response.ok) { toast.error('Task could not be deleted'); return; }
     setTasks(prev => prev.filter(t => t.id !== id));
     toast.success('Task deleted');
   };
 
   const handleUpdate = async (id: string, changes: Partial<Task>) => {
     if (!currentTenant?.id) return;
-    await supabase.from('tasks').update(changes).eq('id', id).eq('tenant_id', currentTenant.id);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [id], changes }),
+    });
+    if (!response.ok) { toast.error('Task could not be updated'); return; }
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
     toast.success('Task updated');
   };
@@ -546,7 +555,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id || selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} selected task(s)?`)) return;
     const ids = Array.from(selectedIds);
-    await supabase.from('tasks').delete().eq('tenant_id', currentTenant.id).in('id', ids);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }),
+    });
+    if (!response.ok) { toast.error('Selected tasks could not be deleted'); return; }
     setTasks((prev) => prev.filter((t) => !selectedIds.has(t.id)));
     setSelectedIds(new Set());
     toast.success(`${ids.length} task(s) deleted`);
@@ -555,7 +567,10 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   const handleBulkComplete = async () => {
     if (!currentTenant?.id || selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
-    await supabase.from('tasks').update({ status: 'completed' }).eq('tenant_id', currentTenant.id).in('id', ids);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, changes: { status: 'completed' } }),
+    });
+    if (!response.ok) { toast.error('Selected tasks could not be completed'); return; }
     setTasks((prev) => prev.map((t) => (selectedIds.has(t.id) ? { ...t, status: 'completed' as TaskStatus } : t)));
     setSelectedIds(new Set());
     toast.success(`${ids.length} task(s) completed`);
@@ -572,32 +587,21 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     if (!currentTenant?.id) return;
     setCreating(true);
     try {
-      const { data: row, error } = await supabase
-        .from('tasks')
-        .insert({
-          tenant_id: currentTenant.id,
+      const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           title: data.title,
-          status: 'todo',
           priority: data.priority,
           due_date: data.due_date || null,
           related_to_deal: data.related_to_deal || null,
           related_to_contact: data.related_to_contact || null,
           related_to_lead: data.related_to_lead || null,
-        })
-        .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)')
-        .single();
-      if (error) throw error;
-      const mapped = {
-        ...(row as any),
-        project_name: (row as any).projects?.name,
-        deal_name: (row as any).deals?.name,
-        contact_name: (row as any).contacts
-          ? [(row as any).contacts.first_name, (row as any).contacts.last_name].filter(Boolean).join(' ')
-            || (row as any).contacts.email
-          : undefined,
-        lead_name: (row as any).leads?.business_name,
-      } as Task;
-      setTasks((prev) => [mapped, ...prev]);
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to create task');
+      await load();
       setCreateOpen(false);
       toast.success('Task created');
       showActionNextSteps('task_created', (path) => router.push(path));

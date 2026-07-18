@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 /** DELETE — user cancels a pending account deletion. */
 export async function DELETE() {
     try {
-        const { user } = await requireAuthenticatedUser();
+        const { user } = await requireAuthenticatedUser(undefined, { allowPendingDeletion: true });
         const result = await accountDeletionService.cancelAccountDeletion(user.id);
 
         if (!result.success) {

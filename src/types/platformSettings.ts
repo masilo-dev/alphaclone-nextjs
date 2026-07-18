@@ -3,6 +3,7 @@ export type PlatformGlobalSettings = {
     platformName?: string;
     supportEmail?: string;
     platformUrl?: string;
+    logoUrl?: string;
   };
   security?: {
     enforce2faTenantAdmins?: boolean;

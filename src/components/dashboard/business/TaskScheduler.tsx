@@ -1,968 +1,143 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  Clock, Plus, Trash2, Play, Pause, X, Sparkles,
-  ChevronDown, ChevronUp, RotateCcw, CheckCircle2,
-  AlertCircle, Loader2, Bot, Zap, Mail, Target,
-  FileText, DollarSign, RefreshCw, Settings2, Share2
-} from 'lucide-react';
-import { useTenant } from '../../../contexts/TenantContext';
-import { generateText } from '../../../services/unifiedAIService';
-import { supabase } from '../../../lib/supabase';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Bot, CalendarClock, ChevronDown, ChevronUp, Loader2, Pause, Play, Plus, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+import { useTenant } from '@/contexts/TenantContext';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
-
-interface TaskResults {
-  total: number;
-  successful: number;
-  failed: number;
-  output?: string;      // AI-generated content / execution summary
-  executedAt?: string;
-}
-
-interface Task {
+type ScheduledTask = {
   id: string;
-  title: string;
-  description: string;
-  type: 'email' | 'lead_generation' | 'contract_creation' | 'invoice' | 'follow_up' | 'social_post' | 'custom';
-  schedule: {
-    type: 'daily' | 'weekly' | 'monthly' | 'once';
-    time: string;
-    day?: number;
-  };
-  target: {
-    count?: number;
-    criteria?: string;
-    template?: string;
-  };
-  aiEnabled: boolean;
-  aiPrompt: string;       // AI instructions for this task
-  status: 'active' | 'paused' | 'completed';
-  lastRun?: string;
-  nextRun?: string;
-  results?: TaskResults;
-  running?: boolean;
-}
-
-interface TaskSchedulerProps {
-  onTaskComplete?: (task: Task) => void;
-}
-
-// ─────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────
-
-const TASK_TYPES = [
-  { value: 'email',             label: 'Email Outreach',    icon: <Mail size={14} />,       color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
-  { value: 'lead_generation',   label: 'Lead Generation',   icon: <Target size={14} />,     color: 'text-teal-400 bg-teal-400/10 border-teal-400/20' },
-  { value: 'social_post',       label: 'Social Post',       icon: <Share2 size={14} />,     color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
-  { value: 'contract_creation', label: 'Contract Creation', icon: <FileText size={14} />,   color: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
-  { value: 'invoice',           label: 'Invoice',           icon: <DollarSign size={14} />, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
-  { value: 'follow_up',         label: 'Follow Up',         icon: <RefreshCw size={14} />,  color: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
-  { value: 'custom',            label: 'Custom',            icon: <Settings2 size={14} />,  color: 'text-slate-400 bg-slate-400/10 border-slate-400/20' },
-] as const;
-
-const SCHEDULE_TYPES = [
-  { value: 'daily',   label: 'Every Day' },
-  { value: 'weekly',  label: 'Every Week' },
-  { value: 'monthly', label: 'Every Month' },
-  { value: 'once',    label: 'One Time' },
-];
-
-const DAYS_OF_WEEK = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-
-// Default AI prompts per task type
-const DEFAULT_AI_PROMPTS: Record<string, string> = {
-  email: 'Draft a professional, personalized outreach email to potential clients. Focus on value proposition and a clear call-to-action. Keep it under 150 words. Write in plain text only — no asterisks, hashtags, or markdown.',
-  lead_generation: 'Analyze our current leads and identify the top 5 highest-intent prospects based on engagement signals. For each, suggest a next action. Write in plain professional text only — no markdown or special symbols.',
-  social_post: 'Write an engaging social media post for our business page. Keep it concise (under 200 characters), professional, and end with a relevant call-to-action. No hashtag spam — maximum 3 relevant hashtags. Write in plain text only — no asterisks or markdown.',
-  contract_creation: 'Generate a professional service agreement outline. Write in plain professional text only — no markdown, bolding (**), or hashtags (#). Use standard numbering for structure.',
-  invoice: 'Summarize this billing cycle\'s completed work items and generate invoice line items. Write in plain professional text only — no markdown symbols.',
-  follow_up: 'Write a warm follow-up message for clients who haven\'t responded in 7 days. Reference previous conversation context and offer a specific next step. Write in plain text only — no asterisks or markdown.',
-  custom: 'Execute the task described above and provide a detailed summary of actions taken and results. Write in plain professional text only — no markdown.',
+  name: string;
+  prompt: string;
+  schedule: string;
+  status: 'active' | 'paused';
+  last_run_at?: string | null;
+  next_run_at: string;
+  latest_result?: { status: 'success' | 'failure'; output?: string | null; error?: string | null; ran_at: string } | null;
 };
 
-// ─────────────────────────────────────────────
-// AI Execution Engine
-// ─────────────────────────────────────────────
+type Frequency = 'daily' | 'weekly' | 'monthly';
 
-async function runWithAI(task: Task): Promise<TaskResults> {
-  const systemContext = `You are an AI business automation agent for AlphaClone Business OS.
-You are executing a scheduled task of type: ${task.type}.
-Task title: "${task.title}"
-Task description: "${task.description}"
-Today's date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-
-STRICT FORMATTING RULES:
-1. Write in PLAIN PROFESSIONAL TEXT only.
-2. DO NOT use markdown symbols: no asterisks (**), no hashtags (#), no underscores (_), no backticks (\`).
-3. DO NOT use bold or italic formatting.
-4. Use standard sentence structure and clear paragraph breaks for structure.
-5. If listing items, use standard numbers (1., 2., 3.) NOT dashes or asterisks.
-
-Execute this task thoroughly and return the result following these rules.`;
-
-  const userPrompt = task.aiPrompt || DEFAULT_AI_PROMPTS[task.type] || task.description;
-
-  try {
-    const { callDeepSeek } = await import('@/lib/ai/deepseek');
-    const text = await callDeepSeek(`${systemContext}\n\n${userPrompt}`, {
-      model: 'deepseek-chat',
-      maxTokens: 1024,
-      temperature: 0.7,
-    });
-
-    if (!text) {
-      throw new Error('DeepSeek returned no output');
-    }
-
-    return {
-      total: 1,
-      successful: 1,
-      failed: 0,
-      output: text,
-      executedAt: new Date().toISOString(),
-    };
-  } catch (deepSeekError) {
-    console.warn('DeepSeek failed, falling back to unified AI:', deepSeekError);
-  }
-
-  const { text, error } = await generateText(`${systemContext}\n\n${userPrompt}`, 1024);
-
-  if (error || !text) {
-    throw new Error(error || 'AI returned no output');
-  }
-
-  return {
-    total: 1,
-    successful: 1,
-    failed: 0,
-    output: text,
-    executedAt: new Date().toISOString(),
-  };
+function cronFor(frequency: Frequency, time: string, day: number) {
+  const [hour, minute] = time.split(':').map(Number);
+  if (frequency === 'weekly') return `${minute} ${hour} * * ${Math.min(6, Math.max(0, day))}`;
+  if (frequency === 'monthly') return `${minute} ${hour} ${Math.min(28, Math.max(1, day))} * *`;
+  return `${minute} ${hour} * * *`;
 }
 
-async function runEmailTask(task: Task): Promise<TaskResults> {
-  // Step 1: Generate email content with AI
-  const aiResult = await runWithAI(task);
-  const content = aiResult.output || '';
-
-  // Step 2: Attempt to send via Zoho Mail
-  const toAddress = (task.target?.criteria || '').trim();
-  if (toAddress) {
-    try {
-      const res = await fetch('/api/zoho/mail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toAddress, subject: task.title, content }),
-      });
-      const sent = res.ok;
-      return {
-        ...aiResult,
-        successful: sent ? 1 : 0,
-        failed: sent ? 0 : 1,
-        output: sent
-          ? `Sent via Zoho Mail to ${toAddress}.\n\n---\n\n${content}`
-          : `Zoho send failed — content ready to use:\n\n${content}`,
-      };
-    } catch {
-      return { ...aiResult, output: `Email content (Zoho unavailable):\n\n${content}` };
-    }
-  }
-
-  // No recipient configured — return the generated content
-  return { ...aiResult, output: `Email drafted (no recipient set):\n\n${content}` };
+function scheduleLabel(cron: string) {
+  const [minute, hour, date, , weekday] = cron.split(' ');
+  const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')} UTC`;
+  if (weekday !== '*') return `Weekly on day ${weekday} at ${time}`;
+  if (date !== '*') return `Monthly on day ${date} at ${time}`;
+  return `Daily at ${time}`;
 }
 
-async function runSocialTask(task: Task, tenantId?: string): Promise<TaskResults> {
-  // Step 1: Generate caption with AI
-  const aiResult = await runWithAI(task);
-  const caption = aiResult.output || '';
-  const platforms = (task.target?.criteria || 'facebook')
-    .split(',')
-    .map((s: string) => s.trim().toLowerCase())
-    .filter(Boolean);
-
-  // Step 2: Publish Facebook posts immediately when Facebook is selected.
-  // This task runner already runs on a schedule, so creating another scheduled
-  // social post would only queue the content instead of actually publishing it.
-  if (tenantId && platforms.includes('facebook')) {
-    try {
-      const { data: pages, error: pagesError } = await supabase
-        .from('facebook_integrations')
-        .select('page_id, page_name')
-        .eq('tenant_id', tenantId)
-        .eq('is_active', true)
-        .limit(1);
-
-      if (pagesError) {
-        throw pagesError;
-      }
-
-      const page = pages?.[0];
-      if (!page?.page_id) {
-        return {
-          ...aiResult,
-          successful: 0,
-          failed: 1,
-          output: `Facebook publish failed — no connected Facebook Page was found.\n\n---\n\n${caption}`,
-        };
-      }
-
-      const res = await fetch('/api/facebook/post', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pageId: page.page_id,
-          message: caption,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      const ok = res.ok && !!data.success;
-
-      return {
-        ...aiResult,
-        successful: ok ? 1 : 0,
-        failed: ok ? 0 : 1,
-        output: ok
-          ? `Posted to Facebook${page.page_name ? ` (${page.page_name})` : ''}.\n\n---\n\n${caption}`
-          : `Facebook publish failed${data.error ? `: ${data.error}` : ''}.\n\n---\n\n${caption}`,
-      };
-    } catch (err: any) {
-      return {
-        ...aiResult,
-        successful: 0,
-        failed: 1,
-        output: `Facebook publish failed: ${err?.message || 'Unknown error'}\n\n---\n\n${caption}`,
-      };
-    }
-  }
-
-  // Step 3: Fallback to the social scheduling API for non-Facebook platforms.
-  if (tenantId) {
-    try {
-      const res = await fetch('/api/social/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tenantId,
-          title: task.title,
-          caption,
-          platforms,
-          status: 'scheduled',
-          publish_now: false,
-        }),
-      });
-      const ok = res.ok;
-      return {
-        ...aiResult,
-        successful: ok ? 1 : 0,
-        failed: ok ? 0 : 1,
-        output: ok
-          ? `Scheduled to ${platforms.join(', ') || 'facebook'}.\n\n---\n\n${caption}`
-          : `Social post created (scheduling failed):\n\n${caption}`,
-      };
-    } catch {
-      return { ...aiResult, output: `Post content (social integration unavailable):\n\n${caption}` };
-    }
-  }
-
-  return { ...aiResult, output: `Post content (no tenant configured):\n\n${caption}` };
-}
-
-async function runLeadTask(task: Task): Promise<TaskResults> {
-  if (task.aiEnabled) return runWithAI(task);
-  return { total: 0, successful: 0, failed: 0, output: 'Lead scan complete.', executedAt: new Date().toISOString() };
-}
-
-async function runContractTask(task: Task): Promise<TaskResults> {
-  if (task.aiEnabled) return runWithAI(task);
-  return { total: 1, successful: 1, failed: 0, output: 'Contract template ready.', executedAt: new Date().toISOString() };
-}
-
-async function runInvoiceTask(task: Task): Promise<TaskResults> {
-  if (task.aiEnabled) return runWithAI(task);
-  return { total: 1, successful: 1, failed: 0, output: 'Invoice generated.', executedAt: new Date().toISOString() };
-}
-
-async function runFollowUpTask(task: Task): Promise<TaskResults> {
-  if (task.aiEnabled) return runWithAI(task);
-  return { total: 1, successful: 1, failed: 0, output: 'Follow-up sent.', executedAt: new Date().toISOString() };
-}
-
-async function runCustomTask(task: Task): Promise<TaskResults> {
-  if (task.aiEnabled) return runWithAI(task);
-  return { total: 1, successful: 1, failed: 0, output: 'Task executed.', executedAt: new Date().toISOString() };
-}
-
-// ─────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────
-
-const TaskScheduler: React.FC<TaskSchedulerProps> = ({ onTaskComplete }) => {
+export default function TaskScheduler({ onTaskComplete }: { onTaskComplete?: (task: ScheduledTask) => void }) {
   const { currentTenant } = useTenant();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [expandedTask, setExpandedTask] = useState<string | null>(null);
-  const [newTask, setNewTask] = useState<Partial<Task>>({
-    title: '', description: '', type: 'email',
-    schedule: { type: 'daily', time: '09:00' },
-    target: {}, aiEnabled: true,
-    aiPrompt: DEFAULT_AI_PROMPTS['email'],
-    status: 'active',
-  });
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [tasks, setTasks] = useState<ScheduledTask[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [name, setName] = useState('');
+  const [prompt, setPrompt] = useState('');
+  const [frequency, setFrequency] = useState<Frequency>('daily');
+  const [time, setTime] = useState('09:00');
+  const [day, setDay] = useState(1);
 
-  // ── Persistence ──────────────────────────────
-
-  const fetchTasks = async () => {
-    if (!currentTenant?.id) return;
-    
-    const { data, error } = await supabase
-      .from('automation_tasks')
-      .select('*')
-      .eq('tenant_id', currentTenant.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching tasks:', error);
-      return;
-    }
-
-    if (data) {
-      // Map database snake_case to component camelCase
-      const mappedTasks: Task[] = data.map((t: any) => ({
-        id: t.id,
-        title: t.title,
-        description: t.description || '',
-        type: t.type as Task['type'],
-        schedule: t.schedule,
-        target: t.target || {},
-        aiEnabled: t.ai_enabled,
-        aiPrompt: t.ai_prompt || '',
-        status: t.status as Task['status'],
-        lastRun: t.last_run,
-        nextRun: t.next_run,
-        results: t.results,
-      }));
-      setTasks(mappedTasks);
-    }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-    
-    // Set up Realtime subscription
-    if (!currentTenant?.id) return;
-    
-    const channel = supabase
-      .channel('automation_tasks_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'automation_tasks',
-        filter: `tenant_id=eq.${currentTenant.id}`
-      }, () => {
-        fetchTasks();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentTenant?.id]);
-
-  // ── Scheduler loop (every 60s) ───────────────
-
-  useEffect(() => {
-    intervalRef.current = setInterval(checkAndRunDueTasks, 60_000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [tasks]);
-
-  const checkAndRunDueTasks = () => {
-    const now = new Date();
-    const hhmm = now.toTimeString().slice(0, 5);
-    tasks.forEach(task => {
-      if (task.status !== 'active' || task.running) return;
-      if (shouldRunNow(task, now, hhmm)) executeTask(task.id);
-    });
-  };
-
-  const shouldRunNow = (task: Task, now: Date, hhmm: string): boolean => {
-    if (task.schedule.time !== hhmm) return false;
-    const last = task.lastRun ? new Date(task.lastRun) : null;
-    const sameDay = last?.toDateString() === now.toDateString();
-    switch (task.schedule.type) {
-      case 'daily':   return !sameDay;
-      case 'weekly':  return now.getDay() === (task.schedule.day ?? 1) && !sameDay;
-      case 'monthly': return now.getDate() === (task.schedule.day ?? 1) && !sameDay;
-      case 'once':    return !task.lastRun && !!task.nextRun && new Date(task.nextRun) <= now;
-      default:        return false;
-    }
-  };
-
-  const nextRunDate = (schedule: Task['schedule']): string => {
-    const d = new Date();
-    switch (schedule.type) {
-      case 'daily':   d.setDate(d.getDate() + 1); break;
-      case 'weekly':  d.setDate(d.getDate() + 7); break;
-      case 'monthly': d.setMonth(d.getMonth() + 1); break;
-      case 'once':    return '';
-    }
-    return d.toISOString();
-  };
-
-  // ── Execute ──────────────────────────────────
-
-  const executeTask = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || task.running) return;
-
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, running: true } : t));
-
+  const endpoint = currentTenant?.id ? `/api/tenant/${encodeURIComponent(currentTenant.id)}/scheduled-ai-tasks` : '';
+  const load = useCallback(async () => {
+    if (!endpoint) { setTasks([]); setLoading(false); return; }
+    setLoading(true);
     try {
-      let results: TaskResults;
-      switch (task.type) {
-        case 'email':             results = await runEmailTask(task); break;
-        case 'lead_generation':   results = await runLeadTask(task); break;
-        case 'social_post':       results = await runSocialTask(task, currentTenant?.id); break;
-        case 'contract_creation': results = await runContractTask(task); break;
-        case 'invoice':           results = await runInvoiceTask(task); break;
-        case 'follow_up':         results = await runFollowUpTask(task); break;
-        default:                  results = await runCustomTask(task); break;
-      }
+      const response = await fetch(endpoint, { credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Tasks could not be loaded');
+      setTasks(payload.tasks || []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Tasks could not be loaded');
+    } finally { setLoading(false); }
+  }, [endpoint]);
 
-      const updated: Task = {
-        ...task,
-        running: false,
-        lastRun: new Date().toISOString(),
-        nextRun: task.schedule.type === 'once' ? '' : nextRunDate(task.schedule),
-        status: task.schedule.type === 'once' ? 'completed' : task.status,
-        results,
-      };
+  useEffect(() => { void load(); }, [load]);
 
-      const { error: updateError } = await supabase
-        .from('automation_tasks')
-        .update({
-          last_run: updated.lastRun,
-          next_run: updated.nextRun,
-          status: updated.status,
-          results: updated.results,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', taskId);
-
-      if (updateError) throw updateError;
-
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
-      setExpandedTask(taskId); // auto-expand to show output
-      toast.success(`"${task.title}" completed`);
-      if (onTaskComplete) onTaskComplete(updated);
-    } catch (err: any) {
-      setTasks(prev => prev.map(t =>
-        t.id === taskId ? { ...t, running: false, results: { total: 1, successful: 0, failed: 1, output: err.message, executedAt: new Date().toISOString() } } : t
-      ));
-      toast.error(`"${task.title}" failed`);
-    }
+  const createTask = async () => {
+    if (!endpoint || !name.trim() || !prompt.trim()) return toast.error('Name and instructions are required');
+    setBusyId('create');
+    try {
+      const response = await fetch(endpoint, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, prompt, schedule: cronFor(frequency, time, day) }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Task could not be scheduled');
+      setName(''); setPrompt(''); setShowCreate(false); await load();
+      toast.success('AI task scheduled');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Task could not be scheduled'); }
+    finally { setBusyId(null); }
   };
 
-  // ── CRUD ─────────────────────────────────────
-
-  const addTask = async () => {
-    if (!newTask.title?.trim() || !newTask.description?.trim() || !currentTenant?.id) {
-      toast.error('Title, description and tenant context are required');
-      return;
-    }
-
-    const nextRun = nextRunDate(newTask.schedule || { type: 'daily', time: '09:00' });
-    
-    // Database payload (snake_case)
-    const dbTask = {
-      tenant_id: currentTenant.id,
-      title: newTask.title!,
-      description: newTask.description!,
-      type: newTask.type || 'custom',
-      schedule: newTask.schedule || { type: 'daily', time: '09:00' },
-      target: newTask.target || {},
-      ai_enabled: newTask.aiEnabled ?? true,
-      ai_prompt: newTask.aiPrompt || DEFAULT_AI_PROMPTS[newTask.type || 'custom'],
-      status: 'active',
-      next_run: nextRun
-    };
-
-    const { data, error } = await supabase
-      .from('automation_tasks')
-      .insert([dbTask])
-      .select()
-      .single();
-
-    if (error) {
-      toast.error('Failed to schedule task');
-      console.error(error);
-      return;
-    }
-
-    if (data) {
-      // Map back to camelCase for local state
-      const task: Task = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        type: data.type as Task['type'],
-        schedule: data.schedule,
-        target: data.target,
-        aiEnabled: data.ai_enabled,
-        aiPrompt: data.ai_prompt,
-        status: data.status as Task['status'],
-        nextRun: data.next_run
-      };
-      
-      setTasks(prev => [...prev, task]);
-      setShowAddModal(false);
-      resetNewTask();
-      toast.success('Task scheduled!');
-    }
+  const setStatus = async (task: ScheduledTask) => {
+    setBusyId(task.id);
+    try {
+      const status = task.status === 'active' ? 'paused' : 'active';
+      const response = await fetch(endpoint, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: task.id, status }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Task status could not be changed');
+      await load(); toast.success(status === 'active' ? 'Task resumed' : 'Task paused');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Task status could not be changed'); }
+    finally { setBusyId(null); }
   };
 
-  const resetNewTask = () => setNewTask({
-    title: '', description: '', type: 'email',
-    schedule: { type: 'daily', time: '09:00' },
-    target: {}, aiEnabled: true,
-    aiPrompt: DEFAULT_AI_PROMPTS['email'],
-    status: 'active',
-  });
-
-  const toggleStatus = async (id: string) => {
-    const task = tasks.find(t => t.id === id);
-    if (!task) return;
-
-    const newStatus = task.status === 'active' ? 'paused' : 'active';
-
-    const { error } = await supabase
-      .from('automation_tasks')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (error) {
-      toast.error('Failed to update status');
-      return;
-    }
-
-    setTasks(prev => prev.map(t =>
-      t.id === id ? { ...t, status: newStatus } : t
-    ));
+  const runNow = async (task: ScheduledTask) => {
+    if (!currentTenant?.id) return;
+    setBusyId(task.id);
+    try {
+      const response = await fetch(`${endpoint}/${task.id}/run`, { method: 'POST', credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Task execution failed');
+      await load(); onTaskComplete?.(task); toast.success('Task completed');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Task execution failed'); }
+    finally { setBusyId(null); }
   };
 
-  const deleteTask = async (id: string) => {
-    const { error } = await supabase
-      .from('automation_tasks')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast.error('Failed to delete task');
-      return;
-    }
-
-    setTasks(prev => prev.filter(t => t.id !== id));
-    toast.success('Task deleted');
+  const deleteTask = async (task: ScheduledTask) => {
+    if (!window.confirm(`Delete “${task.name}” and its run history?`)) return;
+    setBusyId(task.id);
+    try {
+      const response = await fetch(`${endpoint}?id=${encodeURIComponent(task.id)}`, { method: 'DELETE', credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Task could not be deleted');
+      setTasks((current) => current.filter((item) => item.id !== task.id)); toast.success('Task deleted');
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Task could not be deleted'); }
+    finally { setBusyId(null); }
   };
 
-  const typeInfo = (type: string) => TASK_TYPES.find(t => t.value === type) || TASK_TYPES[TASK_TYPES.length - 1];
-
-  // ─────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────
-
-  return (
-    <div className="space-y-6">
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold text-white">Task Scheduler</h2>
-            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs">
-              <Bot size={11} /> AI
-            </span>
-          </div>
-          <p className="text-slate-400 text-sm mt-1">Automate business tasks with Claude AI — runs on your schedule</p>
-        </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all active:scale-95 shadow-lg shadow-violet-600/20"
-        >
-          <Plus size={16} /> New Task
-        </button>
-      </div>
-      <ModuleIntelligenceCard moduleKey="taskManagement" title="Task Intelligence" />
-
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: 'Active',    count: tasks.filter(t => t.status === 'active').length,    color: 'text-teal-400',   bg: 'bg-teal-400/10' },
-          { label: 'AI Tasks',  count: tasks.filter(t => t.aiEnabled).length,              color: 'text-violet-400', bg: 'bg-violet-400/10' },
-          { label: 'Paused',    count: tasks.filter(t => t.status === 'paused').length,    color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-          { label: 'Completed', count: tasks.filter(t => t.status === 'completed').length, color: 'text-slate-400',  bg: 'bg-slate-400/10' },
-        ].map(s => (
-          <div key={s.label} className={`${s.bg} border border-white/5 rounded-2xl p-4 text-center`}>
-            <div className={`text-2xl font-bold ${s.color}`}>{s.count}</div>
-            <div className="text-xs text-slate-500 mt-1">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Empty state */}
-      {tasks.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-900/40 border border-white/5 rounded-2xl text-center">
-          <div className="w-16 h-16 bg-violet-500/10 border border-violet-500/20 rounded-2xl flex items-center justify-center mb-4">
-            <Bot size={28} className="text-violet-400" />
-          </div>
-          <p className="text-white font-bold text-lg">No scheduled tasks yet</p>
-          <p className="text-slate-500 text-sm mt-1 max-w-sm">
-            Create AI-powered tasks that run automatically — email campaigns, lead scoring, follow-ups, and more.
-          </p>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="mt-6 flex items-center gap-2 bg-violet-600 hover:bg-violet-500 text-white font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95"
-          >
-            <Sparkles size={15} /> Create First Task
-          </button>
-        </div>
-      )}
-
-      {/* Task List */}
-      <div className="space-y-3">
-        {tasks.map(task => {
-          const ti = typeInfo(task.type);
-          const isExpanded = expandedTask === task.id;
-
-          return (
-            <div key={task.id} className={`relative bg-slate-900/60 border border-white/5 rounded-2xl overflow-hidden transition-all pl-1`}>
-              {/* Status strip */}
-              <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${
-                task.running       ? 'bg-violet-500 animate-pulse' :
-                task.status === 'completed' ? 'bg-teal-500' :
-                task.status === 'paused'    ? 'bg-yellow-500' :
-                                              'bg-green-500'
-              }`} />
-              {/* Task Row */}
-              <div className="flex items-center gap-3 p-4">
-                {/* Type badge */}
-                <div className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${ti.color}`}>
-                  {ti.icon}
-                  <span className="hidden sm:inline">{ti.label}</span>
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-white truncate">{task.title}</span>
-                    {task.aiEnabled && (
-                      <span className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-500/15 border border-violet-500/20 text-violet-400 text-xs">
-                        <Sparkles size={8} /> AI
-                      </span>
-                    )}
-                    {task.running && (
-                      <span className="shrink-0 flex items-center gap-1 text-teal-400 text-xs">
-                        <Loader2 size={10} className="animate-spin" /> Running
-                      </span>
-                    )}
-                    {task.status === 'completed' && <CheckCircle2 size={14} className="text-teal-400 shrink-0" />}
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500 flex-wrap">
-                    <span className="capitalize">{task.schedule.type} @ {task.schedule.time}</span>
-                    {task.nextRun && task.status === 'active' && (
-                      <span>Next: {new Date(task.nextRun).toLocaleDateString()}</span>
-                    )}
-                    {task.lastRun && (
-                      <span>Last run: {new Date(task.lastRun).toLocaleString()}</span>
-                    )}
-                    {task.results && (
-                      <span className={task.results.failed > 0 ? 'text-red-400' : 'text-teal-400'}>
-                        {task.results.successful}/{task.results.total} ok
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
-                  {/* Run Now */}
-                  <button
-                    onClick={() => executeTask(task.id)}
-                    disabled={task.running || task.status === 'completed'}
-                    title="Run now"
-                    className="p-2 rounded-lg hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {task.running ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
-                  </button>
-                  {/* Pause / Resume */}
-                  <button
-                    onClick={() => toggleStatus(task.id)}
-                    disabled={task.status === 'completed'}
-                    title={task.status === 'active' ? 'Pause' : 'Resume'}
-                    className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {task.status === 'active' ? <Pause size={15} /> : <Play size={15} />}
-                  </button>
-                  {/* Expand */}
-                  {task.results?.output && (
-                    <button
-                      onClick={() => setExpandedTask(isExpanded ? null : task.id)}
-                      className="p-2 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-colors"
-                    >
-                      {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
-                    </button>
-                  )}
-                  {/* Delete */}
-                  <button
-                    onClick={() => deleteTask(task.id)}
-                    className="p-2 rounded-lg hover:bg-red-500/10 text-slate-600 hover:text-red-400 transition-colors"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              </div>
-
-              {/* AI Output panel */}
-              {isExpanded && task.results?.output && (
-                <div className="border-t border-white/5 bg-slate-950/50 px-4 py-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Bot size={14} className="text-violet-400" />
-                    <span className="text-xs font-medium text-violet-400">AI Output</span>
-                    {task.results.executedAt && (
-                      <span className="ml-auto text-xs text-slate-600">
-                        {new Date(task.results.executedAt).toLocaleString()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap bg-slate-900/60 rounded-xl p-4 border border-white/5 max-h-60 overflow-y-auto">
-                    {task.results.output}
-                  </div>
-                  <button
-                    onClick={() => { navigator.clipboard.writeText(task.results!.output!); toast.success('Copied!'); }}
-                    className="mt-2 text-xs text-slate-500 hover:text-white transition-colors"
-                  >
-                    Copy output
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ── Add Task Modal ───────────────────────── */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 w-full max-w-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-xl font-semibold text-white">New Task</h3>
-                <p className="text-slate-500 text-xs mt-0.5">Scheduled automation powered by Claude AI</p>
-              </div>
-              <button onClick={() => { setShowAddModal(false); resetNewTask(); }} className="p-2 hover:bg-white/5 rounded-xl text-slate-400">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="space-y-5">
-              {/* Title */}
-              <div>
-                <label className="text-xs font-medium text-slate-400 mb-1.5 block">Task Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Daily lead follow-up campaign"
-                  value={newTask.title || ''}
-                  onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
-                  className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="text-xs font-medium text-slate-400 mb-1.5 block">Description</label>
-                <input
-                  type="text"
-                  placeholder="What should this task accomplish?"
-                  value={newTask.description || ''}
-                  onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
-                  className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
-                />
-              </div>
-
-              {/* Recipient — shown for email tasks */}
-              {newTask.type === 'email' && (
-                <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Recipient Email</label>
-                  <input
-                    type="email"
-                    placeholder="client@example.com (leave blank to draft only)"
-                    value={newTask.target?.criteria || ''}
-                    onChange={e => setNewTask(p => ({ ...p, target: { ...p.target, criteria: e.target.value } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
-                  />
-                  <p className="text-[11px] text-slate-600 mt-1">When set, email will be sent automatically via Zoho Mail on each run.</p>
-                </div>
-              )}
-
-              {/* Platform — shown for social tasks */}
-              {newTask.type === 'social_post' && (
-                <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Platforms</label>
-                  <select
-                    value={newTask.target?.criteria || 'facebook'}
-                    onChange={e => setNewTask(p => ({ ...p, target: { ...p.target, criteria: e.target.value } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
-                  >
-                    <option value="facebook">Facebook</option>
-                    <option value="facebook,instagram">Facebook + Instagram</option>
-                    <option value="instagram">Instagram</option>
-                  </select>
-                  <p className="text-[11px] text-slate-600 mt-1">AI writes the caption and publishes to Facebook automatically when the task runs.</p>
-                </div>
-              )}
-
-              {/* Type + Schedule row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Task Type</label>
-                  <select
-                    value={newTask.type || 'email'}
-                    onChange={e => setNewTask(p => ({
-                      ...p,
-                      type: e.target.value as Task['type'],
-                      aiPrompt: p.aiPrompt === DEFAULT_AI_PROMPTS[p.type || 'email']
-                        ? DEFAULT_AI_PROMPTS[e.target.value]
-                        : p.aiPrompt,
-                    }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                  >
-                    {TASK_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Frequency</label>
-                  <select
-                    value={newTask.schedule?.type || 'daily'}
-                    onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, type: e.target.value as Task['schedule']['type'] } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                  >
-                    {SCHEDULE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Time + Day row */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1.5 block">Run Time</label>
-                  <input
-                    type="time"
-                    value={newTask.schedule?.time || '09:00'}
-                    onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, time: e.target.value } }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                  />
-                </div>
-                {newTask.schedule?.type === 'weekly' && (
-                  <div>
-                    <label className="text-xs font-medium text-slate-400 mb-1.5 block">Day of Week</label>
-                    <select
-                      value={newTask.schedule?.day ?? 1}
-                      onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, day: parseInt(e.target.value) } }))}
-                      className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-md text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                    >
-                      {DAYS_OF_WEEK.map((d, i) => <option key={d} value={i}>{d}</option>)}
-                    </select>
-                  </div>
-                )}
-                {newTask.schedule?.type === 'monthly' && (
-                  <div>
-                    <label className="text-xs font-medium text-slate-400 mb-1.5 block">Day of Month</label>
-                    <input
-                      type="number" min={1} max={28}
-                      value={newTask.schedule?.day ?? 1}
-                      onChange={e => setNewTask(p => ({ ...p, schedule: { ...p.schedule!, day: parseInt(e.target.value) } }))}
-                      className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* AI Toggle */}
-              <div className="flex items-center justify-between p-4 bg-violet-500/5 border border-violet-500/20 rounded-2xl">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-violet-500/10 rounded-xl">
-                    <Bot size={18} className="text-violet-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Claude AI Execution</p>
-                    <p className="text-[11px] text-slate-500">AI reads your instructions and executes the task intelligently</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setNewTask(p => ({ ...p, aiEnabled: !p.aiEnabled }))}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${newTask.aiEnabled ? 'bg-violet-600' : 'bg-slate-700'}`}
-                >
-                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${newTask.aiEnabled ? 'translate-x-6' : 'translate-x-0.5'}`} />
-                </button>
-              </div>
-
-              {/* AI Prompt */}
-              {newTask.aiEnabled && (
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium text-slate-400">AI Instructions</label>
-                    <button
-                      type="button"
-                      onClick={() => setNewTask(p => ({ ...p, aiPrompt: DEFAULT_AI_PROMPTS[p.type || 'custom'] }))}
-                      className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
-                    >
-                      <RotateCcw size={9} /> Reset to default
-                    </button>
-                  </div>
-                  <textarea
-                    rows={4}
-                    placeholder="Tell Claude exactly what to do when this task runs…"
-                    value={newTask.aiPrompt || ''}
-                    onChange={e => setNewTask(p => ({ ...p, aiPrompt: e.target.value }))}
-                    className="w-full bg-slate-800 border border-white/5 rounded-xl px-4 py-3 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
-                  />
-                  <p className="text-xs text-slate-600 mt-1">
-                    Claude will use this as its instructions when executing the task. Be specific for better results.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Modal footer */}
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => { setShowAddModal(false); resetNewTask(); }}
-                className="flex-1 py-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/5 font-bold transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={addTask}
-                className="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold transition-all active:scale-95 flex items-center justify-center gap-2"
-              >
-                <Sparkles size={15} /> Schedule
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  return <div className="space-y-5">
+    <div className="flex items-start justify-between gap-4">
+      <div><h2 className="text-2xl font-semibold text-white flex items-center gap-2"><Bot className="w-6 h-6 text-violet-400" /> AI Task Scheduler</h2><p className="text-sm text-slate-400 mt-1">Run durable AI analysis and drafting tasks on a UTC schedule. Every run stores its real provider result.</p></div>
+      <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-violet-500 text-white font-semibold flex items-center gap-2"><Plus className="w-4 h-4" /> Schedule task</button>
     </div>
-  );
-};
 
-export default TaskScheduler;
+    {showCreate && <div className="dashboard-panel-soft p-5 space-y-4">
+      <div className="flex justify-between"><h3 className="font-semibold text-white">New scheduled task</h3><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-slate-400" /></button></div>
+      <input value={name} onChange={(event) => setName(event.target.value)} maxLength={200} placeholder="Task name" className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-white" />
+      <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} maxLength={20000} rows={5} placeholder="Describe the analysis, summary, or draft the AI should produce." className="w-full rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-white resize-y" />
+      <div className="grid sm:grid-cols-3 gap-3">
+        <select value={frequency} onChange={(event) => setFrequency(event.target.value as Frequency)} className="rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-white"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+        <input type="time" value={time} onChange={(event) => setTime(event.target.value)} className="rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-white" />
+        {frequency !== 'daily' ? <input type="number" min={frequency === 'weekly' ? 0 : 1} max={frequency === 'weekly' ? 6 : 28} value={day} onChange={(event) => setDay(Number(event.target.value))} aria-label={frequency === 'weekly' ? 'Day of week, Sunday is 0' : 'Day of month'} className="rounded-lg bg-slate-900 border border-slate-700 px-3 py-2 text-white" /> : <div className="rounded-lg border border-slate-800 px-3 py-2 text-sm text-slate-500">UTC timezone</div>}
+      </div>
+      {frequency === 'weekly' && <p className="text-xs text-slate-500">Weekly day: 0 Sunday through 6 Saturday.</p>}
+      <button disabled={busyId === 'create'} onClick={createTask} className="px-4 py-2 rounded-lg bg-violet-500 disabled:opacity-50 text-white font-semibold">{busyId === 'create' ? 'Scheduling…' : 'Create schedule'}</button>
+    </div>}
+
+    {loading ? <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-violet-400" /></div> : tasks.length === 0 ? <div className="dashboard-panel-soft p-10 text-center"><CalendarClock className="w-9 h-9 text-slate-600 mx-auto mb-3" /><p className="text-white font-medium">No scheduled AI tasks</p><p className="text-sm text-slate-500 mt-1">Create one to generate a stored result on a durable server schedule.</p></div> : <div className="space-y-3">{tasks.map((task) => <div key={task.id} className="dashboard-panel-soft p-4">
+      <div className="flex items-start justify-between gap-3"><button onClick={() => setExpandedId(expandedId === task.id ? null : task.id)} className="text-left flex-1"><div className="flex items-center gap-2"><span className="font-semibold text-white">{task.name}</span><span className={`text-[10px] uppercase px-2 py-0.5 rounded-full ${task.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>{task.status}</span></div><p className="text-xs text-slate-500 mt-1">{scheduleLabel(task.schedule)} · Next {new Date(task.next_run_at).toLocaleString()}</p></button><div className="flex items-center gap-1">
+        <button disabled={busyId === task.id} onClick={() => runNow(task)} className="p-2 text-violet-400 hover:bg-violet-500/10 rounded-lg" aria-label="Run now"><Play className="w-4 h-4" /></button>
+        <button disabled={busyId === task.id} onClick={() => setStatus(task)} className="p-2 text-slate-400 hover:bg-slate-700 rounded-lg" aria-label={task.status === 'active' ? 'Pause' : 'Resume'}>{task.status === 'active' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}</button>
+        <button disabled={busyId === task.id} onClick={() => deleteTask(task)} className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg" aria-label="Delete"><Trash2 className="w-4 h-4" /></button>
+        <button onClick={() => setExpandedId(expandedId === task.id ? null : task.id)} className="p-2 text-slate-400">{expandedId === task.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</button>
+      </div></div>
+      {expandedId === task.id && <div className="mt-4 pt-4 border-t border-slate-800 space-y-3"><div><p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Instructions</p><p className="text-sm text-slate-300 whitespace-pre-wrap">{task.prompt}</p></div><div><p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Latest run</p>{task.latest_result ? <div className={`rounded-lg p-3 text-sm whitespace-pre-wrap ${task.latest_result.status === 'success' ? 'bg-emerald-500/5 text-slate-300' : 'bg-rose-500/5 text-rose-300'}`}>{task.latest_result.output || task.latest_result.error || 'No output was recorded.'}<p className="text-[11px] text-slate-600 mt-2">{new Date(task.latest_result.ran_at).toLocaleString()}</p></div> : <p className="text-sm text-slate-500">This task has not run yet.</p>}</div></div>}
+    </div>)}</div>}
+  </div>;
+}

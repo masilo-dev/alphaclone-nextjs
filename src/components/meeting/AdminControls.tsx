@@ -7,12 +7,14 @@ interface AdminControlsProps {
     callObject: DailyCall | null;
     isAdmin: boolean;
     onEndMeeting: () => void;
+    callId?: string;
 }
 
 export const AdminControls: React.FC<AdminControlsProps> = ({
     callObject,
     isAdmin,
-    onEndMeeting
+    onEndMeeting,
+    callId,
 }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [isMeetingLocked, setIsMeetingLocked] = useState(false);
@@ -31,17 +33,14 @@ export const AdminControls: React.FC<AdminControlsProps> = ({
     };
 
     const lockMeeting = async () => {
-        if (!callObject) return;
+        if (!callObject || !callId) return;
         try {
-            // Note: Daily.co doesn't have a direct "lock meeting" API in the client SDK
-            // This would typically be done via the REST API on the backend
-            // For now, we'll show a toast indicating this needs backend implementation
-            toast.success('Meeting lock requires backend API integration');
-            console.log('Lock meeting - requires Daily.co REST API call from backend');
-
-            // Alternative: You could use setUserData to track lock state
-            // await callObject.setUserData({ meetingLocked: !isMeetingLocked });
-            // setIsMeetingLocked(!isMeetingLocked);
+            const nextLocked = !isMeetingLocked;
+            const response = await fetch(`/api/meetings/${encodeURIComponent(callId)}/state`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'lock', locked: nextLocked }) });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Meeting lock could not be updated');
+            setIsMeetingLocked(nextLocked);
+            toast.success(nextLocked ? 'Meeting locked to new guests' : 'Meeting unlocked');
         } catch (error) {
             console.error('Lock meeting error:', error);
             toast.error('Failed to lock meeting');

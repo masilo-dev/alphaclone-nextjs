@@ -491,7 +491,7 @@ export async function POST(request: Request) {
           });
           providerMessageId = null;
         } else if (selectedProvider.provider === 'zoho') {
-          const zohoService = new ZohoMailService(tenantCtx.user.id);
+          const zohoService = new ZohoMailService(tenantCtx.user.id, tenantId);
           const sendResult = await zohoService.sendEmail({
             toAddress: leadEmail,
             fromAddress: selectedProvider.fromEmail || fromAddress,

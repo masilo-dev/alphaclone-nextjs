@@ -78,6 +78,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
     const [availableUsers] = useState<any[]>([]);
     const [pastEventsPrompt, setPastEventsPrompt] = useState<CalendarEvent[]>([]);
     const [conflictWarning, setConflictWarning] = useState<CalendarEvent | null>(null);
+    const [conflictAction, setConflictAction] = useState<'event' | 'video' | null>(null);
 
     // UseRef to control FullCalendar API
     const calendarRef = useRef<FullCalendar>(null);
@@ -189,7 +190,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleCreateEvent = async () => {
+    const handleCreateEvent = async (skipConflictCheck = false) => {
         if (!newEvent.title.trim()) {
             toast.error('Title is required');
             return;
@@ -238,10 +239,11 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                 // Standard Calendar Event - Check for conflicts first
                 const startTime = new Date(newEvent.start_time);
                 const endTime = new Date(newEvent.end_time);
-                const conflict = checkForConflicts(startTime, endTime);
+                const conflict = skipConflictCheck ? null : checkForConflicts(startTime, endTime);
                 
                 if (conflict) {
                     setConflictWarning(conflict);
+                    setConflictAction('event');
                     return; // Don't create the event, show warning instead
                 }
 
@@ -270,7 +272,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
         }
     };
 
-    const handleCreateVideoCall = async () => {
+    const handleCreateVideoCall = async (skipConflictCheck = false) => {
         if (!newEvent.title.trim()) {
             toast.error('Video call title is required');
             return;
@@ -298,12 +300,13 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             }
 
             const endTime = addMinutes(startTime, 60);
-            const videoRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const videoRoomId = `room_${crypto.randomUUID()}`;
 
             // Check for conflicts
-            const conflict = checkForConflicts(startTime, endTime);
+            const conflict = skipConflictCheck ? null : checkForConflicts(startTime, endTime);
             if (conflict) {
                 setConflictWarning(conflict);
+                setConflictAction('video');
                 setIsSaving(false);
                 return;
             }
@@ -715,7 +718,10 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
             {conflictWarning && (
                 <Modal
                     isOpen={!!conflictWarning}
-                    onClose={() => setConflictWarning(null)}
+                    onClose={() => {
+                        setConflictWarning(null);
+                        setConflictAction(null);
+                    }}
                     title="Schedule Conflict Detected"
                 >
                     <div className="space-y-4">
@@ -737,16 +743,23 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                         <div className="flex gap-3 justify-end">
                             <Button
                                 variant="secondary"
-                                onClick={() => setConflictWarning(null)}
+                                onClick={() => {
+                                    setConflictWarning(null);
+                                    setConflictAction(null);
+                                }}
                             >
                                 Reschedule
                             </Button>
                             <Button
                                 onClick={() => {
+                                    const pendingAction = conflictAction;
                                     setConflictWarning(null);
-                                    // Proceed with creating the event despite conflict
-                                    setIsSaving(true);
-                                    // This will need to be handled differently - for now just close
+                                    setConflictAction(null);
+                                    if (pendingAction === 'video') {
+                                        void handleCreateVideoCall(true);
+                                    } else if (pendingAction === 'event') {
+                                        void handleCreateEvent(true);
+                                    }
                                 }}
                                 className="bg-red-600 hover:bg-red-700"
                             >
@@ -1034,7 +1047,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                 </Button>
                                 {newEvent.type === 'call' ? (
                                     <Button
-                                        onClick={handleCreateVideoCall}
+                                        onClick={() => void handleCreateVideoCall()}
                                         className="flex-1 bg-teal-600 hover:bg-teal-500"
                                         disabled={isSaving}
                                     >
@@ -1052,7 +1065,7 @@ const CalendarComponent: React.FC<CalendarProps> = ({ user }) => {
                                     </Button>
                                 ) : (
                                     <Button
-                                        onClick={handleCreateEvent}
+                                        onClick={() => void handleCreateEvent()}
                                         className="flex-1 bg-teal-600 hover:bg-teal-500"
                                         disabled={isSaving}
                                     >

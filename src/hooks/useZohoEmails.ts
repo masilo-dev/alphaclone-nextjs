@@ -47,7 +47,7 @@ function mapZohoMessage(row: Record<string, unknown>, folderId: string): Unified
   };
 }
 
-export function useZohoEmails(limit = 40, enabled = true) {
+export function useZohoEmails(limit = 40, enabled = true, tenantId?: string) {
   const [emails, setEmails] = useState<UnifiedInboxMessage[]>([]);
   const [folder, setFolder] = useState<InboxFolder>('inbox');
   const [folders, setFolders] = useState<ZohoFolderRow[]>([]);
@@ -63,24 +63,27 @@ export function useZohoEmails(limit = 40, enabled = true) {
 
   const checkConnected = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
+      if (!tenantId) return false;
+      const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       return res.ok && data.isConnected === true;
     } catch {
       return false;
     }
-  }, []);
+  }, [tenantId]);
 
   const fetchZoho = useCallback(
     async (url: string, retried = false): Promise<Response> => {
-      const res = await fetch(url, { credentials: 'include' });
+      if (!tenantId) throw new Error('Select a workspace to use Zoho Mail.');
+      const target = `${url}${url.includes('?') ? '&' : '?'}tenantId=${encodeURIComponent(tenantId)}`;
+      const res = await fetch(target, { credentials: 'include' });
       if ((res.status === 401 || res.status === 403) && !retried) {
-        const refreshed = await refreshZohoTokenIfNeeded(true);
+        const refreshed = await refreshZohoTokenIfNeeded(true, tenantId);
         if (refreshed) return fetchZoho(url, true);
       }
       return res;
     },
-    []
+    [tenantId]
   );
 
   const refresh = useCallback(
@@ -90,7 +93,7 @@ export function useZohoEmails(limit = 40, enabled = true) {
       setError(null);
       try {
         if (!retried) {
-          await refreshZohoTokenIfNeeded(false);
+          await refreshZohoTokenIfNeeded(false, tenantId);
         }
 
         const isConnected = await checkConnected();
@@ -126,7 +129,7 @@ export function useZohoEmails(limit = 40, enabled = true) {
           refreshError instanceof Error ? refreshError.message : 'Failed to load Zoho mail';
 
         if (!retried && isAuthErrorMessage(raw)) {
-          const refreshed = await refreshZohoTokenIfNeeded(true);
+          const refreshed = await refreshZohoTokenIfNeeded(true, tenantId);
           if (refreshed) {
             await refresh(true);
             return;
@@ -143,7 +146,7 @@ export function useZohoEmails(limit = 40, enabled = true) {
         setLoading(false);
       }
     },
-    [checkConnected, folder, limit, enabled, fetchZoho]
+    [checkConnected, folder, limit, enabled, fetchZoho, tenantId]
   );
 
   useEffect(() => {
@@ -168,19 +171,9 @@ export function useZohoEmails(limit = 40, enabled = true) {
       if (cached) return cached;
 
       const folderId = message.zohoFolderId || activeFolderId;
-      let res = await fetch(
-        `/api/zoho/mail?action=content&messageId=${encodeURIComponent(message.id)}&folderId=${encodeURIComponent(folderId)}`,
-        { credentials: 'include' }
+      const res = await fetchZoho(
+        `/api/zoho/mail?action=content&messageId=${encodeURIComponent(message.id)}&folderId=${encodeURIComponent(folderId)}`
       );
-      if (res.status === 401 || res.status === 403) {
-        const refreshed = await refreshZohoTokenIfNeeded(true);
-        if (refreshed) {
-          res = await fetch(
-            `/api/zoho/mail?action=content&messageId=${encodeURIComponent(message.id)}&folderId=${encodeURIComponent(folderId)}`,
-            { credentials: 'include' }
-          );
-        }
-      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Failed to load message');
@@ -192,7 +185,7 @@ export function useZohoEmails(limit = 40, enabled = true) {
       );
       return content;
     },
-    [activeFolderId]
+    [activeFolderId, fetchZoho]
   );
 
   return {

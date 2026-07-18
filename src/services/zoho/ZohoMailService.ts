@@ -189,6 +189,22 @@ export class ZohoMailService extends ZohoService {
         }
     }
 
+    async getAttachmentInfo(messageId: string, folderId: string) {
+        const { base } = await this.getMailBase();
+        const data = await this.callZohoAPI(`${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/attachmentinfo?includeInline=false`);
+        const attachments = data?.data?.attachments || data?.attachments || [];
+        return attachments.map((attachment: any) => ({
+            fileName: attachment.attachmentName || attachment.fileName || 'attachment',
+            fileSize: Number(attachment.attachmentSize || attachment.fileSize || 0),
+            attachmentId: String(attachment.attachmentId || attachment.attachmentID || ''),
+        })).filter((attachment: any) => attachment.attachmentId);
+    }
+
+    async downloadAttachment(messageId: string, folderId: string, attachmentId: string) {
+        const { accountId } = await this.getMailBase();
+        return this.proxyImage(`/api/accounts/${encodeURIComponent(accountId)}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`);
+    }
+
     async getFullMessagePayload(message: any, folderId?: string): Promise<ZohoFullMessage> {
         const resolvedFolderId = folderId || message.folderId || message.folder_id || '';
         const id = String(message.messageId || message.id || message.message_id || '');
@@ -299,7 +315,7 @@ export class ZohoMailService extends ZohoService {
 
         // Log the outbound email in unified_messages for contact/CRM sync
         try {
-            const tenantId = await this.resolveTenantIdForIntegration();
+            const tenantId = this.tenantId;
             if (tenantId) {
                 const supabase = this.getSupabaseClient();
                 const { contact_id, company_id } = await resolveContactByEmailAdmin(supabase, tenantId, toAddress);
@@ -534,6 +550,7 @@ export class ZohoMailService extends ZohoService {
                 const { data: zohoIntegration } = await admin
                     .from('integrations')
                     .select('tenant_id, id')
+                    .eq('tenant_id', this.tenantId)
                     .eq('user_id', this.userId)
                     .eq('type', 'zoho')
                     .eq('enabled', true)
@@ -638,6 +655,7 @@ Rules:
                         url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
                         body: {
                             userId: this.userId,
+                            tenantId: this.tenantId,
                             messageId,
                             folderId,
                             senderEmail: normalizedSenderEmail,
@@ -681,7 +699,7 @@ Rules:
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                channelId: `user-${this.userId}`,
+                channelId: `zoho:${this.tenantId}:${this.userId}`,
                 notifyUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/incoming`,
                 resource: '/api/v1/messages',
                 event: 'NEW_MAIL'

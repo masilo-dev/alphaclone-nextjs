@@ -198,7 +198,7 @@ const EcosystemPage: React.FC = () => {
                             Core <span className="text-teal-400">Integrations</span>
                         </h2>
                         <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Built-in integrations with essential business tools. More integrations coming soon.
+                            Built-in integrations with essential business tools, managed from one workspace.
                         </p>
                     </AnimateIn>
                     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto min-w-0 px-1">

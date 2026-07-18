@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { addMinutes, parse, isValid } from 'date-fns';
 import { fromZonedTime } from 'date-fns-tz';
 import { microsoftServerService } from '@/services/server/microsoftServerService';
+import { getValidGoogleAccessToken } from '@/services/google/googleAccessTokenService';
 
 
 // Helper to get Supabase Admin Client
@@ -25,10 +26,13 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     const dateStr = searchParams.get('date');
-    const duration = parseInt(searchParams.get('duration') || '30');
+    const duration = Number(searchParams.get('duration') || '30');
 
-    if (!tenantId || !dateStr) {
+    if (!tenantId || !dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
         return NextResponse.json({ error: 'Missing tenantId or date' }, { status: 400 });
+    }
+    if (!Number.isInteger(duration) || duration < 5 || duration > 480) {
+        return NextResponse.json({ error: 'Duration must be between 5 and 480 minutes' }, { status: 400 });
     }
 
     try {
@@ -87,7 +91,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Failed to fetch host' }, { status: 500 });
         }
 
-        const host = users.find((u: any) => u.role === 'owner' || u.role === 'admin');
+        const host = users.find((u: any) => ['owner', 'admin', 'tenant_admin', 'super_admin'].includes(u.role));
         if (!host) {
             return NextResponse.json({ error: 'No host available' }, { status: 404 });
         }
@@ -128,39 +132,24 @@ export async function GET(req: NextRequest) {
         let externalEvents: { start: number; end: number }[] = [];
 
         // Fetch Google Calendar events if connected
-        const { data: gcalTokens } = await supabaseAdmin
-            .from('google_calendar_tokens')
-            .select('*')
-            .eq('user_id', hostId)
-            .single();
-
-        if (gcalTokens) {
-            try {
-                // We use a simplified fetch here to avoid circular dependencies or complex service imports in API route
-                // Or we can just use the hostId and hope listEvents works if we import it, 
-                // but token refresh needs ENV which might not be available here depending on setup.
-                // For now, let's just use the existing calendar_events table which should 
-                // ideally have synced events, BUT we were asked to check external calendars.
-
-                // If we want REAL-TIME Google Calendar check:
-                const response = await fetch(
-                    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${workStart.toISOString()}&timeMax=${workEnd.toISOString()}`,
-                    {
-                        headers: { Authorization: `Bearer ${gcalTokens.access_token}` }
-                    }
-                );
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const gEntries = (data.items || []).map((item: any) => ({
-                        start: new Date(item.start.dateTime || item.start.date).getTime(),
-                        end: new Date(item.end.dateTime || item.end.date).getTime()
-                    }));
-                    externalEvents = [...externalEvents, ...gEntries];
-                }
-            } catch (err) {
-                console.error('[BookingAPI] Google Calendar fetch error:', err);
-            }
+        const googleAccessToken = await getValidGoogleAccessToken({ admin: supabaseAdmin, userId: hostId, tenantId });
+        if (googleAccessToken) {
+            const googleQuery = new URLSearchParams({
+                timeMin: workStart.toISOString(),
+                timeMax: workEnd.toISOString(),
+                singleEvents: 'true',
+                maxResults: '250',
+            });
+            const response = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${googleQuery}`, {
+                headers: { Authorization: `Bearer ${googleAccessToken}` },
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error?.message || 'Google Calendar availability check failed');
+            const gEntries = (data.items || []).map((item: any) => ({
+                start: new Date(item.start.dateTime || item.start.date).getTime(),
+                end: new Date(item.end.dateTime || item.end.date).getTime()
+            }));
+            externalEvents = [...externalEvents, ...gEntries];
         }
 
         const microsoftConnection = await microsoftServerService.getConnection(hostId).catch(() => null);
@@ -180,7 +169,7 @@ export async function GET(req: NextRequest) {
         // Fetch Video Calls (for Calendly syncs or other scheduled calls)
         const { data: videoCalls } = await supabaseAdmin
             .from('video_calls')
-            .select('scheduled_at, duration_minutes')
+            .select('scheduled_at, duration_limit_minutes')
             .eq('host_id', hostId)
             .eq('status', 'scheduled')
             .or(`and(scheduled_at.lte.${workEnd.toISOString()},scheduled_at.gte.${workStart.toISOString()})`);
@@ -188,7 +177,7 @@ export async function GET(req: NextRequest) {
         if (videoCalls) {
             const vEntries = videoCalls.map((call: any) => {
                 const start = new Date(call.scheduled_at).getTime();
-                const end = start + (call.duration_minutes || 30) * 60000;
+                const end = start + (call.duration_limit_minutes || 30) * 60000;
                 return { start, end };
             });
             externalEvents = [...externalEvents, ...vEntries];

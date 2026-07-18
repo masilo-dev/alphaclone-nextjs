@@ -239,13 +239,17 @@ export const microsoft365Service = {
         return { status: 'offline', error: 'Teams not configured or enabled' };
       }
 
-      // Presence.Read.All is not part of the requested scope set, so keep a
-      // lightweight deterministic status indicator for CRM until that scope is added.
-      const mockStatuses: ('online' | 'away' | 'busy' | 'offline')[] = ['online', 'away', 'busy', 'offline'];
-      let hash = 0;
-      for (let i = 0; i < email.length; i++) hash = (hash * 31 + email.charCodeAt(i)) % mockStatuses.length;
-      
-      return { status: mockStatuses[hash], error: null };
+      const presence = await microsoftGraphService.getPresence(email);
+      const value = `${presence.availability || ''} ${presence.activity || ''}`.toLowerCase();
+      const status: 'online' | 'away' | 'busy' | 'offline' =
+        value.includes('busy') || value.includes('donotdisturb') || value.includes('inacall') || value.includes('inmeeting')
+          ? 'busy'
+          : value.includes('away') || value.includes('berightback')
+            ? 'away'
+            : value.includes('available')
+              ? 'online'
+              : 'offline';
+      return { status, error: null };
     } catch (err) {
       return { status: 'offline', error: err instanceof Error ? err.message : 'Unknown error' };
     }

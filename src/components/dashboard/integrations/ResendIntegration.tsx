@@ -87,13 +87,15 @@ export function ResendIntegration() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/resend/connect`, {
+      const response = await fetch('/api/integrations/email-providers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tenant_id: currentTenant?.id,
-          api_key: apiKey.trim(),
-          domain: domain.trim()
+          tenantId: currentTenant?.id,
+          provider: 'resend',
+          apiKey: apiKey.trim(),
+          fromEmail: `noreply@${domain.trim()}`,
+          fromName: 'AlphaClone Systems',
         })
       });
 
@@ -120,10 +122,10 @@ export function ResendIntegration() {
   const disconnectResend = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/resend/disconnect`, {
-        method: 'POST',
+      const response = await fetch('/api/integrations/email-providers', {
+        method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenant_id: currentTenant?.id })
+        body: JSON.stringify({ tenantId: currentTenant?.id, provider: 'resend' })
       });
       
       if (response.ok) {

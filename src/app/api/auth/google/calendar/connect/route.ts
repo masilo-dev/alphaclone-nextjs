@@ -1,28 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-
-    console.log('Google Calendar Connect Request:', { userId });
-
-    if (!userId) {
-        return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
-    }
-
-    if (!ENV.GOOGLE_CLIENT_ID) {
-        return NextResponse.json({ error: 'Missing Google Client ID' }, { status: 500 });
-    }
-
+    const tenantId = searchParams.get('tenantId') || '';
     try {
+        const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+        const userId = user.id;
+        if (!ENV.GOOGLE_CLIENT_ID || !ENV.GOOGLE_CLIENT_SECRET) {
+            return NextResponse.json({ error: 'Google Calendar OAuth is not configured' }, { status: 503 });
+        }
         const supabaseAdmin = createSupabaseAdminClient();
 
         // 1. Generate and persist new secure state
         const { data: stateRecord, error: stateError } = await supabaseAdmin
             .from('oauth_states')
-            .insert({ user_id: userId })
+            .insert({ user_id: userId, tenant_id: tenantId })
             .select('id')
             .single();
 
@@ -56,6 +51,6 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(authUrl);
     } catch (err: any) {
         console.error('Google Calendar Connect Error:', err);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return routeErrorResponse(err, 'Google Calendar authorization could not be started', req);
     }
 }

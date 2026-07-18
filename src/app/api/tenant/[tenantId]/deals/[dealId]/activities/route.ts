@@ -1,0 +1,10 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+
+const schema = z.object({ activityType: z.string().trim().min(1).max(50), title: z.string().trim().min(1).max(500), description: z.string().trim().max(4000).optional(), durationMinutes: z.number().int().min(0).max(1440).optional(), outcome: z.string().trim().max(1000).optional(), nextAction: z.string().trim().max(1000).optional(), metadata: z.record(z.string(), z.unknown()).optional() });
+
+export async function POST(req: NextRequest, context: { params: Promise<{ tenantId: string; dealId: string }> }) {
+  try { const { tenantId, dealId } = await context.params; const { user } = await requireTenantAccess(tenantId, req); const parsed = schema.safeParse(await req.json().catch(() => ({}))); if (!parsed.success) return NextResponse.json({ error: 'Invalid deal activity' }, { status: 400 }); const admin = createSupabaseAdminClient(); const { data: deal, error: dealError } = await admin.from('deals').select('id').eq('id', dealId).eq('tenant_id', tenantId).maybeSingle(); if (dealError) throw dealError; if (!deal) return NextResponse.json({ error: 'Deal not found' }, { status: 404 }); const value = parsed.data; const { data, error } = await admin.from('deal_activities').insert({ deal_id: dealId, user_id: user.id, activity_type: value.activityType, title: value.title, description: value.description || null, duration_minutes: value.durationMinutes, outcome: value.outcome || null, next_action: value.nextAction || null, metadata: value.metadata || {} }).select('*').single(); if (error) throw error; await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'deal_activity_added', payload: { dealId, activityId: data.id, actorUserId: user.id } }); return NextResponse.json({ activity: data }, { status: 201 }); } catch (error) { return routeErrorResponse(error, 'Deal activity could not be added', req); }
+}

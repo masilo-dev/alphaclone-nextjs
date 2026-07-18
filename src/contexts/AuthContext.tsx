@@ -5,6 +5,7 @@ import { authService } from '../services/authService';
 import { User } from '../types';
 import { supabase } from '../lib/supabase';
 import { AuthChangeEvent } from '@supabase/supabase-js';
+import { resetPlatformState } from '@/lib/platformReset';
 
 
 interface AuthContextType {
@@ -120,14 +121,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const isAuthError = authError.toLowerCase().includes('invalid') ||
                         authError.toLowerCase().includes('expired') ||
                         authError.toLowerCase().includes('unauthorized') ||
-                        authError.toLowerCase().includes('not found');
+                        authError.toLowerCase().includes('not found') ||
+                        authError.toLowerCase().includes('profile') ||
+                        authError.toLowerCase().includes('account');
 
                     if (isAuthError) {
                         clearAuthSession();
                         setSafeUser(null);
                         setError(authError);
                     } else {
-                        console.warn('[AuthContext] Debug: Possible transient error. Retaining current state.', authError);
+                        setSafeUser(null);
+                        setError('We could not verify your session. Please retry when your connection is stable.');
                     }
                 } else if (validatedUser) {
                     setSafeUser(validatedUser);
@@ -178,6 +182,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setMfaLevel(null);
                 setNeedsMfa(false);
                 setLoading(false);
+                void resetPlatformState({
+                    reason: 'session-expired',
+                    clearAuth: true,
+                });
             } else if (event === 'INITIAL_SESSION') {
                 // Check if we are in an auth callback flow
                 const isAuthCallback = typeof window !== 'undefined' && (
@@ -239,11 +247,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const signOut = async () => {
-        // Clear auth tokens FIRST so any refresh during sign-out doesn't re-read stale session
-        clearAuthSession();
         setSafeUser(null);
         setLoading(false);
-        await authService.signOut();
+        setMfaLevel(null);
+        setNeedsMfa(false);
+
+        // Stop protected reads/subscriptions before asking Supabase to revoke the session.
+        await resetPlatformState({ reason: 'sign-out', clearAuth: false });
+        try {
+            await authService.signOut();
+        } finally {
+            // Local cleanup is mandatory even when the provider is unavailable.
+            clearAuthSession();
+            await resetPlatformState({ reason: 'sign-out', clearAuth: true });
+        }
     };
 
     const cancelAccountDeletion = async () => {

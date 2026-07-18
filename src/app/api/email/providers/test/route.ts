@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminSupabaseClientOrThrow();
 
     if (provider === 'zoho') {
-      const zoho = new ZohoMailService(tenantCtx.user.id);
+      const zoho = new ZohoMailService(tenantCtx.user.id, tenantId);
       await zoho.sendEmail({
         toAddress: to,
         subject,

@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Button, Modal, Input, Card } from '../../ui/UIComponents';
-import { 
-    X, Download, Eye, FileText, Printer, Share2, Search, List, Plus, 
-    Sparkles, Trash2, Mail, User, CreditCard, Save, ChevronDown 
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Button, Modal, Input } from '../../ui/UIComponents';
+import { Download, Plus, Trash2, User, Save } from 'lucide-react';
 import { useTenant } from '../../../contexts/TenantContext';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { googleDriveService } from '../../../services/googleDriveService';
-import { supabase } from '../../../lib/supabase';
 import { businessClientService, BusinessClient } from '../../../services/businessClientService';
+import { receiptService } from '../../../services/accounting/receiptService';
 import toast from 'react-hot-toast';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 
@@ -47,8 +43,6 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
     const [isSaving, setIsSaving] = useState(false);
     const [clients, setClients] = useState<BusinessClient[]>([]);
-    const [showContactDropdown, setShowContactDropdown] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -74,9 +68,62 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
 
     const generatePDF = () => {
         const doc = new jsPDF();
-        doc.text('RECEIPT', 105, 20, { align: 'center' });
-        doc.text(`No: ${receiptData.receiptNumber}`, 20, 30);
+        doc.setFillColor(receiptData.accentColor);
+        doc.rect(0, 0, 210, 38, 'F');
+        doc.setTextColor('#ffffff');
+        doc.setFontSize(24);
+        doc.text('PAYMENT RECEIPT', 20, 23);
+        doc.setFontSize(10);
+        doc.text(receiptData.receiptNumber, 190, 18, { align: 'right' });
+        doc.text(receiptData.date, 190, 25, { align: 'right' });
+        doc.setTextColor('#111827');
+        doc.setFontSize(11);
+        doc.text(`Received from: ${receiptData.clientName}`, 20, 52);
+        if (receiptData.clientEmail) doc.text(`Email: ${receiptData.clientEmail}`, 20, 59);
+        doc.text(`Payment method: ${receiptData.paymentMethod}`, 20, 66);
+        autoTable(doc, {
+            startY: 76,
+            head: [['Description', 'Quantity', 'Price', 'Amount']],
+            body: receiptData.items.map((item) => [item.description, item.quantity, `$${item.price.toFixed(2)}`, `$${(item.quantity * item.price).toFixed(2)}`]),
+            theme: 'grid',
+            headStyles: { fillColor: receiptData.accentColor },
+        });
+        const endY = (doc as any).lastAutoTable?.finalY || 100;
+        doc.text(`Subtotal: $${calculateSubtotal().toFixed(2)}`, 190, endY + 12, { align: 'right' });
+        if (receiptData.discountAmount) doc.text(`Discount: -$${receiptData.discountAmount.toFixed(2)}`, 190, endY + 19, { align: 'right' });
+        doc.text(`Tax: ${receiptData.taxRate.toFixed(2)}%`, 190, endY + 26, { align: 'right' });
+        doc.setFontSize(15);
+        doc.text(`Total paid: $${calculateTotal().toFixed(2)}`, 190, endY + 36, { align: 'right' });
+        doc.setFontSize(10);
+        if (receiptData.notes) doc.text(doc.splitTextToSize(receiptData.notes, 170), 20, endY + 50);
         doc.save(`Receipt_${receiptData.receiptNumber}.pdf`);
+    };
+
+    const finalizeReceipt = async () => {
+        if (!currentTenant?.id) return toast.error('Select a workspace before finalizing a receipt');
+        if (!receiptData.clientName.trim()) return toast.error('Client name is required');
+        if (receiptData.items.some((item) => !item.description.trim() || item.quantity <= 0 || item.price < 0)) return toast.error('Complete every receipt item');
+        const total = calculateTotal();
+        if (total <= 0) return toast.error('Receipt total must be greater than zero');
+        setIsSaving(true);
+        const { receipt, error } = await receiptService.createSalesReceipt({
+            receiptNumber: receiptData.receiptNumber,
+            receiptDate: receiptData.date,
+            clientName: receiptData.clientName,
+            clientEmail: receiptData.clientEmail || undefined,
+            paymentMethod: receiptData.paymentMethod,
+            items: receiptData.items.map((item) => ({ description: item.description, quantity: item.quantity, unitPrice: item.price })),
+            discountAmount: receiptData.discountAmount,
+            taxRate: receiptData.taxRate,
+            notes: receiptData.notes,
+            receivedBy: receiptData.receivedBy,
+        });
+        setIsSaving(false);
+        if (error || !receipt) return toast.error(error || 'Receipt could not be finalized');
+        generatePDF();
+        setReceiptData((current) => ({ ...current, receiptNumber: `REC-${Date.now().toString(36).toUpperCase()}`, items: [{ description: '', quantity: 1, price: 0 }] }));
+        toast.success('Sales receipt finalized, posted to the ledger, and downloaded');
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -95,7 +142,13 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                         <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Client</h3>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input label="Name" value={receiptData.clientName} onChange={e => setReceiptData({...receiptData, clientName: e.target.value})} />
+                        <div>
+                            <Input label="Name" list="receipt-client-options" value={receiptData.clientName} onChange={e => {
+                                const client = clients.find((item) => item.name === e.target.value);
+                                setReceiptData({ ...receiptData, clientName: e.target.value, clientEmail: client?.email || receiptData.clientEmail });
+                            }} />
+                            <datalist id="receipt-client-options">{clients.map((client) => <option key={client.id} value={client.name}>{client.email || ''}</option>)}</datalist>
+                        </div>
                         <Input label="Email" value={receiptData.clientEmail} onChange={e => setReceiptData({...receiptData, clientEmail: e.target.value})} />
                     </div>
                 </div>
@@ -128,13 +181,13 @@ export default function ReceiptGeneratorModal({ isOpen, onClose }: ReceiptGenera
                 {/* Footer Actions */}
                 <div className={`flex flex-wrap gap-3 pt-6 border-t border-white/5 ${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-black/90 backdrop-blur-xl z-50 border-white/10' : ''}`}>
                     {isMobile ? (
-                        <button onClick={generatePDF} className="w-full h-14 bg-emerald-600 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"><Download size={20} /> Download Receipt</button>
+                        <button onClick={finalizeReceipt} disabled={isSaving} className="w-full h-14 bg-emerald-600 disabled:opacity-60 text-white rounded-2xl font-black uppercase text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2"><Save size={20} /> {isSaving ? 'Finalizing…' : 'Finalize & Download'}</button>
                     ) : (
                         <>
                             <Button variant="ghost" onClick={onClose}>Cancel</Button>
                             <div className="flex-1" />
                             <Button variant="secondary" onClick={generatePDF} icon={<Download size={18} />}>Download</Button>
-                            <Button onClick={() => toast.success('Saved')} icon={<Save size={18} />}>Finalize</Button>
+                            <Button onClick={finalizeReceipt} isLoading={isSaving} disabled={isSaving} icon={<Save size={18} />}>Finalize</Button>
                         </>
                     )}
                 </div>

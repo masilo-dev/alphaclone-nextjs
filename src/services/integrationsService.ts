@@ -217,60 +217,6 @@ export const integrationsService = {
     },
 
     /**
-     * Sync event to Google Calendar
-     */
-    async syncToGoogleCalendar(
-        config: GoogleCalendarConfig,
-        event: {
-            summary: string;
-            description?: string;
-            start: { dateTime: string; timeZone: string };
-            end: { dateTime: string; timeZone: string };
-            attendees?: Array<{ email: string }>;
-        }
-    ): Promise<{ eventId: string | null; error: string | null }> {
-        try {
-            // In production, use OAuth2 to get access token from refresh token
-            // For now, this is a placeholder structure
-            const accessToken = await this.getGoogleAccessToken(config);
-
-            const response = await fetch(
-                `https://www.googleapis.com/calendar/v3/calendars/${config.calendarId || 'primary'}/events`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(event),
-                }
-            );
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'Google Calendar API error');
-            }
-
-            const createdEvent = await response.json();
-            return { eventId: createdEvent.id, error: null };
-        } catch (error) {
-            return {
-                eventId: null,
-                error: error instanceof Error ? error.message : 'Google Calendar sync failed',
-            };
-        }
-    },
-
-    /**
-     * Get Google OAuth access token (placeholder)
-     */
-    async getGoogleAccessToken(config: GoogleCalendarConfig): Promise<string> {
-        // In production, exchange refresh token for access token
-        // This would use Google OAuth2 API
-        return config.refreshToken; // Placeholder
-    },
-
-    /**
      * Send Discord webhook
      */
     async sendDiscordNotification(

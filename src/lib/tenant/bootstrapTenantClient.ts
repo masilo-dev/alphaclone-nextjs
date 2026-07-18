@@ -5,6 +5,8 @@ export type BootstrapTenantOptions = {
   slug?: string;
   plan?: string;
   referralCode?: string;
+  mode?: 'ensure' | 'create';
+  idempotencyKey?: string;
 };
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -26,9 +28,15 @@ export async function bootstrapTenantViaApi(
   options?: BootstrapTenantOptions
 ): Promise<{ tenant: Tenant | null; error: string | null; created?: boolean }> {
   try {
+    const idempotencyKey =
+      options?.idempotencyKey ||
+      (options?.mode === 'create' ? crypto.randomUUID() : 'initial-workspace-v1');
     const res = await fetch('/api/tenant/bootstrap', {
       method: 'POST',
-      headers: await authHeaders(),
+      headers: {
+        ...(await authHeaders()),
+        'Idempotency-Key': idempotencyKey,
+      },
       credentials: 'include',
       body: JSON.stringify(options ?? {}),
     });

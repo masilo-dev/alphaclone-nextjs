@@ -1,28 +1,30 @@
 import { NextResponse } from 'next/server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-    const authClient = await createSupabaseServerClient();
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     try {
-        const { amount, currency, description, invoiceId, tenantId } = await req.json();
-
-        if (!amount || !currency) {
-            return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
-        }
+        const { user } = await requireAuthenticatedUser(req);
+        const { invoiceId } = z.object({ invoiceId: z.string().uuid() }).parse(await req.json());
+        const supabaseAdmin = createSupabaseAdminClient();
+        const { data: invoice, error: invoiceError } = await supabaseAdmin.from('invoices').select('id,tenant_id,user_id,amount,currency,description,status').eq('id', invoiceId).single();
+        if (invoiceError || !invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        const { data: membership } = await supabaseAdmin.from('tenant_users').select('user_id').eq('tenant_id', invoice.tenant_id).eq('user_id', user.id).maybeSingle();
+        if (invoice.user_id !== user.id && !membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        if (invoice.status === 'paid') return NextResponse.json({ error: 'Invoice is already paid' }, { status: 409 });
+        const amount = Number(invoice.amount);
+        const currency = String(invoice.currency || 'usd').toLowerCase();
+        const description = invoice.description;
+        const tenantId = invoice.tenant_id;
 
         let stripeConnectId = null;
 
         // 1. If tenantId provided, check for connected Stripe account
         if (tenantId) {
-            const supabaseAdmin = createSupabaseAdminClient();
             const { data: tenant } = await supabaseAdmin
                 .from('tenants')
                 .select('stripe_connect_id, stripe_connect_onboarded')
@@ -61,6 +63,6 @@ export async function POST(req: Request) {
 
     } catch (error: any) {
         console.error('Stripe PaymentIntent error:', error);
-        return clientErrorResponse(error, { request: req, scope: 'stripe/create-payment-intent' });
+        return routeErrorResponse(error, 'Payment initialization failed', req);
     }
 }

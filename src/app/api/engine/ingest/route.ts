@@ -4,6 +4,10 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { waitUntil } from '@vercel/functions';
+import { z } from 'zod';
+import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
+
+const schema = z.object({ source: z.string().trim().min(1).max(100), raw_content: z.string().max(500_000).default(''), author_name: z.string().max(300).nullable().optional(), author_contact: z.string().max(500).nullable().optional(), url: z.string().url().max(5000).nullable().optional(), tenant_id: z.string().uuid(), metadata: z.record(z.string(), z.unknown()).default({}) });
 
 /**
  * INGESTION ENGINE endpoint
@@ -14,11 +18,9 @@ export async function POST(req: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
     try {
-        const body = await req.json();
-        const { source, raw_content, author_name, author_contact, url, tenant_id, metadata } = body;
-
-        if (!tenant_id) return NextResponse.json({ error: 'tenant_id required' }, { status: 400 });
-        if (!source)    return NextResponse.json({ error: 'source required' }, { status: 400 });
+        const parsed = schema.safeParse(await req.json().catch(() => ({})));
+        if (!parsed.success) return NextResponse.json({ error: 'Invalid ingestion payload', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+        const { source, raw_content, author_name, author_contact, url, tenant_id, metadata } = parsed.data;
 
         const internalKey = req.headers.get('x-internal-api-key');
         const hasInternalKey =
@@ -26,8 +28,12 @@ export async function POST(req: NextRequest) {
             Boolean(process.env.INTERNAL_API_KEY) &&
             internalKey === process.env.INTERNAL_API_KEY;
 
-        if (!hasInternalKey) {
-            await requireTenantAccess(tenant_id);
+        let actorUserId: string | null = null;
+        if (!hasInternalKey) actorUserId = (await requireTenantAccess(tenant_id, req)).user.id;
+        else {
+            const { data: member, error: memberError } = await supabase.from('tenant_users').select('user_id').eq('tenant_id', tenant_id).limit(1).maybeSingle();
+            if (memberError) throw memberError;
+            actorUserId = member?.user_id || null;
         }
 
         // Run processing engine
@@ -60,7 +66,9 @@ export async function POST(req: NextRequest) {
         // Auto-create a lead if intent is high/urgent
         let lead_id: string | null = null;
         if (['high', 'urgent'].includes(processed.intent_label)) {
-            const { data: lead } = await supabase
+            if (!actorUserId) throw new Error('Workspace has no member available for automated lead ownership');
+            await consumeDailyResourceQuota(tenant_id, actorUserId, 'leads');
+            const { data: lead, error: leadError } = await supabase
                 .from('leads')
                 .insert({
                     tenant_id,
@@ -77,6 +85,11 @@ export async function POST(req: NextRequest) {
                 })
                 .select('id')
                 .single();
+
+            if (leadError) {
+                await releaseDailyResourceQuota(tenant_id, actorUserId, 'leads');
+                throw leadError;
+            }
 
             if (lead) {
                 lead_id = lead.id;
@@ -109,7 +122,7 @@ export async function POST(req: NextRequest) {
 
             // Fire workflow execution in background reliably via waitUntil
             waitUntil(
-                fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/engine/execute`, {
+                fetch(`${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '')}/api/engine/execute`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-internal-api-key': process.env.INTERNAL_API_KEY || '' },
                     body: JSON.stringify({

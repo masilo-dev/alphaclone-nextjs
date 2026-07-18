@@ -22,14 +22,19 @@ export async function GET(req: NextRequest) {
             .from('oauth_states')
             .delete()
             .eq('id', stateNonce)
-            .select('user_id')
+            .select('user_id, tenant_id, created_at')
             .single();
 
-        if (stateError || !stateData) {
+        const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+        if (stateError || !stateData || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
             return NextResponse.redirect(`${appUrl}/dashboard/settings?calendar=error&reason=invalid_state`);
         }
 
         const userId = stateData.user_id;
+        const tenantId = stateData.tenant_id;
+        if (!tenantId) {
+            return NextResponse.redirect(`${appUrl}/dashboard/settings?calendar=error&reason=invalid_state`);
+        }
 
         // 2. Exchange code for tokens
         const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -59,9 +64,25 @@ export async function GET(req: NextRequest) {
         // 3. Save tokens
         await upsertGoogleCalendarTokens({
             userId,
+            tenantId,
             accessToken: access_token,
             refreshToken: refresh_token ?? null,
             expiresAt,
+        });
+
+        const { error: connectionError } = await supabaseAdmin.from('tenant_integrations').upsert({
+            tenant_id: tenantId,
+            integration_id: 'google-calendar',
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            configured_by: userId,
+            metadata: { expiresAt },
+        }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError) throw connectionError;
+        await supabaseAdmin.from('business_automation_events').insert({
+            tenant_id: tenantId,
+            event_type: 'integration_connected',
+            payload: { integrationId: 'google-calendar', actorUserId: userId },
         });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?calendar=connected`);

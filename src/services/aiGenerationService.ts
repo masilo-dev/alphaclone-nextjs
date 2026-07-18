@@ -38,6 +38,15 @@ class AIGenerationService {
         try {
             const enhancedPrompt = `Professional ${style} logo design: ${prompt}. Clean, vector-style, suitable for business branding. High quality, simple background, modern aesthetic.`;
 
+            if (typeof window !== 'undefined') {
+                const tenantId = tenantService.getCurrentTenantId();
+                if (!tenantId) throw new Error('Select a workspace before generating a logo');
+                const response = await fetch('/api/ai/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, prompt: enhancedPrompt, size: '1024x1024', provider: 'openai', assetType: 'logo', metadata: { style } }) });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.url) throw new Error(payload.error || 'Failed to generate logo');
+                return { success: true, url: payload.url, remaining: payload.freeUsage?.remaining ?? undefined };
+            }
+
             const response = await fetch('https://api.openai.com/v1/images/generations', {
                 method: 'POST',
                 headers: {
@@ -102,6 +111,15 @@ class AIGenerationService {
         provider: 'openai' | 'xai' = 'openai'
     ): Promise<GenerationResult> {
         try {
+            if (typeof window !== 'undefined') {
+                const tenantId = tenantService.getCurrentTenantId();
+                if (!tenantId) throw new Error('Select a workspace before generating an image');
+                const response = await fetch('/api/ai/image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, prompt, size, provider, assetType: 'image' }) });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.url) throw new Error(payload.error || 'Failed to generate image');
+                return { success: true, url: payload.url, remaining: payload.freeUsage?.remaining ?? undefined };
+            }
+
             // 1. Generate via selected Provider
             let tempUrl = '';
             
@@ -170,14 +188,9 @@ class AIGenerationService {
                     cacheControl: '3600'
                 });
 
-            if (uploadError) {
-                // If bucket doesn't exist, fallback to 'uploads' or just use tempUrl
-                console.warn('Storage upload failed, falling back to temp URL:', uploadError);
-            }
+            if (uploadError || !uploadData) throw new Error(uploadError?.message || 'Generated image could not be stored permanently');
 
-            const finalUrl = uploadData 
-                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/social-assets/${fileName}`
-                : tempUrl;
+            const finalUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/social-assets/${fileName}`;
 
             // 3. Increment usage
             await rateLimitService.incrementCount(userId, 'image');
@@ -238,6 +251,7 @@ class AIGenerationService {
                     prompt,
                     systemPrompt: systemPrompts[type],
                     model,
+                    tenantId: tenantService.getCurrentTenantId(),
                 })
             });
 
@@ -249,17 +263,11 @@ class AIGenerationService {
             const data = await response.json();
             const content = data.text;
 
-            // Increment usage
-            await rateLimitService.incrementCount(userId, 'content');
-
-            // Save to database
-            await supabase.from('generated_assets').insert({
-                user_id: userId,
-                asset_type: 'content',
-                prompt: prompt,
-                metadata: { type, model, content },
-                tenant_id: tenantService.getCurrentTenantId()
-            });
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before saving generated content');
+            const saveResponse = await fetch(`/api/tenant/${tenantId}/generated-assets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ assetType: 'content', prompt, content, metadata: { type, model } }) });
+            const savePayload = await saveResponse.json().catch(() => ({}));
+            if (!saveResponse.ok) throw new Error(savePayload.error || 'Generated content could not be saved');
 
             const newRemaining = await rateLimitService.getRemainingGenerations(userId, userRole, 'content');
 
@@ -282,20 +290,12 @@ class AIGenerationService {
      */
     async getGenerationHistory(userId: string, limit: number = 20) {
         try {
-            const { data, error } = await supabase
-                .from('generated_assets')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
-                .order('created_at', { ascending: false })
-                .limit(limit);
-
-            if (error) {
-                console.error('Get history error:', error);
-                return { assets: [], error: error.message };
-            }
-
-            return { assets: data || [], error: null };
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace to view generation history');
+            const response = await fetch(`/api/tenant/${tenantId}/generated-assets?limit=${Math.min(Math.max(limit, 1), 100)}`, { cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Generation history could not be loaded');
+            return { assets: payload.assets || [], error: null };
         } catch (err) {
             console.error('Get history error:', err);
             return { assets: [], error: 'Failed to load history' };
@@ -307,18 +307,11 @@ class AIGenerationService {
      */
     async deleteAsset(assetId: string, userId: string) {
         try {
-            const { error } = await supabase
-                .from('generated_assets')
-                .delete()
-                .eq('id', assetId)
-                .eq('user_id', userId)
-                .eq('tenant_id', tenantService.getCurrentTenantId());
-
-            if (error) {
-                console.error('Delete asset error:', error);
-                return { success: false, error: error.message };
-            }
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before deleting an asset');
+            const response = await fetch(`/api/tenant/${tenantId}/generated-assets?assetId=${encodeURIComponent(assetId)}`, { method: 'DELETE' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Generated asset could not be deleted');
             return { success: true, error: null };
         } catch (err) {
             console.error('Delete asset error:', err);

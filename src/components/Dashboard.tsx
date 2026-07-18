@@ -11,7 +11,7 @@ import {
   MessageSquare, Calendar, FileText, PieChart, Users,
   Briefcase, CheckCircle2, Clock, AlertCircle, Menu, X,
   Globe, Layout, Smartphone, Mail, Phone, MapPin,
-  Shield, CreditCard, Wallet, Zap, Brain, Rocket,
+  Shield, CreditCard, Zap, Brain, Rocket,
   Sparkles, Star, Target, TrendingUp, BarChart3,
   ChevronDown, ArrowRight, Download, Share2, Trash2,
   Copy, Edit, Trash, Eye, MoreVertical, LayoutGrid,
@@ -168,7 +168,6 @@ interface DashboardProps {
   setGalleryItems: React.Dispatch<React.SetStateAction<GalleryItem[]>>;
 }
 
-// Mock Invoices Removed
 
 // STAGES now imported from ../types
 
@@ -299,7 +298,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [projectViewMode, setProjectViewMode] = useState<'grid' | 'list'>('list');
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [createInvoiceOpen, setCreateInvoiceOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
@@ -662,8 +660,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   position: 'top-right'
                 });
               });
-              // Increment unread count (simple memory-based for now)
-              // setUnreadCount(prev => prev + 1); // If we had this state
             }
 
             return [...prev, newMessage];
@@ -1064,55 +1060,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     setIsProcessingPayment(true);
 
     try {
-      // Use real Stripe payment processing
-      const { success, error } = await paymentService.processPayment(
-        selectedInvoice.id,
-        paymentMethod // This would be the payment method ID from Stripe Elements
-      );
-
-      if (success) {
-        // Update invoice status locally
-        setInvoices(prev => prev.map(inv =>
-          inv.id === selectedInvoice.id ? { ...inv, status: 'Paid' } : inv
-        ));
-
-        // Update project status if it was pending
-        const project = projects.find(p => p.id === selectedInvoice.projectId);
-        if (project && project.status === 'Pending') {
-          const { error: projectError } = await projectService.updateProject(project.id, {
-            status: 'Active',
-            currentStage: 'Planning',
-            progress: 15
-          });
-
-          if (!projectError) {
-            setProjects(prev => prev.map(p =>
-              p.id === project.id ? { ...p, status: 'Active', currentStage: 'Planning', progress: 15 } : p
-            ));
-
-            import('react-hot-toast').then(({ toast }) => {
-              toast.success(`Payment Successful! Project "${project.name}" is now Active.`);
-            });
-          }
-        } else {
-          import('react-hot-toast').then(({ toast }) => {
-            toast.success('Payment Successful! Thank you.');
-          });
-        }
-
-        // Send payment receipt
-        paymentService.sendPaymentReceipt(selectedInvoice.id).catch(err =>
-          console.error('Failed to send receipt:', err)
-        );
-
-        setPaymentModalOpen(false);
-        setSelectedInvoice(null);
-      } else {
-        // Payment failed
-        import('react-hot-toast').then(({ toast }) => {
-          toast.error(error || 'Payment failed. Please try again.');
-        });
-      }
+      const response = await fetch('/api/stripe/create-legacy-invoice-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId: selectedInvoice.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.url) throw new Error(payload.error || 'Secure checkout is unavailable');
+      window.location.assign(payload.url);
     } catch (err) {
       console.error('Payment error:', err);
       import('react-hot-toast').then(({ toast }) => {
@@ -1182,7 +1137,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
             <WidgetErrorBoundary title={activeTab === '/dashboard/meetings' ? 'Meetings' : 'Video Conference'}>
-              <ConferenceTab />
+              <ConferenceTab user={user} />
             </WidgetErrorBoundary>
           </React.Suspense>
         );
@@ -1731,57 +1686,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-xs text-slate-500 mt-1">Invoice #{selectedInvoice?.id.toUpperCase()}</p>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-slate-300">Select Payment Method</label>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setPaymentMethod('card')}
-                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'card' ? 'bg-teal-600/10 border-teal-500 text-teal-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'}`}
-              >
-                <CreditCard className="w-6 h-6" />
-                <span className="text-sm font-bold">Bank Card</span>
-              </button>
-              <button
-                onClick={() => setPaymentMethod('paypal')}
-                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'paypal' ? 'bg-blue-600/10 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'}`}
-              >
-                <Wallet className="w-6 h-6" />
-                <span className="text-sm font-bold">PayPal</span>
-              </button>
-            </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
+            Card details are collected on Stripe&apos;s hosted checkout and never pass through AlphaClone.
           </div>
-
-          {paymentMethod === 'card' && (
-            <div className="space-y-4 animate-fade-in">
-              <Input label="Cardholder Name" placeholder="John Doe" />
-              <Input label="Card Number" placeholder="0000 0000 0000 0000" />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="Expiry Date" placeholder="MM/YY" />
-                <Input label="CVC" placeholder="123" />
-              </div>
-            </div>
-          )}
-
-          {paymentMethod === 'paypal' && (
-            <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center animate-fade-in">
-              <p className="text-blue-200 text-sm mb-4">You will be redirected to PayPal to complete your purchase securely.</p>
-              <Button
-                className="w-full bg-[#0070BA] hover:bg-[#003087]"
-                onClick={() => toast.error('PayPal checkout is not enabled yet. Please pay with card.')}
-              >
-                Log in to PayPal
-              </Button>
-            </div>
-          )}
-
-          {paymentMethod === 'card' && (
-            <Button onClick={processPayment} className="w-full h-12 text-lg" isLoading={isProcessingPayment}>
-              {isProcessingPayment ? 'Processing...' : `Pay $${selectedInvoice?.amount.toLocaleString()}`}
-            </Button>
-          )}
+          <Button onClick={processPayment} className="w-full h-12 text-lg" isLoading={isProcessingPayment}>
+            <CreditCard className="mr-2 h-5 w-5" />
+            {isProcessingPayment ? 'Opening secure checkout…' : `Continue to pay $${selectedInvoice?.amount.toLocaleString()}`}
+          </Button>
 
           <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Payments processed securely via Global Payment SSL
+            <ShieldCheck className="w-3 h-3" /> Payments are processed securely by Stripe Checkout
           </p>
         </div>
       </Modal>

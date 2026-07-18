@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { routeErrorResponse, requireTenantAccess } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { z } from 'zod';
 
 /**
  * POST /api/social/media/upload
@@ -17,7 +18,14 @@ export async function POST(req: NextRequest) {
 
         if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
-        const { user } = await requireTenantAccess(tenantId);
+        const { user } = await requireTenantAccess(tenantId, req);
+
+        const allowedTypes = new Map([
+            ['image/jpeg', 'jpg'], ['image/png', 'png'], ['image/webp', 'webp'], ['image/gif', 'gif'],
+            ['video/mp4', 'mp4'], ['video/webm', 'webm'], ['video/quicktime', 'mov'],
+        ]);
+        const safeExtension = allowedTypes.get(file.type);
+        if (!safeExtension) return NextResponse.json({ error: 'Unsupported media type' }, { status: 415 });
 
         const MAX_IMAGE_SIZE = 10 * 1024 * 1024;  // 10 MB
         const MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200 MB
@@ -28,8 +36,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: `File too large. Max: ${maxSize / 1024 / 1024}MB` }, { status: 400 });
         }
 
-        const ext = file.name.split('.').pop() || 'bin';
-        const storagePath = `media/${tenantId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+        const storagePath = `media/${tenantId}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${safeExtension}`;
         const assetType = isVideo ? 'video' : file.type.includes('gif') ? 'gif' : 'image';
 
         const adminClient = createSupabaseAdminClient();
@@ -68,12 +75,37 @@ export async function POST(req: NextRequest) {
 
         if (dbErr) {
             console.error('[social/media/upload] media_assets insert:', dbErr);
+            await adminClient.storage.from('public-assets').remove([storagePath]);
             return NextResponse.json({ error: 'Failed to save media record', code: 'MEDIA_DB_ERROR' }, { status: 500 });
         }
 
         return NextResponse.json({ success: true, asset });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to upload media', req);
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const tenantId = req.nextUrl.searchParams.get('tenantId') || '';
+        const assetId = req.nextUrl.searchParams.get('assetId') || '';
+        if (!z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(assetId).success) {
+            return NextResponse.json({ error: 'Valid tenantId and assetId required' }, { status: 400 });
+        }
+        await requireTenantAccess(tenantId, req);
+        const admin = createSupabaseAdminClient();
+        const { data: asset, error: readError } = await admin.from('media_assets').select('id, storage_path').eq('tenant_id', tenantId).eq('id', assetId).maybeSingle();
+        if (readError) throw readError;
+        if (!asset) return NextResponse.json({ error: 'Media asset not found' }, { status: 404 });
+        if (asset.storage_path) {
+            const { error: storageError } = await admin.storage.from('public-assets').remove([asset.storage_path]);
+            if (storageError) throw storageError;
+        }
+        const { error: deleteError } = await admin.from('media_assets').delete().eq('tenant_id', tenantId).eq('id', assetId);
+        if (deleteError) throw deleteError;
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return routeErrorResponse(error, 'Media asset could not be deleted', req);
     }
 }
 
@@ -84,7 +116,7 @@ export async function GET(req: NextRequest) {
         const assetType = searchParams.get('type');
         if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
 
-        const { supabase } = await requireTenantAccess(tenantId);
+        const { supabase } = await requireTenantAccess(tenantId, req);
         let query = supabase
             .from('media_assets')
             .select('*')

@@ -125,7 +125,7 @@ export async function POST(req: Request) {
         }
 
         // 3. Create meeting provider room/link
-        const roomName = `booking-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        const roomName = `booking-${crypto.randomUUID()}`;
         const jitsiRoomName = `alphaclone-${roomName}`;
         let dailyRoomUrl = '';
         let roomId = '';

@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoMailService } from '../../../../services/zoho/ZohoMailService';
 import { ZohoAuthExpiredError, ZohoAPIError } from '../../../../services/zoho/ZohoService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
-async function getUserId(req: NextRequest): Promise<string | null> {
-    try {
-        const supabase = await createSupabaseServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) return user.id;
-    } catch {}
-
-    const { searchParams } = new URL(req.url);
-    const userIdFromQuery = searchParams.get('userId');
-    if (userIdFromQuery) return userIdFromQuery;
-
-    return req.headers.get('x-user-id');
+async function getContext(req: NextRequest) {
+    const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
+    const { user } = await requireTenantAccess(tenantId, req);
+    return { userId: user.id, tenantId };
 }
 
 function handleZohoError(err: unknown): NextResponse {
@@ -70,20 +62,11 @@ function handleZohoError(err: unknown): NextResponse {
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
-    const userId = await getUserId(req);
-
-    if (!userId) {
-        return NextResponse.json(
-            {
-                error: 'No active session. Sign in again, then reopen Zoho Mail.',
-                code: 'NO_SUPABASE_SESSION',
-                reconnect: false,
-            },
-            { status: 401 }
-        );
+    let context;
+    try { context = await getContext(req); } catch (error) {
+        return routeErrorResponse(error, 'Zoho Mail access could not be verified', req);
     }
-
-    const zohoMail = new ZohoMailService(userId);
+    const zohoMail = new ZohoMailService(context.userId, context.tenantId);
 
     try {
         switch (action) {
@@ -106,8 +89,18 @@ export async function GET(req: NextRequest) {
                 const messageId = searchParams.get('messageId');
                 const folderId = searchParams.get('folderId');
                 if (!messageId || !folderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
-                const content = await zohoMail.getMessageContent(messageId, folderId);
-                return NextResponse.json(content);
+                const [content, attachments] = await Promise.all([zohoMail.getMessageContent(messageId, folderId), zohoMail.getAttachmentInfo(messageId, folderId)]);
+                return NextResponse.json({ ...content, attachments });
+            }
+            case 'attachment': {
+                const messageId = searchParams.get('messageId');
+                const folderId = searchParams.get('folderId');
+                const attachmentId = searchParams.get('attachmentId');
+                const requestedName = searchParams.get('fileName') || 'attachment';
+                if (!messageId || !folderId || !attachmentId) return NextResponse.json({ error: 'Message, folder, and attachment IDs are required' }, { status: 400 });
+                const attachment = await zohoMail.downloadAttachment(messageId, folderId, attachmentId);
+                const fileName = requestedName.replace(/[\r\n"\\/]/g, '_').slice(0, 240) || 'attachment';
+                return new NextResponse(attachment.body, { headers: { 'Content-Type': attachment.headers.get('content-type') || 'application/octet-stream', 'Content-Disposition': `attachment; filename="${fileName}"`, 'Cache-Control': 'private, no-store' } });
             }
             case 'search': {
                 const query = searchParams.get('q');
@@ -151,19 +144,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
-    const userId = await getUserId(req);
-    if (!userId) {
-        return NextResponse.json(
-            {
-                error: 'No active session. Sign in again, then reopen Zoho Mail.',
-                code: 'NO_SUPABASE_SESSION',
-                reconnect: false,
-            },
-            { status: 401 }
-        );
+    let context;
+    try { context = await getContext(req); } catch (error) {
+        return routeErrorResponse(error, 'Zoho Mail access could not be verified', req);
     }
-
-    const zohoMail = new ZohoMailService(userId);
+    const zohoMail = new ZohoMailService(context.userId, context.tenantId);
 
     try {
         if (action === 'markRead') {
@@ -194,21 +179,13 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const messageId = searchParams.get('messageId');
     const folderId = searchParams.get('folderId');
-    const userId = await getUserId(req);
-
-    if (!userId) {
-        return NextResponse.json(
-            {
-                error: 'No active session. Sign in again, then reopen Zoho Mail.',
-                code: 'NO_SUPABASE_SESSION',
-                reconnect: false,
-            },
-            { status: 401 }
-        );
+    let context;
+    try { context = await getContext(req); } catch (error) {
+        return routeErrorResponse(error, 'Zoho Mail access could not be verified', req);
     }
     if (!messageId || !folderId) return NextResponse.json({ error: 'Message ID or Folder ID missing' }, { status: 400 });
 
-    const zohoMail = new ZohoMailService(userId);
+    const zohoMail = new ZohoMailService(context.userId, context.tenantId);
 
     try {
         const result = await zohoMail.deleteMessage(messageId, folderId);

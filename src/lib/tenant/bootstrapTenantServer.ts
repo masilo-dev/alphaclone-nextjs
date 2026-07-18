@@ -29,36 +29,50 @@ export async function ensureUserProfile(
 ) {
   const name =
     String(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
-  await admin
+  const { data: existing } = await admin
     .from('profiles')
-    .upsert(
-      {
-        id: user.id,
-        email: user.email,
-        name,
-        role: 'tenant_admin',
-      },
-      { onConflict: 'id' }
-    );
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (existing?.id) {
+    await admin.from('profiles').update({ email: user.email, name }).eq('id', user.id);
+  } else {
+    await admin.from('profiles').insert({
+      id: user.id,
+      email: user.email,
+      name,
+      role: 'tenant_admin',
+    });
+  }
 }
 
 export async function bootstrapTenantForUser(
   admin: SupabaseClient,
   user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> },
-  options?: { name?: string; slug?: string; plan?: string; referralCode?: string }
+  options?: {
+    name?: string;
+    slug?: string;
+    plan?: string;
+    referralCode?: string;
+    mode?: 'ensure' | 'create';
+    idempotencyKey?: string;
+  }
 ): Promise<{ tenantId: string; created: boolean }> {
   await ensureUserProfile(admin, user);
 
-  const { data: memberships } = await admin
-    .from('tenant_users')
-    .select('tenant_id')
-    .eq('user_id', user.id)
-    .order('joined_at', { ascending: false })
-    .limit(1);
+  if (options?.mode !== 'create') {
+    const { data: memberships } = await admin
+      .from('tenant_users')
+      .select('tenant_id')
+      .eq('user_id', user.id)
+      .order('joined_at', { ascending: false })
+      .limit(1);
 
-  const existingId = memberships?.[0]?.tenant_id;
-  if (existingId) {
-    return { tenantId: existingId, created: false };
+    const existingId = memberships?.[0]?.tenant_id;
+    if (existingId) {
+      return { tenantId: existingId, created: false };
+    }
   }
 
   const displayName =
@@ -73,64 +87,17 @@ export async function bootstrapTenantForUser(
   const slug = await uniqueSlug(admin, slugBase);
   const plan = options?.plan || 'free';
 
-  const { data: tenantId, error: rpcError } = await admin.rpc('create_tenant', {
+  const { data: tenantId, error: rpcError } = await admin.rpc('create_tenant_idempotent', {
     p_name: displayName,
     p_slug: slug,
     p_admin_user_id: user.id,
     p_plan: plan,
+    p_idempotency_key: options?.idempotencyKey || 'initial-workspace-v1',
   });
 
   if (!rpcError && tenantId) {
     return { tenantId: String(tenantId), created: true };
   }
 
-  console.warn('[bootstrapTenant] create_tenant RPC failed, using direct insert:', rpcError?.message);
-
-  const trialEndsAt = new Date();
-  trialEndsAt.setDate(trialEndsAt.getDate() + 14);
-
-  const { data: tenant, error: insertError } = await admin
-    .from('tenants')
-    .insert({
-      name: displayName,
-      slug,
-      subscription_plan: plan,
-      subscription_status: 'trial',
-      trial_ends_at: trialEndsAt.toISOString(),
-    })
-    .select('id')
-    .single();
-
-  if (insertError || !tenant?.id) {
-    throw insertError || new Error('Failed to create tenant');
-  }
-
-  const { error: memberError } = await admin.from('tenant_users').upsert(
-    {
-      tenant_id: tenant.id,
-      user_id: user.id,
-      role: 'tenant_admin',
-    },
-    { onConflict: 'tenant_id,user_id' }
-  );
-
-  if (memberError) throw memberError;
-
-  try {
-    await admin.from('business_automation_events').insert({
-      tenant_id: tenant.id,
-      event_type: 'tenant_created',
-      payload: {
-        tenantId: tenant.id,
-        name: displayName,
-        adminUserId: user.id,
-        source: 'bootstrap_api',
-        referralCode: options?.referralCode || null,
-      },
-    });
-  } catch {
-    // optional table
-  }
-
-  return { tenantId: tenant.id, created: true };
+  throw new Error(`Workspace creation is unavailable: ${rpcError?.message || 'required migration missing'}`);
 }

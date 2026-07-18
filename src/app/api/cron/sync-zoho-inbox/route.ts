@@ -25,7 +25,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 async function syncUserInbox(userId: string, tenantId: string) {
   try {
     const admin = createSupabaseAdminClient();
-    const zoho = new ZohoMailService(userId);
+    const zoho = new ZohoMailService(userId, tenantId);
     const folders = await withTimeout(zoho.getFolders(), PER_USER_TIMEOUT_MS);
     const inbox = folders.find((f) => f.folderName?.toLowerCase() === 'inbox') || folders[0];
     if (!inbox) {

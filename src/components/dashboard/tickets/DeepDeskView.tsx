@@ -48,6 +48,15 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
     reopened: 'bg-purple-500 text-white',
 };
 
+const formatSla = (ticket: Ticket) => {
+    if (!ticket.sla_due_at || ['resolved', 'closed'].includes(ticket.status)) return null;
+    const remainingMs = new Date(ticket.sla_due_at).getTime() - Date.now();
+    if (remainingMs <= 0) return { label: 'SLA breached', breached: true };
+    const hours = Math.floor(remainingMs / 3_600_000);
+    const minutes = Math.max(1, Math.ceil((remainingMs % 3_600_000) / 60_000));
+    return { label: hours > 0 ? `${hours}h ${minutes}m left` : `${minutes}m left`, breached: false };
+};
+
 export default function DeepDeskView() {
     const { currentTenant } = useTenant();
     const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -504,6 +513,7 @@ export default function DeepDeskView() {
                             filteredTickets.map(t => {
                                 const isSelected = selectedTicket?.id === t.id;
                                 const dateStr = new Date(t.created_at).toLocaleDateString();
+                                const sla = formatSla(t);
                                 return (
                                     <div
                                         key={t.id}
@@ -531,11 +541,7 @@ export default function DeepDeskView() {
                                                 {t.priority}
                                             </span>
                                             
-                                            {/* SLA Mock indicator */}
-                                            <span className="flex items-center gap-1 text-[9px] text-amber-400 bg-amber-400/5 px-1.5 py-0.5 rounded border border-amber-400/10">
-                                                <Clock className="w-2.5 h-2.5" />
-                                                SLA: 2h
-                                            </span>
+                                            {sla && <span className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border ${sla.breached ? 'text-rose-400 bg-rose-400/5 border-rose-400/10' : 'text-amber-400 bg-amber-400/5 border-amber-400/10'}`}><Clock className="w-2.5 h-2.5" />{sla.label}</span>}
                                         </div>
                                     </div>
                                 );

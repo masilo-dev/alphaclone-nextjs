@@ -80,42 +80,8 @@ const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ user, onComplete }) => 
         const toastId = toast.loading('Personalizing your command center...');
 
         try {
-            // 1. Fetch profiles to check column structure
-            const { data: profile, error: fetchError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .maybeSingle();
-
-            if (fetchError) {
-                console.warn('OnboardingFlow: Profile fetch failed, falling back to metadata update.', fetchError);
-            }
-
-            // 2. Prepare payload
-            const customFields = (profile?.custom_fields as Record<string, any>) || {};
-            const updatePayload: any = {
-                onboarding_completed: true,
-                onboarding_completed_at: new Date().toISOString(),
-                custom_fields: {
-                    ...customFields,
-                    onboarding_role: role,
-                },
-            };
-
-            // Dynamically write to onboarding_role if the column exists in profiles schema
-            if (profile && 'onboarding_role' in profile) {
-                updatePayload.onboarding_role = role;
-            }
-
-            // 3. Update profile table in Supabase
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update(updatePayload)
-                .eq('id', user.id);
-
-            if (updateError) {
-                throw updateError;
-            }
+            const profileResponse = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboardingRole: role, onboardingCompleted: true }) });
+            if (!profileResponse.ok) throw new Error('Onboarding profile could not be saved');
 
             // 4. Update auth user metadata for current session availability
             await supabase.auth.updateUser({

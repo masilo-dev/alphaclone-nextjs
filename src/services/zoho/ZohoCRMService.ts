@@ -21,7 +21,7 @@ export class ZohoCRMService extends ZohoService {
 
     /**
      * Syncs Zoho CRM Contacts to the local 'clients' table.
-     * Uses user_id (not business_id) to link records.
+     * Every imported record is bound to the active workspace.
      */
     async syncContacts(): Promise<number> {
         const contacts = await this.getRecords('Contacts');
@@ -37,6 +37,7 @@ export class ZohoCRMService extends ZohoService {
             const { error } = await supabase
                 .from('clients')
                 .upsert({
+                    tenant_id: this.tenantId,
                     user_id: this.userId,
                     full_name: contact.Full_Name || `${contact.First_Name ?? ''} ${contact.Last_Name ?? ''}`.trim(),
                     email,
@@ -46,7 +47,7 @@ export class ZohoCRMService extends ZohoService {
                     metadata: { zoho_contact_id: contact.id },
                     updated_at: new Date().toISOString(),
                 }, {
-                    onConflict: 'email',
+                    onConflict: 'tenant_id,email',
                 });
 
             if (error) {
@@ -73,6 +74,7 @@ export class ZohoCRMService extends ZohoService {
             const { error } = await supabase
                 .from('deals')
                 .upsert({
+                    tenant_id: this.tenantId,
                     user_id: this.userId,
                     title: deal.Deal_Name,
                     value: deal.Amount ?? 0,

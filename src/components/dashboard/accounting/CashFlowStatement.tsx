@@ -61,7 +61,7 @@ export function CashFlowStatement() {
         ))}
       </div>
       <p className="text-xs text-slate-300 mt-2">
-        Derived from P&amp;L and operational invoice/receipt data. Formal GL cash flow classification coming soon.
+        Derived from the workspace P&amp;L plus operational invoice and receipt activity.
       </p>
     </div>
   );

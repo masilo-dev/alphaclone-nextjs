@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoCampaignsService } from '@/services/zoho/ZohoCampaignsService';
 import { ZohoAuthExpiredError, ZohoAPIError } from '@/services/zoho/ZohoService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-
-async function getUserId(req: NextRequest): Promise<string | null> {
-  try {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id) return user.id;
-  } catch { /* fall through */ }
-
-  const userIdFromQuery = req.nextUrl.searchParams.get('userId');
-  if (userIdFromQuery) return userIdFromQuery;
-  return req.headers.get('x-user-id');
-}
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 function handleZohoError(err: unknown): NextResponse {
   const isMissingConfig =
@@ -50,13 +38,11 @@ function handleZohoError(err: unknown): NextResponse {
 
 export async function GET(req: NextRequest) {
   const action = req.nextUrl.searchParams.get('action');
-  const userId = await getUserId(req);
-  if (!userId) {
-    return NextResponse.json({ error: 'Sign in required', code: 'NO_SESSION' }, { status: 401 });
-  }
+  const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
 
   try {
-    const service = new ZohoCampaignsService(userId);
+    const { user } = await requireTenantAccess(tenantId, req);
+    const service = new ZohoCampaignsService(user.id, tenantId);
 
     switch (action) {
       case 'status': {
@@ -93,20 +79,20 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Unknown action. Use status|lists|campaigns|sent|report' }, { status: 400 });
     }
   } catch (err) {
+    if (err instanceof Error && (err.name === 'RouteAuthError' || err.message === 'tenantId required')) {
+      return routeErrorResponse(err, 'Zoho Campaigns access could not be verified', req);
+    }
     return handleZohoError(err);
   }
 }
 
 export async function POST(req: NextRequest) {
-  const userId = await getUserId(req);
-  if (!userId) {
-    return NextResponse.json({ error: 'Sign in required', code: 'NO_SESSION' }, { status: 401 });
-  }
-
   try {
     const body = await req.json();
+    const tenantId = String(body.tenantId || '').trim();
+    const { user } = await requireTenantAccess(tenantId, req);
     const action = String(body.action || '');
-    const service = new ZohoCampaignsService(userId);
+    const service = new ZohoCampaignsService(user.id, tenantId);
 
     switch (action) {
       case 'create': {

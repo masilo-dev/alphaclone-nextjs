@@ -182,7 +182,8 @@ export async function POST(req: NextRequest) {
                     contractId: updatedContract.id,
                     title: updatedContract.title,
                     clientId: updatedContract.client_id,
-                    projectId: updatedContract.project_id
+                    projectId: updatedContract.project_id,
+                    actorUserId: updatedContract.created_by,
                 }).catch(err => console.error('Failed to emit contract_signed event:', err));
             }
         }

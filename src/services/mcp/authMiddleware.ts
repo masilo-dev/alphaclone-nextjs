@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
+import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export async function validateMCPAuth(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers['authorization'];
@@ -27,7 +28,8 @@ export async function validateMCPAuth(req: NextApiRequest, res: NextApiResponse)
   const { data: keyData, error: keyError } = await supabaseAdmin
     .from('mcp_api_keys')
     .select('tenant_id, user_id')
-    .eq('api_key', api_key)
+    .eq('api_key_hash', hashMcpApiKey(api_key))
+    .eq('is_active', true)
     .single();
 
   if (keyError || !keyData) {

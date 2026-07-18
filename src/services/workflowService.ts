@@ -1,4 +1,3 @@
-import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 
 export interface WorkflowStep {
@@ -65,49 +64,23 @@ export const workflowService = {
             const tid = tenantService.getCurrentTenantId();
             if (!tid) throw new Error('No active tenant found');
 
-            // 1. Insert Workflow Header
-            const { data: workflowData, error: workflowError } = await supabase
-                .from('workflows')
-                .insert({
-                    name: workflow.name,
-                    description: workflow.description,
-                    trigger_type: workflow.trigger_type || 'manual_trigger',
-                    trigger_conditions: workflow.trigger_conditions || {},
-                    is_active: workflow.is_active ?? true,
-                    created_by: workflow.created_by,
-                    tenant_id: tid,
-                    metadata: workflow.metadata || {},
-                })
-                .select()
-                .single();
-
-            if (workflowError) throw workflowError;
-
-            // 2. Insert Workflow Actions (Steps)
-            if (workflow.steps && workflow.steps.length > 0) {
-                const actionsToInsert = workflow.steps.map((step, index) => ({
-                    workflow_id: workflowData.id,
-                    action_type: step.action_type || 'webhook',
-                    action_order: index,
-                    action_config: step.action_config || step.config || {},
-                    delay_minutes: step.delay_minutes || 0,
-                    is_active: true,
-                    tenant_id: tid,
-                }));
-
-                const { error: actionsError } = await supabase
-                    .from('workflow_actions')
-                    .insert(actionsToInsert);
-
-                if (actionsError) {
-                    console.error('Failed to insert workflow actions:', actionsError);
-                }
-            }
-
-            return {
-                workflow: workflowData as Workflow,
-                error: null,
-            };
+            const response = await fetch(`/api/tenant/${tid}/automation-workflows`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...workflow,
+                    steps: (workflow.steps || []).map((step, index) => ({
+                        action_type: step.action_type || step.type || 'webhook',
+                        action_order: index,
+                        action_config: step.action_config || step.config || {},
+                        delay_minutes: step.delay_minutes || 0,
+                        is_active: step.is_active ?? true,
+                    })),
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.workflow) throw new Error(payload.error || 'Failed to create workflow');
+            return { workflow: payload.workflow as Workflow, error: null };
         } catch (error) {
             console.error('Workflow creation error:', error);
             return {
@@ -125,52 +98,31 @@ export const workflowService = {
             const tid = tenantService.getCurrentTenantId();
             if (!tid) throw new Error('No active tenant found');
 
-            // 1. Update Workflow Header
-            const { error: workflowError } = await supabase
-                .from('workflows')
-                .update({
-                    name: workflow.name,
-                    description: workflow.description,
-                    trigger_type: workflow.trigger_type,
-                    trigger_conditions: workflow.trigger_conditions,
-                    is_active: workflow.is_active,
-                    metadata: workflow.metadata,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', id)
-                .eq('tenant_id', tid);
-
-            if (workflowError) throw workflowError;
-
-            // 2. Update Actions (Delete and Re-insert is often easiest for complex builders)
-            if (workflow.steps) {
-                // Delete old actions
-                await supabase
-                    .from('workflow_actions')
-                    .delete()
-                    .eq('workflow_id', id)
-                    .eq('tenant_id', tid);
-
-                // Insert new actions
-                if (workflow.steps.length > 0) {
-                    const actionsToInsert = workflow.steps.map((step, index) => ({
-                        workflow_id: id,
-                        action_type: step.action_type || (step as any).type || 'webhook',
+            const current = await this.getWorkflowById(id);
+            if (!current.workflow) throw new Error(current.error || 'Workflow not found');
+            const merged = { ...current.workflow, ...workflow };
+            const response = await fetch(`/api/tenant/${tid}/automation-workflows`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workflowId: id,
+                    name: merged.name,
+                    description: merged.description || null,
+                    trigger_type: merged.trigger_type,
+                    trigger_conditions: merged.trigger_conditions || {},
+                    is_active: merged.is_active,
+                    metadata: merged.metadata || {},
+                    steps: (merged.steps || []).map((step, index) => ({
+                        action_type: step.action_type || step.type || 'webhook',
                         action_order: index,
-                        action_config: step.action_config || (step as any).config || {},
+                        action_config: step.action_config || step.config || {},
                         delay_minutes: step.delay_minutes || 0,
-                        is_active: true,
-                        tenant_id: tid,
-                    }));
-
-                    const { error: actionsError } = await supabase
-                        .from('workflow_actions')
-                        .insert(actionsToInsert);
-
-                    if (actionsError) throw actionsError;
-                }
-            }
-
+                        is_active: step.is_active ?? true,
+                    })),
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Failed to update workflow');
             return { success: true, error: null };
         } catch (error) {
             console.error('Workflow update error:', error);
@@ -189,22 +141,10 @@ export const workflowService = {
             const tid = tenantService.getCurrentTenantId();
             if (!tid) throw new Error('No active tenant found');
 
-            const { data, error } = await supabase
-                .from('workflows')
-                .select('*, workflow_actions(*)')
-                .eq('created_by', userId)
-                .eq('tenant_id', tid)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            return {
-                workflows: (data || []).map((w: any) => ({
-                    ...w,
-                    steps: (w.workflow_actions || []).sort((a: any, b: any) => a.action_order - b.action_order)
-                })),
-                error: null,
-            };
+            const response = await fetch(`/api/tenant/${tid}/automation-workflows`);
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Failed to fetch workflows');
+            return { workflows: (payload.workflows || []).filter((item: Workflow) => !userId || item.created_by === userId), error: null };
         } catch (error) {
             return {
                 workflows: [],
@@ -221,23 +161,10 @@ export const workflowService = {
             const tid = tenantService.getCurrentTenantId();
             if (!tid) throw new Error('No active tenant found');
 
-            const { data, error } = await supabase
-                .from('workflows')
-                .select('*, workflow_actions(*)')
-                .eq('id', id)
-                .eq('tenant_id', tid)
-                .single();
-
-            if (error) throw error;
-            if (!data) throw new Error('Workflow not found');
-
-            return {
-                workflow: {
-                    ...data,
-                    steps: (data.workflow_actions || []).sort((a: any, b: any) => a.action_order - b.action_order)
-                } as Workflow,
-                error: null,
-            };
+            const response = await fetch(`/api/tenant/${tid}/automation-workflows?workflowId=${encodeURIComponent(id)}`);
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.workflow) throw new Error(payload.error || 'Workflow not found');
+            return { workflow: payload.workflow as Workflow, error: null };
         } catch (error) {
             console.error('Fetch workflow error:', error);
             return {
@@ -251,46 +178,35 @@ export const workflowService = {
      * Execute a workflow
      */
     async executeWorkflow(workflowId: string, context: Record<string, any>): Promise<{ success: boolean; error: string | null }> {
+        let executionId: string | undefined;
+        const tid = tenantService.getCurrentTenantId();
         try {
-            const { data: workflow, error: fetchError } = await supabase
-                .from('workflows')
-                .select('*, workflow_actions(*)')
-                .eq('id', workflowId)
-                .eq('tenant_id', tenantService.getCurrentTenantId())
-                .eq('is_active', true)
-                .single();
-
-            if (fetchError || !workflow) {
-                return { success: false, error: 'Workflow not found or disabled' };
-            }
-
-            const steps = (workflow.workflow_actions || []).sort((a: any, b: any) => a.action_order - b.action_order);
-            if (steps.length === 0) {
-                return { success: false, error: 'Workflow has no steps' };
-            }
-
-            // Execute steps in order
+            if (!tid) throw new Error('No active tenant found');
+            const workflowResult = await this.getWorkflowById(workflowId);
+            if (!workflowResult.workflow || !workflowResult.workflow.is_active) throw new Error(workflowResult.error || 'Workflow not found or disabled');
+            const steps = workflowResult.workflow.steps || [];
+            if (!steps.length) throw new Error('Workflow has no steps');
+            context.tenantId = tid;
+            const startResponse = await fetch(`/api/tenant/${tid}/automation-workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ operation: 'start_execution', workflowId, context }) });
+            const startPayload = await startResponse.json().catch(() => ({}));
+            if (!startResponse.ok || !startPayload.execution) throw new Error(startPayload.error || 'Workflow execution could not be started');
+            executionId = startPayload.execution.id;
             for (const step of steps) {
                 const stepResult = await this.executeStep(step, context);
-                if (!stepResult.success) {
-                    return { success: false, error: stepResult.error || 'Step execution failed' };
-                }
+                if (!stepResult.success) throw new Error(stepResult.error || 'Step execution failed');
             }
-
-            // Log execution
-            await supabase.from('workflow_executions').insert({
-                workflow_id: workflowId,
-                context,
-                status: 'completed',
-                executed_at: new Date().toISOString(),
-                tenant_id: tenantService.getCurrentTenantId(),
-            });
-
+            const finishResponse = await fetch(`/api/tenant/${tid}/automation-workflows`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ operation: 'finish_execution', executionId, status: 'completed', context }) });
+            const finishPayload = await finishResponse.json().catch(() => ({}));
+            if (!finishResponse.ok) throw new Error(finishPayload.error || 'Workflow completion could not be recorded');
             return { success: true, error: null };
         } catch (error) {
+            const message = error instanceof Error ? error.message : 'Workflow execution failed';
+            if (tid && executionId) {
+                await fetch(`/api/tenant/${tid}/automation-workflows`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ operation: 'finish_execution', executionId, status: 'failed', context, errorMessage: message }) }).catch(() => undefined);
+            }
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Workflow execution failed',
+                error: message,
             };
         }
     },
@@ -308,7 +224,6 @@ export const workflowService = {
                 return await this.executeCondition(step, context);
             }
             
-            // For now, most things are actions
             return await this.executeAction(step, context);
         } catch (error) {
             return {
@@ -326,24 +241,29 @@ export const workflowService = {
         const config = step.action_config || {};
 
         switch (actionType) {
-            case 'send_message':
-                // Send message via messageService
+            case 'send_message': {
                 const { messageService } = await import('./messageService');
-                await messageService.sendMessage(
+                const result = await messageService.sendMessage(
                     context.userId || config.senderId,
-                    config.recipientId,
-                    config.message,
-                    config.priority || 'normal'
+                    config.senderName || 'Workflow automation',
+                    'system',
+                    config.message || context.message || 'Workflow notification',
+                    config.recipientId || context.recipientId,
+                    [],
+                    config.priority || 'normal',
                 );
+                if (result.error || !result.message) return { success: false, error: result.error || 'Workflow message could not be sent' };
                 return { success: true, error: null };
+            }
 
-            case 'update_project':
-                // Update project status
+            case 'update_project': {
                 const { projectService } = await import('./projectService');
-                await projectService.updateProject(config.projectId, {
+                const { error } = await projectService.updateProject(config.projectId || context.projectId, {
                     status: config.status,
                 });
+                if (error) return { success: false, error };
                 return { success: true, error: null };
+            }
 
             case 'create_invoice': {
                 const { businessInvoiceService } = await import('./businessInvoiceService');
@@ -368,40 +288,70 @@ export const workflowService = {
                 return await this.executeSendEmail(step, context);
 
             // ── ZOHO CRM ──────────────────────────────────────
-            case 'zoho_create_lead':
-                await supabase.from('leads').insert({
-                    name: config.lastName || context.leadName || 'Unknown',
-                    company: config.company || context.company || 'Unknown',
-                    email: config.email || context.email,
-                    phone: config.phone || context.phone,
-                    source: config.source || 'Workflow Automation',
-                    notes: config.description || `Created by workflow`,
-                    tenant_id: context.tenantId || tenantService.getCurrentTenantId(),
-                    status: 'new',
+            case 'zoho_create_lead': {
+                const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                if (!tenantId) return { success: false, error: 'Workflow has no workspace context' };
+                const response = await fetch('/api/leads/management', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenantId,
+                        action: 'save_lead',
+                        config: {
+                            source: config.source || 'workflow_automation',
+                            leadData: {
+                                id: config.externalId || `workflow_${crypto.randomUUID()}`,
+                                name: config.company || context.company || config.lastName || context.leadName || 'Workflow lead',
+                                email: config.email || context.email || null,
+                                phone: config.phone || context.phone || null,
+                                type: config.industry || context.industry || null,
+                                metadata: { description: config.description || 'Created by workflow automation' },
+                                foundAt: new Date().toISOString(),
+                            },
+                        },
+                    }),
                 });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || payload.success === false) return { success: false, error: payload.error || 'Lead could not be created' };
+                context.leadId = payload.data?.id;
                 return { success: true, error: null };
+            }
 
-            case 'zoho_update_deal':
-                if (config.dealId || context.dealId) {
-                    await supabase.from('deals').update({
+            case 'zoho_update_deal': {
+                const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                const dealId = config.dealId || context.dealId;
+                if (!tenantId) return { success: false, error: 'Workflow has no workspace context' };
+                if (!dealId) return { success: false, error: 'Workflow deal update has no deal ID' };
+                const response = await fetch(`/api/tenant/${tenantId}/deals`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: dealId,
                         stage: config.stage || context.dealStage,
-                        amount: config.amount || context.dealAmount,
-                        closing_date: config.closingDate || context.closingDate,
-                    }).eq('id', config.dealId || context.dealId)
-                      .eq('tenant_id', context.tenantId || tenantService.getCurrentTenantId());
-                }
+                        value: config.amount ?? context.dealAmount,
+                        expectedCloseDate: config.closingDate || context.closingDate,
+                        stageReason: 'Updated by workflow automation',
+                    }),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) return { success: false, error: payload.error || 'Deal could not be updated' };
                 return { success: true, error: null };
+            }
 
-            case 'zoho_create_contact':
-                await supabase.from('contacts').insert({
-                    first_name: config.firstName || context.firstName,
-                    last_name: config.lastName || context.lastName,
+            case 'zoho_create_contact': {
+                const { contactService } = await import('./contactService');
+                const { contact, error } = await contactService.createContact({
+                    firstName: config.firstName || context.firstName || config.company || context.company || 'Workflow contact',
+                    lastName: config.lastName || context.lastName || '',
                     email: config.email || context.email,
                     phone: config.phone || context.phone,
-                    company: config.company || context.company,
-                    tenant_id: context.tenantId || tenantService.getCurrentTenantId(),
+                    notes: config.company || context.company ? `Company: ${config.company || context.company}` : undefined,
+                    leadSource: 'workflow_automation',
                 });
+                if (error || !contact) return { success: false, error: error || 'Contact could not be created' };
+                context.contactId = contact.id;
                 return { success: true, error: null };
+            }
 
             // ── ZOHO MAIL ─────────────────────────────────────
             case 'zoho_send_mail':
@@ -409,61 +359,51 @@ export const workflowService = {
 
             // ── AI ACTIONS ────────────────────────────────────
             case 'ai_analyze_lead': {
-                const score = Math.floor(Math.random() * 40) + 60;
-                context.leadScore = score;
-                context.leadQuality = score > 80 ? 'high' : score > 60 ? 'medium' : 'low';
-                return { success: true, error: null };
+                try {
+                    const { generateText } = await import('./unifiedAIService');
+                    const result = await generateText(
+                        `Score this lead from 0 to 100 using only the supplied facts. Return JSON {"score":number,"quality":"high"|"medium"|"low","reason":"short explanation"}. Do not invent facts.\n${JSON.stringify(context)}`,
+                        500,
+                        'deepseek-chat',
+                        context.tenantId,
+                    );
+                    if (result.error || !result.text) throw new Error(result.error || 'AI returned no lead analysis');
+                    const match = String(result.text || '').match(/\{[\s\S]*\}/);
+                    if (!match) throw new Error('AI returned no structured lead score');
+                    const analysis = JSON.parse(match[0]);
+                    const score = Number(analysis.score);
+                    if (!Number.isFinite(score) || score < 0 || score > 100) throw new Error('AI returned an invalid lead score');
+                    context.leadScore = score;
+                    context.leadQuality = ['high', 'medium', 'low'].includes(analysis.quality) ? analysis.quality : score >= 80 ? 'high' : score >= 50 ? 'medium' : 'low';
+                    context.leadScoreReason = String(analysis.reason || '');
+                    return { success: true, error: null };
+                } catch (error) {
+                    return { success: false, error: error instanceof Error ? error.message : 'Lead analysis failed' };
+                }
             }
 
             case 'ai_draft_email': {
                 try {
-                    const deepSeekKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
-                    
-                    if (deepSeekKey) {
-                        const { callDeepSeek } = await import('@/lib/ai/deepseek');
-                        const result = await callDeepSeek(
-                            `You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise. Write in plain text only — no markdown.`,
-                            { model: 'deepseek-chat', maxTokens: 2048, temperature: 0.7 }
-                        );
-                        context.emailDraft = result || '';
-                        context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
-                    } else {
-                        const { generateText } = await import('./unifiedAIService');
-                        const result = await generateText(
-                            `You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise.`,
-                            2048
-                        );
-                        context.emailDraft = result.text || '';
-                        context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
-                    }
+                    const { generateText } = await import('./unifiedAIService');
+                    const result = await generateText(`You are a professional business email writer. Draft a professional ${config.tone || 'friendly'} email to ${config.recipientName || context.contactName || 'the client'} about: ${config.topic || context.topic || 'follow-up'}. Keep it concise. Write in plain text only — no markdown.`, 2048, 'deepseek-chat', context.tenantId);
+                    if (result.error || !result.text) throw new Error(result.error || 'AI returned no email draft');
+                    context.emailDraft = result.text;
+                    context.emailSubject = config.subject || `Follow-up: ${config.topic || ''}`;
                     return { success: true, error: null };
-                } catch {
-                    return { success: true, error: null };
+                } catch (error) {
+                    return { success: false, error: error instanceof Error ? error.message : 'Email drafting failed' };
                 }
             }
 
             case 'ai_generate_contract': {
                 try {
-                    const deepSeekKey = process.env.DEEPSEEK_API_KEY || process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY;
-                    
-                    if (deepSeekKey) {
-                        const { callDeepSeek } = await import('@/lib/ai/deepseek');
-                        const result = await callDeepSeek(
-                            `You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses. Write in plain professional text only — no markdown.`,
-                            { model: 'deepseek-chat', maxTokens: 4096, temperature: 0.3 }
-                        );
-                        context.contractContent = result || '';
-                    } else {
-                        const { generateText } = await import('./unifiedAIService');
-                        const result = await generateText(
-                            `You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses.`,
-                            4096
-                        );
-                        context.contractContent = result.text || '';
-                    }
+                    const { generateText } = await import('./unifiedAIService');
+                    const result = await generateText(`You are a legal document assistant. Generate a ${config.contractType || 'service'} contract for ${config.clientName || context.clientName || 'the client'}. Include: scope of work, payment terms ($${config.amount || context.amount || '0'}), timeline, and standard clauses. Write in plain professional text only — no markdown.`, 4096, 'deepseek-chat', context.tenantId);
+                    if (result.error || !result.text) throw new Error(result.error || 'AI returned no contract draft');
+                    context.contractContent = result.text;
                     return { success: true, error: null };
-                } catch {
-                    return { success: true, error: null };
+                } catch (error) {
+                    return { success: false, error: error instanceof Error ? error.message : 'Contract generation failed' };
                 }
             }
 
@@ -486,83 +426,65 @@ export const workflowService = {
 
             // ── INVOICES ──────────────────────────────────────
             case 'generate_invoice': {
-                const tid = context.tenantId || tenantService.getCurrentTenantId();
-                const invoiceNum = `INV-${Date.now().toString(36).toUpperCase()}`;
-                const { error: invErr } = await supabase.from('business_invoices').insert({
-                    tenant_id: tid,
-                    client_id: config.clientId || context.clientId,
-                    project_id: config.projectId || context.projectId,
-                    invoice_number: invoiceNum,
-                    issue_date: new Date().toISOString(),
-                    due_date: config.dueDate || new Date(Date.now() + 30 * 86400000).toISOString(),
+                const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                if (!tenantId) return { success: false, error: 'Workflow has no workspace context' };
+                const { businessInvoiceService } = await import('./businessInvoiceService');
+                const amount = Number(config.amount ?? context.amount ?? 0);
+                const { invoice, error } = await businessInvoiceService.createInvoice(tenantId, {
+                    clientId: config.clientId || context.clientId,
+                    projectId: config.projectId || context.projectId,
+                    dueDate: config.dueDate || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
                     status: 'draft',
-                    subtotal: config.amount || context.amount || 0,
-                    tax_rate: config.taxRate || 0,
-                    tax: (config.amount || 0) * ((config.taxRate || 0) / 100),
-                    discount_amount: config.discount || 0,
-                    total: config.amount || context.amount || 0,
-                    line_items: config.lineItems || context.lineItems || [
-                        { description: config.description || 'Service', quantity: 1, rate: config.amount || 0, amount: config.amount || 0 }
-                    ],
+                    subtotal: amount,
+                    taxRate: Number(config.taxRate || 0),
+                    tax: amount * (Number(config.taxRate || 0) / 100),
+                    discountAmount: Number(config.discount || 0),
+                    total: amount,
+                    lineItems: config.lineItems || context.lineItems || [{ description: config.description || 'Service', quantity: 1, rate: amount, amount }],
                     notes: config.notes || '',
-                    is_public: false,
+                    isPublic: false,
                 });
-                if (invErr) return { success: false, error: invErr.message };
-                context.invoiceNumber = invoiceNum;
+                if (error || !invoice) return { success: false, error: error || 'Invoice could not be created' };
+                context.invoiceNumber = invoice.invoiceNumber;
                 return { success: true, error: null };
             }
 
             // ── QUOTATIONS ────────────────────────────────────
             case 'generate_quote': {
-                const tid = context.tenantId || tenantService.getCurrentTenantId();
-                const quoteNum = `QUO-${Date.now().toString(36).toUpperCase()}`;
-                const { error: qErr } = await supabase.from('quotes').insert({
-                    tenant_id: tid,
-                    quote_number: quoteNum,
-                    name: config.name || context.quoteName || 'Auto-generated Quote',
-                    contact_id: config.contactId || context.contactId,
-                    deal_id: config.dealId || context.dealId,
-                    status: 'draft',
-                    subtotal: config.amount || context.amount || 0,
-                    discount_amount: config.discount || 0,
-                    discount_percent: config.discountPercent || 0,
-                    tax_amount: (config.amount || 0) * ((config.taxPercent || 0) / 100),
-                    tax_percent: config.taxPercent || 0,
-                    total_amount: config.amount || context.amount || 0,
-                    currency: config.currency || 'USD',
-                    valid_until: config.validUntil || new Date(Date.now() + 30 * 86400000).toISOString(),
-                    notes: config.notes || '',
-                    terms_and_conditions: config.terms || 'Standard terms apply.',
-                    created_by: context.userId,
+                const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                if (!tenantId) return { success: false, error: 'Workflow has no workspace context' };
+                const response = await fetch(`/api/tenant/${tenantId}/quotes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: config.name || context.quoteName || 'Workflow-generated quote',
+                        email: config.email || context.email,
+                        currency: config.currency || 'USD',
+                        amount: Number(config.amount ?? context.amount ?? 0),
+                    }),
                 });
-                if (qErr) return { success: false, error: qErr.message };
-                context.quoteNumber = quoteNum;
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok || !payload.quote) return { success: false, error: payload.error || 'Quote could not be created' };
+                context.quoteId = payload.quote.id;
+                context.quoteNumber = payload.quote.quote_number;
                 return { success: true, error: null };
             }
 
             // ── EMAIL CAMPAIGNS ───────────────────────────────
             case 'launch_campaign': {
-                const tid = context.tenantId || tenantService.getCurrentTenantId();
-                const { error: campErr } = await supabase.from('email_campaigns').insert({
-                    tenant_id: tid,
-                    name: config.campaignName || context.campaignName || 'Automated Campaign',
-                    subject: config.subject || context.emailSubject || 'Important Update',
-                    template_id: config.templateId || context.templateId,
-                    from_name: config.fromName || 'AlphaClone',
-                    from_email: config.fromEmail || context.fromEmail || 'notifications@alphaclonesystems.com',
-                    status: config.scheduleAt ? 'scheduled' : 'draft',
-                    scheduled_at: config.scheduleAt,
-                    segment_filter: config.segmentFilter || context.segmentFilter || {},
-                    total_recipients: 0,
-                    total_sent: 0,
-                    total_delivered: 0,
-                    total_opened: 0,
-                    total_clicked: 0,
-                    total_bounced: 0,
-                    total_unsubscribed: 0,
-                    created_by: context.userId,
+                const { emailCampaignService } = await import('./emailCampaignService');
+                const { campaign, error } = await emailCampaignService.createCampaign(context.userId, {
+                    name: config.campaignName || context.campaignName || 'Workflow campaign',
+                    subject: config.subject || context.emailSubject || 'Important update',
+                    templateId: config.templateId || context.templateId,
+                    fromName: config.fromName || 'AlphaClone',
+                    fromEmail: config.fromEmail || context.fromEmail || 'notifications@alphaclonesystems.com',
+                    scheduledAt: config.scheduleAt,
+                    segmentFilter: config.segmentFilter || context.segmentFilter || {},
+                    metadata: { createdByWorkflow: true },
                 });
-                if (campErr) return { success: false, error: campErr.message };
+                if (error || !campaign) return { success: false, error: error || 'Campaign could not be created' };
+                context.campaignId = campaign.id;
                 return { success: true, error: null };
             }
 
@@ -587,41 +509,51 @@ export const workflowService = {
 
             // ── NOTIFICATIONS ─────────────────────────────────
             case 'send_notification': {
-                await supabase.from('notifications').insert({
-                    user_id: config.recipientId || context.userId,
-                    tenant_id: context.tenantId || tenantService.getCurrentTenantId(),
+                const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                if (!tenantId) return { success: false, error: 'Workflow has no workspace context' };
+                const response = await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+                    userId: config.recipientId || context.userId,
+                    tenantId,
                     title: config.title || 'Workflow Notification',
                     message: config.message || context.notificationMessage || 'A workflow completed.',
-                    type: config.notificationType || 'info',
-                    read: false,
-                    created_at: new Date().toISOString(),
-                });
+                    type: ['message', 'project', 'payment', 'system', 'alert', 'task'].includes(config.notificationType) ? config.notificationType : 'system',
+                }) });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) return { success: false, error: payload.error || 'Workflow notification failed' };
                 return { success: true, error: null };
             }
 
             // ── SCHEDULE MEETING ──────────────────────────────
             case 'schedule_meeting': {
                 try {
-                    await fetch('/api/meetings/create', {
+                    const tenantId = context.tenantId || tenantService.getCurrentTenantId();
+                    if (!tenantId) return { success: false, error: 'Workflow has no workspace context' };
+                    const participants = (config.participants || []).filter((value: unknown) => typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value));
+                    const response = await fetch('/api/meetings/create', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            tenantId,
                             title: config.title || 'Automated Meeting',
-                            duration: config.duration || 30,
-                            participants: config.participants || [context.email],
+                            durationMinutes: config.duration || 30,
+                            participants,
+                            scheduledAt: config.scheduledAt || context.scheduledAt,
                         }),
                     });
-                } catch { /* meeting API optional */ }
-                return { success: true, error: null };
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) return { success: false, error: payload.error || 'Workflow meeting could not be scheduled' };
+                    context.meetingId = payload.meetingId;
+                    context.meetingUrl = payload.meetingUrl;
+                    return { success: true, error: null };
+                } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Workflow meeting failed' }; }
             }
 
             // ── UPDATE PROJECT STATUS ─────────────────────────
             case 'update_project_status': {
                 if (config.projectId || context.projectId) {
-                    await supabase.from('projects').update({
-                        status: config.status || context.newStatus || 'in_progress',
-                    }).eq('id', config.projectId || context.projectId)
-                      .eq('tenant_id', context.tenantId || tenantService.getCurrentTenantId());
+                    const { projectService } = await import('./projectService');
+                    const { error } = await projectService.updateProject(config.projectId || context.projectId, { status: config.status || context.newStatus || 'in_progress' });
+                    if (error) return { success: false, error };
                 }
                 return { success: true, error: null };
             }
@@ -648,8 +580,8 @@ export const workflowService = {
             });
             if (!res.ok) return { success: false, error: 'Email send failed' };
             return { success: true, error: null };
-        } catch {
-            return { success: true, error: null };
+        } catch (error) {
+            return { success: false, error: error instanceof Error ? error.message : 'Email send failed' };
         }
     },
 
@@ -672,8 +604,8 @@ export const workflowService = {
             });
             if (!res.ok) return { success: false, error: 'Zoho Mail send failed' };
             return { success: true, error: null };
-        } catch {
-            return { success: true, error: null };
+        } catch (error) {
+            return { success: false, error: error instanceof Error ? error.message : 'Zoho Mail send failed' };
         }
     },
 
@@ -715,16 +647,10 @@ export const workflowService = {
             const tid = tenantService.getCurrentTenantId();
             if (!tid) throw new Error('No active tenant found');
 
-            const { data, error } = await supabase
-                .from('workflow_executions')
-                .select('*')
-                .eq('workflow_id', workflowId)
-                .eq('tenant_id', tid)
-                .order('executed_at', { ascending: false })
-                .limit(50);
-
-            if (error) throw error;
-            return { executions: data || [], error: null };
+            const response = await fetch(`/api/tenant/${tid}/automation-workflows?view=executions&workflowId=${encodeURIComponent(workflowId)}`);
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Failed to fetch executions');
+            return { executions: payload.executions || [], error: null };
         } catch (error) {
             return { executions: [], error: error instanceof Error ? error.message : 'Failed to fetch executions' };
         }
@@ -735,14 +661,12 @@ export const workflowService = {
      */
     async getWorkflowTemplates(): Promise<{ templates: any[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('workflow_templates')
-                .select('*')
-                .is('tenant_id', null) // Official templates
-                .order('name');
-
-            if (error) throw error;
-            return { templates: data || [], error: null };
+            const tid = tenantService.getCurrentTenantId();
+            if (!tid) throw new Error('No active tenant found');
+            const response = await fetch(`/api/tenant/${tid}/automation-workflows?view=templates`);
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Failed to fetch templates');
+            return { templates: payload.templates || [], error: null };
         } catch (error) {
             return { templates: [], error: error instanceof Error ? error.message : 'Failed to fetch templates' };
         }
@@ -757,4 +681,3 @@ export const workflowService = {
         return { success: true, error: null };
     },
 };
-

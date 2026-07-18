@@ -225,32 +225,6 @@ export const enterpriseBillingService = {
     },
 
     /**
-     * Generate PDF invoice (would use a PDF library in production)
-     */
-    async generatePDFInvoice(invoiceId: string): Promise<Buffer | null> {
-        try {
-            // Get invoice data
-            const { data: invoice } = await supabase
-                .from('invoices')
-                .select('*, tenants(*), profiles(*)')
-                .eq('id', invoiceId)
-                .single();
-
-            if (!invoice) throw new Error('Invoice not found');
-
-            // In production, use a PDF library like pdfkit or puppeteer
-            // For now, return a placeholder
-            console.log('Generate PDF for invoice:', invoice.invoice_number);
-
-            // Would generate actual PDF here
-            return null;
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            return null;
-        }
-    },
-
-    /**
      * Create payment plan for large invoices
      */
     async createPaymentPlan(

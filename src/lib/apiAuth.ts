@@ -30,7 +30,10 @@ async function getSupabaseServerClient() {
  * Ensures the request is authenticated (cookie session or Authorization Bearer).
  * NOTE: This is designed for App Router API routes/Server Actions.
  */
-export async function requireAuthenticatedUser(req?: Request) {
+export async function requireAuthenticatedUser(
+    req?: Request,
+    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
+) {
     const bearer = req?.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
     if (bearer) {
         if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
@@ -44,6 +47,7 @@ export async function requireAuthenticatedUser(req?: Request) {
             throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
         }
         const supabase = await getSupabaseServerClient();
+        await requireActiveProfile(data.user.id, options);
         return { supabase, user: data.user };
     }
 
@@ -54,22 +58,54 @@ export async function requireAuthenticatedUser(req?: Request) {
         throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
     }
 
+    await requireActiveProfile(data.user.id, options);
+
     return {
         supabase,
         user: data.user,
     };
 }
 
+async function requireActiveProfile(
+    userId: string,
+    options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
+) {
+    const admin = createSupabaseAdminClient();
+    const { data: profile, error } = await admin
+        .from('profiles')
+        .select('id, role, account_status, scheduled_deletion_at')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[apiAuth] Failed to verify account status:', error);
+        throw new RouteAuthError(503, 'Account verification is temporarily unavailable', 'INTERNAL_ERROR');
+    }
+    if (!profile) {
+        if (options?.allowMissingProfile) return null;
+        throw new RouteAuthError(403, 'Account profile is unavailable', 'FORBIDDEN');
+    }
+
+    const status = String(profile.account_status || 'active');
+    if (status === 'deleted' || status === 'suspended') {
+        throw new RouteAuthError(403, 'Account is not active', 'FORBIDDEN');
+    }
+    if (status === 'pending_deletion' && !options?.allowPendingDeletion) {
+        throw new RouteAuthError(403, 'Account deletion is pending', 'FORBIDDEN');
+    }
+    return profile;
+}
+
 /**
  * Ensures the user has access to a specific tenant.
  * NOTE: This is designed for App Router API routes/Server Actions.
  */
-export async function requireTenantAccess(tenantId: string) {
+export async function requireTenantAccess(tenantId: string, req?: Request) {
     if (!tenantId?.trim()) {
         throw new RouteAuthError(400, 'tenantId required', 'BAD_REQUEST');
     }
 
-    const { supabase, user } = await requireAuthenticatedUser();
+    const { supabase, user } = await requireAuthenticatedUser(req);
 
     const { data, error } = await supabase
         .from('tenant_users')
@@ -92,6 +128,14 @@ export async function requireTenantAccess(tenantId: string) {
         user,
         membership: data as TenantMembership,
     };
+}
+
+export async function requireTenantRole(tenantId: string, allowedRoles: string[], req?: Request) {
+    const access = await requireTenantAccess(tenantId, req);
+    if (!allowedRoles.includes(access.membership.role)) {
+        throw new RouteAuthError(403, 'Insufficient workspace permissions', 'FORBIDDEN');
+    }
+    return access;
 }
 
 /**

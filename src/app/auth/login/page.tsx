@@ -8,14 +8,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
-import { AlertCircle, LogIn, UserPlus, FileText, Shield, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, LogIn, UserPlus, Shield, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { usePWA } from '@/contexts/PWAContext';
-import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
+import { SubscriptionPlan } from '@/services/tenancy/types';
 import Image from 'next/image';
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
+import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -73,9 +74,6 @@ function LoginContent() {
     const [isEuLikeRegistration, setIsEuLikeRegistration] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [showPayment, setShowPayment] = useState(false);
-    const [newTenantData, setNewTenantData] = useState<{ id: string, name: string } | null>(null);
-    const [paymentProcessing, setPaymentProcessing] = useState(false);
     const [showMfaChallenge, setShowMfaChallenge] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
     const [humanVerified, setHumanVerified] = useState(false);
@@ -256,20 +254,19 @@ function LoginContent() {
                     trialEndDate.setDate(trialEndDate.getDate() + 14);
 
                     const workspaceName = businessName?.trim() || `${name}'s Organization`;
-                    const randomSuffix = Array.from({ length: 5 }, () =>
-                        String.fromCharCode(97 + Math.floor(Math.random() * 26))
-                    ).join('');
+                    const randomSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
                     const slug = workspaceName.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
-                    let newTenant = null;
+                    let newTenant: { id: string; name: string };
                     try {
-                        const { tenantService } = await import('@/services/tenancy/TenantService');
-                        newTenant = await tenantService.createTenant({
+                        const result = await bootstrapTenantViaApi({
                             name: workspaceName,
                             slug,
-                            adminUserId: newUser.id,
                             plan: selectedPlan,
+                            mode: 'ensure',
+                            idempotencyKey: 'initial-workspace-v1',
                         });
+                        newTenant = result.tenant;
                         toast.success('Workspace provisioned!', { id: 'workspace' });
                     } catch (tenantErr: any) {
                         const errorMsg = tenantErr.message || 'Failed to create workspace';
@@ -278,17 +275,6 @@ function LoginContent() {
                         setError(errorMsg);
                         setIsLoading(false);
                         return;
-                    }
-
-                    try {
-                        const { tenantService } = await import('@/services/tenancy/TenantService');
-                        await tenantService.updateTenant(newTenant.id, {
-                            trial_ends_at: trialEndDate,
-                            subscription_status: 'trial',
-                            subscription_plan: selectedPlan,
-                        });
-                    } catch (trialErr) {
-                        console.warn('Subscription setup failed:', trialErr);
                     }
 
                     try {
@@ -366,42 +352,6 @@ function LoginContent() {
         }
     };
 
-    const handlePayment = async () => {
-        if (!newTenantData) return;
-        setPaymentProcessing(true);
-        setError('');
-
-        try {
-            const { businessInvoiceService } = await import('@/services/businessInvoiceService');
-            const amount = selectedPlan === 'starter' ? 15 : selectedPlan === 'pro' ? 45 : 80;
-
-            const { invoice, error: invoiceErr } = await businessInvoiceService.createInvoice(newTenantData.id, {
-                total: amount,
-                notes: `First month subscription — ${selectedPlan} plan`,
-                status: 'draft',
-                dueDate: new Date().toISOString().split('T')[0],
-            });
-
-            if (invoiceErr) throw new Error(invoiceErr);
-
-            // In a real flow, we'd open Stripe here.
-            // For now, we simulate a successful payment activation.
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Mark tenant as active/paid (simplified for now)
-            const { tenantService } = await import('@/services/tenancy/TenantService');
-            await tenantService.updateTenant(newTenantData.id, {
-                subscription_status: 'active'
-            });
-
-            router.push(getPostAuthDashboardPath('tenant_admin'));
-        } catch (err: any) {
-            setError(`Payment failed: ${err.message}. Please try again.`);
-        } finally {
-            setPaymentProcessing(false);
-        }
-    };
-
     const handleMfaVerify = async () => {
         setIsLoading(true);
         setError('');
@@ -438,63 +388,6 @@ function LoginContent() {
             setIsLoading(false);
         }
     };
-
-    if (showPayment && newTenantData) {
-        return (
-            <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="fixed inset-0 z-0 pointer-events-none">
-                    <HeroBackground />
-                </div>
-
-                <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 my-auto animate-slide-up">
-                    <h2 className="text-2xl font-bold text-white mb-2 text-center">Your 14-Day Trial is Active</h2>
-                    <p className="text-slate-400 text-sm text-center mb-8">
-                        No charge now. Add a payment method after your trial to continue.
-                    </p>
-
-                    <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 space-y-4">
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-                            <span className="text-slate-400">Plan Selected</span>
-                            <span className="text-white font-semibold">{selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-                            <span className="text-slate-400">Billing Cycle</span>
-                            <span className="text-white font-semibold">Monthly</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-                            <span className="text-slate-400">Trial Period</span>
-                            <span className="text-teal-400 font-semibold">14 days free</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-white font-bold">Due After Trial</span>
-                            <span className="text-2xl font-black text-teal-400">
-                                ${PLAN_PRICING[selectedPlan]?.monthly ?? '—'}/mo
-                            </span>
-                        </div>
-                    </div>
-
-                    {error && (
-                        <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl flex items-start gap-3 text-left mb-6">
-                            <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
-                            <p className="text-sm text-rose-200">{error}</p>
-                        </div>
-                    )}
-
-                    <Button
-                        onClick={() => { window.location.href = '/dashboard'; }}
-                        className="w-full bg-teal-500 hover:bg-teal-400 text-slate-950 py-4 text-lg font-bold rounded-2xl shadow-lg shadow-teal-500/20"
-                    >
-                        Go to Dashboard
-                    </Button>
-
-                    <p className="text-xs text-slate-500 mt-4 flex items-center justify-center gap-2 text-center">
-                        <FileText className="w-3 h-3 flex-shrink-0" />
-                        You will be reminded before your trial ends to add a payment method.
-                    </p>
-                </div>
-            </div>
-        );
-    }
 
     if (showMfaChallenge) {
         return (

@@ -114,7 +114,7 @@ export default function LeadFinderChat({ onActivity }: Props) {
   const appendMessage = (role: 'user' | 'assistant', content: string) => {
     setMessages((prev) => [
       ...prev,
-      { id: `${Date.now()}-${Math.random()}`, role, content },
+      { id: crypto.randomUUID(), role, content },
     ]);
   };
 

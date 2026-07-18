@@ -228,15 +228,9 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
         // 6. Google Calendar events
         try {
-            const { data: tokenData } = await supabase
-                .from('google_calendar_tokens')
-                .select('id')
-                .eq('user_id', user.id)
-                .single();
-
-            if (tokenData) {
-                setIsGoogleConnected(true);
-                const googleEvents = await googleCalendarService.listEvents(user.id);
+            if (currentTenant?.id) {
+                const { connected, events: googleEvents } = await googleCalendarService.listEvents(currentTenant.id);
+                setIsGoogleConnected(connected);
                 googleEvents.forEach((ge: GoogleCalendarEvent) => {
                     unified.push({
                         id: `google-${ge.id}`,
@@ -248,9 +242,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                         description: ge.description,
                     });
                 });
-            } else {
-                setIsGoogleConnected(false);
-            }
+            } else setIsGoogleConnected(false);
         } catch (_) { /* silent */ }
 
         setAllEvents(unified);
@@ -261,7 +253,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
 
     const handleUpdateEvent = useCallback(async (eventId: string, updates: Partial<BusinessEvent>) => {
         try {
-            const { error } = await businessEventService.updateEvent(eventId, updates);
+            if (!currentTenant?.id) return;
+            const { error } = await businessEventService.updateEvent(currentTenant.id, eventId, updates);
             if (!error) {
                 toast.success('Event updated');
                 loadAllEvents();
@@ -273,12 +266,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         } catch (_) {
             toast.error('An error occurred');
         }
-    }, [loadAllEvents]);
+    }, [currentTenant?.id, loadAllEvents]);
 
     const handleDeleteEvent = useCallback(async (eventId: string) => {
         if (!confirm('Are you sure you want to delete this event?')) return;
         try {
-            const { error } = await businessEventService.deleteEvent(eventId);
+            if (!currentTenant?.id) return;
+            const { error } = await businessEventService.deleteEvent(currentTenant.id, eventId);
             if (!error) {
                 toast.success('Event deleted');
                 loadAllEvents();
@@ -289,7 +283,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
         } catch (_) {
             toast.error('An error occurred');
         }
-    }, [loadAllEvents]);
+    }, [currentTenant?.id, loadAllEvents]);
 
     const handleAddEvent = useCallback(async (eventData: Partial<BusinessEvent>) => {
         if (!currentTenant) return;
@@ -313,7 +307,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
     }, [currentTenant, loadAllEvents]);
 
     const handleGoogleConnect = () => {
-        window.location.href = `/api/auth/google/calendar/connect?userId=${user.id}`;
+        if (!currentTenant?.id) return;
+        window.location.href = `/api/auth/google/calendar/connect?tenantId=${encodeURIComponent(currentTenant.id)}`;
     };
 
     const toggleFilter = (source: CalendarEvent['source']) => {

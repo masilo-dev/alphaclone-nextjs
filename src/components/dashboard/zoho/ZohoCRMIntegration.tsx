@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { RefreshCw, CheckCircle, AlertCircle, Database, Layout, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useTenant } from '../../../contexts/TenantContext';
 import { showActionNextSteps } from '../../common/showActionNextSteps';
 
 export default function ZohoCRMIntegration() {
     const router = useRouter();
     const { user } = useAuth();
+    const { currentTenant } = useTenant();
     const [syncing, setSyncing] = useState(false);
     const [status, setStatus] = useState<{ type: 'idle' | 'success' | 'error', message?: string }>({ type: 'idle' });
     const [connectionLoading, setConnectionLoading] = useState(true);
@@ -25,7 +27,8 @@ export default function ZohoCRMIntegration() {
         const loadZohoStatus = async () => {
             setConnectionLoading(true);
             try {
-                const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
+                if (!currentTenant?.id) return;
+                const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' });
                 const data = await res.json().catch(() => ({}));
                 if (!cancelled) {
                     setZohoStatus({
@@ -45,20 +48,20 @@ export default function ZohoCRMIntegration() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [currentTenant?.id]);
 
     const handleSync = async (module?: string) => {
-        if (!user) {
+        if (!user || !currentTenant?.id) {
             setStatus({ type: 'error', message: 'User not authenticated' });
             return;
         }
         setSyncing(true);
         setStatus({ type: 'idle' });
         try {
-            const res = await fetch(`/api/zoho/crm/sync?userId=${user.id}`, {
+            const res = await fetch('/api/zoho/crm/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ module })
+                body: JSON.stringify({ module, tenantId: currentTenant.id })
             });
             const data = await res.json();
             if (res.ok) {

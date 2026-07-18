@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
+import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -484,10 +485,11 @@ export async function POST(req: NextRequest) {
 
       const apiKey = client_secret || client_id;
 
+      const keyHash = hashMcpApiKey(String(apiKey || ''));
       const { data: keyData, error: keyError } = await supabase
         .from('mcp_api_keys')
         .select('tenant_id, user_id')
-        .eq('api_key', apiKey)
+        .eq('api_key_hash', keyHash)
         .single();
 
       if (keyError || !keyData) {

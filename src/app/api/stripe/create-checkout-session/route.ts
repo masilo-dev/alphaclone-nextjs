@@ -1,17 +1,29 @@
 import { NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { requireTenantAccess } from '@/lib/apiAuth';
+import { requireTenantRole } from '@/lib/apiAuth';
 import { stripe } from '@/lib/stripe';
+import { PLAN_PRICING, type SubscriptionPlan } from '@/services/tenancy/types';
+import { z } from 'zod';
 
 export async function POST(req: Request) {
     try {
-        const { priceId, planId, tenantId, adminEmail, successUrl, cancelUrl } = await req.json();
+        const { planId, tenantId, successUrl, cancelUrl } = z.object({
+            planId: z.enum(['starter', 'pro', 'enterprise']),
+            tenantId: z.string().uuid(),
+            successUrl: z.string().url().optional(),
+            cancelUrl: z.string().url().optional(),
+            priceId: z.string().optional(),
+            adminEmail: z.string().optional(),
+        }).parse(await req.json());
 
-        if (!priceId || !tenantId) {
-            return NextResponse.json({ error: 'Missing priceId or tenantId' }, { status: 400 });
-        }
-
-        await requireTenantAccess(tenantId);
+        const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
+        const priceId = PLAN_PRICING[planId as SubscriptionPlan].stripePriceId;
+        if (!priceId) return NextResponse.json({ error: 'This plan is not configured for checkout' }, { status: 503 });
+        const origin = new URL(req.url).origin;
+        const safeReturnUrl = (value: string | undefined, fallback: string) => {
+            if (!value) return `${origin}${fallback}`;
+            return new URL(value).origin === origin ? value : `${origin}${fallback}`;
+        };
 
         // Apply discount for starter plan if applicable
         const discounts = [];
@@ -32,10 +44,10 @@ export async function POST(req: Request) {
             mode: 'subscription',
             automatic_tax: { enabled: true },
             tax_id_collection: { enabled: true },
-            customer_email: adminEmail,
+            customer_email: user.email,
             discounts,
-            success_url: successUrl || `${req.headers.get('origin')}/dashboard?checkout=success`,
-            cancel_url: cancelUrl || `${req.headers.get('origin')}/dashboard?checkout=cancelled`,
+            success_url: safeReturnUrl(successUrl, '/dashboard?checkout=success'),
+            cancel_url: safeReturnUrl(cancelUrl, '/dashboard?checkout=cancelled'),
             metadata: {
                 tenantId,
                 planId,

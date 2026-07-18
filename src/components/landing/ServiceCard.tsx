@@ -13,7 +13,6 @@ interface ServiceCardProps {
         image?: string;
         gradient?: string;
         accentColor?: string;
-        isComingSoon?: boolean;
         showExtra?: React.ReactNode;
     };
     index: number;
@@ -61,11 +60,6 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-1">
                             <h3 className="text-2xl font-bold text-white leading-tight">{service.title}</h3>
-                            {service.isComingSoon && (
-                                <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-xs font-bold text-teal-400 uppercase tracking-wider">
-                                    Coming Soon
-                                </span>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -119,4 +113,3 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({ service, index }) => {
         </motion.div>
     );
 };
-

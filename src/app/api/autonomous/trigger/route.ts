@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { autonomousRunnerService } from '@/services/autonomousRunnerService';
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const tenantId = String(body.tenantId || '').trim();
     if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-    await requireTenantAccess(tenantId);
+    await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
 
     console.log(`[Autonomous Trigger] Starting manual execution for tenant: ${tenantId}`);
     const result = await autonomousRunnerService.runForTenant(tenantId);

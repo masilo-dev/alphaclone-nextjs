@@ -11,7 +11,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId, req);
 
         const supabase = createSupabaseAdminClient();
 

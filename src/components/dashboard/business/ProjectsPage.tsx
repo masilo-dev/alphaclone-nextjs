@@ -174,23 +174,25 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const handleStageUpdate = useCallback(async (projectId: string, newStage: ProjectStage) => {
         if (!currentTenant) return;
 
-        // Optimistic update
+        const previousStage = projects.find((project) => project.id === projectId)?.currentStage;
         setProjects(prev => prev.map(p => p.id === projectId ? { ...p, currentStage: newStage } : p));
 
         const { error } = await projectService.updateProject(projectId, { currentStage: newStage });
 
         if (error) {
-            console.error("Failed to update stage:", error);
-            // Optionally revert or show toast here
-            // For now, silent failure log is acceptable as we might refetch later
+            if (previousStage) setProjects(prev => prev.map(p => p.id === projectId ? { ...p, currentStage: previousStage } : p));
+            toast.error(`Project stage was not changed: ${error}`);
         }
-    }, [currentTenant]);
+    }, [currentTenant, projects]);
 
     const handleDeleteProject = useCallback(async (projectId: string) => {
         if (!confirm('Delete this project? This action cannot be undone.')) return;
         const { error } = await projectService.deleteProject(projectId);
         if (!error) {
             setProjects(prev => prev.filter(p => p.id !== projectId));
+            toast.success('Project deleted');
+        } else {
+            toast.error(`Project could not be deleted: ${error}`);
         }
     }, []);
 
@@ -739,7 +741,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
 };
 
 const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
-    // Reusing existing timeline logic for now, but enabling it within the new layout
+    // The timeline uses the same project milestone source as the primary layout.
     const sorted = [...projects].sort((a, b) => new Date(a.startDate || a.createdAt || 0).getTime() - new Date(b.startDate || b.createdAt || 0).getTime());
     const timelineStart = new Date();
     timelineStart.setDate(1);
@@ -977,20 +979,10 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
 
         setPostingComment(true);
         try {
-            const { data, error } = await supabase
-                .from('project_comments')
-                .insert({
-                    tenant_id: tenantId,
-                    project_id: project.id,
-                    author_name: authorName,
-                    author_email: commentAuthorEmail.trim() || null,
-                    content,
-                    is_client: false,
-                })
-                .select('id, author_name, author_email, content, is_client, created_at')
-                .single();
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/projects/${encodeURIComponent(project.id)}/comments`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Project comment could not be saved');
+            const data = payload.comment;
             if (data) {
                 setComments((prev) => [...prev, data as any]);
                 setCommentDraft('');

@@ -1,17 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { encodeOAuthState } from '@/lib/oauth/oauthState';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 
 export async function GET(req: NextRequest) {
     try {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
 
@@ -19,15 +12,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Tenant ID required' }, { status: 400 });
     }
 
-    // Verify user has access to this tenant
-    const { data: access } = await supabase.rpc('user_has_tenant_access', {
-        p_user_id: user.id,
-        p_tenant_id: tenantId
-    });
-
-    if (!access) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
+    const { user } = await requireTenantRole(tenantId, ['owner','admin','tenant_admin','super_admin']);
 
     const clientId = ENV.VITE_CALENDLY_CLIENT_ID;
     const redirectUri = ENV.VITE_CALENDLY_REDIRECT_URI;
@@ -36,17 +21,17 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect(new URL(`/dashboard/settings?tab=booking&error=calendly_not_configured`, req.url));
     }
 
-    const state = encodeOAuthState({
-        tenantId,
-        userId: user.id,
-        ts: Date.now(),
-    });
+    const admin = createSupabaseAdminClient();
+    const { data: stateRow, error: stateError } = await admin.from('oauth_states').insert({
+        user_id: user.id, tenant_id: tenantId, metadata: { provider: 'calendly' },
+    }).select('id').single();
+    if (stateError || !stateRow?.id) throw stateError || new Error('OAuth state could not be created');
 
-    const authUrl = `https://auth.calendly.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+    const authUrl = `https://auth.calendly.com/oauth/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateRow.id}`;
 
     return NextResponse.redirect(authUrl);
     } catch (err) {
         console.error('[calendly/connect] GET error:', err);
-        return NextResponse.redirect(new URL('/dashboard/settings?tab=booking&error=oauth_failed', req.url));
+        return routeErrorResponse(err, 'Calendly authorization could not be started', req);
     }
 }

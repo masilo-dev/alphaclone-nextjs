@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useTenant, useTenantRole } from '../../contexts/TenantContext';
 import { tenantService } from '../../services/tenancy/TenantService';
+import { PLAN_PRICING, type SubscriptionPlan } from '../../services/tenancy/types';
 
 type Tab = 'general' | 'team' | 'billing' | 'branding';
 
@@ -22,7 +23,7 @@ export default function TenantSettings() {
   const userRole = useTenantRole();
   const [activeTab, setActiveTab] = useState<Tab>('general');
 
-  const isAdmin = userRole === 'admin' || userRole === 'owner';
+  const isAdmin = ['admin', 'owner', 'tenant_admin', 'super_admin'].includes(userRole || '');
 
   if (!currentTenant) {
     return (
@@ -105,10 +106,6 @@ function GeneralSettings({ tenant, isAdmin, onUpdate }: any) {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleBillingEmailChange = (email: string) => {
-    // Local state update if needed, but for now we are using the main save
   };
 
   return (
@@ -275,6 +272,17 @@ function TeamSettings({ tenant, isAdmin }: any) {
     }
   };
 
+  const handleRemove = async (userId: string) => {
+    if (!window.confirm('Remove this person from the workspace?')) return;
+    try {
+      await tenantService.removeUserFromTenant(tenant.id, userId);
+      await loadTeamMembers();
+      toast.success('Team member removed');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Team member could not be removed');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Invite Section */}
@@ -367,7 +375,7 @@ function TeamSettings({ tenant, isAdmin }: any) {
                   </span>
 
                   {isAdmin && member.role !== 'owner' && (
-                    <button className="p-2 text-slate-400 hover:text-red-400 transition-colors">
+                    <button onClick={() => handleRemove(member.user_id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors" aria-label="Remove team member">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -386,6 +394,23 @@ function BillingSettings({ tenant, isAdmin }: any) {
   const isCanceled = tenant.cancel_at_period_end;
   const isPaidPlan = currentPlan !== 'free';
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const openBillingPortal = async () => {
+    try {
+      setLoadingAction('portal');
+      const response = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId: tenant.id }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.url) throw new Error(payload.error || 'Billing portal is unavailable');
+      window.location.assign(payload.url);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Billing portal is unavailable');
+      setLoadingAction(null);
+    }
+  };
 
   const handleSubscriptionAction = async (action: 'cancel_at_period_end' | 'resume') => {
     if (!confirm(action === 'cancel_at_period_end'
@@ -429,7 +454,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
               )}
             </div>
             <div className="text-slate-400">
-              {currentPlan === 'free' ? 'Free forever' : `$${currentPlan === 'starter' ? 25 : currentPlan === 'pro' ? 89 : 200}/month`}
+              {currentPlan === 'free' ? 'Free forever' : `$${PLAN_PRICING[currentPlan as SubscriptionPlan]?.monthly ?? '—'}/month`}
             </div>
           </div>
 
@@ -456,7 +481,7 @@ function BillingSettings({ tenant, isAdmin }: any) {
                   </button>
                 )
               )}
-              <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
+              <button onClick={() => window.location.assign('/pricing')} className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors">
                 {currentPlan === 'free' ? 'Upgrade Plan' : 'Change Plan'}
               </button>
             </div>
@@ -494,8 +519,8 @@ function BillingSettings({ tenant, isAdmin }: any) {
                 <p className="text-xs text-slate-400">Managed via Stripe</p>
               </div>
             </div>
-            <button className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm">
-              Update Card
+            <button onClick={openBillingPortal} disabled={loadingAction === 'portal'} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm disabled:opacity-50">
+              {loadingAction === 'portal' ? 'Opening…' : 'Update Card'}
             </button>
           </div>
         </div>
@@ -507,6 +532,23 @@ function BillingSettings({ tenant, isAdmin }: any) {
 function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
   const [logoUrl, setLogoUrl] = useState(tenant.logo_url || '');
   const [brandColor, setBrandColor] = useState(tenant.settings?.brand_color || '#14b8a6');
+  const [saving, setSaving] = useState(false);
+
+  const saveBranding = async () => {
+    try {
+      setSaving(true);
+      await tenantService.updateTenant(tenant.id, {
+        logo_url: logoUrl || undefined,
+        settings: { ...tenant.settings, brand_color: brandColor },
+      });
+      await onUpdate();
+      toast.success('Branding saved');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Branding could not be saved');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -553,7 +595,7 @@ function BrandingSettings({ tenant, isAdmin, onUpdate }: any) {
 
         {isAdmin && (
           <div className="mt-6">
-            <button className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors flex items-center gap-2">
+            <button onClick={saveBranding} disabled={saving} className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
               <Save className="w-4 h-4" />
               Save Branding
             </button>

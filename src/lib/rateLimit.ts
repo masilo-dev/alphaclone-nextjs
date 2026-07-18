@@ -71,21 +71,6 @@ export const rateLimitConfigs: {
 };
 
 /**
- * Create a rate limiter with specific configuration
- */
-function createRateLimiter(limit: number, window: Duration) {
-    if (redis) {
-        return new Ratelimit({
-            redis,
-            limiter: Ratelimit.slidingWindow(limit, window),
-            analytics: true,
-            prefix: 'alphaclone',
-        });
-    }
-    return null;
-}
-
-/**
  * In-memory fallback rate limiter
  */
 function checkInMemoryRateLimit(identifier: string, limit: number, windowMs: number): {
@@ -314,41 +299,4 @@ export async function rateLimitMiddleware(
 
     // Return null to indicate "pass through"
     return null;
-}
-
-/**
- * Get rate limit status for a key (useful for dashboards)
- */
-export async function getRateLimitStatus(identifier: string): Promise<{
-    remaining: number;
-    reset: number;
-    limit: number;
-} | null> {
-    if (!redis) return null;
-
-    try {
-        // This would require additional implementation with Upstash
-        // For now, return null (would need custom Redis commands)
-        return null;
-    } catch (error) {
-        return null;
-    }
-}
-
-/**
- * Reset rate limit for a specific identifier (admin function)
- */
-export async function resetRateLimit(identifier: string): Promise<boolean> {
-    if (!redis) {
-        inMemoryStore.delete(identifier);
-        return true;
-    }
-
-    try {
-        await redis.del(`alphaclone:${identifier}`);
-        return true;
-    } catch (error) {
-        console.error('Failed to reset rate limit:', error);
-        return false;
-    }
 }

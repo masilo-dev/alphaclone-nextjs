@@ -23,6 +23,13 @@ export interface EmailPayload {
     tenantId?: string;
 }
 
+export interface WhatsAppPayload {
+    tenantId: string;
+    phone: string;
+    message: string;
+    integrationId?: string;
+}
+
 export interface NotificationPayload {
     tenantId: string;
     title: string;
@@ -31,17 +38,28 @@ export interface NotificationPayload {
     userId?: string;
 }
 
-export type MessagePayload = SMSPayload | EmailPayload | NotificationPayload;
+export type MessagePayload = SMSPayload | EmailPayload | WhatsAppPayload | NotificationPayload;
 
 /** Unified send interface — routes to correct channel handler */
 export async function sendMessage(channel: Channel, payload: MessagePayload): Promise<{ success: boolean; sid?: string; error?: string }> {
     switch (channel) {
         case 'sms':       return sendSMS(payload as SMSPayload);
         case 'email':     return sendEmail(payload as EmailPayload);
+        case 'whatsapp':  return sendWhatsApp(payload as WhatsAppPayload);
         case 'notification': return sendNotification(payload as NotificationPayload);
         default:
-            return { success: false, error: `Channel "${channel}" not yet implemented` };
+            return { success: false, error: `Unsupported communication channel: ${String(channel)}` };
     }
+}
+
+async function sendWhatsApp(payload: WhatsAppPayload): Promise<{ success: boolean; sid?: string; error?: string }> {
+    const res = await fetch('/api/integrations/whatsapp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { success: res.ok && data.success !== false, sid: data.messageId || data.sid, error: res.ok ? undefined : data.error || 'WhatsApp delivery failed' };
 }
 
 async function sendSMS(payload: SMSPayload): Promise<{ success: boolean; sid?: string; error?: string }> {

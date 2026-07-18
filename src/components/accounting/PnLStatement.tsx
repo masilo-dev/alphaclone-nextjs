@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { useTenant } from '@/contexts/TenantContext';
 
 type PnLData = {
   period: { from: string; to: string; label: string };
@@ -37,6 +38,7 @@ type PnLData = {
 const COLORS = ['#2dd4bf', '#fbbf24', '#f87171', '#818cf8', '#c084fc', '#fb7185', '#38bdf8', '#a3e635'];
 
 export default function PnLStatement() {
+  const { currentTenant } = useTenant();
   const [data, setData] = useState<PnLData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,10 +46,15 @@ export default function PnLStatement() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   const fetchData = async () => {
+    if (!currentTenant?.id) {
+      setLoading(false);
+      setError('Select a workspace to view its financial statement.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      let url = `/api/accounting/pnl?period=${period}`;
+      let url = `/api/accounting/pnl?period=${period}&tenantId=${encodeURIComponent(currentTenant.id)}`;
       if (dateRange.from) url += `&from_date=${dateRange.from}`;
       if (dateRange.to) url += `&to_date=${dateRange.to}`;
 
@@ -65,11 +72,10 @@ export default function PnLStatement() {
 
   useEffect(() => {
     fetchData();
-  }, [period]);
+  }, [period, currentTenant?.id]);
 
   const handleExportPDF = () => {
-    window.print(); // Browser print with CSS media query handles this for now
-    // TODO: implement full jsPDF export if needed
+    window.print();
   };
 
   const fmt = (val: number) => 

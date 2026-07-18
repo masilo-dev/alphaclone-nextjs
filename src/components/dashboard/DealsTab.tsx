@@ -208,7 +208,7 @@ const DealDetail: React.FC<{
   };
 
   const handleDeleteProduct = async (id: string) => {
-    const { error } = await dealService.deleteDealProduct(id);
+    const { error } = await dealService.deleteDealProduct(deal.id, id);
     if (error) { toast.error('Could not remove product'); return; }
     setProducts(prev => prev.filter(p => p.id !== id));
   };
@@ -612,23 +612,22 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
 
     setSavingNewDeal(true);
     try {
-      const { data, error } = await supabase
-        .from('deals')
-        .insert({
+      const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/deals`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           name: newDealName.trim(),
           value: parseFloat(newDealValue) || 0,
           stage: newDealStage,
-          contact_name: newDealContactName.trim() || null,
-          contact_email: newDealContactEmail.trim() || null,
-          description: newDealDescription.trim() || null,
-          tenant_id: currentTenant.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
+          contactName: newDealContactName.trim(),
+          contactEmail: newDealContactEmail.trim(),
+          description: newDealDescription.trim(),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Error creating deal');
+      const data = payload.deal;
 
       toast.success('Deal created successfully');
       setDeals((prev) => [data as Deal, ...prev]);

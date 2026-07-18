@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
                                 .insert({
                                     tenant_id: tenantId,
                                     title,
-                                    description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
+                                    description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop analysis during idle hours.`,
                                     priority: 'medium',
                                     status: 'todo',
                                     created_at: new Date().toISOString(),

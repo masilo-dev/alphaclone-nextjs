@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,17 +15,19 @@ function getFromEmail() {
   return process.env.BREVO_PLATFORM_FROM_EMAIL || process.env.BREVO_FROM_EMAIL || 'legal@alphaclonesystems.com';
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const payload = await req.json().catch(() => ({}));
-    const companyName = String(payload.companyName || '').trim();
-    const email = String(payload.email || '').trim();
-    const country = String(payload.country || '').trim();
-    const notes = String(payload.notes || '').trim() || null;
-
-    if (!companyName || !email || !country) {
-      return NextResponse.json({ error: 'Company name, email, and country are required.' }, { status: 400 });
-    }
+    await requireAuthenticatedUser(req);
+    const { companyName, email, country, notes } = z.object({
+      companyName: z.string().trim().min(1).max(200),
+      email: z.string().trim().email().max(320),
+      country: z.string().trim().min(2).max(100),
+      notes: z.string().trim().max(4000).optional(),
+    }).parse(await req.json().catch(() => ({})));
 
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (brevoKey) {
       const subject = `DPA request received from ${companyName}`;
       const text = `DPA request received from ${companyName} (${email}) in ${country}.`;
-      const html = `<p>DPA request received from <strong>${companyName}</strong> (${email}) in ${country}.</p>${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ''}`;
+      const html = `<p>DPA request received from <strong>${escapeHtml(companyName)}</strong> (${escapeHtml(email)}) in ${escapeHtml(country)}.</p>${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ''}`;
       await sendWithProviderSdk('brevo', {
         apiKey: brevoKey,
         fromEmail: getFromEmail(),
@@ -60,6 +64,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'DPA request received.' });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unexpected error' }, { status: 500 });
+    return routeErrorResponse(error, 'DPA request could not be submitted', req);
   }
 }

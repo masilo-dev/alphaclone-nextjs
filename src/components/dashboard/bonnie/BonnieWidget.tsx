@@ -90,17 +90,7 @@ export default function BonnieWidget() {
           : 'Bonnie background execution paused.'
       );
 
-      // Add a log entry simulating the status toggle
-      setLogs(prev => [
-        {
-          id: String(Date.now()),
-          created_at: new Date().toISOString(),
-          type: 'log',
-          level: nextEnabled ? 'success' : 'warning',
-          message: nextEnabled ? 'Agent execution state changed to RUNNING.' : 'Agent execution state changed to PAUSED.'
-        },
-        ...prev
-      ]);
+      setLogs(await bonnieService.getCombinedLogs(tenantId));
     } catch (err) {
       toast.error('Failed to toggle executing status.');
     }

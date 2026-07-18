@@ -16,6 +16,10 @@ This template covers the full Railway deployment for AlphaClone.
 | `CRON_SECRET` | Secret for cron auth |
 | `INTERNAL_API_KEY` | Service-to-service auth |
 | `ENCRYPTION_SECRET` | Exactly 32 characters |
+| `BREVO_PLATFORM_API_KEY` | Platform transactional and privacy email delivery |
+| `BREVO_PLATFORM_FROM_EMAIL` | Verified platform sender address |
+| `TURNSTILE_SECRET_KEY` | Server-side Cloudflare Turnstile verification key |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile widget key |
 
 ### Common integrations
 
@@ -76,4 +80,3 @@ This template covers the full Railway deployment for AlphaClone.
 | `SCRAPER_SERVICE_URL` | Web | `https://<scraper>.up.railway.app` |
 | `MCP_SYNC_URL` | Scraper | `https://alphaclonesystems.com/api/internal/leads/mcp-sync` |
 | `PORT` | Both | Set by Railway |
-

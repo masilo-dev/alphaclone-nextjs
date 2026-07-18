@@ -1,5 +1,3 @@
-import { supabase } from '../lib/supabase';
-
 export interface ScanResult {
     url: string;
     timestamp: Date;
@@ -14,96 +12,23 @@ export interface ScanResult {
     issues: string[];
 }
 
-class SecurityScannerService {
-
-    /**
-     * Simulates a security scan (since browser-side CORS blocks real header checks on arbitrary domains).
-     * In a production environment, this would call a server-side Edge Function.
-     */
-    async scanWebsite(url: string): Promise<ScanResult> {
-        // Normalize URL
-        if (!url.startsWith('http')) {
-            url = 'https://' + url;
-        }
-
-        console.log(`🔍 Scanning ${url}...`);
-
-        // Simulate network delay for realism
-        await new Promise(resolve => setTimeout(resolve, 2500));
-
-        // Deterministic score based on URL length and protocol for demo consistency
-        const isSecure = url.startsWith('https');
-        const urlHash = url.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const score = isSecure
-            ? Math.floor(90 + (urlHash % 11)) // 90-100
-            : Math.floor(40 + (urlHash % 21)); // 40-60
-
-        const result: ScanResult = {
-            url,
-            timestamp: new Date(),
-            score,
-            grade: this.calculateGrade(score),
-            checks: {
-                ssl: {
-                    status: isSecure ? 'pass' : 'fail',
-                    details: isSecure ? 'Valid SSL Certificate (RSA 2048-bit)' : 'No SSL Certificate detected'
-                },
-                headers: {
-                    status: score > 80 ? 'pass' : 'warning',
-                    details: score > 80 ? 'Security headers configured correctly' : 'Missing X-Frame-Options'
-                },
-                malware: {
-                    status: 'pass',
-                    details: 'No malware found in Google Safe Browsing database'
-                },
-                mail: {
-                    status: 'warning',
-                    details: 'DMARC record not found (DNS)'
-                }
-            },
-            issues: []
-        };
-
-        if (!isSecure) result.issues.push('Missing SSL Certificate');
-        if (score < 95) result.issues.push('Content-Security-Policy header missing');
-        if (score < 85) result.issues.push('Missing Strict-Transport-Security');
-
-        return result;
-    }
-
-    private calculateGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {
-        if (score >= 90) return 'A';
-        if (score >= 80) return 'B';
-        if (score >= 70) return 'C';
-        if (score >= 60) return 'D';
-        return 'F';
-    }
-
-    async saveScanResult(tenantId: string, result: ScanResult) {
-        const { error } = await supabase
-            .from('security_scans')
-            .insert({
-                tenant_id: tenantId,
-                url: result.url,
-                score: result.score,
-                grade: result.grade,
-                details: result
-            });
-
-        if (error) {
-            console.error('Could not save scan to DB', error);
-        }
-    }
-
+export const securityScannerService = {
+    async scanWebsite(url: string, tenantId?: string): Promise<ScanResult> {
+        if (!tenantId) throw new Error('Select a workspace before scanning');
+        const response = await fetch('/api/security/scan', {
+            method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tenantId, url }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Security scan failed');
+        return { ...payload, timestamp: new Date(payload.timestamp) } as ScanResult;
+    },
     async getScanHistory(tenantId: string): Promise<{ scans: any[]; error: any }> {
-        const { data, error } = await supabase
-            .from('security_scans')
-            .select('*')
-            .eq('tenant_id', tenantId)
-            .order('created_at', { ascending: false });
-
-        return { scans: data || [], error };
-    }
-}
-
-export const securityScannerService = new SecurityScannerService();
+        try {
+            const response = await fetch(`/api/security/scan?tenantId=${encodeURIComponent(tenantId)}`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'History failed');
+            return { scans: payload.scans || [], error: null };
+        } catch (error) { return { scans: [], error }; }
+    },
+};

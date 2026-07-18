@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { tenantService } from './tenancy/TenantService';
 
 /**
  * Rate Limiting Service
@@ -53,6 +54,10 @@ class RateLimitService {
         generationType: 'logo' | 'image' | 'content'
     ): Promise<number> {
         try {
+            if (typeof window !== 'undefined') {
+                const stats = await this.getUsageStats(userId);
+                return stats[generationType] || 0;
+            }
             const { data, error } = await supabase.rpc('increment_generation_count', {
                 p_user_id: userId,
                 p_generation_type: generationType
@@ -98,6 +103,18 @@ class RateLimitService {
         const targetDate = date || new Date().toISOString().split('T')[0];
 
         try {
+            if (typeof window !== 'undefined' && targetDate === new Date().toISOString().split('T')[0]) {
+                const tenantId = tenantService.getCurrentTenantId();
+                if (!tenantId) return { logo: 0, image: 0, content: 0 };
+                const response = await fetch(`/api/tenant/${tenantId}/generated-assets?limit=1`, { cache: 'no-store' });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || 'Generation usage could not be loaded');
+                return {
+                    logo: Number(payload.usage?.logo || 0),
+                    image: Number(payload.usage?.image || 0),
+                    content: Number(payload.usage?.content || 0),
+                };
+            }
             const { data, error } = await supabase
                 .from('generation_usage')
                 .select('generation_type, count')

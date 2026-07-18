@@ -52,6 +52,7 @@ import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/provide
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
 import { insertBeforeEmailFooter } from '../../lib/email/emailComposition';
 import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
+import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '../../lib/server/dailyResourceQuota';
 import {
   cancelRun,
   executeRun,
@@ -6314,7 +6315,7 @@ class AlphaCloneMCPServer {
           const limit = Math.min(Math.max(Number(a.limit) || 20, 1), 100);
           const start = Math.max(Number(a.start) || 1, 1);
 
-          const zoho = new ZohoMailService(user_id);
+          const zoho = new ZohoMailService(user_id, tenant_id);
           let payload: Record<string, unknown>;
           if (searchQuery) {
             const messages = await zoho.searchMessages(searchQuery);
@@ -6347,7 +6348,7 @@ class AlphaCloneMCPServer {
           const user_id = this.requireProfileUser(a);
           const threadId = String(a.thread_id || '').trim();
           if (!threadId) throw new Error('thread_id is required');
-          const zoho = new ZohoMailService(user_id);
+          const zoho = new ZohoMailService(user_id, tenant_id);
           const messages = await zoho.getThread(threadId);
           result = { content: [{ type: 'text', text: JSON.stringify({ tenant_id, thread_id: threadId, messages }, null, 2) }] };
           } catch (err: any) {
@@ -6368,7 +6369,7 @@ class AlphaCloneMCPServer {
           const messageId = String(a.message_id || '').trim();
           if (!messageId) throw new Error('message_id is required');
           if (!a.body_html && !a.body_text) throw new Error('body_html or body_text is required');
-          const zoho = new ZohoMailService(user_id);
+          const zoho = new ZohoMailService(user_id, tenant_id);
           const reply = await zoho.replyToMessage({
             messageId,
             bodyHtml: String(a.body_html || a.body_text || ''),
@@ -6971,7 +6972,7 @@ Return ONLY a JSON array of 60 objects:
           let zohoMessages: any[] = [];
           if (user_id) {
             try {
-              const zoho = new ZohoMailService(user_id);
+              const zoho = new ZohoMailService(user_id, tenant_id);
               const folders = await zoho.getFolders();
               const inbox = folders.find((folder) => /inbox/i.test(folder.folderName)) || folders[0];
               if (inbox) {
@@ -7053,8 +7054,10 @@ Return ONLY a JSON array of 60 objects:
           const settings = (tenant?.settings || {}) as Record<string, any>;
           const calendly = settings.calendly || {};
           const booking = settings.booking || {};
+          const { getCalendlyConfig } = await import('../calendly/calendlyIntegrationService');
+          const privateCalendly = await getCalendlyConfig(supabaseAdmin, tenant_id);
           result = { content: [{ type: 'text', text: JSON.stringify({
-            calendly_connected: Boolean(calendly.enabled && calendly.accessToken && calendly.calendlyUserUri),
+            calendly_connected: Boolean(privateCalendly?.accessToken && privateCalendly.calendlyUserUri),
             calendly_event_url: calendly.eventUrl || null,
             local_booking_enabled: Boolean(booking.enabled && booking.slug),
             local_booking_url: booking.slug ? `${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://')}/book/${booking.slug}` : null,
@@ -7192,8 +7195,26 @@ Return ONLY a JSON array of 60 objects:
         case 'start_invoice_lifecycle': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
           const { invoice_id } = a;
-          const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id }]);
+          if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid invoice UUID');
+          const { data: invoice, error: invoiceError } = await supabaseAdmin
+            .from('business_invoices')
+            .select('id,status')
+            .eq('tenant_id', tenant_id)
+            .eq('id', invoice_id)
+            .maybeSingle();
+          if (invoiceError) throw invoiceError;
+          if (!invoice) throw new Error('Invoice not found');
+          if (invoice.status !== 'draft') throw new Error(`Only draft invoices can be sent. This invoice is ${invoice.status}.`);
+          await consumeDailyResourceQuota(tenant_id, user_id, 'invoices');
+          let runId: string;
+          try {
+            ({ runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id, actorUserId: user_id }]));
+          } catch (workflowError) {
+            await releaseDailyResourceQuota(tenant_id, user_id, 'invoices');
+            throw workflowError;
+          }
           result = { content: [{ type: 'text', text: JSON.stringify({ success: true, runId }, null, 2) }] };
           break;
         }

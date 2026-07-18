@@ -24,15 +24,17 @@ export async function GET(req: NextRequest) {
             .select('*')
             .single();
 
-        if (stateError || !stateData) {
+        const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+        if (stateError || !stateData || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
             console.error('[HubSpot Callback] Invalid state:', stateNonce);
             return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=invalid_state`);
         }
 
         const userId = stateData.user_id;
+        const tenantId = stateData.tenant_id;
         const codeVerifier = stateData.metadata?.code_verifier;
 
-        if (!codeVerifier) {
+        if (!codeVerifier || !tenantId) {
             throw new Error('Code verifier not found in state data');
         }
 
@@ -64,9 +66,25 @@ export async function GET(req: NextRequest) {
 
         await upsertHubSpotIntegration({
             userId,
+            tenantId,
             accessToken: tokens.access_token,
             refreshToken: tokens.refresh_token ?? null,
             expiryDate: expiresAt,
+        });
+
+        const { error: connectionError } = await supabaseAdmin.from('tenant_integrations').upsert({
+            tenant_id: tenantId,
+            integration_id: 'hubspot',
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            configured_by: userId,
+            metadata: { expiresAt },
+        }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError) throw connectionError;
+        await supabaseAdmin.from('business_automation_events').insert({
+            tenant_id: tenantId,
+            event_type: 'integration_connected',
+            payload: { integrationId: 'hubspot', actorUserId: userId },
         });
 
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=connected`);

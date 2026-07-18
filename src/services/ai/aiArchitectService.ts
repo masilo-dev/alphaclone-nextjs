@@ -1,4 +1,5 @@
 import * as unifiedAIService from '../unifiedAIService';
+import { z } from 'zod';
 
 export interface ArchitectSpecs {
   businessName: string;
@@ -41,29 +42,22 @@ export const aiArchitectService = {
 
     try {
       const result = await unifiedAIService.generateText(prompt, 1000);
-      const response = result.text || '';
+      if (result.error || !result.text) throw new Error(result.error || 'Blueprint generation returned no content');
+      const response = result.text;
 
       // Simple JSON extraction to be safe
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Failed to generate blueprint JSON");
       
-      return JSON.parse(jsonMatch[0]);
+      return z.object({
+        businessName: z.string().min(1), businessType: z.string().min(1), goals: z.array(z.string()).min(1),
+        complexity: z.enum(['starter', 'pro', 'enterprise']),
+        blueprint: z.object({ crm: z.string(), billing: z.string(), aiAgents: z.string(), automations: z.array(z.string()) }),
+        conversionHook: z.string(),
+      }).parse(JSON.parse(jsonMatch[0]));
     } catch (error) {
       console.error("AI Architect Error:", error);
-      // Fallback specs
-      return {
-        businessName,
-        businessType,
-        goals: [goals],
-        complexity: 'starter',
-        blueprint: {
-          crm: "Unified Client Pipeline",
-          billing: "Automated Global Invoicing",
-          aiAgents: "24/7 Lead Qualifier",
-          automations: ["Lead to Deal Sync", "Auto-Invoice Generation"]
-        },
-        conversionHook: "Your system is ready. Launch now to eliminate tool-hopping and recover 10+ hours a week."
-      };
+      throw error;
     }
   }
 };

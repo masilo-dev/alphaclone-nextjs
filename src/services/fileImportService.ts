@@ -9,6 +9,30 @@ export interface ParsedContact {
     value?: number;
 }
 
+function parseCsv(text: string): string[][] {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = '';
+    let quoted = false;
+    for (let index = 0; index < text.length; index += 1) {
+        const char = text[index];
+        if (char === '"') {
+            if (quoted && text[index + 1] === '"') { cell += '"'; index += 1; }
+            else quoted = !quoted;
+        } else if (char === ',' && !quoted) {
+            row.push(cell); cell = '';
+        } else if ((char === '\n' || char === '\r') && !quoted) {
+            if (char === '\r' && text[index + 1] === '\n') index += 1;
+            row.push(cell); cell = '';
+            if (row.some((value) => value.trim())) rows.push(row);
+            row = [];
+        } else cell += char;
+    }
+    row.push(cell);
+    if (row.some((value) => value.trim())) rows.push(row);
+    return rows;
+}
+
 export const fileImportService = {
     /**
      * Import from Excel/CSV file
@@ -71,11 +95,10 @@ export const fileImportService = {
 
             if (isCsv) {
                 const text = await file.text();
-                const [headerLine, ...lines] = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
-                const headers = (headerLine || '').split(',').map((h) => normalizeKey(h));
+                const [headerCells = [], ...dataRows] = parseCsv(text.replace(/^\uFEFF/, ''));
+                const headers = headerCells.map((header) => normalizeKey(header));
                 const rows: Array<Record<string, any>> = [];
-                for (const line of lines) {
-                    const cells = line.split(',');
+                for (const cells of dataRows) {
                     const row: Record<string, any> = {};
                     headers.forEach((h, i) => {
                         if (!h) return;
@@ -85,7 +108,37 @@ export const fileImportService = {
                 }
                 return { contacts: toContacts(rows), error: null };
             }
-            return { contacts: [], error: 'XLSX import is disabled. Please upload a CSV file.' };
+
+            const extension = file.name.toLowerCase().split('.').pop();
+            if (!['xlsx', 'xlsm'].includes(extension || '')) {
+                return { contacts: [], error: 'Upload a CSV, XLSX, or XLSM workbook.' };
+            }
+
+            const ExcelJS = await import('exceljs');
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(new Uint8Array(await file.arrayBuffer()));
+            const worksheet = workbook.worksheets[0];
+            if (!worksheet) return { contacts: [], error: 'The workbook has no worksheets.' };
+
+            const headers: string[] = [];
+            const headerRow = worksheet.getRow(1);
+            headerRow.eachCell({ includeEmpty: true }, (cell, column) => {
+                headers[column - 1] = normalizeKey(cell.text || cell.value);
+            });
+            if (!headers.some(Boolean)) return { contacts: [], error: 'The first worksheet has no header row.' };
+
+            const rows: Array<Record<string, any>> = [];
+            worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                if (rowNumber === 1) return;
+                const record: Record<string, any> = {};
+                headers.forEach((header, index) => {
+                    if (!header) return;
+                    const cell = row.getCell(index + 1);
+                    record[header] = cell.text || cell.value || '';
+                });
+                if (Object.values(record).some((value) => String(value || '').trim())) rows.push(record);
+            });
+            return { contacts: toContacts(rows), error: null };
         } catch (err: any) {
             console.error('Error importing Excel:', err);
             return { contacts: [], error: err.message };
@@ -160,19 +213,13 @@ export const fileImportService = {
         });
     },
 
-    /**
-     * Extract text from Word document (simplified version)
-     */
+    /** Extract text from a DOCX document using Mammoth's document parser. */
     async extractTextFromWord(file: File): Promise<string> {
-        // This is a placeholder - in production use mammoth.js
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const text = e.target?.result as string;
-                resolve(text);
-            };
-            reader.readAsText(file);
-        });
+        const mammoth = await import('mammoth');
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        if (!result.value.trim()) throw new Error('No readable text was found in this Word document.');
+        return result.value;
     },
 
     /**

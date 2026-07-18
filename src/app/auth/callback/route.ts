@@ -88,9 +88,7 @@ export async function GET(request: Request) {
                             const { bootstrapTenantForUser } = await import('@/lib/tenant/bootstrapTenantServer');
                             const name = (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
                             const workspaceName = `${name}'s Workspace`;
-                            const randomSuffix = Array.from({ length: 5 }, () =>
-                                String.fromCharCode(97 + Math.floor(Math.random() * 26))
-                            ).join('');
+                            const randomSuffix = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
                             const slug = name.toLowerCase().replace(/[^a-z]+/g, '-') + '-' + randomSuffix;
 
                             const { tenantId: newTenantId } = await bootstrapTenantForUser(admin, user, {

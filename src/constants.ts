@@ -277,25 +277,3 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     ],
   },
 ];
-
-
-
-export const ADMIN_STATS: DashboardStat[] = [
-  { label: 'Total Clients', value: '24', icon: Users, color: 'bg-indigo-600' },
-  { label: 'Active Projects', value: '18', icon: Briefcase, color: 'bg-teal-600' },
-  { label: 'Revenue (MTD)', value: '$124k', icon: DollarSign, color: 'bg-green-600' },
-  { label: 'System Health', value: '99.9%', icon: Activity, color: 'bg-rose-600' },
-];
-
-export const CLIENT_STATS: DashboardStat[] = [
-  { label: 'Active Projects', value: '1', icon: Briefcase, color: 'bg-teal-600' },
-  { label: 'Pending Invoices', value: '1', icon: DollarSign, color: 'bg-yellow-600' },
-  { label: 'Unread Messages', value: '3', icon: MessageSquare, color: 'bg-blue-600' },
-  { label: 'Upcoming Meetings', value: '2', icon: Video, color: 'bg-purple-600' },
-];
-
-export const DOCUMENTATION_VIDEOS = {
-  DASHBOARD_TOUR: "3a7000c925c145b7882089688b0ceb5d",
-  AI_INFRASTRUCTURE: "023023e9a7e84120894768393d9ce454",
-  CLIENT_ONBOARDING: "7e5e33d0e2e54e4e84b8e8a8b8b8b8b8", // Placeholder
-};

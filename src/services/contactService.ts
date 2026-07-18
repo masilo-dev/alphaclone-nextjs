@@ -1,11 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 import { getUnifiedContacts, type UnifiedContact } from '../lib/crm/unifiedContacts';
-import {
-    softDeleteContactById,
-    restoreContactById,
-    purgeContactById,
-} from '../lib/crm/softDeleteContact';
 
 export interface Contact {
     id: string;
@@ -147,47 +142,10 @@ export const contactService = {
     async createContact(contact: Partial<Contact>): Promise<{ contact: Contact | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
-
-            const { data, error } = await supabase
-                .from('contacts')
-                .insert({
-                    tenant_id: tenantId,
-                    company_id: contact.companyId,
-                    first_name: contact.firstName,
-                    last_name: contact.lastName,
-                    title: contact.title,
-                    department: contact.department,
-                    email: contact.email,
-                    phone: contact.phone,
-                    mobile: contact.mobile,
-                    address_line1: contact.addressLine1,
-                    address_line2: contact.addressLine2,
-                    city: contact.city,
-                    state: contact.state,
-                    postal_code: contact.postalCode,
-                    country: contact.country,
-                    linkedin_url: contact.linkedinUrl,
-                    facebook_url: contact.facebookUrl,
-                    twitter_url: contact.twitterUrl,
-                    bio: contact.bio,
-                    notes: contact.notes,
-                    status: contact.status || 'active',
-                    lead_source: contact.leadSource,
-                    owner_id: contact.ownerId,
-                    email_opt_in: contact.emailOptIn ?? true,
-                    sms_opt_in: contact.smsOptIn ?? false,
-                    preferred_contact_method: contact.preferredContactMethod || 'email',
-                    tags: contact.tags || [],
-                    custom_fields: contact.customFields || {},
-                    created_by: userData.user?.id,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            return { contact: this.mapContact(data), error: null };
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(contact) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.contact) throw new Error(payload.error || 'Contact could not be created');
+            return { contact: this.mapContact(payload.contact), error: null };
         } catch (err: any) {
             console.error('Error creating contact:', err);
             return { contact: null, error: err.message };
@@ -200,53 +158,10 @@ export const contactService = {
     async updateContact(contactId: string, updates: Partial<Contact>): Promise<{ contact: Contact | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
-
-            const updateData: any = {};
-
-            // Map camelCase to snake_case
-            if (updates.companyId !== undefined) updateData.company_id = updates.companyId;
-            if (updates.firstName !== undefined) updateData.first_name = updates.firstName;
-            if (updates.lastName !== undefined) updateData.last_name = updates.lastName;
-            if (updates.title !== undefined) updateData.title = updates.title;
-            if (updates.department !== undefined) updateData.department = updates.department;
-            if (updates.email !== undefined) updateData.email = updates.email;
-            if (updates.phone !== undefined) updateData.phone = updates.phone;
-            if (updates.mobile !== undefined) updateData.mobile = updates.mobile;
-            if (updates.addressLine1 !== undefined) updateData.address_line1 = updates.addressLine1;
-            if (updates.addressLine2 !== undefined) updateData.address_line2 = updates.addressLine2;
-            if (updates.city !== undefined) updateData.city = updates.city;
-            if (updates.state !== undefined) updateData.state = updates.state;
-            if (updates.postalCode !== undefined) updateData.postal_code = updates.postalCode;
-            if (updates.country !== undefined) updateData.country = updates.country;
-            if (updates.linkedinUrl !== undefined) updateData.linkedin_url = updates.linkedinUrl;
-            if (updates.facebookUrl !== undefined) updateData.facebook_url = updates.facebookUrl;
-            if (updates.twitterUrl !== undefined) updateData.twitter_url = updates.twitterUrl;
-            if (updates.bio !== undefined) updateData.bio = updates.bio;
-            if (updates.notes !== undefined) updateData.notes = updates.notes;
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.leadSource !== undefined) updateData.lead_source = updates.leadSource;
-            if (updates.ownerId !== undefined) updateData.owner_id = updates.ownerId;
-            if (updates.emailOptIn !== undefined) updateData.email_opt_in = updates.emailOptIn;
-            if (updates.smsOptIn !== undefined) updateData.sms_opt_in = updates.smsOptIn;
-            if (updates.preferredContactMethod !== undefined) updateData.preferred_contact_method = updates.preferredContactMethod;
-            if (updates.tags !== undefined) updateData.tags = updates.tags;
-            if (updates.customFields !== undefined) updateData.custom_fields = updates.customFields;
-
-            updateData.updated_by = userData.user?.id;
-
-            const { data, error } = await supabase
-                .from('contacts')
-                .update(updateData)
-                .eq('id', contactId)
-                .eq('tenant_id', tenantId)
-                .is('deleted_at', null)
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            return { contact: this.mapContact(data), error: null };
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contactId, ...updates }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.contact) throw new Error(payload.error || 'Contact could not be updated');
+            return { contact: this.mapContact(payload.contact), error: null };
         } catch (err: any) {
             console.error('Error updating contact:', err);
             return { contact: null, error: err.message };
@@ -259,8 +174,9 @@ export const contactService = {
     async deleteContact(contactId: string): Promise<{ error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
-            return softDeleteContactById(supabase, tenantId, contactId, userData.user?.id);
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [contactId] }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Contact could not be deleted' };
         } catch (err: any) {
             console.error('Error deleting contact:', err);
             return { error: err.message };
@@ -270,7 +186,9 @@ export const contactService = {
     async restoreContact(contactId: string): Promise<{ error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            return restoreContactById(supabase, tenantId, contactId);
+            const response = await fetch('/api/data/deleted-records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, action: 'restore', type: 'contact', id: contactId }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Contact could not be restored' };
         } catch (err: any) {
             return { error: err.message };
         }
@@ -279,7 +197,9 @@ export const contactService = {
     async purgeContact(contactId: string): Promise<{ error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            return purgeContactById(supabase, tenantId, contactId);
+            const response = await fetch('/api/data/deleted-records', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, action: 'purge', type: 'contact', id: contactId }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Contact could not be permanently deleted' };
         } catch (err: any) {
             return { error: err.message };
         }
@@ -306,13 +226,11 @@ export const contactService = {
         if (!contactIds.length) return { error: null, count: 0 };
         try {
             const tenantId = this.getTenantId();
-            const { data: userData } = await supabase.auth.getUser();
             const uniqueIds = [...new Set(contactIds)];
-            for (const id of uniqueIds) {
-                const result = await softDeleteContactById(supabase, tenantId, id, userData.user?.id);
-                if (result.error) throw new Error(result.error);
-            }
-            return { error: null, count: uniqueIds.length };
+            const response = await fetch(`/api/tenant/${tenantId}/contacts`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: uniqueIds }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Contacts could not be deleted');
+            return { error: null, count: Number(payload.count || 0) };
         } catch (err: any) {
             console.error('Error bulk deleting contacts:', err);
             return { error: err.message, count: 0 };
@@ -492,42 +410,38 @@ export const contactService = {
             const inserts = contacts
                 .filter((contact) => !existingByEmail.has(contact.email))
                 .map((contact) => ({
-                    tenant_id: tenantId,
                     name: contact.name,
                     email: contact.email,
                     phone: contact.phone,
                     industry: contact.industry,
                     location: contact.location || null,
-                    sales_stage: 'lead',
+                    salesStage: 'lead',
                     value: 0,
-                    is_active: true,
                     description: 'Imported from Outlook contacts',
+                    customFields: { importSource: 'outlook' },
                 }));
 
             const updates = contacts.filter((contact) => existingByEmail.has(contact.email));
 
             if (inserts.length > 0) {
-                const { error: insertError } = await supabase.from('business_clients').insert(inserts);
-                if (insertError) throw insertError;
+                const response = await fetch(`/api/tenant/${tenantId}/clients`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clients: inserts }),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || 'Outlook contacts could not be created');
             }
 
-            await Promise.all(
-                updates.map((contact) =>
-                    supabase
-                        .from('business_clients')
-                        .update({
-                            name: contact.name,
-                            phone: contact.phone,
-                            industry: contact.industry,
-                            location: contact.location || null,
-                            updated_at: new Date().toISOString(),
-                        })
-                        .eq('id', existingByEmail.get(contact.email)!)
-                        .eq('tenant_id', tenantId)
-                )
-            );
+            const results = await Promise.all(updates.map(async (contact) => {
+                const response = await fetch(`/api/tenant/${tenantId}/clients`, {
+                    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clientId: existingByEmail.get(contact.email), name: contact.name, phone: contact.phone || null, industry: contact.industry || null, location: contact.location || null }),
+                });
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(payload.error || `Outlook contact ${contact.email} could not be updated`);
+                return true;
+            }));
 
-            return { processed: contacts.length, error: null };
+            return { processed: inserts.length + results.length, error: null };
         } catch (err) {
             console.error('bulkUpsertOutlookImports failed:', err);
             return {

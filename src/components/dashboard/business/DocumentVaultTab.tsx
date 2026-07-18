@@ -125,12 +125,8 @@ export default function DocumentVaultTab() {
   const handleDelete = async (doc: VaultDocument) => {
     if (!confirm('Are you sure you want to permanently delete this document from the vault?')) return;
     try {
-      const { error } = await supabase
-        .from('file_uploads')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', doc.id);
-
-      if (error) throw error;
+      const result = await fileUploadService.deleteFile(doc.id);
+      if (!result.success) throw new Error(result.error || 'Document could not be deleted');
       toast.success('Document deleted');
       setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
     } catch (err: any) {
@@ -157,15 +153,9 @@ export default function DocumentVaultTab() {
 
       const classifications = JSON.parse(data.draft.replace(/```json|```/g, '').trim());
       if (Array.isArray(classifications)) {
-        for (const item of classifications) {
-          await supabase
-            .from('file_uploads')
-            .update({
-              category: item.category,
-              tags: ['vault', `security:${item.security_level}`, 'encrypted'],
-            })
-            .eq('id', item.id);
-        }
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/files`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'classify', classifications: classifications.map((item: any) => ({ id: item.id, category: item.category, securityLevel: item.security_level })) }) });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Classifications could not be saved');
         toast.success('AI classification completed!', { id: aiToast });
         loadDocuments();
       } else {

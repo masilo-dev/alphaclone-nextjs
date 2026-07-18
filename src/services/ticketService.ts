@@ -27,6 +27,7 @@ export interface Ticket {
     updated_at: string;
     resolved_at?: string;
     closed_at?: string;
+    sla_due_at?: string;
     tags?: string[];
     metadata?: Record<string, any>;
     _origin?: 'tickets' | 'support_tickets';
@@ -64,36 +65,11 @@ class TicketService {
      * Create a new ticket
      */
     async create(input: CreateTicketInput): Promise<Ticket> {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Authentication required');
-
         const tenantId = await this.getTenantId();
-
-        const metadata = { ...(input.metadata || {}) };
-        if (input.customerEmail) {
-            metadata.customerEmail = input.customerEmail;
-        }
-
-        const { data, error } = await supabase
-            .from('tickets')
-            .insert({
-                tenant_id: tenantId,
-                title: input.title,
-                description: input.description,
-                priority: input.priority || 'medium',
-                status: 'open',
-                source: input.source,
-                source_id: input.source_id,
-                source_name: input.source_name,
-                assigned_to: input.assigned_to,
-                created_by: user.id,
-                tags: input.tags || [],
-                metadata,
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
+        const response = await fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, title: input.title, description: input.description, priority: input.priority, source: input.source, sourceId: input.source_id, sourceName: input.source_name, assignedTo: input.assigned_to, tags: input.tags, metadata: input.metadata, customerEmail: input.customerEmail }) });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.ticket) throw new Error(payload.error || 'Ticket could not be created');
+        const data = payload.ticket;
 
         await this.dispatchNotification('created', data, {
             customerEmail: input.customerEmail || input.metadata?.customerEmail,
@@ -131,35 +107,15 @@ class TicketService {
     }): Promise<Ticket[]> {
         const tenantId = await this.getTenantId();
 
-        try {
-            const res = await fetch(`/api/tickets?tenantId=${encodeURIComponent(tenantId)}`);
-            const data = await res.json().catch(() => ({}));
-            if (res.ok && data.success) {
-                let tickets = (data.tickets || []) as Ticket[];
-                if (filters?.status) tickets = tickets.filter((t) => t.status === filters.status);
-                if (filters?.priority) tickets = tickets.filter((t) => t.priority === filters.priority);
-                if (filters?.source) tickets = tickets.filter((t) => t.source === filters.source);
-                if (filters?.assignedTo) tickets = tickets.filter((t) => t.assigned_to === filters.assignedTo);
-                return tickets;
-            }
-        } catch (err) {
-            console.warn('[ticketService] unified fetch failed, falling back:', err);
-        }
-
-        let query = supabase
-            .from('tickets')
-            .select('*')
-            .eq('tenant_id', tenantId)
-            .order('created_at', { ascending: false });
-
-        if (filters?.status) query = query.eq('status', filters.status);
-        if (filters?.priority) query = query.eq('priority', filters.priority);
-        if (filters?.source) query = query.eq('source', filters.source);
-        if (filters?.assignedTo) query = query.eq('assigned_to', filters.assignedTo);
-
-        const { data, error } = await query;
-        if (error) throw error;
-        return (data || []).map((t: Ticket) => ({ ...t, _origin: 'tickets' as const }));
+        const res = await fetch(`/api/tickets?tenantId=${encodeURIComponent(tenantId)}`, { cache: 'no-store' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) throw new Error(data.error || 'Tickets could not be loaded');
+        let tickets = (data.tickets || []) as Ticket[];
+        if (filters?.status) tickets = tickets.filter((t) => t.status === filters.status);
+        if (filters?.priority) tickets = tickets.filter((t) => t.priority === filters.priority);
+        if (filters?.source) tickets = tickets.filter((t) => t.source === filters.source);
+        if (filters?.assignedTo) tickets = tickets.filter((t) => t.assigned_to === filters.assignedTo);
+        return tickets;
     }
 
     /**
@@ -168,32 +124,11 @@ class TicketService {
     async updateStatus(ticketId: string, status: TicketStatus, origin: 'tickets' | 'support_tickets' = 'tickets'): Promise<void> {
         const tenantId = await this.getTenantId();
 
-        if (origin === 'support_tickets') {
-            const res = await fetch(`/api/tickets/${ticketId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId, origin, status }),
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || 'Failed to update ticket');
-            }
-            return;
-        }
-
-        const updateData: Partial<Ticket> = { status, updated_at: new Date().toISOString() };
-
-        if (status === 'resolved') updateData.resolved_at = new Date().toISOString();
-        if (status === 'closed') updateData.closed_at = new Date().toISOString();
-
-        const { error } = await supabase
-            .from('tickets')
-            .update(updateData)
-            .eq('id', ticketId);
-
-        if (error) throw error;
-
-        const { data: ticket } = await supabase.from('tickets').select('*').eq('id', ticketId).single();
+        const res = await fetch(`/api/tickets/${ticketId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, origin, status }) });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.error || 'Failed to update ticket');
+        if (origin === 'support_tickets') return;
+        const ticket = result.ticket;
         if (ticket) {
             await this.dispatchNotification('status_changed', ticket as Ticket, {
                 customerEmail: ticket.metadata?.customerEmail,
@@ -207,48 +142,21 @@ class TicketService {
     async updatePriority(ticketId: string, priority: TicketPriority, origin: 'tickets' | 'support_tickets' = 'tickets'): Promise<void> {
         const tenantId = await this.getTenantId();
 
-        if (origin === 'support_tickets') {
-            const res = await fetch(`/api/tickets/${ticketId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tenantId, origin, priority }),
-            });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.error || 'Failed to update priority');
-            }
-            return;
-        }
-
-        const { error } = await supabase
-            .from('tickets')
-            .update({ priority, updated_at: new Date().toISOString() })
-            .eq('id', ticketId);
-
-        if (error) throw error;
+        const res = await fetch(`/api/tickets/${ticketId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, origin, priority }) });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.error || 'Failed to update priority');
     }
 
     /**
      * Add a comment to a ticket
      */
     async addComment(ticketId: string, content: string, isInternal: boolean = false): Promise<TicketComment> {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error('Authentication required');
-
-        const { data, error } = await supabase
-            .from('ticket_comments')
-            .insert({
-                ticket_id: ticketId,
-                user_id: user.id,
-                content,
-                is_internal: isInternal,
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        const { data: ticket } = await supabase.from('tickets').select('*').eq('id', ticketId).single();
+        const tenantId = await this.getTenantId();
+        const response = await fetch(`/api/tickets/${ticketId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, content, isInternal }) });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.comment) throw new Error(payload.error || 'Ticket comment could not be added');
+        const data = payload.comment;
+        const ticket = payload.ticket;
         if (ticket && !isInternal) {
             await this.dispatchNotification('comment', ticket as Ticket, {
                 customerEmail: ticket.metadata?.customerEmail,

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Input } from '../ui/UIComponents';
-import { dailyService } from '../../services/dailyService';
 import { User } from '../../types';
 import { Calendar, Clock, User as UserIcon, Shield, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTenant } from '../../contexts/TenantContext';
 
 interface Props {
     isOpen: boolean;
@@ -13,6 +13,7 @@ interface Props {
 }
 
 const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedule }) => {
+    const { currentTenant } = useTenant();
     const [title, setTitle] = useState('');
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
@@ -87,8 +88,13 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
 
         setLoading(true);
         try {
-            // Create the video call
-            const { call, error } = await dailyService.createVideoCall({
+            if (!currentTenant?.id) throw new Error('Select a workspace before scheduling a meeting');
+            const scheduledAt = new Date(`${date}T${time}`);
+            const response = await fetch('/api/meetings/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                tenantId: currentTenant.id,
                 hostId: user.id,
                 title,
                 participants: attendees,
@@ -96,36 +102,12 @@ const ScheduleMeetingModal: React.FC<Props> = ({ isOpen, onClose, user, onSchedu
                 recordingEnabled,
                 cancellationPolicyHours,
                 allowClientCancellation: isAdmin ? allowClientCancellation : true,
+                durationMinutes: 60,
+                scheduledAt: scheduledAt.toISOString(),
+                }),
             });
-
-            if (error || !call) {
-                toast.error(error || 'Failed to schedule meeting');
-                return;
-            }
-
-            // If date/time is provided, create calendar event
-            if (date && time) {
-                const { supabase } = await import('../../lib/supabase');
-                const scheduledAt = new Date(`${date}T${time}`);
-                const endTime = new Date(scheduledAt.getTime() + 60 * 60 * 1000); // 1 hour duration
-
-                await supabase.from('calendar_events').insert({
-                    user_id: user.id,
-                    title,
-                    description: `Video meeting: ${title}`,
-                    start_time: scheduledAt.toISOString(),
-                    end_time: endTime.toISOString(),
-                    type: 'meeting',
-                    video_room_id: call.room_id,
-                    attendees: [user.id, ...attendees],
-                });
-
-                // Link calendar event to video call
-                await supabase
-                    .from('video_calls')
-                    .update({ calendar_event_id: call.id })
-                    .eq('id', call.id);
-            }
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to schedule meeting');
 
             toast.success('Meeting scheduled successfully!');
             onSchedule();

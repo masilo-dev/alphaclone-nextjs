@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { generateText } from '@/services/unifiedAIService';
 
 /**
  * AlphaClone Nexus Intelligence Core
@@ -571,11 +572,13 @@ export class AlphaNexus {
             .eq('tenant_id', this.tenantId);
 
         return {
-            systemAction: 'Nexus Scanning: High-intent signals detected...',
+            systemAction: 'Nexus reviewed the configured social watchlist.',
             suggestedLeads: (watchlist || []).map((item: any) => ({
                 ...item,
-                relevanceScore: Math.floor(Math.random() * 40) + 60,
-                suggestedAction: 'Engage with recent post about "AI agents"'
+                relevanceScore: Math.min(100, 25 + (item.url ? 25 : 0) + (item.name ? 20 : 0) + (item.last_scraped_at ? 20 : 0) + (item.notes ? 10 : 0)),
+                suggestedAction: item.last_scraped_at
+                    ? `Review the latest captured activity for ${item.name || item.platform || 'this source'} before engaging.`
+                    : `Refresh ${item.name || item.platform || 'this source'} to collect current activity before engaging.`,
             })).sort((a: any, b: any) => b.relevanceScore - a.relevanceScore)
         };
     }
@@ -674,15 +677,16 @@ export class AlphaNexus {
         };
     }
 
-    async evaluateInteraction(content: string, _platform: string) {
-        const score = Math.floor(Math.random() * 30) + 70;
-        return {
-            success: score > 80,
-            score,
-            feedback: score > 80
-                ? 'Optimal alignment with AlphaClone brand voice.'
-                : 'System suggests adding a more specific call to action.',
-            refinedContent: score < 85 ? `${content}\n\nWhat are your thoughts on this?` : undefined
-        };
+    async evaluateInteraction(content: string, platform: string) {
+        const prompt = `Evaluate this ${platform || 'social'} content for clarity, specificity, audience value, and call-to-action quality. Return JSON only: {"score":0-100,"feedback":"specific evidence-based feedback","refinedContent":"a revised version or null"}. Do not invent facts. Content: ${JSON.stringify(content)}`;
+        const response = await generateText(prompt, 700, 'deepseek-chat', this.tenantId);
+        if (response.error || !response.text) throw new Error(response.error || 'Content evaluation returned no result');
+        const start = response.text.indexOf('{');
+        const end = response.text.lastIndexOf('}');
+        if (start < 0 || end <= start) throw new Error('Content evaluation returned an invalid response');
+        const parsed = JSON.parse(response.text.slice(start, end + 1));
+        const score = Math.max(0, Math.min(100, Number(parsed.score)));
+        if (!Number.isFinite(score) || typeof parsed.feedback !== 'string') throw new Error('Content evaluation returned invalid fields');
+        return { success: score >= 80, score: Math.round(score), feedback: parsed.feedback, refinedContent: typeof parsed.refinedContent === 'string' ? parsed.refinedContent : undefined };
     }
 }

@@ -18,7 +18,7 @@ export const UnifiedCRMService = {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ deal, entityType: 'deal' })
+                body: JSON.stringify({ tenantId: deal.tenant_id || deal.tenantId, deal, entityType: 'deal' })
             });
 
             if (!response.ok) {
@@ -48,7 +48,7 @@ export const UnifiedCRMService = {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ lead, entityType: 'lead' })
+                body: JSON.stringify({ tenantId: lead.tenant_id || lead.tenantId, lead, entityType: 'lead' })
             });
 
             if (!response.ok) {
@@ -64,7 +64,7 @@ export const UnifiedCRMService = {
     /**
      * Pulls deals from all active external CRMs into the local database
      */
-    async pullDeals() {
+    async pullDeals(tenantId: string) {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -75,8 +75,10 @@ export const UnifiedCRMService = {
             const response = await fetch('/api/crm/sync/pull', {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
-                }
+                },
+                body: JSON.stringify({ tenantId })
             });
             
             const data = await response.json();

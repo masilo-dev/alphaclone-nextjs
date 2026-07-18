@@ -580,15 +580,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
 
     const handleDisconnect = async (pageId: string) => {
         if (!confirm('Disconnect this Facebook Page?')) return;
-        const { error } = await supabase
-            .from('facebook_integrations')
-            .update({ is_active: false })
-            .eq('page_id', pageId)
-            .eq('user_id', user?.id);
-        if (!error) {
+        const response = await fetch('/api/facebook/disconnect', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: tenant?.id, pageId }) });
+        if (response.ok) {
             toast.success('Page disconnected');
             loadData();
-        }
+        } else toast.error('Page could not be disconnected');
     };
 
     const clearImage = () => {

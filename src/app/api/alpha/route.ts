@@ -1,98 +1,59 @@
-import { NextResponse } from 'next/server';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { after, NextResponse } from 'next/server';
 import { alphaAgent } from '@/services/alpha/alphaAgent';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
-/**
- * Helper to get authenticated user in the API
- */
-async function getAuthUser() {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-        process.env.VITE_SUPABASE_URL!,
-        process.env.VITE_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return cookieStore.getAll()
-                },
-                setAll(cookiesToSet) {
-                    try {
-                        cookiesToSet.forEach(({ name, value, options }) =>
-                            cookieStore.set(name, value, options)
-                        )
-                    } catch {
-                        // The `setAll` method was called from a Server Component.
-                        // This can be ignored if you have middleware refreshing
-                        // user sessions.
-                    }
-                },
-            },
-        }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    // Fetch Tenant ID
-    const { data: tenantUser } = await supabase
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .maybeSingle();
-
-    return {
-        id: user.id,
-        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-        role: user.user_metadata?.role || 'operator',
-        tenantId: tenantUser?.tenant_id
-    };
-}
+const missionSchema = z.object({
+    description: z.string().trim().min(3).max(4000),
+    tenantId: z.string().uuid(),
+});
 
 export async function POST(req: Request) {
     try {
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const { description, tenantId } = missionSchema.parse(await req.json());
+        const { user, membership } = await requireTenantAccess(tenantId);
+        const actor = {
+            id: user.id,
+            name: user.email?.split('@')[0] || 'User',
+            role: membership.role,
+            tenantId,
+        };
 
-        const { description } = await req.json();
-        if (!description) {
-            return NextResponse.json({ error: 'Mission description is required' }, { status: 400 });
-        }
-
-        const missionId = await alphaAgent.startMission(description, user);
+        const missionId = await alphaAgent.startMission(description, actor);
+        after(async () => {
+            try {
+                await alphaAgent.executeMission(missionId, actor);
+            } catch (error) {
+                console.error(`[Alpha API] Mission ${missionId} failed:`, error);
+            }
+        });
         return NextResponse.json({ missionId, status: 'started' });
     } catch (error: any) {
         console.error('[Alpha API] Error starting mission:', error);
-        return clientErrorResponse(error, { request: req, scope: 'alpha' });
+        return routeErrorResponse(error, 'Failed to start mission', req);
     }
 }
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
+    const tenantId = searchParams.get('tenantId') || '';
 
     try {
-        const user = await getAuthUser();
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const { user } = await requireTenantAccess(tenantId);
 
         if (id) {
-            const status = alphaAgent.getMissionStatus(id, user.id);
+            const status = await alphaAgent.getMissionStatus(id, user.id, tenantId);
             if (!status) {
                 return NextResponse.json({ error: 'Mission not found or unauthorized' }, { status: 404 });
             }
             return NextResponse.json(status);
         }
 
-        const missions = alphaAgent.getAllMissions(user.id);
+        const missions = await alphaAgent.getAllMissions(user.id, tenantId);
         return NextResponse.json(missions);
     } catch (error: any) {
         console.error('[Alpha API] Error fetching mission status:', error);
-        return clientErrorResponse(error, { request: req, scope: 'alpha' });
+        return routeErrorResponse(error, 'Failed to load missions', req);
     }
 }

@@ -7,7 +7,6 @@ import { User } from '../../types';
 import { dailyService, VideoCall } from '../../services/dailyService';
 import { useRouter } from 'next/navigation';
 import { useTenant } from '../../contexts/TenantContext'; // Added useTenant
-import { supabase } from '@/lib/supabase'; // Added supabase for direct query
 
 interface SimpleVideoMeetingProps {
     user: User;
@@ -38,30 +37,26 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
     const [pastMeetings, setPastMeetings] = useState<VideoCall[]>([]);
     const [showPastMeetings, setShowPastMeetings] = useState(false);
 
-    const initRef = useRef(false);
+    const initializedTenantRef = useRef<string | null>(null);
 
     useEffect(() => {
-        if (initRef.current || !currentTenant) return;
-        initRef.current = true;
+        if (!currentTenant || initializedTenantRef.current === currentTenant.id) return;
+        initializedTenantRef.current = currentTenant.id;
+        setRoom(null);
+        setPastMeetings([]);
+        setShowPastMeetings(false);
 
         initializeVideoService();
         loadPastMeetings();
-    }, [currentTenant]); // Re-run if tenant changes, but initRef prevents loops
+    }, [currentTenant]);
 
     const loadPastMeetings = async () => {
         if (!currentTenant) return;
-        
         try {
-            const { data, error } = await supabase
-                .from('video_calls')
-                .select('*')
-                .eq('tenant_id', currentTenant.id)
-                .in('status', ['ended', 'cancelled'])
-                .order('created_at', { ascending: false })
-                .limit(10);
-
-            if (error) throw error;
-            setPastMeetings(data || []);
+            const response = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, { cache: 'no-store' });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to load meeting history');
+            setPastMeetings(payload.past || []);
         } catch (err) {
             console.error('Failed to load past meetings:', err);
         }
@@ -74,64 +69,24 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
         setErrorMsg(null);
 
         try {
-            // 1. Check if a permanent room exists for this tenant
-            const { data: permanentRooms, error: lookupError } = await supabase
-                .from('video_calls')
-                .select('*')
-                .eq('tenant_id', currentTenant.id)
-                .eq('is_permanent', true)
-                .eq('status', 'active');
+            const lookupResponse = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, { cache: 'no-store' });
+            const lookupPayload = await lookupResponse.json();
+            if (!lookupResponse.ok) throw new Error(lookupPayload.error || 'Failed to load meeting room');
+            let permanentCall = lookupPayload.permanent;
 
-            let permanentCall = permanentRooms && permanentRooms.length > 0 ? permanentRooms[0] : null;
-
-            // 2. If it doesn't exist, create it
             if (!permanentCall) {
-                const { call, error } = await dailyService.createVideoCall({
-                    hostId: user.id || 'system',
-                    title: `${currentTenant.name} 's Permanent Meeting Room`,
-                    isPublic: true,
-                    maxParticipants: 10,
-                    screenShareEnabled: true,
-                    chatEnabled: true,
-                    tenantId: currentTenant.id
+                const createResponse = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                 });
-
-                if (error || !call) {
-                    throw new Error(error || 'Failed to create room');
-                }
-
-                // Generate a random 6-digit PIN
-                const meetingPin = Math.floor(100000 + Math.random() * 900000).toString();
-
-                // Mark it as permanent and store the PIN in metadata
-                const { error: updateError, data: updatedCall } = await supabase
-                    .from('video_calls')
-                    .update({
-                        is_permanent: true,
-                        metadata: { meeting_pin: meetingPin }
-                    })
-                    .eq('id', call.id)
-                    .select()
-                    .single();
-
-                if (updateError) {
-                    console.error('Failed to mark room as permanent/set PIN:', updateError);
-                } else {
-                    permanentCall = updatedCall;
-                }
+                const createPayload = await createResponse.json();
+                if (!createResponse.ok) throw new Error(createPayload.error || 'Failed to create room');
+                permanentCall = createPayload.permanent;
             } else if (!permanentCall.metadata?.meeting_pin) {
-                // Retroactively add a PIN if one doesn't exist for an older layout
-                const meetingPin = Math.floor(100000 + Math.random() * 900000).toString();
-                const { data: updatedCall } = await supabase
-                    .from('video_calls')
-                    .update({
-                        metadata: { ...permanentCall.metadata, meeting_pin: meetingPin }
-                    })
-                    .eq('id', permanentCall.id)
-                    .select()
-                    .single();
-
-                if (updatedCall) permanentCall = updatedCall;
+                const repairResponse = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, { method: 'POST' });
+                const repairPayload = await repairResponse.json();
+                if (!repairResponse.ok) throw new Error(repairPayload.error || 'Failed to secure meeting room');
+                permanentCall = repairPayload.permanent;
             }
 
             // Always use the branded link for the shareable link to ensure consistency
@@ -181,31 +136,14 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 
         setIsRegenerating(true);
         try {
-            const newPin = Math.floor(100000 + Math.random() * 900000).toString();
-
-            // For regenerating, we just want to update the PIN
-            // We do NOT want to change the pin_generated_at timestamp, as that is only for 
-            // when the meeting starts to track the 35 min expiration limit
-
-            // First get current metadata
-            const { data: currentRoom } = await supabase
-                .from('video_calls')
-                .select('metadata')
-                .eq('id', room.id)
-                .single();
-
-            const currentMetadata = currentRoom?.metadata || {};
-
-            const { error: updateError } = await supabase
-                .from('video_calls')
-                .update({
-                    metadata: { ...currentMetadata, meeting_pin: newPin }
-                })
-                .eq('id', room.id);
-
-            if (updateError) throw updateError;
-
-            setRoom({ ...room, pin: newPin });
+            const response = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'regenerate_pin' }),
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.error || 'Failed to generate a new meeting code');
+            setRoom({ ...room, pin: payload.permanent?.metadata?.meeting_pin });
             toast.success('New meeting code generated!');
         } catch (err) {
             console.error('Failed to regenerate pin:', err);
@@ -460,4 +398,3 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 };
 
 export default SimpleVideoMeeting;
-

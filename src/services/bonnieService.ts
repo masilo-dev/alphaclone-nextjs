@@ -159,16 +159,7 @@ export const bonnieService = {
       return data.rules;
     } catch (error) {
       console.error('Error fetching Bonnie rules:', error);
-      // Return default rules if error/missing
-      return {
-        tenant_id: tenantId,
-        enabled: true,
-        auto_send_enabled: false,
-        auto_send_confidence_threshold: 85,
-        high_risk_approval_required: true,
-        stale_deal_days: 7,
-        social_inactivity_days: 3,
-      };
+      throw error;
     }
   },
 

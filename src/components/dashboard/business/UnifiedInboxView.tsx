@@ -57,10 +57,10 @@ function toUnifiedMicrosoft(
   }));
 }
 
-async function fetchProviderStatus(): Promise<{ microsoft: boolean; zoho: boolean }> {
+async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean }> {
   const [microsoft, zohoRes] = await Promise.all([
     microsoftAuthService.isConnected().catch(() => false),
-    fetch('/api/auth/zoho/status', { credentials: 'include' })
+    tenantId ? fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' }) : Promise.resolve(new Response('{}', { status: 400 }))
       .then((r) => r.json().catch(() => ({})))
       .then((d) => Boolean(d.isConnected)),
   ]);
@@ -92,12 +92,12 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
   const [creatingContact, setCreatingContact] = useState(false);
 
   const microsoft = useMicrosoftEmails(50, statusChecked && provider === 'microsoft');
-  const zoho = useZohoEmails(50, statusChecked && provider === 'zoho');
+  const zoho = useZohoEmails(50, statusChecked && provider === 'zoho', currentTenant?.id);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const next = await fetchProviderStatus();
+      const next = await fetchProviderStatus(currentTenant?.id);
       if (cancelled) return;
       setStatus(next);
       const preferred =
@@ -116,7 +116,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     return () => {
       cancelled = true;
     };
-  }, [defaultProvider, urlProvider]);
+  }, [defaultProvider, urlProvider, currentTenant?.id]);
 
   useEffect(() => {
     if (!statusChecked || !searchParams || searchParams.get('action') !== 'compose') return;
@@ -137,13 +137,13 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
     const refreshTokens = () => {
       if (status.microsoft) void refreshMicrosoftTokenIfNeeded(false);
-      if (status.zoho) void refreshZohoTokenIfNeeded(false);
+      if (status.zoho) void refreshZohoTokenIfNeeded(false, currentTenant?.id);
     };
 
     refreshTokens();
     const interval = window.setInterval(refreshTokens, 25 * 60 * 1000);
     return () => window.clearInterval(interval);
-  }, [statusChecked, anyConnected, status.microsoft, status.zoho]);
+  }, [statusChecked, anyConnected, status.microsoft, status.zoho, currentTenant?.id]);
 
   const emails: UnifiedInboxMessage[] = useMemo(
     () => (provider === 'microsoft' ? toUnifiedMicrosoft(microsoft.emails) : zoho.emails),

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { saveCalendlyIntegration } from '@/services/calendly/calendlyIntegrationService';
@@ -24,24 +23,15 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
     }
 
-    const stateData = parseOAuthState<{ tenantId: string; userId: string }>(state);
-    if (!stateData?.tenantId || !stateData?.userId) {
-        return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
-    }
-
     const supabaseAdmin = createSupabaseAdminClient();
-    const { data: member } = await supabaseAdmin
-        .from('tenant_users')
-        .select('tenant_id')
-        .eq('user_id', stateData.userId)
-        .eq('tenant_id', stateData.tenantId)
-        .maybeSingle();
-
-    if (!member?.tenant_id) {
+    const { data: stateData, error: stateError } = await supabaseAdmin.from('oauth_states')
+        .delete().eq('id', state).select('user_id, tenant_id, metadata, created_at').single();
+    const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+    if (stateError || !stateData?.tenant_id || !stateData?.user_id || stateData.metadata?.provider !== 'calendly' || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
         return NextResponse.json({ error: 'Invalid state' }, { status: 400 });
     }
 
-    const tenantId = stateData.tenantId;
+    const tenantId = stateData.tenant_id;
 
     const clientId = ENV.VITE_CALENDLY_CLIENT_ID;
     const clientSecret = ENV.CALENDLY_CLIENT_SECRET;
@@ -101,6 +91,16 @@ export async function GET(req: NextRequest) {
             eventUrl: schedulingUrl,
             webhookSubscriptionUri: webhookSubscriptionUri || undefined,
             webhookUrl,
+        });
+        const { error: connectionError } = await supabaseAdmin.from('tenant_integrations').upsert({
+            tenant_id: tenantId, integration_id: 'calendly', status: 'connected',
+            connected_at: new Date().toISOString(), configured_by: stateData.user_id,
+            metadata: { calendlyUserUri: userUri },
+        }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError) throw connectionError;
+        await supabaseAdmin.from('business_automation_events').insert({
+            tenant_id: tenantId, event_type: 'integration_connected',
+            payload: { integrationId: 'calendly', actorUserId: stateData.user_id },
         });
 
         const hostUserId = await resolveTenantHostUser(tenantId);

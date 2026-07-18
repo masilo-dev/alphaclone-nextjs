@@ -5,6 +5,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { isSocialPublishEnabled } from '@/lib/social/publishConfig';
 import { publishLinkedInPost } from '@/lib/linkedin/publishPost';
 import { getFacebookIntegrationWithToken } from '@/services/facebook/facebookIntegrationService';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 type SchedulePayload = {
   tenantId?: string;
@@ -532,5 +534,23 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'social/schedule.PATCH' });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const tenantId = req.nextUrl.searchParams.get('tenantId') || '';
+    const postId = req.nextUrl.searchParams.get('postId') || '';
+    if (!z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(postId).success) {
+      return NextResponse.json({ error: 'Valid tenantId and postId required' }, { status: 400 });
+    }
+    await requireTenantAccess(tenantId, req);
+    const admin = createSupabaseAdminClient();
+    const { data, error } = await admin.from('social_posts').delete().eq('tenant_id', tenantId).eq('id', postId).select('id').maybeSingle();
+    if (error) throw error;
+    if (!data) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return routeErrorResponse(error, 'Social post could not be deleted', req);
   }
 }

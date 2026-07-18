@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { Plus, Trash2, Loader2, Mail } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import EmptyState from '@/components/ui/EmptyState';
@@ -32,12 +31,9 @@ export default function SequenceBuilder() {
   const load = useCallback(async () => {
     if (!currentTenant?.id) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('email_sequences')
-      .select('id, name, created_at')
-      .eq('tenant_id', currentTenant.id)
-      .order('created_at', { ascending: false });
-    setSequences(data || []);
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/email-sequences`, { credentials: 'include' });
+    const payload = await response.json().catch(() => ({}));
+    setSequences(response.ok ? payload.sequences || [] : []);
     setLoading(false);
   }, [currentTenant?.id]);
 
@@ -46,35 +42,25 @@ export default function SequenceBuilder() {
   }, [load]);
 
   const loadSteps = async (seq: Sequence) => {
-    const { data } = await supabase
-      .from('email_sequence_steps')
-      .select('*')
-      .eq('sequence_id', seq.id)
-      .order('delay_days');
-    setSelected({ ...seq, steps: data || [] });
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant?.id || '')}/email-sequences?sequenceId=${encodeURIComponent(seq.id)}`, { credentials: 'include' });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) return toast.error(payload.error || 'Sequence could not be loaded');
+    setSelected(payload.sequence);
   };
 
   const saveSequence = async () => {
     if (!currentTenant?.id || !name.trim()) return;
     try {
-      const { data: seq, error } = await supabase
-        .from('email_sequences')
-        .insert({ tenant_id: currentTenant.id, name: name.trim() })
-        .select()
-        .single();
-      if (error) throw error;
-
       const stepRows = steps
         .filter((s) => s.subject.trim())
         .map((s) => ({
-          sequence_id: seq.id,
-          delay_days: s.delay_days,
+          delayDays: s.delay_days,
           subject: s.subject,
           body: s.body,
         }));
-      if (stepRows.length) {
-        await supabase.from('email_sequence_steps').insert(stepRows);
-      }
+      const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/email-sequences`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim(), steps: stepRows }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Sequence could not be saved');
       toast.success('Sequence created');
       setName('');
       setSteps([{ delay_days: 0, subject: '', body: '' }]);

@@ -35,14 +35,17 @@ const ZOHO_CONFIG_CACHE_TTL_MS = 60_000;
 
 export class ZohoService {
     protected userId: string;
+    protected tenantId: string;
     protected encryptionSecret: string;
     private configCache: ZohoConfig | null = null;
     private configCachedAt = 0;
-    private tenantIdCache: string | null | undefined;
-    private tenantIdCachedAt = 0;
 
-    constructor(userId: string) {
+    constructor(userId: string, tenantId: string) {
         this.userId = userId;
+        if (!tenantId?.trim()) {
+            throw new Error('A workspace is required for Zoho operations.');
+        }
+        this.tenantId = tenantId.trim();
         const secret = ENV.ZOHO_ENCRYPTION_SECRET;
         if (!secret) {
             throw new Error(
@@ -74,8 +77,6 @@ export class ZohoService {
     protected invalidateConfigCache(): void {
         this.configCache = null;
         this.configCachedAt = 0;
-        this.tenantIdCache = undefined;
-        this.tenantIdCachedAt = 0;
     }
 
     /**
@@ -93,6 +94,7 @@ export class ZohoService {
         const { data, error } = await supabase
             .from('integrations')
             .select('config')
+            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
             .eq('enabled', true)
@@ -126,52 +128,6 @@ export class ZohoService {
         return normalized;
     }
 
-    protected async resolveTenantIdForIntegration(): Promise<string | null> {
-        if (
-            this.tenantIdCache !== undefined &&
-            Date.now() - this.tenantIdCachedAt < ZOHO_CONFIG_CACHE_TTL_MS
-        ) {
-            return this.tenantIdCache;
-        }
-
-        const supabase = this.getSupabaseClient();
-        const { data: existing } = await supabase
-            .from('integrations')
-            .select('tenant_id')
-            .eq('user_id', this.userId)
-            .eq('type', 'zoho')
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-        if (existing?.tenant_id) {
-            this.tenantIdCache = existing.tenant_id as string;
-            this.tenantIdCachedAt = Date.now();
-            return this.tenantIdCache;
-        }
-
-        const { data: tenantMembership } = await supabase
-            .from('tenant_users')
-            .select('tenant_id')
-            .eq('user_id', this.userId)
-            .order('joined_at', { ascending: true })
-            .limit(1)
-            .maybeSingle();
-        if (tenantMembership?.tenant_id) {
-            this.tenantIdCache = tenantMembership.tenant_id as string;
-            this.tenantIdCachedAt = Date.now();
-            return this.tenantIdCache;
-        }
-
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('tenant_id')
-            .eq('id', this.userId)
-            .maybeSingle();
-        this.tenantIdCache = (profile?.tenant_id as string) || null;
-        this.tenantIdCachedAt = Date.now();
-        return this.tenantIdCache;
-    }
-
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
         this.invalidateConfigCache();
         const currentConfig = await this.getConfig() || {};
@@ -194,7 +150,6 @@ export class ZohoService {
         }
 
         const supabase = this.getSupabaseClient();
-        const tenantId = await this.resolveTenantIdForIntegration();
         const payload = {
             user_id: this.userId,
             type: 'zoho',
@@ -202,12 +157,13 @@ export class ZohoService {
             enabled: true,
             config: newConfig,
             updated_at: new Date().toISOString(),
-            tenant_id: tenantId,
+            tenant_id: this.tenantId,
         };
 
         const { data: existing } = await supabase
             .from('integrations')
             .select('id')
+            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
             .order('updated_at', { ascending: false })
@@ -242,6 +198,7 @@ export class ZohoService {
         const { data: existing } = await supabase
             .from('integrations')
             .select('id, config')
+            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho')
             .order('updated_at', { ascending: false })
@@ -414,6 +371,7 @@ export class ZohoService {
         await supabase
             .from('integrations')
             .delete()
+            .eq('tenant_id', this.tenantId)
             .eq('user_id', this.userId)
             .eq('type', 'zoho');
         this.invalidateConfigCache();

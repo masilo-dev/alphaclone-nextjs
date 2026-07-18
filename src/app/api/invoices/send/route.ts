@@ -1,186 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { start } from 'workflow/api';
 import { invoiceLifecycleWorkflow } from '@/workflows/invoice-lifecycle';
-import { signInvoiceTrackToken } from '@/lib/security/signedToken';
-import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
+import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
-async function renderInvoicePdf(invoice: any): Promise<Buffer> {
-  const items = Array.isArray(invoice.items) ? invoice.items : [];
-  const bankLines = [
-    invoice.bank_name ? `Bank: ${invoice.bank_name}` : null,
-    invoice.account_number ? `Account: ${invoice.account_number}` : null,
-    invoice.branch_code ? `Branch: ${invoice.branch_code}` : null,
-    invoice.swift_code ? `SWIFT: ${invoice.swift_code}` : null,
-    invoice.payment_reference ? `Reference: ${invoice.payment_reference}` : null,
-    invoice.bank_details ? String(invoice.bank_details) : null,
-    invoice.payment_link ? `Pay online: ${invoice.payment_link}` : null,
-  ].filter(Boolean);
-  const bankBlock = bankLines.length
-    ? `<div style="margin-top:20px;font-size:12px;"><strong>Payment details</strong><br/>${bankLines.join('<br/>')}</div>`
-    : '';
-  const rows = items.map((item: any) => {
-    const qty = Number(item.quantity || 0);
-    const unit = Number(item.unitPrice || 0);
-    const total = qty * unit;
-    return `<tr>
-      <td>${item.description || item.name || 'Line Item'}</td>
-      <td style="text-align:right;">${qty}</td>
-      <td style="text-align:right;">${unit.toFixed(2)}</td>
-      <td style="text-align:right;">${total.toFixed(2)}</td>
-    </tr>`;
-  }).join('');
-
-  const html = `
-  <html>
-    <head>
-      <meta charset="UTF-8" />
-      <style>
-        body { font-family: Arial, sans-serif; color: #0f172a; }
-        .header { border-bottom: 2px solid #0f172a; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 12px; }
-        th { background: #f8fafc; text-align: left; }
-        .total { margin-top: 16px; text-align: right; font-weight: bold; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>Invoice ${invoice.invoice_number}</h1>
-        <p>Due Date: ${invoice.due_date || '-'}</p>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th style="text-align:right;">Qty</th>
-            <th style="text-align:right;">Unit Price</th>
-            <th style="text-align:right;">Amount</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <p class="total">Total: ${Number(invoice.total || invoice.total_amount || 0).toFixed(2)} ${invoice.currency || 'USD'}</p>
-      ${bankBlock}
-    </body>
-  </html>`;
-
-  const { page, close } = await BrowserManager.createPage();
-  try {
-    await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
-    await page.emulateMedia({ media: 'print' });
-    const pdf = await page.pdf({
-      format: 'Letter',
-      printBackground: true,
-      margin: { top: '25.4mm', right: '25.4mm', bottom: '25.4mm', left: '25.4mm' },
-    });
-    return Buffer.from(pdf);
-  } finally {
-    await close().catch(() => undefined);
-  }
-}
+const schema = z.object({
+  tenantId: z.string().uuid(),
+  invoiceId: z.string().uuid(),
+  recipients: z.union([z.string().email(), z.array(z.string().email()).min(1).max(20)]),
+  subject: z.string().trim().min(1).max(250).optional(),
+  message: z.string().trim().max(10_000).optional(),
+});
 
 export async function POST(req: NextRequest) {
+  let quotaReservation: { tenantId: string; userId: string } | null = null;
   try {
-    const { tenantId, invoiceId, recipients, subject, message } = await req.json();
-    if (!tenantId || !invoiceId || !recipients) {
-      return NextResponse.json({ error: 'tenantId, invoiceId, and recipients are required' }, { status: 400 });
+    const parsed = schema.safeParse(await req.json().catch(() => ({})));
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Valid tenantId, invoiceId, and recipient email are required' }, { status: 400 });
     }
-    const { user } = await requireTenantAccess(tenantId);
 
-    const supabase = createSupabaseAdminClient();
-    const { data: invoice, error } = await supabase
-      .from('invoices')
-      .select('*')
+    const { tenantId, invoiceId, subject, message } = parsed.data;
+    const recipients = Array.isArray(parsed.data.recipients) ? parsed.data.recipients : [parsed.data.recipients];
+    const { user } = await requireTenantAccess(tenantId, req);
+    const admin = createSupabaseAdminClient();
+    const { data: invoice, error } = await admin
+      .from('business_invoices')
+      .select('id,status')
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId)
-      .single();
-    if (error || !invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-
-    const pdf = await renderInvoicePdf(invoice);
-
-    // Build tracking pixel URL (base64url encoded invoice ID)
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
-    const trackingToken = signInvoiceTrackToken(invoiceId);
-    const trackingPixelUrl = `${appUrl}/api/invoices/track/${trackingToken}`;
-
-    const emailResponse = await fetch(`${req.nextUrl.origin}/api/email/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-api-key': process.env.INTERNAL_API_KEY || '',
-      },
-      body: JSON.stringify({
-        tenantId,
-        userId: user.id,
-        to: recipients,
-        subject: subject || `Invoice ${invoice.invoice_number}`,
-        text: message || `Please find attached invoice ${invoice.invoice_number}.`,
-        attachments: [{
-          filename: `Invoice_${invoice.invoice_number}.pdf`,
-          content: pdf.toString('base64'),
-          contentType: 'application/pdf',
-        }],
-      }),
-    });
-
-    const emailPayload = await emailResponse.json().catch(() => ({}));
-    if (!emailResponse.ok) {
-      return NextResponse.json({ error: emailPayload?.error || 'Failed to send invoice email' }, { status: 502 });
+      .maybeSingle();
+    if (error) throw error;
+    if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    if (invoice.status !== 'draft') {
+      return NextResponse.json({ error: `Only draft invoices can be sent. This invoice is ${invoice.status}.` }, { status: 409 });
     }
 
-    const now = new Date().toISOString();
-    const recipientEmail = Array.isArray(recipients) ? recipients[0] : String(recipients);
-    const emailProvider = String(emailPayload?.provider || 'tenant-default');
+    await consumeDailyResourceQuota(tenantId, user.id, 'invoices');
+    quotaReservation = { tenantId, userId: user.id };
 
-    // Update invoice sent_at + delivery_status
-    await supabase
-      .from('invoices')
-      .update({
-        status: 'sent',
-        sent_at: now,
-        updated_at: now,
-        delivery_status: 'DELIVERED',
-      })
-      .eq('id', invoiceId)
-      .eq('tenant_id', tenantId);
-
-    // Create delivery log entry for e-delivery proof
-    await supabase.from('invoice_delivery_log').insert({
-      invoice_id: invoiceId,
-      tenant_id: tenantId,
-      sent_at: now,
-      delivered_at: now,
-      sent_to_email: recipientEmail,
-      email_provider: emailProvider,
-      delivery_status: 'DELIVERED',
-    });
-
-    // Audit log
-    await logInvoiceEvent({
+    const { runId } = await start(invoiceLifecycleWorkflow, [{
       invoiceId,
       tenantId,
-      eventType: 'sent',
-      eventData: {
-        recipients,
-        invoice_number: invoice.invoice_number,
-        tracking_pixel_url: trackingPixelUrl,
-      },
-      performedBy: user.id,
-    });
+      actorUserId: user.id,
+      recipients: [...new Set(recipients.map((email) => email.toLowerCase()))],
+      subject,
+      message,
+    }]);
 
-    const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId, tenantId }]);
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Invoice sent successfully',
+    quotaReservation = null;
+    return NextResponse.json({
+      success: true,
+      status: 'queued',
+      message: 'Invoice delivery has been queued',
       runId,
-      trackingPixelUrl,
-    });
+    }, { status: 202 });
   } catch (error) {
-    console.error('[invoices/send] error:', error);
-    return routeErrorResponse(error, 'Failed to send invoice', req);
+    if (quotaReservation) {
+      await releaseDailyResourceQuota(quotaReservation.tenantId, quotaReservation.userId, 'invoices');
+    }
+    return routeErrorResponse(error, 'Invoice delivery could not be queued', req);
   }
 }

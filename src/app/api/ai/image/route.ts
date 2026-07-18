@@ -98,16 +98,14 @@ async function generateWithProvider(params: {
 
 /**
  * POST /api/ai/image
- * Generate an image via OpenAI GPT Image.
- * Returns a *temporary* OpenAI URL (expires ~1 hour).
- * Images are NOT saved to Supabase — caller must explicitly upload if needed.
+ * Generate an image through the configured provider and persist it to tenant-owned storage.
  */
 export async function POST(req: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { prompt, size = '1024x1024', tenantId: bodyTenantId, mode, provider } = await req.json();
+    const { prompt, size = '1024x1024', tenantId: bodyTenantId, mode, provider, assetType = 'image', metadata = {} } = await req.json();
     if (!prompt?.trim()) {
         return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
@@ -126,6 +124,7 @@ export async function POST(req: NextRequest) {
     const admin = createSupabaseAdminClient();
     const superAdmin = await isPlatformSuperAdmin(supabase, user.id);
     const skipQuota = skipAiQuotaForAdminMode(mode, superAdmin);
+    if (!['image', 'logo'].includes(assetType)) return NextResponse.json({ error: 'Invalid asset type' }, { status: 400 });
 
     // Hard free allowance for everyone: 3 images per UTC day per user.
     // This is independent from tenant AI unit quotas.
@@ -160,8 +159,9 @@ export async function POST(req: NextRequest) {
         );
     }
 
+    let tenantId: string | null = null;
+    const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
     if (!skipQuota) {
-        const ctx = await resolveTenantContextForUser(supabase, user.id, bodyTenantId ?? null);
         if (!ctx) {
             return NextResponse.json(
                 {
@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
+        tenantId = ctx.tenantId;
         if (!planIncludesImageGeneration(ctx.plan)) {
             return NextResponse.json(
                 {
@@ -186,6 +187,8 @@ export async function POST(req: NextRequest) {
             if (blocked) return blocked;
         }
     }
+    if (skipQuota) tenantId = ctx?.tenantId || null;
+    if (!tenantId) return NextResponse.json({ error: 'A workspace is required to store generated images.', code: 'TENANT_REQUIRED' }, { status: 400 });
 
     try {
         const preferredProvider = typeof provider === 'string' ? provider.toLowerCase() : 'auto';
@@ -252,40 +255,48 @@ export async function POST(req: NextRequest) {
         const revisedPrompt = result.revisedPrompt;
         const imageProvider = result.provider;
 
-        // Increment free daily usage counter only after successful generation.
+        const imageResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(30_000) });
+        if (!imageResponse.ok) return NextResponse.json({ error: 'Generated image could not be downloaded for permanent storage' }, { status: 502 });
+        const contentType = String(imageResponse.headers.get('content-type') || 'image/png').split(';')[0];
+        if (!contentType.startsWith('image/')) return NextResponse.json({ error: 'Image provider returned an invalid file type' }, { status: 502 });
+        const bytes = new Uint8Array(await imageResponse.arrayBuffer());
+        if (bytes.byteLength > 25 * 1024 * 1024) return NextResponse.json({ error: 'Generated image exceeds the 25 MB storage limit' }, { status: 413 });
+        const extension = contentType === 'image/jpeg' ? 'jpg' : contentType === 'image/webp' ? 'webp' : 'png';
+        const storagePath = `generated/${tenantId}/${user.id}/${crypto.randomUUID()}.${extension}`;
+        const { error: storageError } = await admin.storage.from('social-assets').upload(storagePath, bytes, { contentType, cacheControl: '31536000', upsert: false });
+        if (storageError) return NextResponse.json({ error: 'Generated image could not be stored permanently', details: storageError.message }, { status: 502 });
+        const { data: publicData } = admin.storage.from('social-assets').getPublicUrl(storagePath);
+        const permanentUrl = publicData.publicUrl;
+        const { data: asset, error: assetError } = await admin.from('generated_assets').insert({
+            tenant_id: tenantId,
+            user_id: user.id,
+            asset_type: assetType,
+            prompt: prompt.trim(),
+            url: permanentUrl,
+            storage_path: storagePath,
+            bucket_id: 'social-assets',
+            metadata: { ...metadata, size, provider: imageProvider, model: imageProvider === 'openai' ? OPENAI_IMAGE_MODEL : process.env.XAI_IMAGE_MODEL || process.env.GROK_IMAGE_MODEL || 'grok-2-image', revisedPrompt: revisedPrompt || null },
+        }).select('*').single();
+        if (assetError) {
+            await admin.storage.from('social-assets').remove([storagePath]);
+            return NextResponse.json({ error: 'Generated image metadata could not be saved' }, { status: 500 });
+        }
+
+        // Increment free daily usage only after the permanent asset exists.
         if (usageTrackingEnabled && !dailyUsage) {
-            const { error: usageInsertError } = await admin
-                .from('daily_image_generation_usage')
-                .insert({
-                    user_id: user.id,
-                    usage_date: usageDate,
-                    generated_count: 1,
-                });
-            if (usageInsertError && !isMissingDailyUsageTableError(usageInsertError)) {
-                return NextResponse.json({ error: usageInsertError.message }, { status: 500 });
-            }
-            if (usageInsertError && isMissingDailyUsageTableError(usageInsertError)) {
-                usageTrackingEnabled = false;
-            }
+            const { error: usageInsertError } = await admin.from('daily_image_generation_usage').insert({ user_id: user.id, usage_date: usageDate, generated_count: 1 });
+            if (usageInsertError && isMissingDailyUsageTableError(usageInsertError)) usageTrackingEnabled = false;
+            else if (usageInsertError) console.error('[ai/image] daily usage could not be recorded', usageInsertError);
         } else if (usageTrackingEnabled && dailyUsage) {
-            const { error: usageUpdateError } = await admin
-                .from('daily_image_generation_usage')
-                .update({
-                    generated_count: generatedToday + 1,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', dailyUsage.id);
-            if (usageUpdateError && !isMissingDailyUsageTableError(usageUpdateError)) {
-                return NextResponse.json({ error: usageUpdateError.message }, { status: 500 });
-            }
-            if (usageUpdateError && isMissingDailyUsageTableError(usageUpdateError)) {
-                usageTrackingEnabled = false;
-            }
+            const { error: usageUpdateError } = await admin.from('daily_image_generation_usage').update({ generated_count: generatedToday + 1, updated_at: new Date().toISOString() }).eq('id', dailyUsage.id);
+            if (usageUpdateError && isMissingDailyUsageTableError(usageUpdateError)) usageTrackingEnabled = false;
+            else if (usageUpdateError) console.error('[ai/image] daily usage could not be recorded', usageUpdateError);
         }
 
         return NextResponse.json({
             success: true,
-            url: imageUrl,
+            url: permanentUrl,
+            asset,
             revised_prompt: revisedPrompt,
             provider: imageProvider,
             freeUsage: {

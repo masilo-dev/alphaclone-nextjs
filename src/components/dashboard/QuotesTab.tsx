@@ -186,8 +186,8 @@ const CreateQuoteModal: React.FC<{
   open: boolean;
   onClose: () => void;
   onCreated: () => void;
-  userId: string;
-}> = ({ open, onClose, onCreated, userId }) => {
+  tenantId: string;
+}> = ({ open, onClose, onCreated, tenantId }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
@@ -203,30 +203,13 @@ const CreateQuoteModal: React.FC<{
     }
     setSaving(true);
     try {
-      const { quote, error } = await quoteService.createQuote(userId, {
-        name: name.trim(),
-        notes: email.trim() ? `Recipient: ${email.trim()}` : undefined,
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined, amount: parseFloat(amount) || 0 }),
       });
-      if (error || !quote) throw new Error(error || 'Failed to create quote');
-
-      const amt = parseFloat(amount) || 0;
-      const metaPatch: Record<string, unknown> = {
-        ...(quote.metadata || {}),
-        ...(email.trim() ? { client_email: email.trim() } : {}),
-      };
-      await supabase.from('quotes').update({
-        ...(amt > 0 ? { total_amount: amt, subtotal: amt } : {}),
-        metadata: metaPatch,
-      }).eq('id', quote.id);
-
-      if (amt > 0) {
-        await quoteService.addQuoteItem(quote.id, {
-          productName: name.trim(),
-          description: 'Professional services',
-          quantity: 1,
-          unitPrice: amt,
-        });
-      }
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to create quote');
 
       toast.success('Quote created');
       setName('');
@@ -296,7 +279,8 @@ const QuoteEditModal: React.FC<{
   quote: QuoteRow | null;
   onClose: () => void;
   onSaved: () => void;
-}> = ({ open, quote, onClose, onSaved }) => {
+  tenantId: string;
+}> = ({ open, quote, onClose, onSaved, tenantId }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<QuoteStatus>('draft');
@@ -306,7 +290,6 @@ const QuoteEditModal: React.FC<{
   const [terms, setTerms] = useState('');
   const [currency, setCurrency] = useState('USD');
   const [items, setItems] = useState<EditableQuoteItem[]>([]);
-  const [originalItemIds, setOriginalItemIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open || !quote) return;
@@ -353,7 +336,6 @@ const QuoteEditModal: React.FC<{
         discountPercent: '0',
         taxPercent: '0',
       }]);
-      setOriginalItemIds((quoteItemsResult.items || []).map((item) => item.id));
       setLoading(false);
     })().catch((err) => {
       if (!cancelled) {
@@ -405,49 +387,30 @@ const QuoteEditModal: React.FC<{
     }
     setSaving(true);
     try {
-      const { error } = await quoteService.updateQuote(quote.id, {
+      const normalizedItems = items.filter((item) => item.productName.trim()).map((item, index) => ({
+        productName: item.productName.trim(),
+        description: item.description.trim() || undefined,
+        quantity: Number(item.quantity || 0) || 1,
+        unitPrice: Number(item.unitPrice || 0) || 0,
+        discountPercent: Number(item.discountPercent || 0) || 0,
+        taxPercent: Number(item.taxPercent || 0) || 0,
+        itemOrder: index + 1,
+      }));
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        quoteId: quote.id,
         name: name.trim(),
         status,
-        validUntil: validUntil || undefined,
+        validUntil: validUntil || null,
         notes,
         termsAndConditions: terms,
         currency,
-      });
-      if (error) throw new Error(error);
-
-      const seenIds = new Set<string>();
-      for (let i = 0; i < items.length; i += 1) {
-        const item = items[i];
-        if (!item.productName.trim()) continue;
-        const payload = {
-          productName: item.productName.trim(),
-          description: item.description.trim() || undefined,
-          quantity: Number(item.quantity || 0) || 1,
-          unitPrice: Number(item.unitPrice || 0) || 0,
-          discountPercent: Number(item.discountPercent || 0) || 0,
-          taxPercent: Number(item.taxPercent || 0) || 0,
-          itemOrder: i + 1,
-        };
-
-        if (item.id) {
-          seenIds.add(item.id);
-          const { error: updateError } = await quoteService.updateQuoteItem(item.id, payload);
-          if (updateError) throw new Error(updateError);
-        } else {
-          const { item: created, error: createError } = await quoteService.addQuoteItem(quote.id, payload);
-          if (createError) throw new Error(createError);
-          if (created?.id) seenIds.add(created.id);
-        }
-      }
-
-      for (const itemId of originalItemIds) {
-        if (!seenIds.has(itemId)) {
-          const { error: deleteError } = await quoteService.deleteQuoteItem(itemId);
-          if (deleteError) throw new Error(deleteError);
-        }
-      }
-
-      await quoteService.recalculateQuoteTotals(quote.id);
+        items: normalizedItems,
+      }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to update quote');
       toast.success('Quote updated');
       onSaved();
       onClose();
@@ -588,7 +551,10 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   useEffect(() => { load(); }, [load]);
 
   const deleteQuote = async (id: string) => {
-    await supabase.from('quotes').delete().eq('id', id);
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/quotes?quoteId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { toast.error(result.error || 'Quote could not be deleted'); return; }
     setQuotes(p => p.filter(q => q.id !== id));
     setSelected(null);
     toast.success('Quote deleted');
@@ -837,8 +803,8 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       >
         <FilePlus className="w-6 h-6 text-white" />
       </button>
-      <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} userId={user.id} />
-      <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} />
+      {currentTenant?.id && <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} tenantId={currentTenant.id} />}
+      {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} />}
 
       <DetailDrawer
         open={Boolean(selected)}

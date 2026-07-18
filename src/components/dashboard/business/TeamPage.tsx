@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User } from '../../../types';
-import { useTenant } from '../../../contexts/TenantContext';
-import { supabase } from '../../../lib/supabase';
+import { useTenant, useTenantRole } from '../../../contexts/TenantContext';
+import { tenantService } from '@/services/tenancy/TenantService';
 import {
     Users as UsersIcon,
     Plus,
@@ -31,6 +31,8 @@ interface TeamPageProps {
 const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     const router = useRouter();
     const { currentTenant } = useTenant();
+    const tenantRole = useTenantRole();
+    const canManageTeam = ['owner', 'admin', 'tenant_admin', 'super_admin'].includes(tenantRole || '');
     const [teamMembers, setTeamMembers] = useState<any[]>([]);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -47,22 +49,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
 
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('tenant_users')
-                .select(`
-                    *,
-                    user:user_id (
-                        id,
-                        email,
-                        name,
-                        avatar
-                    )
-                `)
-                .eq('tenant_id', currentTenant.id);
-
-            if (!error && data) {
-                setTeamMembers(data);
-            }
+            const data = await tenantService.getTenantUsers(currentTenant.id);
+            setTeamMembers(data);
         } catch (error) {
             console.error('Error loading team members:', error);
         } finally {
@@ -74,16 +62,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
         if (!currentTenant) return;
 
         try {
-            const { error } = await supabase
-                .from('tenant_invitations')
-                .insert({
-                    tenant_id: currentTenant.id,
-                    email,
-                    role,
-                    invited_by: user.id
-                });
-
-            if (error) throw error;
+            await tenantService.createInvitation(currentTenant.id, email, role as any, user.id);
 
             toast.success(`Invitation sent to ${email}`);
             setShowInviteModal(false);
@@ -98,14 +77,12 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
 
         if (!currentTenant) return;
 
-        const { error } = await supabase
-            .from('tenant_users')
-            .delete()
-            .eq('tenant_id', currentTenant.id)
-            .eq('user_id', userId);
-
-        if (!error) {
+        try {
+            await tenantService.removeUserFromTenant(currentTenant.id, userId);
             setTeamMembers(teamMembers.filter(m => m.user_id !== userId));
+            toast.success('Team member removed');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Team member could not be removed');
         }
     };
 
@@ -164,7 +141,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                             exit={{ opacity: 0, y: -10 }}
                             className="space-y-6"
                         >
-                            <div className="flex justify-end">
+                            {canManageTeam && <div className="flex justify-end">
                                 <button
                                     onClick={() => setShowInviteModal(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors text-white font-bold shadow-lg shadow-teal-500/20"
@@ -172,7 +149,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                     <UserPlus className="w-4 h-4" />
                                     Invite Member
                                 </button>
-                            </div>
+                            </div>}
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {teamMembers.map(member => (
                                     <TeamMemberCard
@@ -180,6 +157,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                         member={member}
                                         onRemove={handleRemoveMember}
                                         isCurrentUser={member.user_id === user.id}
+                                        canManage={canManageTeam}
                                     />
                                 ))}
                             </div>
@@ -198,7 +176,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                 <h3 className="text-xl font-bold text-white mb-2">Organization Structure</h3>
                                 <p className="text-slate-400 mb-8">
                                     Visualize your team's hierarchy and reporting lines.
-                                    (Currently showing flat structure)
+                                    Owners and administrators are shown above the rest of the workspace team.
                                 </p>
                                 <div className="flex flex-col items-center gap-4 relative">
                                     {/* Simple Tree Visualization */}
@@ -207,7 +185,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
                                     </div>
                                     <div className="h-8 w-px bg-slate-700"></div>
                                     <div className="flex gap-4 overflow-x-auto p-4 w-full justify-center">
-                                        {teamMembers.filter(m => m.role !== 'admin').map(member => (
+                                        {teamMembers.filter(m => !['admin', 'owner', 'tenant_admin'].includes(m.role)).map(member => (
                                             <div key={member.user_id} className="flex flex-col items-center relative group">
                                                 <div className="absolute -top-4 left-1/2 w-px h-4 bg-slate-700"></div>
                                                 <div className="p-3 bg-slate-800 border border-slate-700 rounded-xl min-w-[140px] text-center hover:border-teal-500/50 transition-all">
@@ -337,7 +315,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     );
 };
 
-const TeamMemberCard = ({ member, onRemove, isCurrentUser }: any) => {
+const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => {
     const roleColors = {
         admin: 'bg-red-500/10 text-red-400 border-red-500/20',
         manager: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
@@ -356,7 +334,7 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser }: any) => {
                         <p className="text-xs text-slate-400 font-mono">{member.user?.email}</p>
                     </div>
                 </div>
-                {!isCurrentUser && (
+                {canManage && !isCurrentUser && (
                     <button
                         onClick={() => onRemove(member.user_id)}
                         className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all"
@@ -416,7 +394,7 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
                     <div>
                         <label className="block text-sm font-bold text-slate-300 mb-2">Role</label>
                         <div className="grid grid-cols-3 gap-2">
-                            {['member', 'manager', 'admin'].map((r) => (
+                            {['member', 'client', 'admin'].map((r) => (
                                 <button
                                     key={r}
                                     type="button"

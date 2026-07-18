@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { expenseService } from '../../../../services/finance/ExpenseService';
-import { requireTenantAccess } from '@/lib/apiAuth';
+import { requireTenantAccess, requireTenantRole } from '@/lib/apiAuth';
 import { enforceQuota } from '@/lib/quotaMiddleware';
 import { quotaEnforcementService } from '@/services/quotaEnforcementService';
+import { z } from 'zod';
+
+const tenantIdSchema = z.string().uuid();
+const expenseInputSchema = z.object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    amount: z.coerce.number().positive().max(100_000_000),
+    tax_amount: z.coerce.number().min(0).max(100_000_000).optional(),
+    currency: z.string().length(3).transform((value) => value.toUpperCase()).optional(),
+    description: z.string().trim().max(1000).optional(),
+    vendor_name: z.string().trim().max(300).optional(),
+    payment_method: z.enum(['card', 'cash', 'bank_transfer', 'check', 'other']).optional(),
+    billable: z.boolean().optional(),
+    client_id: z.string().uuid().nullable().optional(),
+    category_id: z.string().uuid().nullable().optional(),
+    asset_account_id: z.string().uuid().nullable().optional(),
+    receipt_url: z.string().max(2000).nullable().optional(),
+    notes: z.string().max(5000).nullable().optional(),
+});
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -12,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     let user;
     try {
-        ({ user } = await requireTenantAccess(tenantId));
+        ({ user } = await requireTenantAccess(tenantId, req));
     } catch {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -58,14 +76,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { action, tenantId, ...payload } = body;
 
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
 
     let user;
     try {
-        ({ user } = await requireTenantAccess(tenantId));
+        ({ user } = await requireTenantAccess(tenantId, req));
     } catch {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -79,11 +97,14 @@ export async function POST(req: NextRequest) {
     try {
         switch (action) {
             case 'create': {
-                const expense = await expenseService.createExpense(tenantId, user.id, payload);
+                const parsed = expenseInputSchema.safeParse(payload);
+                if (!parsed.success) return NextResponse.json({ error: 'Invalid expense details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+                const expense = await expenseService.createExpense(tenantId, user.id, parsed.data);
                 await quotaEnforcementService.trackAPICall(tenantId, '/api/finance/expenses?action=create', user.id).catch(console.error);
                 return NextResponse.json(expense, { status: 201 });
             }
             case 'approve': {
+                await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
                 const { expenseId } = payload;
                 if (!expenseId) return NextResponse.json({ error: 'expenseId required' }, { status: 400 });
                 const expense = await expenseService.approveExpense(tenantId, expenseId, user.id);
@@ -91,6 +112,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json(expense);
             }
             case 'reject': {
+                await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
                 const { expenseId, reason } = payload;
                 if (!expenseId) return NextResponse.json({ error: 'expenseId required' }, { status: 400 });
                 const expense = await expenseService.rejectExpense(tenantId, expenseId, reason);
@@ -116,12 +138,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-    const { tenantId, expenseId, ...updates } = await req.json();
+    const { tenantId, expenseId, ...updates } = await req.json().catch(() => ({}));
     if (!tenantId || !expenseId) return NextResponse.json({ error: 'tenantId and expenseId required' }, { status: 400 });
 
     let user;
     try {
-        ({ user } = await requireTenantAccess(tenantId));
+        ({ user } = await requireTenantAccess(tenantId, req));
     } catch {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -133,7 +155,11 @@ export async function PATCH(req: NextRequest) {
     if (quotaResponse) return quotaResponse;
 
     try {
-        const expense = await expenseService.updateExpense(tenantId, expenseId, updates);
+        const parsed = expenseInputSchema.partial().safeParse(updates);
+        if (!parsed.success || !tenantIdSchema.safeParse(tenantId).success || !z.string().uuid().safeParse(expenseId).success) {
+            return NextResponse.json({ error: 'Invalid expense update' }, { status: 400 });
+        }
+        const expense = await expenseService.updateExpense(tenantId, expenseId, parsed.data);
         await quotaEnforcementService.trackAPICall(tenantId, '/api/finance/expenses?action=update', user.id).catch(console.error);
         return NextResponse.json(expense);
     } catch (err: any) {
@@ -150,7 +176,7 @@ export async function DELETE(req: NextRequest) {
 
     let user;
     try {
-        ({ user } = await requireTenantAccess(tenantId));
+        ({ user } = await requireTenantAccess(tenantId, req));
     } catch {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

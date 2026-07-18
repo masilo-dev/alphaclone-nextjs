@@ -178,7 +178,9 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this campaign?')) return;
-        await supabase.from('sms_campaigns').delete().eq('id', id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/sms/campaign?tenantId=${encodeURIComponent(tenant.id)}&campaignId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Campaign could not be deleted');
         setCampaigns(prev => prev.filter(c => c.id !== id));
         toast.success('Deleted');
     };
@@ -637,4 +639,3 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
         </div>
     );
 }
-

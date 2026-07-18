@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { DailyCall } from '@daily-co/daily-js';
 import { sendAuditToMeeting } from '../lib/meetingAudit';
+import { tenantService } from './tenancy/TenantService';
 
 // Global reference to the Daily call object (set by the meeting component)
 let _dailyCallObject: DailyCall | null = null;
@@ -32,18 +33,10 @@ export const notificationService = {
         priority?: 'low' | 'medium' | 'high' | 'urgent';
         metadata?: Record<string, any>;
     }) {
-        const { error } = await supabase
-            .from('notifications')
-            .insert({
-                user_id: params.userId,
-                type: params.type,
-                title: params.title,
-                message: params.message,
-                link: params.link,
-                priority: params.priority || 'medium',
-                metadata: params.metadata || {},
-                read: false
-            });
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return { success: false, error: 'No active workspace selected' };
+        const response = await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...params }) });
+        const payload = await response.json().catch(() => ({}));
 
         // Send audit to meeting
         if (_dailyCallObject) {
@@ -59,44 +52,42 @@ export const notificationService = {
             });
         }
 
-        return { success: !error, error: error?.message };
+        return { success: response.ok, error: response.ok ? undefined : payload.error || 'Notification could not be sent' };
     },
 
     async getNotifications(userId: string) {
-        const { data, error } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-
-        return { notifications: data as Notification[] || [], error: error?.message };
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return { notifications: [], error: 'No active workspace selected' };
+        const response = await fetch(`/api/notifications?tenantId=${encodeURIComponent(tenantId)}`, { cache: 'no-store' });
+        const payload = await response.json().catch(() => ({}));
+        return { notifications: response.ok ? payload.notifications as Notification[] || [] : [], error: response.ok ? undefined : payload.error || 'Notifications could not be loaded' };
     },
 
     async markAsRead(notificationId: string) {
-        const { error } = await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('id', notificationId);
-
-        return { error: error?.message };
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return { error: 'No active workspace selected' };
+        const response = await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ids: [notificationId], read: true }) });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? undefined : payload.error || 'Notification could not be updated' };
     },
 
     async markAllAsRead(userId: string) {
-        const { error } = await supabase
-            .from('notifications')
-            .update({ read: true })
-            .eq('user_id', userId);
-
-        return { error: error?.message };
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return { error: 'No active workspace selected' };
+        const loaded = await this.getNotifications(userId);
+        const ids = loaded.notifications.filter((notification) => !notification.read).map((notification) => notification.id);
+        if (!ids.length) return { error: loaded.error };
+        const response = await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ids, read: true }) });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? undefined : payload.error || 'Notifications could not be updated' };
     },
 
     async deleteNotification(notificationId: string) {
-        const { error } = await supabase
-            .from('notifications')
-            .delete()
-            .eq('id', notificationId);
-
-        return { error: error?.message };
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return { error: 'No active workspace selected' };
+        const response = await fetch(`/api/notifications?tenantId=${encodeURIComponent(tenantId)}&notificationId=${encodeURIComponent(notificationId)}`, { method: 'DELETE' });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? undefined : payload.error || 'Notification could not be deleted' };
     },
 
     /** Workspace-wide in-app + email announcement (owner/admin only). */

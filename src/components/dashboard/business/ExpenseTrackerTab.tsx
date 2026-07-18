@@ -84,6 +84,7 @@ const EMPTY_FORM = {
     notes: '',
     category_id: '',
     asset_account_id: '',
+    receipt_url: '',
 };
 
 export default function ExpenseTrackerTab() {
@@ -104,49 +105,44 @@ export default function ExpenseTrackerTab() {
     const [scanning, setScanning] = useState(false);
     const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
-    const handleCameraScan = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCameraScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file || !tenant?.id) return;
 
         setScanning(true);
         const objectUrl = URL.createObjectURL(file);
         setReceiptPreview(objectUrl);
 
-        setTimeout(() => {
-            const vendors = ['Starbucks Coffee', 'Uber Ride', 'Amazon Web Services', 'GitHub Enterprise', 'Shell Station'];
-            const descriptions = ['Team coffee meeting', 'Client travel ride-share', 'Monthly infrastructure billing', 'Developer Copilot licensing', 'Fuel reimbursement'];
-            const randomIdx = Math.floor(Math.random() * vendors.length);
-            const amt = (Math.random() * 85 + 15).toFixed(2);
-            const tax = (parseFloat(amt) * 0.0825).toFixed(2);
-
-            let catId = '';
-            if (categories.length > 0) {
-                if (randomIdx === 0) catId = categories.find(c => c.name.toLowerCase().includes('meals'))?.id || categories[0].id;
-                else if (randomIdx === 1 || randomIdx === 4) catId = categories.find(c => c.name.toLowerCase().includes('travel'))?.id || categories[0].id;
-                else catId = categories.find(c => c.name.toLowerCase().includes('software'))?.id || categories[0].id;
-            }
-
-            setForm({
-                date: new Date().toISOString().split('T')[0],
-                amount: amt,
-                tax_amount: tax,
-                currency: 'USD',
-                description: descriptions[randomIdx],
-                vendor_name: vendors[randomIdx],
-                payment_method: 'card',
-                status: 'pending',
-                billable: Math.random() > 0.5,
-                client_id: '',
-                notes: 'Receipt automatically parsed using built-in AI scanner.',
-                category_id: catId,
-                asset_account_id: assetAccounts[0]?.id || '',
-            });
-
+        try {
+            const request = new FormData();
+            request.set('file', file);
+            request.set('tenantId', tenant.id);
+            const response = await fetch('/api/ai/vision', { method: 'POST', body: request });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result?.data) throw new Error(result.error || 'Receipt scan failed');
+            const extracted = result.data as Record<string, unknown>;
+            const suggested = String(extracted.category || '').toLowerCase();
+            const categoryId = categories.find((category) =>
+                suggested && (suggested.includes(category.name.toLowerCase()) || category.name.toLowerCase().includes(suggested))
+            )?.id || '';
+            setForm((current) => ({
+                ...current,
+                date: String(extracted.date || current.date),
+                amount: Number(extracted.amount || 0) > 0 ? String(extracted.amount) : '',
+                description: String(extracted.description || ''),
+                vendor_name: String(extracted.description || ''),
+                category_id: categoryId,
+                receipt_url: String(extracted.receiptUrl || ''),
+                notes: 'Review the extracted fields against the attached receipt before saving.',
+            }));
             setEditingId(null);
             setShowForm(true);
+            toast.success('Receipt scanned. Review the fields before saving.');
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Receipt scan failed');
+        } finally {
             setScanning(false);
-            toast.success('AI Scanner completed! Receipt data auto-filled.');
-        }, 2200);
+        }
     };
 
     const loadData = useCallback(async () => {
@@ -212,9 +208,11 @@ export default function ExpenseTrackerTab() {
     useEffect(() => {
         if (!loading && categories.length === 0 && tenant?.id) {
             const seed = async () => {
-                await supabase.from('expense_categories').insert(
-                    DEFAULT_CATEGORIES.map(c => ({ ...c, tenant_id: tenant.id }))
-                );
+                await fetch('/api/finance/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'seed_categories', tenantId: tenant.id }),
+                });
                 loadData();
             };
             seed();
@@ -254,17 +252,20 @@ export default function ExpenseTrackerTab() {
             notes: form.notes || null,
             category_id: form.category_id || null,
             asset_account_id: form.asset_account_id || null,
+            receipt_url: form.receipt_url || null,
         };
 
-        let error;
-        if (editingId) {
-            ({ error } = await supabase.from('expenses').update(payload).eq('id', editingId));
-        } else {
-            ({ error } = await supabase.from('expenses').insert(payload));
-        }
+        const response = await fetch('/api/finance/expenses', {
+            method: editingId ? 'PATCH' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(editingId
+                ? { tenantId: tenant.id, expenseId: editingId, ...payload }
+                : { action: 'create', tenantId: tenant.id, ...payload }),
+        });
+        const result = await response.json().catch(() => ({}));
 
-        if (error) {
-            toast.error(error.message);
+        if (!response.ok) {
+            toast.error(result.error || 'Expense could not be saved');
         } else {
             toast.success(editingId ? 'Expense updated' : 'Expense added');
             setShowForm(false);
@@ -290,6 +291,7 @@ export default function ExpenseTrackerTab() {
             notes: expense.notes || '',
             category_id: expense.category_id || '',
             asset_account_id: (expense as any).asset_account_id || '',
+            receipt_url: expense.receipt_url || '',
         });
         setEditingId(expense.id);
         setShowForm(true);
@@ -297,16 +299,27 @@ export default function ExpenseTrackerTab() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this expense?')) return;
-        const { error } = await supabase.from('expenses').delete().eq('id', id);
-        if (!error) {
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/finance/expenses?tenantId=${encodeURIComponent(tenant.id)}&expenseId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (response.ok) {
             toast.success('Deleted');
             setExpenses(prev => prev.filter(e => e.id !== id));
         }
     };
 
     const handleStatusChange = async (id: string, status: string) => {
-        const { error } = await supabase.from('expenses').update({ status }).eq('id', id);
-        if (!error) {
+        if (!tenant?.id) return;
+        const action = status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : null;
+        if (!action) {
+            toast.error('This status change requires the reimbursement workflow.');
+            return;
+        }
+        const response = await fetch('/api/finance/expenses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, tenantId: tenant.id, expenseId: id }),
+        });
+        if (response.ok) {
             setExpenses(prev => prev.map(e => e.id === id ? { ...e, status } : e));
             toast.success('Status updated');
         }
@@ -750,4 +763,3 @@ export default function ExpenseTrackerTab() {
         </div>
     );
 }
-

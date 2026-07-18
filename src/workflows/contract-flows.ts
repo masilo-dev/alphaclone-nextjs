@@ -2,6 +2,7 @@ import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceLifecycleWorkflow } from './invoice-lifecycle';
 import crypto from 'crypto';
+import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 import {
   closeDealFromContractSign,
   resolveBusinessClientIdForParty,
@@ -20,8 +21,15 @@ export async function contractSignedWorkflow({ tenantId, payload }: { tenantId: 
 
   const invoice = await generateInvoiceStep(contractId, tenantId);
 
-  if (invoice?.id) {
-    await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice.id, tenantId }]);
+  const actorUserId = typeof payload.actorUserId === 'string' ? payload.actorUserId : undefined;
+  if (invoice?.id && invoice.shouldSend && actorUserId) {
+    await consumeDailyResourceQuota(tenantId, actorUserId, 'invoices');
+    try {
+      await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice.id, tenantId, actorUserId }]);
+    } catch (error) {
+      await releaseDailyResourceQuota(tenantId, actorUserId, 'invoices');
+      throw error;
+    }
   }
 
   const project = await kickoffProjectStep(contractId, tenantId);
@@ -38,7 +46,8 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
-  const { data: contract } = await supabase.from('contracts').select('*').eq('id', contractId).single();
+  const { data: contract, error: contractError } = await supabase.from('contracts').select('*').eq('tenant_id', tenantId).eq('id', contractId).single();
+  if (contractError) throw contractError;
   if (!contract) return null;
 
   const { data: existingInvoice } = await supabase
@@ -50,14 +59,15 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
     .limit(1)
     .maybeSingle();
   if (existingInvoice?.id) {
-    return existingInvoice;
+    return { ...existingInvoice, shouldSend: false };
   }
 
-  const amount = Number(contract.payment_amount || 0) || 1000;
+  const amount = Number(contract.payment_amount || 0);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const publicToken = crypto.randomUUID();
 
-  const { data: invoice } = await supabase
+  const { data: invoice, error: invoiceError } = await supabase
     .from('business_invoices')
     .insert({
       tenant_id: tenantId,
@@ -82,9 +92,10 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
     })
     .select()
     .single();
+  if (invoiceError) throw invoiceError;
 
   if (invoice?.id) {
-    await supabase.from('invoice_line_items').insert({
+    const { error: itemError } = await supabase.from('invoice_line_items').insert({
       invoice_id: invoice.id,
       tenant_id: tenantId,
       description: contract.title || 'Services per contract',
@@ -92,9 +103,13 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
       unit_price: amount,
       amount,
     });
+    if (itemError) {
+      await supabase.from('business_invoices').delete().eq('tenant_id', tenantId).eq('id', invoice.id);
+      throw itemError;
+    }
   }
 
-  return invoice;
+  return invoice ? { ...invoice, shouldSend: true } : null;
 }
 
 async function kickoffProjectStep(contractId: string, tenantId: string) {

@@ -74,63 +74,37 @@ export const authService = {
                 return { user: null, error: 'No user data returned' };
             }
 
-            // OPTIMIZED: Try to use cached metadata first, then fall back to DB query
-            // This reduces login time by avoiding unnecessary database calls
-            let user: User;
-
-            // Check if we have complete user data in metadata (faster)
             const metadata = data.user.user_metadata;
-            if (metadata?.name && metadata?.role) {
-                user = {
-                    id: data.user.id,
-                    email: data.user.email || '',
-                    name: metadata.name,
-                    role: metadata.role,
-                    avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
-                };
-            } else {
-                // Fallback: Fetch user profile from database (slower, but needed for old users)
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', data.user.id)
-                    .maybeSingle();
+            const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('id, email, name, role, avatar, account_status, scheduled_deletion_at')
+                .eq('id', data.user.id)
+                .maybeSingle();
 
-                if (profileError) {
-                    console.error("AuthService: Profile fetch error", profileError);
-                    return { user: null, error: 'Failed to fetch user profile' };
-                }
-
-                if (!profile) {
-                    // If no profile yet, don't fail immediately, try to return a basic user 
-                    // and let background sync handle creation
-                    console.warn("AuthService: No profile found for user during sign in", data.user.id);
-                    user = {
-                        id: data.user.id,
-                        email: data.user.email || '',
-                        name: metadata?.name || data.user.email?.split('@')[0] || 'User',
-                        role: (metadata?.role as UserRole) || 'tenant_admin',
-                        avatar: metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
-                    };
-                } else {
-                    user = {
-                        id: profile.id,
-                        email: profile.email,
-                        name: profile.name,
-                        role: profile.role,
-                        avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
-                    };
-                }
-
-                // Update metadata for next login (optimization)
-                supabase.auth.updateUser({
-                    data: {
-                        name: user.name,
-                        role: user.role,
-                        avatar: user.avatar,
-                    }
-                }).catch(() => { }); // Non-blocking, silent fail
+            if (profileError || !profile) {
+                console.error("AuthService: Canonical profile fetch failed", profileError);
+                await supabase.auth.signOut().catch(() => undefined);
+                return { user: null, error: 'Your account profile could not be verified. Please try again.' };
             }
+
+            if (['deleted', 'suspended', 'pending_deletion'].includes(String(profile.account_status))) {
+                await supabase.auth.signOut().catch(() => undefined);
+                return { user: null, error: 'This account is not currently active.' };
+            }
+
+            const user: User = {
+                id: profile.id,
+                email: profile.email,
+                name: profile.name,
+                role: profile.role,
+                avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+                account_status: profile.account_status,
+                scheduled_deletion_at: profile.scheduled_deletion_at,
+            };
+
+            supabase.auth.updateUser({
+                data: { name: user.name, avatar: user.avatar }
+            }).catch(() => { });
 
             // 5. Create Login Session & Log Activity (NON-BLOCKING)
             // Defer this to background so login returns immediately
@@ -642,53 +616,6 @@ export const authService = {
             const startTime = Date.now();
             console.log(`AuthService: Fetching profile for ${session.user.id}...`);
 
-            let user: User;
-
-            const metadata = session.user.user_metadata;
-
-            // FAST PATH: If we have basic metadata, return immediately and sync in background
-            if (metadata?.name && metadata?.role) {
-                console.log("AuthService: Fast-path hit (metadata exists)");
-                const { data: statusRow } = await supabase
-                    .from('profiles')
-                    .select('account_status, scheduled_deletion_at')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
-
-                if (!statusRow) {
-                    console.warn('AuthService: Profile missing for active session');
-                    return { user: null, error: 'Account no longer exists' };
-                }
-
-                if (statusRow.account_status === 'deleted' || statusRow.account_status === 'suspended') {
-                    return { user: null, error: 'Account is not active' };
-                }
-
-                const fastUser: User = {
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    name: metadata.name,
-                    role: metadata.role,
-                    avatar: metadata.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.email}`,
-                    account_status: statusRow.account_status,
-                    scheduled_deletion_at: statusRow.scheduled_deletion_at,
-                };
-
-                // Sync profile in background to ensure database is up to date
-                supabase.from('profiles').select('name, role, avatar').eq('id', session.user.id).single()
-                    .then(({ data: p }: { data: any }) => {
-                        if (p && (p.name !== fastUser.name || p.role !== fastUser.role)) {
-                            console.log("AuthService: Background sync found profile update needed");
-                        }
-                    }).catch(() => { });
-
-                console.log(`auth:getProfile: ${Date.now() - startTime}ms (fast-path)`);
-                return { user: fastUser, error: null };
-            }
-
-            // If metadata is incomplete, we still want to avoid blocking for too long
-            console.log("AuthService: Metadata incomplete, entering fallback fetch/transient mode");
-
             let profile = null;
             lastError = null;
             const maxRetries = 2; // Reduced from 3
@@ -728,30 +655,17 @@ export const authService = {
             }
 
             if (!profile) {
-                console.warn("AuthService: Profile retrieval failed. Using transient profile.", lastError);
-                const fallbackRole: UserRole = (session.user.user_metadata.role as UserRole) || 'tenant_admin';
+                console.warn("AuthService: Canonical profile retrieval failed.", lastError);
+                return { user: null, error: 'Your account profile could not be verified. Please sign in again.' };
+            }
 
-                user = {
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    name: session.user.user_metadata.full_name || session.user.email?.split('@')[0] || 'User',
-                    role: fallbackRole,
-                    avatar: session.user.user_metadata.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
-                };
-
-                import('./userService').then(({ userService }) => {
-                    userService.syncUserProfile(session.user).catch(err =>
-                        console.warn('Background profile sync failed:', err)
-                    );
-                });
-
-                console.log(`auth:getProfile: ${Date.now() - startTime}ms (fallback)`);
-                return { user, error: null };
+            if (['deleted', 'suspended', 'pending_deletion'].includes(String(profile.account_status))) {
+                return { user: null, error: 'Account is not active' };
             }
 
             console.log("AuthService: Profile retrieved successfully", profile.role);
 
-            user = {
+            const user: User = {
                 id: profile.id,
                 email: profile.email,
                 name: profile.name,
@@ -763,13 +677,11 @@ export const authService = {
 
             if (
                 session.user.user_metadata.name !== user.name ||
-                session.user.user_metadata.role !== user.role ||
                 session.user.user_metadata.avatar !== user.avatar
             ) {
                 supabase.auth.updateUser({
                     data: {
                         name: user.name,
-                        role: user.role,
                         avatar: user.avatar,
                     }
                 }).catch(() => { });

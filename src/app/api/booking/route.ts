@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Server misconfiguration: No Video API Key' }, { status: 500 });
         }
 
-        const roomName = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        const roomName = `room-${crypto.randomUUID()}`;
         const duration = meetingType.duration || 30;
 
         const dailyRes = await fetch(`${DAILY_API_URL}/rooms`, {

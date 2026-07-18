@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
-import { parseOAuthState } from '@/lib/oauth/oauthState';
-import { isProduction } from '@/lib/security/productionGuard';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -81,24 +80,16 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        let region = 'US';
-        let userId = '';
-        const parsedState = parseOAuthState<{ region?: string; state?: string }>(stateStr);
-        if (parsedState) {
-            region = typeof parsedState.region === 'string' && parsedState.region ? parsedState.region : 'US';
-            userId = typeof parsedState.state === 'string' ? parsedState.state : '';
-        } else if (!isProduction()) {
-            try {
-                const legacy = JSON.parse(stateStr);
-                region = typeof legacy?.region === 'string' && legacy.region ? legacy.region : 'US';
-                userId = typeof legacy?.state === 'string' ? legacy.state : '';
-            } catch {
-                userId = stateStr;
-            }
-        }
-        if (!userId || typeof userId !== 'string') {
+        const admin = createSupabaseAdminClient();
+        const { data: stateData, error: stateError } = await admin.from('oauth_states')
+            .delete().eq('id', stateStr).select('user_id, tenant_id, metadata, created_at').single();
+        const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
+        if (stateError || !stateData?.user_id || !stateData?.tenant_id || stateData.metadata?.provider !== 'zoho' || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
             throw new Error('Invalid OAuth state payload');
         }
+        const userId = String(stateData.user_id);
+        const tenantId = String(stateData.tenant_id);
+        const region = typeof stateData.metadata?.region === 'string' ? stateData.metadata.region : 'US';
 
         const redirectUri = getZohoRedirectUri(req);
         const candidateRegions = [
@@ -134,7 +125,7 @@ export async function GET(req: NextRequest) {
         const hosts = ZohoService.getHostsByRegion(resolvedRegion);
 
         // Initialize ZohoService to read/save config
-        const zohoService = new ZohoService(userId);
+        const zohoService = new ZohoService(userId, tenantId);
         const existingConfig = await zohoService.getConfig();
         const refreshToken = data.refresh_token || existingConfig?.refreshToken;
         if (!refreshToken) {
@@ -174,6 +165,21 @@ export async function GET(req: NextRequest) {
             accountsServer: hosts.accounts,
             accountId: accountId,
             ...(booksOrgId ? { booksOrgId } : {}),
+        });
+
+        const { error: connectionError } = await admin.from('tenant_integrations').upsert({
+            tenant_id: tenantId,
+            integration_id: 'zoho-mail',
+            status: 'connected',
+            connected_at: new Date().toISOString(),
+            configured_by: userId,
+            metadata: { region: resolvedRegion, mailReady: Boolean(accountId), booksReady: Boolean(booksOrgId) },
+        }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError) throw connectionError;
+        await admin.from('business_automation_events').insert({
+            tenant_id: tenantId,
+            event_type: 'integration_connected',
+            payload: { integrationId: 'zoho-mail', actorUserId: userId },
         });
 
         return NextResponse.redirect(`${zohoMailReturnUrl}?success=zoho_connected`);

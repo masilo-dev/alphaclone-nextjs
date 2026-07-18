@@ -3,6 +3,8 @@ import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { scraperDeepCrawlSchema } from '@/schemas/validation';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { assertSafeExternalHttpUrl } from '@/lib/security/externalUrl';
 
 // Regex for extracting emails
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
@@ -10,6 +12,7 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 export async function POST(request: Request) {
   let browserClose: (() => Promise<void>) | null = null;
   try {
+    await requireAuthenticatedUser(request);
     const payload = await request.json();
     const parsed = scraperDeepCrawlSchema.safeParse(payload);
     if (!parsed.success) {
@@ -18,6 +21,7 @@ export async function POST(request: Request) {
     const { url, usePlaywright = false } = parsed.data;
 
     const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
+    await assertSafeExternalHttpUrl(cleanUrl);
     let html = '';
     let usedBrowser = false;
 
@@ -34,7 +38,9 @@ export async function POST(request: Request) {
           'Accept-Language': 'en-US,en;q=0.9',
         },
         timeout: 15000,
-        maxRedirects: 5,
+        // Redirects are handled by the browser fallback, where each navigation
+        // is checked. This prevents a public URL redirecting into a private net.
+        maxRedirects: 0,
       });
       html = response.data;
       
@@ -47,6 +53,15 @@ export async function POST(request: Request) {
       try {
           const { page, close } = await BrowserManager.createPage();
           browserClose = close;
+          await page.route('**/*', async (route) => {
+            if (!route.request().isNavigationRequest()) return route.continue();
+            try {
+              await assertSafeExternalHttpUrl(route.request().url());
+              await route.continue();
+            } catch {
+              await route.abort('blockedbyclient');
+            }
+          });
           await page.goto(cleanUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
           // Wait a bit for JS to render
           await page.waitForTimeout(2000); 
@@ -132,14 +147,7 @@ export async function POST(request: Request) {
       errorCode = 'ENGINE_UNAVAILABLE';
     }
 
-    return NextResponse.json({ 
-      success: false, 
-      error: errorMessage, 
-      code: errorCode, 
-      emails: [], 
-      phone: '', 
-      social_links: {} 
-    }, { status: (errorCode === 'DEEP_CRAWL_FAILED' ? 500 : 503) });
+    return routeErrorResponse(error, errorMessage, request);
   } finally {
     if (browserClose) {
       await browserClose().catch(() => {});

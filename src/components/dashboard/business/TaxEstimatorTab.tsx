@@ -6,7 +6,6 @@ import {
   Sparkles, Loader2, RefreshCw, AlertCircle, Check,
   Percent, Scale, FileSpreadsheet, ShieldAlert
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 
@@ -18,6 +17,7 @@ interface TaxRecord {
   estimated_income: number;
   estimated_expenses: number;
   deduction_amount: number;
+  tax_rate: number;
   estimated_tax_due: number;
   status: 'draft' | 'paid';
   created_at: string;
@@ -38,6 +38,7 @@ export default function TaxEstimatorTab() {
     estimated_income: '',
     estimated_expenses: '',
     deduction_amount: '',
+    tax_rate: '',
     status: 'draft' as 'draft' | 'paid'
   });
 
@@ -45,15 +46,10 @@ export default function TaxEstimatorTab() {
     if (!tenant?.id) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('tax_records')
-        .select('*')
-        .eq('tenant_id', tenant.id)
-        .order('tax_year', { ascending: false })
-        .order('quarter', { ascending: false });
-
-      if (error) throw error;
-      setRecords(data || []);
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/financial-planning`, { credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Tax records could not be loaded');
+      setRecords(payload.taxRecords || []);
     } catch (err: any) {
       toast.error('Failed to load tax records: ' + err.message);
     } finally {
@@ -72,27 +68,14 @@ export default function TaxEstimatorTab() {
     const income = parseFloat(form.estimated_income) || 0;
     const expenses = parseFloat(form.estimated_expenses) || 0;
     const deduction = parseFloat(form.deduction_amount) || 0;
-    
-    // Simulate SE Tax calculation (15.3%) + basic federal income tax brackets (simulated overall average 15%)
-    const netProfit = Math.max(0, income - expenses - deduction);
-    const calculatedTax = netProfit * 0.28; // Estimated aggregate rate of 28% for federal + self-employment
+    const taxRate = parseFloat(form.tax_rate);
+    if (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 100) return toast.error('Enter the tax rate supplied by your accountant or tax authority');
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('tax_records')
-        .insert({
-          tenant_id: tenant.id,
-          tax_year: form.tax_year,
-          quarter: form.quarter,
-          estimated_income: income,
-          estimated_expenses: expenses,
-          deduction_amount: deduction,
-          estimated_tax_due: parseFloat(calculatedTax.toFixed(2)),
-          status: form.status
-        });
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/financial-planning`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'tax', taxYear: form.tax_year, quarter: form.quarter, income, expenses, deductions: deduction, taxRate, status: form.status }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Tax estimate could not be saved');
       toast.success('Quarterly tax estimate logged');
       setShowModal(false);
       setForm({
@@ -101,6 +84,7 @@ export default function TaxEstimatorTab() {
         estimated_income: '',
         estimated_expenses: '',
         deduction_amount: '',
+        tax_rate: '',
         status: 'draft'
       });
       loadTaxRecords();
@@ -114,12 +98,9 @@ export default function TaxEstimatorTab() {
   const handleDelete = async (id: string) => {
     if (!confirm('Permanently delete this quarterly tax record?')) return;
     try {
-      const { error } = await supabase
-        .from('tax_records')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/financial-planning?kind=tax&id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Tax estimate could not be deleted');
       toast.success('Record deleted');
       setRecords(prev => prev.filter(r => r.id !== id));
     } catch (err: any) {
@@ -137,7 +118,7 @@ export default function TaxEstimatorTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: `My Q${activeRecord.quarter} income is $${activeRecord.estimated_income} with expenses $${activeRecord.estimated_expenses}.`,
-          context: 'Provide exactly 3 bullet points of high-probability tax write-offs or deduction tips for this solopreneur business profile (e.g. Home office, Section 179 equipment, retirement account contributions).'
+          context: 'Provide exactly 3 questions this business owner should ask a qualified tax professional about possible deductions. Do not state that any deduction applies, do not provide legal or tax advice, and mention that eligibility depends on jurisdiction and records.'
         })
       });
       const data = await res.json();
@@ -211,7 +192,7 @@ export default function TaxEstimatorTab() {
         <div className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-5">
           <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Taxable Profit</span>
           <div className="text-2xl font-black text-white font-mono mt-1">${Math.max(0, totalIncome - totalExpenses - totalDeductions).toLocaleString()}</div>
-          <span className="text-[10px] text-slate-500 mt-1 block">Simulated bracket base</span>
+          <span className="text-[10px] text-slate-500 mt-1 block">User-entered effective rate basis</span>
         </div>
       </div>
 
@@ -280,7 +261,7 @@ export default function TaxEstimatorTab() {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
-              AI Write-Off Optimizer
+              AI Tax Planning Questions
             </h4>
           </div>
 
@@ -294,19 +275,19 @@ export default function TaxEstimatorTab() {
 
               <div className="p-3 bg-teal-500/5 rounded-xl border border-teal-500/10 text-[10px] text-teal-300 flex items-center gap-2">
                 <Check className="w-3.5 h-3.5" />
-                Deductions compiled for maximum legal relief.
+                Planning questions only — confirm eligibility and rates with a qualified tax professional.
               </div>
             </div>
           ) : (
             <div className="p-8 text-center text-slate-500 space-y-3">
               <FileSpreadsheet className="w-8 h-8 mx-auto text-slate-600 animate-pulse" />
-              <p className="text-xs font-medium">Evaluate write-offs and auto-simulate home office or auto deductions with AI triage.</p>
+              <p className="text-xs font-medium">Generate questions to discuss with a qualified tax professional. This tool does not determine deduction eligibility.</p>
               <button
                 onClick={handleRunDeductionTriage}
                 disabled={runningAi || records.length === 0}
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold"
               >
-                Scan Write-Offs
+                Generate Planning Questions
               </button>
             </div>
           )}
@@ -384,6 +365,22 @@ export default function TaxEstimatorTab() {
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-teal-500 font-mono"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Estimated Tax Rate (%)</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="Use a rate supplied by your tax authority or adviser"
+                  value={form.tax_rate}
+                  onChange={e => setForm(f => ({ ...f, tax_rate: e.target.value }))}
+                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-teal-500 font-mono"
+                />
+                <p className="mt-1 text-[10px] text-slate-500">AlphaClone does not infer jurisdiction-specific tax rates.</p>
               </div>
 
               <div>

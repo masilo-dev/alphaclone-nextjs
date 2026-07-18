@@ -3,7 +3,19 @@ import { supabase } from '../lib/supabase';
 import { Project, UserRole } from '../types';
 import { activityService } from './activityService';
 import { tenantService } from './tenancy/TenantService';
-import { fileUploadService } from './fileUploadService';
+
+function mapProjectRow(data: any): Project {
+    return {
+        id: data.id, dealId: data.deal_id, contractId: data.contract_id, ownerId: data.owner_id, ownerName: data.owner_name,
+        name: data.name, category: data.category, status: data.status, currentStage: data.current_stage, progress: data.progress,
+        dueDate: data.due_date, startDate: data.start_date, team: data.team || [], image: data.image, description: data.description,
+        contractStatus: data.contract_status, contractText: data.contract_text, externalUrl: data.external_url, isPublic: data.is_public,
+        showInPortfolio: data.show_in_portfolio, clientId: data.client_id, location: data.location, budget: data.budget, risk: data.risk,
+        health: data.health, resources: data.resources || [], budgetTotal: data.budget_total, budgetUsed: data.budget_used,
+        velocityScore: data.velocity_score, healthScore: data.health_score, portalToken: data.portal_token, portalEnabled: data.portal_enabled,
+        estimatedCompletionDate: data.estimated_completion_date, autoInvoiceEnabled: data.auto_invoice_enabled, createdAt: data.created_at,
+    } as Project;
+}
 
 export const projectService = {
     /**
@@ -170,24 +182,11 @@ export const projectService = {
     async ensurePortalToken(projectId: string): Promise<{ token: string | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            let query = supabase.from('projects').select('portal_token').eq('id', projectId);
-            if (tenantId) query = query.eq('tenant_id', tenantId);
-
-            const { data: existing, error: readErr } = await query.single();
-            if (readErr) return { token: null, error: readErr.message };
-
-            if (existing?.portal_token) {
-                return { token: existing.portal_token, error: null };
-            }
-
-            const token = crypto.randomUUID().replace(/-/g, '');
-            const { error: updateErr } = await supabase
-                .from('projects')
-                .update({ portal_token: token, portal_enabled: true })
-                .eq('id', projectId);
-
-            if (updateErr) return { token: null, error: updateErr.message };
-            return { token, error: null };
+            if (!tenantId) return { token: null, error: 'Select a workspace first' };
+            const response = await fetch(`/api/tenant/${tenantId}/projects/${projectId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'ensure_portal_token' }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { token: null, error: payload.error || 'Portal link could not be created' };
+            return { token: payload.token, error: null };
         } catch (err) {
             return { token: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -242,104 +241,17 @@ export const projectService = {
     async createProject(project: Omit<Project, 'id'>, templateId?: string): Promise<{ project: Project | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const dueDate = this.normalizeDateField(project.dueDate);
-            const startDate = this.normalizeDateField(project.startDate);
-
-            const { data, error } = await supabase
-                .from('projects')
-                .insert({
-                    tenant_id: tenantId || null,
-                    owner_id: project.ownerId,
-                    owner_name: project.ownerName,
-                    name: project.name,
-                    category: project.category,
-                    status: project.status,
-                    current_stage: project.currentStage,
-                    progress: project.progress,
-                    due_date: dueDate,
-                    start_date: startDate,
-                    team: project.team,
-                    image: project.image,
-                    description: project.description,
-                    contract_status: project.contractStatus || 'None',
-                    contract_text: project.contractText,
-                    external_url: project.externalUrl,
-                    is_public: project.isPublic,
-                    show_in_portfolio: project.showInPortfolio,
-                    client_id: project.clientId || null,
-                    location: project.location,
-                    budget: project.budget,
-                    risk: project.risk,
-                    health: project.health,
-                    resources: project.resources,
-                    budget_total: project.budgetTotal,
-                    budget_used: project.budgetUsed || 0,
-                    velocity_score: project.velocityScore,
-                    health_score: project.healthScore,
-                    portal_token: project.portalToken,
-                    portal_enabled: project.portalEnabled || false,
-                    estimated_completion_date: project.estimatedCompletionDate,
-                    auto_invoice_enabled: project.autoInvoiceEnabled || false,
-                })
-                .select()
-                .single();
-
-            if (error) {
-                return { project: null, error: error.message };
+            if (!tenantId) return { project: null, error: 'Select a workspace first' };
+            const response = await fetch(`/api/tenant/${tenantId}/projects`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...project, templateId }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.project) return { project: null, error: payload.error || 'Project could not be created' };
+            const newProject = mapProjectRow(payload.project);
+            if (newProject.ownerId) {
+                activityService.logActivity(newProject.ownerId, 'Project Created', { projectId: newProject.id, projectName: newProject.name, category: newProject.category, status: newProject.status, templateApplied: Boolean(templateId) }, tenantId).catch(() => undefined);
             }
-
-            const newProject: Project = {
-                id: data.id,
-                ownerId: data.owner_id,
-                ownerName: data.owner_name,
-                name: data.name,
-                category: data.category,
-                status: data.status,
-                currentStage: data.current_stage,
-                progress: data.progress,
-                dueDate: data.due_date,
-                startDate: data.start_date,
-                team: data.team || [],
-                image: data.image,
-                description: data.description,
-                contractStatus: data.contract_status,
-                contractText: data.contract_text,
-                externalUrl: data.external_url,
-                isPublic: data.is_public,
-                showInPortfolio: data.show_in_portfolio,
-                clientId: data.client_id,
-                budget: data.budget,
-                risk: data.risk,
-                health: data.health,
-                resources: data.resources || [],
-                budgetTotal: data.budget_total,
-                budgetUsed: data.budget_used,
-                velocityScore: data.velocity_score,
-                healthScore: data.health_score,
-                portalToken: data.portal_token,
-                portalEnabled: data.portal_enabled,
-                estimatedCompletionDate: data.estimated_completion_date,
-                autoInvoiceEnabled: data.auto_invoice_enabled,
-                createdAt: data.created_at,
-            };
-
-            // If a template is provided, apply it to the new project
-            if (templateId) {
-                const { projectTemplateService } = await import('./projectTemplateService');
-                await projectTemplateService.applyTemplateToProject(newProject.id, templateId);
-            }
-
-            // Log activity
-            if (project.ownerId) {
-                activityService.logActivity(project.ownerId, 'Project Created', {
-                    projectId: newProject.id,
-                    projectName: newProject.name,
-                    category: newProject.category,
-                    status: newProject.status,
-                    templateApplied: !!templateId
-                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
-            }
-
             return { project: newProject, error: null };
         } catch (err) {
             return { project: null, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -352,111 +264,16 @@ export const projectService = {
     async updateProject(projectId: string, updates: Partial<Project>): Promise<{ error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-
-            let previousStage: string | null = null;
-            if (updates.currentStage !== undefined && tenantId) {
-                const { data: existing } = await supabase
-                    .from('projects')
-                    .select('current_stage')
-                    .eq('id', projectId)
-                    .eq('tenant_id', tenantId)
-                    .maybeSingle();
-                previousStage = existing?.current_stage ?? null;
+            if (!tenantId) return { error: 'Select a workspace first' };
+            const response = await fetch(`/api/tenant/${tenantId}/projects/${projectId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.project) return { error: payload.error || 'Project could not be updated' };
+            const data = payload.project;
+            activityService.logActivity(data.owner_id, 'Project Updated', { projectId, projectName: data.name, updatedFields: Object.keys(updates).join(', ') }, tenantId).catch(() => undefined);
+            if (updates.dueDate !== undefined && data.owner_id) {
+                void import('@/lib/calendar/nativeCalendarSync').then(({ syncProjectToNativeCalendar }) => syncProjectToNativeCalendar(tenantId, data.owner_id, { id: projectId, name: data.name, description: data.description, due_date: data.due_date, status: data.status, client_id: data.client_id })).catch(() => undefined);
             }
-
-            const updateData: Record<string, unknown> = {};
-
-            if (updates.name !== undefined) updateData.name = updates.name;
-            if (updates.category !== undefined) updateData.category = updates.category;
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.currentStage !== undefined) updateData.current_stage = updates.currentStage;
-            if (updates.progress !== undefined) updateData.progress = updates.progress;
-            if (updates.dueDate !== undefined) {
-                updateData.due_date = this.normalizeDateField(updates.dueDate);
-            }
-            if (updates.startDate !== undefined) {
-                updateData.start_date = this.normalizeDateField(updates.startDate);
-            }
-            if (updates.team !== undefined) updateData.team = updates.team;
-            if (updates.image !== undefined) updateData.image = updates.image;
-            if (updates.description !== undefined) updateData.description = updates.description;
-            if (updates.contractStatus !== undefined) updateData.contract_status = updates.contractStatus;
-            if (updates.contractText !== undefined) updateData.contract_text = updates.contractText;
-            if (updates.externalUrl !== undefined) updateData.external_url = updates.externalUrl;
-            if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
-            if (updates.showInPortfolio !== undefined) updateData.show_in_portfolio = updates.showInPortfolio;
-            if (updates.budget !== undefined) updateData.budget = updates.budget;
-            if (updates.risk !== undefined) updateData.risk = updates.risk;
-            if (updates.health !== undefined) updateData.health = updates.health;
-            if (updates.resources !== undefined) updateData.resources = updates.resources;
-            if (updates.budgetTotal !== undefined) updateData.budget_total = updates.budgetTotal;
-            if (updates.budgetUsed !== undefined) updateData.budget_used = updates.budgetUsed;
-            if (updates.velocityScore !== undefined) updateData.velocity_score = updates.velocityScore;
-            if (updates.healthScore !== undefined) updateData.health_score = updates.healthScore;
-            if (updates.portalToken !== undefined) updateData.portal_token = updates.portalToken;
-            if (updates.portalEnabled !== undefined) updateData.portal_enabled = updates.portalEnabled;
-            if (updates.estimatedCompletionDate !== undefined) {
-                updateData.estimated_completion_date = this.normalizeDateField(updates.estimatedCompletionDate);
-            }
-            if (updates.autoInvoiceEnabled !== undefined) updateData.auto_invoice_enabled = updates.autoInvoiceEnabled;
-
-            // Build update query
-            let updateQuery = supabase
-                .from('projects')
-                .update(updateData)
-                .eq('id', projectId);
-
-            // Only verify tenant ownership if tenant exists
-            if (tenantId) {
-                updateQuery = updateQuery.eq('tenant_id', tenantId);
-            }
-
-            const { error, data } = await updateQuery
-                .select('owner_id, name, due_date, client_id, status, description')
-                .single();
-
-            if (error) {
-                return { error: error.message };
-            }
-
-            // If no data returned, project not found or no access
-            if (!data) {
-                return { error: 'Project not found or no access' };
-            }
-
-            // Log activity
-            if (data?.owner_id) {
-                const changedFields = Object.keys(updateData).join(', ');
-                activityService.logActivity(data.owner_id, 'Project Updated', {
-                    projectId: projectId,
-                    projectName: data.name,
-                    updatedFields: changedFields
-                }, tenantId || undefined).catch(err => console.error('Failed to log activity:', err));
-            }
-
-            if (updates.dueDate !== undefined && tenantId && data?.owner_id) {
-                void import('@/lib/calendar/nativeCalendarSync')
-                    .then(({ syncProjectToNativeCalendar }) =>
-                        syncProjectToNativeCalendar(tenantId, data.owner_id, {
-                            id: projectId,
-                            name: data.name,
-                            description: data.description,
-                            due_date: data.due_date,
-                            status: data.status,
-                            client_id: data.client_id,
-                        })
-                    )
-                    .catch((err) => console.error('[projectService] native calendar sync failed:', err));
-            }
-
-            if (
-                updates.currentStage !== undefined &&
-                previousStage &&
-                previousStage !== updates.currentStage
-            ) {
-                void this.notifyClientStageChange(projectId, previousStage, updates.currentStage);
-            }
-
+            if (updates.currentStage !== undefined && payload.previousStage && payload.previousStage !== updates.currentStage) void this.notifyClientStageChange(projectId, payload.previousStage, updates.currentStage);
             return { error: null };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error' };
@@ -469,23 +286,10 @@ export const projectService = {
     async deleteProject(projectId: string): Promise<{ error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-
-            let deleteQuery = supabase
-                .from('projects')
-                .delete()
-                .eq('id', projectId);
-
-            // Only verify tenant ownership if tenant exists
-            if (tenantId) {
-                deleteQuery = deleteQuery.eq('tenant_id', tenantId);
-            }
-
-            // Reclaim storage space
-            await fileUploadService.deleteFileByEntity('project', projectId);
-
-            const { error } = await deleteQuery;
-
-            return { error: error ? error.message : null };
+            if (!tenantId) return { error: 'Select a workspace first' };
+            const response = await fetch(`/api/tenant/${tenantId}/projects/${projectId}`, { method: 'DELETE' });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Project could not be deleted' };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -559,48 +363,12 @@ export const projectService = {
      */
     async recalculateProjectProgress(projectId: string): Promise<{ progress: number; error: string | null }> {
         try {
-            const { data: beforeRow } = await supabase
-                .from('projects')
-                .select('progress')
-                .eq('id', projectId)
-                .maybeSingle();
-            const previousProgress =
-                typeof beforeRow?.progress === 'number' ? beforeRow.progress : null;
-
-            const { data: milestones, error: milestoneError } = await supabase
-                .from('project_milestones')
-                .select('status')
-                .eq('project_id', projectId);
-
-            if (milestoneError) throw milestoneError;
-
-            if (milestones && milestones.length > 0) {
-                const completed = milestones.filter((m: { status: string }) => m.status === 'completed').length;
-                const progress = Math.round((completed / milestones.length) * 100);
-                await this.updateProject(projectId, { progress });
-                void this.notifyClientProgressChange(projectId, previousProgress, progress, 'milestone');
-                return { progress, error: null };
-            }
-
-            const { data: tasks, error } = await supabase
-                .from('tasks')
-                .select('status')
-                .eq('related_to_project', projectId);
-
-            if (error) throw error;
-
-            if (!tasks || tasks.length === 0) {
-                await this.updateProject(projectId, { progress: 0 });
-                void this.notifyClientProgressChange(projectId, previousProgress, 0, 'progress_change');
-                return { progress: 0, error: null };
-            }
-
-            const completedTasks = tasks.filter((t: { status: string }) => t.status === 'completed').length;
-            const progress = Math.round((completedTasks / tasks.length) * 100);
-            await this.updateProject(projectId, { progress });
-            void this.notifyClientProgressChange(projectId, previousProgress, progress, 'progress_change');
-
-            return { progress, error: null };
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { progress: 0, error: 'Select a workspace first' };
+            const response = await fetch(`/api/tenant/${tenantId}/projects/${projectId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'recalculate_progress' }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { progress: 0, error: payload.error || 'Project progress could not be recalculated' };
+            return { progress: payload.progress, error: null };
         } catch (err) {
             return { progress: 0, error: err instanceof Error ? err.message : 'Unknown error' };
         }

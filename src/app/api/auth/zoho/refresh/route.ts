@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess } from '@/lib/apiAuth';
 
 function tokenNeedsRefresh(expiryDate: string | undefined, force: boolean): boolean {
   if (force) return true;
@@ -11,20 +11,13 @@ function tokenNeedsRefresh(expiryDate: string | undefined, force: boolean): bool
 }
 
 export async function POST(req: NextRequest) {
-  const authClient = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
-  if (!user?.id) {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  }
-
   const body = await req.json().catch(() => ({}));
   const force = body?.force === true;
 
   try {
-    const zohoService = new ZohoService(user.id);
+    const tenantId = String(body?.tenantId || '').trim();
+    const { user } = await requireTenantAccess(tenantId, req);
+    const zohoService = new ZohoService(user.id, tenantId);
     const config = await zohoService.getConfig();
     if (!config?.refreshToken) {
       return NextResponse.json(

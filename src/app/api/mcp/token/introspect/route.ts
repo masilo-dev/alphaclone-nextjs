@@ -81,7 +81,8 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     const { data: apiKeyData } = await supabase
       .from('mcp_api_keys')
       .select('tenant_id')
-      .or(`api_key.eq.${token},api_key_hash.eq.${hashMcpApiKey(token)}`)
+      .eq('api_key_hash', hashMcpApiKey(token))
+      .eq('is_active', true)
       .maybeSingle();
 
     if (apiKeyData) {

@@ -226,13 +226,11 @@ const GlobalSettingsTab: React.FC = () => {
                                     />
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-300">Logo Assets</label>
-                                        <div className="flex gap-4">
-                                            <div className="w-16 h-16 bg-slate-900 rounded-xl border border-white/5 flex items-center justify-center">
-                                                <Globe className="w-8 h-8 text-indigo-500" />
+                                        <div className="flex items-start gap-4">
+                                            <div className="w-16 h-16 shrink-0 bg-slate-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                                                {branding.logoUrl ? <img src={branding.logoUrl} alt="Platform logo preview" className="h-full w-full object-contain" /> : <Globe className="w-8 h-8 text-indigo-500" />}
                                             </div>
-                                            <Button type="button" variant="outline" size="sm" disabled title="Upload is not configured yet">
-                                                Update Logo
-                                            </Button>
+                                            <div className="flex-1"><Input label="Logo URL" placeholder="https://cdn.example.com/logo.svg" value={branding.logoUrl ?? ''} onChange={(e) => setBranding({ logoUrl: e.target.value })} validate={(v) => v.trim() && !/^https:\/\/.+/.test(v.trim()) ? 'Use a secure HTTPS logo URL' : undefined} /></div>
                                         </div>
                                     </div>
                                 </div>

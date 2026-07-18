@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { Instagram, Linkedin, Loader2, Save, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/UIComponents';
 import { useTenant } from '@/contexts/TenantContext';
-import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
 export default function ZernioIntegration() {
@@ -26,19 +25,9 @@ export default function ZernioIntegration() {
     if (!currentTenant?.id) return;
     setSaving(true);
     try {
-      const updatedSettings = {
-        ...(currentTenant.settings as any),
-        zernio: {
-          ...((currentTenant.settings as any)?.zernio || {}),
-          instagramAccountId: instagramAccountId.trim() || undefined,
-          linkedinOrgAccountId: linkedinOrgAccountId.trim() || undefined,
-        },
-      };
-      const { error } = await supabase
-        .from('tenants')
-        .update({ settings: updatedSettings })
-        .eq('id', currentTenant.id);
-      if (error) throw error;
+      const response = await fetch('/api/integrations/zernio/settings', { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: currentTenant.id, instagramAccountId: instagramAccountId.trim(), linkedinOrgAccountId: linkedinOrgAccountId.trim() }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Zernio settings could not be saved');
       await refreshTenants();
       toast.success('Zernio social accounts saved');
     } catch (err: any) {

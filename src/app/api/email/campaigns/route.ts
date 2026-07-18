@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { RouteAuthError, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { emailCampaignCreateSchema, emailCampaignDeleteSchema, emailCampaignUpdateSchema } from '@/schemas/validation';
 
 function isMissingRelationOrCache(error: unknown, relation: string): boolean {
@@ -13,22 +13,6 @@ function isMissingRelationOrCache(error: unknown, relation: string): boolean {
         maybeError.code === 'PGRST205' ||
         (message.includes(relationName) && (message.includes('does not exist') || message.includes('schema cache')))
     );
-}
-
-function campaignsUnavailableResponse() {
-    return NextResponse.json({
-        success: true,
-        campaigns: [],
-        warning: 'Email workspace setup is still in progress.',
-    });
-}
-
-function contactsUnavailableResponse() {
-    return NextResponse.json({
-        success: true,
-        contacts: [],
-        warning: 'Contacts are being prepared.',
-    });
 }
 
 type CampaignContactRow = {
@@ -64,7 +48,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'tenantId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId, request);
         const admin = createSupabaseAdminClient();
 
         if (mode === 'contacts') {
@@ -76,7 +60,7 @@ export async function GET(request: NextRequest) {
                 .not('email', 'is', null)
                 .order('full_name', { ascending: true });
             if (isMissingRelationOrCache(error, 'contacts') || isWorkspaceSetupError(error)) {
-                return contactsUnavailableResponse();
+                return NextResponse.json({ error: 'Campaign contacts are unavailable', code: 'CAMPAIGN_CONTACTS_UNAVAILABLE' }, { status: 503 });
             }
             if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGN_CONTACTS_FETCH_FAILED' }, { status: 500 });
             const contacts = ((data || []) as CampaignContactRow[]).map((row) => ({
@@ -138,7 +122,7 @@ export async function GET(request: NextRequest) {
             .order('created_at', { ascending: false })
             .limit(100);
         if (isMissingRelationOrCache(error, 'email_campaigns') || isWorkspaceSetupError(error)) {
-            return campaignsUnavailableResponse();
+            return NextResponse.json({ error: 'Campaign storage is unavailable', code: 'CAMPAIGNS_UNAVAILABLE' }, { status: 503 });
         }
         if (error) return NextResponse.json({ error: error.message, code: 'CAMPAIGNS_FETCH_FAILED' }, { status: 500 });
         return NextResponse.json(
@@ -152,9 +136,6 @@ export async function GET(request: NextRequest) {
             { headers: { 'X-Deprecated-API': 'email-campaigns-legacy' } }
         );
     } catch (error) {
-        if (error instanceof RouteAuthError && (error.status === 500 || error.status === 403)) {
-            return campaignsUnavailableResponse();
-        }
         return routeErrorResponse(error, 'Failed to load campaigns', request);
     }
 }
@@ -169,7 +150,7 @@ export async function POST(request: NextRequest) {
         const tenantId = parsed.data.tenantId;
         const mode = String(parsed.data.mode || 'create').trim();
 
-        const auth = await requireTenantAccess(tenantId);
+        const auth = await requireTenantAccess(tenantId, request);
         const admin = createSupabaseAdminClient();
 
         if (mode === 'retry_failed') {
@@ -429,7 +410,7 @@ export async function PATCH(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-        await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId, request);
         const admin = createSupabaseAdminClient();
 
         const updateData: Record<string, unknown> = {};
@@ -462,7 +443,7 @@ export async function DELETE(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-        await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId, request);
         const admin = createSupabaseAdminClient();
 
         const { data: campaign, error: fetchError } = await admin

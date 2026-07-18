@@ -335,14 +335,18 @@ export default function SocialMediaComposer() {
 
     const handleDeletePost = async (id: string) => {
         if (!confirm('Delete this post?')) return;
-        await supabase.from('social_posts').delete().eq('id', id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(tenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!response.ok) { toast.error('Post could not be deleted'); return; }
         setPosts(prev => prev.filter(p => p.id !== id));
         toast.success('Deleted');
     };
 
     const handleDeleteMedia = async (asset: MediaAsset) => {
         if (!confirm('Delete this media asset?')) return;
-        await supabase.from('media_assets').delete().eq('id', asset.id);
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/social/media/upload?tenantId=${encodeURIComponent(tenant.id)}&assetId=${encodeURIComponent(asset.id)}`, { method: 'DELETE' });
+        if (!response.ok) { toast.error('Media asset could not be deleted'); return; }
         setMediaAssets(prev => prev.filter(a => a.id !== asset.id));
         toast.success('Deleted');
     };

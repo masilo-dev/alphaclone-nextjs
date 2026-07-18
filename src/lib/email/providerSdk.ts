@@ -66,6 +66,7 @@ export type EmailSendInput = {
         contentType?: string;
     }>;
     userId?: string;
+    tenantId?: string;
     // SMTP-specific
     smtpHost?: string;
     smtpPort?: number;
@@ -234,15 +235,15 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
 
 async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
     try {
-        if (!input.userId) {
-            return { ok: false, provider: 'zoho', error: 'Zoho send requires user context' };
+        if (!input.userId || !input.tenantId) {
+            return { ok: false, provider: 'zoho', error: 'Zoho send requires user and workspace context' };
         }
         const recipients = normalizeRecipients(input.to);
         if (!recipients.length) {
             return { ok: false, provider: 'zoho', error: 'Recipient is required' };
         }
 
-        const zohoService = new ZohoMailService(input.userId);
+        const zohoService = new ZohoMailService(input.userId, input.tenantId);
         const result = await zohoService.sendEmail({
             fromAddress: input.fromEmail,
             toAddress: recipients.join(','),
@@ -561,7 +562,7 @@ export async function sendWithProviderSdk(
                         contact_id,
                         company_id,
                         source: provider as any,
-                        external_id: result.emailId || `${provider}-outbound-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                        external_id: result.emailId || `${provider}-outbound-${crypto.randomUUID()}`,
                         direction: 'outbound',
                         channel: 'email',
                         subject: input.subject,

@@ -5,7 +5,6 @@ import { Mail, Send, X, Loader2, CheckCircle2, User, Search, Users, ChevronDown,
 import { Button, Input } from '../../ui/UIComponents';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { BusinessClient, businessClientService } from '../../../services/businessClientService';
-import { supabase } from '../../../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
@@ -249,12 +248,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                 throw new Error('Email was queued for approval instead of sending. Check AI Agents or retry with auto-send enabled.');
             }
 
-            await supabase.from('activity_logs').insert({
-                user_id: user.id,
-                type: 'EXECUTE',
-                action: 'Email Sent',
-                details: { to: selectedClient.email, subject, provider: result.provider || selectedProvider }
-            });
+            const { activityService } = await import('../../../services/activityService');
+            await activityService.logActivity(user.id, 'Email Sent', { type: 'EXECUTE', to: selectedClient.email, subject, provider: result.provider || selectedProvider }, currentTenant.id);
 
             const sentVia = String(result.provider || selectedProvider).toUpperCase();
             toast.success(`Email sent successfully via ${sentVia}`);

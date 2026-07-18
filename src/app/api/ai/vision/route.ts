@@ -7,6 +7,8 @@ import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/sup
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { DEFAULT_OPENROUTER_MODEL } from '@/config/aiModels';
+import { requireTenantAccess } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 export const maxDuration = 60; // Allow more time for AI vision processing
 export const dynamic = 'force-dynamic';
@@ -33,16 +35,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
         }
 
-        const { data: membership } = await supabase
-            .from('user_tenant_roles')
-            .select('tenant_id')
-            .eq('user_id', user.id)
-            .eq('tenant_id', tenantId)
-            .maybeSingle();
-
-        if (!membership?.tenant_id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
+        await requireTenantAccess(tenantId, req);
 
         const admin = createSupabaseAdminClient();
         const { data: tenantRow } = await admin
@@ -67,6 +60,9 @@ export async function POST(req: NextRequest) {
         const supportedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (!supportedTypes.includes(mimeType)) {
             return NextResponse.json({ error: `Unsupported file type: ${mimeType}. Please upload a clear image (JPEG, PNG, WEBP).` }, { status: 400 });
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            return NextResponse.json({ error: 'Image must be 10 MB or smaller.' }, { status: 413 });
         }
 
         // 2. Determine which AI provider to use
@@ -218,33 +214,34 @@ export async function POST(req: NextRequest) {
             };
         }
 
-        if (!extractedData) {
-             // Fallback for extraction failure
-             extractedData = {
-                date: new Date().toISOString().split('T')[0],
-                description: '',
-                amount: 0,
-                currency: 'USD',
-                category: 'Uncategorized',
-                confidence: 0
-            };
+        const extractionSchema = z.object({
+            date: z.string().nullable().optional(),
+            description: z.string().nullable().optional(),
+            amount: z.coerce.number().nonnegative().nullable().optional(),
+            currency: z.string().length(3).nullable().optional(),
+            category: z.string().nullable().optional(),
+            confidence: z.coerce.number().min(0).max(1).optional(),
+        });
+        const parsedExtraction = extractionSchema.safeParse(extractedData);
+        if (!parsedExtraction.success) {
+            return NextResponse.json({ error: 'The receipt could not be read reliably. Enter its details manually.' }, { status: 422 });
         }
+        extractedData = parsedExtraction.data;
 
         // 3. Upload File to Storage for records (optional but good practice)
-        const fileExt = file.name.split('.').pop();
-        const fileName = `receipt-${Date.now()}.${fileExt}`;
+        const extensionByMime: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
+        const fileName = `receipt-${crypto.randomUUID()}.${extensionByMime[mimeType]}`;
         const filePath = `${tenantId}/receipts/${fileName}`;
 
-        const { data: uploadData, error: uploadError } = await supabase
+        const { data: uploadData, error: uploadError } = await admin
             .storage
             .from('documents')
-            .upload(filePath, file, { contentType: mimeType, upsert: true });
+            .upload(filePath, file, { contentType: mimeType, upsert: false });
 
-        let fileUrl = null;
-        if (!uploadError && uploadData) {
-            // Use proxied URL instead of direct Supabase URL
-            fileUrl = `/api/storage/documents/${filePath}`;
+        if (uploadError || !uploadData) {
+            throw new Error(`Receipt image could not be stored: ${uploadError?.message || 'upload failed'}`);
         }
+        const fileUrl = `/api/storage/documents/${filePath}`;
 
         // Return extracted data + receipt URL
         return NextResponse.json({

@@ -666,14 +666,6 @@ export const taskService = {
     },
 
     /**
-     * AI-powered task outline generation (Placeholder for MVP)
-     */
-    async generateTaskOutline(title: string): Promise<{ outline: string; error: string | null }> {
-        const mockOutline = `Strategy for: ${title}\n\n1. Define core objectives\n2. Identify key stakeholders\n3. Establish timeline and milestones\n4. Allocate necessary resources\n5. Execute initial phase\n6. Review and optimize progress`;
-        return { outline: mockOutline, error: null };
-    },
-
-    /**
      * Get task comments
      */
     async getTaskComments(taskId: string): Promise<{ comments: TaskComment[]; error: string | null }> {

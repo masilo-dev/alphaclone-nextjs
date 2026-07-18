@@ -100,17 +100,7 @@ export default function BonnieFullView() {
           : 'Bonnie background execution paused.'
       );
 
-      // Add a log entry simulating the status toggle
-      setLogs(prev => [
-        {
-          id: String(Date.now()),
-          created_at: new Date().toISOString(),
-          type: 'log',
-          level: nextEnabled ? 'success' : 'warning',
-          message: nextEnabled ? 'Agent execution state changed to RUNNING.' : 'Agent execution state changed to PAUSED.'
-        },
-        ...prev
-      ]);
+      setLogs(await bonnieService.getCombinedLogs(tenantId));
     } catch (err) {
       toast.error('Failed to toggle executing status.');
     }
@@ -345,7 +335,7 @@ export default function BonnieFullView() {
               </div>
             </div>
 
-            {/* Simulated Rules / Objectives */}
+            {/* Active rules and objectives */}
             {rules && (
               <div className="space-y-2 pt-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Autonomous Mandates</span>

@@ -19,7 +19,6 @@ import { authService } from '@/services/authService';
 import { fileUploadService } from '@/services/fileUploadService';
 import { SubscriptionPlan, PLAN_PRICING } from '@/services/tenancy/types';
 import { UNIVERSAL_SERVICE_CATALOG, ServiceItem } from '@/services/universalServiceCatalog';
-import { supabase } from '@/lib/supabase';
 import { getTaxRateForCountry } from '@/lib/tax/taxRules';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -68,6 +67,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [showApiKey, setShowApiKey] = useState(false);
     const [mcpApiKey, setMcpApiKey] = useState<string | null>(null);
+    const [hasMcpApiKey, setHasMcpApiKey] = useState(false);
     const [isLoadingApiKey, setIsLoadingApiKey] = useState(true);
 
     // Profile & workspace details
@@ -116,11 +116,10 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             if (!currentTenant?.id) return;
             try {
                 // Fetch profile updates from user service / db
-                const { data: bData, error } = await supabase
-                    .from('business_settings')
-                    .select('*')
-                    .eq('tenant_id', currentTenant.id)
-                    .single();
+                const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/business-settings`, { credentials: 'include' });
+                const payload = await response.json().catch(() => ({}));
+                const bData = payload.settings;
+                const error = response.ok ? null : new Error(payload.error || 'Business settings could not be loaded');
 
                 if (!error && bData) {
                     setBusinessSettings({
@@ -151,23 +150,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     // Load MCP API key
     useEffect(() => {
         const loadMcpApiKey = async () => {
-            if (!user.id) return;
+            if (!user.id || !currentTenant?.id) return;
             setIsLoadingApiKey(true);
             try {
-                // Try to fetch existing API key
-                const { data, error } = await supabase
-                    .from('user_api_keys')
-                    .select('key')
-                    .eq('user_id', user.id)
-                    .eq('type', 'mcp')
-                    .eq('is_active', true)
-                    .single();
-                
-                if (data?.key) {
-                    setMcpApiKey(data.key);
-                } else {
-                    setMcpApiKey(null);
-                }
+                const response = await fetch(`/api/mcp/keys?tenantId=${encodeURIComponent(currentTenant.id)}`);
+                const data = await response.json().catch(() => ({}));
+                setHasMcpApiKey(response.ok && data.exists === true);
+                setMcpApiKey(null);
             } catch (err) {
                 console.error('Failed to load MCP API key:', err);
                 setMcpApiKey(null);
@@ -176,38 +165,19 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             }
         };
         loadMcpApiKey();
-    }, [user.id]);
+    }, [user.id, currentTenant?.id]);
 
     const handleGenerateApiKey = async () => {
-        if (!user.id) return toast.error('You must be logged in');
+        if (!user.id || !currentTenant?.id) return toast.error('Select a workspace first');
         
         try {
             setIsSaving(true);
             
-            // Generate a new key
-            const newKey = `mcp_live_${crypto.randomUUID().replace(/-/g, '')}`;
-            
-            // Revoke any existing keys
-            await supabase
-                .from('user_api_keys')
-                .update({ is_active: false, revoked_at: new Date().toISOString() })
-                .eq('user_id', user.id)
-                .eq('type', 'mcp');
-            
-            // Insert new key
-            const { error } = await supabase
-                .from('user_api_keys')
-                .insert({
-                    user_id: user.id,
-                    type: 'mcp',
-                    key: newKey,
-                    is_active: true,
-                    created_at: new Date().toISOString(),
-                });
-            
-            if (error) throw error;
-            
-            setMcpApiKey(newKey);
+            const response = await fetch('/api/mcp/keys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId: currentTenant.id }) });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.token) throw new Error(result.error || 'Failed to generate API key');
+            setMcpApiKey(result.token);
+            setHasMcpApiKey(true);
             toast.success('New MCP API key generated!');
         } catch (err: any) {
             toast.error(err.message || 'Failed to generate API key');
@@ -272,31 +242,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         if (!currentTenant) return;
         setIsSaving(true);
         try {
-            const { error } = await supabase
-                .from('business_settings')
-                .upsert({
-                    tenant_id: currentTenant.id,
-                    business_name: businessSettings.businessName,
-                    trading_name: businessSettings.tradingName || null,
-                    logo_url: businessSettings.logoUrl,
-                    brand_color: businessSettings.brandColor,
-                    address: businessSettings.address,
-                    phone: businessSettings.phone,
-                    email: businessSettings.email,
-                    tax_rate: businessSettings.taxRate,
-                    tax_country: businessSettings.taxCountry,
-                    currency: businessSettings.currency,
-                    invoice_prefix: businessSettings.invoicePrefix,
-                    bank_details: businessSettings.bankDetails,
-                    mobile_payment_details: businessSettings.mobilePaymentDetails,
-                    settings: {
-                        service_sectors: businessSettings.serviceSectors,
-                        my_services: businessSettings.myServices
-                    },
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'tenant_id' });
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${encodeURIComponent(currentTenant.id)}/business-settings`, {
+                method: 'PUT',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(businessSettings),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Failed to save business settings');
             toast.success('Workspace business profile saved!');
         } catch (err: any) {
             toast.error(err.message || 'Failed to save business settings');
@@ -1078,8 +1031,8 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                         </div>
                     ) : (
                         <div className="p-3 bg-slate-950 rounded-xl border border-white/5 text-center">
-                            <p className="text-sm text-slate-400">No MCP API key generated yet</p>
-                            <p className="text-xs text-slate-500 mt-1">Click "Generate Key" to create one</p>
+                            <p className="text-sm text-slate-400">{hasMcpApiKey ? 'MCP key active' : 'No MCP API key generated yet'}</p>
+                            <p className="text-xs text-slate-500 mt-1">{hasMcpApiKey ? 'For security, the key is shown only when generated. Rotate it to receive a new value.' : 'Click "Generate Key" to create one'}</p>
                         </div>
                     )}
                 </div>

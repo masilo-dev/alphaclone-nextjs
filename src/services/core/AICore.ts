@@ -542,7 +542,7 @@ Return a JSON array of objects with:
 - description: 1 sentence explanation
 - priority: "low", "medium", "high"
 - actionLabel: Button text (e.g., "Draft Contract", "Follow-up")
-- actionType: Identifier for the action (e.g., "DRAFT_CONTRACT", "CLIENT_FOLLOWUP")
+- actionType: one of "DRAFT_CONTRACT", "REVIEW_OVERDUE_INVOICES", "REVIEW_STALE_LEADS", or "REVIEW_TASKS". Use DRAFT_CONTRACT only when metadata includes a real projectId.
 - metadata: Relevant IDs
 
 Invisible AI Rule: No "Based on the data". No conversation. Just the JSON. Handle any industry contextually.

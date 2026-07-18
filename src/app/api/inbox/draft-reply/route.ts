@@ -2,10 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { routeAIRequest } from '@/services/aiRouter';
 import { buildBusinessReplyPrompt } from '@/lib/ai/businessContext';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
+import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    await requireAuthenticatedUser(req);
+    const body = z.object({
+      messageId: z.string().uuid().optional(),
+      text: z.string().max(20_000).optional(),
+      fromName: z.string().max(200).optional(),
+      subject: z.string().max(500).optional(),
+      context: z.string().max(5_000).optional(),
+      replyTo: z.string().max(200).optional(),
+    }).parse(await req.json());
     const { messageId, text, fromName, context } = body;
 
     let messageBody = text || '';
@@ -51,8 +61,8 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, draft: response.content });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[DraftReplyAPI] Error:', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    return routeErrorResponse(err, 'Draft generation failed', req);
   }
 }

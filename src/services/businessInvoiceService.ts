@@ -2,30 +2,18 @@ import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { resolveInvoiceSenderName } from '@/lib/invoices/invoiceBranding';
-import { journalEntryService } from './accounting/journalEntryService';
-import { chartOfAccountsService } from './accounting/chartOfAccountsService';
-import { activityService } from './activityService';
-import { quotaService } from './quotaService';
+import { tenantService } from './tenancy/TenantService';
 
-function drawWrappedText(
-    doc: any,
-    text: string,
-    x: number,
-    y: number,
-    maxWidth: number,
-    options: { align?: 'left' | 'center' | 'right'; fontSize?: number; maxLines?: number } = {}
-): number {
+function drawWrappedText(doc: any, text: string, x: number, y: number, maxWidth: number, options: { align?: 'left' | 'center' | 'right'; fontSize?: number; maxLines?: number } = {}): number {
     const lines = doc.splitTextToSize(String(text || '').trim(), maxWidth);
     const safeLines = Array.isArray(lines) ? lines : [String(lines || '')];
-    const trimmedLines = options.maxLines ? safeLines.slice(0, options.maxLines) : safeLines;
-    const displayLines = trimmedLines.length ? trimmedLines : [''];
-    if (options.fontSize) {
-        doc.setFontSize(options.fontSize);
-    }
-    doc.text(displayLines, x, y, { align: options.align || 'left' });
-    return displayLines.length;
+    const displayLines = options.maxLines ? safeLines.slice(0, options.maxLines) : safeLines;
+    if (options.fontSize) doc.setFontSize(options.fontSize);
+    doc.text(displayLines.length ? displayLines : [''], x, y, { align: options.align || 'left' });
+    return Math.max(displayLines.length, 1);
 }
 
+export interface InvoiceLineItem { description: string; quantity: number; rate: number; amount: number }
 export interface BusinessInvoice {
     id: string;
     tenantId: string;
@@ -49,288 +37,52 @@ export interface BusinessInvoice {
     senderName?: string;
     bankDetails?: string;
     mobilePaymentDetails?: string;
-    signature?: { type: 'draw' | 'type', data: string };
+    signature?: { type: 'draw' | 'type'; data: string };
     createdAt: string;
     updatedAt: string;
 }
 
-export interface InvoiceLineItem {
-    description: string;
-    quantity: number;
-    rate: number;
-    amount: number;
+function mapInvoice(row: any): BusinessInvoice {
+    const lineRows = row.invoice_line_items || row.line_items || [];
+    return {
+        id: row.id, tenantId: row.tenant_id, clientId: row.client_id, projectId: row.project_id,
+        invoiceNumber: row.invoice_number, issueDate: row.issue_date, dueDate: row.due_date, status: row.status,
+        subtotal: Number(row.subtotal || 0), taxRate: Number(row.tax_rate || 0), tax: Number(row.tax || 0),
+        discountAmount: Number(row.discount_amount || 0), total: Number(row.total || 0), amountPaid: Number(row.amount_paid || 0),
+        balanceDue: Number(row.balance_due ?? Number(row.total || 0) - Number(row.amount_paid || 0)), autoFollowupEnabled: row.auto_followup_enabled !== false,
+        lineItems: lineRows.map((item: any) => ({ description: item.description, quantity: Number(item.quantity || 0), rate: Number(item.rate ?? item.unit_price ?? 0), amount: Number(item.amount ?? Number(item.quantity || 0) * Number(item.rate ?? item.unit_price ?? 0)) })),
+        notes: row.notes, isPublic: Boolean(row.is_public), senderName: row.sender_name, bankDetails: row.bank_details,
+        mobilePaymentDetails: row.mobile_payment_details, signature: row.signature, createdAt: row.created_at, updatedAt: row.updated_at,
+    };
 }
 
 export const businessInvoiceService = {
     normalizeLineItems(lineItems: InvoiceLineItem[] | undefined): InvoiceLineItem[] {
-        const items = Array.isArray(lineItems) ? lineItems : [];
-        return items.map((item) => {
-            const quantity = Number(item?.quantity || 0);
-            const rate = Number(item?.rate || 0);
-            const amount = Math.round(quantity * rate * 100) / 100;
-            return {
-                description: item?.description || '',
-                quantity,
-                rate,
-                amount,
-            };
-        });
+        return (lineItems || []).map((item) => { const quantity = Number(item.quantity || 0); const rate = Number(item.rate || 0); return { description: item.description || '', quantity, rate, amount: Math.round(quantity * rate * 100) / 100 }; });
     },
 
-    /**
-     * Parse receipt metadata from notes field
-     */
     parseMetadata(notes: string | undefined): any {
         if (!notes) return null;
-        try {
-            const match = notes.match(/---METADATA---([\s\S]*?)---METADATA---/);
-            if (match && match[1]) {
-                return JSON.parse(match[1]);
-            }
-        } catch (e) {
-            console.error('Error parsing metadata:', e);
-        }
-        return null;
+        try { const match = notes.match(/---METADATA---([\s\S]*?)---METADATA---/); return match?.[1] ? JSON.parse(match[1]) : null; }
+        catch { return null; }
     },
 
-    /**
-     * Get all invoices for a tenant
-     */
     async getInvoices(tenantId: string): Promise<{ invoices: BusinessInvoice[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('business_invoices')
-                .select(`
-                    *,
-                    invoice_line_items(*)
-                `)
-                .eq('tenant_id', tenantId)
-                .order('created_at', { ascending: false });
-
+            const { data, error } = await supabase.from('business_invoices').select('*, invoice_line_items(*)').eq('tenant_id', tenantId).order('created_at', { ascending: false });
             if (error) throw error;
-
-            const invoices = (data || []).map((inv: any) => ({
-                id: inv.id,
-                tenantId: inv.tenant_id,
-                clientId: inv.client_id,
-                projectId: inv.project_id,
-                invoiceNumber: inv.invoice_number,
-                issueDate: inv.issue_date,
-                dueDate: inv.due_date,
-                status: inv.status,
-                subtotal: parseFloat(inv.subtotal || 0),
-                taxRate: parseFloat(inv.tax_rate || 0),
-                tax: parseFloat(inv.tax || 0),
-                discountAmount: parseFloat(inv.discount_amount || 0),
-                total: parseFloat(inv.total || 0),
-                amountPaid: parseFloat(inv.amount_paid || 0),
-                balanceDue: parseFloat(String(inv.balance_due ?? (Number(inv.total || 0) - Number(inv.amount_paid || 0) || 0))),
-                autoFollowupEnabled: inv.auto_followup_enabled !== false,
-                lineItems: (inv.invoice_line_items || []).map((li: any) => ({
-                    description: li.description,
-                    quantity: parseFloat(li.quantity),
-                    rate: parseFloat(li.unit_price),
-                    amount: parseFloat(li.amount)
-                })),
-                notes: inv.notes,
-                isPublic: inv.is_public || false,
-                senderName: inv.sender_name,
-                bankDetails: inv.bank_details,
-                mobilePaymentDetails: inv.mobile_payment_details,
-                signature: inv.signature,
-                createdAt: inv.created_at,
-                updatedAt: inv.updated_at
-            }));
-
-            return { invoices, error: null };
-        } catch (err: any) {
-            console.error('Error fetching invoices:', err);
-            return { invoices: [], error: err.message };
-        }
+            return { invoices: (data || []).map(mapInvoice), error: null };
+        } catch (error) { return { invoices: [], error: error instanceof Error ? error.message : 'Invoices could not be loaded' }; }
     },
 
-    /**
-     * Create a new invoice
-     */
     async createInvoice(tenantId: string, invoice: Partial<BusinessInvoice>): Promise<{ invoice: BusinessInvoice | null; error: string | null }> {
         try {
-            // Check quota limits
-            if (invoice.status !== 'draft') {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) throw new Error('Authentication required');
-
-                const quotaCheck = await quotaService.checkQuota('invoices', user.id);
-                if (!quotaCheck.allowed) {
-                    return { invoice: null, error: quotaCheck.message };
-                }
-            }
-
-            // Generate invoice number if not provided
-            const invoiceNumber = invoice.invoiceNumber || await this.generateInvoiceNumber(tenantId);
-
-            // Calculate default due date (14 days from issue date or today)
-            const issueDateObj = invoice.issueDate ? new Date(invoice.issueDate) : new Date();
-            const defaultDueDate = new Date(issueDateObj.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-            const payload = {
-                tenant_id: tenantId,
-                client_id: invoice.clientId || null,
-                project_id: invoice.projectId || null,
-                invoice_number: invoiceNumber,
-                issue_date: invoice.issueDate || new Date().toISOString().split('T')[0],
-                due_date: invoice.dueDate || defaultDueDate, // Fix: Use default instead of null
-                status: invoice.status || 'draft',
-                subtotal: invoice.subtotal || 0,
-                tax_rate: invoice.taxRate || 0,
-                tax: invoice.tax || 0,
-                discount_amount: invoice.discountAmount || 0,
-                total: invoice.total || 0,
-                line_items: invoice.lineItems || [],
-                notes: invoice.notes,
-                is_public: invoice.isPublic || false,
-                sender_name: invoice.senderName,
-                bank_details: invoice.bankDetails,
-                mobile_payment_details: invoice.mobilePaymentDetails,
-                signature: invoice.signature || null
-            };
-
-            // Debug logging
-            console.log('Creating invoice with payload:', payload);
-
-            let insertError;
-            let retryCount = 0;
-            const maxRetries = 5;
-            let currentPayload = { ...payload };
-            let finalData;
-
-            const isDuplicateInvoiceNumberError = (error: any) => {
-                if (!error) return false;
-                if (error.code === '23505') return true;
-                if (error.status === 409) return true;
-                const message = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`;
-                return /duplicate|unique|invoice_number|conflict/i.test(message);
-            };
-
-            while (retryCount <= maxRetries) {
-                const { data, error } = await supabase
-                    .from('business_invoices')
-                    .insert(currentPayload)
-                    .select()
-                    .single();
-
-                if (!error) {
-                    finalData = data;
-                    break;
-                }
-
-                insertError = error;
-                if (isDuplicateInvoiceNumberError(error)) {
-                    console.warn(`Duplicate invoice number detected. Retry ${retryCount + 1}/${maxRetries}...`);
-                    currentPayload.invoice_number = `INV-${Date.now().toString().slice(-8)}-${retryCount + 1}`;
-                    retryCount++;
-                    continue;
-                }
-
-                break;
-            }
-
-            if (!finalData) {
-                console.error('Final attempt to create invoice failed:', insertError);
-                throw insertError;
-            }
-
-            const data = finalData;
-
-            // NEW: Insert line items into relational table
-            if (invoice.lineItems && invoice.lineItems.length > 0) {
-                const lineItemsPayload = invoice.lineItems.map(item => ({
-                    invoice_id: data.id,
-                    tenant_id: tenantId,
-                    description: item.description,
-                    quantity: item.quantity,
-                    unit_price: item.rate
-                }));
-
-                const { error: lineItemsError } = await supabase
-                    .from('invoice_line_items')
-                    .insert(lineItemsPayload);
-
-                if (lineItemsError) {
-                    console.error('Error inserting relational line items:', lineItemsError);
-                    // We don't throw here to avoid failing the whole invoice creation,
-                    // but ideally we should use a transaction.
-                }
-            }
-
-            const newInvoice: BusinessInvoice = {
-                id: data.id,
-                tenantId: data.tenant_id,
-                clientId: data.client_id,
-                projectId: data.project_id,
-                invoiceNumber: data.invoice_number,
-                issueDate: data.issue_date,
-                dueDate: data.due_date,
-                status: data.status,
-                subtotal: parseFloat(data.subtotal || 0),
-                taxRate: parseFloat(data.tax_rate || 0),
-                tax: parseFloat(data.tax || 0),
-                discountAmount: parseFloat(data.discount_amount || 0),
-                total: parseFloat(data.total || 0),
-                lineItems: data.line_items || [],
-                notes: data.notes,
-                isPublic: data.is_public || false,
-                senderName: data.sender_name,
-                bankDetails: data.bank_details,
-                mobilePaymentDetails: data.mobile_payment_details,
-                signature: data.signature,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at
-            };
-
-            if (newInvoice.id) {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    await activityService.logAudit({
-                        userId: user.id,
-                        tenantId: newInvoice.tenantId,
-                        action: 'INVOICE_CREATE',
-                        resourceType: 'business_invoices',
-                        resourceId: newInvoice.id,
-                        oldValues: null,
-                        newValues: {
-                            status: newInvoice.status,
-                            total: newInvoice.total,
-                            clientId: newInvoice.clientId,
-                            invoiceNumber: newInvoice.invoiceNumber
-                        },
-                        metadata: {
-                            invoiceNumber: newInvoice.invoiceNumber,
-                            amount: newInvoice.total
-                        }
-                    });
-                }
-
-                // Increment quota usage if invoice is not draft
-                if (newInvoice.status !== 'draft') {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                        const { success: quotaSuccess, error: quotaError } = await quotaService.incrementQuota('invoices', user.id);
-                        if (!quotaSuccess) {
-                            console.warn('Failed to increment invoice quota:', quotaError);
-                        }
-                    }
-                }
-            }
-
-            return { invoice: newInvoice, error: null };
-        } catch (err: any) {
-            console.error('Error creating invoice:', err);
-            // Enhanced logging for non-enumerable properties (like Error objects)
-            if (typeof err === 'object' && err !== null) {
-                console.error('Error details (JSON):', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-            }
-            return { invoice: null, error: err.message || 'Unknown error occurred during invoice creation' };
-        }
+            const lineItems = this.normalizeLineItems(invoice.lineItems);
+            const response = await fetch('/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...invoice, lineItems }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.invoice) throw new Error(payload.error || 'Invoice could not be created');
+            return { invoice: mapInvoice({ ...payload.invoice, line_items: lineItems }), error: null };
+        } catch (error) { return { invoice: null, error: error instanceof Error ? error.message : 'Invoice could not be created' }; }
     },
 
     /**
@@ -338,148 +90,19 @@ export const businessInvoiceService = {
      */
     async updateInvoice(invoiceId: string, updates: Partial<BusinessInvoice>): Promise<{ error: string | null }> {
         try {
-            // Get current invoice data to detect status changes
-            const { data: currentInvoice, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('*')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
-            const updateData: Record<string, any> = {};
-
-            if (updates.clientId !== undefined) updateData.client_id = updates.clientId || null;
-            if (updates.projectId !== undefined) updateData.project_id = updates.projectId || null;
-            if (updates.issueDate !== undefined) updateData.issue_date = updates.issueDate;
-
-            // Fix: due_date is NOT NULL, so fallback to calculated date if cleared
-            if (updates.dueDate !== undefined) {
-                const baseDate = updates.issueDate ? new Date(updates.issueDate) : new Date();
-                const defaultDue = new Date(baseDate.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-                updateData.due_date = updates.dueDate || defaultDue;
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'Select a workspace before updating an invoice' };
+            const body: Record<string, unknown> = { tenantId };
+            const mapping: Record<string, string> = { clientId: 'client_id', projectId: 'project_id', issueDate: 'issue_date', dueDate: 'due_date', taxRate: 'tax_rate', discountAmount: 'discount_amount', lineItems: 'line_items', isPublic: 'is_public', senderName: 'sender_name', bankDetails: 'bank_details', mobilePaymentDetails: 'mobile_payment_details' };
+            for (const [key, value] of Object.entries(updates)) {
+                if (value === undefined || ['id', 'tenantId', 'invoiceNumber', 'createdAt', 'updatedAt'].includes(key)) continue;
+                body[mapping[key] || key] = key === 'lineItems' && Array.isArray(value)
+                    ? value.map((item: any) => ({ description: item.description, quantity: Number(item.quantity), unit_price: Number(item.rate ?? item.unit_price) }))
+                    : value;
             }
-
-            if (updates.status !== undefined) updateData.status = updates.status;
-            if (updates.subtotal !== undefined) updateData.subtotal = updates.subtotal;
-            if (updates.taxRate !== undefined) updateData.tax_rate = updates.taxRate;
-            if (updates.tax !== undefined) updateData.tax = updates.tax;
-            if (updates.discountAmount !== undefined) updateData.discount_amount = updates.discountAmount;
-            if (updates.total !== undefined) updateData.total = updates.total;
-            if (updates.lineItems !== undefined) updateData.line_items = updates.lineItems;
-            if (updates.notes !== undefined) updateData.notes = updates.notes;
-            if (updates.isPublic !== undefined) updateData.is_public = updates.isPublic;
-            if (updates.senderName !== undefined) updateData.sender_name = updates.senderName;
-            if (updates.bankDetails !== undefined) updateData.bank_details = updates.bankDetails;
-            if (updates.mobilePaymentDetails !== undefined) updateData.mobile_payment_details = updates.mobilePaymentDetails;
-            if (updates.signature !== undefined) updateData.signature = updates.signature;
-
-            updateData.updated_at = new Date().toISOString();
-
-            const { error } = await supabase
-                .from('business_invoices')
-                .update(updateData)
-                .eq('id', invoiceId);
-
-            if (error) throw error;
-
-            // NEW: Update relational line items
-            if (updates.lineItems !== undefined) {
-                // Delete existing items
-                await supabase
-                    .from('invoice_line_items')
-                    .delete()
-                    .eq('invoice_id', invoiceId);
-
-                // Insert new ones
-                if (updates.lineItems.length > 0) {
-                    const lineItemsPayload = updates.lineItems.map(item => ({
-                        invoice_id: invoiceId,
-                        tenant_id: currentInvoice.tenant_id,
-                        description: item.description,
-                        quantity: item.quantity,
-                        unit_price: item.rate
-                    }));
-
-                    const { error: lineItemsError } = await supabase
-                        .from('invoice_line_items')
-                        .insert(lineItemsPayload);
-
-                    if (lineItemsError) {
-                        console.error('Error updating relational line items:', lineItemsError);
-                    }
-                }
-            }
-
-            // Log activity with diff
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user && currentInvoice) {
-                const diffBefore: Record<string, any> = {};
-                const diffAfter: Record<string, any> = {};
-
-                // Map field names for consistent audit diffs (camelCase)
-                const fieldMapping: Record<string, string> = {
-                    client_id: 'clientId',
-                    project_id: 'projectId',
-                    issue_date: 'issueDate',
-                    due_date: 'dueDate',
-                    status: 'status',
-                    subtotal: 'subtotal',
-                    tax_rate: 'taxRate',
-                    tax: 'tax',
-                    discount_amount: 'discountAmount',
-                    total: 'total',
-                    line_items: 'lineItems',
-                    notes: 'notes',
-                    is_public: 'isPublic',
-                    sender_name: 'senderName',
-                    bank_details: 'bankDetails',
-                    mobile_payment_details: 'mobilePaymentDetails',
-                    signature: 'signature'
-                };
-
-                // Only include changed fields in the audit diff
-                Object.keys(updateData).forEach(dbKey => {
-                    if (dbKey === 'updated_at') return;
-                    const oldVal = currentInvoice[dbKey];
-                    const newVal = updateData[dbKey];
-                    if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
-                        const label = fieldMapping[dbKey] || dbKey;
-                        diffBefore[label] = oldVal;
-                        diffAfter[label] = newVal;
-                    }
-                });
-
-                if (Object.keys(diffAfter).length > 0) {
-                    await activityService.logAudit({
-                        userId: user.id,
-                        tenantId: currentInvoice.tenant_id,
-                        action: 'INVOICE_UPDATE',
-                        resourceType: 'business_invoices',
-                        resourceId: invoiceId,
-                        oldValues: diffBefore,
-                        newValues: diffAfter,
-                        metadata: {
-                            invoiceNumber: currentInvoice.invoice_number
-                        }
-                    });
-                }
-            }
-
-            // GL INTEGRATION: Post to accounting when status changes
-            if (updates.status && currentInvoice) {
-                const oldStatus = currentInvoice.status;
-                const newStatus = updates.status;
-
-                // Revenue recognition policy: recognize on payment receipt, not on send.
-                if (newStatus === 'paid' && oldStatus !== 'paid') {
-                    await this.postRevenueOnPayment(invoiceId, currentInvoice);
-                    // Fire and forget receipt automation
-                    this.triggerReceiptAutomation(invoiceId, currentInvoice.tenant_id).catch(console.error);
-                }
-            }
-
-            return { error: null };
+            const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Invoice could not be updated' };
         } catch (err: any) {
             console.error('Error updating invoice:', err);
             return { error: err.message };
@@ -493,51 +116,11 @@ export const businessInvoiceService = {
      */
     async deleteInvoice(invoiceId: string): Promise<{ error: string | null }> {
         try {
-            // CRITICAL: Check invoice status before deletion
-            const { data: existing, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('status, invoice_number')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) {
-                return { error: fetchError.message };
-            }
-
-            // ACCOUNTING PROTECTION: Prevent deletion of posted invoices
-            if (existing?.status !== 'draft') {
-                return {
-                    error: `Cannot delete ${existing?.status} invoice ${existing?.invoice_number}. Posted invoices must be voided/cancelled to maintain audit trail.`
-                };
-            }
-
-            // Only draft invoices can be permanently deleted
-            const { error } = await supabase
-                .from('business_invoices')
-                .delete()
-                .eq('id', invoiceId);
-
-            if (error) throw error;
-
-            // Log audit
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user && existing) {
-                await activityService.logAudit({
-                    userId: user.id,
-                    tenantId: null as any, // Tenant ID unknown at this point or should be fetched
-                    action: 'INVOICE_DELETE',
-                    resourceType: 'business_invoices',
-                    resourceId: invoiceId,
-                    oldValues: { invoiceNumber: existing.invoice_number, status: existing.status },
-                    newValues: null,
-                    severity: 'warning',
-                    metadata: {
-                        invoiceNumber: existing.invoice_number
-                    }
-                });
-            }
-
-            return { error: null };
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'Select a workspace before deleting an invoice' };
+            const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId }) });
+            const payload = await response.json().catch(() => ({}));
+            return { error: response.ok ? null : payload.error || 'Invoice could not be deleted' };
         } catch (err: any) {
             console.error('Error deleting invoice:', err);
             return { error: err.message };
@@ -620,6 +203,8 @@ export const businessInvoiceService = {
      */
     async getInvoiceWithDetails(invoiceId: string, tenantId?: string): Promise<{ invoice: any | null; error: string | null }> {
         try {
+            const activeTenantId = tenantId || tenantService.getCurrentTenantId();
+            if (!activeTenantId) throw new Error('Select a workspace before loading invoice details');
             let query = supabase
                 .from('business_invoices')
                 .select(`
@@ -633,7 +218,6 @@ export const businessInvoiceService = {
                         id,
                         name,
                         email,
-                        company,
                         phone
                     ),
                     project:project_id (
@@ -643,9 +227,7 @@ export const businessInvoiceService = {
                 `)
                 .eq('id', invoiceId);
 
-            if (tenantId) {
-                query = query.eq('tenant_id', tenantId);
-            }
+            query = query.eq('tenant_id', activeTenantId);
 
             const { data, error } = await query.single();
 
@@ -667,47 +249,15 @@ export const businessInvoiceService = {
      */
     async markAsPaid(invoiceId: string): Promise<{ error: string | null }> {
         try {
-            // Get invoice data first for GL posting
-            const { data: invoice, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('*')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) throw fetchError;
-
-            const { error } = await supabase
-                .from('business_invoices')
-                .update({ status: 'paid', updated_at: new Date().toISOString() })
-                .eq('id', invoiceId);
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before recording payment');
+            const { data: invoice, error } = await supabase.from('business_invoices').select('total,amount_paid').eq('tenant_id', tenantId).eq('id', invoiceId).maybeSingle();
             if (error) throw error;
-
-            // GL INTEGRATION: Revenue is recognized on payment receipt
-            await this.postRevenueOnPayment(invoiceId, invoice);
-
-            // Fire and forget receipt automation
-            this.triggerReceiptAutomation(invoiceId, invoice.tenant_id).catch(console.error);
-
-            // Log audit
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                await activityService.logAudit({
-                    userId: user.id,
-                    tenantId: invoice.tenant_id,
-                    action: 'INVOICE_PAID',
-                    resourceType: 'business_invoices',
-                    resourceId: invoiceId,
-                    oldValues: { status: invoice.status },
-                    newValues: { status: 'paid' },
-                    metadata: {
-                        invoiceNumber: invoice.invoice_number,
-                        amount: invoice.total
-                    }
-                });
-            }
-
-            return { error: null };
+            if (!invoice) throw new Error('Invoice not found');
+            const remaining = Math.max(0, Number(invoice.total || 0) - Number(invoice.amount_paid || 0));
+            if (!remaining) return { error: null };
+            const result = await this.recordPayment(invoiceId, remaining);
+            return { error: result.error };
         } catch (err: any) {
             console.error('Error marking invoice as paid:', err);
             return { error: err.message };
@@ -727,47 +277,16 @@ export const businessInvoiceService = {
             if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
                 return { error: 'Payment amount must be greater than zero.' };
             }
-
-            const { data: invoice, error: fetchError } = await supabase
-                .from('business_invoices')
-                .select('id, tenant_id, status, total, total_amount, amount_paid, paid_at, invoice_number')
-                .eq('id', invoiceId)
-                .single();
-
-            if (fetchError) throw fetchError;
-            const total = Number(invoice?.total_amount ?? invoice?.total ?? 0);
-            const currentPaid = Number(invoice?.amount_paid ?? 0);
-            const nextPaid = Math.max(0, Math.round((currentPaid + paymentAmount) * 100) / 100);
-
-            const nextStatus: BusinessInvoice['status'] =
-                nextPaid >= total
-                    ? 'paid'
-                    : nextPaid > 0
-                        ? 'partially_paid'
-                        : (invoice?.status as BusinessInvoice['status']) || 'sent';
-
-            const patch: Record<string, unknown> = {
-                amount_paid: nextPaid,
-                status: nextStatus,
-                updated_at: new Date().toISOString(),
-            };
-            if (nextStatus === 'paid' && !invoice?.paid_at) {
-                patch.paid_at = new Date().toISOString();
-            }
-
-            const { error } = await supabase
-                .from('business_invoices')
-                .update(patch)
-                .eq('id', invoiceId);
-
-            if (error) throw error;
-
-            if (nextStatus === 'paid') {
-                await this.postRevenueOnPayment(invoiceId, invoice);
-                this.triggerReceiptAutomation(invoiceId, invoice.tenant_id).catch(console.error);
-            }
-
-            return { error: null, status: nextStatus, amountPaid: nextPaid };
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before recording payment');
+            const response = await fetch(`/api/invoices/${encodeURIComponent(invoiceId)}/payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, amount: paymentAmount, idempotencyKey: crypto.randomUUID() }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.invoice) throw new Error(payload.error || 'Payment could not be recorded');
+            return { error: null, status: payload.invoice.status, amountPaid: Number(payload.invoice.amount_paid || 0) };
         } catch (err: any) {
             console.error('Error recording invoice payment:', err);
             return { error: err.message || 'Failed to record payment' };
@@ -1125,294 +644,4 @@ export const businessInvoiceService = {
         return doc;
     },
 
-    /**
-     * Post invoice to General Ledger when sent
-     * DR Accounts Receivable (1100)
-     *   CR Revenue (4100)
-     */
-    async postInvoiceToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
-        try {
-            // Get account IDs for AR and Revenue
-            let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
-            let { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
-
-            if (!arAccount || !revenueAccount) {
-                console.warn('Accounts Receivable (1100) or Service Revenue (4100) not found. Attempting to initialize default accounts...');
-                await chartOfAccountsService.initializeDefaultAccounts();
-
-                // Retry fetching accounts
-                const arRetry = await chartOfAccountsService.getAccountByCode('1100');
-                const revRetry = await chartOfAccountsService.getAccountByCode('4100');
-
-                arAccount = arRetry.account;
-                revenueAccount = revRetry.account;
-
-                if (!arAccount || !revenueAccount) {
-                    console.error('Failed to initialize or retrieve required accounts (1100, 4100). Skipping GL post.');
-                    return { error: 'Required accounts not found and could not be initialized in Chart of Accounts' };
-                }
-            }
-
-            const total = parseFloat(invoiceData.total || '0');
-            const issueDate = invoiceData.issue_date || invoiceData.issueDate || new Date().toISOString().split('T')[0];
-            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber;
-
-            // Create journal entry
-            const { entry, error } = await journalEntryService.createEntry({
-                entryDate: issueDate,
-                description: `Invoice ${invoiceNumber} - Service Revenue`,
-                reference: invoiceNumber,
-                sourceType: 'invoice',
-                sourceId: invoiceId,
-                lines: [
-                    {
-                        accountId: arAccount.id,
-                        debitAmount: total,
-                        creditAmount: 0,
-                        description: `AR - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                    {
-                        accountId: revenueAccount.id,
-                        debitAmount: 0,
-                        creditAmount: total,
-                        description: `Revenue - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                ],
-            });
-
-            if (error) {
-                console.error('Failed to create journal entry for invoice:', error);
-                return { error };
-            }
-
-            // Auto-post the entry
-            if (entry) {
-                await journalEntryService.postEntry(entry.id);
-            }
-
-            return { error: null };
-        } catch (err: any) {
-            console.error('Error posting invoice to GL:', err);
-            return { error: err.message };
-        }
-    },
-
-    /**
-     * Post payment to General Ledger when invoice is paid
-     * DR Cash (1000)
-     *   CR Accounts Receivable (1100)
-     */
-    async postPaymentToGL(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
-        try {
-            // Get account IDs for Cash and AR
-            let { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
-            let { account: arAccount } = await chartOfAccountsService.getAccountByCode('1100');
-
-            if (!cashAccount || !arAccount) {
-                console.warn('Cash (1000) or Accounts Receivable (1100) not found. Attempting to initialize default accounts...');
-                await chartOfAccountsService.initializeDefaultAccounts();
-
-                // Retry fetching accounts
-                const cashRetry = await chartOfAccountsService.getAccountByCode('1000');
-                const arRetry = await chartOfAccountsService.getAccountByCode('1100');
-
-                cashAccount = cashRetry.account;
-                arAccount = arRetry.account;
-
-                if (!cashAccount || !arAccount) {
-                    console.error('Failed to initialize or retrieve required accounts (1000, 1100). Skipping GL post.');
-                    return { error: 'Required accounts not found and could not be initialized in Chart of Accounts' };
-                }
-            }
-
-            const total = parseFloat(invoiceData.total || '0');
-            const paymentDate = new Date().toISOString().split('T')[0];
-            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber;
-
-            // Create journal entry
-            const { entry, error } = await journalEntryService.createEntry({
-                entryDate: paymentDate,
-                description: `Payment received for Invoice ${invoiceNumber}`,
-                reference: invoiceNumber,
-                sourceType: 'payment',
-                sourceId: invoiceId,
-                lines: [
-                    {
-                        accountId: cashAccount.id,
-                        debitAmount: total,
-                        creditAmount: 0,
-                        description: `Cash received - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                    {
-                        accountId: arAccount.id,
-                        debitAmount: 0,
-                        creditAmount: total,
-                        description: `AR collected - Invoice ${invoiceNumber}`,
-                        entityType: 'invoice',
-                        entityId: invoiceId,
-                    },
-                ],
-            });
-
-            if (error) {
-                console.error('Failed to create journal entry for payment:', error);
-                return { error };
-            }
-
-            // Auto-post the entry
-            if (entry) {
-                await journalEntryService.postEntry(entry.id);
-            }
-
-            return { error: null };
-        } catch (err: any) {
-            console.error('Error posting payment to GL:', err);
-            return { error: err.message };
-        }
-    },
-
-    /**
-     * Recognize revenue when payment is received.
-     * DR Cash (1000)
-     *   CR Service Revenue (4100) for net amount
-     *   CR Sales Tax Payable (2100) for tax amount
-     */
-    async postRevenueOnPayment(invoiceId: string, invoiceData: any): Promise<{ error: string | null }> {
-        try {
-            let { account: cashAccount } = await chartOfAccountsService.getAccountByCode('1000');
-            let { account: revenueAccount } = await chartOfAccountsService.getAccountByCode('4100');
-            let { account: taxPayableAccount } = await chartOfAccountsService.getAccountByCode('2100');
-
-            if (!cashAccount || !revenueAccount) {
-                await chartOfAccountsService.initializeDefaultAccounts();
-                const cashRetry = await chartOfAccountsService.getAccountByCode('1000');
-                const revRetry = await chartOfAccountsService.getAccountByCode('4100');
-                const taxRetry = await chartOfAccountsService.getAccountByCode('2100');
-                cashAccount = cashRetry.account;
-                revenueAccount = revRetry.account;
-                taxPayableAccount = taxRetry.account || taxPayableAccount;
-            }
-
-            if (!cashAccount || !revenueAccount) {
-                return { error: 'Required accounts (1000, 4100) not found' };
-            }
-
-            const total = Number(invoiceData.total || 0);
-            const tax = Number(invoiceData.tax || 0);
-            const netRevenue = Math.max(0, total - tax);
-            const paymentDate = new Date().toISOString().split('T')[0];
-            const invoiceNumber = invoiceData.invoice_number || invoiceData.invoiceNumber || invoiceId;
-            const lines: Array<{
-                accountId: string;
-                debitAmount: number;
-                creditAmount: number;
-                description: string;
-                entityType: 'invoice';
-                entityId: string;
-            }> = [
-                {
-                    accountId: cashAccount.id,
-                    debitAmount: total,
-                    creditAmount: 0,
-                    description: `Cash received - Invoice ${invoiceNumber}`,
-                    entityType: 'invoice',
-                    entityId: invoiceId,
-                },
-                {
-                    accountId: revenueAccount.id,
-                    debitAmount: 0,
-                    creditAmount: netRevenue,
-                    description: `Revenue recognized - Invoice ${invoiceNumber}`,
-                    entityType: 'invoice',
-                    entityId: invoiceId,
-                },
-            ];
-
-            if (tax > 0 && taxPayableAccount?.id) {
-                lines.push({
-                    accountId: taxPayableAccount.id,
-                    debitAmount: 0,
-                    creditAmount: tax,
-                    description: `Tax payable - Invoice ${invoiceNumber}`,
-                    entityType: 'invoice',
-                    entityId: invoiceId,
-                });
-            }
-
-            const { entry, error } = await journalEntryService.createEntry({
-                entryDate: paymentDate,
-                description: `Payment received for Invoice ${invoiceNumber}`,
-                reference: invoiceNumber,
-                sourceType: 'payment',
-                sourceId: invoiceId,
-                lines,
-            });
-
-            if (error) return { error };
-            if (entry) await journalEntryService.postEntry(entry.id);
-            return { error: null };
-        } catch (err: any) {
-            console.error('Error recognizing revenue on payment:', err);
-            return { error: err.message };
-        }
-    },
-
-    /**
-     * Trigger Receipt Automation via MCP tool
-     */
-    async triggerReceiptAutomation(invoiceId: string, tenantId: string) {
-        try {
-            // Call the MCP send_receipt tool
-            const response = await fetch('/api/mcp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: crypto.randomUUID(),
-                    method: 'tools/call',
-                    params: {
-                        name: 'send_receipt',
-                        arguments: {
-                            invoice_id: invoiceId,
-                            tenant_id: tenantId
-                        }
-                    }
-                })
-            });
-
-            const result = await response.json();
-            
-            if (result.result && !result.error) {
-                // Successful transmission, append to audit trail in notes
-                const timestamp = new Date().toLocaleString();
-                const auditNote = `\n[System] Receipt sent automatically on ${timestamp}`;
-                
-                // Get current notes
-                const { data: current } = await supabase
-                    .from('business_invoices')
-                    .select('notes')
-                    .eq('id', invoiceId)
-                    .single();
-                
-                const newNotes = (current?.notes || '') + auditNote;
-                
-                await supabase
-                    .from('business_invoices')
-                    .update({ notes: newNotes })
-                    .eq('id', invoiceId);
-                
-                console.log(`Receipt audit trail updated for ${invoiceId}`);
-            } else {
-                console.error('MCP Receipt Error:', result.error);
-            }
-        } catch (err) {
-            console.error('Failed to trigger receipt automation:', err);
-        }
-    },
 };

@@ -7,6 +7,7 @@ import {
   normalizeMcpClientId,
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
+import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -333,7 +334,8 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const { data: keyData, error: keyError } = await supabase
     .from('mcp_api_keys')
     .select('tenant_id, user_id')
-    .eq('api_key', apiKey)
+    .eq('api_key_hash', hashMcpApiKey(apiKey))
+    .eq('is_active', true)
     .single();
 
   if (keyError || !keyData) {

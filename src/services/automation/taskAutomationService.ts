@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { cronService } from '../cronService';
+import { aiService } from '@/services/ai/aiService';
 
 export interface ScheduledAiTask {
     id: string;
@@ -18,6 +18,26 @@ export interface ScheduledAiTask {
     updated_at: string;
 }
 
+function cronFieldMatches(field: string, value: number): boolean {
+    if (field === '*') return true;
+    return field.split(',').some((part) => Number(part) === value);
+}
+
+export function getNextTaskRun(schedule: string, after = new Date()): Date {
+    const parts = schedule.trim().split(/\s+/);
+    if (parts.length !== 5 || !parts.every((part) => /^(?:\*|\d{1,2}(?:,\d{1,2})*)$/.test(part))) throw new Error('Schedule must be a supported five-field cron expression');
+    const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+    const candidate = new Date(after.getTime());
+    candidate.setUTCSeconds(0, 0);
+    candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
+    const maximum = 366 * 24 * 60;
+    for (let attempt = 0; attempt < maximum; attempt += 1) {
+        if (cronFieldMatches(minute, candidate.getUTCMinutes()) && cronFieldMatches(hour, candidate.getUTCHours()) && cronFieldMatches(dayOfMonth, candidate.getUTCDate()) && cronFieldMatches(month, candidate.getUTCMonth() + 1) && cronFieldMatches(dayOfWeek, candidate.getUTCDay())) return candidate;
+        candidate.setUTCMinutes(candidate.getUTCMinutes() + 1);
+    }
+    throw new Error('Schedule has no run time within the next year');
+}
+
 export const taskAutomationService = {
     /**
      * Create a new scheduled AI task
@@ -33,9 +53,7 @@ export const taskAutomationService = {
     }) {
         const supabase = createSupabaseAdminClient();
         
-        // Calculate initial next_run_at (Simplified for now, in prod we'd use cron-parser)
-        const nextRunAt = new Date();
-        nextRunAt.setHours(nextRunAt.getHours() + 24); // Default to tomorrow same time if not parsed
+        const nextRunAt = getNextTaskRun(params.schedule);
 
         const { data, error } = await supabase
             .from('scheduled_ai_tasks')
@@ -128,11 +146,14 @@ export const taskAutomationService = {
         const supabase = createSupabaseAdminClient();
         
         try {
-            // 1. Call AI to run the prompt
-            // In a real implementation, we'd use the aiRouter or a specific agent
-            console.log(`Executing AI Task: ${task.name} with prompt: ${task.prompt}`);
-            
-            const output = `AI Result for "${task.name}": This is a simulated result based on your prompt: ${task.prompt}`;
+            const completion = await aiService.complete({
+                prompt: task.prompt,
+                systemPrompt: `Execute the scheduled workspace task named "${task.name}". Return a concise, actionable result.`,
+                provider: 'auto',
+                temperature: 0.2,
+            });
+            const output = String(completion.content || '').trim();
+            if (!output) throw new Error('AI provider returned an empty result');
 
             // 2. Store Result
             await supabase.from('scheduled_ai_task_results').insert({
@@ -144,8 +165,7 @@ export const taskAutomationService = {
             });
 
             // 3. Update Task Last Run and Next Run
-            const nextRunAt = new Date();
-            nextRunAt.setHours(nextRunAt.getHours() + 24); // Simple +24h for now
+            const nextRunAt = getNextTaskRun(task.schedule);
 
             await supabase
                 .from('scheduled_ai_tasks')

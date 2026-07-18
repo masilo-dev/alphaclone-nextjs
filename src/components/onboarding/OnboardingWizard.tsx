@@ -5,8 +5,8 @@ import { Check, ChevronRight, Users, FolderPlus, Settings, Sparkles } from 'luci
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTenant } from '../../contexts/TenantContext';
-import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import { tenantService } from '@/services/tenancy/TenantService';
 
 interface OnboardingStep {
     id: string;
@@ -152,17 +152,8 @@ export function OnboardingWizard() {
 
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({
-                    full_name: profileData.fullName,
-                    company: profileData.company,
-                    role: profileData.role,
-                    phone: profileData.phone,
-                })
-                .eq('id', user?.id);
-
-            if (error) throw error;
+            const response = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: profileData.fullName, company: profileData.company, onboardingRole: profileData.role, phone: profileData.phone }) });
+            if (!response.ok) throw new Error('Profile update failed');
 
             markStepComplete(1);
             setCurrentStep(2);
@@ -191,12 +182,8 @@ export function OnboardingWizard() {
         try {
             // Send invitations
             for (const email of validEmails) {
-                await supabase.from('tenant_users').insert({
-                    tenant_id: tenant?.id,
-                    email,
-                    role: 'client',
-                    status: 'invited',
-                });
+                if (!tenant?.id || !user?.id) throw new Error('Workspace is unavailable');
+                await tenantService.createInvitation(tenant.id, email, 'member', user.id);
             }
 
             markStepComplete(2);
@@ -218,15 +205,9 @@ export function OnboardingWizard() {
 
         setLoading(true);
         try {
-            const { error } = await supabase.from('projects').insert({
-                tenant_id: tenant?.id,
-                name: projectData.name,
-                description: projectData.description,
-                status: 'Active',
-                created_by: user?.id,
-            });
-
-            if (error) throw error;
+            if (!tenant?.id) throw new Error('Workspace is unavailable');
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/projects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: projectData.name, description: projectData.description }) });
+            if (!response.ok) throw new Error('Project creation failed');
 
             markStepComplete(3);
             toast.success('Project created!');
@@ -247,10 +228,8 @@ export function OnboardingWizard() {
                 try { localStorage.removeItem(draftKey); } catch { /* non-fatal */ }
             }
             // Mark onboarding as complete
-            await supabase
-                .from('profiles')
-                .update({ onboarding_completed: true })
-                .eq('id', user?.id);
+            const response = await fetch('/api/account/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ onboardingCompleted: true }) });
+            if (!response.ok) throw new Error('Onboarding completion could not be saved');
 
             toast.success('Setup complete! Welcome aboard! 🎉');
 

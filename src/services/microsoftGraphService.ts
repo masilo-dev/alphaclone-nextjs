@@ -451,4 +451,12 @@ export const microsoftGraphService = {
       chatInfo: meeting.chatInfo,
     };
   },
+
+  async getPresence(email: string) {
+    const normalized = String(email || '').trim();
+    if (!normalized) throw new Error('Email is required');
+    return graphRequest<{ availability?: string; activity?: string }>(
+      `/users/${encodeURIComponent(normalized)}/presence`
+    );
+  },
 };

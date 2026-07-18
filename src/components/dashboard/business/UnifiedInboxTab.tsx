@@ -101,21 +101,17 @@ export default function UnifiedInboxTab() {
       // Mark as read in local state first
       setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, read: true } : m));
       // Save to database
-      await supabase
-        .from('unified_messages')
-        .update({ read: true, read_at: new Date().toISOString() })
-        .eq('id', msg.id);
+      void fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/inbox/messages`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'read', messageId: msg.id }) }).then(async (response) => {
+        if (!response.ok) { await loadMessages(); toast.error('Message read state could not be saved'); }
+      });
     }
   };
 
   const handleArchiveMessage = async (msgId: string) => {
     try {
-      const { error } = await supabase
-        .from('unified_messages')
-        .update({ archived: true })
-        .eq('id', msgId);
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/inbox/messages`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'archive', messageId: msgId }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Message could not be archived');
       
       toast.success('Conversation archived');
       setMessages(prev => prev.filter(m => m.id !== msgId));
@@ -129,12 +125,9 @@ export default function UnifiedInboxTab() {
 
   const handleMarkNeedsResponse = async (msgId: string, val: boolean) => {
     try {
-      const { error } = await supabase
-        .from('unified_messages')
-        .update({ needs_response: val })
-        .eq('id', msgId);
-
-      if (error) throw error;
+      const response = await fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/inbox/messages`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'needs_response', messageId: msgId, value: val }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || 'Message could not be updated');
       
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, needs_response: val } : m));
       if (selectedMessage?.id === msgId) {
@@ -236,16 +229,9 @@ export default function UnifiedInboxTab() {
         throw new Error(result.error || 'Failed to send email');
       }
 
-      const { error } = await supabase
-        .from('unified_messages')
-        .update({
-          replied_at: new Date().toISOString(),
-          needs_response: false,
-          read: true,
-        })
-        .eq('id', selectedMessage.id);
-
-      if (error) throw error;
+      const stateResponse = await fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/inbox/messages`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'replied', messageId: selectedMessage.id }) });
+      const statePayload = await stateResponse.json().catch(() => ({}));
+      if (!stateResponse.ok) throw new Error(statePayload.error || 'Reply state could not be saved');
 
       const sentVia = String(result.provider || provider || 'platform').toUpperCase();
       toast.success(`Email sent via ${sentVia}`, { id: sendToast });

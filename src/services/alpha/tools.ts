@@ -3,7 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { gmailService } from '@/services/gmailService';
-import { contractService } from '@/services/contractService';
+import { sendWithProviderSdk } from '@/lib/email/providerSdk';
 
 export interface AlphaTool {
     name: string;
@@ -161,7 +161,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                         if (integrations) {
                             const hubspot = integrations.find((i: any) => i.type === 'hubspot');
                             if (hubspot) {
-                                await hubspotService.syncLeadToHubSpot(userId, {
+                                await hubspotService.syncLeadToHubSpot(userId, tenantId, {
                                     firstname: 'AI Prospect',
                                     lastname: industry,
                                     company: industry,
@@ -185,7 +185,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                 }
             }
 
-            return { status: 'success', account_id, leads: res.content, note: 'Simulation (No Tenant ID)' };
+            return { status: 'failed', error: 'Authenticated workspace context is required' };
         }
     },
 
@@ -208,7 +208,8 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             // REAL IMPLEMENTATION: Send via Outreach Provider
             try {
                 if (provider === 'zoho') {
-                    const zoho = new ZohoMailService(userId);
+                    if (!tenantId) return { status: 'failed', error: 'Workspace ID required for Zoho outreach' };
+                    const zoho = new ZohoMailService(userId, tenantId);
                     const res = await zoho.sendEmail({
                         fromAddress: '', // Let Zoho use default account
                         toAddress: to,
@@ -224,7 +225,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                 }
 
                 if (provider === 'hubspot') {
-                    const res = await hubspotService.syncLeadToHubSpot(userId, {
+                    const res = await hubspotService.syncLeadToHubSpot(userId, tenantId, {
                         firstname: 'AI Outreach',
                         lastname: subject,
                         company: 'AI Outreach',
@@ -233,8 +234,22 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                     return { status: 'synced_to_crm', provider: 'hubspot', res };
                 }
                 
-                // Fallback (simulated)
-                return { status: 'simulated', provider: provider || 'resend', timestamp: new Date().toISOString() };
+                const apiKey = process.env.RESEND_API_KEY;
+                const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.DEFAULT_FROM_EMAIL;
+                if (!apiKey || !fromEmail) {
+                    return { status: 'failed', error: 'Resend delivery is not configured' };
+                }
+                const sent = await sendWithProviderSdk('resend', {
+                    apiKey,
+                    fromEmail,
+                    fromName: process.env.DEFAULT_FROM_NAME || 'AlphaClone',
+                    to,
+                    subject,
+                    text: body,
+                    html: `<div style="white-space:pre-wrap">${String(body).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] || c))}</div>`,
+                });
+                if (!sent.ok) return { status: 'failed', error: sent.error || 'Delivery failed' };
+                return { status: 'sent', provider: 'resend', messageId: sent.messageId };
             } catch (error: any) {
                 console.error('Outreach failed:', error);
                 return { status: 'failed', error: error.message };
@@ -279,11 +294,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                 }
             }
 
-            return { 
-                status: 'scheduled_simulated', 
-                execution_time: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
-                mission_id: Math.random().toString(36).substring(7)
-            };
+            return { status: 'failed', error: 'Authenticated workspace context is required' };
         }
     },
 
@@ -319,40 +330,37 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             required: ['client_name', 'contract_type']
         },
         execute: async ({ client_name, contract_type, key_terms, userId, tenantId }) => {
-            const prompt = `Draft a ${contract_type} for ${client_name}. Terms: ${key_terms}. Return HTML.`;
+            if (!tenantId || !userId) return { status: 'failed', error: 'Authenticated workspace context is required' };
+            const prompt = `Draft a complete ${contract_type} for ${client_name}. Terms: ${key_terms || 'standard commercial terms'}. Return clean HTML with numbered sections. Do not invent addresses, registration numbers, pricing, dates, or governing jurisdictions; clearly identify any information the operator must complete before sending.`;
             const res = await aiService.complete({
                 prompt,
-                systemPrompt: 'Legal Contract Drafter. Professional tone.',
+                systemPrompt: 'Professional contract drafting assistant. Produce an editable draft, preserve uncertainty, and never present the output as legal advice.',
                 provider: 'auto'
             });
 
-            if (tenantId) {
-                try {
-                    const { text, error } = await contractService.generateDraft(contract_type, client_name, key_terms);
-                    if (error) throw new Error(error.message);
-
-                    const { contract, error: saveError } = await contractService.createContract({
-                        title: `${contract_type}: ${client_name}`,
-                        content: text || '',
-                        status: 'draft',
-                        type: contract_type,
-                        client_id: userId // Assuming link for now, in reality might search for client
-                    });
-
-                    if (saveError) throw saveError;
-
-                    return { 
-                        status: 'drafted', 
-                        contract_id: contract.id, 
-                        preview: text?.substring(0, 200) + '...',
-                        note: 'Contract saved to database' 
-                    };
-                } catch (err: any) {
-                    console.error('Contract drafting failed:', err);
-                    return { status: 'failed', error: err.message };
-                }
+            try {
+                const admin = createSupabaseAdminClient();
+                const { data: contract, error } = await admin.from('contracts').insert({
+                    tenant_id: tenantId,
+                    owner_id: userId,
+                    title: `${contract_type}: ${client_name}`,
+                    content: res.content,
+                    status: 'draft',
+                    type: contract_type,
+                    signing_token: crypto.randomUUID(),
+                    metadata: { client_name, source: 'alpha_contract_drafter', requires_human_review: true },
+                }).select('id').single();
+                if (error || !contract) throw error || new Error('Contract draft was not saved');
+                return {
+                    status: 'drafted',
+                    contract_id: contract.id,
+                    preview: `${res.content.substring(0, 200)}...`,
+                    note: 'Editable contract draft saved for human review',
+                };
+            } catch (err: any) {
+                console.error('Contract drafting failed:', err);
+                return { status: 'failed', error: err.message };
             }
-            return { status: 'simulated_draft', content: res.content };
         }
     },
 
@@ -367,22 +375,25 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
             },
             required: ['company_domain']
         },
-        execute: async ({ company_domain, person_name }) => {
-            // Simulated Enrichment (Clay/Apollo style)
-            // In production, this would call an API like Hunter.io or Proxycurl
-            
-            const domain = company_domain.replace('https://', '').replace('www.', '').split('/')[0];
-            const namePart = person_name ? person_name.split(' ')[0].toLowerCase() : 'contact';
-            
-            return {
-                status: 'success',
-                data: {
-                    email: `${namePart}@${domain}`,
-                    linkedin: `https://linkedin.com/in/${person_name ? person_name.replace(/\s+/g, '-').toLowerCase() : 'unknown'}`,
-                    confidence_score: 85,
-                    source: 'Alpha_Enrichment_v1'
-                }
-            };
+        execute: async ({ company_domain, person_name, tenantId }) => {
+            if (!tenantId) return { status: 'failed', error: 'Authenticated workspace context is required' };
+            const domain = String(company_domain || '').trim().toLowerCase()
+                .replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+            if (!/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain)) {
+                return { status: 'failed', error: 'A valid public company domain is required' };
+            }
+            const apiKey = process.env.HUNTER_API_KEY;
+            if (!apiKey) return { status: 'failed', error: 'Email discovery provider is not configured' };
+            const query = new URL('https://api.hunter.io/v2/email-finder');
+            query.searchParams.set('domain', domain);
+            query.searchParams.set('api_key', apiKey);
+            const parts = String(person_name || '').trim().split(/\s+/).filter(Boolean);
+            if (parts[0]) query.searchParams.set('first_name', parts[0]);
+            if (parts.length > 1) query.searchParams.set('last_name', parts.slice(1).join(' '));
+            const response = await fetch(query, { signal: AbortSignal.timeout(15_000) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload?.data?.email) return { status: 'failed', error: 'No verified email was found' };
+            return { status: 'success', data: { email: payload.data.email, score: payload.data.score, source: 'hunter' } };
         }
     },
 

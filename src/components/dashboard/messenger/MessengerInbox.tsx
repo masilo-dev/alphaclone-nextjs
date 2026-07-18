@@ -190,10 +190,8 @@ export default function MessengerInbox() {
     };
 
     const markAsRead = async (convId: string) => {
-        await supabase
-            .from('messenger_conversations')
-            .update({ is_read: true })
-            .eq('id', convId);
+        const response = await fetch(`/api/facebook/messenger/conversations/${encodeURIComponent(convId)}/read`, { method: 'PATCH' });
+        if (!response.ok) console.error('Failed to mark Messenger conversation as read');
     };
 
     const handleSend = async (e?: React.FormEvent) => {

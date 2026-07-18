@@ -242,20 +242,15 @@ export default function WorkflowDashboard() {
     const seedDefaults = async () => {
         if (!tenant?.id) return;
         setSeeding(true);
-        for (const wf of DEFAULT_WORKFLOWS) {
-            await supabase.from('workflow_definitions').insert({ ...wf, tenant_id: tenant.id, is_active: false });
-        }
+        await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflows: DEFAULT_WORKFLOWS }) });
         toast.success('Default workflows added');
         loadData();
         setSeeding(false);
     };
 
     const handleToggle = async (wf: WorkflowDef) => {
-        const { error } = await supabase
-            .from('workflow_definitions')
-            .update({ is_active: !wf.is_active })
-            .eq('id', wf.id);
-        if (!error) {
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant!.id)}/workflows`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowId: wf.id, isActive: !wf.is_active }) });
+        if (response.ok) {
             setWorkflows(prev => prev.map(w => w.id === wf.id ? { ...w, is_active: !wf.is_active } : w));
             toast.success(wf.is_active ? 'Workflow paused' : 'Workflow activated');
         }
@@ -263,8 +258,9 @@ export default function WorkflowDashboard() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this workflow?')) return;
-        const { error } = await supabase.from('workflow_definitions').delete().eq('id', id);
-        if (!error) {
+        if (!tenant?.id) return;
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows?workflowId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (response.ok) {
             setWorkflows(prev => prev.filter(w => w.id !== id));
             toast.success('Deleted');
         }
@@ -274,12 +270,9 @@ export default function WorkflowDashboard() {
         if (!tenant?.id || !form.name || !form.trigger_type) return toast.error('Name and trigger required');
         if (form.actions.length === 0) return toast.error('Add at least one action');
         setSaving(true);
-        const { error } = await supabase.from('workflow_definitions').insert({
-            ...form,
-            tenant_id: tenant.id,
-            is_active: false,
-        });
-        if (error) { toast.error(error.message); } else {
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) { toast.error(result.error || 'Workflow could not be created'); } else {
             toast.success('Workflow created (activate to enable)');
             setShowForm(false);
             setForm({ ...EMPTY_FORM });
@@ -290,18 +283,18 @@ export default function WorkflowDashboard() {
 
     const handleTestRun = async (wf: WorkflowDef) => {
         const toastId = toast.loading('Running test...');
-        const res = await fetch('/api/engine/execute', {
-            method: 'POST',
+        if (!tenant?.id) return;
+        const res = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                trigger_type: wf.trigger_type,
-                tenant_id: tenant?.id,
-                data: { intent_label: 'high', intent_score: 75, source: 'test', contact_name: 'Test Lead', phone: '+10000000000' },
+                workflowId: wf.id,
+                sample: { intent_label: 'high', intent_score: 75, source: 'dry-run', contact_name: 'Sample Lead', phone: '+10000000000' },
             }),
         });
-        const result = await res.json();
-        toast.success(`Test: ${result.executed} workflow(s) executed`, { id: toastId });
-        loadData();
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) { toast.error(result.error || 'Dry run failed', { id: toastId }); return; }
+        toast.success(result.conditionsMet ? `Dry run passed: ${result.actions?.length || 0} action(s) previewed` : 'Dry run complete: conditions did not match', { id: toastId });
     };
 
     const addCondition = () => setForm(f => ({

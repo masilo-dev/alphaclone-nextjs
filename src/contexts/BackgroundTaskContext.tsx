@@ -2,6 +2,10 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import {
+    getPlatformResetEpoch,
+    PLATFORM_RESET_EVENT,
+} from '@/lib/platformReset';
 
 const TASKS_STORAGE_KEY = 'alphaclone_background_tasks_v1';
 
@@ -53,6 +57,12 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
         }
     }, [tasks, hydrated]);
 
+    useEffect(() => {
+        const reset = () => setTasks([]);
+        window.addEventListener(PLATFORM_RESET_EVENT, reset);
+        return () => window.removeEventListener(PLATFORM_RESET_EVENT, reset);
+    }, []);
+
     const startTask = async <T,>(
         id: string,
         name: string,
@@ -60,6 +70,7 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
         onSuccess?: (result: T) => void,
         onError?: (error: any) => void
     ) => {
+        const taskEpoch = getPlatformResetEpoch();
         // Add to state
         setTasks(prev => {
             if (prev.find(t => t.id === id)) return prev;
@@ -74,6 +85,8 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
 
             const result = await taskFn();
 
+            if (taskEpoch !== getPlatformResetEpoch()) return;
+
             setTasks(prev => prev.map(t =>
                 t.id === id ? { ...t, status: 'completed', result } : t
             ));
@@ -83,6 +96,7 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
             if (onSuccess) onSuccess(result);
 
         } catch (error: any) {
+            if (taskEpoch !== getPlatformResetEpoch()) return;
             console.error(`Background task failed: ${name}`, error);
             
             // Better error handling for different types of errors

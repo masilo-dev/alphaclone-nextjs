@@ -417,8 +417,9 @@ export default function SocialCommandCenter() {
     const handleDeletePost = async (id: string) => {
         const toastId = toast.loading('Deleting...');
         try {
-            const { error } = await supabase.from('social_posts').delete().eq('id', id);
-            if (error) throw error;
+            if (!tenant?.id) throw new Error('Select a workspace first');
+            const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(tenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!response.ok) throw new Error('Delete failed');
             toast.success('Post deleted', { id: toastId });
             setPosts(prev => prev.filter(p => p.id !== id));
         } catch {
@@ -593,7 +594,7 @@ export default function SocialCommandCenter() {
                 const res = await fetch('/api/ai/scrape-social', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: item.url, itemId: item.id })
+                    body: JSON.stringify({ tenantId: currentTenant?.id, itemId: item.id })
                 });
                 if (!res.ok) throw new Error();
                 await loadData();
@@ -850,7 +851,7 @@ export default function SocialCommandCenter() {
                                     ))}
                                 </div>
 
-                                {/* Custom Tooltip Engagement Chart Mock */}
+                                {/* Engagement chart from synchronized platform metrics. */}
                                 <div className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -862,12 +863,12 @@ export default function SocialCommandCenter() {
                                         </div>
                                     </div>
                                     <div className="h-28 flex items-end justify-between pt-6 px-2 gap-1.5">
-                                        {(publishedPlatformPosts.length > 0 
+                                        {(publishedPlatformPosts.length > 0
                                             ? publishedPlatformPosts.slice(-12).map(p => {
                                                 const m = getPostMetrics(p);
                                                 return m.impressions + m.reactions * 5 + m.comments * 10;
                                             })
-                                            : [10, 25, 15, 40, 30, 55, 45, 70, 55, 80, 65, 90] // Dynamic-looking fallback baseline
+                                            : []
                                         ).map((h, idx) => {
                                             const maxH = Math.max(...(publishedPlatformPosts.length > 0 ? publishedPlatformPosts.slice(-12).map(p => {
                                                 const m = getPostMetrics(p);
@@ -1290,16 +1291,12 @@ export default function SocialCommandCenter() {
                                         </select>
                                     </div>
 
-                                    {/* Link preview card mock */}
-                                    <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
-                                        <div className="w-full h-20 bg-slate-900 rounded-lg flex items-center justify-center text-slate-600 text-xs">
-                                            Image preview
+                                    {composeMediaUrl && (
+                                        <div className="p-3 bg-slate-950 rounded-xl border border-white/5 space-y-1.5">
+                                            <img src={composeMediaUrl} alt="Selected post media preview" className="w-full h-20 object-cover rounded-lg" />
+                                            <span className="text-[10px] text-slate-500 font-bold block truncate">{composeMediaUrl}</span>
                                         </div>
-                                        <div>
-                                            <span className="text-[10px] text-slate-500 font-bold block uppercase">alphaclonenexus.com</span>
-                                            <span className="text-[11px] text-white font-bold block">AlphaClone Business Operations Hub</span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 

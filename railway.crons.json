@@ -16,6 +16,7 @@
     { "path": "/api/cron/process-campaigns", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/sequence-worker", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/process-scheduled-ai-tasks", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/webhook-deliveries", "schedule": "*/1 * * * *" },
     { "path": "/api/cron/process-task-reminders", "schedule": "*/15 * * * *" },
     { "path": "/api/cron/autonomous-runner", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/autonomous-sync", "schedule": "*/5 * * * *" },

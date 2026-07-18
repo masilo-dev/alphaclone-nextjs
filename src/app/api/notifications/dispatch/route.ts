@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuthenticatedUser } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import webPush from 'web-push';
+import { z } from 'zod';
+import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
 
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
@@ -25,36 +27,39 @@ if (vapidPublicKey && vapidPrivateKey) {
  */
 export async function POST(req: NextRequest) {
     try {
-        // Caller must be authenticated (the sender / triggering user).
-        await requireAuthenticatedUser();
-
         const admin = createSupabaseAdminClient();
-        const body = await req.json();
+        const body = z.object({
+            tenantId: z.string().uuid(),
+            userId: z.string().uuid().optional(),
+            user_id: z.string().uuid().optional(),
+            type: z.string().trim().min(1).max(40).regex(/^[a-z0-9_-]+$/i).default('system'),
+            title: z.string().trim().min(1).max(160),
+            message: z.string().trim().max(2000).optional(),
+            link: z.string().trim().max(1000).refine(value => value.startsWith('/') && !value.startsWith('//'), 'Notification links must be internal').optional(),
+            email: z.boolean().default(true),
+        }).refine(value => Boolean(value.userId || value.user_id), { message: 'Recipient is required' }).parse(await req.json());
+        await requireTenantAccess(body.tenantId);
+        const recipientId = body.userId || body.user_id!;
+        const { type, title, message, link } = body;
+        const shouldEmail = body.email;
 
-        const recipientId: string | undefined = body.userId || body.user_id;
-        const type: string = body.type || 'system';
-        const title: string = body.title;
-        const message: string | undefined = body.message;
-        const link: string | undefined = body.link;
-        const shouldEmail: boolean = body.email !== false; // default: also email
-
-        if (!recipientId || !title) {
-            return NextResponse.json({ error: 'Missing userId or title' }, { status: 400 });
-        }
+        const { data: recipientMembership, error: membershipError } = await admin.from('tenant_users').select('user_id')
+            .eq('tenant_id', body.tenantId).eq('user_id', recipientId).maybeSingle();
+        if (membershipError) throw membershipError;
+        if (!recipientMembership) return NextResponse.json({ error: 'Recipient is not a workspace member' }, { status: 404 });
 
         // Resolve recipient profile (tenant + email) with the admin client (bypasses RLS).
         const { data: profile } = await admin
             .from('profiles')
-            .select('email, name, tenant_id')
+            .select('email, name')
             .eq('id', recipientId)
             .maybeSingle();
 
-        const tenantId: string | undefined = body.tenantId || profile?.tenant_id || undefined;
+        const tenantId = body.tenantId;
 
         // 1. In-app notification row (drives the realtime bell + badge).
         // Note: the table column is `action_url` (not `link`) and `message` is NOT NULL.
-        if (tenantId) {
-            await admin.from('notifications').insert({
+        const { error: notificationError } = await admin.from('notifications').insert({
                 user_id: recipientId,
                 tenant_id: tenantId,
                 type,
@@ -63,7 +68,7 @@ export async function POST(req: NextRequest) {
                 action_url: link || null,
                 read: false,
             });
-        }
+        if (notificationError) throw notificationError;
 
         // 2. Web push to every registered device
         let pushed = 0;
@@ -71,7 +76,8 @@ export async function POST(req: NextRequest) {
             const { data: subs } = await admin
                 .from('push_subscriptions')
                 .select('id, subscription, endpoint, keys')
-                .eq('user_id', recipientId);
+                .eq('user_id', recipientId)
+                .eq('tenant_id', tenantId);
 
             if (subs && subs.length > 0) {
                 const payload = JSON.stringify({
@@ -117,9 +123,9 @@ export async function POST(req: NextRequest) {
                     subject: title,
                     html: `
                         <div style="font-family: sans-serif; padding: 20px; color: #333;">
-                            <h2 style="color: #0d9488;">${title}</h2>
-                            ${message ? `<p>${message}</p>` : ''}
-                            ${link ? `<a href="${baseUrl}${link}" style="display:inline-block;padding:10px 20px;background:#0d9488;color:#fff;text-decoration:none;border-radius:6px;">Open AlphaClone</a>` : ''}
+                            <h2 style="color: #0d9488;">${escapeHtml(title)}</h2>
+                            ${message ? `<p>${escapeHtml(message)}</p>` : ''}
+                            ${link ? `<a href="${escapeHtml(baseUrl + link)}" style="display:inline-block;padding:10px 20px;background:#0d9488;color:#fff;text-decoration:none;border-radius:6px;">Open AlphaClone</a>` : ''}
                             <hr style="border:none;border-top:1px solid #eee;margin:20px 0;" />
                             <small style="color:#666;">You're receiving this because you have notifications enabled on AlphaClone.</small>
                         </div>
@@ -133,9 +139,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({ success: true, pushed, emailed });
-    } catch (err: any) {
-        const status = typeof err?.status === 'number' ? err.status : 500;
-        if (status >= 500) console.error('[Notifications Dispatch] Error:', err);
-        return NextResponse.json({ error: err?.message || 'Internal Server Error' }, { status });
+    } catch (err: unknown) {
+        return routeErrorResponse(err, 'Notification could not be dispatched', req);
     }
 }

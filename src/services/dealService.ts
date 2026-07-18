@@ -146,6 +146,21 @@ export interface PipelineStats {
     totalValue: number;
 }
 
+function mapDealRow(data: any): Deal {
+    return {
+        id: data.id, name: data.name, contactId: data.contact_id, projectId: data.project_id,
+        ownerId: data.owner_id, value: data.value, currency: data.currency, stage: data.stage,
+        probability: data.probability, expectedCloseDate: data.expected_close_date, actualCloseDate: data.actual_close_date,
+        source: data.source, leadSource: data.lead_source, sourceDetails: data.source_details,
+        competitorInfo: data.competitor_info, nextStep: data.next_step, description: data.description,
+        tags: data.tags || [], customFields: data.custom_fields || {}, lostReason: data.lost_reason,
+        wonDetails: data.won_details, metadata: data.metadata || {}, intelligenceScore: data.intelligence_score ?? undefined,
+        intelligenceConfidence: data.intelligence_confidence ?? undefined, intelligenceState: data.intelligence_state ?? undefined,
+        intelligenceRecommendations: data.intelligence_recommendations ?? undefined, psychologyProfile: data.psychology_profile ?? undefined,
+        createdAt: data.created_at, updatedAt: data.updated_at,
+    };
+}
+
 export interface DealService {
     getTenantId(): string;
     getDeals(filters?: {
@@ -185,7 +200,7 @@ export interface DealService {
             taxPercent?: number;
         }
     ): Promise<{ product: DealProduct | null; error: string | null }>;
-    deleteDealProduct(productId: string): Promise<{ success: boolean; error: string | null }>;
+    deleteDealProduct(dealId: string, productId: string): Promise<{ success: boolean; error: string | null }>;
     getPipelineStats(ownerId?: string): Promise<{ stats: PipelineStats[]; error: string | null }>;
     getWeightedPipelineValue(ownerId?: string): Promise<{ value: number; error: string | null }>;
     getWinRate(
@@ -338,31 +353,10 @@ export const dealService: DealService = {
         try {
             const tenantId = this.getTenantId();
 
-            const { data, error } = await supabase
-                .from('deals')
-                .insert({
-                    tenant_id: tenantId, // ← ASSIGN TO TENANT
-                    name: dealData.name,
-                    contact_id: dealData.contactId,
-                    project_id: dealData.projectId,
-                    owner_id: dealData.ownerId || userId,
-                    value: dealData.value,
-                    currency: dealData.currency || 'USD',
-                    stage: dealData.stage || 'lead',
-                    probability: dealData.probability || 0,
-                    expected_close_date: dealData.expectedCloseDate,
-                    source: dealData.source,
-                    lead_source: (dealData as any).leadSource || dealData.source, // Map to new column
-                    source_details: dealData.sourceDetails,
-                    next_step: dealData.nextStep,
-                    description: dealData.description,
-                    tags: dealData.tags || [],
-                    metadata: dealData.metadata || {},
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${tenantId}/deals`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dealData) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.deal) throw new Error(payload.error || 'Deal could not be created');
+            const data = payload.deal;
 
             // Log activity
             await activityService.logActivity(userId, 'Deal Created', {
@@ -371,36 +365,7 @@ export const dealService: DealService = {
                 dealValue: dealData.value,
             }, tenantId);
 
-            const deal: Deal = {
-                id: data.id,
-                name: data.name,
-                contactId: data.contact_id,
-                projectId: data.project_id,
-                ownerId: data.owner_id,
-                value: data.value,
-                currency: data.currency,
-                stage: data.stage,
-                probability: data.probability,
-                expectedCloseDate: data.expected_close_date,
-                actualCloseDate: data.actual_close_date,
-                source: data.source,
-                sourceDetails: data.source_details,
-                competitorInfo: data.competitor_info,
-                nextStep: data.next_step,
-                description: data.description,
-                tags: data.tags || [],
-                customFields: data.custom_fields || {},
-                lostReason: data.lost_reason,
-                wonDetails: data.won_details,
-                metadata: data.metadata || {},
-                intelligenceScore: data.intelligence_score ?? undefined,
-                intelligenceConfidence: data.intelligence_confidence ?? undefined,
-                intelligenceState: data.intelligence_state ?? undefined,
-                intelligenceRecommendations: data.intelligence_recommendations ?? undefined,
-                psychologyProfile: data.psychology_profile ?? undefined,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at,
-            };
+            const deal = mapDealRow(data);
 
             // SYNC TO EXTERNAL CRM
             // Non-blocking sync to avoid UI delay
@@ -446,16 +411,6 @@ export const dealService: DealService = {
                 ? appendDealStageMetadata(existingDeal.metadata, existingDeal.stage, updates.stage as string, stageReason)
                 : updates.metadata;
 
-            if (updates.stage === 'closed_lost') {
-                const { error: deleteError } = await supabase
-                    .from('deals')
-                    .delete()
-                    .eq('id', dealId)
-                    .eq('tenant_id', tenantId);
-                if (deleteError) throw deleteError;
-                return { deal: null, error: null };
-            }
-
             const updateData: any = {};
 
             if (updates.name !== undefined) updateData.name = updates.name;
@@ -483,31 +438,10 @@ export const dealService: DealService = {
                 updateData.actual_close_date = new Date().toISOString().split('T')[0];
             }
 
-            const { data, error } = await supabase
-                .from('deals')
-                .update(updateData)
-                .eq('id', dealId)
-                .eq('tenant_id', tenantId) // ← VERIFY OWNERSHIP
-                .select()
-                .single();
-
-            if (error) throw error;
-
-            if (stageChanged && existingDeal) {
-                const { data: authData } = await supabase.auth.getUser();
-                const { error: historyError } = await supabase
-                    .from('deal_stage_history')
-                    .insert({
-                        deal_id: dealId,
-                        tenant_id: tenantId,
-                        from_stage: existingDeal.stage,
-                        to_stage: updates.stage,
-                        changed_by: authData.user?.id || null,
-                    });
-                if (historyError) {
-                    console.error('Failed to log deal stage history:', historyError);
-                }
-            }
+            const response = await fetch(`/api/tenant/${tenantId}/deals`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: dealId, ...updates }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.deal) throw new Error(payload.error || 'Deal could not be updated');
+            const data = payload.deal;
 
             // GL INTEGRATION: When deal moves to closed_won, post revenue entry
             if (updates.stage === 'closed_won' && data.value && data.value > 0) {
@@ -635,33 +569,10 @@ export const dealService: DealService = {
         try {
             const tenantId = this.getTenantId();
 
+            const response = await fetch(`/api/tenant/${tenantId}/deals`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [dealId] }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Deal could not be deleted');
             await fileUploadService.deleteFileByEntity('deal', dealId);
-
-            const { data, error } = await supabase.rpc('delete_tenant_deal', { p_deal_id: dealId });
-            if (!error && data && (data as { ok?: boolean }).ok) {
-                return { success: true, error: null };
-            }
-
-            if (error) {
-                const { error: directError } = await supabase
-                    .from('deals')
-                    .delete()
-                    .eq('id', dealId)
-                    .eq('tenant_id', tenantId);
-                if (directError) throw directError;
-                return { success: true, error: null };
-            }
-
-            const rpcError = (data as { error?: string } | null)?.error;
-            if (rpcError) {
-                const { error: directError } = await supabase
-                    .from('deals')
-                    .delete()
-                    .eq('id', dealId)
-                    .eq('tenant_id', tenantId);
-                if (directError) throw directError;
-            }
-
             return { success: true, error: null };
         } catch (err) {
             return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -673,23 +584,11 @@ export const dealService: DealService = {
         const tenantId = this.getTenantId();
         const uniqueIds = [...new Set(dealIds)];
         try {
+            const response = await fetch(`/api/tenant/${tenantId}/deals`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: uniqueIds }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Deals could not be deleted');
             await Promise.all(uniqueIds.map((id) => fileUploadService.deleteFileByEntity('deal', id)));
-            let count = 0;
-            for (const id of uniqueIds) {
-                const { data, error } = await supabase.rpc('delete_tenant_deal', { p_deal_id: id });
-                if (!error && data && (data as { ok?: boolean }).ok) {
-                    count += 1;
-                    continue;
-                }
-                const { error: directError } = await supabase
-                    .from('deals')
-                    .delete()
-                    .eq('id', id)
-                    .eq('tenant_id', tenantId);
-                if (directError) throw directError;
-                count += 1;
-            }
-            return { error: null, count };
+            return { error: null, count: Number(payload.count || 0) };
         } catch (err) {
             return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };
         }
@@ -754,23 +653,10 @@ export const dealService: DealService = {
     ): Promise<{ activity: DealActivity | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            const { data, error } = await supabase
-                .from('deal_activities')
-                .insert({
-                    deal_id: dealId,
-                    user_id: userId,
-                    activity_type: activityType,
-                    title,
-                    description: options?.description,
-                    duration_minutes: options?.durationMinutes,
-                    outcome: options?.outcome,
-                    next_action: options?.nextAction,
-                    metadata: options?.metadata || {},
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
+            const response = await fetch(`/api/tenant/${tenantId}/deals/${dealId}/activities`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activityType, title, ...options }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.activity) throw new Error(payload.error || 'Deal activity could not be added');
+            const data = payload.activity;
 
             void fetch('/api/crm/activities', {
                 method: 'POST',
@@ -814,13 +700,11 @@ export const dealService: DealService = {
      */
     async getDealProducts(dealId: string): Promise<{ products: DealProduct[]; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('deal_products')
-                .select('*')
-                .eq('deal_id', dealId)
-                .order('created_at', { ascending: true });
-
-            if (error) throw error;
+            const tenantId = this.getTenantId();
+            const response = await fetch(`/api/tenant/${tenantId}/deals/${dealId}/products`, { cache: 'no-store' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Deal products could not be loaded');
+            const data = payload.products;
 
             const products: DealProduct[] = (data || []).map((p: any) => ({
                 id: p.id,
@@ -857,21 +741,11 @@ export const dealService: DealService = {
         }
     ): Promise<{ product: DealProduct | null; error: string | null }> {
         try {
-            const { data, error } = await supabase
-                .from('deal_products')
-                .insert({
-                    deal_id: dealId,
-                    product_name: productData.productName,
-                    description: productData.description,
-                    quantity: productData.quantity,
-                    unit_price: productData.unitPrice,
-                    discount_percent: productData.discountPercent || 0,
-                    tax_percent: productData.taxPercent || 0,
-                })
-                .select()
-                .single();
-
-            if (error) throw error;
+            const tenantId = this.getTenantId();
+            const response = await fetch(`/api/tenant/${tenantId}/deals/${dealId}/products`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(productData) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.product) throw new Error(payload.error || 'Deal product could not be added');
+            const data = payload.product;
 
             const product: DealProduct = {
                 id: data.id,
@@ -896,11 +770,12 @@ export const dealService: DealService = {
     /**
      * Delete deal product
      */
-    async deleteDealProduct(productId: string): Promise<{ success: boolean; error: string | null }> {
+    async deleteDealProduct(dealId: string, productId: string): Promise<{ success: boolean; error: string | null }> {
         try {
-            const { error } = await supabase.from('deal_products').delete().eq('id', productId);
-
-            if (error) throw error;
+            const tenantId = this.getTenantId();
+            const response = await fetch(`/api/tenant/${tenantId}/deals/${dealId}/products?productId=${encodeURIComponent(productId)}`, { method: 'DELETE' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Deal product could not be deleted');
 
             return { success: true, error: null };
         } catch (err) {

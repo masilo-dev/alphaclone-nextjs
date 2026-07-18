@@ -121,16 +121,19 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     if (!currentTenant?.id || !newExpense.description.trim()) return;
     setSavingExpense(true);
     try {
-      const { error } = await supabase.from('expenses').insert({
-        tenant_id: currentTenant.id,
+      const response = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        action: 'create',
+        tenantId: currentTenant.id,
         description: newExpense.description.trim(),
         amount: Number(newExpense.amount) || 0,
-        category: newExpense.category.toLowerCase(),
-        vendor: newExpense.vendor.trim() || null,
-        status: 'pending',
+        vendor_name: newExpense.vendor.trim() || undefined,
         date: new Date().toISOString().split('T')[0],
-      });
-      if (error) throw error;
+      }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || 'Failed to add expense');
       toast.success('Expense added');
       setShowAddExpense(false);
       setNewExpense({ description: '', amount: '', category: 'other', vendor: '' });
@@ -218,7 +221,10 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
     toast.success('Invoice marked paid');
   };
   const deleteExpense = async (id: string) => {
-    await supabase.from('expenses').delete().eq('id', id);
+    if (!currentTenant?.id) return;
+    const response = await fetch(`/api/finance/expenses?tenantId=${encodeURIComponent(currentTenant.id)}&expenseId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) { toast.error(result.error || 'Expense could not be deleted'); return; }
     setExpenses(prev => prev.filter(e => e.id !== id));
     toast.success('Expense deleted');
   };

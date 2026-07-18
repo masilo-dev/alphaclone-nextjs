@@ -135,6 +135,10 @@ export async function GET(request: NextRequest) {
             .eq('id', event.id);
           results.push({ eventId: event.id, status: 'hooks_only' });
         } else {
+          await supabase
+            .from('business_automation_events')
+            .update({ processed: true })
+            .eq('id', event.id);
           results.push({ eventId: event.id, status: 'skipped', reason: 'no_workflow' });
         }
 

@@ -24,6 +24,7 @@ import AutomationBuilder from './workflows/AutomationBuilder';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { userLearningPreferencesService } from '@/services/userLearningPreferencesService';
 import { BonnieModulePageShell } from './bonnie/BonnieModulePageShell';
+import { useTenant } from '@/contexts/TenantContext';
 
 interface ParsedContact {
     name?: string;
@@ -35,6 +36,7 @@ interface ParsedContact {
 }
 
 const SalesAgent: React.FC = () => {
+    const { currentTenant } = useTenant();
     const aiConfigured = isAnyAIConfigured();
     const { startTask } = useBackgroundTasks();
     const router = useRouter();
@@ -125,8 +127,7 @@ const SalesAgent: React.FC = () => {
             setShowManualModal(false);
             setManualLead({ businessName: '', email: '', phone: '', industry: '', location: '', value: '' });
 
-            // Auto-process manual lead too? User said "ALL generated leads", but let's stick to AI ones for now unless specified.
-            // Actually, for consistency, let's keep manual separate unless requested.
+            // Manual entries stay in lead status so a human can verify them before conversion.
             loadLeads();
         }
     };
@@ -197,20 +198,12 @@ const SalesAgent: React.FC = () => {
 
             // 7. Sync to HubSpot (NEW)
             try {
-                const { supabase } = await import('../../lib/supabase');
-                const { data: hubspotIntegration } = await supabase
-                    .from('integrations')
-                    .select('*')
-                    .eq('user_id', userId)
-                    .eq('type', 'hubspot')
-                    .maybeSingle();
-
-                if (hubspotIntegration && hubspotIntegration.enabled) {
+                if (currentTenant?.id) {
                     console.log(`[SalesAgent] HubSpot connected, syncing lead ${lead.businessName}...`);
                     await fetch('/api/hubspot/sync', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId, leads: [lead] })
+                        body: JSON.stringify({ tenantId: currentTenant.id, leads: [lead] })
                     });
                 }
             } catch (hsErr) {
@@ -315,7 +308,7 @@ const SalesAgent: React.FC = () => {
 
     // Chat State
     const [messages, setMessages] = useState([
-        { id: 1, sender: 'agent', text: 'Hello. I can help you find leads, draft outreach messages, and prepare CRM follow-up. Assisted workflows are available now; fully autonomous execution is still in beta.' }
+        { id: 1, sender: 'agent', text: 'Hello. I can find and qualify leads, draft outreach, save CRM follow-up, and dispatch durable Alpha missions for longer-running work.' }
     ]);
     const [inputText, setInputText] = useState('');
     const [pendingSearch, setPendingSearch] = useState<{ industry: string, location: string, filters?: string } | null>(null);

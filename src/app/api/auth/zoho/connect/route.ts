@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
-import { encodeOAuthState } from '@/lib/oauth/oauthState';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 
 function getAppUrl(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -31,24 +31,11 @@ export async function GET(req: NextRequest) {
     try {
     const { searchParams } = new URL(req.url);
     const requestedRegion = searchParams.get('region');
-    const state = searchParams.get('state') || ''; // user ID or secure nonce
+    const tenantId = searchParams.get('tenantId') || searchParams.get('tenant_id') || '';
 
     const redirectUri = getZohoRedirectUri(req);
 
-    let identityState = state;
-    if (!identityState) {
-        const supabase = await createSupabaseServerClient();
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.id) {
-            identityState = user.id;
-        }
-    }
-
-    if (!identityState) {
-        return NextResponse.json({ error: 'Missing user identity state' }, { status: 400 });
-    }
+    const { user } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
 
     const region = (requestedRegion || ENV.ZOHO_REGION || 'US').toUpperCase();
     const { clientId, clientSecret } = resolveZohoCredentials(region);
@@ -59,6 +46,13 @@ export async function GET(req: NextRequest) {
         );
     }
     const hosts = ZohoService.getHostsByRegion(region);
+    const admin = createSupabaseAdminClient();
+    const { data: stateRow, error: stateError } = await admin.from('oauth_states').insert({
+        user_id: user.id,
+        tenant_id: tenantId,
+        metadata: { provider: 'zoho', region },
+    }).select('id').single();
+    if (stateError || !stateRow?.id) throw stateError || new Error('OAuth state could not be created');
 
     const scopes = [
         // Mail
@@ -84,16 +78,12 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.append('redirect_uri', redirectUri);
     authUrl.searchParams.append(
         'state',
-        encodeOAuthState({
-            region,
-            state: identityState,
-            ts: Date.now(),
-        })
+        stateRow.id
     );
 
     return NextResponse.redirect(authUrl.toString());
     } catch (err) {
         console.error('[zoho/connect] GET error:', err);
-        return NextResponse.json({ error: 'OAuth initialization failed' }, { status: 500 });
+        return routeErrorResponse(err, 'Zoho authorization could not be started', req);
     }
 }

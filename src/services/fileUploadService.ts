@@ -237,7 +237,7 @@ class FileUploadService {
 
             // 3. Generate storage path
             const timestamp = Date.now();
-            const randomString = Math.random().toString(36).substring(7);
+            const randomString = crypto.randomUUID();
             const extension = filename.split('.').pop();
             const storagePath = `${userId}/${timestamp}-${randomString}.${extension}`;
 
@@ -333,7 +333,7 @@ class FileUploadService {
 
             // Generate unique filename
             const timestamp = Date.now();
-            const randomString = Math.random().toString(36).substring(7);
+            const randomString = crypto.randomUUID();
             const extension = file.name.split('.').pop();
             const filename = `${finalUserId as string}/${timestamp}-${randomString}.${extension}`;
 
@@ -454,25 +454,11 @@ class FileUploadService {
      */
     async deleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
-            // Soft delete in database
-            const { error: dbError } = await supabase
-                .from('file_uploads')
-                .update({ deleted_at: new Date().toISOString() })
-                .eq('id', fileId);
-
-            if (dbError) {
-                return { success: false, error: 'Failed to move file to trash' };
-            }
-
-            // Audit log
-            auditLoggingService.logAction(
-                'file_soft_deleted',
-                'file_upload',
-                fileId,
-                undefined,
-                undefined
-            ).catch(err => console.error('Failed to log audit:', err));
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { success: false, error: 'No active workspace' };
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'soft_delete', fileId }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { success: false, error: payload.error || 'Failed to move file to trash' };
             return { success: true };
         } catch (error) {
             console.error('File delete error:', error);
@@ -485,15 +471,11 @@ class FileUploadService {
      */
     async restoreFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
-            const { error: dbError } = await supabase
-                .from('file_uploads')
-                .update({ deleted_at: null })
-                .eq('id', fileId);
-
-            if (dbError) {
-                return { success: false, error: 'Failed to restore file' };
-            }
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { success: false, error: 'No active workspace' };
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'restore', fileId }) });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { success: false, error: payload.error || 'Failed to restore file' };
             return { success: true };
         } catch (error) {
             console.error('File restore error:', error);
@@ -506,36 +488,11 @@ class FileUploadService {
      */
     async permanentDeleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
         try {
-            // Get file record
-            const { data: fileRecord, error: fetchError } = await supabase
-                .from('file_uploads')
-                .select('*')
-                .eq('id', fileId)
-                .single();
-
-            if (fetchError || !fileRecord) {
-                return { success: false, error: 'File not found' };
-            }
-
-            // Delete from storage
-            const { error: storageError } = await supabase.storage
-                .from('uploads')
-                .remove([fileRecord.storage_path]);
-
-            if (storageError) {
-                console.error('Storage delete error:', storageError);
-            }
-
-            // Delete from database
-            const { error: dbError } = await supabase
-                .from('file_uploads')
-                .delete()
-                .eq('id', fileId);
-
-            if (dbError) {
-                return { success: false, error: 'Failed to delete file record' };
-            }
-
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { success: false, error: 'No active workspace' };
+            const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files?fileId=${encodeURIComponent(fileId)}`, { method: 'DELETE', credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) return { success: false, error: payload.error || 'Failed to permanently delete file' };
             return { success: true };
         } catch (error) {
             console.error('Permanent delete error:', error);
@@ -646,29 +603,9 @@ class FileUploadService {
      * Permanently delete all trashed files for a tenant
      */
     async emptyTrash(tenantId: string) {
-        // First get all trashed files to remove from storage
-        const { data: trashedFiles } = await supabase
-            .from('file_uploads')
-            .select('storage_path')
-            .eq('tenant_id', tenantId)
-            .not('deleted_at', 'is', null);
-
-        // Remove from storage
-        if (trashedFiles && trashedFiles.length > 0) {
-            const paths = trashedFiles.map((f: { storage_path: string }) => f.storage_path).filter(Boolean);
-            if (paths.length > 0) {
-                await supabase.storage.from('uploads').remove(paths);
-            }
-        }
-
-        // Delete records from database
-        const { error } = await supabase
-            .from('file_uploads')
-            .delete()
-            .eq('tenant_id', tenantId)
-            .not('deleted_at', 'is', null);
-
-        return { error };
+        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, { method: 'DELETE', credentials: 'include' });
+        const payload = await response.json().catch(() => ({}));
+        return { error: response.ok ? null : payload.error || 'Trash could not be emptied' };
     }
 }
 

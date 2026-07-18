@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ZohoMailService } from '../../../../../services/zoho/ZohoMailService';
 import { ZohoCampaignsService } from '../../../../../services/zoho/ZohoCampaignsService';
-import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 
 function inferZohoRegionFromAccountsServer(value: string | undefined): string | null {
     const server = String(value || '').toLowerCase();
@@ -17,17 +17,11 @@ function inferZohoRegionFromAccountsServer(value: string | undefined): string | 
 }
 
 export async function GET(req: NextRequest) {
-    const authClient = await createSupabaseServerClient();
-    const {
-        data: { user },
-    } = await authClient.auth.getUser();
-    const userId = user?.id || null;
-    if (!userId) {
-        return NextResponse.json({ isConnected: false, error: 'Unauthorized' }, { status: 401 });
-    }
+    const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
 
     try {
-        const zohoService = new ZohoService(userId);
+        const { user } = await requireTenantAccess(tenantId, req);
+        const zohoService = new ZohoService(user.id, tenantId);
         const config = await zohoService.getConfig();
         const configuredRegion = inferZohoRegionFromAccountsServer(config?.accountsServer);
         const baseConnected = await zohoService.checkIntegration();
@@ -38,7 +32,7 @@ export async function GET(req: NextRequest) {
         let mailReady = false;
         let campaignsReady = false;
         try {
-            const zohoMailService = new ZohoMailService(userId);
+            const zohoMailService = new ZohoMailService(user.id, tenantId);
             const senderAddresses = await zohoMailService.getSenderAddresses();
             mailReady = senderAddresses.length > 0;
         } catch {
@@ -46,7 +40,7 @@ export async function GET(req: NextRequest) {
         }
 
         try {
-            const zohoCampaignsService = new ZohoCampaignsService(userId);
+            const zohoCampaignsService = new ZohoCampaignsService(user.id, tenantId);
             campaignsReady = await zohoCampaignsService.checkCampaignsReady();
         } catch {
             campaignsReady = false;
@@ -61,9 +55,6 @@ export async function GET(req: NextRequest) {
         });
     } catch (err: unknown) {
         console.error('Zoho Status Check Error:', err);
-        return NextResponse.json(
-            { isConnected: false, error: 'Status check failed', code: 'ZOHO_STATUS_ERROR' },
-            { status: 500 }
-        );
+        return routeErrorResponse(err, 'Zoho status could not be checked', req);
     }
 }

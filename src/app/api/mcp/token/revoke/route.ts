@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -170,7 +171,7 @@ export async function POST(req: NextRequest) {
         const { data: keyData } = await supabase
           .from('mcp_api_keys')
           .select('user_id, tenant_id')
-          .eq('api_key', authToken)
+          .eq('api_key_hash', hashMcpApiKey(authToken))
           .eq('is_active', true)
           .maybeSingle();
 

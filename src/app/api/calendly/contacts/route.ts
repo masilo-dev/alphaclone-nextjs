@@ -5,6 +5,7 @@ import {
     getCalendlyContacts,
     syncCRMClientsToCalendlyContacts,
 } from '@/lib/calendly/syncToNative';
+import { refreshCalendlyTokenIfNeeded } from '@/services/calendly/calendlyIntegrationService';
 
 // GET /api/calendly/contacts?tenantId=xxx
 // Returns all Calendly contacts for the tenant
@@ -17,21 +18,11 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId, req);
 
         const supabase = createSupabaseAdminClient();
-        const { data: tenant, error } = await supabase
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenantId)
-            .single();
-
-        if (error || !tenant) {
-            return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-        }
-
-        const config = (tenant.settings as any)?.calendly;
-        if (!config?.enabled || !config?.accessToken) {
+        const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
+        if (!config?.accessToken) {
             return NextResponse.json({ error: 'Calendly not connected' }, { status: 401 });
         }
 
@@ -54,21 +45,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId);
+        await requireTenantAccess(tenantId, req);
 
         const supabase = createSupabaseAdminClient();
-        const { data: tenant, error } = await supabase
-            .from('tenants')
-            .select('settings')
-            .eq('id', tenantId)
-            .single();
-
-        if (error || !tenant) {
-            return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
-        }
-
-        const config = (tenant.settings as any)?.calendly;
-        if (!config?.enabled || !config?.accessToken) {
+        const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
+        if (!config?.accessToken) {
             return NextResponse.json({ error: 'Calendly not connected' }, { status: 401 });
         }
 

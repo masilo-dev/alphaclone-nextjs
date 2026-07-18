@@ -346,7 +346,7 @@ export const calendarService = {
         relatedToLead?: string
     ) {
         const endTime = addMinutes(startTime, durationMinutes);
-        const videoRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const videoRoomId = `room_${crypto.randomUUID()}`;
 
         const event = {
             user_id: userId,
