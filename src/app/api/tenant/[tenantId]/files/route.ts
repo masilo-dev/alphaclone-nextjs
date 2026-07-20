@@ -48,12 +48,12 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ tena
     }
     const { data: files, error: readError } = await query;
     if (readError) throw readError;
-    const paths = (files || []).map((file) => file.storage_path).filter(Boolean);
+    const paths = (files || []).map((file: any) => file.storage_path).filter(Boolean);
     if (paths.length) {
       const { error: storageError } = await admin.storage.from('uploads').remove(paths);
       if (storageError) throw storageError;
     }
-    const ids = (files || []).map((file) => file.id);
+    const ids = (files || []).map((file: any) => file.id);
     if (ids.length) {
       const { error } = await admin.from('file_uploads').delete().eq('tenant_id', tenantId).in('id', ids);
       if (error) throw error;

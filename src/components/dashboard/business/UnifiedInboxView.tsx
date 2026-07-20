@@ -58,13 +58,16 @@ function toUnifiedMicrosoft(
 }
 
 async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean }> {
-  const [microsoft, zohoRes] = await Promise.all([
+  const [microsoft, zoho] = await Promise.all([
     microsoftAuthService.isConnected().catch(() => false),
-    tenantId ? fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' }) : Promise.resolve(new Response('{}', { status: 400 }))
-      .then((r) => r.json().catch(() => ({})))
-      .then((d) => Boolean(d.isConnected)),
+    tenantId
+      ? fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
+          .then((r) => r.json().catch(() => ({})))
+          .then((d) => Boolean(d.isConnected))
+          .catch(() => false)
+      : Promise.resolve(false),
   ]);
-  return { microsoft, zoho: zohoRes };
+  return { microsoft, zoho };
 }
 
 export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewProps) {

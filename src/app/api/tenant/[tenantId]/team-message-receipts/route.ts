@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     if (!message || message.sender_id !== user.id) return NextResponse.json({ error: 'Message not found' }, { status: 404 });
     const { data: members, error: membersError } = await admin.from('tenant_users').select('user_id').eq('tenant_id', tenantId).in('user_id', parsed.data.recipientUserIds);
     if (membersError) throw membersError;
-    const allowedIds = new Set((members || []).map((member) => member.user_id));
+    const allowedIds = new Set((members || []).map((member: any) => member.user_id));
     if (allowedIds.size !== new Set(parsed.data.recipientUserIds).size) return NextResponse.json({ error: 'A recipient is not a workspace member' }, { status: 400 });
     const now = new Date().toISOString();
     const { error: messageUpdateError } = await admin.from('messages').update({ delivered_at: parsed.data.deliveredAt }).eq('id', message.id).eq('tenant_id', tenantId);

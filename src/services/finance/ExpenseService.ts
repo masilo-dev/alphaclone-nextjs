@@ -35,7 +35,6 @@ export interface Expense {
     receipt_url?: string;
     notes?: string;
     asset_account_id?: string;
-    receipt_url?: string;
     journal_entry_id?: string;
     zoho_books_id?: string;
     created_by?: string;
@@ -63,6 +62,7 @@ export interface CreateExpenseInput {
     client_id?: string;
     receipt_url?: string;
     notes?: string;
+    asset_account_id?: string;
 }
 
 export interface ExpenseFilters {

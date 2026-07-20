@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, context: Context) {
     if (chatgptTokens.error) throw chatgptTokens.error;
     if (slack.error) throw slack.error;
 
-    const safeRows = (rows || []).map((row) => ({
+    const safeRows = (rows || []).map((row: any) => ({
       integrationId: String(row.integration_id),
       status: row.status === 'connected' ? 'connected' : 'available',
       connectedAt: row.connected_at,

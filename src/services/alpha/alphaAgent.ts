@@ -123,7 +123,7 @@ class AlphaAgent {
             .eq('user_id', userId).eq('tenant_id', tenantId)
             .order('started_at', { ascending: false }).limit(100);
         if (error) throw error;
-        return (data || []).map(row => this.fromRow(row));
+        return (data || []).map((row: any) => this.fromRow(row));
     }
 
     private fromRow(row: any): AlphaMissionStatus {

@@ -266,6 +266,9 @@ function LoginContent() {
                             mode: 'ensure',
                             idempotencyKey: 'initial-workspace-v1',
                         });
+                        if (result.error || !result.tenant) {
+                            throw new Error(result.error || 'Failed to create workspace');
+                        }
                         newTenant = result.tenant;
                         toast.success('Workspace provisioned!', { id: 'workspace' });
                     } catch (tenantErr: any) {

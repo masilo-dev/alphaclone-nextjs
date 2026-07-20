@@ -15,12 +15,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     const admin = createSupabaseAdminClient();
     const { data: tasks, error } = await admin.from('scheduled_ai_tasks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(200);
     if (error) throw error;
-    const ids = (tasks || []).map((task) => task.id);
+    const ids = (tasks || []).map((task: any) => task.id);
     const { data: results, error: resultError } = ids.length ? await admin.from('scheduled_ai_task_results').select('*').eq('tenant_id', tenantId).in('task_id', ids).order('ran_at', { ascending: false }).limit(500) : { data: [], error: null };
     if (resultError) throw resultError;
     const latest = new Map<string, unknown>();
     for (const result of results || []) if (!latest.has(result.task_id)) latest.set(result.task_id, result);
-    return NextResponse.json({ tasks: (tasks || []).map((task) => ({ ...task, latest_result: latest.get(task.id) || null })) });
+    return NextResponse.json({ tasks: (tasks || []).map((task: any) => ({ ...task, latest_result: latest.get(task.id) || null })) });
   } catch (error) { return routeErrorResponse(error, 'Scheduled AI tasks could not be loaded', req); }
 }
 

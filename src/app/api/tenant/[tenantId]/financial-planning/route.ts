@@ -20,9 +20,9 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     if (cash.error) throw cash.error;
     if (tax.error) throw tax.error;
     if (accounts.error) throw accounts.error;
-    const openingCash = (accounts.data || []).reduce((sum, account) => sum + Number(account.current_balance || 0), 0);
-    const projections = (cash.data || []).map((row) => ({ id: row.id, tenant_id: row.tenant_id, projection_date: row.forecast_date, type: Number(row.projected_inflow || 0) > 0 ? 'inflow' : 'outflow', amount: Number(row.projected_inflow || row.projected_outflow || 0), category: row.category || (Number(row.projected_inflow || 0) > 0 ? 'Revenue' : 'Expenses'), description: row.description, status: row.status, created_at: row.created_at }));
-    const taxRecords = (tax.data || []).map((row) => ({ id: row.id, tenant_id: row.tenant_id, tax_year: row.tax_year, quarter: row.quarter, estimated_income: Number(row.estimated_income || 0), estimated_expenses: Number(row.estimated_expenses || 0), deduction_amount: Number(row.deduction_amount || 0), tax_rate: Number(row.tax_rate || 0), estimated_tax_due: Number(row.tax_owed || 0), status: row.status, created_at: row.created_at }));
+    const openingCash = (accounts.data || []).reduce((sum: number, account: any) => sum + Number(account.current_balance || 0), 0);
+    const projections = (cash.data || []).map((row: any) => ({ id: row.id, tenant_id: row.tenant_id, projection_date: row.forecast_date, type: Number(row.projected_inflow || 0) > 0 ? 'inflow' : 'outflow', amount: Number(row.projected_inflow || row.projected_outflow || 0), category: row.category || (Number(row.projected_inflow || 0) > 0 ? 'Revenue' : 'Expenses'), description: row.description, status: row.status, created_at: row.created_at }));
+    const taxRecords = (tax.data || []).map((row: any) => ({ id: row.id, tenant_id: row.tenant_id, tax_year: row.tax_year, quarter: row.quarter, estimated_income: Number(row.estimated_income || 0), estimated_expenses: Number(row.estimated_expenses || 0), deduction_amount: Number(row.deduction_amount || 0), tax_rate: Number(row.tax_rate || 0), estimated_tax_due: Number(row.tax_owed || 0), status: row.status, created_at: row.created_at }));
     return NextResponse.json({ projections, taxRecords, openingCash });
   } catch (error) { return routeErrorResponse(error, 'Financial planning data could not be loaded', req); }
 }

@@ -59,7 +59,7 @@ async function googleAccessToken(userId: string, tenantId: string): Promise<stri
     expiresAt,
   });
   tokens = { ...tokens, accessToken: String(payload.access_token), expiresAt };
-  return tokens.accessToken;
+  return tokens.accessToken!;
 }
 
 registerTool('google-workspace', {

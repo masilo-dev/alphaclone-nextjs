@@ -300,7 +300,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 status: 'draft',
                 client_id: selectedClientIdForLawyer || form.clientId || undefined,
             });
-            if (error || !contract) throw new Error(error || 'Failed to save contract');
+            if (error || !contract) throw new Error(typeof error === 'object' && error && 'message' in error ? String((error as any).message) : String(error || 'Failed to save contract'));
 
             setGeneratedContract(cleaned);
             setEditedHtml(html);
@@ -515,7 +515,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 admin_signature: isSigned ? signatureData : undefined,
                 admin_signed_at: isSigned ? new Date().toISOString() : undefined,
             });
-            if (error) throw new Error(error);
+            if (error) throw new Error(String(error));
             toast.success('Contract saved successfully!');
             if (contract?.id) setContractId(contract.id);
             showActionNextSteps(isSigned ? 'contract_signed' : 'contract_saved', (path) => router.push(path));
@@ -650,7 +650,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         const toastId = toast.loading(`Deleting ${ids.length} contract(s)...`);
         try {
             const { error, count, skipped } = await contractService.bulkDeleteContracts(ids);
-            if (error) throw new Error(error);
+            if (error) throw new Error(String(error));
             setSavedContracts((prev) => prev.filter((c) => !selectedContractIds.has(c.id)));
             setSelectedContractIds(new Set());
             if (skipped > 0) {

@@ -16,11 +16,11 @@ const expenseInputSchema = z.object({
     vendor_name: z.string().trim().max(300).optional(),
     payment_method: z.enum(['card', 'cash', 'bank_transfer', 'check', 'other']).optional(),
     billable: z.boolean().optional(),
-    client_id: z.string().uuid().nullable().optional(),
-    category_id: z.string().uuid().nullable().optional(),
-    asset_account_id: z.string().uuid().nullable().optional(),
-    receipt_url: z.string().max(2000).nullable().optional(),
-    notes: z.string().max(5000).nullable().optional(),
+    client_id: z.string().uuid().nullable().optional().transform(val => val ?? undefined),
+    category_id: z.string().uuid().nullable().optional().transform(val => val ?? undefined),
+    asset_account_id: z.string().uuid().nullable().optional().transform(val => val ?? undefined),
+    receipt_url: z.string().max(2000).nullable().optional().transform(val => val ?? undefined),
+    notes: z.string().max(5000).nullable().optional().transform(val => val ?? undefined),
 });
 
 export async function GET(req: NextRequest) {

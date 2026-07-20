@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     ]);
     if (stepsError) throw stepsError;
     if (contactsError) throw contactsError;
-    const contactIds = (contacts || []).map((contact) => contact.id);
+    const contactIds = (contacts || []).map((contact: any) => contact.id);
     let submissions: unknown[] = [];
     if (contactIds.length) {
       const result = await admin.from('onboarding_submissions').select('*, contacts(first_name, last_name, email), onboarding_steps(*)').in('contact_id', contactIds).order('created_at', { ascending: false });
@@ -40,9 +40,9 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const parsed = postSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid onboarding steps', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const admin = createSupabaseAdminClient();
-    const { data, error } = await admin.from('onboarding_steps').insert(parsed.data.steps.map((step) => ({ ...step, tenant_id: tenantId, step_description: step.step_description || null }))).select('*');
+    const { data, error } = await admin.from('onboarding_steps').insert(parsed.data.steps.map((step: any) => ({ ...step, tenant_id: tenantId, step_description: step.step_description || null }))).select('*');
     if (error) throw error;
-    await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'onboarding_steps_created', payload: { stepIds: (data || []).map((step) => step.id), actorUserId: user.id } });
+    await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'onboarding_steps_created', payload: { stepIds: (data || []).map((step: any) => step.id), actorUserId: user.id } });
     return NextResponse.json({ steps: data || [] }, { status: 201 });
   } catch (error) {
     return routeErrorResponse(error, 'Onboarding steps could not be created', req);

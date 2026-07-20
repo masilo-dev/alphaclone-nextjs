@@ -31,9 +31,9 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
       current.events += 1;
       byUser.set(log.user_id, current);
     }
-    const leaderboard = (members || []).map((member: any) => ({ userId: member.user_id, name: member.profiles?.name || member.profiles?.email || 'Workspace member', avatarUrl: member.profiles?.avatar_url || null, role: member.role, ...(byUser.get(member.user_id) || { xp: 0, events: 0 }), isMe: member.user_id === user.id })).sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name)).map((entry, index) => ({ ...entry, rank: index + 1 }));
-    const myLogs = (logs || []).filter((log) => log.user_id === user.id);
-    const dates = new Set(myLogs.map((log) => new Date(log.created_at).toISOString().slice(0, 10)));
+    const leaderboard = (members || []).map((member: any) => ({ userId: member.user_id, name: member.profiles?.name || member.profiles?.email || 'Workspace member', avatarUrl: member.profiles?.avatar_url || null, role: member.role, ...(byUser.get(member.user_id) || { xp: 0, events: 0 }), isMe: member.user_id === user.id })).sort((a: any, b: any) => b.xp - a.xp || a.name.localeCompare(b.name)).map((entry: any, index: number) => ({ ...entry, rank: index + 1 }));
+    const myLogs = (logs || []).filter((log: any) => log.user_id === user.id);
+    const dates = new Set(myLogs.map((log: any) => new Date(log.created_at).toISOString().slice(0, 10)));
     let streak = 0;
     const cursor = new Date();
     for (;;) {
@@ -45,9 +45,18 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
       if (dates.has(cursor.toISOString().slice(0, 10))) streak += 1;
       cursor.setUTCDate(cursor.getUTCDate() - 1);
     }
-    const actionCounts = myLogs.reduce<Record<string, number>>((counts, log) => { const key = (log.action || '').toLowerCase(); counts[key] = (counts[key] || 0) + 1; return counts; }, {});
-    const countMatching = (...terms: string[]) => Object.entries(actionCounts).reduce((sum, [action, count]) => sum + (terms.some((term) => action.includes(term)) ? count : 0), 0);
-    const me = leaderboard.find((entry) => entry.isMe) || { xp: 0, events: 0, rank: leaderboard.length + 1 };
+    const actionCounts: Record<string, number> = {};
+    for (const log of (myLogs as any[])) { const key = String(log.action || '').toLowerCase(); actionCounts[key] = (actionCounts[key] || 0) + 1; }
+    const countMatching = (...terms: string[]): number => {
+      let sum = 0;
+      for (const [action, count] of Object.entries(actionCounts)) {
+        if (terms.some((term) => action.includes(term))) {
+          sum += Number(count);
+        }
+      }
+      return sum;
+    };
+    const me = leaderboard.find((entry: any) => entry.isMe) || { xp: 0, events: 0, rank: leaderboard.length + 1 };
     return NextResponse.json({
       profile: { xp: me.xp, events: me.events, rank: me.rank, streak },
       badges: [
@@ -57,7 +66,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
         { id: 'invoice-operator', name: 'Invoice Operator', icon: '💰', description: 'Send or record 25 paid invoices', earned: countMatching('invoice sent', 'invoice paid') >= 25 },
         { id: 'pipeline-builder', name: 'Pipeline Builder', icon: '🌐', description: 'Add or discover 100 leads', earned: countMatching('lead add', 'lead creat', 'lead discover') >= 100 },
       ],
-      history: myLogs.slice(0, 20).map((log) => ({ id: log.id, action: log.action, xp: scoreAction(log.action || ''), createdAt: log.created_at })),
+      history: myLogs.slice(0, 20).map((log: any) => ({ id: log.id, action: log.action, xp: scoreAction(log.action || ''), createdAt: log.created_at })),
       leaderboard,
     });
   } catch (error) {

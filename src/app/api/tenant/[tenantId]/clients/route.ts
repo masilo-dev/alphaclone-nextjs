@@ -32,9 +32,14 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     const { user } = await requireTenantAccess(tenantId, req);
     const body = await req.json().catch(() => ({}));
     const bulk = bulkCreateSchema.safeParse(body);
-    const single = bulk.success ? null : fields.safeParse(body);
-    if (!bulk.success && !single?.success) return NextResponse.json({ error: 'Invalid client details' }, { status: 400 });
-    const values = bulk.success ? bulk.data.clients : [single!.data];
+    let values: z.infer<typeof fields>[];
+    if (bulk.success) {
+      values = bulk.data.clients;
+    } else {
+      const single = fields.safeParse(body);
+      if (!single.success) return NextResponse.json({ error: 'Invalid client details' }, { status: 400 });
+      values = [single.data];
+    }
     const admin = createSupabaseAdminClient();
     const emails = [...new Set(values.map((item) => item.email?.toLowerCase()).filter(Boolean) as string[])];
     const existingEmails = new Set<string>();
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
       if (leadCount) await releaseDailyResourceQuota(tenantId, user.id, 'leads', leadCount);
       throw error;
     }
-    await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: bulk.success ? 'clients_imported' : 'client_created', payload: { clientIds: (data || []).map((item) => item.id), actorUserId: user.id, skippedDuplicates: values.length - accepted.length } });
+    await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: bulk.success ? 'clients_imported' : 'client_created', payload: { clientIds: (data || []).map((item: any) => item.id), actorUserId: user.id, skippedDuplicates: values.length - accepted.length } });
     return NextResponse.json({ clients: data || [], client: bulk.success ? undefined : data?.[0], count: data?.length || 0, skipped: values.length - accepted.length }, { status: 201 });
   } catch (error) { return routeErrorResponse(error, 'Client records could not be created', req); }
 }
@@ -102,7 +107,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ tena
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin.from('business_clients').update({ is_active: false, updated_at: new Date().toISOString() }).eq('tenant_id', tenantId).in('id', parsed.data.ids).eq('is_active', true).select('id');
     if (error) throw error;
-    const ids = (data || []).map((item) => item.id);
+    const ids = (data || []).map((item: any) => item.id);
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'clients_archived', payload: { clientIds: ids, actorUserId: user.id } });
     return NextResponse.json({ success: true, count: ids.length });
   } catch (error) { return routeErrorResponse(error, 'Clients could not be archived', req); }

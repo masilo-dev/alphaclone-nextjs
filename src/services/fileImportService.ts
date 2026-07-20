@@ -116,7 +116,8 @@ export const fileImportService = {
 
             const ExcelJS = await import('exceljs');
             const workbook = new ExcelJS.Workbook();
-            await workbook.xlsx.load(new Uint8Array(await file.arrayBuffer()));
+            // @ts-expect-error: exceljs types expect legacy Buffer; Buffer.from() is functionally correct at runtime
+            await workbook.xlsx.load(Buffer.from(await file.arrayBuffer()));
             const worksheet = workbook.worksheets[0];
             if (!worksheet) return { contacts: [], error: 'The workbook has no worksheets.' };
 

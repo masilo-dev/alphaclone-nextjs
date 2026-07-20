@@ -417,8 +417,8 @@ export default function SocialCommandCenter() {
     const handleDeletePost = async (id: string) => {
         const toastId = toast.loading('Deleting...');
         try {
-            if (!tenant?.id) throw new Error('Select a workspace first');
-            const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(tenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
+            if (!currentTenant?.id) throw new Error('Select a workspace first');
+            const response = await fetch(`/api/social/schedule?tenantId=${encodeURIComponent(currentTenant.id)}&postId=${encodeURIComponent(id)}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Delete failed');
             toast.success('Post deleted', { id: toastId });
             setPosts(prev => prev.filter(p => p.id !== id));

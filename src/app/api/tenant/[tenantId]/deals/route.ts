@@ -154,7 +154,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ tena
     const admin = createSupabaseAdminClient();
     const { data: existing, error: lookupError } = await admin.from('deals').select('id').eq('tenant_id', tenantId).in('id', parsed.data.ids);
     if (lookupError) throw lookupError;
-    const foundIds = (existing || []).map((row) => row.id);
+    const foundIds = (existing || []).map((row: any) => row.id);
     if (foundIds.length) {
       const { error } = await admin.from('deals').delete().eq('tenant_id', tenantId).in('id', foundIds);
       if (error) throw error;

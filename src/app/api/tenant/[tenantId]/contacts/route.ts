@@ -127,7 +127,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ tena
     const now = new Date().toISOString();
     const { data, error } = await admin.from('contacts').update({ deleted_at: now, updated_by: user.id, updated_at: now }).eq('tenant_id', tenantId).in('id', parsed.data.ids).is('deleted_at', null).select('id');
     if (error) throw error;
-    const ids = (data || []).map((row) => row.id);
+    const ids = (data || []).map((row: any) => row.id);
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'contacts_deleted', payload: { contactIds: ids, actorUserId: user.id } });
     return NextResponse.json({ success: true, count: ids.length });
   } catch (error) { return routeErrorResponse(error, 'Contacts could not be deleted', req); }

@@ -163,7 +163,7 @@ async function markInvoiceSent(input: InvoiceLifecycleInput) {
       tenant_id: input.tenantId,
       event_type: 'invoice_sent',
       payload: { invoiceId: input.invoiceId, invoiceNumber: invoice.invoice_number, actorUserId: input.actorUserId || null },
-    }).then(({ error: eventError }) => { if (eventError) throw eventError; }),
+    }).then(({ error: eventError }: { error: Error | null }) => { if (eventError) throw eventError; }),
   ]);
   if (auditResult.status === 'rejected') console.error('[invoice-lifecycle] sent audit failed', auditResult.reason);
   if (eventResult.status === 'rejected') console.error('[invoice-lifecycle] sent event failed', eventResult.reason);
@@ -254,7 +254,7 @@ async function escalateOverdue(invoiceId: string, tenantId: string, actorUserId?
     logInvoiceEvent({
       invoiceId,
       tenantId,
-      eventType: 'overdue',
+      eventType: 'status_changed',
       eventData: { invoiceNumber },
       performedBy: actorUserId || 'system',
     }),

@@ -35,8 +35,8 @@ export const businessReportService = {
     const deals = dealResult.data || [];
     const totalLeads = leadResult.count || 0;
     const totalDeals = deals.length;
-    const totalWon = deals.filter((deal) => deal.stage === 'closed_won').length;
-    const totalLost = deals.filter((deal) => deal.stage === 'closed_lost').length;
+    const totalWon = deals.filter((deal: any) => deal.stage === 'closed_won').length;
+    const totalLost = deals.filter((deal: any) => deal.stage === 'closed_lost').length;
     const decided = totalWon + totalLost;
     const winRate = decided > 0 ? totalWon / decided * 100 : 0;
     const leadToDealConversion = totalLeads > 0 ? ((totalDeals / totalLeads) * 100).toFixed(2) : "0.00";
@@ -45,18 +45,18 @@ export const businessReportService = {
     const automationHealth = await getAutomationHealth(tid);
 
     // 4. Expense Breakdown by Category (from Chart of Accounts)
-    const expenseBreakdown = (accountResult.data || []).map(acc => ({
+    const expenseBreakdown = (accountResult.data || []).map((acc: any) => ({
       category: acc.account_name,
       amount: Math.abs(Number(acc.current_balance || 0)),
       code: acc.account_code
-    })).filter(e => e.amount > 0);
+    })).filter((e: any) => e.amount > 0);
 
-    const topSocialPosts = (socialResult.data || []).map((post) => {
+    const topSocialPosts = (socialResult.data || []).map((post: any) => {
       const stats = post.linkedin_stats && typeof post.linkedin_stats === 'object' ? post.linkedin_stats as Record<string, unknown> : {};
       const impressions = Number(stats.impressions || stats.impressionCount || 0);
       const interactions = Number(stats.likes || stats.likeCount || 0) + Number(stats.comments || stats.commentCount || 0) + Number(stats.shares || stats.shareCount || 0);
       return { platform: Array.isArray(post.platforms) ? post.platforms.join(', ') : 'social', topic: String(post.caption || '').slice(0, 120), reach: impressions, engagement: impressions > 0 ? interactions / impressions * 100 : 0, date: post.published_at };
-    }).filter((post) => post.reach > 0).sort((a, b) => b.reach - a.reach).slice(0, 5);
+    }).filter((post: any) => post.reach > 0).sort((a: any, b: any) => b.reach - a.reach).slice(0, 5);
 
     const stageMap = new Map<string, { stage: string; dealCount: number; totalValue: number }>();
     for (const deal of deals) {
@@ -64,7 +64,7 @@ export const businessReportService = {
       current.dealCount += 1; current.totalValue += Number(deal.value || 0); stageMap.set(deal.stage, current);
     }
     const pipelineStats = Array.from(stageMap.values());
-    const weightedValue = deals.filter((deal) => !['closed_won', 'closed_lost'].includes(deal.stage)).reduce((sum, deal) => sum + Number(deal.value || 0) * Number(deal.probability || 0) / 100, 0);
+    const weightedValue = deals.filter((deal: any) => !['closed_won', 'closed_lost'].includes(deal.stage)).reduce((sum: number, deal: any) => sum + Number(deal.value || 0) * Number(deal.probability || 0) / 100, 0);
 
     return {
       executiveSummary: {

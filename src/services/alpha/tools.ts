@@ -249,7 +249,7 @@ export const ALPHA_TOOLS: Record<string, AlphaTool> = {
                     html: `<div style="white-space:pre-wrap">${String(body).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] || c))}</div>`,
                 });
                 if (!sent.ok) return { status: 'failed', error: sent.error || 'Delivery failed' };
-                return { status: 'sent', provider: 'resend', messageId: sent.messageId };
+                return { status: 'sent', provider: 'resend', messageId: sent.emailId };
             } catch (error: any) {
                 console.error('Outreach failed:', error);
                 return { status: 'failed', error: error.message };

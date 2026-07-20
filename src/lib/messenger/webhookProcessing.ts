@@ -25,7 +25,7 @@ export async function persistMessengerWebhookEntries(params: {
     if (integrationError) throw integrationError;
     if (!integration?.tenant_id) continue;
 
-    const pageId = String(isInstagram ? integration.facebook_page_id || externalAccountId : integration.page_id || externalAccountId);
+    const pageId = String(isInstagram ? (integration as any).facebook_page_id || externalAccountId : (integration as any).page_id || externalAccountId);
     for (const event of entry.messaging || []) {
       if (!event.message || event.message.is_echo) continue;
       const senderId = String(event.sender?.id || '').trim();

@@ -70,7 +70,7 @@ export const StripeConnectOnboarding: React.FC = () => {
   };
 
   const handleManageAccount = async () => {
-    if (!status?.accountId) return;
+    if (!status?.accountId || !currentTenant?.id) return;
 
     setLoading(true);
     try {
