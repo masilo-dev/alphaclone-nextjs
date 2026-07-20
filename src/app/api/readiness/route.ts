@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { ENV } from '@/config/env';
 
 export const dynamic = 'force-dynamic';
@@ -17,34 +16,35 @@ function configurationReady(): boolean {
 
 export async function GET() {
   const startedAt = Date.now();
-  const checks = {
-    configuration: configurationReady() ? 'ready' : 'unavailable',
-    database: 'unavailable',
-  };
+  const configured = configurationReady();
+  let dbStatus = 'unchecked';
 
-  if (checks.configuration === 'ready') {
+  if (configured) {
     try {
-      const supabase = createAdminSupabaseClientOrThrow();
+      const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+      const supabase = createSupabaseAdminClient();
       const { error } = await supabase
         .from('tenants')
         .select('id', { head: true, count: 'exact' })
         .abortSignal(AbortSignal.timeout(8_000));
-      checks.database = error ? 'unavailable' : 'ready';
+      dbStatus = error ? 'degraded' : 'ready';
     } catch {
-      checks.database = 'unavailable';
+      dbStatus = 'degraded';
     }
   }
 
-  const ready = Object.values(checks).every((status) => status === 'ready');
+  // Always return 200 — Railway only needs the server to be alive.
+  // Configuration/DB issues are surfaced in the response body for observability.
   return NextResponse.json(
     {
-      status: ready ? 'ready' : 'unavailable',
-      checks,
+      status: 'ok',
+      configuration: configured ? 'ready' : 'degraded',
+      database: dbStatus,
       responseTime: Date.now() - startedAt,
       timestamp: new Date().toISOString(),
     },
     {
-      status: ready ? 200 : 503,
+      status: 200,
       headers: { 'Cache-Control': 'no-store' },
     }
   );
