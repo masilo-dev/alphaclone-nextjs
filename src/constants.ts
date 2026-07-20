@@ -41,6 +41,7 @@ import {
   Target,
   Brain,
   BookOpen,
+  ShieldAlert,
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
@@ -100,6 +101,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Operations', href: '/dashboard/admin/operations', icon: Activity },
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Bonnie AI', href: '/dashboard/bonnie', icon: Brain },
+  { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
   { label: 'Performance', href: '/dashboard/performance', icon: Zap },
   { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
   {
@@ -148,6 +150,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Workspace home', href: '/dashboard', icon: Zap },
   { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
+  { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
 
   {
     label: 'Sales Hub',

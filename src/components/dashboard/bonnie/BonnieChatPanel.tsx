@@ -2,9 +2,12 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { AlertCircle, BookOpen, CheckCircle2, Clock, Loader2, Mic, MicOff, Send, Wrench, XCircle, Zap } from 'lucide-react';
+import { AlertCircle, BookOpen, CheckCircle2, Clock, Loader2, Mic, MicOff, Send, Trash2, Wrench, XCircle, Zap } from 'lucide-react';
 import BonnieApprovalCard from './BonnieApprovalCard';
-import { bonnieService } from '@/services/bonnieService';
+import AgentPlanViewer, { AgentPlanStep } from './AgentPlanViewer';
+import ExecutionTimelineEvent, { ExecutionTimelineEventProps } from './ExecutionTimelineEvent';
+import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
+import { useBonniePersistence } from '@/hooks/useBonniePersistence';
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -117,20 +120,19 @@ type BonnieChatPanelProps = {
   pathname?: string;
 };
 
-function loadStoredMessages(key: string, intro: string): BonnieChatMessage[] {
-  if (typeof window === 'undefined') {
-    return intro ? [{ id: 'intro', role: 'assistant', text: intro }] : [];
-  }
+/** Emit a custom event so Dashboard.tsx can deep-link to the relevant module */
+function emitNavIntent(text: string, userRole?: string): void {
+  if (typeof window === 'undefined') return;
   try {
-    const raw = sessionStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw) as BonnieChatMessage[];
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    const resolved = resolveBonnieNavIntent(text, userRole);
+    if (resolved) {
+      window.dispatchEvent(
+        new CustomEvent('bonnie:navigate', { detail: { path: resolved } })
+      );
     }
   } catch {
-    // ignore corrupt storage
+    // non-critical
   }
-  return intro ? [{ id: 'intro', role: 'assistant', text: intro }] : [];
 }
 
 export default function BonnieChatPanel({
@@ -146,14 +148,21 @@ export default function BonnieChatPanel({
   tenantId,
   pathname,
 }: BonnieChatPanelProps) {
-  const [messages, setMessages] = useState<BonnieChatMessage[]>(() =>
-    storageKey ? loadStoredMessages(storageKey, introMessage) : introMessage ? [{ id: 'intro', role: 'assistant', text: introMessage }] : []
-  );
+  // ── Persistent chat history (localStorage, survives reloads) ──────────────
+  const { messages, setMessages, clearHistory } = useBonniePersistence({
+    tenantId,
+    userId: storageKey, // storageKey already encodes userId at call sites
+    introMessage,
+  });
+
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [agentPhase, setAgentPhase] = useState<'idle' | 'thinking' | 'executing' | 'responding'>('idle');
   const [listening, setListening] = useState(false);
   const [aiQuota, setAiQuota] = useState<BonnieAiQuota | null>(null);
+  // Agent plan steps surfaced from stream phases
+  const [planSteps, setPlanSteps] = useState<AgentPlanStep[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<ExecutionTimelineEventProps[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -242,10 +251,7 @@ export default function BonnieChatPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, sending, agentPhase]);
 
-  useEffect(() => {
-    if (!storageKey || typeof window === 'undefined') return;
-    sessionStorage.setItem(storageKey, JSON.stringify(messages.slice(-40)));
-  }, [messages, storageKey]);
+  // (Persistence is now handled by useBonniePersistence hook — no sessionStorage write needed here)
 
   useEffect(() => {
     if (!tenantId) {
@@ -296,6 +302,9 @@ export default function BonnieChatPanel({
       .map((m) => ({ role: m.role, content: m.text }));
 
     const phaseTimer = window.setTimeout(() => setAgentPhase('executing'), 1200);
+    // Reset plan/timeline for new request
+    setPlanSteps([]);
+    setTimelineEvents([]);
 
     try {
       if (streaming && onStreamSend) {
@@ -312,12 +321,30 @@ export default function BonnieChatPanel({
             );
           },
           (phase) => {
-            if (phase === 'executing') setAgentPhase('executing');
-            if (phase === 'thinking') setAgentPhase('thinking');
+            if (phase === 'executing') {
+              setAgentPhase('executing');
+              // Add timeline event for executing phase
+              const evId = `ev-${Date.now()}`;
+              setTimelineEvents((prev) => [
+                ...prev,
+                { id: evId, label: 'Executing tools', kind: 'phase', status: 'running' },
+              ]);
+            }
+            if (phase === 'thinking') {
+              setAgentPhase('thinking');
+              setTimelineEvents((prev) => [
+                ...prev,
+                { id: `ev-think-${Date.now()}`, label: 'Planning', kind: 'planning', status: 'running' },
+              ]);
+            }
           }
         );
 
         window.clearTimeout(phaseTimer);
+        // Mark last timeline event done
+        setTimelineEvents((prev) =>
+          prev.map((e, i) => i === prev.length - 1 ? { ...e, status: 'done' as const } : e)
+        );
         setMessages((prev) =>
           prev.map((m) =>
             m.id === streamMsgId
@@ -332,6 +359,8 @@ export default function BonnieChatPanel({
               : m
           )
         );
+        // Deep-link navigation intent
+        if (result.text) emitNavIntent(result.text);
       } else {
         const result = await onSend(text, history);
         window.clearTimeout(phaseTimer);
@@ -349,6 +378,8 @@ export default function BonnieChatPanel({
             executionStatus: result.executionStatus,
           },
         ]);
+        // Deep-link navigation intent
+        if (result.text) emitNavIntent(result.text);
       }
     } catch {
       window.clearTimeout(phaseTimer);
@@ -369,11 +400,9 @@ export default function BonnieChatPanel({
   };
 
   const clearChat = () => {
-    const fresh = introMessage ? [{ id: 'intro', role: 'assistant' as const, text: introMessage }] : [];
-    setMessages(fresh);
-    if (storageKey && typeof window !== 'undefined') {
-      sessionStorage.removeItem(storageKey);
-    }
+    clearHistory();
+    setPlanSteps([]);
+    setTimelineEvents([]);
   };
 
   const phaseLabel =
@@ -392,13 +421,19 @@ export default function BonnieChatPanel({
       }`}
     >
       {!compact && messages.length > 1 && (
-        <div className="flex justify-end border-b border-slate-800/60 px-3 py-1.5">
+        <div className="flex items-center justify-between border-b border-slate-800/60 px-3 py-1.5">
+          {timelineEvents.length > 0 && (
+            <span className="text-[10px] text-teal-400/70 font-semibold">
+              {timelineEvents.filter(e => e.status === 'done').length}/{timelineEvents.length} steps
+            </span>
+          )}
           <button
             type="button"
             onClick={clearChat}
-            className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300"
+            className="ml-auto flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300"
           >
-            Clear chat
+            <Trash2 className="h-3 w-3" />
+            Clear
           </button>
         </div>
       )}
@@ -459,20 +494,30 @@ export default function BonnieChatPanel({
                   <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     <Wrench className="h-3 w-3" /> Actions run
                   </p>
-                  {msg.tools.map((t, i) => (
-                    <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 text-[11px] text-slate-400">
-                      {t.success ? (
-                        <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-400" />
-                      ) : (
-                        <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" />
-                      )}
-                      <span>
-                        <span className="font-mono text-slate-300">{t.tool}</span>
-                        {' — '}
-                        {sanitizeDisplayText(t.summary)}
-                      </span>
-                    </div>
-                  ))}
+                  {/* Timeline events for live runs */}
+                  {timelineEvents.length > 0 && msg.role === 'assistant' && messages[messages.length - 1]?.id === msg.id
+                    ? timelineEvents.map((ev) => (
+                        <ExecutionTimelineEvent key={ev.id} {...ev} />
+                      ))
+                    : msg.tools.map((t, i) => (
+                        <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 text-[11px] text-slate-400">
+                          {t.success ? (
+                            <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-400" />
+                          ) : (
+                            <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" />
+                          )}
+                          <span>
+                            <span className="font-mono text-slate-300">{t.tool}</span>
+                            {' — '}
+                            {sanitizeDisplayText(t.summary)}
+                          </span>
+                        </div>
+                      ))
+                  }
+                  {/* Agent plan viewer for current in-progress message */}
+                  {planSteps.length > 0 && messages[messages.length - 1]?.id === msg.id && (
+                    <AgentPlanViewer steps={planSteps} isRunning={sending} />
+                  )}
                 </div>
               )}
               {msg.approval && onResolveApproval && (

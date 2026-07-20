@@ -27,6 +27,10 @@ export type BonnieAgentInput = {
   moduleContext?: BonnieModuleId;
   pathname?: string;
   onStreamToken?: (token: string) => void;
+  /** Optional: ID of an existing bonnie_workflows row to update instead of creating a new one */
+  workflowId?: string;
+  /** Optional: ID of the bonnie_conversations row this agent call belongs to */
+  conversationId?: string;
 };
 
 export type BonnieAgentResult = {
@@ -43,6 +47,8 @@ export type BonnieAgentResult = {
     | 'read_only_answer'
     | 'planning_failed'
     | 'provider_blocked';
+  /** Server-side workflow ID created or updated during this run */
+  workflowId?: string;
 };
 
 type BonniePlan = {
@@ -368,6 +374,76 @@ async function persistBonnieLogs(tenantId: string, logs: string[]) {
   }
 }
 
+// ── Workflow persistence helpers ──────────────────────────────────────────────
+
+async function createWorkflowRecord(params: {
+  tenantId: string;
+  userId: string;
+  instruction: string;
+  conversationId?: string;
+  module?: string;
+}): Promise<string | null> {
+  try {
+    const admin = createSupabaseAdminClient();
+    const { data, error } = await admin
+      .from('bonnie_workflows')
+      .insert({
+        tenant_id: params.tenantId,
+        user_id: params.userId,
+        instruction: params.instruction,
+        conversation_id: params.conversationId || null,
+        module: params.module || null,
+        status: 'planning',
+        rounds: 0,
+        tool_results: [],
+        logs: [],
+        retry_history: [],
+      })
+      .select('id')
+      .single();
+    if (error || !data?.id) return null;
+    return data.id as string;
+  } catch {
+    return null;
+  }
+}
+
+async function updateWorkflowRecord(params: {
+  workflowId: string;
+  tenantId: string;
+  status: string;
+  rounds?: number;
+  toolResults?: unknown[];
+  logs?: string[];
+  finalResponse?: string;
+  executionStatus?: string;
+  blockingApprovalId?: string | null;
+  completedAt?: boolean;
+}): Promise<void> {
+  try {
+    const admin = createSupabaseAdminClient();
+    const payload: Record<string, unknown> = {
+      status: params.status,
+      updated_at: new Date().toISOString(),
+    };
+    if (params.rounds !== undefined) payload.rounds = params.rounds;
+    if (params.toolResults !== undefined) payload.tool_results = params.toolResults;
+    if (params.logs !== undefined) payload.logs = params.logs;
+    if (params.finalResponse !== undefined) payload.final_response = params.finalResponse;
+    if (params.executionStatus !== undefined) payload.execution_status = params.executionStatus;
+    if (params.blockingApprovalId !== undefined) payload.blocking_approval_id = params.blockingApprovalId;
+    if (params.completedAt) payload.completed_at = new Date().toISOString();
+
+    await admin
+      .from('bonnie_workflows')
+      .update(payload)
+      .eq('id', params.workflowId)
+      .eq('tenant_id', params.tenantId);
+  } catch {
+    // non-critical — never block the agent loop
+  }
+}
+
 async function persistRunnerActions(
   tenantId: string,
   instruction: string,
@@ -413,8 +489,20 @@ function resolveModuleId(
 }
 
 export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAgentResult> {
-  const { tenantId, userId, instruction, history = [], pathname, moduleContext, onStreamToken } = input;
+  const { tenantId, userId, instruction, history = [], pathname, moduleContext, onStreamToken, conversationId } = input;
   const moduleId = resolveModuleId(moduleContext, pathname);
+
+  // Create a server-side workflow record to track this execution
+  const workflowId = input.workflowId ||
+    await createWorkflowRecord({
+      tenantId,
+      userId,
+      instruction,
+      conversationId,
+      module: moduleId,
+    });
+  const wfUpdate = (params: Omit<Parameters<typeof updateWorkflowRecord>[0], 'workflowId' | 'tenantId'>) =>
+    workflowId ? updateWorkflowRecord({ workflowId, tenantId, ...params }) : Promise.resolve();
 
   let model = 'deepseek-chat';
   const provider = process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback';
@@ -423,17 +511,23 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   const conversationMode = detectConversationMode(instruction);
 
   if (conversationMode === 'briefing') {
+    void wfUpdate({ status: 'running' });
     const result = await runBriefingMode(tenantId, userId, moduleId);
-    return { ...result, executionStatus: 'executed' };
+    void wfUpdate({ status: 'completed', finalResponse: result.response, executionStatus: 'executed', completedAt: true });
+    return { ...result, executionStatus: 'executed', workflowId: workflowId ?? undefined };
   }
 
   if (conversationMode === 'autopilot') {
+    void wfUpdate({ status: 'running' });
     const result = await runAutopilotMode(tenantId, userId, moduleId);
     const hasPending = result.toolResults.some((r) => r.approvalRequired);
-    return { ...result, executionStatus: hasPending ? 'queued_for_approval' : 'executed' };
+    const es = hasPending ? 'queued_for_approval' : 'executed';
+    void wfUpdate({ status: hasPending ? 'waiting_for_approval' : 'completed', finalResponse: result.response, executionStatus: es, completedAt: !hasPending });
+    return { ...result, executionStatus: es, workflowId: workflowId ?? undefined };
   }
 
   if (conversationMode === 'query') {
+    void wfUpdate({ status: 'running' });
     const { executeBonnieToolCalls } = await import('@/lib/bonnie/bonnieToolExecutor');
     const suggested = suggestToolsForQuestion(instruction, moduleId).slice(0, 2);
     const queryTools = await executeBonnieToolCalls(
@@ -452,6 +546,8 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         tenantId,
         onStreamToken
       );
+      const es = detectProviderBlocked(allQueryResults) ? 'provider_blocked' : 'executed';
+      void wfUpdate({ status: 'completed', finalResponse: text, executionStatus: es, toolResults: allQueryResults, rounds: 1, completedAt: true });
       return {
         response: text,
         success: true,
@@ -460,10 +556,12 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         toolResults: allQueryResults,
         logs: ['Query mode: targeted read tools + synthesis'],
         rounds: 1,
-        executionStatus: detectProviderBlocked(allQueryResults) ? 'provider_blocked' : 'executed',
+        executionStatus: es,
+        workflowId: workflowId ?? undefined,
       };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Query failed';
+      void wfUpdate({ status: 'failed', finalResponse: `Query failed: ${message}`, executionStatus: 'planning_failed', completedAt: true });
       return {
         response: `Bonnie could not answer that (${message}).`,
         success: false,
@@ -473,6 +571,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         logs: [],
         rounds: 1,
         executionStatus: 'planning_failed',
+        workflowId: workflowId ?? undefined,
       };
     }
   }
@@ -488,6 +587,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         tenantId,
         onStreamToken
       );
+      void wfUpdate({ status: 'completed', finalResponse: text, executionStatus: 'read_only_answer', completedAt: true });
       return {
         response: text,
         success: true,
@@ -497,8 +597,10 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         logs: ['Conversational reply (no tools)'],
         rounds: 0,
         executionStatus: 'executed',
+        workflowId: workflowId ?? undefined,
       };
     } catch (err: any) {
+      void wfUpdate({ status: 'failed', finalResponse: err.message, executionStatus: 'planning_failed', completedAt: true });
       return {
         response: `Bonnie could not answer that (${err.message}). Try rephrasing.`,
         success: false,
@@ -508,10 +610,12 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         logs: [],
         rounds: 0,
         executionStatus: 'planning_failed',
+        workflowId: workflowId ?? undefined,
       };
     }
   }
 
+  void wfUpdate({ status: 'running' });
   const allToolResults: BonnieToolResult[] = [...warmResults];
   const allLogs: string[] = warmResults.map((r) => `Prefetched ${r.tool}: ${r.summary}`);
   let lastPlan: BonniePlan = { response: 'Done.' };
@@ -551,6 +655,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       }
 
       await persistBonnieLogs(tenantId, allLogs).catch(() => undefined);
+      void wfUpdate({ status: 'failed', finalResponse: fallbackText || formatBonniePlanningError(err), executionStatus: 'planning_failed', logs: allLogs, completedAt: true });
 
       return {
         response:
@@ -563,6 +668,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         logs: allLogs,
         rounds,
         executionStatus: 'planning_failed',
+        workflowId: workflowId ?? undefined,
       };
     }
 
@@ -589,6 +695,11 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       allLogs.push(
         `${pendingApprovals.length} action(s) queued for inline approval — continuing prep work if needed`
       );
+      // Track the blocking approval in the workflow record
+      const firstPendingApprovalId = pendingApprovals[0]?.approvalId;
+      if (firstPendingApprovalId) {
+        void wfUpdate({ status: 'waiting_for_approval', blockingApprovalId: firstPendingApprovalId, rounds, logs: allLogs });
+      }
       lastPlan = {
         response:
           pendingApprovals.length === 1
@@ -646,6 +757,32 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   const anyApproval = finalToolResults.some((r) => r.approvalRequired);
   const providerBlocked = detectProviderBlocked(finalToolResults);
 
+  const finalExecutionStatus = providerBlocked
+    ? 'provider_blocked'
+    : anyApproval
+      ? 'queued_for_approval'
+      : anyTools
+        ? 'executed'
+        : looksLikeActionInstruction(instruction)
+          ? 'planning_failed'
+          : 'executed';
+
+  const finalWorkflowStatus = finalExecutionStatus === 'queued_for_approval'
+    ? 'waiting_for_approval'
+    : finalExecutionStatus === 'planning_failed' || !finalToolResults.length
+      ? 'failed'
+      : 'completed';
+
+  void wfUpdate({
+    status: finalWorkflowStatus,
+    finalResponse: response,
+    executionStatus: finalExecutionStatus,
+    toolResults: finalToolResults,
+    logs: allLogs,
+    rounds,
+    completedAt: finalWorkflowStatus !== 'waiting_for_approval',
+  });
+
   return {
     response,
     success: true,
@@ -654,14 +791,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     toolResults: finalToolResults,
     logs: allLogs,
     rounds,
-    executionStatus: providerBlocked
-      ? 'provider_blocked'
-      : anyApproval
-        ? 'queued_for_approval'
-        : anyTools
-          ? 'executed'
-          : looksLikeActionInstruction(instruction)
-            ? 'planning_failed'
-            : 'executed',
+    executionStatus: finalExecutionStatus,
+    workflowId: workflowId ?? undefined,
   };
 }

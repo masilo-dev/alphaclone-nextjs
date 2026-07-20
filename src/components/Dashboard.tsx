@@ -58,6 +58,7 @@ import IncomingCallModal from './dashboard/video/IncomingCallModal';
 import { generateText } from '../services/unifiedAIService';
 import BonnieWidget from './dashboard/bonnie/BonnieWidget';
 import BonnieFullView from './dashboard/bonnie/BonnieFullView';
+import ApprovalCenter from './dashboard/bonnie/ApprovalCenter';
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
@@ -291,6 +292,22 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (typeof window === 'undefined' || !activeTab?.startsWith('/dashboard')) return;
     sessionStorage.setItem(`dashboard_active_tab_${user.id}`, activeTab);
   }, [activeTab, user.id]);
+
+  // Deep-link: Bonnie emits bonnie:navigate events to steer the dashboard
+  useEffect(() => {
+    const handleBonnieNav = (e: Event) => {
+      const path = (e as CustomEvent<{ path: string }>).detail?.path;
+      if (path?.startsWith('/dashboard')) {
+        setActiveTab(normalizeTabForRole(path));
+        toast.success(`Navigating to ${path.replace('/dashboard/', '').replace(/\//g, ' › ')}`, {
+          icon: '🧭',
+          duration: 2500,
+        });
+      }
+    };
+    window.addEventListener('bonnie:navigate', handleBonnieNav);
+    return () => window.removeEventListener('bonnie:navigate', handleBonnieNav);
+  }, []);
   const [invoices, setInvoices] = useState<Invoice[]>([]); // Initialize empty
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
@@ -1410,6 +1427,17 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case '/dashboard/bonnie':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <BonnieFullView />
+          </React.Suspense>
+        );
+
+      case '/dashboard/bonnie/approvals':
+      case '/dashboard/business/bonnie/approvals':
+        return <ApprovalCenter />;
+
+      case '/dashboard/business/bonnie':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <BonnieFullView />

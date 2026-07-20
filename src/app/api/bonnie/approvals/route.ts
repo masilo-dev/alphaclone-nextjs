@@ -11,6 +11,9 @@ export type BonnieApprovalPreview = {
   createdAt: string;
   preview: { target?: string; draft?: string };
   payload: Record<string, unknown>;
+  editHistory?: Array<{ timestamp: string; args: Record<string, unknown> }>;
+  workflowId?: string | null;
+  conversationId?: string | null;
 };
 
 function buildPreviewFromPayload(payload: Record<string, unknown>) {
@@ -58,19 +61,18 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     const bonnieApprovals: BonnieApprovalPreview[] = (data || [])
-      .filter((row: { payload?: Record<string, unknown>; action_key?: string }) => {
+      .filter((row: { payload?: Record<string, unknown>; action_key?: string; source?: string }) => {
         const payload = (row.payload || {}) as Record<string, unknown>;
-        return payload.source === 'bonnie' || String(row.action_key || '').startsWith('bonnie:');
+        // Include both legacy bonnie-sourced approvals and new source-tagged ones
+        return (
+          payload.source === 'bonnie' ||
+          String(row.action_key || '').startsWith('bonnie:') ||
+          (row as any).source === 'bonnie' ||
+          // Include all approvals with a workflow_id (definitely from Bonnie)
+          !!(row as any).workflow_id
+        );
       })
-      .map((row: {
-        id: string;
-        risk_level: string;
-        reason: string;
-        status: string;
-        created_at: string;
-        action_key?: string;
-        payload?: Record<string, unknown>;
-      }) => {
+      .map((row: any) => {
         const payload = (row.payload || {}) as Record<string, unknown>;
         const toolName =
           String(payload.tool_name || '') ||
@@ -84,6 +86,9 @@ export async function GET(request: NextRequest) {
           createdAt: row.created_at,
           preview: buildPreviewFromPayload(payload),
           payload,
+          editHistory: Array.isArray(row.edit_history) ? row.edit_history : [],
+          workflowId: row.workflow_id ?? null,
+          conversationId: row.conversation_id ?? null,
         };
       });
 
@@ -97,6 +102,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * PATCH /api/bonnie/approvals
+ * Inline argument editing: merges args into payload and records the original
+ * in edit_history so the full edit trail is preserved for audit.
+ */
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
@@ -111,7 +121,7 @@ export async function PATCH(request: NextRequest) {
 
     const { data: existing, error: fetchError } = await admin
       .from('autonomous_runner_approvals')
-      .select('payload')
+      .select('payload, edit_history')
       .eq('id', approvalId)
       .eq('tenant_id', tenantId)
       .eq('status', 'pending')
@@ -122,15 +132,26 @@ export async function PATCH(request: NextRequest) {
     }
 
     const payload = (existing.payload || {}) as Record<string, unknown>;
+    const editHistory = Array.isArray(existing.edit_history) ? existing.edit_history : [];
+
+    // Snapshot the current args into edit history before overwriting
+    const currentArgs = (payload.args || {}) as Record<string, unknown>;
+    const newEditEntry = {
+      timestamp: new Date().toISOString(),
+      previous_args: currentArgs,
+      new_args: args,
+    };
+
     const mergedPayload = {
       ...payload,
-      args: { ...((payload.args || {}) as Record<string, unknown>), ...args },
+      args: { ...currentArgs, ...args },
     };
 
     const { data, error } = await admin
       .from('autonomous_runner_approvals')
       .update({
         payload: mergedPayload,
+        edit_history: [...editHistory, newEditEntry],
         updated_at: new Date().toISOString(),
       })
       .eq('id', approvalId)
@@ -144,6 +165,7 @@ export async function PATCH(request: NextRequest) {
       success: true,
       approval: data,
       preview: buildPreviewFromPayload(mergedPayload),
+      editCount: editHistory.length + 1,
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to update approval');
