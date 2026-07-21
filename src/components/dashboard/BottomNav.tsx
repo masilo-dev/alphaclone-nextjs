@@ -27,8 +27,8 @@ const BottomNav: React.FC<BottomNavProps> = ({
     const { isPWA } = usePWA();
     const { prefs } = usePwaPreferences();
     const mobileNavItems = useMemo(
-        () => resolveBottomNavItems(userRole, prefs.bottomNavModuleIds),
-        [userRole, prefs.bottomNavModuleIds],
+        () => resolveBottomNavItems(userRole, prefs.bottomNavModuleIds, { isPwa: isPWA }),
+        [userRole, prefs.bottomNavModuleIds, isPWA],
     );
 
     const handleNavClick = (href: string) => {

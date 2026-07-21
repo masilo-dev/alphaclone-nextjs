@@ -53,4 +53,6 @@ export type PlatformEnvStatus = {
   outlook: boolean;
   gmail: boolean;
   deepseek: boolean;
+  turnstile: boolean;
+  webPush: boolean;
 };

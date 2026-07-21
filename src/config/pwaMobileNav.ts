@@ -171,6 +171,8 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
 ];
 
 const DEFAULT_MODULE_IDS = ['home', 'crm', 'mail', 'clients'];
+/** Phone browser: keep bottom bar home-first; full modules stay in the More menu. */
+const PHONE_BROWSER_DEFAULT_MODULE_IDS = ['home'];
 
 export function moduleDefToNavItem(def: PwaModuleDef, role: UserRole): PwaNavItem {
   return {
@@ -185,15 +187,19 @@ export function moduleDefToNavItem(def: PwaModuleDef, role: UserRole): PwaNavIte
   };
 }
 
-export function getDefaultBottomNavModuleIds(): string[] {
-  return [...DEFAULT_MODULE_IDS];
+export function getDefaultBottomNavModuleIds(isPwa = true): string[] {
+  return [...(isPwa ? DEFAULT_MODULE_IDS : PHONE_BROWSER_DEFAULT_MODULE_IDS)];
 }
 
 export function resolveBottomNavItems(
   role: UserRole,
   selectedIds?: string[] | null,
+  options?: { isPwa?: boolean },
 ): PwaNavItem[] {
-  const ids = (selectedIds?.length ? selectedIds : DEFAULT_MODULE_IDS).slice(0, PWA_MAX_BOTTOM_SLOTS);
+  const isPwa = options?.isPwa !== false;
+  const fallbackIds = getDefaultBottomNavModuleIds(isPwa);
+  // Custom bottom slots only apply inside the installed PWA.
+  const ids = (isPwa && selectedIds?.length ? selectedIds : fallbackIds).slice(0, PWA_MAX_BOTTOM_SLOTS);
   const catalog = new Map(PWA_MODULE_CATALOG.map((m) => [m.id, m]));
 
   const items: PwaNavItem[] = [];
@@ -203,7 +209,7 @@ export function resolveBottomNavItems(
   }
 
   if (items.length === 0) {
-    return DEFAULT_MODULE_IDS.map((id) => moduleDefToNavItem(catalog.get(id)!, role));
+    return fallbackIds.map((id) => moduleDefToNavItem(catalog.get(id)!, role));
   }
 
   return items;
