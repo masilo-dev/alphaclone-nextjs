@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
-import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
+import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 
 export const dynamic = 'force-dynamic';
@@ -74,21 +74,27 @@ async function authenticateClient(
     return { valid: true };
   }
 
-  // Look up the client
+  // Look up the client.
+  // NOTE: mcp_oauth_clients has no `id` column — selecting it makes PostgREST
+  // fail and ChatGPT OAuth dies with a misleading invalid_client error.
   const { data: client, error } = await supabase
     .from('mcp_oauth_clients')
-    .select('id, client_id, is_public, client_secret')
+    .select('client_id, is_public, client_secret')
     .eq('client_id', clientId)
     .eq('is_active', true)
     .maybeSingle();
 
   if (error || !client) {
-    console.warn('[MCP Token] Client authentication failed - client not found:', clientId);
+    console.warn('[MCP Token] Client authentication failed - client not found:', clientId, error?.message);
     return { valid: false, error: 'invalid_client' };
   }
 
-  // Public clients don't need to authenticate (they use PKCE)
-  if (client.is_public) {
+  // Public clients / placeholder secrets don't need client_secret (PKCE).
+  const placeholderSecret =
+    !client.client_secret ||
+    client.client_secret === 'public' ||
+    client.client_secret === 'dynamic';
+  if (client.is_public || placeholderSecret || PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
     return { valid: true, client: { id: clientId, is_public: true } };
   }
 

@@ -47,7 +47,12 @@ function LoginContent() {
       if (nextParam) {
         try {
           const decoded = decodeURIComponent(nextParam);
-          if (decoded.startsWith('/oauth/') || decoded.startsWith('/authorize') || decoded.startsWith('/dashboard')) {
+          if (
+            decoded.startsWith('/oauth/') ||
+            decoded.startsWith('/authorize') ||
+            decoded.startsWith('/dashboard') ||
+            decoded.startsWith('/api/mcp/authorize')
+          ) {
             return decoded;
           }
         } catch {
@@ -56,6 +61,8 @@ function LoginContent() {
       }
       return null;
     };
+    const oauthReturnPath = resolveExplicitNextRedirect();
+    const isOauthConnectFlow = Boolean(oauthReturnPath?.startsWith('/authorize'));
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
@@ -335,7 +342,7 @@ function LoginContent() {
                     }
 
                     toast.success('Welcome to AlphaClone! Redirecting...');
-                    router.push(getPostAuthDashboardPath('tenant_admin'));
+                    router.push(resolveExplicitNextRedirect() ?? getPostAuthDashboardPath('tenant_admin'));
                     return;
                 }
                 setIsLoading(false);
@@ -478,10 +485,15 @@ function LoginContent() {
 
     return (
         <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
-            {/* Background Effects */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
+            {/* Background Effects — skip heavy canvas in OAuth popups to avoid long blink */}
+            {!isOauthConnectFlow && (
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <HeroBackground />
+                </div>
+            )}
+            {isOauthConnectFlow && (
+                <div className="fixed inset-0 z-0 pointer-events-none bg-slate-950" />
+            )}
 
             <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
@@ -518,6 +530,7 @@ function LoginContent() {
 
                 <SocialAuthButtons
                     isLoading={isLoading}
+                    nextPath={oauthReturnPath}
                     onError={setError}
                     onLoadingChange={setIsLoading}
                     className="mb-3"
@@ -564,52 +577,56 @@ function LoginContent() {
                         autoComplete="email"
                     />
 
-                    <div className="relative">
-                        <Input
-                            label="Password"
-                            type={showPassword ? 'text' : 'password'}
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                            className={!isRegistering ? 'pr-20' : 'pr-12'}
-                            autoComplete={isRegistering ? 'new-password' : 'current-password'}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword((prev) => !prev)}
-                            className={`absolute top-9 ${!isRegistering ? 'right-16' : 'right-3'} text-slate-400 hover:text-teal-400 transition-colors`}
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
-                            title={showPassword ? 'Hide password' : 'Show password'}
-                        >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                        {!isRegistering && (
+                    <div>
+                        <div className="mb-1 flex items-center justify-between gap-2">
+                            <label className="text-xs font-medium text-slate-400">Password</label>
+                            {!isRegistering && (
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!email) {
+                                            setError('Enter your email first, then tap Forgot password.');
+                                            return;
+                                        }
+                                        setIsLoading(true);
+                                        const { authService } = await import('@/services/authService');
+                                        const { error: resetErr } = await authService.resetPassword(email);
+                                        if (resetErr) {
+                                            setError(resetErr);
+                                            setPasswordResetSentTo('');
+                                        } else {
+                                            setError('');
+                                            setPasswordResetSentTo(email);
+                                            toast.success('Password reset link sent to your email!');
+                                        }
+                                        setIsLoading(false);
+                                    }}
+                                    className="text-[11px] font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+                                >
+                                    Forgot password?
+                                </button>
+                            )}
+                        </div>
+                        <div className="relative">
+                            <Input
+                                type={showPassword ? 'text' : 'password'}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                                className="pr-11"
+                                autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                            />
                             <button
                                 type="button"
-                                onClick={async () => {
-                                    if (!email) {
-                                        setError('Please enter your email address first to reset your password.');
-                                        return;
-                                    }
-                                    setIsLoading(true);
-                                    const { authService } = await import('@/services/authService');
-                                    const { error: resetErr } = await authService.resetPassword(email);
-                                    if (resetErr) {
-                                        setError(resetErr);
-                                        setPasswordResetSentTo('');
-                                    } else {
-                                        setError('');
-                                        setPasswordResetSentTo(email);
-                                        toast.success('Password reset link sent to your email!');
-                                    }
-                                    setIsLoading(false);
-                                }}
-                                className="absolute right-0 top-0 text-[10px] text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wider"
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 hover:text-teal-300 transition-colors"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                title={showPassword ? 'Hide password' : 'Show password'}
                             >
-                                Forgot?
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                             </button>
-                        )}
+                        </div>
                     </div>
 
                     {!isRegistering && passwordResetSentTo && (
@@ -693,6 +710,8 @@ function LoginContent() {
                             <TurnstileWidget
                                 key={turnstileNonce}
                                 theme="dark"
+                                appearance="interaction-only"
+                                size="compact"
                                 onTokenChange={setTurnstileToken}
                                 onExpire={() => setTurnstileToken('')}
                                 onError={() => setTurnstileToken('')}

@@ -190,7 +190,19 @@ export async function GET(request: Request) {
                 }
 
                 let next = requestedNext ?? '/dashboard'
-                if (!requestedNext) {
+                if (requestedNext) {
+                    // Only allow same-origin relative redirects (OAuth return, dashboard).
+                    const safe =
+                        requestedNext.startsWith('/authorize') ||
+                        requestedNext.startsWith('/oauth/') ||
+                        requestedNext.startsWith('/dashboard') ||
+                        requestedNext.startsWith('/auth/')
+                    if (!safe || requestedNext.startsWith('//') || requestedNext.includes('://')) {
+                        next = '/dashboard'
+                    } else {
+                        next = requestedNext
+                    }
+                } else {
                     try {
                         const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
                         const admin = createSupabaseAdminClient()

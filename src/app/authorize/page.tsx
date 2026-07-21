@@ -23,7 +23,7 @@ function AuthorizeContent() {
     useEffect(() => {
         if (!loading && !user) {
             const currentUrl = window.location.pathname + window.location.search;
-            router.push(`/login?returnTo=${encodeURIComponent(currentUrl)}`);
+            router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
         }
     }, [user, loading, router]);
 
@@ -37,6 +37,13 @@ function AuthorizeContent() {
         setError('');
 
         try {
+            const normalizedScope = (scope || 'read write')
+                .split(/[\s+]+/)
+                .map((s) => (s === 'wrie' ? 'write' : s))
+                .filter(Boolean)
+                .filter((s, i, arr) => arr.indexOf(s) === i)
+                .join(' ');
+
             const res = await fetch('/api/mcp/oauth/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -47,7 +54,7 @@ function AuthorizeContent() {
                     state,
                     code_challenge: codeChallenge || undefined,
                     code_challenge_method: codeChallenge ? codeChallengeMethod : undefined,
-                    scope,
+                    scope: normalizedScope,
                 })
             });
 
@@ -87,8 +94,9 @@ function AuthorizeContent() {
 
     if (loading || !user) {
         return (
-            <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-teal-500 animate-spin" />
+            <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-3 text-slate-400">
+                <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
+                <p className="text-sm">{loading ? 'Checking your session…' : 'Redirecting to sign in…'}</p>
             </div>
         );
     }
