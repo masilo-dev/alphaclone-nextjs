@@ -296,13 +296,43 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Deep-link: Bonnie emits bonnie:navigate events to steer the dashboard
   useEffect(() => {
     const handleBonnieNav = (e: Event) => {
-      const path = (e as CustomEvent<{ path: string }>).detail?.path;
+      const detail = (e as CustomEvent<{
+        path?: string;
+        label?: string;
+        tab?: string;
+        focus?: string;
+        recordId?: string;
+        workflowId?: string;
+        reason?: string;
+      }>).detail;
+      const path = detail?.path;
       if (path?.startsWith('/dashboard')) {
-        setActiveTab(normalizeTabForRole(path));
-        toast.success(`Navigating to ${path.replace('/dashboard/', '').replace(/\//g, ' › ')}`, {
-          icon: '🧭',
-          duration: 2500,
-        });
+        setActiveTab(normalizeTabForRole(path.split('?')[0]));
+        if (typeof window !== 'undefined') {
+          const url = new URL(path, window.location.origin);
+          if (detail?.tab) url.searchParams.set('tab', detail.tab);
+          if (detail?.focus) url.searchParams.set('focus', detail.focus);
+          if (detail?.recordId) url.searchParams.set('id', detail.recordId);
+          if (detail?.workflowId) url.searchParams.set('workflow', detail.workflowId);
+          if (detail?.reason) url.searchParams.set('bonnieReason', detail.reason);
+          window.history.replaceState({}, '', url.pathname + url.search);
+          window.dispatchEvent(
+            new CustomEvent('bonnie:focus', {
+              detail: {
+                tab: detail?.tab,
+                focus: detail?.focus,
+                recordId: detail?.recordId,
+                workflowId: detail?.workflowId,
+                reason: detail?.reason,
+              },
+            })
+          );
+        }
+        toast.success(
+          detail?.reason ||
+            `Navigating to ${(detail?.label || path.replace('/dashboard/', '').replace(/\//g, ' › '))}`,
+          { icon: '🧭', duration: 2800 }
+        );
       }
     };
     window.addEventListener('bonnie:navigate', handleBonnieNav);

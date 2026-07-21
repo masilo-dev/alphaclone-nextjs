@@ -118,8 +118,10 @@ export async function evaluateToolPolicy(params: {
   source: PolicySource;
   args?: Record<string, unknown>;
   instruction?: string;
+  workflowId?: string;
+  conversationId?: string;
 }): Promise<PolicyDecision> {
-  const { tenantId, userId, toolName, source, args = {}, instruction } = params;
+  const { tenantId, userId, toolName, source, args = {}, instruction, workflowId, conversationId } = params;
   const riskClass = classifyTool(toolName);
   const admin = createSupabaseAdminClient();
 
@@ -171,6 +173,9 @@ export async function evaluateToolPolicy(params: {
       risk_level: riskClass === 'bulk' || riskClass === 'financial' ? 'high' : 'medium',
       confidence_score: 70,
       status: 'pending',
+      source: source === 'bonnie' ? 'bonnie' : 'autonomous_runner',
+      workflow_id: workflowId || null,
+      conversation_id: conversationId || null,
       reason: readinessReason || `${source.toUpperCase()} requested "${toolName}" (${riskClass}) — approval required by policy.`,
       payload: {
         source,
@@ -180,6 +185,8 @@ export async function evaluateToolPolicy(params: {
         risk_class: riskClass,
         agent_mode: agentMode,
         instruction: instruction || undefined,
+        workflow_id: workflowId || undefined,
+        conversation_id: conversationId || undefined,
       },
     })
     .select('id')

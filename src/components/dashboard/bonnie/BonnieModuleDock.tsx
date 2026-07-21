@@ -92,6 +92,7 @@ export default function BonnieModuleDock() {
     return {
       success: result.success,
       message: result.execution?.result?.summary || result.execution?.error,
+      continuation: result.continuation || null,
     };
   };
 
@@ -145,6 +146,9 @@ export default function BonnieModuleDock() {
             onSend={handleSend}
             onStreamSend={handleStream}
             onResolveApproval={handleResolveApproval}
+            tenantId={tenantId}
+            pathname={pathname || undefined}
+            userRole={user?.role}
           />
         </div>
       )}

@@ -35,6 +35,10 @@ export const BONNIE_REGISTRY_TOOLS = [
   // Bonnie meta
   'orchestrate_task', 'define_outcome', 'trigger_bonnie_dream',
   'list_skills', 'load_skill', 'activate_skill_for_session',
+  // Platform advantage
+  'owner_autopilot_queue', 'revenue_recovery_agent', 'client_pulse',
+  'deal_to_cash_flow', 'ai_business_readiness_score', 'business_memory_graph',
+  'trust_ledger', 'solo_owner_time_savings_meter',
 ] as const;
 
 /** Tools implemented in MCPServer (not in lightweight registry) */
@@ -116,8 +120,8 @@ export const BONNIE_MODULE_HINTS: Record<
 > = {
   crm: {
     label: 'CRM',
-    tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity'],
-    examples: ['Show my top contacts', 'Log a call with Acme Corp'],
+    tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity', 'client_pulse', 'owner_autopilot_queue', 'revenue_recovery_agent'],
+    examples: ['Show my top contacts', 'Which clients need attention?', 'Recover overdue invoice cash'],
   },
   leads: {
     label: 'Leads',
@@ -173,8 +177,8 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   accounting: {
     label: 'Accounting',
-    tools: ['get_revenue_summary', 'accounting_snapshot', 'get_invoices', 'send_invoice'],
-    examples: ['What is my revenue this month?', 'Show overdue invoices'],
+    tools: ['get_revenue_summary', 'accounting_snapshot', 'get_invoices', 'send_invoice', 'revenue_recovery_agent', 'deal_to_cash_flow'],
+    examples: ['What is my revenue this month?', 'Show overdue invoices', 'Recover overdue invoice cash'],
   },
   contracts: {
     label: 'Contracts',

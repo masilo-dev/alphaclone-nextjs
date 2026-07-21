@@ -238,6 +238,7 @@ export default function BonnieFullView() {
     return {
       success: result.success,
       message: result.execution?.result?.summary || result.execution?.error,
+      continuation: result.continuation || null,
     };
   };
 
@@ -446,6 +447,9 @@ export default function BonnieFullView() {
               onSend={handleBonnieMessage}
               onStreamSend={handleBonnieStream}
               onResolveApproval={handleResolveApproval}
+              tenantId={tenantId}
+              pathname={pathname || undefined}
+              userRole={user?.role}
             />
           </div>
         </div>

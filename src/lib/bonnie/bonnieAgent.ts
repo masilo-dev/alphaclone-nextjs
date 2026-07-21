@@ -682,7 +682,10 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
 
     const toolResults = await (
       await import('@/lib/bonnie/bonnieToolExecutor')
-    ).executeBonnieToolCalls(tenantId, userId, toolCalls, instruction);
+    ).executeBonnieToolCalls(tenantId, userId, toolCalls, instruction, {
+      workflowId: workflowId ?? undefined,
+      conversationId: conversationId ?? undefined,
+    });
 
     allToolResults.push(...toolResults);
     allLogs.push(
@@ -736,7 +739,11 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         tenantId,
         userId,
         suggested.map((tool) => ({ tool, arguments: { tenant_id: tenantId } })),
-        instruction
+        instruction,
+        {
+          workflowId: workflowId ?? undefined,
+          conversationId: conversationId ?? undefined,
+        }
       );
       finalToolResults = [...warmResults, ...forced];
       allLogs.push(...forced.map((r) => `Auto-run ${r.tool}: ${r.summary}`));

@@ -85,6 +85,7 @@ export function resolveBonnieNavIntent(
   // [keywords, businessRoute, adminRoute, label]
   const map: Array<[RegExp, string, string, string]> = [
     [/\b(crm|customers?|contacts?|client list)\b/, '/dashboard/crm', '/dashboard/crm', 'CRM'],
+    [/\b(lead finder|lead search|prospect search|find leads)\b/, '/dashboard/leads/campaigns', '/dashboard/leads/campaigns', 'Lead Finder'],
     [/\b(leads?|lead board|pipeline of leads)\b/, '/dashboard/leads', '/dashboard/leads', 'Leads'],
     [/\b(deals?|sales pipeline|opportunit)/, '/dashboard/deals', '/dashboard/deals', 'Deals'],
     [/\b(ticket|support|help ?desk|deep ?desk)/, '/dashboard/business/tickets', '/dashboard/tickets', 'Tickets'],

@@ -7,6 +7,7 @@ import BonnieApprovalCard from './BonnieApprovalCard';
 import AgentPlanViewer, { AgentPlanStep } from './AgentPlanViewer';
 import ExecutionTimelineEvent, { ExecutionTimelineEventProps } from './ExecutionTimelineEvent';
 import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
+import { normalizeBonnieNavPath, parseBonnieDeepLink } from '@/lib/bonnie/bonnieDeepLink';
 import { useBonniePersistence } from '@/hooks/useBonniePersistence';
 
 type BrowserSpeechRecognition = {
@@ -118,21 +119,46 @@ type BonnieChatPanelProps = {
   /** Tenant id for voice commands */
   tenantId?: string;
   pathname?: string;
+  userRole?: string | null;
 };
 
 /** Emit a custom event so Dashboard.tsx can deep-link to the relevant module */
-function emitNavIntent(text: string, userRole?: string): void {
+function emitNavIntent(text: string, userRole?: string | null): void {
   if (typeof window === 'undefined') return;
   try {
     const resolved = resolveBonnieNavIntent(text, userRole);
     if (resolved) {
+      const path = normalizeBonnieNavPath(resolved.route) || resolved.route;
       window.dispatchEvent(
-        new CustomEvent('bonnie:navigate', { detail: { path: resolved } })
+        new CustomEvent('bonnie:navigate', {
+          detail: {
+            path,
+            label: resolved.label,
+            reason: `Bonnie opened ${resolved.label} based on your request.`,
+          },
+        })
       );
     }
   } catch {
     // non-critical
   }
+}
+
+export function emitBonnieDeepLink(target: ReturnType<typeof parseBonnieDeepLink>): void {
+  if (!target?.route || typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent('bonnie:navigate', {
+      detail: {
+        path: target.route,
+        label: target.label,
+        tab: target.tab,
+        focus: target.focus,
+        recordId: target.recordId,
+        workflowId: target.workflowId,
+        reason: target.reason,
+      },
+    })
+  );
 }
 
 export default function BonnieChatPanel({
@@ -147,6 +173,7 @@ export default function BonnieChatPanel({
   onResolveApproval,
   tenantId,
   pathname,
+  userRole,
 }: BonnieChatPanelProps) {
   // ── Persistent chat history (localStorage, survives reloads) ──────────────
   const { messages, setMessages, clearHistory } = useBonniePersistence({
@@ -360,7 +387,7 @@ export default function BonnieChatPanel({
           )
         );
         // Deep-link navigation intent
-        if (result.text) emitNavIntent(result.text);
+        if (result.text) emitNavIntent(result.text, userRole);
       } else {
         const result = await onSend(text, history);
         window.clearTimeout(phaseTimer);
@@ -379,7 +406,7 @@ export default function BonnieChatPanel({
           },
         ]);
         // Deep-link navigation intent
-        if (result.text) emitNavIntent(result.text);
+        if (result.text) emitNavIntent(result.text, userRole);
       }
     } catch {
       window.clearTimeout(phaseTimer);

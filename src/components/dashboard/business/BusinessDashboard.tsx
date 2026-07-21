@@ -78,6 +78,10 @@ const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDas
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
 const UnifiedInboxView = React.lazy(() => import('./UnifiedInboxView'));
+const UnifiedInboxTab = React.lazy(() => import('./UnifiedInboxTab'));
+const BonnieModulePageShell = React.lazy(() =>
+  import('../bonnie/BonnieModulePageShell').then((m) => ({ default: m.BonnieModulePageShell }))
+);
 const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./BusinessPerformanceDashboard'));
 
@@ -497,7 +501,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/billing/manage':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <EnhancedBillingPage user={user} />
+                        <BonnieModulePageShell>
+                            <EnhancedBillingPage user={user} />
+                        </BonnieModulePageShell>
                     </React.Suspense>
                 );
             case '/dashboard/business/reports':
@@ -762,7 +768,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social-command':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
-                        <SocialCommandCenter />
+                        <BonnieModulePageShell>
+                            <SocialCommandCenter />
+                        </BonnieModulePageShell>
                     </React.Suspense>
                 );
 
@@ -797,7 +805,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
                         <div className="h-full p-3 md:p-5">
-                            <UnifiedInboxView />
+                            <UnifiedInboxTab />
                         </div>
                     </React.Suspense>
                 );

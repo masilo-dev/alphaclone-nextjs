@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Approval not found' }, { status: 404 });
     }
 
+    if (existing.status !== 'pending') {
+      return NextResponse.json(
+        {
+          error: `Approval is already ${existing.status}. Refresh to see the latest workflow state.`,
+          code: 'STALE_APPROVAL',
+        },
+        { status: 409 }
+      );
+    }
+
     // ── Risk-based role gate ──────────────────────────────────────────────────
     // If the approval is high-risk, only tenant admins can approve
     const riskLevel = String(existing.risk_level || 'medium').toLowerCase();

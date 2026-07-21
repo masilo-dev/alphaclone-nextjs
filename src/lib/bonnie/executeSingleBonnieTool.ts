@@ -64,8 +64,10 @@ export async function executeSingleBonnieTool(params: {
   skipPolicy?: boolean;
   policySource?: 'bonnie' | 'mcp' | 'playbook';
   instruction?: string;
+  workflowId?: string;
+  conversationId?: string;
 }): Promise<BonnieToolResult> {
-  const { tenantId, userId, skipPolicy = false, policySource = 'bonnie', instruction } = params;
+  const { tenantId, userId, skipPolicy = false, policySource = 'bonnie', instruction, workflowId, conversationId } = params;
   const tool = String(params.tool || '').trim();
   const args = forceSessionArgs({ ...(params.args || {}) }, { tenantId, userId });
 
@@ -81,6 +83,8 @@ export async function executeSingleBonnieTool(params: {
       source: policySource,
       args,
       instruction,
+      workflowId,
+      conversationId,
     });
     riskClass = policy.riskClass;
 

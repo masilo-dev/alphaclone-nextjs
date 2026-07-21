@@ -27,6 +27,7 @@ import OnlineStatusBadge from './OnlineStatusBadge';
 import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
+import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { CRMActionChips } from './crm/CRMActionChips';
@@ -2116,8 +2117,12 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             <div className="p-4 border-b border-white/5 bg-slate-900/20">
               <ModuleStatCards stats={crmStats} className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" />
             </div>
-            <div className="px-4 pb-2">
+            <div className="px-4 pb-2 space-y-3">
               <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />
+              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-300">Client pulse</p>
+                <ClientPulsePanel compact />
+              </div>
             </div>
           </>
         )}

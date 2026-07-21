@@ -8,7 +8,8 @@ export async function executeBonnieToolCalls(
   tenantId: string,
   userId: string,
   toolCalls: BonnieToolCall[],
-  instruction?: string
+  instruction?: string,
+  context?: { workflowId?: string; conversationId?: string }
 ): Promise<BonnieToolResult[]> {
   const calls = toolCalls.slice(0, BONNIE_MAX_TOOLS_PER_ROUND);
 
@@ -22,6 +23,8 @@ export async function executeBonnieToolCalls(
         tool,
         args,
         instruction,
+        workflowId: context?.workflowId,
+        conversationId: context?.conversationId,
       });
     })
   );

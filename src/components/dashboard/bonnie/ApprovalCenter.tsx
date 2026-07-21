@@ -439,7 +439,10 @@ export default function ApprovalCenter() {
   const approve = async (id: string, editedArgs?: Record<string, unknown>) => {
     setProcessing(id);
     try {
-      await handleApproval(id, 'approved', editedArgs);
+      const result = await handleApproval(id, 'approved', editedArgs);
+      if (result.continuation?.response) {
+        toast.success('Workflow continued automatically.', { duration: 3500 });
+      }
     } catch {
       toast.error('Failed to approve — please try again.');
     } finally {
