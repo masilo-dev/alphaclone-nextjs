@@ -33,7 +33,25 @@ const state: StoreSnapshot & { lastFetchAt: number; backoffUntil: number } = {
   backoffUntil: 0,
 };
 
+/** Cached snapshot — useSyncExternalStore requires stable references between emits. */
+let snapshot: StoreSnapshot = {
+  tenantId: state.tenantId,
+  approvals: state.approvals,
+  loading: state.loading,
+  error: state.error,
+};
+
+function syncSnapshot(): void {
+  snapshot = {
+    tenantId: state.tenantId,
+    approvals: state.approvals,
+    loading: state.loading,
+    error: state.error,
+  };
+}
+
 function emit() {
+  syncSnapshot();
   listeners.forEach((listener) => listener());
 }
 
@@ -43,12 +61,7 @@ export function subscribeBonnieApprovals(listener: Listener): () => void {
 }
 
 export function getBonnieApprovalsSnapshot(): StoreSnapshot {
-  return {
-    tenantId: state.tenantId,
-    approvals: state.approvals,
-    loading: state.loading,
-    error: state.error,
-  };
+  return snapshot;
 }
 
 export async function fetchBonnieApprovalsShared(
@@ -66,9 +79,8 @@ export async function fetchBonnieApprovalsShared(
   }
   if (inflight) return inflight;
 
-  const shouldEmitLoading = !state.loading || state.tenantId !== tenantId;
   state.tenantId = tenantId;
-  if (shouldEmitLoading) {
+  if (!state.loading) {
     state.loading = true;
     emit();
   } else {
