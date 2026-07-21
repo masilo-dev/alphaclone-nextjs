@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "rm -rf app/ .next/cache && npm run build"
+buildCommand = "rm -rf app/ && (rm -rf .next/cache/* 2>/dev/null || true) && npm run build"
 
 [deploy]
 startCommand = "npm run start"
