@@ -40,8 +40,8 @@ function AuthorizeContent() {
             const res = await fetch('/api/mcp/oauth/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({
-                    user_id: user.id,
                     client_id: clientId,
                     redirect_uri: redirectUri,
                     state,

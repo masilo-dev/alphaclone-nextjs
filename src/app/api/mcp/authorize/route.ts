@@ -5,6 +5,7 @@ import {
   buildAuthorizePageUrl,
   isRedirectUriAllowed,
   normalizeMcpClientId,
+  PLATFORM_MCP_OAUTH_CLIENT_IDS,
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
 import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
@@ -309,6 +310,14 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
       return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
     }
+  } else if (PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
+    console.error('[MCP Authorize] Platform client not registered in database:', clientId);
+    return oauthError(
+      redirectUri,
+      'invalid_client',
+      'This AI connector is not configured on this server. Contact support or run MCP client migration.',
+      state
+    );
   }
 
   // ChatGPT / Claude / other PKCE connectors → login + consent UI (not API-key form)

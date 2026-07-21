@@ -245,28 +245,16 @@ export async function validateMCPAuthApp(
 
     const expiryDate = new Date(tokenData.expires_at);
     const now = new Date();
-    const gracePeriodMs = 120 * 60 * 1000; // 2 hour grace period for reconnecting desktop MCP clients
 
-    if (expiryDate.getTime() + gracePeriodMs < now.getTime()) {
-      const extendedExpiry = new Date(now.getTime() + 3600 * 1000).toISOString();
-      const { error: extendError } = await supabaseAdmin
-        .from('mcp_oauth_tokens')
-        .update({ expires_at: extendedExpiry })
-        .eq('access_token', token);
-
-      if (extendError) {
-        console.error('[MCP Auth] Failed to extend expired OAuth token:', extendError);
-        return {
-          error: 'Access token has expired',
-          status: 401,
-          wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Access token has expired'),
-        };
-      }
-
-      console.info('[MCP Auth] Extended expired OAuth token for MCP reconnect', {
-        client_id: tokenData.client_id,
-        user_id: tokenData.user_id,
-      });
+    if (expiryDate.getTime() < now.getTime()) {
+      return {
+        error: 'Access token has expired',
+        status: 401,
+        wwwAuthenticate: createWWWAuthenticateHeader(
+          'invalid_token',
+          'Access token has expired. Reconnect ChatGPT or Claude and authorize again.'
+        ),
+      };
     }
 
     return {

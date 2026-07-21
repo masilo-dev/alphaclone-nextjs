@@ -8,7 +8,9 @@ export const BONNIE_REGISTRY_TOOLS = [
   'get_contacts', 'create_contact', 'update_contact', 'log_contact_activity',
   'get_deals', 'create_deal', 'update_deal', 'move_deal_stage', 'get_pipeline_summary',
   // Finance
-  'get_invoices', 'create_invoice', 'update_invoice_status', 'accounting_snapshot', 'get_revenue_summary', 'get_finance_snapshot',
+  'get_invoices', 'create_invoice', 'update_invoice_status', 'update_invoice', 'send_invoice',
+  'convert_quote_to_invoice', 'get_accounts_receivable_aging', 'get_accounts_payable_aging',
+  'accounting_snapshot', 'get_revenue_summary', 'get_finance_snapshot',
   // Projects & tasks
   'get_projects', 'create_project', 'get_project_tasks', 'create_project_task', 'update_project_task',
   // Campaigns & outreach
@@ -177,8 +179,26 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   accounting: {
     label: 'Accounting',
-    tools: ['get_revenue_summary', 'accounting_snapshot', 'get_invoices', 'send_invoice', 'revenue_recovery_agent', 'deal_to_cash_flow'],
-    examples: ['What is my revenue this month?', 'Show overdue invoices', 'Recover overdue invoice cash'],
+    tools: [
+      'get_revenue_summary',
+      'accounting_snapshot',
+      'get_finance_snapshot',
+      'get_accounts_receivable_aging',
+      'get_accounts_payable_aging',
+      'get_invoices',
+      'create_invoice',
+      'update_invoice',
+      'update_invoice_status',
+      'send_invoice',
+      'convert_quote_to_invoice',
+      'reconcile_payment',
+      'send_receipt',
+      'start_invoice_lifecycle',
+      'nexus_invoice_chasing',
+      'revenue_recovery_agent',
+      'deal_to_cash_flow',
+    ],
+    examples: ['What is my revenue this month?', 'Show overdue invoices', 'Convert quote to invoice and send'],
   },
   contracts: {
     label: 'Contracts',

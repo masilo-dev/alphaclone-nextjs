@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
+import { convertQuoteToInvoice } from '@/lib/quotes/convertQuoteToInvoice';
 
 // 1. get_invoices
 registerTool('invoicing', {
@@ -325,5 +326,35 @@ registerTool('invoicing', {
 
     if (error) throw error;
     return data;
+  },
+});
+
+registerTool('invoicing', {
+  name: 'convert_quote_to_invoice',
+  description:
+    'Convert an accepted quote into a business invoice. Optionally auto-send the invoice email to the client.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    quote_id: z.string().uuid(),
+    auto_send: z.boolean().optional().default(false),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      quote_id: { type: 'string', format: 'uuid' },
+      auto_send: { type: 'boolean', description: 'Send invoice email after conversion' },
+    },
+    required: ['quote_id'],
+  },
+  handler: async (args) => {
+    const result = await convertQuoteToInvoice(args.quote_id, args.tenant_id!, {
+      autoSend: args.auto_send,
+    });
+    if (result.error) throw new Error(result.error);
+    return {
+      invoice_id: result.invoiceId,
+      public_token: result.publicToken,
+      converted: true,
+    };
   },
 });

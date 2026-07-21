@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import {
     isRedirectUriAllowed,
     normalizeMcpClientId,
@@ -11,24 +12,14 @@ import {
  * MCP OAuth2 Approve Endpoint — UI-based authorization code issuance
  *
  * Called by the /authorize page after user clicks "Authorize Access".
- * Issues a real, single-use authorization code (not the API key) stored
- * in mcp_oauth_codes, and returns the redirect URL.
- *
- * Body: {
- *   user_id: string,
- *   client_id: string,
- *   redirect_uri: string,
- *   state?: string,
- *   code_challenge?: string,
- *   code_challenge_method?: string,
- *   scope?: string,
- * }
+ * Requires an authenticated AlphaClone session — user_id is taken from the session,
+ * never from the request body.
  */
 export async function POST(req: Request) {
     try {
+        const { user } = await requireAuthenticatedUser(req);
         const body = await req.json();
         const {
-            user_id,
             client_id: rawClientId,
             redirect_uri,
             state,
@@ -36,10 +27,11 @@ export async function POST(req: Request) {
             code_challenge_method,
             scope = 'read write',
         } = body;
+        const user_id = user.id;
         const client_id = normalizeMcpClientId(rawClientId) ?? rawClientId;
 
-        if (!user_id || !redirect_uri) {
-            return NextResponse.json({ error: 'Missing required parameters: user_id, redirect_uri' }, { status: 400 });
+        if (!redirect_uri) {
+            return NextResponse.json({ error: 'Missing required parameter: redirect_uri' }, { status: 400 });
         }
 
         if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
@@ -124,8 +116,7 @@ export async function POST(req: Request) {
         if (state) url.searchParams.set('state', state);
 
         return NextResponse.json({ redirectUrl: url.toString() });
-    } catch (err: any) {
-        console.error('[OAuth Approve] Error:', err);
-        return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+    } catch (err: unknown) {
+        return routeErrorResponse(err, 'OAuth approval failed', req);
     }
 }
