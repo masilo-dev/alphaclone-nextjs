@@ -17,7 +17,6 @@
  * Source is NEVER included in the output — internal engine only.
  */
 
-import * as cheerio from 'cheerio';
 import { BrowserManager } from '@/lib/scraper/browserManager';
 
 // ---------------------------------------------------------------------------
@@ -205,6 +204,7 @@ async function passCheerio(url: string): Promise<Partial<EnrichmentResult>> {
     });
 
     const html = res.body;
+    const cheerio = await import('cheerio');
     const $ = cheerio.load(html);
 
     const mailtoEmails: string[] = [];

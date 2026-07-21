@@ -11,7 +11,6 @@
  */
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
-import * as cheerio from 'cheerio';
 import { googlePlacesService as realGoogleService } from './googlePlacesService';
 
 
@@ -271,49 +270,68 @@ async function fetchGoogleMapsScrape(
     }).catch(() => null);
     await new Promise(r => setTimeout(r, 1500));
 
-    const html = await page.content();
-    const $ = cheerio.load(html);
+    const scraped = await page.evaluate((limit) => {
+      const cards: Array<{
+        name: string;
+        rating?: number;
+        reviewCount?: number;
+        category: string;
+        address: string;
+        mapsLink: string;
+      }> = [];
+      document.querySelectorAll('[role="article"], .Nv2PK').forEach((el) => {
+        if (cards.length >= limit) return;
 
-    // Extract business cards from Google Maps results
-    $('[role="article"], .Nv2PK').each((_, el) => {
-      if (results.length >= maxResults) return false;
+        const nameEl = el.querySelector('.qBF1Pd, .fontHeadlineSmall, h3');
+        const name = nameEl?.textContent?.trim() || '';
+        if (!name || name.length < 2) return;
 
-      const nameEl = $(el).find('.qBF1Pd, .fontHeadlineSmall, h3').first();
-      const name = nameEl.text().trim();
-      if (!name || name.length < 2) return;
+        const ratingText = el.querySelector('.MW4etd')?.textContent?.trim() || '';
+        const rating = ratingText ? parseFloat(ratingText) : undefined;
 
-      const ratingEl = $(el).find('.MW4etd').first();
-      const ratingText = ratingEl.text().trim();
-      const rating = ratingText ? parseFloat(ratingText) : undefined;
+        const reviewText = (el.querySelector('.UY7F9')?.textContent || '').replace(/[()]/g, '').trim();
+        const reviewCount = reviewText ? parseInt(reviewText.replace(/,/g, ''), 10) : undefined;
 
-      const reviewEl = $(el).find('.UY7F9').first();
-      const reviewText = reviewEl.text().replace(/[()]/g, '').trim();
-      const reviewCount = reviewText ? parseInt(reviewText.replace(/,/g, ''), 10) : undefined;
+        const category =
+          (el.querySelector('.W4Efsd .W4Efsd span')?.textContent || '').replace(/·/g, '').trim() ||
+          'Business';
 
-      const categoryEl = $(el).find('.W4Efsd:first-of-type .W4Efsd span').first();
-      const category = categoryEl.text().replace(/·/g, '').trim() || 'Business';
+        const address =
+          el.querySelector('[data-tooltip="Copy address"], .W4Efsd:last-of-type span')?.textContent?.trim() ||
+          '';
 
-      const addressEl = $(el).find('[data-tooltip="Copy address"], .W4Efsd:last-of-type span').first();
-      const address = addressEl.text().trim();
+        const mapsLink = el.querySelector('a[href*="/maps/place/"]')?.getAttribute('href') || '';
 
-      // Build Maps link
-      const linkEl = $(el).find('a[href*="/maps/place/"]').first();
-      const mapsLink = linkEl.attr('href') || '';
+        cards.push({
+          name,
+          rating: rating !== undefined && !Number.isNaN(rating) ? rating : undefined,
+          reviewCount: reviewCount !== undefined && !Number.isNaN(reviewCount) ? reviewCount : undefined,
+          category,
+          address,
+          mapsLink,
+        });
+      });
+      return cards;
+    }, maxResults);
 
+    for (const card of scraped) {
       results.push({
-        placeId: `gmaps-${Buffer.from(name).toString('base64').slice(0, 16)}`,
-        businessName: name,
-        formattedAddress: address,
+        placeId: `gmaps-${Buffer.from(card.name).toString('base64').slice(0, 16)}`,
+        businessName: card.name,
+        formattedAddress: card.address,
         phone: '',
         website: '',
-        industry: category,
-        rating: !isNaN(rating!) ? rating : undefined,
-        userRatingCount: !isNaN(reviewCount!) ? reviewCount : undefined,
-        googleMapsUri: mapsLink ? `https://www.google.com${mapsLink}` : undefined,
+        industry: card.category,
+        rating: card.rating,
+        userRatingCount: card.reviewCount,
+        googleMapsUri: card.mapsLink ? `https://www.google.com${card.mapsLink}` : undefined,
         source: 'Google Maps Scrape',
-        countryCode: address.split(',').pop()?.trim().length === 2 ? address.split(',').pop()?.trim().toUpperCase() : undefined,
+        countryCode:
+          card.address.split(',').pop()?.trim().length === 2
+            ? card.address.split(',').pop()?.trim().toUpperCase()
+            : undefined,
       });
-    });
+    }
 
     return results;
   } catch (err) {
