@@ -96,54 +96,37 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
 
 // --- ADMIN NAVIGATION ---
 export const ADMIN_NAV_ITEMS: NavItem[] = [
+  { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
+  { label: 'Ops & logs', href: '/dashboard/admin/operations', icon: Activity },
+  { label: 'Pre-customer review', href: '/dashboard/admin/improvements', icon: Zap },
   { label: 'Platform Users', href: '/dashboard/admin/users', icon: Users },
-  { label: 'Operations', href: '/dashboard/admin/operations', icon: Activity },
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
+  { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
+  { label: 'Contact intake', href: '/dashboard/contact-submissions', icon: Mail },
   { label: 'Bonnie AI', href: '/dashboard/bonnie', icon: Brain },
   { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
-  { label: 'Performance', href: '/dashboard/performance', icon: Zap },
-  { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
   {
-    label: 'Communication',
+    label: 'Platform insights',
+    href: '#',
+    icon: BarChart3,
+    subItems: [
+      { label: 'Analytics', href: '/dashboard/analytics' },
+      { label: 'Performance', href: '/dashboard/performance' },
+      { label: 'Reporting', href: '/dashboard/reporting' },
+    ],
+  },
+  {
+    label: 'Support desk',
     href: '#',
     icon: MessageSquare,
     subItems: [
-      { label: 'Calendar', href: '/dashboard/calendar' },
-      { label: 'Mail', href: '/dashboard/mail' },
-      { label: 'Messages', href: '/dashboard/messages' },
       { label: 'Deep-Desk Tickets', href: '/dashboard/tickets' },
-    ]
+      { label: 'Messages', href: '/dashboard/messages' },
+      { label: 'Mail', href: '/dashboard/mail' },
+    ],
   },
-  {
-    label: 'AI Studio',
-    href: '#',
-    icon: Layers,
-    subItems: [
-      { label: 'SEO', href: '/dashboard/articles' },
-      { label: 'Improvements', href: '/dashboard/admin/improvements' },
-    ]
-  },
-  {
-    label: 'Sales Hub',
-    href: '#',
-    icon: TrendingUp,
-    subItems: [
-      { label: 'Tasks', href: '/dashboard/tasks' },
-      { label: 'Deals', href: '/dashboard/deals' },
-      { label: 'Forecast', href: '/dashboard/forecast' },
-      { label: 'Goals & Targets', href: '/dashboard/goals' },
-      { label: 'Annual Planning', href: '/dashboard/planning' },
-      { label: 'Jobs & Queue', href: '/dashboard/jobs' },
-      { label: 'Webhooks', href: '/dashboard/webhooks' },
-    ]
-  },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Finance', href: '/dashboard/finance', icon: DollarSign },
-  { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
   { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
-  { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
-  { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
 ];
 
 // --- TENANT_ADMIN NAVIGATION (aligned with hub names: Sales, Marketing, Money, Insights, Documents) ---
@@ -224,8 +207,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Executive Dashboard', href: '/dashboard/executive', icon: BarChart3 },
       { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
       { label: 'Performance', href: '/dashboard/performance', icon: Zap },
-      { label: 'Revenue Reports', href: '/dashboard/business/reports', icon: TrendingUp },
-      { label: 'Reporting', href: '/dashboard/reporting', icon: BarChart3 },
+      { label: 'Revenue Reports', href: '/dashboard/reporting', icon: TrendingUp },
       { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ],
   },

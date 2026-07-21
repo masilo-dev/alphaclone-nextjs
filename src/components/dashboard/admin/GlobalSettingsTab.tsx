@@ -301,6 +301,18 @@ const GlobalSettingsTab: React.FC = () => {
                                         description="Twitter/X API for social posting."
                                         details="TWITTER_API_KEY and TWITTER_API_SECRET"
                                     />
+                                    <IntegrationItem
+                                        name="Cloudflare Turnstile"
+                                        configured={envStatus.turnstile}
+                                        description="Bot protection on public forms and login."
+                                        details="TURNSTILE_SECRET_KEY and NEXT_PUBLIC_TURNSTILE_SITE_KEY"
+                                    />
+                                    <IntegrationItem
+                                        name="Web Push (VAPID)"
+                                        configured={envStatus.webPush}
+                                        description="Browser push notifications for the PWA."
+                                        details="VITE_VAPID_PUBLIC_KEY / NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY"
+                                    />
                                 </div>
                             </div>
                         )}

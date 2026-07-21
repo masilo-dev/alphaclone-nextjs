@@ -5,10 +5,11 @@ import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import webPush from 'web-push';
 import { z } from 'zod';
 import { escapeHtml } from '@/lib/email/sanitizeEmailHtml';
+import { getVapidEmail, getVapidPrivateKey, getVapidPublicKey } from '@/lib/push/vapidEnv';
 
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-const vapidEmail = process.env.VAPID_EMAIL || 'mailto:sales@alphaclonesystems.com';
+const vapidPublicKey = getVapidPublicKey();
+const vapidPrivateKey = getVapidPrivateKey();
+const vapidEmail = getVapidEmail();
 
 let vapidReady = false;
 if (vapidPublicKey && vapidPrivateKey) {

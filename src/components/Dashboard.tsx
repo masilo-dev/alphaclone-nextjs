@@ -103,6 +103,7 @@ const CalendarComponent = React.lazy(() => import('./dashboard/CalendarComponent
 const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdminTenantsTab'));
 const SuperAdminUsersTab = React.lazy(() => import('./dashboard/admin/SuperAdminUsersTab'));
 const ImprovementsPage = React.lazy(() => import('./dashboard/admin/ImprovementsPage'));
+const PlatformOwnerHome = React.lazy(() => import('./dashboard/admin/PlatformOwnerHome'));
 const ContactSubmissionsTab = React.lazy(() => import('./dashboard/ContactSubmissionsTab'));
 import TasksTab from './dashboard/TasksTab';
 import DealsTab from './dashboard/DealsTab';
@@ -1658,6 +1659,15 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       default:
         if (location === '/dashboard' || location === '/dashboard/business') {
+          if (isPlatformAdminRole(user.role)) {
+            return (
+              <div data-tour="platform-owner-home">
+                <React.Suspense fallback={<TabSkeleton />}>
+                  <PlatformOwnerHome />
+                </React.Suspense>
+              </div>
+            );
+          }
           return (
             <div data-tour="dashboard-overview">
               <OverviewDashboard />

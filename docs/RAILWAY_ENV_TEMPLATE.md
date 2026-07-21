@@ -57,6 +57,10 @@ This template covers the full Railway deployment for AlphaClone.
 | `SENTRY_DSN` | Error tracking |
 | `NEXT_PUBLIC_SENTRY_DSN` | Client error tracking |
 | `SCRAPER_SERVICE_URL` | Railway scraper public URL |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Web Push public key (also set `VITE_VAPID_PUBLIC_KEY` to the same value) |
+| `VITE_VAPID_PUBLIC_KEY` | Alias of the Web Push public key for server-side ENV readers |
+| `VAPID_PRIVATE_KEY` | Web Push private key (server only — never expose to client) |
+| `VAPID_EMAIL` | Contact for VAPID, e.g. `mailto:sales@alphaclonesystems.com` |
 
 ## Scraper service (`alphaclone-scraper`)
 

@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -76,7 +77,9 @@ function LoginContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [showMfaChallenge, setShowMfaChallenge] = useState(false);
     const [mfaCode, setMfaCode] = useState('');
-    const [humanVerified, setHumanVerified] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const [turnstileNonce, setTurnstileNonce] = useState(0);
+    const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
     const [registrationOpen, setRegistrationOpen] = useState(true);
     const [policyLoaded, setPolicyLoaded] = useState(false);
     const [passwordResetSentTo, setPasswordResetSentTo] = useState('');
@@ -146,6 +149,27 @@ function LoginContent() {
         setIsLoading(true);
 
         try {
+            if (turnstileEnabled) {
+                if (!turnstileToken) {
+                    setError('Please complete the security check before continuing.');
+                    setIsLoading(false);
+                    return;
+                }
+                const humanRes = await fetch('/api/auth/human-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ turnstileToken }),
+                });
+                if (!humanRes.ok) {
+                    const payload = await humanRes.json().catch(() => ({}));
+                    setError(payload.error || 'Security verification failed. Please try again.');
+                    setTurnstileToken('');
+                    setTurnstileNonce((n) => n + 1);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
             // 1. REGISTRATION FLOW
             if (isRegistering) {
                 if (!registrationOpen) {
@@ -664,10 +688,23 @@ function LoginContent() {
                         </div>
                     )}
 
+                    {turnstileEnabled && (
+                        <div className="flex justify-center">
+                            <TurnstileWidget
+                                key={turnstileNonce}
+                                theme="dark"
+                                onTokenChange={setTurnstileToken}
+                                onExpire={() => setTurnstileToken('')}
+                                onError={() => setTurnstileToken('')}
+                            />
+                        </div>
+                    )}
+
                     <Button
                         type="submit"
                         className="w-full h-9 text-sm font-semibold bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 shadow-lg shadow-teal-500/20"
                         isLoading={isLoading}
+                        disabled={turnstileEnabled && !turnstileToken}
                     >
                         {isRegistering ? 'Create Account with Email' : 'Sign In with Email'}
                     </Button>

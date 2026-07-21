@@ -64,7 +64,7 @@ export default function PwaSettingsScreen({ user, onBack }: PwaSettingsScreenPro
     [subscribeToPush, unsubscribeFromPush, updatePrefs],
   );
 
-  const preview = resolveBottomNavItems(user.role, prefs.bottomNavModuleIds);
+  const preview = resolveBottomNavItems(user.role, prefs.bottomNavModuleIds, { isPwa: true });
   const permission =
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
 

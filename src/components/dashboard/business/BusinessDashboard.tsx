@@ -111,6 +111,7 @@ const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
 const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
+const ApprovalCenter = React.lazy(() => import('../bonnie/ApprovalCenter'));
 const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
 const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
 const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
@@ -506,6 +507,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/business/reports':
+            case '/dashboard/reporting':
                 return (
                     <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={4} columns={2} /></div>}>
                         <ReportsPage user={user} />
@@ -838,9 +840,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             case '/dashboard/business/bonnie':
+            case '/dashboard/bonnie':
                 return (
                     <React.Suspense fallback={<TableSkeleton />}>
                         <BonnieFullView />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/bonnie/approvals':
+            case '/dashboard/business/bonnie/approvals':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <ApprovalCenter />
                     </React.Suspense>
                 );
 
@@ -913,7 +924,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/calendar': return t('Calendar');
             case '/dashboard/billing':
             case '/dashboard/business/billing': return t('Billing');
-            case '/dashboard/business/reports': return t('Analytics & Reports');
+            case '/dashboard/business/reports':
+            case '/dashboard/reporting':
+                return t('Analytics & Reports');
             case '/dashboard/performance': return t('Business OS Performance');
             case '/dashboard/settings':
             case '/dashboard/business/settings': return t('Settings');
@@ -950,7 +963,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
             case '/dashboard/leads/campaigns': return t('Lead Finder');
-            case '/dashboard/business/bonnie': return t('Bonnie AI Console');
+            case '/dashboard/business/bonnie':
+            case '/dashboard/bonnie': return t('Bonnie AI Console');
+            case '/dashboard/bonnie/approvals':
+            case '/dashboard/business/bonnie/approvals': return t('Approvals');
             case '/dashboard/business/tickets': return t('Deep-Desk Support');
             case '/dashboard/accounting': return t('Accounting Dashboard');
             case '/dashboard/mail': return t('Mail');

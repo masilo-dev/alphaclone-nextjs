@@ -6,13 +6,13 @@ test.describe('Mobile Sanity Check', () => {
     test('Login and Menu Interaction', async ({ page }) => {
         // Pre-seed localStorage
         await page.addInitScript(() => {
-            const userId = 'df841125-59ce-4e09-aa2d-5b746ec03d9b';
+            const userId = 'd8fd4aea-2987-4313-90e2-e6600539ec56';
             localStorage.setItem(`welcome_seen_${userId}`, 'true');
             localStorage.setItem(`onboarding_completed_${userId}`, 'true');
             localStorage.setItem('onboarding_completed', 'true');
         });
 
-        await page.goto('/login');
+        await page.goto('/auth/login');
         await expect(page.locator('input[type="email"]')).toBeVisible();
         await expect(page.locator('button:has-text("Sign In")')).toBeVisible();
 
@@ -35,23 +35,20 @@ test.describe('Mobile Sanity Check', () => {
             await page.waitForTimeout(1000);
         }
 
-        await expect(page.locator('#main-content')).toBeVisible({ timeout: 20000 });
+        await expect(page.locator('main').first()).toBeVisible({ timeout: 20000 });
         await page.waitForTimeout(2000); // Allow session to settle
 
-        // Check for hamburger menu - only if in mobile viewport
+        // Mobile shell uses compact icon sidebar navigation (no hamburger drawer).
         const width = page.viewportSize().width;
         if (width < 768) {
-            await expect(page.locator('button[aria-label="Menu"]')).toBeVisible();
-            await page.click('button[aria-label="Menu"]');
-
-            // Check menu drawer content
-            await expect(page.locator('text=System Settings')).toBeVisible();
-            await expect(page.locator('text=Log Out')).toBeVisible();
+            await expect(page.getByRole('button', { name: 'Workspace home' })).toBeVisible();
+            await expect(page.getByRole('button', { name: 'Bonnie AI', exact: true })).toBeVisible();
+            await expect(page.getByRole('button', { name: 'Log Out' })).toBeVisible();
         }
     });
 
     test('No horizontal scrolling on Dashboard', async ({ page }) => {
-        await page.goto('/login');
+        await page.goto('/auth/login');
         await page.fill('input[type="email"]', process.env.TENANT_EMAIL);
         await page.fill('input[type="password"]', process.env.TENANT_PASSWORD);
         await page.click('button[type="submit"]:has-text("Sign In")');
@@ -67,7 +64,7 @@ test.describe('Mobile Sanity Check', () => {
             await page.waitForTimeout(1000); // Allow animation
         }
 
-        await expect(page.locator('#main-content')).toBeVisible({ timeout: 20000 });
+        await expect(page.locator('main').first()).toBeVisible({ timeout: 20000 });
         await page.waitForTimeout(2000); // Allow session to settle
 
         await page.goto('/dashboard');
