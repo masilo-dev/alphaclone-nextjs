@@ -102,7 +102,7 @@ export default function SocialCommandCenter() {
     // Social Manager Platform Switcher
     const [activePlatform, setActivePlatform] = useState<'linkedin' | 'facebook' | 'x'>('linkedin');
     // Social Manager Subview Filter: 'queue' (scheduled), 'published', 'analytics'
-    const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'analytics'>('queue');
+    const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'publishing' | 'analytics'>('queue');
     
     // State lists
     const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -673,6 +673,8 @@ export default function SocialCommandCenter() {
             return post.status === 'scheduled';
         } else if (activeSubView === 'published') {
             return post.status === 'published';
+        } else if (activeSubView === 'publishing') {
+            return post.status === 'publishing' || (post.status === 'failed' && Boolean(post.error_message));
         }
         return true;
     });
@@ -772,6 +774,7 @@ export default function SocialCommandCenter() {
                     <div className="flex p-3 gap-2 bg-slate-950 border-b border-white/5">
                         {[
                             { id: 'queue', label: 'Scheduled Queue', count: posts.filter(p => p.status === 'scheduled' && p.platforms.includes(activePlatform)).length },
+                            { id: 'publishing', label: 'Publishing / Recovery', count: posts.filter(p => (p.status === 'publishing' || p.status === 'failed') && p.platforms.includes(activePlatform)).length },
                             { id: 'published', label: 'Published Feed', count: posts.filter(p => p.status === 'published' && p.platforms.includes(activePlatform)).length },
                             { id: 'analytics', label: 'Analytics Insights', count: null }
                         ].map((sub) => {
@@ -967,6 +970,7 @@ export default function SocialCommandCenter() {
                                                                 <span className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border flex-shrink-0 ${
                                                                     post.status === 'published' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                                                     post.status === 'scheduled' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                                    post.status === 'publishing' ? 'bg-blue-500/10 text-blue-300 border-blue-500/20' :
                                                                     post.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
                                                                     'bg-slate-800 text-slate-400 border-transparent'
                                                                 }`}>
@@ -1043,6 +1047,11 @@ export default function SocialCommandCenter() {
                                                         {/* Optional New/Unread Accent Dot */}
                                                         {post.status === 'failed' && (
                                                             <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                                                        )}
+                                                        {post.status === 'publishing' && (
+                                                            <div className="mt-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-2 py-1 text-[10px] text-blue-200">
+                                                                Publishing in progress — platform recovery will retry if this stays stuck for 15+ minutes.
+                                                            </div>
                                                         )}
                                                     </div>
                                                 </div>

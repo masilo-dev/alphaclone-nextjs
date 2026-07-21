@@ -1,4 +1,4 @@
-export type InboxProvider = 'microsoft' | 'zoho';
+export type InboxProvider = 'microsoft' | 'zoho' | 'gmail';
 
 export type InboxFolder = 'inbox' | 'sent' | 'drafts' | 'trash';
 

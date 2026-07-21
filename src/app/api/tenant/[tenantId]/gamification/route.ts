@@ -9,7 +9,7 @@ const scoreAction = (action: string) => {
   if (value.includes('invoice') && (value.includes('sent') || value.includes('paid'))) return 25;
   if (value.includes('lead') && (value.includes('add') || value.includes('creat') || value.includes('discover'))) return 10;
   if (value.includes('ai') || value.includes('playbook') || value.includes('automation')) return 20;
-  return 5;
+  return 0;
 };
 
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     };
     const me = leaderboard.find((entry: any) => entry.isMe) || { xp: 0, events: 0, rank: leaderboard.length + 1 };
     return NextResponse.json({
-      profile: { xp: me.xp, events: me.events, rank: me.rank, streak },
+      profile: { xp: me.xp, events: me.events },
       badges: [
         { id: 'first-deal', name: 'First Deal', icon: '🤝', description: 'Record a closed or won deal', earned: countMatching('deal closed', 'deal won') >= 1 },
         { id: 'task-builder', name: 'Task Builder', icon: '✅', description: 'Complete 10 tasks', earned: countMatching('task complete', 'task done') >= 10 },
@@ -66,8 +66,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
         { id: 'invoice-operator', name: 'Invoice Operator', icon: '💰', description: 'Send or record 25 paid invoices', earned: countMatching('invoice sent', 'invoice paid') >= 25 },
         { id: 'pipeline-builder', name: 'Pipeline Builder', icon: '🌐', description: 'Add or discover 100 leads', earned: countMatching('lead add', 'lead creat', 'lead discover') >= 100 },
       ],
-      history: myLogs.slice(0, 20).map((log: any) => ({ id: log.id, action: log.action, xp: scoreAction(log.action || ''), createdAt: log.created_at })),
-      leaderboard,
+      history: myLogs.filter((log: any) => scoreAction(log.action || '') > 0).slice(0, 20).map((log: any) => ({ id: log.id, action: log.action, xp: scoreAction(log.action || ''), createdAt: log.created_at })),
     });
   } catch (error) {
     return routeErrorResponse(error, 'Workspace achievements could not be loaded', req);

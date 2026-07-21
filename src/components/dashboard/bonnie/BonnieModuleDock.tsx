@@ -70,13 +70,13 @@ export default function BonnieModuleDock() {
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
     onToken: (token: string) => void,
-    onPhase?: (phase: string) => void
+    onPhase?: (phase: string, meta?: Record<string, unknown>) => void
   ) => {
     const res = await bonnieService.streamInstruction(tenantId, text, history, {
       pathname: pathname || undefined,
       moduleContext: activeModule,
       onToken,
-      onPhase,
+      onPhase: (phase, meta) => onPhase?.(phase, meta),
     });
     void refreshApprovals();
     if (res.success) return mapResult(res);

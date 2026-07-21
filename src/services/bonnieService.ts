@@ -356,7 +356,13 @@ export const bonnieService = {
     tenantId: string,
     instruction: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> | undefined,
-    options: { pathname?: string; moduleContext?: string; onToken?: (token: string) => void; onPhase?: (phase: string) => void }
+    options: {
+      pathname?: string;
+      moduleContext?: string;
+      onToken?: (token: string) => void;
+      onPhase?: (phase: string, meta?: Record<string, unknown>) => void;
+      onTools?: (tools: BonnieToolExecuted[]) => void;
+    }
   ): Promise<BonnieInstructionResult> {
     const response = await fetch('/api/bonnie/stream', {
       method: 'POST',
@@ -416,6 +422,11 @@ export const bonnieService = {
 
         if (event === 'phase' && data.phase) {
           options.onPhase?.(String(data.phase));
+        }
+        if (event === 'tools' && Array.isArray(data.tools)) {
+          const tools = data.tools as BonnieToolExecuted[];
+          options.onTools?.(tools);
+          options.onPhase?.('tools', { tools });
         }
         if (event === 'token' && data.text) {
           streamedText += String(data.text);

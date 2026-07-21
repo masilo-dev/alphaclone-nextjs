@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
@@ -120,6 +121,19 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             router.replace('/dashboard/business/billing/manage', { scroll: false });
         }
     }, [searchParams, router]);
+
+    useBonnieDeepLinkFocus({
+        onFocus: ({ focus, recordId }) => {
+            if (focus === 'overdue') setFilter('overdue');
+            if (recordId) {
+                const invoice = invoices.find((item) => item.id === recordId);
+                if (invoice) {
+                    setSelectedInvoiceForOptions(invoice);
+                    setIsOptionsOpen(true);
+                }
+            }
+        },
+    });
 
     const loadClients = async () => {
         if (!currentTenant?.id) return;

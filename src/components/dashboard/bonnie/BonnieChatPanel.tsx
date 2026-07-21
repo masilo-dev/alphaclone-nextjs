@@ -105,7 +105,7 @@ type BonnieChatPanelProps = {
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
     onToken: (token: string) => void,
-    onPhase?: (phase: string) => void
+    onPhase?: (phase: string, meta?: Record<string, unknown>) => void
   ) => Promise<BonnieChatSendResult>;
   onResolveApproval?: (
     approvalId: string,
@@ -121,6 +121,16 @@ type BonnieChatPanelProps = {
   pathname?: string;
   userRole?: string | null;
 };
+
+function mapToolsToPlanSteps(tools: Array<{ tool: string; success?: boolean; summary?: string }>): AgentPlanStep[] {
+  return tools.map((tool, index) => ({
+    id: `plan-${tool.tool}-${index}`,
+    label: tool.summary || tool.tool,
+    tool: tool.tool,
+    status: tool.success === false ? 'failed' : 'done',
+    detail: tool.summary,
+  }));
+}
 
 /** Emit a custom event so Dashboard.tsx can deep-link to the relevant module */
 function emitNavIntent(text: string, userRole?: string | null): void {
@@ -347,10 +357,9 @@ export default function BonnieChatPanel({
               prev.map((m) => (m.id === streamMsgId ? { ...m, text: m.text + token } : m))
             );
           },
-          (phase) => {
+          (phase, meta) => {
             if (phase === 'executing') {
               setAgentPhase('executing');
-              // Add timeline event for executing phase
               const evId = `ev-${Date.now()}`;
               setTimelineEvents((prev) => [
                 ...prev,
@@ -363,6 +372,9 @@ export default function BonnieChatPanel({
                 ...prev,
                 { id: `ev-think-${Date.now()}`, label: 'Planning', kind: 'planning', status: 'running' },
               ]);
+            }
+            if (phase === 'tools' && Array.isArray(meta?.tools)) {
+              setPlanSteps(mapToolsToPlanSteps(meta.tools as Array<{ tool: string; success?: boolean; summary?: string }>));
             }
           }
         );
@@ -386,6 +398,9 @@ export default function BonnieChatPanel({
               : m
           )
         );
+        if (result.tools?.length) {
+          setPlanSteps(mapToolsToPlanSteps(result.tools));
+        }
         // Deep-link navigation intent
         if (result.text) emitNavIntent(result.text, userRole);
       } else {

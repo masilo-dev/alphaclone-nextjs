@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import DOMPurify from 'dompurify';
 import {
     Mail, Send, Clock, Users, Eye, Plus, Trash2, Play, Pause,
@@ -165,8 +165,9 @@ type ComposeAudit = {
 
 const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { isMobile } = useBreakpoint();
-    
+    const [recoveryBanner, setRecoveryBanner] = useState<Array<{ title?: string; reason?: string; amount?: number }>>([]);
     // View state: 'list' is main feed list, 'detail' is single detail view, 'compose' is wizard flow
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'compose'>('list');
     const [campaignMode, setCampaignMode] = useState<'simple' | 'advanced'>('simple');
@@ -242,6 +243,31 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const [retryingFailedRecipients, setRetryingFailedRecipients] = useState(false);
 
     useEffect(() => { loadData(); }, []);
+
+    useEffect(() => {
+        const source = searchParams?.get('source');
+        if (source !== 'recovery') return;
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) return;
+        void fetch(`/api/platform-advantage/snapshot?tenantId=${encodeURIComponent(tenantId)}`)
+            .then((res) => res.json())
+            .then((data) => {
+                const raw = data.snapshot?.revenueRecovery;
+                const items = Array.isArray(raw) ? raw : Array.isArray(raw?.actions) ? raw.actions : [];
+                setRecoveryBanner(items.slice(0, 4));
+                if (items[0]?.recommended_action || items[0]?.reason) {
+                    setForm((prev) => ({
+                        ...prev,
+                        name: 'Revenue recovery follow-up',
+                        subject: 'Payment reminder',
+                        bodyHtml: htmlFromPlain(String(items[0]?.recommended_action || items[0]?.reason || '')),
+                    }));
+                    setViewMode('compose');
+                    setActiveStep(2);
+                }
+            })
+            .catch(() => undefined);
+    }, [searchParams]);
 
     useEffect(() => {
         const loadSender = async () => {
@@ -973,6 +999,20 @@ Voice & rules:
     return (
         <BonnieModulePageShell>
         <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
+
+            {recoveryBanner.length > 0 && (
+                <div className="border-b border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-300">Revenue recovery queue</p>
+                    <p className="mt-1 text-sm text-slate-300">Bonnie surfaced overdue invoices and stale quotes. Review the draft below, then approve send when ready.</p>
+                    <ul className="mt-2 space-y-1">
+                        {recoveryBanner.map((item, idx) => (
+                            <li key={`${item.title}-${idx}`} className="text-xs text-slate-400">
+                                {item.title || 'Recovery action'} — {item.reason}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             
             {/* Header bar */}
             <div className="h-16 border-b border-white/5 bg-slate-900 px-4 flex items-center justify-between shrink-0">

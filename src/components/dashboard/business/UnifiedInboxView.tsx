@@ -22,6 +22,8 @@ import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { refreshMicrosoftTokenIfNeeded, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { useZohoEmails } from '@/hooks/useZohoEmails';
+import { useGmailEmails } from '@/hooks/useGmailEmails';
+import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 import { businessClientService } from '@/services/businessClientService';
 import { contactService } from '@/services/contactService';
@@ -57,8 +59,22 @@ function toUnifiedMicrosoft(
   }));
 }
 
-async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean }> {
-  const [microsoft, zoho] = await Promise.all([
+function toUnifiedGmail(
+  emails: ReturnType<typeof useGmailEmails>['emails']
+): UnifiedInboxMessage[] {
+  return emails.map((email) => ({
+    id: email.id,
+    provider: 'gmail' as const,
+    subject: email.subject || '(No subject)',
+    from: email.from || 'Unknown sender',
+    snippet: email.snippet,
+    body: email.body,
+    receivedAt: email.date || new Date().toISOString(),
+  }));
+}
+
+async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean; gmail: boolean }> {
+  const [microsoft, zoho, gmailRes] = await Promise.all([
     microsoftAuthService.isConnected().catch(() => false),
     tenantId
       ? fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
@@ -66,8 +82,14 @@ async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: bool
           .then((d) => Boolean(d.isConnected))
           .catch(() => false)
       : Promise.resolve(false),
+    tenantId
+      ? fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(tenantId)}&provider=gmail`)
+          .then((r) => r.json().catch(() => ({})))
+          .then((d) => Boolean(d.connected))
+          .catch(() => false)
+      : Promise.resolve(false),
   ]);
-  return { microsoft, zoho };
+  return { microsoft, zoho, gmail: gmailRes };
 }
 
 export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewProps) {
@@ -78,13 +100,13 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const urlProvider = searchParams?.get('provider');
   const initialProvider: InboxProvider =
-    urlProvider === 'zoho' || urlProvider === 'microsoft'
+    urlProvider === 'zoho' || urlProvider === 'microsoft' || urlProvider === 'gmail'
       ? urlProvider
       : defaultProvider || 'microsoft';
 
   const [provider, setProvider] = useState<InboxProvider>(initialProvider);
   const [statusChecked, setStatusChecked] = useState(false);
-  const [status, setStatus] = useState({ microsoft: false, zoho: false });
+  const [status, setStatus] = useState({ microsoft: false, zoho: false, gmail: false });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeDraft, setComposeDraft] = useState<ComposeState>({});
@@ -96,6 +118,21 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const microsoft = useMicrosoftEmails(50, statusChecked && provider === 'microsoft');
   const zoho = useZohoEmails(50, statusChecked && provider === 'zoho', currentTenant?.id);
+  const gmail = useGmailEmails(50, statusChecked && provider === 'gmail');
+
+  useBonnieDeepLinkFocus({
+    onFocus: ({ tab, focus }) => {
+      if (tab === 'sent' || tab === 'drafts' || tab === 'trash' || tab === 'inbox') {
+        if (provider === 'microsoft') microsoft.setFolder(tab);
+        if (provider === 'zoho') zoho.setFolder(tab);
+        if (provider === 'gmail') gmail.setFolder(tab);
+      }
+      if (focus === 'draft' || focus === 'compose') {
+        setComposeOpen(true);
+      }
+    },
+    showToast: false,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -104,15 +141,22 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
       if (cancelled) return;
       setStatus(next);
       const preferred =
-        urlProvider === 'zoho' || urlProvider === 'microsoft'
+        urlProvider === 'zoho' || urlProvider === 'microsoft' || urlProvider === 'gmail'
           ? urlProvider
           : defaultProvider;
-      if (preferred && (preferred === 'microsoft' ? next.microsoft : next.zoho)) {
+      if (
+        preferred &&
+        ((preferred === 'microsoft' && next.microsoft) ||
+          (preferred === 'zoho' && next.zoho) ||
+          (preferred === 'gmail' && next.gmail))
+      ) {
         setProvider(preferred);
       } else if (next.microsoft) {
         setProvider('microsoft');
       } else if (next.zoho) {
         setProvider('zoho');
+      } else if (next.gmail) {
+        setProvider('gmail');
       }
       setStatusChecked(true);
     })();
@@ -131,9 +175,15 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     setComposeOpen(true);
   }, [statusChecked, searchParams]);
 
-  const active = provider === 'microsoft' ? microsoft : zoho;
-  const anyConnected = status.microsoft || status.zoho;
-  const providerConnected = provider === 'microsoft' ? status.microsoft : status.zoho;
+  const active =
+    provider === 'microsoft' ? microsoft : provider === 'gmail' ? gmail : zoho;
+  const anyConnected = status.microsoft || status.zoho || status.gmail;
+  const providerConnected =
+    provider === 'microsoft'
+      ? status.microsoft
+      : provider === 'gmail'
+        ? status.gmail
+        : status.zoho;
 
   useEffect(() => {
     if (!statusChecked || !anyConnected) return;
@@ -148,10 +198,11 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     return () => window.clearInterval(interval);
   }, [statusChecked, anyConnected, status.microsoft, status.zoho, currentTenant?.id]);
 
-  const emails: UnifiedInboxMessage[] = useMemo(
-    () => (provider === 'microsoft' ? toUnifiedMicrosoft(microsoft.emails) : zoho.emails),
-    [provider, microsoft.emails, zoho.emails]
-  );
+  const emails: UnifiedInboxMessage[] = useMemo(() => {
+    if (provider === 'microsoft') return toUnifiedMicrosoft(microsoft.emails);
+    if (provider === 'gmail') return toUnifiedGmail(gmail.emails);
+    return zoho.emails;
+  }, [provider, microsoft.emails, zoho.emails, gmail.emails]);
 
   const folder = active.folder as InboxFolder;
   const setFolder = active.setFolder as (f: InboxFolder) => void;
@@ -179,8 +230,9 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const refresh = useCallback(() => {
     if (provider === 'microsoft') void microsoft.refresh();
+    else if (provider === 'gmail') void gmail.refresh();
     else void zoho.refresh();
-  }, [provider, microsoft, zoho]);
+  }, [provider, microsoft, zoho, gmail]);
 
   const switchProvider = (next: InboxProvider) => {
     setProvider(next);
@@ -423,6 +475,15 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
               >
                 Zoho{status.zoho ? '' : ' · off'}
               </button>
+              <button
+                type="button"
+                onClick={() => switchProvider('gmail')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
+                  provider === 'gmail' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Gmail{status.gmail ? '' : ' · off'}
+              </button>
             </div>
 
             {!providerConnected && (
@@ -433,6 +494,13 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                     <button type="button" onClick={connectMicrosoft} className="underline font-semibold">
                       Connect
                     </button>
+                  </>
+                ) : provider === 'gmail' ? (
+                  <>
+                    Gmail not connected.{' '}
+                    <Link href="/dashboard/business/settings?tab=integrations" className="underline font-semibold">
+                      Connect in settings
+                    </Link>
                   </>
                 ) : (
                   <>
@@ -455,10 +523,16 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                   {/expired|reconnect|not connected/i.test(active.error) && (
                     <button
                       type="button"
-                      onClick={provider === 'microsoft' ? connectMicrosoft : connectZoho}
+                      onClick={
+                        provider === 'microsoft'
+                          ? connectMicrosoft
+                          : provider === 'gmail'
+                            ? () => { window.location.href = '/dashboard/business/settings?tab=integrations'; }
+                            : connectZoho
+                      }
                       className="underline font-semibold"
                     >
-                      Reconnect {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
+                      Reconnect {provider === 'microsoft' ? 'Outlook' : provider === 'gmail' ? 'Gmail' : 'Zoho'}
                     </button>
                   )}
                 </div>

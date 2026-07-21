@@ -241,12 +241,24 @@ export function PlatformAdvantageHome() {
                   ) : null}
                   <Link
                     href={buildBonnieDeepLink({
+                      route: '/dashboard/business/campaigns',
+                      focus: 'recovery',
+                      recordId: item.id,
+                      reason: item.reason,
+                    }) + '&source=recovery'}
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 hover:text-emerald-200"
+                  >
+                    Create recovery campaign
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                  <Link
+                    href={buildBonnieDeepLink({
                       route: '/dashboard/business/billing',
                       focus: 'overdue',
                       recordId: item.id,
                       reason: item.reason,
                     })}
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-300 hover:text-emerald-200"
+                    className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-slate-200"
                   >
                     Review in billing
                     <ArrowRight className="h-3 w-3" />

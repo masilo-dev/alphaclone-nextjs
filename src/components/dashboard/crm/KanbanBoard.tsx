@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 import { Avatar } from '@/components/ui/Avatar';
 import LeadDetailModal from '@/components/dashboard/leads/LeadDetailModal';
+import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 // Active pipeline columns only — won/lost are terminal actions (removed from board).
@@ -570,6 +571,19 @@ export default function KanbanBoard() {
     };
     fetchUser();
   }, [loadLeads]);
+
+  useBonnieDeepLinkFocus({
+    onFocus: ({ recordId, focus }) => {
+      if (!recordId) return;
+      const lead = leads.find((item) => item.id === recordId);
+      if (lead) {
+        setDetailLead(lead);
+        if (focus === 'follow-up') {
+          setShowOutreachModal(true);
+        }
+      }
+    },
+  });
 
   const leadNextSteps = useMemo(() => buildLeadKanbanNextSteps(leads), [leads]);
   const normalizedSource = useCallback((source: string | undefined) => String(source || '').trim().toLowerCase(), []);
