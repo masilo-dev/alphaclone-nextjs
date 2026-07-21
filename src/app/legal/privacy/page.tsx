@@ -45,7 +45,7 @@ export default function Page() {
       </section>
       <section id="third-parties" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Third-party services</h2>
-        <p className="text-sm leading-7 text-slate-300">We use services such as Anthropic Claude API, Supabase, Stripe, Brevo, Twilio, Vercel, Google OAuth, Microsoft OAuth, Facebook/Meta OAuth, and LinkedIn OAuth to provide the platform.</p>
+        <p className="text-sm leading-7 text-slate-300">We use services such as Anthropic Claude API, Supabase, Stripe, Brevo, Twilio, Railway, Google OAuth, Microsoft OAuth, Facebook/Meta OAuth, and LinkedIn OAuth to provide the platform.</p>
       </section>
       <section id="storage" className="scroll-mt-28 space-y-3">
         <h2 className="text-xl font-semibold text-white">Storage and security</h2>

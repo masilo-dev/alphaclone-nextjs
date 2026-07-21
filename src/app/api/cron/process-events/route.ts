@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 /**
  * Main Automation Dispatcher
  * Polls unprocessed business events and triggers the corresponding workflows.
- * Run this every 5 minutes via Vercel Cron.
+ * Run this every 5 minutes via Railway Cron.
  */
 export async function GET(request: NextRequest) {
   const denied = denyIfCronUnauthorized(request);

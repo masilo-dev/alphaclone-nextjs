@@ -1,6 +1,6 @@
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 const ENVIRONMENT = process.env.NODE_ENV || 'development';
-const RELEASE = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || 'development';
+const RELEASE = process.env.NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || 'development';
 
 export async function register() {
     const [{ initBotId }, Sentry] = await Promise.all([

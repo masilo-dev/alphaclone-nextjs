@@ -237,7 +237,7 @@ export function PrivacyPolicy() {
                         { p: 'Stripe, Inc. (US)', pu: 'Payment processing', d: 'Email, billing address, Stripe customer ID' },
                         { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in', d: 'Google account OAuth token, email actions only' },
                         { p: 'Cloudflare, Inc. (US)', pu: 'Bot protection & security (Turnstile)', d: 'IP address, browser metadata, telemetry' },
-                        { p: 'Vercel, Inc. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
+                        { p: 'Railway Corp. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
                         { p: 'Resend / SendGrid', pu: 'Transactional email delivery', d: 'Email address, email content (transactional only)' },
                         { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
                      ].map((row, i) => (
@@ -547,7 +547,6 @@ const cookieCategories = [
       desc: 'These cookies help us understand how users interact with the platform. Data is anonymized and aggregated — we cannot identify individual users from analytics data. We use this to improve the platform experience.',
       cookies: [
          { name: '_ga, _ga_[ID]', purpose: 'Google Analytics — tracks page views and navigation patterns (anonymized).', duration: '2 years', party: 'Google LLC' },
-         { name: '_vercel_*', purpose: 'Vercel analytics for page performance measurement.', duration: 'Session', party: 'Vercel, Inc.' },
          { name: 'ac_webvitals', purpose: 'AlphaClone Core Web Vitals monitoring — measures LCP, CLS, INP.', duration: 'Session', party: 'First party' },
       ]
    },
@@ -621,7 +620,7 @@ export function CookiePolicy() {
 
          <Section id="what-are-cookies" title="1. What Are Cookies?">
             <p>Cookies are small text files that websites place on your device when you visit them. They are widely used to make websites work correctly, to store your preferences, and to help website owners understand how their site is being used.</p>
-            <p>Cookies set by AlphaClone ("first-party cookies") are only readable by us. Some features use cookies set by third-party service providers (Google, Stripe, Vercel) which those providers can also read.</p>
+            <p>Cookies set by AlphaClone ("first-party cookies") are only readable by us. Some features use cookies set by third-party service providers (Google, Stripe) which those providers can also read.</p>
             <p>Cookies can be "session cookies" (deleted when you close your browser) or "persistent cookies" (remain on your device for a set period or until you delete them).</p>
          </Section>
 
@@ -702,7 +701,7 @@ export function CookiePolicy() {
             <BulletList items={[
                'Google (Gmail integration, Analytics, OAuth) — google.com/privacy',
                'Stripe (payment processing) — stripe.com/privacy',
-               'Vercel (hosting infrastructure) — vercel.com/legal/privacy-policy',
+               'Railway (hosting infrastructure) — railway.com/legal/privacy',
                'Meta/Facebook (advertising, only if marketing cookies enabled) — facebook.com/policy',
                'LinkedIn (advertising, only if marketing cookies enabled) — linkedin.com/legal/privacy-policy',
             ]} />
@@ -927,7 +926,7 @@ export function DPA() {
                                 { sp: 'Supabase, Inc.', pu: 'Database & authentication', loc: 'US (AWS us-east-1)', sg: 'SCCs + DPA' },
                                 { sp: 'Stripe, Inc.', pu: 'Payment processing', loc: 'US', sg: 'SCCs + DPA' },
                                 { sp: 'Cloudflare, Inc.', pu: 'CDN, DDoS, bot protection', loc: 'Global (US HQ)', sg: 'SCCs + DPA' },
-                                { sp: 'Vercel, Inc.', pu: 'Application hosting', loc: 'US (AWS)', sg: 'SCCs + DPA' },
+                                { sp: 'Railway Corp.', pu: 'Application hosting', loc: 'US (AWS)', sg: 'SCCs + DPA' },
                                 { sp: 'Resend / SendGrid', pu: 'Transactional email', loc: 'US', sg: 'SCCs + DPA' },
                                 { sp: 'Sentry, Inc.', pu: 'Error monitoring', loc: 'US', sg: 'SCCs + DPA' },
                             ].map((row, i) => (
@@ -1033,7 +1032,7 @@ export function PrivacyChoices() {
                 <InfoBox>
                     AlphaClone Systems does not sell your personal information to third parties for money. We do not share your personal information with third parties for cross-context behavioural advertising. No opt-out action is required for the sale of personal data because we do not engage in this practice.
                 </InfoBox>
-                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Vercel, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-teal-400 hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
+                <p className="mt-3">We do share certain data with our service providers (Supabase, Stripe, Railway, Cloudflare, Resend) to operate our platform. These are service relationships governed by data processing agreements, not data sales. See our <a href="/privacy-policy#data-sharing" className="text-teal-400 hover:underline">Privacy Policy — Section 5</a> for the full list.</p>
                 <p className="mt-3">If you believe we have incorrectly categorised any data sharing as non-sale, or if you wish to formally record an opt-out preference, contact us at the address below.</p>
             </Section>
 

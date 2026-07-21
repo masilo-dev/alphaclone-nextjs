@@ -24,7 +24,7 @@ const sections = [
   { id: 'signature', title: 'Signatures' },
 ];
 
-const subprocessors = ['Supabase', 'Vercel', 'Anthropic', 'Stripe', 'Brevo', 'Twilio', 'Cloudflare'];
+const subprocessors = ['Supabase', 'Railway', 'Anthropic', 'Stripe', 'Brevo', 'Twilio', 'Cloudflare'];
 
 export default function Page() {
   return (

@@ -169,7 +169,7 @@ async function sendViaMeta(params: {
       provider: 'meta-whatsapp',
       code: 'NOT_CONFIGURED',
       error:
-        'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Vercel.',
+        'WhatsApp integration is not configured. Add Phone Number ID and Access Token under Integration Settings, or set WHATSAPP_PHONE_NUMBER_ID and WHATSAPP_ACCESS_TOKEN in Railway environment variables.',
     };
   }
 

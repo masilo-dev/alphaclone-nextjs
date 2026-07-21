@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Retries persisting external LinkedIn/Facebook IDs onto social_posts when the initial update failed after a successful publish.
- * Auth: Vercel Cron or Authorization: Bearer ${CRON_SECRET}.
+ * Auth: Railway Cron or Authorization: Bearer ${CRON_SECRET}.
  */
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);

@@ -1,4 +1,5 @@
 import Browserbase from '@browserbasehq/sdk';
+import { isRailwayHost } from '@/config/railwayWorkload';
 import { chromium, Browser, Page } from 'playwright-core';
 import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer-core';
 
@@ -10,7 +11,7 @@ import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'p
  * Priority order:
  *  1. Browserbase managed session (BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID)
  *  2. Generic CDP endpoint (BROWSER_WS_ENDPOINT) — comma-separated for load balancing
- *  3. Local Chromium — development only (never runs on Vercel)
+ *  3. Local Chromium — Railway or local development when remote browsers are unavailable
  */
 
 export interface BrowserSession {
@@ -65,13 +66,13 @@ async function launchViaCDP(endpoints: string[]): Promise<Browser> {
 }
 
 async function launchLocal(): Promise<Browser> {
-  if (process.env.VERCEL) {
+  if (!isRailwayHost() && process.env.NODE_ENV === 'production') {
     throw new Error(
-      'Local browser fallback is disabled on Vercel. ' +
+      'Local browser fallback requires Railway or development. ' +
         'Set BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID.'
     );
   }
-  console.log('[BrowserManager] Using local Chromium (dev only)');
+  console.log('[BrowserManager] Using local Chromium');
   return chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -207,7 +208,9 @@ export class BrowserManager {
       pBrowser = await puppeteer.connect({ browserWSEndpoint: wsEndpoint });
     } else {
       // Dev fallback
-      if (process.env.VERCEL) throw new Error('No remote browser for Puppeteer on Vercel');
+      if (!isRailwayHost() && process.env.NODE_ENV === 'production') {
+        throw new Error('No remote browser configured for production. Set BROWSERBASE_API_KEY.');
+      }
       pBrowser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     }
 

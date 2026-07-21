@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/cron/autonomous
- * Triggered by Vercel Cron or manual execution.
+ * Triggered by Railway Cron or manual execution.
  * Runs autonomous business processes across all tenants.
  */
 export async function GET(req: NextRequest) {

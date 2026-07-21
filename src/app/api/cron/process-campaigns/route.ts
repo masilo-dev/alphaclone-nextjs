@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Cron-triggered endpoint to process scheduled campaigns (every 5–15 minutes).
- * Auth: Vercel Cron (`x-vercel-cron`) or `Authorization: Bearer ${CRON_SECRET}`.
+ * Auth: Railway Cron (`x-railway-cron`) or `Authorization: Bearer ${CRON_SECRET}`.
  * Requires INTERNAL_API_KEY for outbound email via /api/email/send.
  */
 export async function GET(req: NextRequest) {

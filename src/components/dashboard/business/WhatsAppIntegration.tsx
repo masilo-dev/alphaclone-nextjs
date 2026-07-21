@@ -199,7 +199,7 @@ export default function WhatsAppIntegration() {
 
       {!metaConfigured && (
         <div className="px-6 py-3 bg-amber-500/10 border-b border-amber-500/20 text-amber-300 text-sm">
-          Platform webhook signatures are not fully verified. Ask your administrator to set up <code className="text-amber-200">FACEBOOK_VERIFY_TOKEN</code> and <code className="text-amber-200">FACEBOOK_APP_SECRET</code> in Vercel to fully secure your inbound webhooks.
+          Platform webhook signatures are not fully verified. Ask your administrator to set up <code className="text-amber-200">FACEBOOK_VERIFY_TOKEN</code> and <code className="text-amber-200">FACEBOOK_APP_SECRET</code> in Railway environment variables to fully secure your inbound webhooks.
         </div>
       )}
 

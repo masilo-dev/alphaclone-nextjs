@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getPublicAppUrl } from '@/lib/server/appUrl';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { upsertWhatsAppIntegration } from '@/services/whatsapp/whatsappIntegrationService';
@@ -99,10 +100,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the absolute webhook URL for this deployment
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://alphaclonesystems.com');
+    const baseUrl = getPublicAppUrl();
     const webhookUrl = `${baseUrl}${APP_WEBHOOK_PATH}`;
 
     let upsertResult: { integrationId: string | null; error?: string };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { getRequestCountry } from '@/lib/server/requestGeo';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
     const payload = await req.json().catch(() => ({}));
     const communicationPrefs = normalizePrefs(payload.communicationPrefs || payload);
     const headers = req.headers;
-    const country = headers.get('x-vercel-ip-country') || '';
+    const country = getRequestCountry(headers);
     const isEuUk = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'IS', 'LI', 'NO', 'GB', 'UK'].includes(country);
     const acceptedLegal = payload.acceptedLegal !== false;
     const euConsent = Boolean(payload.euConsent);

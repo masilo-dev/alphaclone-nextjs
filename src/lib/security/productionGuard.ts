@@ -3,7 +3,10 @@ import { ENV } from '@/config/env';
 import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 
 export function isProduction(): boolean {
-  return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+  return (
+    process.env.NODE_ENV === 'production' ||
+    process.env.RAILWAY_ENVIRONMENT === 'production'
+  );
 }
 
 /** Block dev-only inbox test injectors in production. */

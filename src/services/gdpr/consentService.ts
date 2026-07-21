@@ -123,7 +123,7 @@ export const consentService = {
                 type: 'cookies_analytics',
                 name: 'Analytics Cookies',
                 description:
-                    'Help us understand how visitors use our website (e.g., Google Analytics, Vercel Analytics).',
+                    'Help us understand how visitors use our website (e.g., Google Analytics).',
                 required: false,
             },
             {

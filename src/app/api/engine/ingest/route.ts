@@ -3,7 +3,8 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { waitUntil } from '@vercel/functions';
+import { runInBackground } from '@/lib/server/backgroundTask';
+import { getPublicAppUrl } from '@/lib/server/appUrl';
 import { z } from 'zod';
 import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
@@ -120,9 +121,9 @@ export async function POST(req: NextRequest) {
                 author_name,
             };
 
-            // Fire workflow execution in background reliably via waitUntil
-            waitUntil(
-                fetch(`${(process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '')}/api/engine/execute`, {
+            // Fire workflow execution in background after response
+            runInBackground(
+                fetch(`${getPublicAppUrl()}/api/engine/execute`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-internal-api-key': process.env.INTERNAL_API_KEY || '' },
                     body: JSON.stringify({

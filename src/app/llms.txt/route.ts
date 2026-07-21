@@ -19,7 +19,7 @@ API Discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-ser
 
 ## Platform Architecture
 
-- Runtime: Next.js 15 (App Router) — deployed on Vercel Edge Network
+- Runtime: Next.js 15 (App Router) — deployed on Railway
 - Database: Supabase (PostgreSQL 17) with Row-Level Security (RLS) on all tenant tables
 - Auth: Supabase Auth + Cloudflare Turnstile (bot protection) + PKCE OAuth2
 - Storage: Supabase Storage (multi-tenant file isolation)
