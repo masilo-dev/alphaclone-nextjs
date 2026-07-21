@@ -1,20 +1,53 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Project, ChatMessage, GalleryItem } from '@/types';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Project, ChatMessage, GalleryItem, User } from '@/types';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
 import AppLegalFooter from '@/components/legal/AppLegalFooter';
+import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import dynamic from 'next/dynamic';
 
 const Dashboard = dynamic(() => import('@/components/Dashboard'), {
     ssr: false,
     loading: () => null,
 });
+
+const BusinessDashboard = dynamic(() => import('@/components/dashboard/business/BusinessDashboard'), {
+    ssr: false,
+    loading: () => null,
+});
+
+/** Tenant admins use BusinessDashboard only — skip the heavy Dashboard shell hooks. */
+function TenantAdminDashboardShell({
+    user,
+    onLogout,
+}: {
+    user: User;
+    onLogout: () => void;
+}) {
+    const location = usePathname();
+    const router = useRouter();
+    const { currentTenant } = useTenant();
+    const businessRoute = useMemo(
+        () => normalizeBusinessRoute(location || '/dashboard', user.role),
+        [location, user.role],
+    );
+
+    return (
+        <BusinessDashboard
+            user={user}
+            currentTenant={currentTenant ?? undefined}
+            onLogout={onLogout}
+            activeTab={businessRoute}
+            setActiveTab={(tab) => router.push(tab)}
+        />
+    );
+}
 
 class BuildErrorLogger extends React.Component<{ children: React.ReactNode }> {
     state = { hasError: false };
@@ -78,16 +111,20 @@ export default function DashboardClientPage() {
     return (
         <BuildErrorLogger>
             <SubscriptionGuard>
-                <Dashboard
-                    user={user}
-                    onLogout={handleLogout}
-                    projects={projects}
-                    setProjects={setProjects}
-                    messages={messages}
-                    setMessages={setMessages}
-                    galleryItems={galleryItems}
-                    setGalleryItems={setGalleryItems}
-                />
+                {user.role === 'tenant_admin' ? (
+                    <TenantAdminDashboardShell user={user} onLogout={handleLogout} />
+                ) : (
+                    <Dashboard
+                        user={user}
+                        onLogout={handleLogout}
+                        projects={projects}
+                        setProjects={setProjects}
+                        messages={messages}
+                        setMessages={setMessages}
+                        galleryItems={galleryItems}
+                        setGalleryItems={setGalleryItems}
+                    />
+                )}
                 <SessionTimeoutWarning
                     isOpen={showWarning}
                     countdown={countdown}

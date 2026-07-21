@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain, Play, Pause, RefreshCw, X,
@@ -35,6 +35,12 @@ export default function BonnieWidget() {
   const { brief: morningBrief, refresh: refreshBrief } = useBonnieMorningBrief(tenantId);
   const hasUnreadBrief = Boolean(morningBrief?.summary && morningBrief.read !== true);
 
+  const introMessage = useMemo(
+    () =>
+      `I'm Bonnie AI — your in-platform agent for ${moduleHint.label}. Tell me what to do and I'll execute it. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`,
+    [moduleHint.label, moduleHint.examples],
+  );
+
   // Load Rules and Logs when open or tenant changes
   useEffect(() => {
     if (!tenantId) return;
@@ -69,12 +75,11 @@ export default function BonnieWidget() {
     return () => clearInterval(interval);
   }, [tenantId]);
 
-  // Scroll logs to bottom on update
+  // Scroll logs to bottom on update (only when activity panel is visible)
   useEffect(() => {
-    if (logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [logs]);
+    if (!isOpen || !showActivity) return;
+    logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs, isOpen, showActivity]);
 
   if (!tenantId) return null;
 
@@ -376,7 +381,7 @@ export default function BonnieWidget() {
                   streaming
                   storageKey={tenantId ? `bonnie_chat_${tenantId}` : undefined}
                   placeholder={`Ask Bonnie about ${moduleHint.label.toLowerCase()}…`}
-                  introMessage={`I'm Bonnie AI — your in-platform agent for ${moduleHint.label}. Tell me what to do and I'll execute it. Try: "${moduleHint.examples[1] || moduleHint.examples[0]}"`}
+                  introMessage={introMessage}
                   onSend={handleBonnieMessage}
                   onStreamSend={handleBonnieStream}
                   onResolveApproval={handleResolveApproval}

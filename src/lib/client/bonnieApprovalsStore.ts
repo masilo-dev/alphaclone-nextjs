@@ -66,9 +66,14 @@ export async function fetchBonnieApprovalsShared(
   }
   if (inflight) return inflight;
 
+  const shouldEmitLoading = !state.loading || state.tenantId !== tenantId;
   state.tenantId = tenantId;
-  state.loading = true;
-  emit();
+  if (shouldEmitLoading) {
+    state.loading = true;
+    emit();
+  } else {
+    state.loading = true;
+  }
 
   inflight = (async () => {
     try {

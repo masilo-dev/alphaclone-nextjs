@@ -27,7 +27,6 @@ import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { useLanguage } from '../contexts/LanguageContext';
 import Image from 'next/image';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole, STAGES } from '../types';
-import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { resolveDashboardPath } from '@/lib/dashboardNavigate';
 import InsightsHub from './dashboard/hubs/InsightsHub';
 import { useTenant } from '../contexts/TenantContext';
@@ -94,7 +93,6 @@ import { useMeetingSession } from '../hooks/useMeetingSession';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
 
-const BusinessDashboard = React.lazy(() => import('./dashboard/business/BusinessDashboard'));
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
 import CRMTab from './dashboard/CRMTab';
@@ -279,13 +277,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
 
-  // Sync activeTab with URL changes
+  // Sync activeTab with URL changes (skip no-op updates to avoid re-render churn)
   useEffect(() => {
-    // location is a string in Next.js usePathname
-    if (location?.startsWith('/dashboard')) {
-      setActiveTab(normalizeTabForRole(location));
-    }
-  }, [location]);
+    if (!location?.startsWith('/dashboard')) return;
+    const next = normalizeTabForRole(location);
+    setActiveTab((prev) => (prev === next ? prev : next));
+  }, [location, user.role]);
 
   // Persist last dashboard route so switching browser tabs does not reset navigation
   useEffect(() => {
@@ -1684,21 +1681,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
     }
   };
-
-  // -- CRITICAL FIX: ISOLATED TENANT DASHBOARD --
-  // Return early for Tenant Admins to avoid double-shell layout collisions
-  if (user.role === 'tenant_admin') {
-    const businessRoute = normalizeBusinessRoute(location || '/dashboard', user.role);
-    return (
-      <BusinessDashboard
-        user={user}
-        currentTenant={currentTenant}
-        onLogout={onLogout}
-        activeTab={businessRoute}
-        setActiveTab={(tab) => router.push(tab)}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root [height:100dvh]">

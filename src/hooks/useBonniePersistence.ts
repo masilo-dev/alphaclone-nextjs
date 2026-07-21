@@ -145,19 +145,24 @@ export function useBonniePersistence<T extends PersistedMessage = PersistedMessa
   const [hydrated, setHydrated] = useState(false);
   const [dbSynced, setDbSynced] = useState(false);
 
+  const introMessageRef = useRef(introMessage);
+  const introFactoryRef = useRef(introFactory);
+  introMessageRef.current = introMessage;
+  introFactoryRef.current = introFactory;
+
   const buildIntro = useCallback((): T => {
-    if (introFactory) return introFactory();
-    return { id: 'intro', role: 'assistant', text: introMessage || '' } as T;
-  }, [introMessage, introFactory]);
+    if (introFactoryRef.current) return introFactoryRef.current();
+    return { id: 'intro', role: 'assistant', text: introMessageRef.current || '' } as T;
+  }, []);
 
   const buildInitial = useCallback(
     (key: string): T[] => {
       const stored = safeRead<T>(key);
       if (stored.length > 0) return stored;
-      if (introMessage || introFactory) return [buildIntro()];
+      if (introMessageRef.current || introFactoryRef.current) return [buildIntro()];
       return [];
     },
-    [buildIntro, introMessage, introFactory]
+    [buildIntro]
   );
 
   const [messages, setMessages] = useState<T[]>([]);
@@ -186,25 +191,26 @@ export function useBonniePersistence<T extends PersistedMessage = PersistedMessa
       if (cancelled) return;
 
       if (dbMessages && dbMessages.length > 0) {
-        // DB is the authority — replace local copy, but keep any pending
-        // approval objects that the server can't reconstruct (transient in-chat approvals)
         setMessages((prev) => {
-          // Find any approval messages not yet in DB (they have `approval` set)
           const pendingApprovals = prev.filter((m) => m.approval);
           const dbIds = new Set(dbMessages.map((m) => m.id));
           const localOnlyApprovals = pendingApprovals.filter((m) => !dbIds.has(m.id));
 
           const merged: T[] = [
-            // Add intro if DB is empty of intro
             ...(dbMessages.some((m) => m.id === 'intro') ? [] : [buildIntro()]),
             ...(dbMessages as T[]),
             ...localOnlyApprovals,
           ];
+          if (
+            merged.length === prev.length &&
+            merged.every((msg, index) => msg.id === prev[index]?.id && msg.text === prev[index]?.text)
+          ) {
+            return prev;
+          }
           safeWrite<T>(storageKey, merged);
           return merged;
         });
       } else if (dbMessages && dbMessages.length === 0) {
-        // DB returned empty — ensure intro message is present
         setMessages((prev) => {
           if (prev.length === 0) return [buildIntro()];
           return prev;

@@ -83,7 +83,17 @@ const Sidebar = React.memo<SidebarProps>(({
                 autoExpand[item.label] = true;
             }
         });
-        setExpanded(prev => ({ ...prev, ...autoExpand }));
+        setExpanded((prev) => {
+            let changed = false;
+            const next = { ...prev };
+            for (const [label, value] of Object.entries(autoExpand)) {
+                if (value && !prev[label]) {
+                    next[label] = true;
+                    changed = true;
+                }
+            }
+            return changed ? next : prev;
+        });
     }, [activeTab, navItems]);
 
     const handleTheme = useCallback((next: AcThemeMode) => {
