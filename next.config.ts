@@ -131,6 +131,23 @@ const nextConfig: NextConfig = {
       config.externals = [...externalList, /^chromium-bidi\//];
     }
 
+    // The `withWorkflow` plugin generates App Router route files under
+    // <root>/app/.well-known/workflow/... during `next build`. These files live
+    // outside of `src/` so they cannot resolve `@/*` path aliases (which map to
+    // `./src/*`), causing webpack "Module not found" errors on every build.
+    // Exclude the entire generated workflow directory from compilation.
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: [
+        ...(Array.isArray(config.watchOptions?.ignored)
+          ? config.watchOptions.ignored
+          : config.watchOptions?.ignored
+          ? [config.watchOptions.ignored]
+          : []),
+        '**/app/.well-known/workflow/**',
+      ],
+    };
+
     return config;
   },
 
