@@ -412,7 +412,7 @@ const CreateInvoiceModal: React.FC<CreateInvoiceModalProps> = ({ isOpen, onClose
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
     return (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[10050] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
             <div className={`flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} shadow-none`}>
                 {/* Header */}
                 <div className="flex shrink-0 items-center justify-between border-b border-[var(--ws-border)] p-6">

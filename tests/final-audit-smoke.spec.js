@@ -95,11 +95,23 @@ test.describe('Final Audit Smoke', () => {
       { path: '/dashboard/accounting', text: /Accounting|Period|Banking/i },
       { path: '/dashboard/marketplace', text: /Integration Marketplace|Integrations|Marketplace/i },
       { path: '/dashboard/mail', text: /Mailbox|All channels|Compose|Mail/i },
+      { path: '/dashboard/bonnie/approvals', text: /Approval Center|No pending approvals|pending/i },
+      { path: '/dashboard/business/billing/manage', text: /Create Invoice|Invoice|DRAFT|Billing/i },
     ];
 
     for (const check of checks) {
       await expectRouteHealthy(page, check.path, check.text);
     }
+  });
+
+  test('Invoice manager opens latest creator modal', async ({ page }) => {
+    await page.goto('/dashboard/business/billing/manage?create=true', { timeout: 60000 });
+    await dismissWelcomeOverlay(page);
+    const accept = page.getByRole('button', { name: 'Accept All' });
+    if (await accept.isVisible().catch(() => false)) await accept.click();
+
+    await expect(page.getByText(/Organization Invoice|Fill in invoice details/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: /Preview Invoice/i })).toBeVisible({ timeout: 10000 });
   });
 
   test('Delete Account dialog opens and can be cancelled safely', async ({ page }) => {

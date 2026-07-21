@@ -61,22 +61,25 @@ export async function GET(request: NextRequest) {
     if (error) throw error;
 
     const bonnieApprovals: BonnieApprovalPreview[] = (data || [])
-      .filter((row: { payload?: Record<string, unknown>; action_key?: string; source?: string }) => {
+      .filter((row: { payload?: Record<string, unknown>; action_key?: string; source?: string; workflow_id?: string | null }) => {
         const payload = (row.payload || {}) as Record<string, unknown>;
-        // Include both legacy bonnie-sourced approvals and new source-tagged ones
+        const actionKey = String(row.action_key || '');
+        const source = String(row.source || payload.source || '');
+        // Surface Bonnie, MCP, and autonomous-runner pending actions in Approval Center
         return (
-          payload.source === 'bonnie' ||
-          String(row.action_key || '').startsWith('bonnie:') ||
-          (row as any).source === 'bonnie' ||
-          // Include all approvals with a workflow_id (definitely from Bonnie)
-          !!(row as any).workflow_id
+          source === 'bonnie' ||
+          source === 'autonomous_runner' ||
+          actionKey.startsWith('bonnie:') ||
+          actionKey.startsWith('mcp:') ||
+          !!row.workflow_id ||
+          payload.source === 'bonnie'
         );
       })
       .map((row: any) => {
         const payload = (row.payload || {}) as Record<string, unknown>;
         const toolName =
           String(payload.tool_name || '') ||
-          String(row.action_key || '').replace(/^bonnie:/, '');
+          String(row.action_key || '').replace(/^(bonnie:|mcp:)/, '');
         return {
           id: row.id,
           toolName,

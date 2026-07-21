@@ -111,6 +111,7 @@ const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
 const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
+const ApprovalCenter = React.lazy(() => import('../bonnie/ApprovalCenter'));
 const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
 const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
 const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
@@ -838,9 +839,18 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             case '/dashboard/business/bonnie':
+            case '/dashboard/bonnie':
                 return (
                     <React.Suspense fallback={<TableSkeleton />}>
                         <BonnieFullView />
+                    </React.Suspense>
+                );
+
+            case '/dashboard/bonnie/approvals':
+            case '/dashboard/business/bonnie/approvals':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
+                        <ApprovalCenter />
                     </React.Suspense>
                 );
 
@@ -950,7 +960,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
             case '/dashboard/leads/campaigns': return t('Lead Finder');
-            case '/dashboard/business/bonnie': return t('Bonnie AI Console');
+            case '/dashboard/business/bonnie':
+            case '/dashboard/bonnie': return t('Bonnie AI Console');
+            case '/dashboard/bonnie/approvals':
+            case '/dashboard/business/bonnie/approvals': return t('Approvals');
             case '/dashboard/business/tickets': return t('Deep-Desk Support');
             case '/dashboard/accounting': return t('Accounting Dashboard');
             case '/dashboard/mail': return t('Mail');

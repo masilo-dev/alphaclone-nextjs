@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { ChevronUp, Shield, Settings2, ToggleLeft, ToggleRight } from 'lucide-react';
 
 export type CookieConsentState = {
@@ -68,10 +69,14 @@ export function useCookieConsent() {
 }
 
 export default function CookieBanner() {
+  const pathname = usePathname();
   const { consent } = useCookieConsent();
   const [openPrefs, setOpenPrefs] = useState(false);
   const [functional, setFunctional] = useState(true);
   const [analytics, setAnalytics] = useState(false);
+
+  // Authenticated workspace already has session cookies; banner must not cover modals.
+  const hideOnWorkspace = Boolean(pathname?.startsWith('/dashboard') || pathname?.startsWith('/meet'));
 
   useEffect(() => {
     if (consent) {
@@ -85,6 +90,8 @@ export default function CookieBanner() {
     window.addEventListener('ac:open-cookie-preferences', open);
     return () => window.removeEventListener('ac:open-cookie-preferences', open);
   }, []);
+
+  if (hideOnWorkspace) return null;
 
   const saveConsent = (next: { functional: boolean; analytics: boolean }) => {
     writeConsent({
