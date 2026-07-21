@@ -10,3 +10,9 @@ alphaclone-scraper
 .env
 .env.*
 !.env.example
+# workflow library generates a root app/ dir at build-time; exclude to prevent
+# Next.js webpack from seeing both /app and /src/app simultaneously.
+/app/
+scratch/
+tmp/
+*.log

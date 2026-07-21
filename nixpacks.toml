@@ -9,7 +9,9 @@ NIXPACKS_NODE_VERSION = "22"
 cmds = ["npm ci --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["npm run build"]
+# Remove any runtime-generated root /app dir (workflow library) before next build
+# to prevent webpack from seeing both /app and /src/app at compile time.
+cmds = ["rm -rf app/ || true", "npm run build"]
 
 [start]
 cmd = "npm run start"

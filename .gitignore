@@ -101,3 +101,6 @@ Thumbs.db
 # Scratch and temporary files
 /scratch/
 .aider*
+
+# workflow library generates a root /app dir at runtime; must not be committed
+/app/
