@@ -71,7 +71,7 @@ interface TurnstileWidgetProps {
   siteKey?: string;
   theme?: 'light' | 'dark' | 'auto';
   className?: string;
-  /** Prefer interaction-only so most users never wait on a visible challenge. */
+  /** Always show the widget so users can see/complete the check. */
   appearance?: 'always' | 'execute' | 'interaction-only';
   size?: 'normal' | 'compact' | 'flexible';
   onTokenChange: (token: string) => void;
@@ -83,8 +83,8 @@ export default function TurnstileWidget({
   siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   theme = 'auto',
   className,
-  appearance = 'interaction-only',
-  size = 'compact',
+  appearance = 'always',
+  size = 'normal',
   onTokenChange,
   onError,
   onExpire,

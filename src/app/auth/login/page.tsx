@@ -706,16 +706,21 @@ function LoginContent() {
                     )}
 
                     {turnstileEnabled && (
-                        <div className="flex justify-center">
-                            <TurnstileWidget
-                                key={turnstileNonce}
-                                theme="dark"
-                                appearance="interaction-only"
-                                size="compact"
-                                onTokenChange={setTurnstileToken}
-                                onExpire={() => setTurnstileToken('')}
-                                onError={() => setTurnstileToken('')}
-                            />
+                        <div className="space-y-1.5">
+                            <p className="text-[11px] font-medium text-slate-400 text-center">
+                              Security check
+                            </p>
+                            <div className="flex justify-center min-h-[65px]">
+                              <TurnstileWidget
+                                  key={turnstileNonce}
+                                  theme="dark"
+                                  appearance="always"
+                                  size="normal"
+                                  onTokenChange={setTurnstileToken}
+                                  onExpire={() => setTurnstileToken('')}
+                                  onError={() => setTurnstileToken('')}
+                              />
+                            </div>
                         </div>
                     )}
 
