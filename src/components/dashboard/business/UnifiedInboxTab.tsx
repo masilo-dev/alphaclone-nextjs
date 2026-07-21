@@ -399,7 +399,7 @@ export default function UnifiedInboxTab() {
       {messages.length > 0 && (
         <ModuleStatCards stats={inboxStats} />
       )}
-    <div className="flex min-h-[480px] border border-slate-800 rounded-3xl ac-scroll-full bg-slate-950/60 backdrop-blur-md">
+    <div className="flex min-h-[480px] border border-slate-800 rounded-3xl ac-scroll-full bg-slate-950/60 backdrop-blur-md" role="region" aria-label="All channels inbox">
       {/* 1. Left Message List Section */}
       <div className="w-1/3 border-r border-slate-800 flex flex-col bg-slate-900/20">
         {/* Filters Header */}

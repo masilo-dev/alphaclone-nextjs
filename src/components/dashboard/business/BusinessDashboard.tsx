@@ -77,8 +77,7 @@ import DocumentHub from '../../documents/DocumentHub';
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 // New Components
 const TaskScheduler = React.lazy(() => import('./TaskScheduler'));
-const UnifiedInboxView = React.lazy(() => import('./UnifiedInboxView'));
-const UnifiedInboxTab = React.lazy(() => import('./UnifiedInboxTab'));
+const UnifiedInbox = React.lazy(() => import('./UnifiedInbox'));
 const BonnieModulePageShell = React.lazy(() =>
   import('../bonnie/BonnieModulePageShell').then((m) => ({ default: m.BonnieModulePageShell }))
 );
@@ -781,7 +780,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} />}>
                         <div className="h-full p-3 md:p-5">
-                            <UnifiedInboxView defaultProvider="zoho" />
+                            <UnifiedInbox defaultProvider="zoho" />
                         </div>
                     </React.Suspense>
                 );
@@ -805,7 +804,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
                         <div className="h-full p-3 md:p-5">
-                            <UnifiedInboxTab />
+                            <UnifiedInbox defaultTab="channels" />
                         </div>
                     </React.Suspense>
                 );

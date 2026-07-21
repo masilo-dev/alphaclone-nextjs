@@ -8,10 +8,15 @@ import {
   normalizeDeliveryProvider,
   type DeliveryEmailProvider,
 } from '@/lib/email/emailProviderOptions';
+import {
+  normalizeEmailAutoReplyMode,
+  type EmailAutoReplyMode,
+} from '@/lib/email/autoReplySettings';
 
 const patchSchema = z.object({
   tenantId: z.string().uuid(),
-  defaultProvider: z.enum(['auto', 'zoho', 'microsoft', 'brevo', 'sendgrid', 'resend', 'gmail']),
+  defaultProvider: z.enum(['auto', 'zoho', 'microsoft', 'brevo', 'sendgrid', 'resend', 'gmail']).optional(),
+  autoReplyMode: z.enum(['off', 'draft_only', 'auto_send']).optional(),
 });
 
 type ConnectedProvider = {
@@ -121,12 +126,16 @@ export async function GET(req: NextRequest) {
     const defaultProvider = normalizeDeliveryProvider(
       emailSettings.default_provider || emailSettings.defaultProvider || 'auto'
     );
+    const autoReplyMode = normalizeEmailAutoReplyMode(
+      emailSettings.auto_reply_mode || emailSettings.autoReplyMode
+    );
 
     const connected = await getConnectedProviders(tenantId, user.id, admin);
     const connectedIds = connected.filter((p) => p.connected).map((p) => p.id);
 
     return NextResponse.json({
       defaultProvider,
+      autoReplyMode,
       connectedProviders: connected,
       connectedIds,
       campaignsProvider: NATIVE_CAMPAIGNS_PROVIDER,
@@ -144,7 +153,7 @@ export async function PATCH(req: NextRequest) {
     const { user } = await requireTenantAccess(body.tenantId);
     const admin = createSupabaseAdminClient();
 
-    if (body.defaultProvider !== 'auto') {
+    if (body.defaultProvider !== undefined && body.defaultProvider !== 'auto') {
       const connected = await getConnectedProviders(body.tenantId, user.id, admin);
       const hit = connected.find((p) => p.id === body.defaultProvider);
       if (!hit?.connected) {
@@ -166,13 +175,19 @@ export async function PATCH(req: NextRequest) {
 
     const prevSettings = (existing?.settings || {}) as Record<string, unknown>;
     const prevEmail = (prevSettings.email || {}) as Record<string, unknown>;
+    const nextEmail: Record<string, unknown> = {
+      ...prevEmail,
+      updated_at: new Date().toISOString(),
+    };
+    if (body.defaultProvider !== undefined) {
+      nextEmail.default_provider = body.defaultProvider;
+    }
+    if (body.autoReplyMode !== undefined) {
+      nextEmail.auto_reply_mode = body.autoReplyMode;
+    }
     const nextSettings = {
       ...prevSettings,
-      email: {
-        ...prevEmail,
-        default_provider: body.defaultProvider,
-        updated_at: new Date().toISOString(),
-      },
+      email: nextEmail,
     };
 
     const { error } = await admin.from('business_settings').upsert(
@@ -188,8 +203,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      defaultProvider: body.defaultProvider,
-      savedAt: nextSettings.email.updated_at,
+      defaultProvider: normalizeDeliveryProvider(nextEmail.default_provider),
+      autoReplyMode: normalizeEmailAutoReplyMode(nextEmail.auto_reply_mode) as EmailAutoReplyMode,
+      savedAt: nextEmail.updated_at,
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to save email provider settings', req);

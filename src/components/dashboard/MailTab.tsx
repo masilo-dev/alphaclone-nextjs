@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import UnifiedInboxView from './business/UnifiedInboxView';
+import UnifiedInbox from './business/UnifiedInbox';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { User } from '../../types';
 
@@ -21,7 +21,7 @@ const MailTab: React.FC<MailTabProps> = () => {
             }
         >
             <ModulePageLayout showBonnieDock className="h-full min-h-0">
-                <UnifiedInboxView />
+                <UnifiedInbox />
             </ModulePageLayout>
         </Suspense>
     );

@@ -84,6 +84,7 @@ test.describe('Final Audit Smoke', () => {
       { path: '/dashboard/business/billing', text: /Billing|Invoices|Revenue/i },
       { path: '/dashboard/accounting', text: /Accounting|Period|Banking/i },
       { path: '/dashboard/marketplace', text: /Integration Marketplace|Integrations|Marketplace/i },
+      { path: '/dashboard/mail', text: /Mailbox|All channels|Compose|Mail/i },
     ];
 
     for (const check of checks) {

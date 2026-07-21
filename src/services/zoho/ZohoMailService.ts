@@ -497,6 +497,12 @@ export class ZohoMailService extends ZohoService {
 
     async triageIncomingEmail(messageId: string, folderId: string) {
         try {
+            const { getEmailAutoReplyMode } = await import('@/lib/email/autoReplySettings');
+            const autoReplyMode = await getEmailAutoReplyMode(this.tenantId);
+            if (autoReplyMode === 'off') {
+                return { status: 'ignored', reason: 'auto_reply_disabled' };
+            }
+
             const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
             const supabase = createSupabaseAdminClient();
 
@@ -693,7 +699,9 @@ Rules:
                         console.warn('[ZohoMailService] Could not save AI reply to Zoho drafts folder:', draftErr);
                     }
 
-                    const autoSendEnabled = process.env.EMAIL_AUTO_REPLY_AUTO_SEND === 'true';
+                    const autoSendEnabled =
+                        autoReplyMode === 'auto_send' ||
+                        process.env.EMAIL_AUTO_REPLY_AUTO_SEND === 'true';
                     if (autoSendEnabled) {
                         const { Client } = await import('@upstash/qstash');
                         const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });

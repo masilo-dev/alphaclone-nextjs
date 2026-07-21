@@ -130,7 +130,7 @@ import { CelebrationOverlay } from './ui/CelebrationOverlay';
 import { TrialBanner } from './dashboard/TrialBanner';
 
 // Zoho Components
-const UnifiedInboxView = React.lazy(() => import('./dashboard/business/UnifiedInboxView'));
+const UnifiedInbox = React.lazy(() => import('./dashboard/business/UnifiedInbox'));
 const ZohoCRMIntegration = React.lazy(() => import('./dashboard/zoho/ZohoCRMIntegration'));
 const TaskScheduler = React.lazy(() => import('./dashboard/business/TaskScheduler'));
 const ScraperCampaignsPage = React.lazy(() => import('./dashboard/leads/ScraperCampaignsPage'));
@@ -1492,7 +1492,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton rows={6} showStats={false} />}>
             <div className="h-full p-3 md:p-5">
-              <UnifiedInboxView defaultProvider="zoho" />
+              <UnifiedInbox defaultProvider="zoho" />
             </div>
           </React.Suspense>
         );

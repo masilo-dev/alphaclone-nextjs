@@ -34,6 +34,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import ComposeEmailModal from './ComposeEmailModal';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
+import AiDraftReviewBanner from '../inbox/AiDraftReviewBanner';
 import { parseEmailFromHeader } from '../crm/emailRecipient';
 import type { InboxFolder, InboxProvider, UnifiedInboxMessage } from '@/types/unifiedInbox';
 import type { DeliveryEmailProvider } from '@/lib/email/emailProviderOptions';
@@ -619,7 +620,22 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   return (
     <>
-      <div className="flex h-[min(88dvh,820px)] min-h-[480px] ac-workspace-panel overflow-hidden">
+      <div className="mb-3">
+        <AiDraftReviewBanner
+          onOpenDraft={(draft) => {
+            openCompose({
+              to: draft.fromEmail || draft.from || '',
+              subject: draft.subject?.match(/^Re:/i) ? draft.subject : `Re: ${draft.subject || ''}`,
+              body: draft.body || '',
+            });
+          }}
+        />
+      </div>
+      <div
+        className="flex h-[min(88dvh,820px)] min-h-[480px] ac-workspace-panel overflow-hidden"
+        role="region"
+        aria-label="Email mailbox"
+      >
         {/* Sidebar list */}
         <div
           className={`${
@@ -638,6 +654,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 type="button"
                 onClick={refresh}
                 className="rounded-lg border border-white/10 p-2 text-slate-400 hover:text-white"
+                aria-label="Refresh mailbox"
                 title="Refresh"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -648,6 +665,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
               type="button"
               onClick={openNewEmail}
               disabled={!providerConnected}
+              aria-label="Compose new email"
               className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2.5 text-sm font-bold text-white"
             >
               <PenSquare className="w-4 h-4" />
@@ -724,21 +742,24 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
             )}
 
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search mail…"
+                aria-label="Search mail"
                 className="w-full bg-slate-900 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40"
               />
             </div>
 
-            <div className="flex gap-1 overflow-x-auto">
+            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Mail folders">
               {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => (
                 <button
                   key={f}
                   type="button"
+                  role="tab"
+                  aria-selected={folder === f}
                   onClick={() => {
                     setFolder(f);
                     setSelectedId(null);
@@ -758,7 +779,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+          <div className="flex-1 overflow-y-auto divide-y divide-white/5" role="list" aria-label={`${folder} messages`}>
             {active.loading ? (
               <div className="p-6 flex flex-col items-center gap-2 text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
@@ -778,6 +799,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 <button
                   key={`${email.provider}-${email.id}`}
                   type="button"
+                  role="listitem"
                   onClick={() => handleSelectEmail(email)}
                   className={`w-full text-left p-3 transition-colors ${
                     selectedEmail?.id === email.id && folder !== 'drafts'
@@ -983,6 +1005,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                       onChange={(e) => setInlineReply(e.target.value)}
                       placeholder="Type your reply…"
                       rows={3}
+                      aria-label="Quick reply message"
                       className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 resize-y"
                     />
                     <div className="flex items-center justify-between gap-2 flex-wrap">

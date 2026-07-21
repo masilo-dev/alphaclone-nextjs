@@ -27,7 +27,7 @@ const MARKETING_TABS = [
   { label: 'Sequences', href: '/dashboard/marketing/sequences', icon: Mail },
   { label: 'Forms', href: '/dashboard/business/forms', icon: FileText },
   { label: 'SMS', href: '/dashboard/business/sms', icon: MessageSquare },
-  { label: 'Inbox', href: '/dashboard/business/unified-inbox', icon: MessageSquare },
+  { label: 'Inbox', href: '/dashboard/mail', icon: MessageSquare },
 ];
 
 interface MarketingHubProps {
