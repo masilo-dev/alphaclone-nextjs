@@ -10,7 +10,7 @@ async function loginAsTenant(page) {
   });
 
   await page.addInitScript(() => {
-    const userId = 'df841125-59ce-4e09-aa2d-5b746ec03d9b';
+    const userId = 'd8fd4aea-2987-4313-90e2-e6600539ec56';
     localStorage.setItem(`welcome_seen_${userId}`, 'true');
     localStorage.setItem(`onboarding_completed_${userId}`, 'true');
     localStorage.setItem('onboarding_completed', 'true');
@@ -50,20 +50,30 @@ async function loginAsTenant(page) {
 
   await expect(page.locator('main').first()).toBeVisible({ timeout: 20000 });
   await expect(page.getByRole('heading', { name: /Dashboard|Workspace/i }).first()).toBeVisible({ timeout: 20000 });
+  await dismissWelcomeOverlay(page);
 }
 
-async function expectRouteHealthy(page, path, expectedText) {
-  await page.goto(path, { timeout: 60000 });
+async function dismissWelcomeOverlay(page) {
   const goToDashboardBtn = page.getByRole('button', { name: 'Go to dashboard' });
   if (await goToDashboardBtn.count() > 0 && await goToDashboardBtn.isVisible()) {
     await goToDashboardBtn.click();
   }
-  await expect(page.locator('main').first()).toBeVisible({ timeout: 20000 });
+  const gotItBtn = page.getByRole('button', { name: 'Got it' });
+  if (await gotItBtn.count() > 0 && await gotItBtn.isVisible()) {
+    await gotItBtn.click();
+  }
+}
+
+async function expectRouteHealthy(page, path, expectedText) {
+  await page.goto(path, { timeout: 60000 });
+  await dismissWelcomeOverlay(page);
+  const main = page.locator('main').first();
+  await expect(main).toBeVisible({ timeout: 20000 });
   await expect(page.locator('body')).not.toContainText('This section could not be loaded.');
   await expect(page.locator('body')).not.toContainText('This section is not available');
   await expect(page.locator('body')).not.toContainText('404');
   if (expectedText) {
-    await expect(page.getByText(expectedText).first()).toBeVisible({ timeout: 15000 });
+    await expect(main.getByText(expectedText).filter({ visible: true }).first()).toBeVisible({ timeout: 15000 });
   }
 }
 
@@ -80,7 +90,7 @@ test.describe('Final Audit Smoke', () => {
       { path: '/dashboard', text: /Workspace Modules|Start here|Revenue/i },
       { path: '/dashboard/crm', text: /CRM|Contacts|Pipeline/i },
       { path: '/dashboard/deals', text: /Deals|Pipeline/i },
-      { path: '/dashboard/quotes', text: /Quotes|Proposals/i },
+      { path: '/dashboard/business/quotes', text: /Quotes|Proposals/i },
       { path: '/dashboard/business/billing', text: /Billing|Invoices|Revenue/i },
       { path: '/dashboard/accounting', text: /Accounting|Period|Banking/i },
       { path: '/dashboard/marketplace', text: /Integration Marketplace|Integrations|Marketplace/i },
