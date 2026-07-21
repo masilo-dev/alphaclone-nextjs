@@ -429,6 +429,7 @@ export default function ApprovalCenter() {
     handleApproval,
     refresh,
     loading,
+    error,
   } = useBonnieApprovals(tenantId);
 
   const [processing, setProcessing] = useState<string | null>(null);
@@ -496,6 +497,13 @@ export default function ApprovalCenter() {
         </button>
       </div>
 
+      {/* Error state */}
+      {error && pendingApprovals.length === 0 && (
+        <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          {error}. Database may be temporarily unavailable — try Refresh in a minute.
+        </div>
+      )}
+
       {/* Loading */}
       {loading && pendingApprovals.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-slate-600">
@@ -505,7 +513,7 @@ export default function ApprovalCenter() {
       )}
 
       {/* Empty state */}
-      {!loading && pendingApprovals.length === 0 && (
+      {!loading && !error && pendingApprovals.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

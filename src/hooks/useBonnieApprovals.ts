@@ -11,57 +11,40 @@
  *  • Role-aware error surface for high-risk rejections (403 INSUFFICIENT_ROLE)
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabase';
+import {
+  fetchBonnieApprovalsShared,
+  getBonnieApprovalsSnapshot,
+  subscribeBonnieApprovals,
+  type BonnieApprovalItem,
+} from '@/lib/client/bonnieApprovalsStore';
 
-export type BonnieApprovalItem = {
-  id: string;
-  toolName: string;
-  riskLevel: string;
-  reason: string;
-  status: string;
-  createdAt: string;
-  preview: { target?: string; draft?: string };
-  payload: Record<string, unknown>;
-  editHistory?: Array<{ timestamp: string; previous_args?: Record<string, unknown>; new_args?: Record<string, unknown> }>;
-  workflowId?: string | null;
-  conversationId?: string | null;
-};
+export type { BonnieApprovalItem };
 
 export function useBonnieApprovals(tenantId: string | undefined) {
-  const [approvals, setApprovals] = useState<BonnieApprovalItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const snapshot = useSyncExternalStore(
+    subscribeBonnieApprovals,
+    getBonnieApprovalsSnapshot,
+    getBonnieApprovalsSnapshot
+  );
   const realtimeConnected = useRef(false);
 
   const refresh = useCallback(async () => {
-    if (!tenantId) {
-      setApprovals([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/bonnie/approvals?tenantId=${encodeURIComponent(tenantId)}`);
-      const data = await res.json();
-      if (data.success) {
-        setApprovals(data.approvals || []);
-      }
-    } catch {
-      // non-critical
-    } finally {
-      setLoading(false);
-    }
+    if (!tenantId) return;
+    await fetchBonnieApprovalsShared(tenantId, { force: true });
   }, [tenantId]);
 
-  // Initial fetch + polling fallback
   useEffect(() => {
-    void refresh();
-    // Reduced polling since Realtime handles most updates; keep as safety net
-    const interval = setInterval(() => void refresh(), 30_000);
+    if (!tenantId) return;
+    void fetchBonnieApprovalsShared(tenantId);
+    const interval = setInterval(() => {
+      void fetchBonnieApprovalsShared(tenantId);
+    }, 60_000);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [tenantId]);
 
-  // Supabase Realtime subscription — subscribe to changes in autonomous_runner_approvals
   useEffect(() => {
     if (!tenantId) return;
 
@@ -75,9 +58,8 @@ export function useBonnieApprovals(tenantId: string | undefined) {
           table: 'autonomous_runner_approvals',
           filter: `tenant_id=eq.${tenantId}`,
         },
-        (payload: unknown) => {
-          // On any INSERT/UPDATE/DELETE affecting this tenant's approvals, refresh
-          void refresh();
+        () => {
+          void fetchBonnieApprovalsShared(tenantId, { force: true });
         }
       )
       .subscribe((status: string) => {
@@ -88,7 +70,7 @@ export function useBonnieApprovals(tenantId: string | undefined) {
       void supabase.removeChannel(channel);
       realtimeConnected.current = false;
     };
-  }, [tenantId, refresh]);
+  }, [tenantId]);
 
   const handleApproval = useCallback(
     async (
@@ -150,12 +132,15 @@ export function useBonnieApprovals(tenantId: string | undefined) {
     [tenantId, refresh]
   );
 
-  const pendingCount = approvals.filter((a) => a.status === 'pending').length;
+  const pendingCount = snapshot.tenantId === tenantId
+    ? snapshot.approvals.filter((a) => a.status === 'pending').length
+    : 0;
 
   return {
-    approvals,
+    approvals: snapshot.tenantId === tenantId ? snapshot.approvals : [],
     pendingCount,
-    loading,
+    loading: snapshot.tenantId === tenantId ? snapshot.loading : false,
+    error: snapshot.tenantId === tenantId ? snapshot.error : null,
     refresh,
     handleApproval,
     realtimeConnected: realtimeConnected.current,

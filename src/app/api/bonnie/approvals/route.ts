@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId, request);
     const admin = createSupabaseAdminClient();
 
     const { data, error } = await admin
@@ -116,7 +116,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId, approvalId, and args are required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
+    await requireTenantAccess(tenantId, request);
     const admin = createSupabaseAdminClient();
 
     const { data: existing, error: fetchError } = await admin

@@ -33,6 +33,36 @@ const schema = z.object({
   signature: z.union([z.string().max(2_000_000), z.object({ type: z.enum(['draw', 'type']), data: z.string().max(2_000_000) }), z.null()]).optional(),
 });
 
+function emptyToNull(value: unknown): unknown {
+  return value === '' || value === undefined ? null : value;
+}
+
+function normalizeInvoicePayload(raw: unknown) {
+  if (!raw || typeof raw !== 'object') return raw;
+  const body = { ...(raw as Record<string, unknown>) };
+  body.clientId = emptyToNull(body.clientId);
+  body.projectId = emptyToNull(body.projectId);
+  if (body.dueDate === '') delete body.dueDate;
+  if (body.issueDate === '') delete body.issueDate;
+  if (!body.mobilePaymentDetails && body.mobileDetails) {
+    body.mobilePaymentDetails = body.mobileDetails;
+  }
+  if (!body.signature && body.signatureType && (body.signature || body.typedSignature)) {
+    body.signature = {
+      type: body.signatureType,
+      data: body.signature || body.typedSignature,
+    };
+  }
+  if (Array.isArray(body.lineItems)) {
+    body.lineItems = body.lineItems.filter((item) => {
+      if (!item || typeof item !== 'object') return false;
+      const row = item as Record<string, unknown>;
+      return String(row.description || '').trim().length > 0;
+    });
+  }
+  return body;
+}
+
 async function assertReference(admin: ReturnType<typeof createSupabaseAdminClient>, table: 'business_clients' | 'projects', id: string | null | undefined, tenantId: string) {
   if (!id) return;
   const { data, error } = await admin.from(table).select('id').eq('tenant_id', tenantId).eq('id', id).maybeSingle();
@@ -43,7 +73,7 @@ async function assertReference(admin: ReturnType<typeof createSupabaseAdminClien
 export async function POST(req: NextRequest) {
   let quotaReservation: { tenantId: string; userId: string } | null = null;
   try {
-    const parsed = schema.safeParse(await req.json().catch(() => ({})));
+    const parsed = schema.safeParse(normalizeInvoicePayload(await req.json().catch(() => ({}))));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid invoice details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const value = parsed.data;
     const { user } = await requireTenantAccess(value.tenantId, req);

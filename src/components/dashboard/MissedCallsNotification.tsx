@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Image from 'next/image';
-import { PhoneMissed, X, Phone } from 'lucide-react';
+import { PhoneMissed, Phone } from 'lucide-react';
 import { missedCallsService, MissedCall } from '../../services/missedCallsService';
 import { Button, Modal } from '../ui/UIComponents';
 import toast from 'react-hot-toast';
@@ -18,6 +18,11 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
     const [showModal, setShowModal] = useState(false);
     const [missedCalls, setMissedCalls] = useState<MissedCall[]>([]);
     const [loading, setLoading] = useState(false);
+    const onCallBackRef = useRef(onCallBack);
+
+    useEffect(() => {
+        onCallBackRef.current = onCallBack;
+    }, [onCallBack]);
 
     const loadUnseenCount = useCallback(async () => {
         const { count } = await missedCallsService.getUnseenMissedCallsCount(userId);
@@ -32,9 +37,8 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
     }, [userId]);
 
     useEffect(() => {
-        loadUnseenCount();
+        void loadUnseenCount();
 
-        // Subscribe to new missed calls
         const unsubscribe = missedCallsService.subscribeToMissedCalls(
             userId,
             (newMissedCall) => {
@@ -50,9 +54,7 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                             size="sm"
                             onClick={() => {
                                 toast.dismiss(t.id);
-                                if (onCallBack) {
-                                    onCallBack(newMissedCall.caller_id);
-                                }
+                                onCallBackRef.current?.(newMissedCall.caller_id);
                             }}
                         >
                             Call Back
@@ -68,21 +70,18 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
         return () => {
             unsubscribe();
         };
-    }, [userId, loadUnseenCount, onCallBack]);
+    }, [userId, loadUnseenCount]);
 
     const handleOpenModal = useCallback(async () => {
         setShowModal(true);
         await loadMissedCalls();
-        // Mark all as seen
         await missedCallsService.markAllMissedCallsSeen(userId);
         setUnseenCount(0);
     }, [userId, loadMissedCalls]);
 
     const handleCallBack = (callerId: string) => {
         setShowModal(false);
-        if (onCallBack) {
-            onCallBack(callerId);
-        }
+        onCallBackRef.current?.(callerId);
     };
 
     if (unseenCount === 0) return null;
