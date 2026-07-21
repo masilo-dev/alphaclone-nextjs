@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { isProduction } from '@/lib/security/productionGuard';
-import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
+import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -78,12 +78,7 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     }
 
     // Check if this is an API key (internal service)
-    const { data: apiKeyData } = await supabase
-      .from('mcp_api_keys')
-      .select('tenant_id')
-      .eq('api_key_hash', hashMcpApiKey(token))
-      .eq('is_active', true)
-      .maybeSingle();
+    const apiKeyData = await lookupMcpApiKey(supabase, token, { requireActive: true });
 
     if (apiKeyData) {
       return { isAuthenticated: true, clientId: 'internal-service' };

@@ -50,37 +50,33 @@ async function upsertMcpKey(
 ) {
   const keyHash = hashMcpApiKey(token);
   const now = new Date().toISOString();
+  const base = {
+    tenant_id: tenantId,
+    user_id: userId,
+    updated_at: now,
+  };
 
-  const hashOnly = await admin.from('mcp_api_keys').upsert(
-    {
-      tenant_id: tenantId,
-      user_id: userId,
-      api_key: null,
-      api_key_hash: keyHash,
-      updated_at: now,
-    },
+  // Prefer hash in api_key first — works when api_key is still NOT NULL.
+  const hashedInApiKey = await admin.from('mcp_api_keys').upsert(
+    { ...base, api_key: keyHash, api_key_hash: keyHash },
     { onConflict: 'tenant_id,user_id' }
   );
-  if (!hashOnly.error) return;
+  if (!hashedInApiKey.error) return;
 
   const legacyHashed = await admin.from('mcp_api_keys').upsert(
-    {
-      tenant_id: tenantId,
-      user_id: userId,
-      api_key: keyHash,
-      updated_at: now,
-    },
+    { ...base, api_key: keyHash },
     { onConflict: 'tenant_id,user_id' }
   );
   if (!legacyHashed.error) return;
 
+  const hashOnly = await admin.from('mcp_api_keys').upsert(
+    { ...base, api_key: null, api_key_hash: keyHash },
+    { onConflict: 'tenant_id,user_id' }
+  );
+  if (!hashOnly.error) return;
+
   const legacyPlain = await admin.from('mcp_api_keys').upsert(
-    {
-      tenant_id: tenantId,
-      user_id: userId,
-      api_key: token,
-      updated_at: now,
-    },
+    { ...base, api_key: token },
     { onConflict: 'tenant_id,user_id' }
   );
   if (legacyPlain.error) throw legacyPlain.error;

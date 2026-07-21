@@ -8,7 +8,7 @@ import {
   PLATFORM_MCP_OAUTH_CLIENT_IDS,
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
-import { hashMcpApiKey } from '@/lib/security/mcpKeyHash';
+import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -340,14 +340,9 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   }
 
   // Validate API key → resolve tenant + user
-  const { data: keyData, error: keyError } = await supabase
-    .from('mcp_api_keys')
-    .select('tenant_id, user_id')
-    .eq('api_key_hash', hashMcpApiKey(apiKey))
-    .eq('is_active', true)
-    .single();
+  const keyData = await lookupMcpApiKey(supabase, apiKey, { requireActive: true });
 
-  if (keyError || !keyData) {
+  if (!keyData) {
     console.warn('[MCP Authorize] Invalid API key presented');
     // If browser form, re-render with error instead of redirecting with access_denied
     return serveConsentPage({

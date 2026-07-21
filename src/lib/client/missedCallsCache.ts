@@ -8,8 +8,8 @@ let cached: CachedCount | null = null;
 let inflight: Promise<{ count: number; error: string | null }> | null = null;
 let backoffUntil = 0;
 
-const MIN_INTERVAL_MS = 30_000;
-const BACKOFF_MS = 120_000;
+const MIN_INTERVAL_MS = 60_000;
+const BACKOFF_MS = 180_000;
 
 export function readMissedCallsCache(userId: string): number | null {
   if (!cached || cached.userId !== userId) return null;
