@@ -82,6 +82,7 @@ export async function runCampaignOnPlatform(
     progress: leadCount > 0 ? 100 : 15,
     source_count: leadCount,
     enriched_count: leadCount,
+    run_at: new Date().toISOString(),
   };
   await supabase.from('lead_campaign_runs').insert(runPayload);
   await supabase.from('lead_run_log').insert(runPayload).then((r: { error: { message: string } | null }) => {

@@ -43,14 +43,14 @@ export async function logLeadRun(input: {
   const payload = {
     tenant_id: input.tenantId,
     campaign_id: input.campaignId,
-    market: input.market,
-    category: input.category,
     status: input.status,
     source_count: input.sourceCount,
     enriched_count: input.enrichedCount,
     created_count: input.createdCount,
     errors: input.errors || [],
-    created_at: new Date().toISOString(),
+    run_at: new Date().toISOString(),
+    message: [input.market, input.category].filter(Boolean).join(' · ') || null,
+    metadata: { market: input.market, category: input.category },
   };
 
   const { error } = await supabase.from('lead_run_log').insert(payload);
