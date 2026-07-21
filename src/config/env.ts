@@ -214,6 +214,10 @@ function validateEnv() {
         LIVEKIT_API_SECRET: process.env.LIVEKIT_API_SECRET,
         VITE_STRIPE_PUBLIC_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLIC_KEY,
         VITE_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN || process.env.VITE_SENTRY_DSN,
+        VITE_VAPID_PUBLIC_KEY:
+            process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+            process.env.VITE_VAPID_PUBLIC_KEY ||
+            '',
         VITE_CALENDLY_CLIENT_ID: process.env.NEXT_PUBLIC_CALENDLY_CLIENT_ID || process.env.VITE_CALENDLY_CLIENT_ID || process.env.CALENDLY_CLIENT_ID,
         CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
         VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/calendly/callback`,

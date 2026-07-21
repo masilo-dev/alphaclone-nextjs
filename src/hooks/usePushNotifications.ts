@@ -57,7 +57,8 @@ export function usePushNotifications() {
                 return false;
             }
 
-            const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            const vapidPublicKey =
+                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VITE_VAPID_PUBLIC_KEY;
             if (!vapidPublicKey) {
                 return false;
             }

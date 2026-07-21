@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { redis } from '@/lib/cache/redis';
+import { isVapidConfigured } from '@/lib/push/vapidEnv';
 
 /**
  * Liveness endpoint for Railway and external monitors.
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
     const stripeConfigured = !!ENV.STRIPE_SECRET_KEY;
     const dailyConfigured = !!ENV.DAILY_API_KEY;
     const resendConfigured = !!ENV.RESEND_API_KEY;
-    const pushConfigured = !!ENV.VITE_VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY;
+    const pushConfigured = isVapidConfigured();
 
     // 1. Check database connection
     try {

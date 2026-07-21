@@ -3,6 +3,7 @@ import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requirePlatformSuperAdmin, routeErrorResponse } from '@/lib/apiAuth';
 import type { PlatformEnvStatus, PlatformGlobalSettings } from '@/types/platformSettings';
+import { isVapidConfigured } from '@/lib/push/vapidEnv';
 
 const SINGLETON = 'default';
 
@@ -39,7 +40,7 @@ function buildEnvStatus(): PlatformEnvStatus {
       process.env.TURNSTILE_SECRET_KEY !== 'placeholder' &&
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     ),
-    webPush: !!(ENV.VITE_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY),
+    webPush: isVapidConfigured(),
   };
 }
 
