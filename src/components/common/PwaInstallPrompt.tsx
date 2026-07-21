@@ -7,12 +7,27 @@ import { usePWA } from '@/contexts/PWAContext';
 import { pwaService } from '@/services/pwaService';
 import { Button } from '@/components/ui/UIComponents';
 
-const DISMISS_KEY = 'ac_pwa_install_dismissed';
-const DISMISS_DAYS = 7;
+const DISMISS_KEY = 'ac_pwa_install_dismissed_until';
+/** How long “Not now / Got it / X” stays dismissed. */
+const DISMISS_MS = 90 * 24 * 60 * 60 * 1000;
+const SESSION_SHOWN_KEY = 'ac_pwa_install_shown_session';
+
+function isDismissed(): boolean {
+  if (typeof window === 'undefined') return true;
+  const until = parseInt(localStorage.getItem(DISMISS_KEY) || '0', 10);
+  if (until && Date.now() < until) return true;
+  // Legacy key from older banner (ISO date string)
+  const legacy = localStorage.getItem('ac_pwa_install_dismissed');
+  if (legacy) {
+    const days = (Date.now() - new Date(legacy).getTime()) / (1000 * 60 * 60 * 24);
+    if (days < 90) return true;
+  }
+  return false;
+}
 
 /**
- * Global install banner — works on laptop (Chrome/Edge) via beforeinstallprompt
- * and shows manual steps when the browser has no native prompt (Safari, Firefox).
+ * Single global install banner.
+ * Shows at most once per browser session, and not again for 90 days after dismiss.
  */
 export default function PwaInstallPrompt() {
   const pathname = usePathname();
@@ -24,31 +39,45 @@ export default function PwaInstallPrompt() {
   useEffect(() => {
     if (typeof window === 'undefined' || isLoading || isPWA) return;
     if (window.matchMedia('(display-mode: standalone)').matches) return;
-
-    const dismissed = localStorage.getItem(DISMISS_KEY);
-    if (dismissed) {
-      const days = (Date.now() - new Date(dismissed).getTime()) / (1000 * 60 * 60 * 24);
-      if (days < DISMISS_DAYS) return;
+    if (isDismissed()) return;
+    // Already shown (or dismissed) once this tab/session — don't reappear on every route change.
+    if (sessionStorage.getItem(SESSION_SHOWN_KEY) === '1') return;
+    // Don't interrupt login / OAuth connect popups.
+    if (pathname?.startsWith('/auth') || pathname?.startsWith('/authorize') || pathname?.startsWith('/login')) {
+      return;
     }
 
+    let cancelled = false;
     void pwaService.registerServiceWorker();
 
-    void pwaService.getInstallPrompt().then(({ prompt }) => {
-      setCanNativeInstall(Boolean(prompt));
+    const show = (native: boolean) => {
+      if (cancelled || isDismissed()) return;
+      sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
+      setCanNativeInstall(native);
       setVisible(true);
+    };
+
+    void pwaService.getInstallPrompt().then(({ prompt }) => {
+      show(Boolean(prompt));
     });
 
     const timer = window.setTimeout(() => {
-      setVisible((prev) => prev || pwaService.isInstallable());
-    }, 2500);
+      if (!cancelled) show(pwaService.isInstallable());
+    }, 4000);
 
-    return () => window.clearTimeout(timer);
-  }, [isLoading, isPWA, pathname]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+    // Intentionally omit pathname from deps for re-show — session flag gates repeats.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isPWA]);
 
   if (!visible) return null;
 
   const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, new Date().toISOString());
+    localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_MS));
+    sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
     setVisible(false);
   };
 
@@ -57,23 +86,22 @@ export default function PwaInstallPrompt() {
     const { success } = await pwaService.promptInstall();
     setInstalling(false);
     if (success) {
+      localStorage.setItem(DISMISS_KEY, String(Date.now() + DISMISS_MS));
+      sessionStorage.setItem(SESSION_SHOWN_KEY, '1');
       setVisible(false);
       return;
     }
     dismiss();
   };
 
-  const isAuth = pathname?.startsWith('/auth');
   const isMarketing = !pathname?.startsWith('/dashboard');
 
   return (
     <div
       className={`fixed z-[130] pointer-events-none ${
-        isAuth
-          ? 'bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-sm'
-          : isMarketing
-            ? 'bottom-4 left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:max-w-md'
-            : 'bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:max-w-md'
+        isMarketing
+          ? 'bottom-4 left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:max-w-md'
+          : 'bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:max-w-md'
       }`}
     >
       <div className="pointer-events-auto rounded-2xl border border-cyan-500/25 bg-slate-950/95 backdrop-blur-xl shadow-2xl p-4 sm:p-5">
@@ -86,7 +114,7 @@ export default function PwaInstallPrompt() {
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
               {canNativeInstall
                 ? 'Add the app to your laptop or phone — opens in its own window, no browser toolbar.'
-                : 'Use your browser menu: Install app (Chrome/Edge) or Add to Dock (Safari). Works on laptop and mobile.'}
+                : 'Use your browser menu: Install app (Chrome/Edge) or Add to Home Screen on mobile.'}
             </p>
             <div className="flex flex-wrap gap-2 mt-3">
               {canNativeInstall ? (
