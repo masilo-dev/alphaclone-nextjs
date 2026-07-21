@@ -20,6 +20,11 @@ import {
   resolveAutoProvider,
   type DeliveryEmailProvider,
 } from '@/lib/email/emailProviderOptions';
+import {
+  clearLocalComposeDraft,
+  loadLocalComposeDraft,
+  saveLocalComposeDraft,
+} from '@/lib/email/composeDraftStorage';
 
 function parseRecipientList(value: string): string[] {
     return value
@@ -81,6 +86,9 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [selectedProvider, setSelectedProvider] = useState<IntegrationConfig | null>(null);
     const [showContactDropdown, setShowContactDropdown] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+    const [savingDraft, setSavingDraft] = useState(false);
+    const autoSaveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -91,8 +99,21 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             setBody(initialBody);
             setSearchQuery('');
             setAiPrompt('');
+            setAutoSaveStatus('idle');
+
+            if (!initialTo && !initialSubject && !initialBody && currentTenant?.id) {
+                const stored = loadLocalComposeDraft(currentTenant.id, userId);
+                if (stored) {
+                    setTo(stored.to);
+                    setCc(stored.cc);
+                    setBcc(stored.bcc);
+                    setSubject(stored.subject);
+                    setBody(stored.body);
+                    setDeliveryProvider(stored.deliveryProvider);
+                }
+            }
         }
-    }, [isOpen, initialTo, initialSubject, initialBody]);
+    }, [isOpen, initialTo, initialSubject, initialBody, currentTenant?.id, userId]);
 
     React.useEffect(() => {
         if (isOpen && currentTenant?.id) {
@@ -177,6 +198,29 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    React.useEffect(() => {
+        if (!isOpen || !currentTenant?.id) return;
+        if (!to && !subject && !body) return;
+
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = setTimeout(() => {
+            setAutoSaveStatus('saving');
+            saveLocalComposeDraft(currentTenant.id, userId, {
+                to,
+                cc,
+                bcc,
+                subject,
+                body,
+                deliveryProvider,
+            });
+            setAutoSaveStatus('saved');
+        }, 1500);
+
+        return () => {
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+        };
+    }, [isOpen, currentTenant?.id, userId, to, cc, bcc, subject, body, deliveryProvider]);
 
     const filteredClients = clients.filter(c =>
         c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -300,6 +344,61 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         }
     };
 
+    const handleSaveDraft = async () => {
+        if (!currentTenant?.id) {
+            toast.error('No active workspace selected.');
+            return;
+        }
+        if (!body.trim()) {
+            toast.error('Add some message text before saving a draft.');
+            return;
+        }
+
+        setSavingDraft(true);
+        try {
+            saveLocalComposeDraft(currentTenant.id, userId, {
+                to,
+                cc,
+                bcc,
+                subject,
+                body,
+                deliveryProvider,
+            });
+
+            const connectedIds = providerOptions.filter((p) => p.connected).map((p) => p.id);
+            const resolvedType =
+                deliveryProvider === 'auto'
+                    ? resolveAutoProvider(connectedIds, workspaceDefault)
+                    : deliveryProvider;
+
+            if (resolvedType === 'microsoft' || resolvedType === 'zoho') {
+                const res = await fetch('/api/email/drafts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tenantId: currentTenant.id,
+                        to,
+                        cc,
+                        bcc,
+                        subject,
+                        body,
+                        deliveryProvider: resolvedType,
+                    }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Failed to save draft to mailbox');
+                toast.success(data.note || `Draft saved to ${resolvedType}`);
+            } else {
+                toast.success('Draft saved on this device. Pick Microsoft or Zoho to sync to your mailbox drafts folder.');
+            }
+            setAutoSaveStatus('saved');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Failed to save draft');
+        } finally {
+            setSavingDraft(false);
+        }
+    };
+
     const handleSend = async () => {
         if (toRecipients.length === 0) {
             toast.error('Add at least one recipient.');
@@ -371,6 +470,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             toast.success(
                 `${allRecipients.length === 1 ? 'Email' : `${allRecipients.length} emails`} sent via ${String(sendProvider || selectedProvider?.type || 'platform').toUpperCase()}`
             );
+            if (currentTenant?.id) clearLocalComposeDraft(currentTenant.id, userId);
             onClose();
             setTo('');
             setCc('');
@@ -725,19 +825,28 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                         </div>
 
                         {/* Footer */}
-                        <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between">
-                            <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em] hidden sm:block">
-                                Encrypted Transmission Status: READY
+                        <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between gap-4 flex-wrap">
+                            <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em]">
+                                {autoSaveStatus === 'saving' && 'Saving draft…'}
+                                {autoSaveStatus === 'saved' && 'Draft saved locally'}
+                                {autoSaveStatus === 'idle' && 'Encrypted Transmission Status: READY'}
                             </div>
                             <div className="hidden sm:block max-w-[320px]">
                                 <AIOutputDisclaimer type="email" />
                             </div>
-                            <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 sm:flex-none px-8 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
+                                    className="flex-1 sm:flex-none px-6 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
                                 >
                                     Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveDraft}
+                                    disabled={savingDraft || !body.trim()}
+                                    className="flex-1 sm:flex-none px-6 py-3.5 rounded-2xl border border-white/10 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest transition-all disabled:opacity-40"
+                                >
+                                    {savingDraft ? 'Saving…' : 'Save Draft'}
                                 </button>
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}

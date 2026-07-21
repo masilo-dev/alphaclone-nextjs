@@ -37,6 +37,11 @@ import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 import { parseEmailFromHeader } from '../crm/emailRecipient';
 import type { InboxFolder, InboxProvider, UnifiedInboxMessage } from '@/types/unifiedInbox';
 import type { DeliveryEmailProvider } from '@/lib/email/emailProviderOptions';
+import {
+  normalizeDeliveryProvider,
+  resolveAutoProvider,
+} from '@/lib/email/emailProviderOptions';
+import EmailProviderSelector from '@/components/shared/EmailProviderSelector';
 
 type ComposeState = {
   to?: string;
@@ -122,6 +127,11 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
   const [inlineReply, setInlineReply] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deliveryProvider, setDeliveryProvider] = useState<DeliveryEmailProvider>('auto');
+  const [workspaceDefault, setWorkspaceDefault] = useState<DeliveryEmailProvider>('auto');
+  const [providerOptions, setProviderOptions] = useState<
+    Array<{ id: DeliveryEmailProvider; label: string; connected: boolean; native?: boolean; campaigns?: boolean }>
+  >([]);
 
   const microsoft = useMicrosoftEmails(50, statusChecked && provider === 'microsoft');
   const zoho = useZohoEmails(50, statusChecked && provider === 'zoho', currentTenant?.id);
@@ -163,6 +173,22 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
       cancelled = true;
     };
   }, [defaultProvider, urlProvider, currentTenant?.id]);
+
+  useEffect(() => {
+    if (!currentTenant?.id) return;
+    fetch(`/api/settings/email-provider?tenantId=${encodeURIComponent(currentTenant.id)}`, {
+      credentials: 'include',
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((data) => {
+        const connected = (data.connectedProviders || []) as typeof providerOptions;
+        setProviderOptions(connected);
+        const tenantDefault = normalizeDeliveryProvider(data.defaultProvider);
+        setWorkspaceDefault(tenantDefault);
+        setDeliveryProvider(tenantDefault);
+      })
+      .catch(() => {});
+  }, [currentTenant?.id]);
 
   useEffect(() => {
     if (!statusChecked || !searchParams || searchParams.get('action') !== 'compose') return;
@@ -237,12 +263,20 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
   };
 
   const openCompose = (draft: ComposeState) => {
-    setComposeDraft(draft);
+    const connectedIds = providerOptions.filter((p) => p.connected).map((p) => p.id);
+    const resolved =
+      deliveryProvider === 'auto'
+        ? resolveAutoProvider(connectedIds, workspaceDefault)
+        : deliveryProvider;
+    setComposeDraft({
+      ...draft,
+      preferredProvider: draft.preferredProvider || resolved,
+    });
     setComposeOpen(true);
   };
 
   const openNewEmail = () => {
-    openCompose({ preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho' });
+    openCompose({});
   };
 
   const openReply = (replyAll = false, bodyOverride?: string) => {
@@ -265,7 +299,6 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
       to: [...new Set(toList)].join(', '),
       subject,
       body: bodyOverride ?? buildReplyQuote(selectedEmail),
-      preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho',
     });
   };
 
@@ -279,7 +312,6 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
         ? selectedEmail.subject
         : `Fwd: ${selectedEmail.subject || ''}`,
       body: buildForwardBody(selectedEmail),
-      preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho',
     });
   };
 
@@ -289,7 +321,6 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
       to: (email.to || []).join(', ') || parsed.email || '',
       subject: email.subject || '',
       body: email.body || email.snippet || '',
-      preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho',
     });
   };
 
@@ -933,9 +964,19 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
               {folder !== 'sent' && folder !== 'trash' && (
                 <div className="p-4 border-t border-white/5 shrink-0">
-                  <div className="rounded-xl border border-white/10 bg-slate-950/80 p-3 space-y-2">
+                  <div className="rounded-xl border border-white/10 bg-slate-950/80 p-3 space-y-3">
+                    {providerOptions.some((p) => p.connected) && (
+                      <EmailProviderSelector
+                        value={deliveryProvider}
+                        onChange={setDeliveryProvider}
+                        providers={providerOptions}
+                        compact
+                      />
+                    )}
                     <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                      {provider === 'microsoft' ? 'Quick reply via Outlook' : 'Quick reply'}
+                      {provider === 'microsoft' && deliveryProvider === 'microsoft'
+                        ? 'Quick reply via Outlook'
+                        : 'Quick reply — or open full compose to send'}
                     </p>
                     <textarea
                       value={inlineReply}
@@ -946,10 +987,10 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                     />
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <p className="text-[10px] text-slate-500">
-                        Need Brevo, SendGrid, or Resend? Use Reply above for full compose with provider picker.
+                        Send via Brevo, SendGrid, Resend, Zoho, or Outlook — pick above or use Reply for full compose.
                       </p>
                       <div className="flex gap-2">
-                        {provider === 'microsoft' && (
+                        {provider === 'microsoft' && deliveryProvider === 'microsoft' && (
                           <button
                             type="button"
                             onClick={() => handleInlineReply(true)}
@@ -962,11 +1003,13 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                         )}
                         <button
                           type="button"
-                          onClick={() =>
-                            provider === 'microsoft'
-                              ? handleInlineReply(false)
-                              : openReply(false, inlineReply + buildReplyQuote(selectedEmail!))
-                          }
+                          onClick={() => {
+                            if (provider === 'microsoft' && deliveryProvider === 'microsoft') {
+                              void handleInlineReply(false);
+                              return;
+                            }
+                            openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!)}`);
+                          }}
                           disabled={sendingReply || !inlineReply.trim()}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
                         >

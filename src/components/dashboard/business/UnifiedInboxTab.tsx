@@ -13,6 +13,12 @@ import { useTenant } from '@/contexts/TenantContext';
 import { extractEmailAddress } from '@/lib/email/composeNavigation';
 import toast from 'react-hot-toast';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
+import EmailProviderSelector from '@/components/shared/EmailProviderSelector';
+import {
+  normalizeDeliveryProvider,
+  resolveAutoProvider,
+  type DeliveryEmailProvider,
+} from '@/lib/email/emailProviderOptions';
 
 function resolveOutreachProvider(source?: string | null): string | undefined {
   const normalized = String(source || '').toLowerCase();
@@ -61,6 +67,12 @@ export default function UnifiedInboxTab() {
   const [sendingReply, setSendingReply] = useState(false);
   const [processingIntelligence, setProcessingIntelligence] = useState(false);
   const [customReplyPrompt, setCustomReplyPrompt] = useState('');
+  const [deliveryProvider, setDeliveryProvider] = useState<DeliveryEmailProvider>('auto');
+  const [workspaceDefault, setWorkspaceDefault] = useState<DeliveryEmailProvider>('auto');
+  const [providerOptions, setProviderOptions] = useState<
+    Array<{ id: DeliveryEmailProvider; label: string; connected: boolean; native?: boolean; campaigns?: boolean }>
+  >([]);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const loadMessages = useCallback(async () => {
     if (!tenant?.id) return;
@@ -90,6 +102,59 @@ export default function UnifiedInboxTab() {
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
+
+  useEffect(() => {
+    if (!tenant?.id) return;
+    fetch(`/api/settings/email-provider?tenantId=${encodeURIComponent(tenant.id)}`, {
+      credentials: 'include',
+    })
+      .then((r) => r.json().catch(() => ({})))
+      .then((data) => {
+        const connected = (data.connectedProviders || []) as typeof providerOptions;
+        setProviderOptions(connected);
+        const tenantDefault = normalizeDeliveryProvider(data.defaultProvider);
+        setWorkspaceDefault(tenantDefault);
+        setDeliveryProvider(tenantDefault);
+      })
+      .catch(() => {});
+  }, [tenant?.id]);
+
+  const resolveSendProvider = () => {
+    const connectedIds = providerOptions.filter((p) => p.connected).map((p) => p.id);
+    const fromPicker =
+      deliveryProvider === 'auto'
+        ? resolveAutoProvider(connectedIds, workspaceDefault)
+        : deliveryProvider;
+    if (fromPicker !== 'auto') return fromPicker;
+    return resolveOutreachProvider(selectedMessage?.source);
+  };
+
+  const handleSaveDraftToMailbox = async () => {
+    if (!tenant?.id || !draftReplyText.trim()) return;
+    setSavingDraft(true);
+    try {
+      const recipient = selectedMessage ? extractEmailAddress(selectedMessage.from_address) : '';
+      const provider = resolveSendProvider();
+      const res = await fetch('/api/email/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenantId: tenant.id,
+          to: recipient,
+          subject: replySubject,
+          body: draftReplyText,
+          deliveryProvider: provider === 'auto' ? 'zoho' : provider,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to save draft');
+      toast.success(data.note || 'AI draft saved to drafts');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save draft');
+    } finally {
+      setSavingDraft(false);
+    }
+  };
 
   const handleSelectMessage = async (msg: UnifiedMessage) => {
     setSelectedMessage(msg);
@@ -154,7 +219,24 @@ export default function UnifiedInboxTab() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Draft generation failed');
       setDraftReplyText(data.draft);
-      toast.success('AI Draft generated successfully!');
+      toast.success('AI draft generated — review before sending');
+
+      if (tenant?.id && selectedMessage?.channel === 'email') {
+        const provider = resolveSendProvider();
+        void fetch('/api/email/drafts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tenantId: tenant.id,
+            to: extractEmailAddress(selectedMessage.from_address),
+            subject: replySubject,
+            body: data.draft,
+            deliveryProvider: provider === 'auto' ? 'zoho' : provider,
+          }),
+        }).then(async (draftRes) => {
+          if (draftRes.ok) toast.success('Saved to your drafts folder for review');
+        });
+      }
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -203,7 +285,7 @@ export default function UnifiedInboxTab() {
     const sendToast = toast.loading('Sending email...');
     try {
       const subject = replySubject.trim() || `Re: ${selectedMessage.subject || 'Your message'}`;
-      const provider = resolveOutreachProvider(selectedMessage.source);
+      const provider = resolveSendProvider();
 
       const response = await fetch('/api/outreach/send', {
         method: 'POST',
@@ -544,6 +626,15 @@ export default function UnifiedInboxTab() {
                     </button>
                   </div>
 
+                  {selectedMessage.channel === 'email' && providerOptions.some((p) => p.connected) && (
+                    <EmailProviderSelector
+                      value={deliveryProvider}
+                      onChange={setDeliveryProvider}
+                      providers={providerOptions}
+                      compact
+                    />
+                  )}
+
                   {selectedMessage.channel === 'email' && (
                     <input
                       type="text"
@@ -580,6 +671,15 @@ export default function UnifiedInboxTab() {
                         className="px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-400 rounded-xl text-xs font-semibold"
                       >
                         Clear Draft
+                      </button>
+                    )}
+                    {selectedMessage.channel === 'email' && draftReplyText && (
+                      <button
+                        onClick={handleSaveDraftToMailbox}
+                        disabled={savingDraft}
+                        className="px-4 py-2 border border-white/10 text-slate-300 hover:text-white rounded-xl text-xs font-semibold disabled:opacity-40"
+                      >
+                        {savingDraft ? 'Saving…' : 'Save to Drafts'}
                       </button>
                     )}
                     <button

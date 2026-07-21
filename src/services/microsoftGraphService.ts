@@ -147,6 +147,24 @@ export const microsoftGraphService = {
     return { success: true };
   },
 
+  async createDraft(input: {
+    to?: string[];
+    subject?: string;
+    body: string;
+    cc?: string[];
+  }) {
+    const data = await graphRequest<{ id: string }>('/me/messages', {
+      method: 'POST',
+      body: {
+        subject: input.subject || '',
+        body: { contentType: 'HTML', content: input.body },
+        toRecipients: (input.to || []).map((email) => ({ emailAddress: { address: email } })),
+        ccRecipients: (input.cc || []).map((email) => ({ emailAddress: { address: email } })),
+      },
+    });
+    return { id: data.id, success: true };
+  },
+
   async getCalendarEvents(startDateTime?: string, endDateTime?: string) {
     const query = new URLSearchParams();
     if (startDateTime) query.set('startDateTime', startDateTime);

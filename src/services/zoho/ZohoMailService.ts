@@ -344,6 +344,40 @@ export class ZohoMailService extends ZohoService {
         return result;
     }
 
+    async saveDraft(params: {
+        fromAddress?: string;
+        toAddress?: string;
+        subject: string;
+        content: string;
+        ccAddress?: string;
+        bccAddress?: string;
+        inReplyTo?: string;
+    }) {
+        const { base } = await this.getMailBase();
+        const validAddresses = await this.getSenderAddresses();
+        if (!params.fromAddress || (validAddresses.length > 0 && !validAddresses.includes(params.fromAddress))) {
+            const primary = validAddresses.length > 0 ? validAddresses[0] : null;
+            if (primary) params.fromAddress = primary;
+        }
+
+        const subject = normalizeEmailSubject(params.subject) || '(Draft)';
+        const toAddress = params.toAddress ? extractEmailAddress(params.toAddress) : '';
+
+        return this.callZohoAPI(`${base}/messages`, {
+            method: 'POST',
+            body: JSON.stringify({
+                mode: 'draft',
+                fromAddress: params.fromAddress,
+                toAddress: toAddress || undefined,
+                subject,
+                content: String(params.content || ''),
+                ccAddress: params.ccAddress,
+                bccAddress: params.bccAddress,
+                inReplyTo: params.inReplyTo,
+            }),
+        });
+    }
+
     async replyToMessage(params: {
         messageId: string;
         bodyHtml: string;
@@ -642,29 +676,47 @@ Rules:
                     sender,
                     sender_email: normalizedSenderEmail,
                     subject,
-                    triage_status: 'scheduled',
+                    triage_status: 'draft_ready',
                     draft_reply: draftReply,
-                    ai_analysis: { classification: 'qualified' },
+                    ai_analysis: { classification: 'qualified', mode: 'draft_only' },
                 }).select().single();
 
                 if (log) {
-                    const { Client } = await import('@upstash/qstash');
-                    const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
-                    const autoReplyDelaySeconds = Number(process.env.EMAIL_AUTO_REPLY_DELAY_SECONDS || '3600');
-                    await qstash.publishJSON({
-                        url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
-                        body: {
-                            userId: this.userId,
-                            tenantId: this.tenantId,
-                            messageId,
-                            folderId,
-                            senderEmail: normalizedSenderEmail,
-                            originalSubject: normalizeReplySubject(subject),
-                            replyText: draftReply,
-                            logId: log.id,
-                        },
-                        delay: autoReplyDelaySeconds,
-                    });
+                    try {
+                        await this.saveDraft({
+                            toAddress: normalizedSenderEmail,
+                            subject: normalizeReplySubject(subject),
+                            content: draftReply,
+                            inReplyTo: messageId,
+                        });
+                    } catch (draftErr) {
+                        console.warn('[ZohoMailService] Could not save AI reply to Zoho drafts folder:', draftErr);
+                    }
+
+                    const autoSendEnabled = process.env.EMAIL_AUTO_REPLY_AUTO_SEND === 'true';
+                    if (autoSendEnabled) {
+                        const { Client } = await import('@upstash/qstash');
+                        const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
+                        const autoReplyDelaySeconds = Number(process.env.EMAIL_AUTO_REPLY_DELAY_SECONDS || '3600');
+                        await qstash.publishJSON({
+                            url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
+                            body: {
+                                userId: this.userId,
+                                tenantId: this.tenantId,
+                                messageId,
+                                folderId,
+                                senderEmail: normalizedSenderEmail,
+                                originalSubject: normalizeReplySubject(subject),
+                                replyText: draftReply,
+                                logId: log.id,
+                            },
+                            delay: autoReplyDelaySeconds,
+                        });
+                        await supabase
+                            .from('zoho_auto_responder_logs')
+                            .update({ triage_status: 'scheduled' })
+                            .eq('id', log.id);
+                    }
                 }
             } else {
                 await supabase.from('zoho_auto_responder_logs').insert({
