@@ -6,13 +6,16 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   AlertTriangle,
+  Forward,
   Loader2,
   Mail,
   PenSquare,
   RefreshCw,
   Reply,
+  ReplyAll,
   Search,
   Send,
+  Trash2,
   UserPlus,
   Users,
 } from 'lucide-react';
@@ -22,9 +25,9 @@ import { buildSafeEmailBodyHtml } from '@/lib/email/sanitizeEmailHtml';
 import { refreshMicrosoftTokenIfNeeded, refreshZohoTokenIfNeeded } from '@/lib/email/tokenRefresh';
 import { useMicrosoftEmails } from '@/hooks/useMicrosoftEmails';
 import { useZohoEmails } from '@/hooks/useZohoEmails';
-import { useGmailEmails } from '@/hooks/useGmailEmails';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
+import { microsoftGraphService } from '@/services/microsoftGraphService';
 import { businessClientService } from '@/services/businessClientService';
 import { contactService } from '@/services/contactService';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,12 +36,15 @@ import ComposeEmailModal from './ComposeEmailModal';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 import { parseEmailFromHeader } from '../crm/emailRecipient';
 import type { InboxFolder, InboxProvider, UnifiedInboxMessage } from '@/types/unifiedInbox';
+import type { DeliveryEmailProvider } from '@/lib/email/emailProviderOptions';
 
 type ComposeState = {
   to?: string;
+  cc?: string;
+  bcc?: string;
   subject?: string;
   body?: string;
-  preferredProvider?: InboxProvider;
+  preferredProvider?: DeliveryEmailProvider;
 };
 
 type UnifiedInboxViewProps = {
@@ -53,28 +59,19 @@ function toUnifiedMicrosoft(
     provider: 'microsoft' as const,
     subject: email.subject,
     from: email.from,
+    to: email.to,
     snippet: email.snippet,
     body: email.body,
     receivedAt: email.receivedAt,
+    threadId: email.threadId,
+    isRead: email.isRead,
+    hasAttachments: email.hasAttachments,
+    webLink: email.webLink,
   }));
 }
 
-function toUnifiedGmail(
-  emails: ReturnType<typeof useGmailEmails>['emails']
-): UnifiedInboxMessage[] {
-  return emails.map((email) => ({
-    id: email.id,
-    provider: 'gmail' as const,
-    subject: email.subject || '(No subject)',
-    from: email.from || 'Unknown sender',
-    snippet: email.snippet,
-    body: email.body,
-    receivedAt: email.date || new Date().toISOString(),
-  }));
-}
-
-async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean; gmail: boolean }> {
-  const [microsoft, zoho, gmailRes] = await Promise.all([
+async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean }> {
+  const [microsoft, zoho] = await Promise.all([
     microsoftAuthService.isConnected().catch(() => false),
     tenantId
       ? fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
@@ -82,14 +79,20 @@ async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: bool
           .then((d) => Boolean(d.isConnected))
           .catch(() => false)
       : Promise.resolve(false),
-    tenantId
-      ? fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(tenantId)}&provider=gmail`)
-          .then((r) => r.json().catch(() => ({})))
-          .then((d) => Boolean(d.connected))
-          .catch(() => false)
-      : Promise.resolve(false),
   ]);
-  return { microsoft, zoho, gmail: gmailRes };
+  return { microsoft, zoho };
+}
+
+function buildReplyQuote(email: UnifiedInboxMessage): string {
+  const when = new Date(email.receivedAt).toLocaleString();
+  const excerpt = email.snippet || '';
+  return `\n\n---\nOn ${when}, ${email.from} wrote:\n${excerpt}`;
+}
+
+function buildForwardBody(email: UnifiedInboxMessage): string {
+  const when = new Date(email.receivedAt).toLocaleString();
+  const bodyText = email.body?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || email.snippet || '';
+  return `\n\n---------- Forwarded message ----------\nFrom: ${email.from}\nDate: ${when}\nSubject: ${email.subject || '(no subject)'}\n\n${bodyText}`;
 }
 
 export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewProps) {
@@ -100,13 +103,11 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const urlProvider = searchParams?.get('provider');
   const initialProvider: InboxProvider =
-    urlProvider === 'zoho' || urlProvider === 'microsoft' || urlProvider === 'gmail'
-      ? urlProvider
-      : defaultProvider || 'microsoft';
+    urlProvider === 'zoho' || urlProvider === 'microsoft' ? urlProvider : defaultProvider || 'microsoft';
 
   const [provider, setProvider] = useState<InboxProvider>(initialProvider);
   const [statusChecked, setStatusChecked] = useState(false);
-  const [status, setStatus] = useState({ microsoft: false, zoho: false, gmail: false });
+  const [status, setStatus] = useState({ microsoft: false, zoho: false });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeDraft, setComposeDraft] = useState<ComposeState>({});
@@ -116,16 +117,20 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
   const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
   const [creatingContact, setCreatingContact] = useState(false);
 
+  const [threadMessages, setThreadMessages] = useState<UnifiedInboxMessage[]>([]);
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [inlineReply, setInlineReply] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const microsoft = useMicrosoftEmails(50, statusChecked && provider === 'microsoft');
   const zoho = useZohoEmails(50, statusChecked && provider === 'zoho', currentTenant?.id);
-  const gmail = useGmailEmails(50, statusChecked && provider === 'gmail');
 
   useBonnieDeepLinkFocus({
     onFocus: ({ tab, focus }) => {
       if (tab === 'sent' || tab === 'drafts' || tab === 'trash' || tab === 'inbox') {
         if (provider === 'microsoft') microsoft.setFolder(tab);
         if (provider === 'zoho') zoho.setFolder(tab);
-        if (provider === 'gmail') gmail.setFolder(tab);
       }
       if (focus === 'draft' || focus === 'compose') {
         setComposeOpen(true);
@@ -141,22 +146,16 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
       if (cancelled) return;
       setStatus(next);
       const preferred =
-        urlProvider === 'zoho' || urlProvider === 'microsoft' || urlProvider === 'gmail'
-          ? urlProvider
-          : defaultProvider;
+        urlProvider === 'zoho' || urlProvider === 'microsoft' ? urlProvider : defaultProvider;
       if (
         preferred &&
-        ((preferred === 'microsoft' && next.microsoft) ||
-          (preferred === 'zoho' && next.zoho) ||
-          (preferred === 'gmail' && next.gmail))
+        ((preferred === 'microsoft' && next.microsoft) || (preferred === 'zoho' && next.zoho))
       ) {
         setProvider(preferred);
       } else if (next.microsoft) {
         setProvider('microsoft');
       } else if (next.zoho) {
         setProvider('zoho');
-      } else if (next.gmail) {
-        setProvider('gmail');
       }
       setStatusChecked(true);
     })();
@@ -175,15 +174,10 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     setComposeOpen(true);
   }, [statusChecked, searchParams]);
 
-  const active =
-    provider === 'microsoft' ? microsoft : provider === 'gmail' ? gmail : zoho;
-  const anyConnected = status.microsoft || status.zoho || status.gmail;
+  const active = provider === 'microsoft' ? microsoft : zoho;
+  const anyConnected = status.microsoft || status.zoho;
   const providerConnected =
-    provider === 'microsoft'
-      ? status.microsoft
-      : provider === 'gmail'
-        ? status.gmail
-        : status.zoho;
+    provider === 'microsoft' ? status.microsoft : status.zoho;
 
   useEffect(() => {
     if (!statusChecked || !anyConnected) return;
@@ -200,9 +194,8 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const emails: UnifiedInboxMessage[] = useMemo(() => {
     if (provider === 'microsoft') return toUnifiedMicrosoft(microsoft.emails);
-    if (provider === 'gmail') return toUnifiedGmail(gmail.emails);
     return zoho.emails;
-  }, [provider, microsoft.emails, zoho.emails, gmail.emails]);
+  }, [provider, microsoft.emails, zoho.emails]);
 
   const folder = active.folder as InboxFolder;
   const setFolder = active.setFolder as (f: InboxFolder) => void;
@@ -223,6 +216,8 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     [filteredEmails, selectedId]
   );
 
+  const displayMessages = threadMessages.length > 0 ? threadMessages : selectedEmail ? [selectedEmail] : [];
+
   const selectedEmailHtml = useMemo(
     () => buildSafeEmailBodyHtml(selectedEmail?.body, selectedEmail?.snippet),
     [selectedEmail]
@@ -230,15 +225,149 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const refresh = useCallback(() => {
     if (provider === 'microsoft') void microsoft.refresh();
-    else if (provider === 'gmail') void gmail.refresh();
     else void zoho.refresh();
-  }, [provider, microsoft, zoho, gmail]);
+  }, [provider, microsoft, zoho]);
 
   const switchProvider = (next: InboxProvider) => {
     setProvider(next);
     setSelectedId(null);
+    setThreadMessages([]);
+    setInlineReply('');
     setSearchQuery('');
   };
+
+  const openCompose = (draft: ComposeState) => {
+    setComposeDraft(draft);
+    setComposeOpen(true);
+  };
+
+  const openNewEmail = () => {
+    openCompose({ preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho' });
+  };
+
+  const openReply = (replyAll = false, bodyOverride?: string) => {
+    if (!selectedEmail) {
+      toast.error('Select a message to reply to.');
+      return;
+    }
+    const parsed = parseEmailFromHeader(selectedEmail.from || '');
+    if (!parsed.email) {
+      toast.error('Could not parse sender email from this message.');
+      return;
+    }
+    const subject = selectedEmail.subject?.match(/^Re:/i)
+      ? selectedEmail.subject
+      : `Re: ${selectedEmail.subject || ''}`;
+    const toList = replyAll
+      ? [parsed.email, ...(selectedEmail.to || []).filter((e) => e && e !== parsed.email)]
+      : [parsed.email];
+    openCompose({
+      to: [...new Set(toList)].join(', '),
+      subject,
+      body: bodyOverride ?? buildReplyQuote(selectedEmail),
+      preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho',
+    });
+  };
+
+  const openForward = () => {
+    if (!selectedEmail) {
+      toast.error('Select a message to forward.');
+      return;
+    }
+    openCompose({
+      subject: selectedEmail.subject?.match(/^Fwd:/i)
+        ? selectedEmail.subject
+        : `Fwd: ${selectedEmail.subject || ''}`,
+      body: buildForwardBody(selectedEmail),
+      preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho',
+    });
+  };
+
+  const openDraftInCompose = (email: UnifiedInboxMessage) => {
+    const parsed = parseEmailFromHeader(email.from || '');
+    openCompose({
+      to: (email.to || []).join(', ') || parsed.email || '',
+      subject: email.subject || '',
+      body: email.body || email.snippet || '',
+      preferredProvider: provider === 'microsoft' ? 'microsoft' : 'zoho',
+    });
+  };
+
+  const handleSelectEmail = (email: UnifiedInboxMessage) => {
+    if (folder === 'drafts') {
+      void (async () => {
+        let full = email;
+        try {
+          if (provider === 'zoho' && !email.body) {
+            const body = await zoho.loadMessageBody(email);
+            full = { ...email, body };
+          } else if (provider === 'microsoft' && !email.body) {
+            const detailed = await microsoftGraphService.getMessage(email.id);
+            full = {
+              ...email,
+              body: detailed.body,
+              to: detailed.to,
+              subject: detailed.subject,
+            };
+          }
+        } catch {
+          /* use list metadata */
+        }
+        openDraftInCompose(full);
+      })();
+      return;
+    }
+    setSelectedId(email.id);
+    setInlineReply('');
+    setThreadMessages([]);
+  };
+
+  useEffect(() => {
+    if (!selectedEmail || provider !== 'microsoft' || folder === 'drafts') {
+      setThreadMessages([]);
+      return;
+    }
+
+    let cancelled = false;
+    setThreadLoading(true);
+    (async () => {
+      try {
+        if (selectedEmail.threadId) {
+          const msgs = await microsoftGraphService.getConversationMessages(
+            selectedEmail.threadId,
+            selectedEmail.id
+          );
+          if (cancelled) return;
+          setThreadMessages(
+            msgs.map((m) => ({
+              id: m.id,
+              provider: 'microsoft' as const,
+              subject: m.subject,
+              from: m.from,
+              to: m.to,
+              snippet: m.snippet,
+              body: m.body,
+              receivedAt: m.receivedAt,
+              threadId: m.threadId,
+              isRead: m.isRead,
+              hasAttachments: m.hasAttachments,
+              webLink: m.webLink,
+            }))
+          );
+        } else {
+          setThreadMessages([selectedEmail]);
+        }
+      } catch {
+        if (!cancelled) setThreadMessages([selectedEmail]);
+      } finally {
+        if (!cancelled) setThreadLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedEmail?.id, provider, folder, selectedEmail]);
 
   useEffect(() => {
     if (!selectedEmail || selectedEmail.body || provider !== 'zoho') return;
@@ -331,38 +460,84 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
     }
   };
 
+  const handleInlineReply = async (replyAll = false) => {
+    if (!selectedEmail || !inlineReply.trim()) return;
+    if (provider !== 'microsoft') {
+      openReply(replyAll);
+      return;
+    }
+    setSendingReply(true);
+    try {
+      if (replyAll) {
+        await microsoftGraphService.replyAllToMessage(selectedEmail.id, inlineReply);
+      } else {
+        await microsoftGraphService.replyToMessage(selectedEmail.id, inlineReply);
+      }
+      toast.success('Reply sent via Outlook');
+      setInlineReply('');
+      refresh();
+      if (selectedEmail.threadId) {
+        const msgs = await microsoftGraphService.getConversationMessages(
+          selectedEmail.threadId,
+          selectedEmail.id
+        );
+        setThreadMessages(
+          msgs.map((m) => ({
+            id: m.id,
+            provider: 'microsoft' as const,
+            subject: m.subject,
+            from: m.from,
+            to: m.to,
+            snippet: m.snippet,
+            body: m.body,
+            receivedAt: m.receivedAt,
+            threadId: m.threadId,
+            isRead: m.isRead,
+            hasAttachments: m.hasAttachments,
+            webLink: m.webLink,
+          }))
+        );
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send reply');
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedEmail) return;
+    setDeleting(true);
+    try {
+      if (provider === 'microsoft') {
+        await microsoftGraphService.deleteMessage(selectedEmail.id);
+      } else if (selectedEmail.zohoFolderId) {
+        const res = await fetch(
+          `/api/zoho/mail?messageId=${encodeURIComponent(selectedEmail.id)}&folderId=${encodeURIComponent(selectedEmail.zohoFolderId)}&tenantId=${encodeURIComponent(currentTenant?.id || '')}`,
+          { method: 'DELETE', credentials: 'include' }
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || 'Failed to delete message');
+        }
+      }
+      toast.success('Message moved to trash');
+      setSelectedId(null);
+      setThreadMessages([]);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete message');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const classificationColors: Record<EmailClassification, string> = {
     Marketing: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
     Lead: 'bg-teal-500/15 text-teal-300 border-teal-500/30',
     Client: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
     Unverified: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
     Direct: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
-  };
-
-  const openNewEmail = () => {
-    setComposeDraft({ preferredProvider: provider });
-    setComposeOpen(true);
-  };
-
-  const openReply = () => {
-    if (!selectedEmail) {
-      toast.error('Select a message to reply to.');
-      return;
-    }
-    const parsed = parseEmailFromHeader(selectedEmail.from || '');
-    if (!parsed.email) {
-      toast.error('Could not parse sender email from this message.');
-      return;
-    }
-    setComposeDraft({
-      to: parsed.email,
-      subject: selectedEmail.subject?.startsWith('Re:')
-        ? selectedEmail.subject
-        : `Re: ${selectedEmail.subject || ''}`,
-      body: `\n\n---\nOn ${new Date(selectedEmail.receivedAt).toLocaleString()}, ${selectedEmail.from} wrote:\n${selectedEmail.snippet || ''}`,
-      preferredProvider: provider,
-    });
-    setComposeOpen(true);
   };
 
   const connectMicrosoft = () => {
@@ -389,7 +564,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
         <Mail className="w-10 h-10 text-teal-400 mx-auto mb-4" />
         <h2 className="text-lg font-bold text-white mb-2">Connect email to see your inbox</h2>
         <p className="text-sm text-slate-400 mb-6">
-          Link Outlook or Zoho — then you can read mail, write new messages, and reply from here.
+          Link Outlook or Zoho to read mail here. When you send, pick Microsoft, Zoho, Brevo, SendGrid, or Resend — whatever you have connected.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
@@ -423,7 +598,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
           <div className="p-3 border-b border-white/5 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <div>
-                <h3 className="text-sm font-bold text-white">Inbox</h3>
+                <h3 className="text-sm font-bold text-white">Mail</h3>
                 <p className="text-[10px] text-slate-500">
                   {active.loading ? 'Loading…' : `${filteredEmails.length} message${filteredEmails.length === 1 ? '' : 's'}`}
                 </p>
@@ -445,7 +620,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
               className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2.5 text-sm font-bold text-white"
             >
               <PenSquare className="w-4 h-4" />
-              Write new email
+              Compose
             </button>
 
             <Link
@@ -475,15 +650,6 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
               >
                 Zoho{status.zoho ? '' : ' · off'}
               </button>
-              <button
-                type="button"
-                onClick={() => switchProvider('gmail')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
-                  provider === 'gmail' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Gmail{status.gmail ? '' : ' · off'}
-              </button>
             </div>
 
             {!providerConnected && (
@@ -494,13 +660,6 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                     <button type="button" onClick={connectMicrosoft} className="underline font-semibold">
                       Connect
                     </button>
-                  </>
-                ) : provider === 'gmail' ? (
-                  <>
-                    Gmail not connected.{' '}
-                    <Link href="/dashboard/business/settings?tab=integrations" className="underline font-semibold">
-                      Connect in settings
-                    </Link>
                   </>
                 ) : (
                   <>
@@ -523,16 +682,10 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                   {/expired|reconnect|not connected/i.test(active.error) && (
                     <button
                       type="button"
-                      onClick={
-                        provider === 'microsoft'
-                          ? connectMicrosoft
-                          : provider === 'gmail'
-                            ? () => { window.location.href = '/dashboard/business/settings?tab=integrations'; }
-                            : connectZoho
-                      }
+                      onClick={provider === 'microsoft' ? connectMicrosoft : connectZoho}
                       className="underline font-semibold"
                     >
-                      Reconnect {provider === 'microsoft' ? 'Outlook' : provider === 'gmail' ? 'Gmail' : 'Zoho'}
+                      Reconnect {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
                     </button>
                   )}
                 </div>
@@ -558,6 +711,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                   onClick={() => {
                     setFolder(f);
                     setSelectedId(null);
+                    setThreadMessages([]);
                   }}
                   className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize whitespace-nowrap ${
                     folder === f
@@ -582,9 +736,9 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
             ) : filteredEmails.length === 0 ? (
               <div className="p-6 text-sm text-slate-500 text-center space-y-2">
                 <p>{providerConnected ? `No messages in ${folder}.` : 'Connect this account first.'}</p>
-                {providerConnected && (
+                {providerConnected && folder !== 'drafts' && (
                   <button type="button" onClick={openNewEmail} className="text-teal-400 text-xs font-semibold underline">
-                    Write a new email
+                    Compose a new email
                   </button>
                 )}
               </div>
@@ -593,16 +747,22 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 <button
                   key={`${email.provider}-${email.id}`}
                   type="button"
-                  onClick={() => setSelectedId(email.id)}
+                  onClick={() => handleSelectEmail(email)}
                   className={`w-full text-left p-3 transition-colors ${
-                    selectedEmail?.id === email.id
+                    selectedEmail?.id === email.id && folder !== 'drafts'
                       ? 'bg-teal-500/10 border-l-2 border-l-teal-500'
                       : 'hover:bg-white/5 border-l-2 border-l-transparent'
-                  }`}
+                  } ${email.isRead === false ? 'bg-white/[0.02]' : ''}`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="text-sm font-semibold text-white truncate">
-                      {(email.from || '').split('<')[0].trim() || email.from || 'Unknown'}
+                    <p
+                      className={`text-sm truncate ${
+                        email.isRead === false ? 'font-bold text-white' : 'font-semibold text-white'
+                      }`}
+                    >
+                      {folder === 'sent' || folder === 'drafts'
+                        ? email.subject || '(no subject)'
+                        : (email.from || '').split('<')[0].trim() || email.from || 'Unknown'}
                     </p>
                     <span className="text-[10px] text-slate-500 shrink-0">
                       {new Date(email.receivedAt).toLocaleDateString(undefined, {
@@ -612,9 +772,16 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                     </span>
                   </div>
                   <p className="text-xs font-medium text-slate-300 truncate">
-                    {email.subject || '(no subject)'}
+                    {folder === 'sent' || folder === 'drafts'
+                      ? (email.to || []).join(', ') || email.from || 'Draft'
+                      : email.subject || '(no subject)'}
                   </p>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">{email.snippet}</p>
+                  {folder === 'drafts' && (
+                    <span className="inline-block mt-1 text-[10px] font-bold uppercase text-amber-400">
+                      Tap to edit draft
+                    </span>
+                  )}
                 </button>
               ))
             )}
@@ -623,12 +790,15 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
         {/* Read & reply */}
         <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
-          {selectedEmail ? (
+          {selectedEmail && folder !== 'drafts' ? (
             <>
-              <div className="flex items-center gap-3 p-3 md:p-4 border-b border-white/5 shrink-0">
+              <div className="flex items-center gap-2 p-3 md:p-4 border-b border-white/5 shrink-0 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setSelectedId(null)}
+                  onClick={() => {
+                    setSelectedId(null);
+                    setThreadMessages([]);
+                  }}
                   className="md:hidden p-2 -ml-1 text-slate-400 hover:text-white"
                   aria-label="Back to list"
                 >
@@ -638,9 +808,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                   <span
                     className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border mr-1.5 ${classificationColors[emailClassification]}`}
                   >
-                    {emailClassification === 'Unverified' && (
-                      <AlertTriangle className="w-3 h-3" />
-                    )}
+                    {emailClassification === 'Unverified' && <AlertTriangle className="w-3 h-3" />}
                     {emailClassification}
                   </span>
                   <span
@@ -675,23 +843,82 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                     </div>
                   )}
                 </div>
-                <button
-                  type="button"
-                  onClick={openReply}
-                  disabled={!providerConnected}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white shrink-0 disabled:opacity-40"
-                >
-                  <Reply className="w-3.5 h-3.5" />
-                  Reply
-                </button>
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => openReply(false)}
+                    disabled={!providerConnected}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 disabled:opacity-40"
+                    title="Reply with provider picker (Brevo, Zoho, Outlook, etc.)"
+                  >
+                    <Reply className="w-3.5 h-3.5" />
+                    Reply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openReply(true)}
+                    disabled={!providerConnected}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 disabled:opacity-40"
+                  >
+                    <ReplyAll className="w-3.5 h-3.5" />
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openForward}
+                    disabled={!providerConnected}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 disabled:opacity-40"
+                  >
+                    <Forward className="w-3.5 h-3.5" />
+                    Fwd
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-1 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1.5 text-[10px] font-bold text-rose-300 disabled:opacity-40"
+                  >
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  </button>
+                  {selectedEmail.webLink && (
+                    <a
+                      href={selectedEmail.webLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 px-2 py-1.5"
+                    >
+                      Open in Outlook
+                    </a>
+                  )}
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 md:p-6">
-                <EmailLeadInsightPanel
-                  from={selectedEmail.from}
-                  subject={selectedEmail.subject}
-                />
-                {loadingBody && provider === 'zoho' && !selectedEmail.body ? (
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
+                <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} />
+
+                {threadLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading conversation…
+                  </div>
+                ) : displayMessages.length > 1 ? (
+                  displayMessages.map((msg) => (
+                    <div key={msg.id} className="border-b border-white/5 pb-6 last:border-0">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="text-sm font-semibold text-white">{msg.from}</p>
+                        <span className="text-[10px] text-slate-500">
+                          {new Date(msg.receivedAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div
+                        className="prose prose-invert max-w-none prose-p:text-slate-300 prose-pre:bg-slate-950/60 text-sm"
+                        dangerouslySetInnerHTML={{
+                          __html: buildSafeEmailBodyHtml(msg.body, msg.snippet),
+                        }}
+                      />
+                    </div>
+                  ))
+                ) : loadingBody && provider === 'zoho' && !selectedEmail.body ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Loading message…
@@ -703,13 +930,65 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                   />
                 )}
               </div>
+
+              {folder !== 'sent' && folder !== 'trash' && (
+                <div className="p-4 border-t border-white/5 shrink-0">
+                  <div className="rounded-xl border border-white/10 bg-slate-950/80 p-3 space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                      {provider === 'microsoft' ? 'Quick reply via Outlook' : 'Quick reply'}
+                    </p>
+                    <textarea
+                      value={inlineReply}
+                      onChange={(e) => setInlineReply(e.target.value)}
+                      placeholder="Type your reply…"
+                      rows={3}
+                      className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 resize-y"
+                    />
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <p className="text-[10px] text-slate-500">
+                        Need Brevo, SendGrid, or Resend? Use Reply above for full compose with provider picker.
+                      </p>
+                      <div className="flex gap-2">
+                        {provider === 'microsoft' && (
+                          <button
+                            type="button"
+                            onClick={() => handleInlineReply(true)}
+                            disabled={sendingReply || !inlineReply.trim()}
+                            className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
+                          >
+                            <ReplyAll className="w-3.5 h-3.5" />
+                            Reply all
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            provider === 'microsoft'
+                              ? handleInlineReply(false)
+                              : openReply(false, inlineReply + buildReplyQuote(selectedEmail!))
+                          }
+                          disabled={sendingReply || !inlineReply.trim()}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
+                        >
+                          {sendingReply ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Send className="w-3.5 h-3.5" />
+                          )}
+                          Send
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-500">
               <Send className="w-12 h-12 text-slate-700 mb-3" />
               <p className="text-sm font-medium text-slate-400">Pick an email from the list</p>
-              <p className="text-xs mt-1 max-w-xs">
-                Or use <strong className="text-slate-300">Write new email</strong> to compose to anyone in your contacts.
+              <p className="text-xs mt-1 max-w-sm">
+                Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.
               </p>
               <button
                 type="button"
@@ -718,7 +997,7 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white"
               >
                 <PenSquare className="w-4 h-4" />
-                Write new email
+                Compose
               </button>
             </div>
           )}

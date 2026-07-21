@@ -1,7 +1,7 @@
 import { MICROSOFT_GRAPH_BASE_URL } from '@/config/microsoft';
 import { microsoftAuthService } from '@/services/microsoftAuthService';
 
-type GraphMethod = 'GET' | 'POST' | 'PATCH' | 'PUT';
+type GraphMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 interface GraphRequestOptions {
   method?: GraphMethod;
@@ -419,6 +419,23 @@ export const microsoftGraphService = {
       body: {
         comment,
       },
+    });
+    return { success: true };
+  },
+
+  async replyAllToMessage(messageId: string, comment: string) {
+    await graphRequest(`/me/messages/${messageId}/replyAll`, {
+      method: 'POST',
+      body: {
+        comment,
+      },
+    });
+    return { success: true };
+  },
+
+  async deleteMessage(messageId: string) {
+    await graphRequest(`/me/messages/${messageId}`, {
+      method: 'DELETE',
     });
     return { success: true };
   },
