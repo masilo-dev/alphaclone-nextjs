@@ -96,7 +96,13 @@ export async function POST(req: Request) {
                 user_id,
                 tenant_id,
                 redirect_uri,
-                scopes: typeof scope === 'string' ? scope.split(' ').filter(Boolean) : scope,
+                    scopes: typeof scope === 'string'
+                        ? scope
+                            .split(/[\s+]+/)
+                            .map((s: string) => (s === 'wrie' ? 'write' : s))
+                            .filter(Boolean)
+                            .filter((s: string, i: number, arr: string[]) => arr.indexOf(s) === i)
+                        : scope,
                 expires_at: expiresAt,
                 code_challenge: code_challenge || null,
                 code_challenge_method: code_challenge ? (code_challenge_method || 'S256') : null,
