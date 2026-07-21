@@ -14,7 +14,7 @@ const DEFAULT_HOST = 'alphaclonesystems.com';
  * This prevents Railway's internal binding (0.0.0.0:8080) from leaking
  * into OAuth discovery metadata served to external clients.
  */
-function getBaseUrl(req: NextRequest) {
+export function getMcpPublicBaseUrl(req: NextRequest) {
   // ── 1. Env vars (most reliable in production) ─────────────────────────────
   const envUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -74,7 +74,7 @@ function getDiscoveryHeaders() {
  * indicating which authorization servers can issue tokens for it.
  */
 export function createProtectedResourceResponse(req: NextRequest) {
-  const baseUrl = getBaseUrl(req);
+  const baseUrl = getMcpPublicBaseUrl(req);
   const data = {
     resource: `${baseUrl}/api/mcp`,
     authorization_servers: [baseUrl],
@@ -108,7 +108,7 @@ export function createProtectedResourceResponse(req: NextRequest) {
  * including endpoints, grant types, and PKCE methods supported.
  */
 export function createAuthorizationServerResponse(req: NextRequest) {
-  const baseUrl = getBaseUrl(req);
+  const baseUrl = getMcpPublicBaseUrl(req);
   const data = {
     issuer: baseUrl,
     authorization_endpoint: `${baseUrl}/api/mcp/authorize`,

@@ -188,8 +188,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   const { currentTenant, getDashboardStats, error: tenantError } = useTenant();
   const { t } = useLanguage();
   const [dashboardStats, setDashboardStats] = useState<any>(null);
-  // Prevent duplicate data loads when TenantContext resolves after initial render
-  const dataLoadedRef = useRef(false);
+  // Prevent duplicate data loads per tenant when TenantContext resolves after initial render
+  const dataLoadedRef = useRef<string | null>(null);
   const lastTenantIdRef = useRef<string | undefined>(undefined);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -584,10 +584,11 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   }, [user.id, user.role, setInvoices]);
 
-  // OPTIMIZED: Load core data ONCE on mount (projects, invoices, messages)
+  // OPTIMIZED: Load core data once tenant is available (projects, invoices, messages)
   useEffect(() => {
-    if (dataLoadedRef.current) return; // prevent double-fire in StrictMode/dev
-    dataLoadedRef.current = true;
+    if (!currentTenant?.id) return;
+    if (dataLoadedRef.current === currentTenant.id) return;
+    dataLoadedRef.current = currentTenant.id;
 
     // 1. Restore from cache immediately for instant UI
     try {
@@ -629,7 +630,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     loadAllData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]); // Only re-run if user changes (not on every tenant update)
+  }, [currentTenant?.id, user.id]); // Re-run when tenant becomes available
 
   const refreshStats = useCallback(async () => {
     if (!currentTenant?.id) return;
@@ -688,6 +689,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Subscribe to real-time messages with filtering for performance
   useEffect(() => {
+    if (!currentTenant?.id) return;
     const isAdmin = isPlatformAdminRole(user.role) || user.role === 'tenant_admin';
     // ✅ Now uses filtered subscription - gets INSERT + UPDATE for instant read receipts
     const unsubscribe = messageService.subscribeToMessages(
@@ -719,7 +721,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
     );
     return () => unsubscribe();
-  }, [user.id, user.role]);
+  }, [user.id, user.role, currentTenant?.id]);
 
   // Log Navigation - DEFERRED: Don't block dashboard render
   useEffect(() => {
@@ -741,6 +743,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // Subscribe to real-time projects
   useEffect(() => {
+    if (!currentTenant?.id) return;
     const unsubscribe = projectService.subscribeToProjects((updatedProject) => {
       setProjects(prev => {
         const exists = prev.find(p => p.id === updatedProject.id);
@@ -752,7 +755,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       });
     });
     return () => unsubscribe();
-  }, []);
+  }, [currentTenant?.id]);
 
   const handleAddProject = async () => {
     if (!newProject.name) {

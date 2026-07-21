@@ -422,7 +422,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         };
 
         checkTasks();
-    }, [user, currentTenant]);
+    }, [user?.id, currentTenant?.id]);
 
     React.useEffect(() => {
         if (dashboardStatsError) {

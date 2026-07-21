@@ -379,20 +379,19 @@ export const projectService = {
      */
     subscribeToProjects(callback: (project: Project) => void) {
         const tenantId = this.getTenantId();
+        if (!tenantId) {
+            return () => { };
+        }
 
         // Build subscription config
         const subscriptionConfig: any = {
             event: '*',
             schema: 'public',
-            table: 'projects'
+            table: 'projects',
+            filter: `tenant_id=eq.${tenantId.trim()}`,
         };
 
-        // Only filter by tenant if tenant exists
-        if (tenantId) {
-            subscriptionConfig.filter = `tenant_id=eq.${tenantId.trim()}`;
-        }
-
-        const channelName = `projects_${tenantId ? tenantId.replace(/[^a-zA-Z0-9-_]/g, '_') : 'global'}`;
+        const channelName = `projects_${tenantId.replace(/[^a-zA-Z0-9-_]/g, '_')}`;
         const channel = supabase
             .channel(channelName)
             .on(

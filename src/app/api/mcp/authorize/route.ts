@@ -9,6 +9,7 @@ import {
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
+import { getMcpPublicBaseUrl } from '@/lib/mcpWellKnown';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -329,7 +330,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       isPublicClient: client?.is_public,
     })
   ) {
-    const origin = new URL(req.url).origin;
+    const origin = getMcpPublicBaseUrl(req);
     const authorizeUrl = buildAuthorizePageUrl(origin, new URL(req.url).searchParams);
     return Response.redirect(authorizeUrl, 302);
   }

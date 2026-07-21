@@ -843,7 +843,8 @@ export const taskService = {
      */
     async getOverdueTasks(userId?: string): Promise<{ tasks: Task[]; error: string | null }> {
         try {
-            const tenantId = this.getTenantId();
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { tasks: [], error: null };
             const today = new Date();
 
             let query = supabase

@@ -281,11 +281,12 @@ export function CrmDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const quickAdd = searchParams?.get('quickAdd');
   useEffect(() => {
-    if (searchParams?.get('quickAdd') === 'true') {
+    if (quickAdd === 'true') {
       router.replace('/dashboard/crm/workspace?quickAdd=true');
     }
-  }, [router, searchParams]);
+  }, [router, quickAdd]);
 
   return (
     <div className="space-y-4 ac-scroll-full ac-module-section">
