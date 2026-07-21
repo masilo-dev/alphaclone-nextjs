@@ -5,7 +5,6 @@ import { usePWA } from '@/contexts/PWAContext';
 import MarketingShell from './MarketingShell';
 import AppShell from './AppShell';
 import Splash from '@/components/pwa/Splash';
-import PwaInstallNudge from '@/components/common/PwaInstallNudge';
 
 import { usePathname } from 'next/navigation';
 
@@ -33,10 +32,6 @@ export default function ShellSwitcher({ children }: { children: React.ReactNode 
         return <AppShell>{children}</AppShell>;
     }
 
-    return (
-        <MarketingShell>
-            {children}
-            <PwaInstallNudge />
-        </MarketingShell>
-    );
+    // Install banner lives once in root layout (PwaInstallPrompt) — do not mount a second nudge here.
+    return <MarketingShell>{children}</MarketingShell>;
 }
