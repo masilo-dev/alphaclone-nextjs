@@ -482,6 +482,15 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      if (!session) {
+        return tokenError(
+          'invalid_grant',
+          'Refresh token is invalid or revoked',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+
       if (session.refresh_expires_at && new Date(session.refresh_expires_at) < new Date()) {
         return tokenError(
           'invalid_grant',
