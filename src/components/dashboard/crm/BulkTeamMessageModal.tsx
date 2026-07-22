@@ -13,7 +13,7 @@ type BulkTeamMessageModalProps = {
   body?: string;
 };
 
-/** Inline bulk compose — shared "Hello team," greeting, no navigation away from the list. */
+/** Inline compose for team/bulk messaging — skip CRM gate so selected tenant emails can send. */
 export function BulkTeamMessageModal({
   isOpen,
   onClose,
@@ -22,7 +22,7 @@ export function BulkTeamMessageModal({
   subject = BULK_TEAM_DEFAULT_SUBJECT,
   body,
 }: BulkTeamMessageModalProps) {
-  if (!isOpen || recipients.length === 0) return null;
+  if (!isOpen) return null;
 
   return (
     <ComposeEmailModal
@@ -31,7 +31,7 @@ export function BulkTeamMessageModal({
       userId={userId}
       initialTo={recipients.join(', ')}
       initialSubject={subject}
-      initialBody={body ?? buildBulkTeamMessageBody()}
+      initialBody={body ?? (recipients.length > 1 ? buildBulkTeamMessageBody() : '')}
       skipCrmGate
       entityType="direct"
     />
