@@ -566,11 +566,52 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
+    const resolveContractClientContact = (contract?: any | null) => {
+        const meta = (contract?.metadata || {}) as Record<string, unknown>;
+        const linkedClient =
+            (contract?.client_id && clients.find((c) => c.id === contract.client_id)) ||
+            (form.clientId && clients.find((c) => c.id === form.clientId)) ||
+            null;
+
+        const emailCandidates = [
+            contract?.client_email,
+            meta.client_email,
+            meta.clientEmail,
+            meta.signer_email,
+            linkedClient?.email,
+            form.clientEmail,
+        ]
+            .map((value) => String(value || '').trim())
+            .filter((value) => value.includes('@'));
+
+        const nameCandidates = [
+            meta.client_name,
+            meta.clientName,
+            linkedClient?.name,
+            form.clientName,
+            contract?.client_name,
+        ]
+            .map((value) => String(value || '').trim())
+            .filter(Boolean);
+
+        return {
+            email: emailCandidates[0] || '',
+            name: nameCandidates[0] || 'the client',
+            clientId: String(contract?.client_id || linkedClient?.id || form.clientId || ''),
+        };
+    };
+
     const openSendContractModal = (options?: { resend?: boolean; contract?: any }) => {
         const targetContract = options?.contract;
         const isResend = Boolean(options?.resend);
         const contractTitle = targetContract?.title || form.projectName || 'Service Agreement';
-        const targetEmail = targetContract?.client_email || form.clientEmail || '';
+        const contact = resolveContractClientContact(targetContract);
+        const targetEmail = contact.email;
+        const projectLabel =
+            form.projectName ||
+            String((targetContract?.metadata as Record<string, unknown> | undefined)?.project_name || '') ||
+            contractTitle;
+
         setResendForSignature(isResend);
         setSendForm({
             recipientEmail: targetEmail,
@@ -579,18 +620,29 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 : `Contract: ${contractTitle}`,
             message: isResend
                 ? `We still need your signature on "${contractTitle}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link as soon as possible.`
-                : `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
+                : `Hello${contact.name && contact.name !== 'the client' ? ` ${contact.name}` : ''},\n\nPlease review and sign the attached contract for ${projectLabel || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
             provider: 'auto',
         });
         setAiSendInstructions(
             isResend
-                ? `Write an urgent but professional follow-up asking ${form.clientName || 'the client'} to sign "${contractTitle}" because the project cannot proceed until signed.`
-                : `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
+                ? `Write an urgent but professional follow-up asking ${contact.name} to sign "${contractTitle}" because the project cannot proceed until signed.`
+                : `Write a professional contract delivery email for ${contact.name} about ${projectLabel || 'our engagement'}. Keep it concise and clear.`
         );
         if (targetContract?.id) {
             setContractId(targetContract.id);
         }
+        if (contact.email && !form.clientEmail) {
+            setForm((prev) => ({
+                ...prev,
+                clientEmail: contact.email,
+                clientName: contact.name !== 'the client' ? contact.name : prev.clientName,
+                clientId: contact.clientId || prev.clientId,
+            }));
+        }
         setShowSendModal(true);
+        if (!targetEmail) {
+            toast.error('No client email on this contract yet — pick the client or type their email before sending.');
+        }
     };
 
     const handleAiDraftSendMessage = async () => {
@@ -830,6 +882,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             Created: <span className="text-slate-300">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
                                             <span className="mx-1.5">·</span>
                                             Expiry: <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Expires {getExpiry()}</span>
+                                            {(() => {
+                                                const contact = resolveContractClientContact(c);
+                                                if (!contact.email && contact.name === 'the client') return null;
+                                                return (
+                                                    <>
+                                                        <span className="mx-1.5">·</span>
+                                                        <span className="text-teal-300/90">
+                                                            {contact.name !== 'the client' ? contact.name : 'Client'}
+                                                            {contact.email ? ` · ${contact.email}` : ''}
+                                                        </span>
+                                                    </>
+                                                );
+                                            })()}
                                         </p>
                                     </div>
                                 </div>
@@ -846,6 +911,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setIsSigned(!!c.admin_signature);
                                         setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
 
+                                        const contact = resolveContractClientContact(c);
+                                        const linked = c.client_id
+                                            ? clients.find((cl) => cl.id === c.client_id)
+                                            : undefined;
+                                        setForm((prev) => ({
+                                            ...prev,
+                                            clientId: c.client_id || prev.clientId,
+                                            clientName: contact.name !== 'the client' ? contact.name : prev.clientName,
+                                            clientEmail: contact.email || prev.clientEmail,
+                                            clientCompany: linked?.name || prev.clientCompany,
+                                            clientPhone: linked?.phone || prev.clientPhone,
+                                            clientAddress: linked?.location || prev.clientAddress,
+                                            projectName: prev.projectName || String(c.title || '').split('—')[0]?.trim() || prev.projectName,
+                                            totalAmount:
+                                                prev.totalAmount ||
+                                                (c.payment_amount != null ? String(c.payment_amount) : prev.totalAmount),
+                                        }));
+
                                         // Use proxied URL if available
                                         if (c.document_url) {
                                             c.document_url = fileUploadService.convertToProxiedUrl(c.document_url);
@@ -860,13 +943,23 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 >
                                     <Eye className="w-3.5 h-3.5 text-teal-400" /> View
                                 </button>
-                                {c.status !== 'fully_signed' && c.status !== 'draft' && c.status !== 'rejected' ? (
+                                {c.status !== 'fully_signed' && c.status !== 'rejected' ? (
                                     <button
                                         type="button"
-                                        onClick={() => openSendContractModal({ resend: true, contract: c })}
-                                        className="w-full sm:w-auto justify-center px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-amber-500/30"
+                                        onClick={() =>
+                                            openSendContractModal({
+                                                resend: c.status !== 'draft',
+                                                contract: c,
+                                            })
+                                        }
+                                        className={`w-full sm:w-auto justify-center px-3.5 py-2 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border ${
+                                            c.status === 'draft'
+                                                ? 'bg-teal-500/10 hover:bg-teal-500/20 text-teal-200 border-teal-500/30'
+                                                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 border-amber-500/30'
+                                        }`}
                                     >
-                                        <Send className="w-3.5 h-3.5" /> Resend for signature
+                                        <Send className="w-3.5 h-3.5" />
+                                        {c.status === 'draft' ? 'Send to client' : 'Resend for signature'}
                                     </button>
                                 ) : null}
                                 </div>
@@ -1573,6 +1666,10 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
                                 placeholder="client@example.com"
                             />
+                            <p className="text-[11px] text-slate-500 mt-1.5">
+                                Auto-filled from the client this contract is for
+                                {sendForm.recipientEmail ? ` (${sendForm.recipientEmail})` : ' — add their email on the client record if empty'}.
+                            </p>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
