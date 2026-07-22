@@ -15,6 +15,7 @@ import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import BonnieChatPanel from './BonnieChatPanel';
+import { BonnieResearchPanel } from './BonnieResearchPanel';
 import { useBonnieApprovals } from '../../../hooks/useBonnieApprovals';
 import type { BonniePendingApprovalResponse } from '../../../services/bonnieService';
 
@@ -389,6 +390,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
               </div>
             )}
           </div>
+
+          <BonnieResearchPanel tenantId={tenantId} />
 
           {/* Activity / Execution Log */}
           <div className="flex-1 rounded-3xl border border-slate-800 bg-[#090d16] p-6 flex flex-col min-h-[300px]">
