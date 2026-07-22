@@ -227,13 +227,18 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     };
 
     const handleViewPDF = (inv: BusinessInvoice) => {
-        const metadata = businessInvoiceService.parseMetadata(inv.notes);
-        const client = inv.clientId
-            ? { name: clientMap[inv.clientId]?.name || inv.clientId, email: clientMap[inv.clientId]?.email || '' }
-            : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
-        const doc = businessInvoiceService.generatePDF(inv, currentTenant!, client);
-        const pdfUrl = URL.createObjectURL(doc.output('blob'));
-        setShowPDFPreview(pdfUrl);
+        if (!currentTenant?.id) return;
+        setShowPDFPreview(
+          `/api/invoices/${encodeURIComponent(inv.id)}/pdf?tenantId=${encodeURIComponent(currentTenant.id)}`
+        );
+    };
+
+    const handleDownloadPDF = (inv: BusinessInvoice) => {
+        if (!currentTenant?.id) return;
+        window.open(
+          `/api/invoices/${encodeURIComponent(inv.id)}/pdf?tenantId=${encodeURIComponent(currentTenant.id)}&download=true`,
+          '_blank'
+        );
     };
 
     if (loading) {
@@ -526,12 +531,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                                     <button
                                         onClick={() => {
-                                            const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
-                                            const client = selectedInvoiceForOptions.clientId
-                                                ? { name: clientMap[selectedInvoiceForOptions.clientId]?.name || selectedInvoiceForOptions.clientId, email: clientMap[selectedInvoiceForOptions.clientId]?.email || '' }
-                                                : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
-                                            const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
-                                            doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
+                                            handleDownloadPDF(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
                                         className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
@@ -751,12 +751,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             <button
                                 onClick={() => {
                                     if (!selectedInvoiceForOptions) return;
-                                    const metadata = businessInvoiceService.parseMetadata(selectedInvoiceForOptions.notes);
-                                    const client = selectedInvoiceForOptions.clientId
-                                        ? { name: clientMap[selectedInvoiceForOptions.clientId]?.name || selectedInvoiceForOptions.clientId, email: clientMap[selectedInvoiceForOptions.clientId]?.email || '' }
-                                        : { name: metadata?.clientName || 'Walk-in', email: metadata?.clientEmail || metadata?.email || '' };
-                                    const doc = businessInvoiceService.generatePDF(selectedInvoiceForOptions, currentTenant!, client);
-                                    doc.save(`${selectedInvoiceForOptions.invoiceNumber}.pdf`);
+                                    handleDownloadPDF(selectedInvoiceForOptions);
                                 }}
                                 className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-white"
                             >

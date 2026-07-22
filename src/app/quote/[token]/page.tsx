@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { SignaturePad } from '@/components/contracts/SignaturePad';
 import { extractTenantBranding } from '@/lib/tenantBranding';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { buildQuoteDocumentInput } from '@/lib/documents/documentBuilders';
 
 type QuotePayload = {
     quoteNumber: string;
@@ -15,8 +17,12 @@ type QuotePayload = {
     currency: string;
     validUntil?: string;
     termsAndConditions?: string;
+    notes?: string;
+    metadata?: Record<string, unknown>;
     tenantName?: string;
     tenantSettings?: Record<string, unknown> | null;
+    tenantLogoUrl?: string | null;
+    tenantBrandColor?: string | null;
 };
 
 type QuoteItem = {
@@ -97,6 +103,34 @@ export default function PublicQuotePage() {
         }
     };
 
+    const previewInput = useMemo(() => {
+        if (!quote) return null;
+        return buildQuoteDocumentInput(
+            {
+                quote_number: quote.quoteNumber,
+                name: quote.name,
+                valid_until: quote.validUntil,
+                notes: quote.notes,
+                status: quote.status,
+                total_amount: quote.totalAmount,
+                metadata: quote.metadata,
+            },
+            items.map((item) => ({
+                product_name: item.productName,
+                description: item.description,
+                quantity: item.quantity,
+                unit_price: item.unitPrice,
+                line_total: item.lineTotal,
+            })),
+            {
+                name: quote.tenantName,
+                logo_url: quote.tenantLogoUrl,
+                brand_color_primary: quote.tenantBrandColor,
+                settings: quote.tenantSettings,
+            }
+        );
+    }, [quote, items]);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-950 flex items-center justify-center">
@@ -114,7 +148,11 @@ export default function PublicQuotePage() {
     }
 
     const isFinal = responded || quote.status === 'accepted' || quote.status === 'rejected';
-    const branding = extractTenantBranding({ name: quote.tenantName, settings: quote.tenantSettings });
+    const branding = extractTenantBranding({
+        name: quote.tenantName,
+        logo_url: quote.tenantLogoUrl,
+        settings: quote.tenantSettings,
+    });
     const pdfUrl = `/api/quotes/${encodeURIComponent(token)}/pdf`;
 
     return (
@@ -173,6 +211,8 @@ export default function PublicQuotePage() {
                             </div>
                         </div>
                     </div>
+
+                    {previewInput ? <DocumentPreview input={previewInput} /> : null}
 
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">

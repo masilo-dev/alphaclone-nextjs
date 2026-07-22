@@ -29,6 +29,7 @@ import {
   resolveDocumentThemeId,
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+import { QuoteDocumentPreview } from '@/components/documents/QuoteDocumentPreview';
 
 type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
@@ -179,6 +180,7 @@ const QuoteDetail: React.FC<{
           )}
           {quote.valid_until && <div className="text-[13px] text-slate-400 opacity-55 mt-0.5">Valid until {new Date(quote.valid_until).toLocaleDateString()}</div>}
         </div>
+        <QuoteDocumentPreview quoteId={quote.id} />
         {quote.status === 'accepted' && (
           <button onClick={() => onConvert(quote)} className="w-full h-[52px] bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-wider rounded-2xl text-[13px] transition-colors flex items-center justify-center gap-2">
             <ArrowRight className="w-5 h-5" /> Convert to Invoice

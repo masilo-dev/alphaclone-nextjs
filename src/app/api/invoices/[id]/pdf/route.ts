@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { generateInvoicePDF } from '@/utils/pdfGenerator';
+import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
 
 function sanitizeFilename(input: string): string {
   return String(input || 'invoice').replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -69,42 +69,22 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       .eq('invoice_id', invoice.id)
       .order('created_at', { ascending: true });
 
-    const { data: businessSettings } = await admin
-      .from('business_settings')
-      .select('trading_name, business_name')
-      .eq('tenant_id', invoice.tenant_id)
-      .maybeSingle();
+    let client: { name?: string; email?: string } | undefined;
+    if (invoice.client_id) {
+      const { data: clientRow } = await admin
+        .from('business_clients')
+        .select('name, email')
+        .eq('id', invoice.client_id)
+        .maybeSingle();
+      if (clientRow) client = { name: clientRow.name, email: clientRow.email };
+    }
 
-    const doc = generateInvoicePDF(
-      {
-        id: invoice.id,
-        invoiceNumber: invoice.invoice_number,
-        status: invoice.status,
-        subtotal: Number(invoice.subtotal || 0),
-        taxRate: Number(invoice.tax_rate || 0),
-        tax: Number(invoice.tax || 0),
-        discountAmount: Number(invoice.discount_amount || 0),
-        total: Number(invoice.total || 0),
-        currency: invoice.currency || 'USD',
-        dueDate: invoice.due_date || undefined,
-        issueDate: invoice.issue_date || undefined,
-        notes: invoice.notes || undefined,
-        createdAt: invoice.created_at,
-        updatedAt: invoice.updated_at,
-      } as any,
-      (items || []).map((item: any) => ({
-        id: item.id,
-        invoiceId: item.invoice_id,
-        description: item.description,
-        quantity: Number(item.quantity || 0),
-        rate: Number(item.rate || 0),
-        amount: Number(item.amount || 0),
-      })),
-      invoice.tenant as any,
-      businessSettings || undefined
+    const pdfBuffer = await generateThemedInvoicePdfBuffer(
+      invoice,
+      items || [],
+      invoice.tenant,
+      client
     );
-
-    const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
     const filename = sanitizeFilename(`Invoice_${invoice.invoice_number || id}.pdf`);
 
     const isDownload = searchParams.get('download') === 'true';
