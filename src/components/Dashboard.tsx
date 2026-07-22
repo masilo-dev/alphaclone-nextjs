@@ -110,6 +110,7 @@ import DealsTab from './dashboard/DealsTab';
 import QuotesTab from './dashboard/QuotesTab';
 const SalesForecastTab = React.lazy(() => import('./dashboard/SalesForecastTab'));
 import MailTab from './dashboard/MailTab';
+import CommunicationHub from './dashboard/communication/CommunicationHub';
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
 import ClientsPage from './dashboard/business/ClientsPage';
@@ -1205,10 +1206,17 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+      case '/dashboard/comms':
+        return (
+          <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
+            <CommunicationHub user={user} />
+          </React.Suspense>
+        );
+
       case '/dashboard/mail':
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
-            <MailTab user={user} />
+            <CommunicationHub user={user} />
           </React.Suspense>
         );
 
@@ -2109,7 +2117,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         title="Mission Accomplished" 
         message="Achievement unlocked." 
       />
-      {activeTab !== '/dashboard/bonnie' && <BonnieWidget />}
+      {!route.startsWith('/dashboard/bonnie') &&
+        route !== '/dashboard/business/bonnie' && <BonnieWidget />}
     </div>
   );
 };

@@ -18,9 +18,7 @@ export async function POST(req: NextRequest) {
     }
     const { tenantId, action, config } = parsed.data;
 
-    await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
     switch (action) {

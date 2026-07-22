@@ -162,8 +162,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
 
     if (action === 'status' && campaignId) {
       try {

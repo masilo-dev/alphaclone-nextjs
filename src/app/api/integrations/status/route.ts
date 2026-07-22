@@ -21,9 +21,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Tenant ID is required' }, { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
     
     // Set tenant context for RLS
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });

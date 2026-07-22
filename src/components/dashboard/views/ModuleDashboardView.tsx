@@ -11,6 +11,7 @@ import { DashboardBarChart } from '../DashboardBarChart';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 import { resolveModuleActions } from '@/config/moduleDashboardActions';
+import { metricLabel } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
 import { CRMNav } from '../crm/CRMNav';
@@ -98,7 +99,7 @@ function DashboardContent({
           { label: 'Deals', href: '/dashboard/deals', Icon: Zap },
           { label: 'Projects', href: '/dashboard/projects', Icon: Briefcase },
           { label: 'Tasks', href: '/dashboard/tasks', Icon: CheckSquare },
-          { label: 'Invoicing', href: '/dashboard/accounting', Icon: FileText },
+          { label: 'Invoicing', href: '/dashboard/business/billing', Icon: FileText },
           { label: 'Quotes', href: '/dashboard/quotes', Icon: Receipt },
           { label: 'Accounting', href: '/dashboard/accounting', Icon: BarChart3 },
           { label: 'Messages', href: '/dashboard/messages', Icon: MessageCircle },
@@ -150,7 +151,7 @@ function DashboardContent({
         <div className="grid gap-3 lg:grid-cols-3">
           {overviewNextSteps.map(({ label, title, description, href, Icon, cta }) => (
             <button
-              key={href}
+              key={`${label}-${href}`}
               type="button"
               onClick={() => router.push(href)}
               className="ac-workspace-panel rounded-lg p-4 text-left transition-all hover:border-teal-500/20 hover:bg-slate-900/70"
@@ -188,7 +189,7 @@ function DashboardContent({
         {metrics.map((m, i) => (
           <MetricCard
             key={m.label}
-            label={m.label}
+            label={metricLabel(m.label)}
             value={m.value}
             delta={m.delta}
             deltaDir={m.deltaDir}
@@ -237,7 +238,7 @@ function DashboardContent({
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
             {overviewQuickModules.map(({ label, href, Icon }) => (
               <button
-                key={href}
+                key={`${label}-${href}`}
                 type="button"
                 onClick={() => router.push(href)}
                 className="h-10 rounded-lg bg-slate-950/40 border border-white/5 hover:border-white/10 transition-all flex items-center justify-center gap-2 min-w-0 px-2"

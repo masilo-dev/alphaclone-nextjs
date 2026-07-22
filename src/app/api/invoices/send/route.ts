@@ -24,8 +24,7 @@ export async function POST(req: NextRequest) {
 
     const { tenantId, invoiceId, subject, message } = parsed.data;
     const recipients = Array.isArray(parsed.data.recipients) ? parsed.data.recipients : [parsed.data.recipients];
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data: invoice, error } = await admin
       .from('business_invoices')
       .select('id,status')

@@ -19,8 +19,7 @@ export async function GET(req: NextRequest) {
     if (!tenantId || !z.string().uuid().safeParse(tenantId).success) {
       return NextResponse.json({ error: 'Valid tenantId required' }, { status: 400 });
     }
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('business_receipts').select('*').eq('tenant_id', tenantId).order('receipt_date', { ascending: false });
     if (error) throw error;
     return NextResponse.json({ receipts: data || [] });

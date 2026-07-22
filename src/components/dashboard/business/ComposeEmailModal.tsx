@@ -2,18 +2,15 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import AIOutputDisclaimer from '@/components/ai/AIOutputDisclaimer';
-import { X, Send, Loader2, Sparkles, Wand2, User, Search, Check, ChevronDown, Plus } from 'lucide-react';
+import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
 import { businessClientService } from '../../../services/businessClientService';
 import { integrationsService, IntegrationConfig } from '../../../services/integrationsService';
 import { useTenant } from '../../../contexts/TenantContext';
-import { getMimeType } from '../../../utils/mimeTypes';
 import { ClientEmailContextPicker } from '../common/ClientEmailContextPicker';
-import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
-import { isValidEmail, validateEmailField } from '@/lib/email/isValidEmail';
+import { isValidEmail } from '@/lib/email/isValidEmail';
 import EmailProviderSelector from '@/components/shared/EmailProviderSelector';
 import {
   normalizeDeliveryProvider,
@@ -72,6 +69,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [attachments, setAttachments] = useState<{ id: string, name: string, size: number, data?: string }[]>([]);
     const [uploading, setUploading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [showAiAssist, setShowAiAssist] = useState(false);
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
     const [selectedTone, setSelectedTone] = useState('professional');
@@ -99,6 +97,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             setBody(initialBody);
             setSearchQuery('');
             setAiPrompt('');
+            setShowAiAssist(false);
             setAutoSaveStatus('idle');
 
             if (!initialTo && !initialSubject && !initialBody && currentTenant?.id) {
@@ -319,8 +318,8 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     Recipient context: ${to ? `Writing to ${to}` : 'General business contact'}.
                     Return your response as a JSON object with 'subject' and 'body' fields. 
                     Style: ${selectedTone}.
-                    Be professional and concise. Don't add any other text outside the JSON.`,
-                    systemPrompt: "You are an expert business email assistant. You respond only with valid JSON focusing on high-conversion outreach."
+                    Be professional and concise. Do not invent greetings, openings, or sign-offs unless the user instructions ask for them. Don't add any other text outside the JSON.`,
+                    systemPrompt: "You are an expert business email assistant. You respond only with valid JSON. Never auto-add greetings like Hello/Hi/Dear unless explicitly requested."
                 })
             });
 
@@ -498,87 +497,80 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                     />
 
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.98, y: 12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-2xl max-h-[90vh] bg-slate-900 border border-white/10 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col z-[120]"
+                        exit={{ opacity: 0, scale: 0.98, y: 12 }}
+                        className="relative w-full max-w-xl max-h-[min(82vh,640px)] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-[120]"
                     >
                         {/* Header */}
-                        <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between bg-white/2">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20">
-                                    <Send className="w-5 h-5 text-teal-400" />
+                        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shrink-0">
+                                    <Send className="w-4 h-4 text-teal-400" />
                                 </div>
-                                <div>
-                                    <h2 className="text-base font-black text-white uppercase tracking-tight">Compose Email</h2>
-                                    <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">{selectedProvider?.name || 'Unified'} · AI Assistant</p>
+                                <div className="min-w-0">
+                                    <h2 className="text-sm font-bold text-white truncate">Compose Email</h2>
+                                    <p className="text-[10px] text-slate-500 truncate">{selectedProvider?.name || 'Workspace provider'}</p>
                                 </div>
                             </div>
                             <button
                                 onClick={onClose}
-                                className="p-3 text-slate-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-2xl transition-all"
+                                className="p-2 text-slate-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8 custom-scrollbar">
-                            {/* AI POWERED DRAFTING SECTION */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 }}
-                                className="bg-gradient-to-br from-teal-500/10 to-slate-500/10 border border-teal-500/20 rounded-3xl p-6 relative overflow-hidden group"
-                            >
-                                <div className="absolute top-0 right-0 p-8 pointer-events-none opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <Sparkles className="w-24 h-24 text-teal-400" />
-                                </div>
-
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="p-2 bg-teal-500 rounded-lg">
-                                        <Wand2 className="w-3 h-3 text-white" />
-                                    </div>
-                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-teal-400">AI Assistant</span>
-                                </div>
-
-                                <div className="space-y-4 relative z-10">
-                                    <div className="flex flex-wrap gap-2">
-                                        {TONES.map(tone => (
-                                            <button
-                                                key={tone.id}
-                                                onClick={() => setSelectedTone(tone.id)}
-                                                className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider transition-all border ${selectedTone === tone.id
-                                                    ? 'bg-teal-500 text-white border-teal-400 shadow-lg shadow-teal-500/20'
-                                                    : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
-                                                    }`}
-                                            >
-                                                {tone.label}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="flex gap-3">
-                                        <div className="relative flex-1">
+                        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
+                            <div className="rounded-xl border border-white/10 bg-slate-950/40 overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAiAssist((v) => !v)}
+                                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left"
+                                >
+                                    <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-teal-400">
+                                        <Wand2 className="w-3.5 h-3.5" /> Write with AI (optional)
+                                    </span>
+                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showAiAssist ? 'rotate-180' : ''}`} />
+                                </button>
+                                {showAiAssist ? (
+                                    <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2">
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {TONES.map(tone => (
+                                                <button
+                                                    key={tone.id}
+                                                    type="button"
+                                                    onClick={() => setSelectedTone(tone.id)}
+                                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${selectedTone === tone.id
+                                                        ? 'bg-teal-500 text-white border-teal-400'
+                                                        : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
+                                                        }`}
+                                                >
+                                                    {tone.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="flex gap-2">
                                             <input
                                                 value={aiPrompt}
                                                 onChange={e => setAiPrompt(e.target.value)}
-                                                placeholder="Instruction: e.g. 'Draft a follow-up about the proposal...'"
-                                                className="w-full bg-slate-950/80 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder:text-slate-600 focus:border-teal-500/50 outline-none transition-all"
+                                                placeholder="What should AI write? (no auto greeting)"
+                                                className="flex-1 bg-slate-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:border-teal-500/50 outline-none"
                                                 onKeyDown={e => e.key === 'Enter' && handleAIGenerate()}
                                             />
+                                            <Button
+                                                onClick={handleAIGenerate}
+                                                disabled={generating || !aiPrompt.trim()}
+                                                className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 rounded-xl shrink-0"
+                                            >
+                                                {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write'}
+                                            </Button>
                                         </div>
-                                        <Button
-                                            onClick={handleAIGenerate}
-                                            disabled={generating || !aiPrompt.trim()}
-                                            className="h-auto bg-teal-600 hover:bg-teal-500 text-white text-xs font-black uppercase tracking-widest px-5 rounded-2xl shrink-0 shadow-xl shadow-teal-600/20"
-                                        >
-                                            {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write with AI'}
-                                        </Button>
                                     </div>
-                                </div>
-                            </motion.div>
+                                ) : null}
+                            </div>
 
-                            <div className="grid grid-cols-1 gap-6">
+                            <div className="grid grid-cols-1 gap-3">
                                 {providerOptions.some((p) => p.connected) && (
                                     <EmailProviderSelector
                                         value={deliveryProvider}
@@ -588,33 +580,20 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     />
                                 )}
 
-                                {/* FROM: SENDER */}
                                 <div>
-                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Sender Address</label>
-                                    <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
-                                            <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
-                                        </div>
-                                        <input
-                                            type="text"
-                                            value={from}
-                                            onChange={e => setFrom(e.target.value)}
-                                            placeholder="sender@yourdomain.com"
-                                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
-                                        />
-                                    </div>
-                                    <p className="mt-2 px-1 text-xs text-slate-500 font-mono uppercase tracking-wider">
-                                        Sending via {selectedProvider?.name || 'workspace provider'} as {from || 'your connected address'}.
-                                    </p>
+                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">From</label>
+                                    <input
+                                        type="text"
+                                        value={from}
+                                        onChange={e => setFrom(e.target.value)}
+                                        placeholder="sender@yourdomain.com"
+                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none"
+                                    />
                                 </div>
 
-                                {/* TO: RECIPIENT */}
                                 <div className="relative" ref={dropdownRef}>
-                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Recipients</label>
-                                    <div className="relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 rounded-lg group-focus-within:bg-teal-500/10 transition-colors">
-                                            <User className="w-3.5 h-3.5 text-slate-500 group-focus-within:text-teal-400" />
-                                        </div>
+                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">To</label>
+                                    <div className="relative">
                                         <input
                                             type="text"
                                             value={to}
@@ -624,42 +603,42 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 setShowContactDropdown(true);
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
-                                            placeholder="Add one or more emails, separated by commas..."
-                                            className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-12 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
+                                            placeholder="email@client.com"
+                                            className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 pr-16 text-sm text-white focus:border-teal-500/40 outline-none"
                                         />
                                         <button 
+                                            type="button"
                                             onClick={() => setShowCcBcc(!showCcBcc)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-500 hover:text-teal-400 transition-colors"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 hover:text-teal-400"
                                         >
-                                            {showCcBcc ? 'HIDE CC' : 'CC/BCC'}
+                                            {showCcBcc ? 'HIDE' : 'CC/BCC'}
                                         </button>
                                     </div>
 
-                                    {/* CC / BCC FIELDS */}
                                     <AnimatePresence>
                                         {showCcBcc && (
                                             <motion.div 
                                                 initial={{ height: 0, opacity: 0 }}
                                                 animate={{ height: 'auto', opacity: 1 }}
                                                 exit={{ height: 0, opacity: 0 }}
-                                                className="grid grid-cols-2 gap-4 overflow-hidden mt-4"
+                                                className="grid grid-cols-2 gap-2 overflow-hidden mt-2"
                                             >
                                                 <div>
-                                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">CC</label>
+                                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">CC</label>
                                                     <input
                                                         type="text"
                                                         value={cc}
                                                         onChange={e => setCc(e.target.value)}
-                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-teal-500/40 outline-none transition-all"
+                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-teal-500/40 outline-none"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-2 px-1">BCC</label>
+                                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1">BCC</label>
                                                     <input
                                                         type="text"
                                                         value={bcc}
                                                         onChange={e => setBcc(e.target.value)}
-                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:border-teal-500/40 outline-none transition-all"
+                                                        className="w-full bg-slate-950/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:border-teal-500/40 outline-none"
                                                     />
                                                 </div>
                                             </motion.div>
@@ -669,77 +648,35 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     <AnimatePresence>
                                         {showContactDropdown && (searchQuery.length > 0 || filteredClients.length > 0) && (
                                             <motion.div
-                                                initial={{ opacity: 0, y: -10, scale: 0.98 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                                                className="absolute left-0 right-0 top-full mt-3 bg-slate-900 border border-white/10 rounded-3xl shadow-[0_24px_48px_-12px_rgba(0,0,0,0.8)] z-[130] max-h-72 overflow-y-auto p-2 backdrop-blur-2xl"
+                                                initial={{ opacity: 0, y: -6 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -6 }}
+                                                className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[130] max-h-44 overflow-y-auto p-1.5"
                                             >
-                                                <div className="px-3 py-2 border-b border-white/5 mb-2 flex items-center justify-between">
-                                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Matched Contacts</span>
-                                                    <span className="text-xs font-mono text-teal-400">{filteredClients.length} found</span>
-                                                </div>
                                                 {filteredClients.length > 0 ? (
-                                                    filteredClients.map(client => (
+                                                    filteredClients.slice(0, 8).map(client => (
                                                         <button
                                                             key={client.id}
+                                                            type="button"
                                                             onClick={() => {
                                                                 setTo(client.email);
                                                                 setShowContactDropdown(false);
                                                             }}
-                                                            className="w-full text-left p-3.5 rounded-2xl hover:bg-white/5 transition-all group flex items-center justify-between border border-transparent hover:border-white/5 mb-1"
+                                                            className="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-all flex items-center justify-between"
                                                         >
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center border border-teal-500/20 shadow-inner">
-                                                                    <span className="text-xs font-black text-teal-400">{client.name?.charAt(0)}</span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{client.name}</p>
-                                                                    <p className="text-xs text-slate-500 font-mono">{client.email}</p>
-                                                                </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-medium text-slate-200 truncate">{client.name}</p>
+                                                                <p className="text-xs text-slate-500 truncate">{client.email}</p>
                                                             </div>
-                                                            {to === client.email && (
-                                                                <div className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
-                                                                    <Check className="w-3.5 h-3.5 text-teal-400" />
-                                                                </div>
-                                                            )}
+                                                            {to === client.email && <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />}
                                                         </button>
                                                     ))
                                                 ) : (
-                                                    <div className="p-8 text-center">
-                                                        <Search className="w-8 h-8 mx-auto mb-3 text-slate-700 opacity-20" />
-                                                        <p className="text-xs font-black uppercase tracking-widest text-slate-600">No contact matching "{searchQuery}"</p>
-                                                    </div>
+                                                    <p className="p-3 text-center text-xs text-slate-600">No matches</p>
                                                 )}
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
-
-                                    {allRecipients.length > 0 && (
-                                        <div className="mt-3 rounded-xl border border-white/5 bg-slate-950/40 p-3 space-y-2">
-                                            <div className="flex items-center justify-between gap-2">
-                                                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Recipient Review</p>
-                                                <p className="text-[11px] text-teal-300 font-semibold">
-                                                    {toRecipients.length} to / {ccRecipients.length} cc / {bccRecipients.length} bcc
-                                                </p>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {allRecipients.map((recipient) => (
-                                                    <span
-                                                        key={recipient}
-                                                        className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300"
-                                                    >
-                                                        {recipient}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {toRecipients.length === 1 && to.includes('@') && (
-                                        <div className="mt-3">
-                                            <EmailLeadInsightPanel from={toRecipients[0]} subject={subject} compact />
-                                        </div>
-                                    )}
                                 </div>
 
                                 {matchedClient && (
@@ -751,45 +688,38 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     />
                                 )}
 
-                                {/* SUBJECT */}
                                 <div>
-                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Subject</label>
+                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">Subject</label>
                                     <input
                                         type="text"
                                         value={subject}
                                         onChange={e => setSubject(e.target.value)}
-                                        placeholder="Identification handle..."
-                                        className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-teal-500/40 outline-none transition-all shadow-inner placeholder:text-slate-700"
+                                        placeholder="Subject"
+                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none"
                                     />
                                 </div>
 
-                                {/* MESSAGE BODY */}
                                 <div>
-                                    <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em] block mb-3 px-1">Message Body</label>
-                                    <div className="relative">
-                                        <textarea
-                                            value={body}
-                                            onChange={e => setBody(e.target.value)}
-                                            placeholder="Begin data transmission..."
-                                            className="w-full bg-slate-950/50 border border-white/10 rounded-[2rem] px-6 py-6 text-sm text-white focus:border-teal-500/40 outline-none transition-all min-h-[200px] resize-none shadow-inner placeholder:text-slate-700 font-medium leading-relaxed custom-scrollbar"
-                                        />
-                                        <div className="absolute bottom-4 right-4 text-xs font-mono text-slate-600 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/5">
-                                            SYNS: {body.length} CHARS
-                                        </div>
-                                    </div>
+                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">Message</label>
+                                    <textarea
+                                        value={body}
+                                        onChange={e => setBody(e.target.value)}
+                                        placeholder="Type your message…"
+                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none h-[140px] max-h-[140px] resize-none overflow-y-auto"
+                                    />
                                 </div>
 
-                                {/* ATTACHMENTS */}
                                 <div>
-                                    <div className="flex items-center justify-between mb-3 px-1">
-                                        <label className="text-xs text-slate-500 uppercase font-black tracking-[0.2em]">Payload Attachments</label>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Attachments</label>
                                         <button 
+                                            type="button"
                                             onClick={() => fileInputRef.current?.click()}
                                             disabled={uploading}
-                                            className="text-xs font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                            className="text-[10px] font-bold text-teal-400 uppercase tracking-wider flex items-center gap-1"
                                         >
                                             {uploading ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5" />}
-                                            {uploading ? 'Uploading...' : 'Attach File'}
+                                            {uploading ? 'Uploading…' : 'Attach'}
                                         </button>
                                         <input 
                                             type="file" 
@@ -798,66 +728,54 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             onChange={handleFileUpload}
                                         />
                                     </div>
-                                    
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-1.5">
                                         {attachments.map(att => (
                                             <div 
                                                 key={att.id}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-300 group/att hover:border-teal-500/30 transition-all"
+                                                className="flex items-center gap-1.5 px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-slate-300"
                                             >
-                                                <span className="truncate max-w-[150px]">{att.name}</span>
-                                                <button 
-                                                    onClick={() => removeAttachment(att.id)}
-                                                    className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover/att:opacity-100 transition-all"
-                                                >
+                                                <span className="truncate max-w-[120px]">{att.name}</span>
+                                                <button type="button" onClick={() => removeAttachment(att.id)} className="text-slate-500 hover:text-red-400">
                                                     <X className="w-3 h-3" />
                                                 </button>
                                             </div>
                                         ))}
-                                        {attachments.length === 0 && (
-                                            <div className="w-full py-4 border border-dashed border-white/5 rounded-2xl flex items-center justify-center">
-                                                <p className="text-xs text-slate-700 font-black uppercase tracking-widest">No local files attached</p>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-8 border-t border-white/5 bg-white/2 flex items-center justify-between gap-4 flex-wrap">
-                            <div className="text-xs font-black text-slate-600 uppercase tracking-[0.2em]">
-                                {autoSaveStatus === 'saving' && 'Saving draft…'}
-                                {autoSaveStatus === 'saved' && 'Draft saved locally'}
-                                {autoSaveStatus === 'idle' && 'Encrypted Transmission Status: READY'}
-                            </div>
-                            <div className="hidden sm:block max-w-[320px]">
-                                <AIOutputDisclaimer type="email" />
-                            </div>
-                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between gap-2 shrink-0">
+                            <p className="text-[10px] text-slate-600 truncate">
+                                {autoSaveStatus === 'saving' && 'Saving…'}
+                                {autoSaveStatus === 'saved' && 'Draft saved'}
+                                {autoSaveStatus === 'idle' && 'Ready'}
+                            </p>
+                            <div className="flex items-center gap-2">
                                 <button
+                                    type="button"
                                     onClick={onClose}
-                                    className="flex-1 sm:flex-none px-6 py-3.5 text-slate-400 hover:text-white font-black text-xs uppercase tracking-widest transition-all"
+                                    className="px-3 py-2 text-slate-400 hover:text-white text-xs font-bold"
                                 >
                                     Cancel
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleSaveDraft}
                                     disabled={savingDraft || !body.trim()}
-                                    className="flex-1 sm:flex-none px-6 py-3.5 rounded-2xl border border-white/10 text-slate-300 hover:text-white font-black text-xs uppercase tracking-widest transition-all disabled:opacity-40"
+                                    className="px-3 py-2 rounded-xl border border-white/10 text-slate-300 text-xs font-bold disabled:opacity-40"
                                 >
-                                    {savingDraft ? 'Saving…' : 'Save Draft'}
+                                    {savingDraft ? 'Saving…' : 'Draft'}
                                 </button>
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
+                                <button
+                                    type="button"
                                     onClick={handleSend}
                                     disabled={sending}
-                                    className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-500 text-white px-10 py-3.5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-xl shadow-teal-900/10 disabled:opacity-50 disabled:grayscale"
+                                    className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 disabled:opacity-50"
                                 >
-                                    {sending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Send className="w-4 h-4 stroke-[2.5px]" />}
-                                    {sending ? 'Sending...' : 'Send Now'}
-                                </motion.button>
+                                    {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                                    {sending ? 'Sending…' : 'Send'}
+                                </button>
                             </div>
                         </div>
                     </motion.div >

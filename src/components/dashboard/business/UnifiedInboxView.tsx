@@ -55,6 +55,7 @@ type ComposeState = {
 
 type UnifiedInboxViewProps = {
   defaultProvider?: InboxProvider;
+  initialFolder?: InboxFolder;
 };
 
 function toUnifiedMicrosoft(
@@ -101,7 +102,7 @@ function buildForwardBody(email: UnifiedInboxMessage): string {
   return `\n\n---------- Forwarded message ----------\nFrom: ${email.from}\nDate: ${when}\nSubject: ${email.subject || '(no subject)'}\n\n${bodyText}`;
 }
 
-export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewProps) {
+export default function UnifiedInboxView({ defaultProvider, initialFolder }: UnifiedInboxViewProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
   const pathname = usePathname();
@@ -226,6 +227,10 @@ export default function UnifiedInboxView({ defaultProvider }: UnifiedInboxViewPr
 
   const folder = active.folder as InboxFolder;
   const setFolder = active.setFolder as (f: InboxFolder) => void;
+
+  useEffect(() => {
+    if (initialFolder) setFolder(initialFolder);
+  }, [initialFolder, setFolder]);
 
   const filteredEmails = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

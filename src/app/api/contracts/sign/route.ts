@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 
         const { data: contract, error: contractError } = await admin
             .from('contracts')
-            .select('id, title, content, status, client_signed_at, tenant:tenants(name)')
+            .select('id, title, content, status, client_signed_at, payment_amount, metadata, tenant:tenants(name, logo_url, brand_color_primary, settings)')
             .eq('id', signingToken.contract_id)
             .eq('tenant_id', signingToken.tenant_id)
             .single();

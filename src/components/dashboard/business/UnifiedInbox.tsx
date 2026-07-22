@@ -5,17 +5,29 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Inbox, Loader2, MessageSquare } from 'lucide-react';
 import UnifiedInboxView from './UnifiedInboxView';
 import UnifiedInboxTab from './UnifiedInboxTab';
-import type { InboxProvider } from '@/types/unifiedInbox';
+import type { InboxFolder, InboxProvider } from '@/types/unifiedInbox';
 
 type UnifiedInboxProps = {
   defaultProvider?: InboxProvider;
   /** Which tab to open first when no URL param is set */
   defaultTab?: 'mailbox' | 'channels';
+  /** Initial mailbox folder when opening mailbox tab */
+  initialFolder?: InboxFolder;
+  /** Filter channels tab to needs-response only */
+  needsReplyOnly?: boolean;
+  /** Hide internal tab switcher (used inside CommunicationHub) */
+  hideTabSwitcher?: boolean;
 };
 
 type InboxTab = 'mailbox' | 'channels';
 
-function UnifiedInboxContent({ defaultProvider, defaultTab = 'mailbox' }: UnifiedInboxProps) {
+function UnifiedInboxContent({
+  defaultProvider,
+  defaultTab = 'mailbox',
+  initialFolder,
+  needsReplyOnly,
+  hideTabSwitcher,
+}: UnifiedInboxProps) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,6 +49,7 @@ function UnifiedInboxContent({ defaultProvider, defaultTab = 'mailbox' }: Unifie
 
   return (
     <div className="flex flex-col h-full min-h-0 gap-3">
+      {!hideTabSwitcher ? (
       <div
         className="flex items-center gap-2 p-1 rounded-xl bg-slate-900/80 border border-white/10 w-full sm:w-fit"
         role="tablist"
@@ -75,12 +88,15 @@ function UnifiedInboxContent({ defaultProvider, defaultTab = 'mailbox' }: Unifie
           All channels
         </button>
       </div>
+      ) : null}
 
+      {!hideTabSwitcher ? (
       <p className="text-[11px] text-slate-500 px-1">
         {activeTab === 'mailbox'
           ? 'Read and send from your connected Outlook or Zoho mailbox. Choose Brevo, SendGrid, or Resend when you compose.'
           : 'WhatsApp, social, and synced email activity in one feed — with AI draft replies you approve before sending.'}
       </p>
+      ) : null}
 
       <div className="flex-1 min-h-0">
         {activeTab === 'mailbox' ? (
@@ -90,7 +106,7 @@ function UnifiedInboxContent({ defaultProvider, defaultTab = 'mailbox' }: Unifie
             aria-labelledby="inbox-tab-mailbox"
             className="h-full min-h-0"
           >
-            <UnifiedInboxView defaultProvider={defaultProvider} />
+            <UnifiedInboxView defaultProvider={defaultProvider} initialFolder={initialFolder} />
           </div>
         ) : (
           <div
@@ -99,7 +115,7 @@ function UnifiedInboxContent({ defaultProvider, defaultTab = 'mailbox' }: Unifie
             aria-labelledby="inbox-tab-channels"
             className="h-full min-h-0"
           >
-            <UnifiedInboxTab />
+            <UnifiedInboxTab needsReplyOnly={needsReplyOnly} />
           </div>
         )}
       </div>

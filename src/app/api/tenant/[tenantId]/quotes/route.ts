@@ -24,6 +24,7 @@ const createSchema = z.object({
   validForDays: z.coerce.number().int().min(1).max(365).default(30),
   notes: z.string().max(10_000).optional(),
   termsAndConditions: z.string().max(30_000).optional(),
+  documentTheme: z.string().max(40).optional(),
 });
 const updateSchema = z.object({
   quoteId: z.string().uuid(),
@@ -34,6 +35,7 @@ const updateSchema = z.object({
   termsAndConditions: z.string().max(30_000).default(''),
   currency: z.string().length(3),
   items: z.array(itemSchema).max(200),
+  documentTheme: z.string().max(40).optional(),
 });
 
 function totals(items: z.infer<typeof itemSchema>[]) {
@@ -69,7 +71,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
       contact_id: parsed.data.contactId || null, deal_id: parsed.data.dealId || null, template_id: parsed.data.templateId || null,
       notes: parsed.data.notes || (parsed.data.email ? `Recipient: ${parsed.data.email}` : null),
       terms_and_conditions: parsed.data.termsAndConditions || null,
-      metadata: parsed.data.email ? { client_email: parsed.data.email } : {},
+      metadata: {
+        ...(parsed.data.email ? { client_email: parsed.data.email } : {}),
+        ...(parsed.data.documentTheme ? { document_theme: parsed.data.documentTheme } : {}),
+      },
       ...totals(initialItems),
     }).select('*').single();
     if (error) throw error;
@@ -92,7 +97,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     const parsed = updateSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid quote update', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const admin = createSupabaseAdminClient();
-    const { data: existing } = await admin.from('quotes').select('id').eq('tenant_id', tenantId).eq('id', parsed.data.quoteId).maybeSingle();
+    const { data: existing } = await admin.from('quotes').select('id, metadata').eq('tenant_id', tenantId).eq('id', parsed.data.quoteId).maybeSingle();
     if (!existing) return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
     const items = parsed.data.items.map((item, index) => ({ ...item, itemOrder: index + 1 }));
     const quoteTotals = totals(items);
@@ -108,6 +113,13 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
       p_items: itemRows,
     });
     if (quoteError) throw quoteError;
+    if (parsed.data.documentTheme) {
+      const nextMeta = {
+        ...((existing.metadata || {}) as Record<string, unknown>),
+        document_theme: parsed.data.documentTheme,
+      };
+      await admin.from('quotes').update({ metadata: nextMeta }).eq('id', parsed.data.quoteId).eq('tenant_id', tenantId);
+    }
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'quote_updated', payload: { quoteId: parsed.data.quoteId, actorUserId: user.id } });
     return NextResponse.json({ success: true });
   } catch (error) { return routeErrorResponse(error, 'Quote could not be updated', req); }

@@ -26,9 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { tenantId } = parsed.data;
-    await requireTenantAccess(tenantId);
-
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     if ('action' in parsed.data && parsed.data.action === 'reconcile') {
       const summary = await reconcileTenantCrm(admin, tenantId);
       return NextResponse.json({ success: true, ...summary });

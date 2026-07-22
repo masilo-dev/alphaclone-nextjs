@@ -30,6 +30,7 @@ import DOMPurify from 'dompurify';
 import { notificationService } from '../../services/dashboardService';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { TemplateLibrary } from './TemplateLibrary';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -880,6 +881,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     return (
         <>
             <div className="space-y-4 p-4 sm:p-6" style={{ touchAction: 'pan-y' }}>
+            <TemplateLibrary />
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>

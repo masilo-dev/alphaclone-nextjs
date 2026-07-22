@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const CreateContractSchema = z.object({
@@ -29,8 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { tenantId, client_id, project_id, title, content, type, status, metadata, admin_signature, admin_signed_at, payment_due_date, payment_amount, payment_status } = parsed.data;
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createAdminSupabaseClientOrThrow();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
 
     // 1. Verify party belongs to tenant (unified contact or legacy business client)
     const { data: contact, error: contactError } = client_id ? await admin

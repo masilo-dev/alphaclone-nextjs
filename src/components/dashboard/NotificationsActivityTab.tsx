@@ -107,7 +107,13 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
             {loading ? (
               <EmptyState icon={Bell} title="Loading alerts" description="Pulling your latest notifications and audit activity into the workspace." className="py-8" />
             ) : visibleNotifications.length === 0 ? (
-              <EmptyState icon={BellOff} title="No notifications" description="You are all caught up. New alerts will appear here when important activity happens." className="py-8" />
+              <EmptyState
+                icon={BellOff}
+                title="You're all caught up"
+                description="Important alerts — overdue invoices, pending approvals, and customer replies — will appear here when something needs your attention."
+                bonnieSuggestion="Bonnie sends proactive alerts when something needs your attention."
+                className="py-8"
+              />
             ) : (
               visibleNotifications.map((n) => (
                 <div

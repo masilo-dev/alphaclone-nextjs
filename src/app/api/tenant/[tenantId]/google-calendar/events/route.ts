@@ -16,8 +16,7 @@ const eventSchema = z.object({
 
 async function contextFor(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   const { tenantId } = await context.params;
-  const { user } = await requireTenantAccess(tenantId, req);
-  const admin = createSupabaseAdminClient();
+  const { user, admin } = await requireTenantAccess(tenantId, req);
   const accessToken = await getValidGoogleAccessToken({ admin, userId: user.id, tenantId });
   if (!accessToken) return { tenantId, user, accessToken: null };
   return { tenantId, user, accessToken };

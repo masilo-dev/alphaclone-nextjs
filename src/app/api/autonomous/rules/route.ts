@@ -7,8 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const tenantId = String(new URL(request.url).searchParams.get('tenantId') || '').trim();
     if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
 
     const { data, error } = await admin
       .from('autonomous_runner_rules')
@@ -51,7 +50,7 @@ export async function PUT(request: NextRequest) {
     }).parse(await request.json());
     const tenantId = body.tenantId;
     const access = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin']);
-    const admin = createSupabaseAdminClient();
+    const admin = access.admin;
 
     const payload = {
       tenant_id: tenantId,

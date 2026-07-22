@@ -112,8 +112,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId);
 
     const { data: business } = await admin
       .from('business_settings')
@@ -150,8 +149,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const body = patchSchema.parse(await req.json());
-    const { user } = await requireTenantAccess(body.tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(body.tenantId);
 
     if (body.defaultProvider !== undefined && body.defaultProvider !== 'auto') {
       const connected = await getConnectedProviders(body.tenantId, user.id, admin);

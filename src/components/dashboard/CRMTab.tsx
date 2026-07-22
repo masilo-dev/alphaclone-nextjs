@@ -28,8 +28,11 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
+import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
+import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import { showActionNextSteps } from '../common/showActionNextSteps';
-import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { BulkTeamMessageModal } from './crm/BulkTeamMessageModal';
+import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
 import { CRMActionChips } from './crm/CRMActionChips';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -865,7 +868,7 @@ const Client360Detail: React.FC<{
                   toast.error('Add an email address for this client first.');
                   return;
                 }
-                router.push(buildMailComposeUrl(client.email, `Re: ${client.name}`));
+                setShowEmailModal(true);
               },
             },
             {
@@ -962,16 +965,30 @@ const Client360Detail: React.FC<{
           </div>
         )}
 
-        {/* 360 Engagement Timeline */}
+        {/* Unified Customer Timeline */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-teal-400" />
-            <h3 className="text-sm font-bold text-white">Customer 360 Logs</h3>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-teal-400" />
+              <h3 className="text-sm font-bold text-white">Customer workspace</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/comms')}
+              className="text-[11px] text-teal-400 hover:text-teal-300"
+            >
+              Open in Communication hub →
+            </button>
           </div>
 
-          {loadingAi ? (
+          {client.id ? (
+            <CustomerTimeline
+              clientId={client.id}
+              onOpenComms={() => router.push('/dashboard/comms')}
+            />
+          ) : loadingAi ? (
             <div className="h-20 flex items-center justify-center text-slate-500 text-xs">
-              Resolving audit logs...
+              Loading activity…
             </div>
           ) : profile360?.timeline && profile360.timeline.length > 0 ? (
             <div className="relative border-l border-white/5 pl-4 ml-2 space-y-5 py-2">
@@ -990,7 +1007,7 @@ const Client360Detail: React.FC<{
             </div>
           ) : (
             <div className="bg-slate-900/30 p-6 rounded-2xl border border-white/5 border-dashed text-center text-slate-500 text-xs">
-              No recent timeline history or records matched for this account.
+              {HUMAN_LABELS.needsResponse.replace('Customers', 'Start a conversation — messages and activity will appear here')}
             </div>
           )}
         </div>
@@ -1002,6 +1019,8 @@ const Client360Detail: React.FC<{
         <CommunicationModal
           client={client as any}
           user={user}
+          prefilledSubject="Follow-up"
+          prefilledBody="Hello,\n\n"
           onClose={() => setShowEmailModal(false)}
           onSent={() => setShowEmailModal(false)}
         />
@@ -1406,14 +1425,35 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [teamCompose, setTeamCompose] = useState<{
+    recipients: string[];
+    subject?: string;
+    body?: string;
+  } | null>(null);
   const crmListRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(50);
   const loadMoreEntities = useCallback(() => setVisibleCount((c) => c + 40), []);
-  const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string }) => {
-    if (!entity.email) return;
-    const displayName = entity.name || entity.company || 'there';
-    router.push(buildMailComposeUrl(entity.email, `Re: ${displayName}`));
-  }, [router]);
+  const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string; emails?: string[] }) => {
+    const fromArray = Array.isArray(entity.emails)
+      ? entity.emails.map((e) => String(e || '').trim()).find((e) => e.includes('@'))
+      : undefined;
+    const email = (entity.email || fromArray || '').trim();
+    if (!email) {
+      // Still open compose so user can pick any tenant contact — do not block pipeline stages
+      setTeamCompose({
+        recipients: [],
+        subject: entity.name ? `Follow-up — ${entity.name}` : 'Follow-up',
+        body: '',
+      });
+      toast('No email on this record — pick a contact in compose, or add an email first.', { icon: '✉️' });
+      return;
+    }
+    setTeamCompose({
+      recipients: [email],
+      subject: 'Follow-up',
+      body: '',
+    });
+  }, []);
   // Realtime transparency: recently changed record IDs get a brief row flash
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
   const flashRecord = useCallback((id: string) => {
@@ -1721,33 +1761,36 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     }
   };
 
-  const handleBulkEmail = useCallback(() => {
+  const handleBulkMessage = useCallback(() => {
     if (selectedKeys.size === 0) return;
 
-    const recipientSet = new Set<string>();
+    const emails: string[] = [];
     selectedKeys.forEach((key) => {
       const [type, id] = key.split(':');
       if (!id) return;
 
       if (type === 'lead') {
         const lead = leads.find((entry) => entry.id === id);
-        if (lead?.email) recipientSet.add(lead.email.trim());
+        if (lead?.email) emails.push(lead.email);
         return;
       }
 
       const client = clients.find((entry) => entry.id === id);
-      if (client?.email) recipientSet.add(client.email.trim());
+      if (client?.email) emails.push(client.email);
     });
 
-    const recipients = Array.from(recipientSet).filter(Boolean);
+    const recipients = normalizeRecipientEmails(emails);
     if (recipients.length === 0) {
       toast.error('Selected records do not have email addresses.');
       return;
     }
 
-    const subject = recipients.length === 1 ? 'Follow-up' : 'CRM follow-up';
-    router.push(buildMailComposeUrl(recipients, subject));
-  }, [clients, leads, router, selectedKeys]);
+    setTeamCompose({
+      recipients,
+      subject: recipients.length === 1 ? 'Follow-up' : 'Team update',
+      body: recipients.length === 1 ? 'Hello,\n\n' : buildBulkTeamMessageBody(),
+    });
+  }, [clients, leads, selectedKeys]);
 
   // Lead status transition
   const handleStatusUpdate = async (id: string, status: LeadStatus) => {
@@ -1968,7 +2011,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         type: 'lead',
         id: l.id,
         name: l.name,
-        email: l.email,
+        email: l.email || (Array.isArray((l as { emails?: string[] }).emails) ? (l as { emails?: string[] }).emails?.[0] : undefined),
         phone: l.phone,
         company: l.company,
         source: l.source,
@@ -1985,7 +2028,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         type: isClient ? 'client' : 'contact',
         id: c.id,
         name: c.name,
-        email: c.email,
+        email: c.email || (Array.isArray((c as { emails?: string[] }).emails) ? (c as { emails?: string[] }).emails?.[0] : undefined),
         phone: c.phone,
         company: c.industry || 'Private Account',
         source: c.custom_fields?.source || 'Direct',
@@ -2070,7 +2113,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   return (
     <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950 select-none relative">
       <ModulePageLayout
-        showBonnieDock
         header={(
           <div className="px-4 pt-3 space-y-2.5 shrink-0">
             <div className="rounded-2xl border border-white/5 bg-slate-900/60 px-2.5 py-2">
@@ -2271,11 +2313,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleBulkEmail}
+                  onClick={handleBulkMessage}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-300 hover:text-indigo-200"
                 >
-                  <Mail className="w-3.5 h-3.5" />
-                  Email ({selectedCount})
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Message ({selectedCount})
                 </button>
                 <button
                   type="button"
@@ -2339,10 +2381,18 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   ].filter(Boolean).join(' ') || undefined}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => { e.stopPropagation(); toggleEntitySelection(entity); }}
-                      className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleEntitySelection(entity);
+                        }
+                      }}
+                      className="flex-shrink-0 text-slate-500 hover:text-teal-400 cursor-pointer"
                       aria-label={selectedKeys.has(entityKey(entity)) ? 'Deselect' : 'Select'}
                     >
                       {selectedKeys.has(entityKey(entity)) ? (
@@ -2350,7 +2400,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       ) : (
                         <Square className="w-4 h-4" />
                       )}
-                    </button>
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white">{entity.name}</p>
                       <p className="text-sm text-slate-400">{entity.email || entity.phone || '-'}</p>
@@ -2476,6 +2526,17 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           />
         )}
       </DetailDrawer>
+
+      {teamCompose && (
+        <BulkTeamMessageModal
+          isOpen
+          onClose={() => setTeamCompose(null)}
+          userId={user.id}
+          recipients={teamCompose.recipients}
+          subject={teamCompose.subject}
+          body={teamCompose.body}
+        />
+      )}
     </div>
   );
 };

@@ -3,7 +3,11 @@
  * Standardizes redirects and links across email templates, dashboards, and services.
  */
 
-const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/^https:\/\/www\./, 'https://');
+import { buildValidatedPublicUrl, getProductionBaseUrl, validatePublicUrl } from '@/lib/urls/publicUrlGuard';
+
+const BASE_URL = getProductionBaseUrl().replace(/^https:\/\/www\./, 'https://');
+
+export { validatePublicUrl, buildValidatedPublicUrl, getProductionBaseUrl };
 
 export const AppUrls = {
   // Public Signing (canonical native contract portal)

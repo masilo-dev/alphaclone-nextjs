@@ -11,8 +11,7 @@ const updateSchema = z.object({ id: z.string().uuid(), status: z.enum(['active',
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data: tasks, error } = await admin.from('scheduled_ai_tasks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(200);
     if (error) throw error;
     const ids = (tasks || []).map((task: any) => task.id);

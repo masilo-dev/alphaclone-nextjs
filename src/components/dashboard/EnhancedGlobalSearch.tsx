@@ -154,6 +154,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                         src="/logo.png"
                         alt="AlphaClone"
                         fill
+                        sizes="40px"
                         className="object-contain"
                     />
                 </div>

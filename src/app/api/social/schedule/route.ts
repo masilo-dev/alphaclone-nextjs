@@ -544,8 +544,7 @@ export async function DELETE(req: NextRequest) {
     if (!z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(postId).success) {
       return NextResponse.json({ error: 'Valid tenantId and postId required' }, { status: 400 });
     }
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('social_posts').delete().eq('tenant_id', tenantId).eq('id', postId).select('id').maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: 'Post not found' }, { status: 404 });

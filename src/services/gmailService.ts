@@ -23,7 +23,7 @@ export const gmailService = {
     async apiCall(endpoint: string, userId: string, options: RequestInit = {}, retries = 2): Promise<any> {
         const baseUrl = typeof window !== 'undefined' 
             ? window.location.origin 
-            : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+            : (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com');
             
         const url = new URL(`${baseUrl}/api/gmail/${endpoint}`);
         url.searchParams.set('userId', userId);
@@ -65,7 +65,7 @@ export const gmailService = {
     async listThreads(userId: string, maxResults = 20, pageToken?: string, labelIds: string[] = ['INBOX']): Promise<{ threads: GmailMessage[], nextPageToken?: string }> {
         const baseUrl = typeof window !== 'undefined' 
             ? window.location.origin 
-            : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+            : (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com');
 
         const url = new URL(`${baseUrl}/api/gmail/threads`);
         url.searchParams.set('userId', userId);

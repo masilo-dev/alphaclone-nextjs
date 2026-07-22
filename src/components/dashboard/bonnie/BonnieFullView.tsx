@@ -4,25 +4,34 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Brain, Play, Pause, RefreshCw,
-  CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert, BookOpen
+  CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert, BookOpen, ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
 import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '../../../contexts/TenantContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import BonnieChatPanel from './BonnieChatPanel';
+import { BonnieResearchPanel } from './BonnieResearchPanel';
 import { useBonnieApprovals } from '../../../hooks/useBonnieApprovals';
 import type { BonniePendingApprovalResponse } from '../../../services/bonnieService';
 
-export default function BonnieFullView() {
+type BonnieFullViewProps = {
+  variant?: 'default' | 'popout';
+};
+
+export default function BonnieFullView({ variant = 'default' }: BonnieFullViewProps) {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const activeModule = resolveBonnieModuleFromPath(pathname || '');
+  const searchParams = useSearchParams();
+  const contextPath = searchParams.get('from') || pathname || '';
+  const activeModule = resolveBonnieModuleFromPath(contextPath);
+  const isPopout = variant === 'popout';
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const [rules, setRules] = useState<BonnieRule | null>(null);
   const [logs, setLogs] = useState<BonnieLog[]>([]);
@@ -191,7 +200,7 @@ export default function BonnieFullView() {
     }
 
     const res = await bonnieService.sendInstruction(tenantId, text, history, {
-      pathname: pathname || undefined,
+      pathname: contextPath || undefined,
       moduleContext: activeModule,
     });
     if (res.success) {
@@ -211,7 +220,7 @@ export default function BonnieFullView() {
     onPhase?: (phase: string, meta?: Record<string, unknown>) => void
   ) => {
     const res = await bonnieService.streamInstruction(tenantId, text, history, {
-      pathname: pathname || undefined,
+      pathname: contextPath || undefined,
       moduleContext: activeModule,
       onToken,
       onPhase: (phase, meta) => onPhase?.(phase, meta),
@@ -242,8 +251,10 @@ export default function BonnieFullView() {
     };
   };
 
+  const bonnieDashboardRoute = resolveBonnieDashboardRoute(pathname, user?.role);
+
   return (
-    <div className="flex min-h-[calc(100dvh-10rem)] w-full flex-col gap-4 md:gap-6 bg-slate-950 text-white p-1 md:p-2 overflow-y-auto">
+    <div className={`flex w-full flex-col gap-4 md:gap-6 bg-slate-950 text-white overflow-y-auto ${isPopout ? 'min-h-dvh p-3 md:p-4' : 'min-h-[calc(100dvh-10rem)] p-1 md:p-2'}`}>
       {/* Header Banner */}
       <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-800 bg-[#090d16] p-4 md:p-6 sm:flex-row sm:items-center shrink-0">
         <div className="flex items-center gap-4">
@@ -253,22 +264,44 @@ export default function BonnieFullView() {
           </div>
           <div>
             <h1 className="text-xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-400">
-              Bonnie AI System Console
+              {isPopout ? 'Bonnie Workspace' : 'Bonnie AI System Console'}
             </h1>
             <p className="text-sm text-slate-400">
-              Bonnie AI executes real actions across CRM, finance, outreach, social, and automation. Ask for actions like &quot;run scan&quot;, &quot;list overdue invoices&quot;, or &quot;publish LinkedIn post&quot;.
+              {isPopout
+                ? `Dedicated window · context: ${moduleHint.label}`
+                : 'Bonnie AI executes real actions across CRM, finance, outreach, social, and automation. Ask for actions like "run scan", "list overdue invoices", or "publish LinkedIn post".'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/help"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-teal-500/40 hover:text-teal-300 transition-all"
-          >
-            <BookOpen size={14} />
-            Platform guide
-          </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {isPopout ? (
+            <Link
+              href={bonnieDashboardRoute}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-teal-500/40 hover:text-teal-300 transition-all"
+            >
+              <BookOpen size={14} />
+              Open in app
+            </Link>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => openBonniePopoutWindow(pathname || undefined)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-cyan-500/40 hover:text-cyan-300 transition-all"
+              >
+                <ExternalLink size={14} />
+                Pop out window
+              </button>
+              <Link
+                href="/dashboard/help"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-teal-500/40 hover:text-teal-300 transition-all"
+              >
+                <BookOpen size={14} />
+                Platform guide
+              </Link>
+            </>
+          )}
           <button
             onClick={handleToggleStatus}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md ${
@@ -357,6 +390,8 @@ export default function BonnieFullView() {
               </div>
             )}
           </div>
+
+          <BonnieResearchPanel tenantId={tenantId} />
 
           {/* Activity / Execution Log */}
           <div className="flex-1 rounded-3xl border border-slate-800 bg-[#090d16] p-6 flex flex-col min-h-[300px]">
@@ -448,7 +483,7 @@ export default function BonnieFullView() {
               onStreamSend={handleBonnieStream}
               onResolveApproval={handleResolveApproval}
               tenantId={tenantId}
-              pathname={pathname || undefined}
+              pathname={contextPath || undefined}
               userRole={user?.role}
             />
           </div>

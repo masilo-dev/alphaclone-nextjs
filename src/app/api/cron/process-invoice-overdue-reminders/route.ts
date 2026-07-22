@@ -18,7 +18,7 @@ async function processInvoiceOverdueReminders() {
         const now = new Date();
         const nowIso = now.toISOString();
         const todayIso = now.toISOString().split('T')[0];
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
 
         let markedOverdue = 0;
         let remindersSent = 0;

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/apiAuth';
 import { bootstrapTenantForUser } from '@/lib/tenant/bootstrapTenantServer';
+import { ENV } from '@/config/env';
 
 const bodySchema = z
   .object({
@@ -17,7 +18,7 @@ const bodySchema = z
 
 export async function POST(req: NextRequest) {
   try {
-    const { user } = await requireAuthenticatedUser(req, { allowMissingProfile: true });
+    const { user, admin } = await requireAuthenticatedUser(req, { allowMissingProfile: true });
     const body = bodySchema.parse(await req.json().catch(() => ({})));
     const idempotencyKey =
       req.headers.get('idempotency-key')?.trim() ||
@@ -26,7 +27,6 @@ export async function POST(req: NextRequest) {
     if (idempotencyKey.length < 8 || idempotencyKey.length > 200) {
       return NextResponse.json({ error: 'Invalid Idempotency-Key' }, { status: 400 });
     }
-    const admin = createSupabaseAdminClient();
 
     const { tenantId, created } = await bootstrapTenantForUser(admin, user, {
       ...body,
@@ -43,12 +43,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Tenant created but could not be loaded' }, { status: 500 });
     }
 
-    await admin.auth.admin.updateUserById(user.id, {
-      user_metadata: {
-        ...(user.user_metadata || {}),
-        tenant_id: tenantId,
-      },
-    });
+    // Auth admin API requires the service role key; skip in local dev when it is not configured.
+    if (ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      const serviceAdmin = createSupabaseAdminClient();
+      const { error: metadataError } = await serviceAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...(user.user_metadata || {}),
+          tenant_id: tenantId,
+        },
+      });
+      if (metadataError) {
+        console.warn('[tenant/bootstrap] Failed to sync user metadata:', metadataError.message);
+      }
+    }
 
     return NextResponse.json({ success: true, created, tenant });
   } catch (error) {

@@ -11,8 +11,7 @@ const createPin = () => String(randomInt(100000, 1000000));
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const [{ data: permanent, error: roomError }, { data: past, error: pastError }] = await Promise.all([
       admin.from('video_calls').select('*').eq('tenant_id', tenantId).eq('is_permanent', true).neq('status', 'cancelled').order('created_at', { ascending: true }).limit(1).maybeSingle(),
       admin.from('video_calls').select('*').eq('tenant_id', tenantId).in('status', ['ended', 'cancelled']).order('created_at', { ascending: false }).limit(10),
@@ -28,8 +27,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
 export async function POST(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data: tenant, error: tenantError } = await admin.from('tenants').select('name').eq('id', tenantId).maybeSingle();
     if (tenantError) throw tenantError;
     if (!tenant) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });

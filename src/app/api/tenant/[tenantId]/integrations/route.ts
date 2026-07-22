@@ -10,8 +10,7 @@ const integrationIdSchema = z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$
 export async function GET(req: NextRequest, context: Context) {
   try {
     const { tenantId } = await context.params;
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const [{ data: rows, error }, mcpKeys, chatgptTokens, slack] = await Promise.all([
       admin
         .from('tenant_integrations')

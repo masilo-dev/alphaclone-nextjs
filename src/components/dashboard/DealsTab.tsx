@@ -1056,7 +1056,6 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
       </div>
       <ModulePageLayout
-        showBonnieDock
         toolbar={(
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
         <div>

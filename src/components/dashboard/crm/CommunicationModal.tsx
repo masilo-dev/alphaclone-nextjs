@@ -56,8 +56,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     const [contactSearch, setContactSearch] = useState('');
     const [showPicker, setShowPicker] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
-
-    const [signature, setSignature] = useState('');
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
@@ -88,15 +86,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     useEffect(() => {
         if (prefilledBody) setBody(prefilledBody);
     }, [prefilledBody]);
-
-    // Load signature
-    useEffect(() => {
-        const fetchSignature = async () => {
-            const sig = await businessClientService.getUserSignature(user.id);
-            setSignature(sig);
-        };
-        fetchSignature();
-    }, [user.id]);
 
     useEffect(() => {
         const loadClients = async () => {
@@ -171,24 +160,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Handle AI Auto-drafting and Signature Appending
-    useEffect(() => {
-        if (selectedClient?.customFields?.ai_outreach_draft) {
-            const draft = selectedClient.customFields.ai_outreach_draft;
-            setSubject(draft.subject || '');
-            
-            // Only update body if it's currently empty to avoid overwriting user edits
-            // But always ensure signature is present if empty
-            if (!body) {
-                setBody(`${draft.body || ''}${signature}`);
-            }
-        } else if (selectedClient && !subject && !body) {
-            // Default template for non-draft clients
-            setSubject(`Strategic Update: ${selectedClient.name}`);
-            setBody(`Hello ${selectedClient.name.split(' ')[0]},\n\nI would like to follow up on our recent discussion...\n${signature}`);
-        }
-    }, [selectedClient, signature]);
-
     const filteredContacts = useMemo(() => {
         const query = contactSearch.trim().toLowerCase();
         if (!query) return clients;
@@ -222,7 +193,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             const response = await fetch('/api/outreach/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                    body: JSON.stringify({
                     tenantId: currentTenant.id,
                     leadEmail: selectedClient.email,
                     leadName: selectedClient.name,
@@ -234,6 +205,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                     autoSend: true,
                     consentGranted: true,
                     confidenceScore: 100,
+                    skipCrmGate: true,
+                    directSend: true,
                     deliveryProviders: [selectedProvider],
                     preferredProvider: selectedProvider,
                     balanceByDailyLimit: false,
@@ -280,14 +253,14 @@ Recipient industry: ${selectedClient.industry || 'Unknown'}
 Subject: ${subject}
 Context: ${selectedClient.description || 'No additional context'}
 Current draft: ${body || 'No current draft'}
-Return valid JSON with keys "subject" and "body".`;
+Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject or current draft already uses them. Return valid JSON with keys "subject" and "body".`;
 
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     prompt,
-                    systemPrompt: 'You are a professional business email assistant. Return JSON only.',
+                    systemPrompt: 'You are a professional business email assistant. Return JSON only. Never auto-add greetings unless explicitly present in the request.',
                 }),
             });
 
@@ -317,9 +290,9 @@ Return valid JSON with keys "subject" and "body".`;
             open
             onOpenChange={(open) => { if (!open) onClose(); }}
             title="Send Email"
-            size="wide"
+            size="default"
         >
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {/* Provider selector — always visible so Zoho/Microsoft compose starts clearly */}
                 <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Send via</label>
@@ -489,7 +462,7 @@ Return valid JSON with keys "subject" and "body".`;
                             onChange={(e) => setBody(e.target.value)}
                             placeholder="Type your message here..."
                             disabled={!selectedClient?.email || loadingProvider}
-                            className="w-full bg-slate-900 border border-slate-700 p-4 rounded-xl text-white text-sm focus:outline-none focus:border-teal-500 transition-colors min-h-[200px] resize-none"
+                            className="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl text-white text-sm focus:outline-none focus:border-teal-500 transition-colors h-[140px] max-h-[140px] resize-none overflow-y-auto"
                         />
                     </div>
                 </div>

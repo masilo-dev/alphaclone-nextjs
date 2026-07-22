@@ -48,8 +48,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'tenantId is required', code: 'VALIDATION_ERROR' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, request);
 
         if (mode === 'contacts') {
             const { data, error } = await admin
@@ -151,7 +150,7 @@ export async function POST(request: NextRequest) {
         const mode = String(parsed.data.mode || 'create').trim();
 
         const auth = await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = auth;
 
         if (mode === 'retry_failed') {
             const campaignId = String(parsed.data.campaignId || '').trim();
@@ -410,8 +409,7 @@ export async function PATCH(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-        await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, request);
 
         const updateData: Record<string, unknown> = {};
         if (parsed.data.name !== undefined) updateData.name = parsed.data.name;
@@ -443,8 +441,7 @@ export async function DELETE(request: NextRequest) {
         }
         const tenantId = parsed.data.tenantId;
         const campaignId = parsed.data.campaignId;
-        await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, request);
 
         const { data: campaign, error: fetchError } = await admin
             .from('email_campaigns')

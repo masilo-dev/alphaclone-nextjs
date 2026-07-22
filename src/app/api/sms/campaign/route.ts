@@ -18,8 +18,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const tenantId = searchParams.get('tenantId');
     if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 });
-    await requireTenantAccess(tenantId, req);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId, req);
 
     const { data, error } = await supabase
         .from('sms_campaigns')
@@ -36,8 +35,7 @@ export async function POST(req: NextRequest) {
     const parsed = campaignSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: 'Invalid campaign details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const { tenantId, name, message_body, from_number, recipient_source, recipient_filter, scheduled_at } = parsed.data;
-    await requireTenantAccess(tenantId, req);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId, req);
 
     const { data, error } = await supabase
         .from('sms_campaigns')
@@ -65,8 +63,7 @@ export async function DELETE(req: NextRequest) {
         if (!z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(campaignId).success) {
             return NextResponse.json({ error: 'Valid tenantId and campaignId required' }, { status: 400 });
         }
-        await requireTenantAccess(tenantId, req);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, req);
         const { data, error } = await admin.from('sms_campaigns').delete().eq('tenant_id', tenantId).eq('id', campaignId).select('id').maybeSingle();
         if (error) throw error;
         if (!data) return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });

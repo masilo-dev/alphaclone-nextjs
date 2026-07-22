@@ -7,8 +7,7 @@ import { generateMcpApiKey, hashMcpApiKey } from '@/lib/security/mcpKeyHash';
 export async function GET(req: NextRequest) {
   try {
     const tenantId = req.nextUrl.searchParams.get('tenantId') || '';
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data } = await admin
       .from('mcp_api_keys')
       .select('id, updated_at, last_used_at')
@@ -28,8 +27,7 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const tenantId = req.nextUrl.searchParams.get('tenantId') || '';
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { error } = await admin
       .from('mcp_api_keys')
       .delete()

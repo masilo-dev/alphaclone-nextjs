@@ -25,9 +25,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const { tenantId, password, clearPassword, expiresInDays, neverExpires } = parsed.data;
-    await requireTenantAccess(tenantId);
-
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const { data: project, error: fetchError } = await admin
       .from('projects')
       .select('id, portal_token')

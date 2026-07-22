@@ -11,8 +11,7 @@ const createSchema = z.object({ url: z.string().url().max(2048), events: z.array
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('webhooks').select('id, tenant_id, url, events, is_active, created_at, updated_at').eq('tenant_id', tenantId).order('created_at', { ascending: false });
     if (error) throw error;
     return NextResponse.json({ webhooks: data || [] });

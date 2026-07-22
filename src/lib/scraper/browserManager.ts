@@ -65,6 +65,29 @@ async function launchViaCDP(endpoints: string[]): Promise<Browser> {
   throw new Error('All remote CDP endpoints failed');
 }
 
+function resolveLocalChromeExecutable(): string | undefined {
+  const fromEnv = process.env.CHROME_EXECUTABLE_PATH?.trim() || process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
+  if (fromEnv) return fromEnv;
+
+  const candidates = [
+    '/usr/local/bin/google-chrome',
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ];
+  for (const candidate of candidates) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require('fs') as typeof import('fs');
+      if (fs.existsSync(candidate)) return candidate;
+    } catch {
+      /* ignore */
+    }
+  }
+  return undefined;
+}
+
 async function launchLocal(): Promise<Browser> {
   if (!isRailwayHost() && process.env.NODE_ENV === 'production') {
     throw new Error(
@@ -72,10 +95,14 @@ async function launchLocal(): Promise<Browser> {
         'Set BROWSERBASE_API_KEY + BROWSERBASE_PROJECT_ID.'
     );
   }
-  console.log('[BrowserManager] Using local Chromium');
+  const executablePath = resolveLocalChromeExecutable();
+  console.log(
+    `[BrowserManager] Using local Chromium${executablePath ? ` (${executablePath})` : ' (Playwright bundled)'}`
+  );
   return chromium.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    ...(executablePath ? { executablePath } : {}),
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 }
 
@@ -211,7 +238,12 @@ export class BrowserManager {
       if (!isRailwayHost() && process.env.NODE_ENV === 'production') {
         throw new Error('No remote browser configured for production. Set BROWSERBASE_API_KEY.');
       }
-      pBrowser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+      const executablePath = resolveLocalChromeExecutable();
+      pBrowser = await puppeteer.launch({
+        headless: true,
+        ...(executablePath ? { executablePath } : {}),
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
     }
 
     const page = await pBrowser.newPage();

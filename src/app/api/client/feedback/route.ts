@@ -11,8 +11,7 @@ export async function POST(req: NextRequest) {
       rating: z.number().int().min(1).max(5),
       comment: z.string().trim().max(4000).default(''),
     }).parse(await req.json());
-    const { user } = await requireTenantAccess(input.tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(input.tenantId);
     const { data: project, error: projectError } = await admin.from('projects')
       .select('id').eq('id', input.projectId).eq('tenant_id', input.tenantId).maybeSingle();
     if (projectError) throw projectError;

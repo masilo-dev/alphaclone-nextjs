@@ -27,8 +27,7 @@ async function fetchPublicPage(initial: URL): Promise<string> {
 export async function POST(req: NextRequest) {
   try {
     const { tenantId, itemId } = z.object({ tenantId: z.string().uuid(), itemId: z.string().uuid() }).parse(await req.json());
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const { data: item, error } = await admin.from('social_watchlist').select('id, url, name, platform')
       .eq('id', itemId).eq('tenant_id', tenantId).maybeSingle();
     if (error) throw error;

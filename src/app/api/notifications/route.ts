@@ -10,8 +10,7 @@ export async function POST(req: NextRequest) {
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid notification' }, { status: 400 });
     const value = parsed.data;
-    await requireTenantAccess(value.tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(value.tenantId, req);
     const { data: recipient, error: recipientError } = await admin.from('tenant_users').select('user_id').eq('tenant_id', value.tenantId).eq('user_id', value.userId).maybeSingle();
     if (recipientError) throw recipientError;
     if (!recipient) return NextResponse.json({ error: 'Notification recipient is not a workspace member' }, { status: 400 });
@@ -24,8 +23,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const tenantId = req.nextUrl.searchParams.get('tenantId') || '';
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('notifications').select('*').eq('tenant_id', tenantId).eq('user_id', user.id).order('created_at', { ascending: false }).limit(200);
     if (error) throw error;
     return NextResponse.json({ notifications: data || [] });
@@ -37,8 +35,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const parsed = updateSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid notification update' }, { status: 400 });
-    const { user } = await requireTenantAccess(parsed.data.tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(parsed.data.tenantId, req);
     const { error } = await admin.from('notifications').update({ read: true }).eq('tenant_id', parsed.data.tenantId).eq('user_id', user.id).in('id', parsed.data.ids);
     if (error) throw error;
     return NextResponse.json({ success: true });
@@ -50,8 +47,7 @@ export async function DELETE(req: NextRequest) {
     const tenantId = req.nextUrl.searchParams.get('tenantId') || '';
     const notificationId = req.nextUrl.searchParams.get('notificationId') || '';
     if (!z.string().uuid().safeParse(notificationId).success) return NextResponse.json({ error: 'Valid notificationId is required' }, { status: 400 });
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('notifications').delete().eq('id', notificationId).eq('tenant_id', tenantId).eq('user_id', user.id).select('id').maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: 'Notification not found' }, { status: 404 });

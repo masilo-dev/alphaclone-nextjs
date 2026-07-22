@@ -9,8 +9,7 @@ const adminRoles = ['owner', 'admin', 'tenant_admin', 'super_admin'];
 export async function GET(req: NextRequest, context: Context) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const { data, error } = await admin.from('tenant_users').select('tenant_id, user_id, role, joined_at, profiles(id,email,name,avatar)').eq('tenant_id', tenantId).order('joined_at');
     if (error) throw error;
     const members = (data || []).map((row: Record<string, unknown>) => ({

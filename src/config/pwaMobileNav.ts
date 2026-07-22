@@ -62,13 +62,13 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
   },
   {
     id: 'mail',
-    label: 'Mail',
+    label: 'Comms',
     icon: Mail,
     tileBg: 'bg-green-500',
     tileBgMuted: 'bg-green-500/20',
     labelActive: 'text-green-400',
-    hrefForRole: () => '/dashboard/mail',
-    matchPrefixesForRole: () => ['/dashboard/mail'],
+    hrefForRole: () => '/dashboard/comms',
+    matchPrefixesForRole: () => ['/dashboard/comms', '/dashboard/mail'],
   },
   {
     id: 'clients',

@@ -15,6 +15,13 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
 import { ContractAuditLog } from './ContractAuditLog';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import {
+    buildContractDocumentInput,
+    resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -299,6 +306,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 content: html,
                 status: 'draft',
                 client_id: selectedClientIdForLawyer || form.clientId || undefined,
+                metadata: {
+                    document_theme: documentTheme,
+                    client_name: form.clientName,
+                    client_email: form.clientEmail,
+                    source: 'lawyer_assistant',
+                },
             });
             if (error || !contract) throw new Error(typeof error === 'object' && error && 'message' in error ? String((error as any).message) : String(error || 'Failed to save contract'));
 
@@ -332,6 +345,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
     const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string });
+    const [resendForSignature, setResendForSignature] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
     const [previewTab, setPreviewTab] = useState<'document' | 'audit'>('document');
@@ -372,6 +386,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         contractLength: 'full',
         outputLanguage: 'en',
     });
+    const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -514,6 +529,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 payment_amount: parseFloat(form.totalAmount) || 0,
                 admin_signature: isSigned ? signatureData : undefined,
                 admin_signed_at: isSigned ? new Date().toISOString() : undefined,
+                metadata: {
+                    document_theme: documentTheme,
+                    client_name: form.clientName,
+                    client_email: form.clientEmail,
+                },
             });
             if (error) throw new Error(String(error));
             toast.success('Contract saved successfully!');
@@ -546,17 +566,30 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
-    const openSendContractModal = () => {
-        const targetEmail = form.clientEmail || '';
+    const openSendContractModal = (options?: { resend?: boolean; contract?: any }) => {
+        const targetContract = options?.contract;
+        const isResend = Boolean(options?.resend);
+        const contractTitle = targetContract?.title || form.projectName || 'Service Agreement';
+        const targetEmail = targetContract?.client_email || form.clientEmail || '';
+        setResendForSignature(isResend);
         setSendForm({
             recipientEmail: targetEmail,
-            subject: `Contract: ${form.projectName || 'Service Agreement'}`,
-            message: `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
+            subject: isResend
+                ? `Action required: Sign contract — ${contractTitle} (your process is on hold)`
+                : `Contract: ${contractTitle}`,
+            message: isResend
+                ? `We still need your signature on "${contractTitle}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link as soon as possible.`
+                : `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
             provider: 'auto',
         });
         setAiSendInstructions(
-            `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
+            isResend
+                ? `Write an urgent but professional follow-up asking ${form.clientName || 'the client'} to sign "${contractTitle}" because the project cannot proceed until signed.`
+                : `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
         );
+        if (targetContract?.id) {
+            setContractId(targetContract.id);
+        }
         setShowSendModal(true);
     };
 
@@ -607,6 +640,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         format: 'pdf',
                         userId: user.id,
                         provider: sendForm.provider !== 'auto' ? sendForm.provider : undefined,
+                        resendForSignature,
                     },
                 }),
             });
@@ -614,8 +648,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (!res.ok || !payload?.success) {
                 throw new Error(payload?.error || 'Failed to send contract');
             }
-            toast.success('Contract sent successfully');
+            toast.success(resendForSignature ? 'Signature request resent' : 'Contract sent successfully');
             setShowSendModal(false);
+            setResendForSignature(false);
         } catch (error: any) {
             toast.error(error?.message || 'Failed to send contract');
         } finally {
@@ -798,6 +833,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </p>
                                     </div>
                                 </div>
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -808,6 +844,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setSignatureData(c.admin_signature || '');
                                         setSignatureName(c.admin_signature ? 'Administrator' : '');
                                         setIsSigned(!!c.admin_signature);
+                                        setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
 
                                         // Use proxied URL if available
                                         if (c.document_url) {
@@ -823,6 +860,16 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 >
                                     <Eye className="w-3.5 h-3.5 text-teal-400" /> View
                                 </button>
+                                {c.status !== 'fully_signed' && c.status !== 'draft' && c.status !== 'rejected' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => openSendContractModal({ resend: true, contract: c })}
+                                        className="w-full sm:w-auto justify-center px-3.5 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-amber-500/30"
+                                    >
+                                        <Send className="w-3.5 h-3.5" /> Resend for signature
+                                    </button>
+                                ) : null}
+                                </div>
                             </div>
                         );
                     })}
@@ -1111,7 +1158,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             <button onClick={handlePrint} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
                                                 <Printer className="w-3.5 h-3.5" /> Print / PDF
                                             </button>
-                                            <button onClick={openSendContractModal} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
+                                            <button onClick={() => openSendContractModal()} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
                                                 <FileText className="w-3.5 h-3.5" /> Send Contract
                                             </button>
                                         </>
@@ -1123,7 +1170,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </button>
                                     )}
                                 </div>
-                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); setDocumentTheme('executive'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
                                     <RotateCcw className="w-3.5 h-3.5" /> New Contract
                                 </button>
                             </div>
@@ -1192,8 +1239,42 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             )}
 
                             <p className="text-slate-500 text-xs">
-                                {isEditing ? 'Editing mode enabled. Your changes will be saved to the final contract.' : 'On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area.'}
+                                {isEditing
+                                    ? 'Editing mode enabled. Your changes will be saved to the final contract.'
+                                    : 'Pick a brand theme below — preview and PDF export use the same colorful design as quotes and invoices.'}
                             </p>
+
+                            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
+                                <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+                                <DocumentPreview
+                                    input={buildContractDocumentInput(
+                                        {
+                                            id: contractId || undefined,
+                                            title: `${form.projectName || 'Service Agreement'} — ${form.clientName || 'Client'}`,
+                                            content: isEditing
+                                                ? editedHtml
+                                                : (editedHtml || generatedContract || contractToHTML(generatedContract)),
+                                            status: isSigned ? 'sent' : 'draft',
+                                            payment_amount: parseFloat(form.totalAmount) || 0,
+                                            created_at: new Date().toISOString(),
+                                            metadata: {
+                                                document_theme: documentTheme,
+                                                client_name: form.clientName,
+                                                client_email: form.clientEmail,
+                                            },
+                                        },
+                                        currentTenant
+                                            ? {
+                                                name: currentTenant.name,
+                                                logo_url: (currentTenant as { logo_url?: string }).logo_url,
+                                                brand_color_primary: (currentTenant as { brand_color_primary?: string }).brand_color_primary,
+                                                settings: (currentTenant as { settings?: unknown }).settings,
+                                            }
+                                            : null,
+                                        { name: form.clientName, email: form.clientEmail }
+                                    )}
+                                />
+                            </div>
 
                             {/* Contract Document */}
                             <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[600px]">
@@ -1476,7 +1557,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
                     <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                        <h3 className="text-lg font-semibold text-white">Send Contract by Email</h3>
+                        <h3 className="text-lg font-semibold text-white">
+                            {resendForSignature ? 'Resend contract for signature' : 'Send Contract by Email'}
+                        </h3>
+                        {resendForSignature ? (
+                            <p className="text-sm text-amber-300/90">
+                                The recipient will get an urgent subject line explaining their project cannot proceed until the contract is signed.
+                            </p>
+                        ) : null}
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
                             <input
@@ -1555,7 +1643,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     Cancel
                                 </button>
                                 <button type="button" onClick={handleSendContract} disabled={sendingContract} className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold">
-                                    {sendingContract ? 'Sending...' : 'Send Contract'}
+                                    {sendingContract ? 'Sending...' : resendForSignature ? 'Resend for signature' : 'Send Contract'}
                                 </button>
                             </div>
                         </div>

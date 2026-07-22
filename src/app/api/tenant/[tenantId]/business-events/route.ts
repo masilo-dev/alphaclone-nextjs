@@ -34,8 +34,7 @@ const mapEvent = (event: any) => ({
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('business_events').select('*').eq('tenant_id', tenantId).order('start_time');
     if (error) throw error;
     return NextResponse.json({ events: (data || []).map(mapEvent) });

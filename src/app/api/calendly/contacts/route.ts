@@ -18,9 +18,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId, req);
-
-        const supabase = createSupabaseAdminClient();
+        const { admin: supabase } = await requireTenantAccess(tenantId, req);
         const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
         if (!config?.accessToken) {
             return NextResponse.json({ error: 'Calendly not connected' }, { status: 401 });
@@ -45,9 +43,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId, req);
-
-        const supabase = createSupabaseAdminClient();
+        const { admin: supabase } = await requireTenantAccess(tenantId, req);
         const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
         if (!config?.accessToken) {
             return NextResponse.json({ error: 'Calendly not connected' }, { status: 401 });

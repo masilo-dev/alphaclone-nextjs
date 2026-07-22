@@ -12,8 +12,7 @@ const subscriptionSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const input = z.object({ tenantId: z.string().uuid(), subscription: subscriptionSchema }).parse(await req.json());
-    const { user } = await requireTenantAccess(input.tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(input.tenantId);
     const { data: existing, error: findError } = await admin.from('push_subscriptions').select('id')
       .eq('user_id', user.id).eq('endpoint', input.subscription.endpoint).maybeSingle();
     if (findError) throw findError;
@@ -31,8 +30,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { tenantId, endpoint } = z.object({ tenantId: z.string().uuid(), endpoint: z.string().url().max(4096) }).parse(await req.json());
-    const { user } = await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId);
     const { error } = await admin.from('push_subscriptions').delete()
       .eq('tenant_id', tenantId).eq('user_id', user.id).eq('endpoint', endpoint);
     if (error) throw error;

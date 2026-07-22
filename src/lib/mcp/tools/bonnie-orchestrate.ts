@@ -14,14 +14,27 @@ const DEFAULT_READ_TOOLS = new Set([
   'get_revenue_summary', 'get_accounts_receivable_aging', 'get_linkedin_posts',
   'get_scheduled_posts', 'get_project_details', 'trust_ledger',
   'qualify_crm_leads', 'get_scraper_leads', 'find_and_qualify_leads',
+  'list_pending_approvals',
 ]);
 
 export const SPECIALIST_SUBAGENTS = [
   {
     name: 'CRM Specialist',
     role: 'crm_analyst',
-    instructions: 'Audit contacts, leads, deals pipeline health. Flag stale deals and missing follow-ups.',
-    tools: ['get_contacts', 'get_leads', 'get_deals', 'get_pipeline_summary', 'recommend_next_steps'],
+    instructions: 'Audit contacts, leads, deals pipeline health across discovered→qualified→proposal→negotiation. Flag stale deals and missing follow-ups. Prefer records that have emails for outreach.',
+    tools: ['get_contacts', 'get_leads', 'get_deals', 'get_pipeline_summary', 'recommend_next_steps', 'qualify_crm_leads'],
+  },
+  {
+    name: 'Sales Specialist',
+    role: 'sales_analyst',
+    instructions: 'Push pipeline revenue: deals, quotes, follow-ups, and next best actions to close.',
+    tools: ['get_deals', 'get_pipeline_summary', 'predict_deal_win_probability', 'get_leads', 'recommend_next_steps'],
+  },
+  {
+    name: 'Marketing Specialist',
+    role: 'marketing_analyst',
+    instructions: 'Review campaigns, outreach sequences, and channel readiness. Suggest concrete send/publish next steps.',
+    tools: ['campaign_brief', 'campaign_diagnose', 'get_social_accounts', 'get_scheduled_posts', 'solo_owner_operator_brief'],
   },
   {
     name: 'Finance Specialist',
@@ -30,9 +43,15 @@ export const SPECIALIST_SUBAGENTS = [
     tools: ['get_invoices', 'accounting_snapshot', 'get_revenue_summary', 'get_accounts_receivable_aging'],
   },
   {
+    name: 'Social Specialist',
+    role: 'social_analyst',
+    instructions: 'Prepare social content plans. When posts are queued for approval, list_pending_approvals and approve_pending_action via MCP instead of asking the user to open the dashboard.',
+    tools: ['get_social_accounts', 'get_linkedin_posts', 'get_scheduled_posts', 'list_pending_approvals'],
+  },
+  {
     name: 'Leads Specialist',
     role: 'leads_analyst',
-    instructions: 'Assess lead pipeline quality, scraper inventory, and qualification opportunities.',
+    instructions: 'Assess lead pipeline quality, scraper inventory, and qualification opportunities. Ensure outreach targets have emails.',
     tools: ['get_leads', 'qualify_crm_leads', 'get_scraper_leads', 'find_and_qualify_leads'],
   },
 ] as const;

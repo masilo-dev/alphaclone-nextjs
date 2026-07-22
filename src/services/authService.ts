@@ -1,5 +1,5 @@
 import { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE, supabase } from '../lib/supabase';
 import { User, UserRole } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
 import { z } from 'zod';
@@ -29,11 +29,20 @@ async function withAuthTimeout<T = any>(promise: any, timeoutMs: number = 30000)
 // In-flight deduplication: if getCurrentUser() is already running, return the same promise
 let _getCurrentUserInflight: Promise<{ user: User | null; error: string | null }> | null = null;
 
+function supabaseConfigError(): string | null {
+    return isSupabaseConfigured() ? null : SUPABASE_NOT_CONFIGURED_MESSAGE;
+}
+
 export const authService = {
     /**
      * Sign in with email and password
      */
     async signIn(email: string, password: string): Promise<{ user: User | null; error: string | null; needsMfa?: boolean }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { user: null, error: configError };
+        }
+
         try {
             // Validate input
             const validated = signInSchema.parse({ email: email.trim().toLowerCase(), password });
@@ -161,6 +170,11 @@ export const authService = {
         role: UserRole = 'tenant_admin',
         options?: { businessName?: string; plan?: string; referralCode?: string }
     ): Promise<{ user: User | null; error: string | null; needsEmailConfirmation?: boolean }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { user: null, error: configError };
+        }
+
         try {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
@@ -271,6 +285,11 @@ export const authService = {
      * Send password reset email
      */
     async resetPassword(email: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             const { error } = await withAuthTimeout(supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -346,6 +365,11 @@ export const authService = {
      * Sign in with Google OAuth
      */
     async signInWithGoogle(nextPath?: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             // Set a flag to help AuthContext/AuthService identify that we are in a callback loop
             // and should be more persistent with session discovery.
@@ -389,6 +413,11 @@ export const authService = {
      * Sign in with LinkedIn OAuth
      */
     async signInWithLinkedIn(nextPath?: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
@@ -487,6 +516,11 @@ export const authService = {
      * Sign in with Facebook OAuth
      */
     async signInWithFacebook(nextPath?: string): Promise<{ error: string | null }> {
+        const configError = supabaseConfigError();
+        if (configError) {
+            return { error: configError };
+        }
+
         try {
             if (typeof window !== 'undefined') {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
@@ -569,6 +603,10 @@ export const authService = {
     },
 
     async _doGetCurrentUser(): Promise<{ user: User | null; error: string | null }> {
+        if (!isSupabaseConfigured()) {
+            return { user: null, error: null };
+        }
+
         try {
             let session = null;
             let lastError = null;

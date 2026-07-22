@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tenantCtx = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const supabase = tenantCtx.admin;
 
     const { data, error } = await supabase
       .from('integrations')
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     } = parsed.data as any;
 
     const tenantCtx = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const supabase = tenantCtx.admin;
 
     const { data: existing } = await supabase
       .from('integrations')
@@ -164,7 +164,7 @@ export async function DELETE(request: NextRequest) {
     const provider = parsed.data.provider;
 
     const tenantCtx = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const supabase = tenantCtx.admin;
 
     const { error } = await supabase
       .from('integrations')

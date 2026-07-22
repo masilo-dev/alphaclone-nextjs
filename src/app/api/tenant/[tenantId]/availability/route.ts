@@ -18,8 +18,7 @@ const scheduleSchema = z.object({ schedule: z.record(daySchema, z.array(slotSche
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('availability_schedules').select('*').eq('tenant_id', tenantId).order('is_default', { ascending: false }).order('created_at', { ascending: true }).limit(1).maybeSingle();
     if (error) throw error;
     return NextResponse.json({ availability: data || null });

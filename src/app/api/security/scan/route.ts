@@ -77,8 +77,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const tenantId = z.string().uuid().parse(req.nextUrl.searchParams.get('tenantId'));
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const { data, error } = await admin.from('security_scans').select('*')
       .eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;

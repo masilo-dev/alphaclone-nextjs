@@ -12,8 +12,7 @@ const deleteSchema = z.object({ stepId: z.string().uuid() });
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const [{ data: steps, error: stepsError }, { data: contacts, error: contactsError }] = await Promise.all([
       admin.from('onboarding_steps').select('*').eq('tenant_id', tenantId).order('step_order', { ascending: true }),
       admin.from('contacts').select('id').eq('tenant_id', tenantId),

@@ -11,6 +11,7 @@ export default function ClientFinancePortalPage() {
   const [portal, setPortal] = useState<ClientFinancePortalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'finance' | 'documents' | 'projects'>('finance');
 
   useEffect(() => {
     if (!token) return;
@@ -67,10 +68,38 @@ export default function ClientFinancePortalPage() {
           )}
           <div>
             <h1 className="text-2xl font-bold">{branding.name}</h1>
-            <p className="text-slate-500 text-sm">Client finance portal · {client.name}</p>
+            <p className="text-slate-500 text-sm">Client portal · {client.name}</p>
           </div>
         </header>
 
+        <div className="flex gap-2 border-b border-white/10 pb-2">
+          {(['finance', 'documents', 'projects'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition-colors ${
+                activeTab === tab ? 'bg-teal-500/20 text-teal-300' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'documents' ? (
+          <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
+            <FileText className="w-10 h-10 text-teal-400 mx-auto mb-3" aria-hidden="true" />
+            <p className="text-slate-300 font-medium">Documents & contracts</p>
+            <p className="text-slate-500 text-sm mt-1">Shared files and agreements will appear here.</p>
+          </section>
+        ) : activeTab === 'projects' ? (
+          <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
+            <p className="text-slate-300 font-medium">Project updates</p>
+            <p className="text-slate-500 text-sm mt-1">Milestones and deliverables will appear here when a project is active.</p>
+          </section>
+        ) : (
+        <>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-5">
             <p className="text-xs uppercase text-slate-500 font-bold">Open invoices</p>
@@ -158,6 +187,8 @@ export default function ClientFinancePortalPage() {
             </div>
           )}
         </section>
+        </>
+        )}
 
         <footer className="text-center text-xs text-slate-600 pt-8 flex items-center justify-center gap-1">
           <Receipt className="w-3 h-3" /> Powered by AlphaClone native billing

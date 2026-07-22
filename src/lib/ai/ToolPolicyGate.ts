@@ -77,6 +77,9 @@ const TENANT_INTERNAL_TOOLS = new Set([
   'list_skills',
   'load_skill',
   'activate_skill_for_session',
+  'list_pending_approvals',
+  'approve_pending_action',
+  'reject_pending_action',
   ...META_ORCHESTRATION_TOOLS,
 ]);
 

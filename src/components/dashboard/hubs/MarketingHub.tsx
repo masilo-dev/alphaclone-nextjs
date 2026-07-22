@@ -40,7 +40,7 @@ export default function MarketingHub({ children }: MarketingHubProps) {
       title="Marketing & Social"
       description="Publish, schedule, and run campaigns from one place"
       tabs={MARKETING_TABS}
-      accent="violet"
+      accent="teal"
     >
       {children}
     </HubShell>

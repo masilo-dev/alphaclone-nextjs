@@ -10,8 +10,7 @@ export async function GET(request: NextRequest) {
         const tenantId = String(searchParams.get('tenantId') || '').trim();
         if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
 
-        await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, request);
 
         const [bmRes, wlRes, xRes, siRes] = await Promise.all([
             admin.from('social_bookmarks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
@@ -42,8 +41,7 @@ export async function POST(request: NextRequest) {
         const mode = String(body.mode || '').trim();
         if (!tenantId || !mode) return NextResponse.json({ error: 'tenantId and mode are required' }, { status: 400 });
 
-        await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, request);
 
         if (mode === 'add_bookmark') {
             const payload = {
@@ -122,8 +120,7 @@ export async function DELETE(request: NextRequest) {
         const id = String(body.id || '').trim();
         if (!tenantId || !mode || !id) return NextResponse.json({ error: 'tenantId, mode and id are required' }, { status: 400 });
 
-        await requireTenantAccess(tenantId, request);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, request);
 
         if (mode === 'delete_bookmark') {
             const { error } = await admin.from('social_bookmarks').delete().eq('id', id).eq('tenant_id', tenantId);

@@ -2951,8 +2951,14 @@ class AlphaCloneMCPServer {
           for (let i = 0; i < allEntities.length; i += CHUNK_SIZE) {
             const chunk = allEntities.slice(i, i + CHUNK_SIZE);
             const chunkResults = await Promise.all(chunk.map(async (entity) => {
-             const email = entity.email || (entity as any).emails?.[0];
-             if (!email) return { name: entity.business_name || entity.name, status: 'failed', error: 'No email found' };
+             const email = entity.email || (Array.isArray((entity as any).emails) ? (entity as any).emails[0] : null) || (entity as any).contact_email;
+             if (!email || !String(email).includes('@')) {
+               return {
+                 name: entity.business_name || entity.name,
+                 status: 'failed',
+                 error: 'No email found on this record. Add an email in CRM (any stage: discovered→negotiation) then retry.',
+               };
+             }
              
              try {
                 const prompt = `Generate a highly personalized, professional B2B outreach email for ${entity.business_name || entity.name}.

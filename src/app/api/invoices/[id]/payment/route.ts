@@ -17,8 +17,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Valid tenantId and positive payment amount required' }, { status: 400 });
     const { tenantId, amount, idempotencyKey } = parsed.data;
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data: rows, error } = await admin.rpc('record_business_invoice_payment', {
       p_tenant_id: tenantId,
       p_invoice_id: id,

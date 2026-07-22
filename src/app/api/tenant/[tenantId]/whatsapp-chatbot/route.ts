@@ -9,8 +9,7 @@ const schema = z.object({ chatbot_enabled: z.boolean() });
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('whatsapp_chatbot_settings').select('chatbot_enabled').eq('tenant_id', tenantId).maybeSingle();
     if (error) throw error;
     return NextResponse.json({ chatbotEnabled: Boolean(data?.chatbot_enabled) });

@@ -6,8 +6,7 @@ import { taskAutomationService } from '@/services/automation/taskAutomationServi
 export async function POST(req: NextRequest, context: { params: Promise<{ tenantId: string; taskId: string }> }) {
   try {
     const { tenantId, taskId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data: task, error } = await admin.from('scheduled_ai_tasks').select('*').eq('tenant_id', tenantId).eq('id', taskId).maybeSingle();
     if (error) throw error;
     if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });

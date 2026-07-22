@@ -15,8 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenant_id is required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
 
     // 1. Fetch last 50 mcp_sessions for the tenant
     const { data: sessions, error: sessErr } = await supabase
