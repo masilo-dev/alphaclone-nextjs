@@ -2117,8 +2117,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         title="Mission Accomplished" 
         message="Achievement unlocked." 
       />
-      {!route.startsWith('/dashboard/bonnie') &&
-        route !== '/dashboard/business/bonnie' && <BonnieWidget />}
+      {!location.startsWith('/dashboard/bonnie') &&
+        location !== '/dashboard/business/bonnie' && <BonnieWidget />}
     </div>
   );
 };

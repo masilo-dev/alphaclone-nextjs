@@ -122,7 +122,7 @@ export async function searchEmailContext(
       id: row.id,
       name: name || undefined,
       email: row.email,
-      company: row.company,
+      company: (row as { company?: string }).company,
       phone: row.phone,
       href: `/dashboard/contacts?id=${row.id}`,
     });

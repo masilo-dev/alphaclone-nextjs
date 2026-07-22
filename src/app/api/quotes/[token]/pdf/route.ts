@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ token:
     const isDownload = _req.nextUrl.searchParams.get('download') === 'true';
     const disposition = isDownload ? 'attachment' : 'inline';
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `${disposition}; filename="${filename}"`,

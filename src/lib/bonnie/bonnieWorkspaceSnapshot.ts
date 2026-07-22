@@ -29,7 +29,7 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
 
   async function countTable(
     table: string,
-    build: (q: ReturnType<typeof admin.from>) => ReturnType<ReturnType<typeof admin.from>['select']>
+    build: (q: any) => any
   ): Promise<number> {
     try {
       const { count, error } = await build(admin.from(table));

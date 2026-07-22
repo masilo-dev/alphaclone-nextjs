@@ -24,7 +24,7 @@ export async function GET(
     // Fetch invoice to get tenantId and current status
     const { data: invoice, error: fetchError } = await admin
       .from('business_invoices')
-      .select('id, tenant_id, status, view_count')
+      .select('id, tenant_id, status, view_count, viewed_at')
       .eq('id', invoiceId)
       .single();
 

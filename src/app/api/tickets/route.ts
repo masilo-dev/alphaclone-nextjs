@@ -104,7 +104,9 @@ export async function GET(req: NextRequest) {
       : (supportResult.data || []).map((row: SupportTicketRow) => mapSupportTicket(row));
 
     const merged = [...dashboardTickets, ...supportTickets].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      (a, b) =>
+        new Date(String((b as { created_at?: string }).created_at || 0)).getTime() -
+        new Date(String((a as { created_at?: string }).created_at || 0)).getTime()
     );
 
     return NextResponse.json({ success: true, tickets: merged });

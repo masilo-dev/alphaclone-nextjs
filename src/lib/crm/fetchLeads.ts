@@ -73,7 +73,7 @@ export async function fetchLeadsPaginated(
       ? params.fields.split(',').map((f) => f.trim()).filter(Boolean).join(', ')
       : DEFAULT_SELECT;
 
-  const applyFilters = (baseQuery: ReturnType<typeof supabase.from>) => {
+  const applyFilters = (baseQuery: any) => {
     let q = baseQuery.eq('tenant_id', params.tenantId);
     if (params.status) q = q.eq('status', params.status);
     if (params.stage) q = q.eq('stage', params.stage);

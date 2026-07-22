@@ -242,16 +242,20 @@ export class AlphaNexus {
                                 });
 
                                 // Log to outreach table
-                                await this.admin.from('lead_outreach_log').insert({
-                                    tenant_id: this.tenantId,
-                                    user_id: userId,
-                                    lead_name: target.name,
-                                    lead_email: target.email,
-                                    subject: `Quick question about ${target.name}`,
-                                    body_html: emailHtml,
-                                    status: 'sent',
-                                    provider: providerConfig.provider,
-                                }).catch(() => {/* non-fatal log error */});
+                                try {
+                                    await this.admin.from('lead_outreach_log').insert({
+                                        tenant_id: this.tenantId,
+                                        user_id: userId,
+                                        lead_name: target.name,
+                                        lead_email: target.email,
+                                        subject: `Quick question about ${target.name}`,
+                                        body_html: emailHtml,
+                                        status: 'sent',
+                                        provider: providerConfig.provider,
+                                    });
+                                } catch {
+                                    /* non-fatal log error */
+                                }
 
                                 emailsSent++;
                             } catch (err: any) {

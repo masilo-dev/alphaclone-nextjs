@@ -61,12 +61,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    await supabase.from('automation_cron_logs').insert({
-      trigger_type: 'bonnie-continuous',
-      status: 'success',
-      payload: { processed: results.length, results: results.slice(0, 50) },
-      ran_at: ranAt,
-    }).then(() => undefined).catch(() => undefined);
+    try {
+      await supabase.from('automation_cron_logs').insert({
+        trigger_type: 'bonnie-continuous',
+        status: 'success',
+        payload: { processed: results.length, results: results.slice(0, 50) },
+        ran_at: ranAt,
+      });
+    } catch {
+      // Best-effort cron log; never fail the continuous runner on telemetry writes.
+    }
 
     return NextResponse.json({
       success: true,

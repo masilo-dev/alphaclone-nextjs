@@ -7515,7 +7515,7 @@ Return ONLY a JSON array of 60 objects:
 
           // Run all finance queries in parallel
           // Note: Supabase query builder does not expose .catch() — use async IIFEs
-          const safeQuery = async (fn: () => Promise<{ data: any; error: any }>) => {
+          const safeQuery = async (fn: () => PromiseLike<{ data: any; error: any }>) => {
             try { return await fn(); } catch { return { data: null, error: null }; }
           };
 
