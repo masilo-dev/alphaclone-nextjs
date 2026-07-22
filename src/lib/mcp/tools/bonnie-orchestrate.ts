@@ -16,6 +16,10 @@ const DEFAULT_READ_TOOLS = new Set([
   'qualify_crm_leads', 'get_scraper_leads', 'find_and_qualify_leads',
 ]);
 
+import { selectAgentsForGoal } from '@/lib/bonnie/os/supervisor';
+import { toOrchestratorSubagents } from '@/lib/bonnie/os/agentRegistry';
+
+/** @deprecated Prefer DEPARTMENT_AGENTS via Supervisor — kept for backward compatibility */
 export const SPECIALIST_SUBAGENTS = [
   {
     name: 'CRM Specialist',
@@ -39,9 +43,17 @@ export const SPECIALIST_SUBAGENTS = [
 
 function mergeSubagents(
   userSubagents: Array<{ name: string; role: string; instructions: string; tools?: string[]; write_allowed?: boolean }>,
-  useSpecialists: boolean
+  useSpecialists: boolean,
+  task?: string
 ) {
   if (!useSpecialists || userSubagents.length > 0) return userSubagents;
+  // Supervisor selects best department agents for this task (falls back to classic trio)
+  try {
+    const selected = selectAgentsForGoal(task || 'audit business health', { maxAgents: 4 });
+    if (selected.length) return toOrchestratorSubagents(selected);
+  } catch {
+    // fall through
+  }
   return SPECIALIST_SUBAGENTS.map((s) => ({ ...s, tools: [...s.tools] }));
 }
 
@@ -202,7 +214,7 @@ registerTool('bonnie-orchestrate', {
     if (runInsertError) throw new Error(`Failed to create orchestration run: ${runInsertError.message}`);
     const runId = runRow.id;
 
-    const subagents = mergeSubagents(args.subagents || [], args.use_specialist_subagents !== false);
+    const subagents = mergeSubagents(args.subagents || [], args.use_specialist_subagents !== false, args.task);
     if (!subagents.length) {
       throw new Error('At least one subagent is required (or enable use_specialist_subagents).');
     }

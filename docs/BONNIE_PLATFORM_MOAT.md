@@ -71,12 +71,15 @@ Browser speech-to-text can call this endpoint. Bonnie is not text-only.
 ## Roadmap pillars (2026–2031)
 
 1. **Proactive agent** — cron briefings pushed to widget without asking
-2. **Specialist subagents** — parallel CRM + finance + leads agents per orchestration
+2. **Specialist subagents** — Supervisor selects from 24 department agents per mission ✅ foundation live
 3. **Auto-resume after approval** — mission continues when you tap Approve
 4. **Module dock on every page** — context-aware everywhere
 5. **Tenant-trained playbooks** — Bonnie writes and replays your SOPs
 6. **Marketplace skills** — install vertical packs (HVAC, dental, legal)
 7. **MCP as platform API** — Claude/Grok/Manus connect *to* AlphaClone, not the reverse
+8. **Cognitive OS loop** — Observe→Understand→Reason→Plan→Simulate→Risk→Execute→Verify→Reflect→Learn ✅ foundation live
+9. **Knowledge graph + digital twin** — persisted world model for continuous business reasoning ✅ foundation live
+10. **Event-driven agency** — every lead/invoice/deal/ticket event creates reasoning ✅ foundation live
 
 ---
 
@@ -84,6 +87,6 @@ Browser speech-to-text can call this endpoint. Bonnie is not text-only.
 
 > **Claude is a brain. AlphaClone is the business body.**
 
-Bonnie is the nervous system — senses (data), decides (policy + memory), acts (tools), remembers (nexus), and asks permission (approvals) before irreversible sends.
+Bonnie is the nervous system — senses (data + digital twin), decides (supervisor + policy + memory), acts (tools), remembers (layered nexus + knowledge graph), reflects (self-improvement), and asks permission (approvals) before irreversible sends.
 
 That combination is the 5-year moat.

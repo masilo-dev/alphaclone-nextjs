@@ -13,6 +13,7 @@ import { tenantCreatedWorkflow } from '@/workflows/tenant-flows';
 import { quantumDealIntelligenceService } from '@/services/intelligence/quantumDealIntelligenceService';
 import { runEnterpriseWorkflowsForTrigger } from '@/lib/crm/crmEnterpriseWorkflowRunner';
 import { syncCrmEntity } from '@/lib/crm/crmBridgeServer';
+import { isBonnieReasoningEvent, reasonAboutBusinessEvent } from '@/lib/bonnie/os/eventReasoning';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +50,29 @@ export async function GET(request: NextRequest) {
     // 2. Dispatch events to workflows
     for (const event of events) {
       try {
+        // Every business event creates Bonnie reasoning (Observe→…→Learn)
+        if (isBonnieReasoningEvent(event.event_type)) {
+          try {
+            const cognitive = await reasonAboutBusinessEvent({
+              tenantId: event.tenant_id,
+              eventType: event.event_type,
+              eventId: event.id,
+              payload: (event.payload || {}) as Record<string, unknown>,
+              executeActions: true,
+            });
+            results.push({
+              eventId: event.id,
+              status: 'bonnie_reasoned',
+              cognitiveRunId: cognitive?.runId || null,
+              cognitiveStatus: cognitive?.status || null,
+            });
+          } catch (reasonErr: unknown) {
+            const message = reasonErr instanceof Error ? reasonErr.message : String(reasonErr);
+            console.warn(`[Automation] Bonnie reasoning failed for ${event.id}:`, message);
+            results.push({ eventId: event.id, status: 'bonnie_reason_failed', error: message });
+          }
+        }
+
         let workflowToStart: any = null;
 
         switch (event.event_type) {
