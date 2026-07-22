@@ -5,6 +5,7 @@ import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
+import { generateThemedInvoicePdfBuffer } from '@/lib/documents/documentBuilders';
 
 interface InvoiceLifecycleInput {
   invoiceId: string;
@@ -41,10 +42,31 @@ async function loadInvoice(invoiceId: string, tenantId: string) {
 async function generateAndStorePDF(invoiceId: string, tenantId: string) {
   "use step";
   const invoice = await loadInvoice(invoiceId, tenantId);
-  const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
-  const pdf = Buffer.from(doc.output('arraybuffer'));
-  const storagePath = `${tenantId}/${invoiceId}/invoice.pdf`;
   const admin = createSupabaseAdminClient();
+
+  const { data: items, error: itemsError } = await admin
+    .from('invoice_items')
+    .select('*')
+    .eq('invoice_id', invoiceId)
+    .order('created_at', { ascending: true });
+  if (itemsError) throw itemsError;
+
+  const { data: tenant, error: tenantError } = await admin
+    .from('tenants')
+    .select('name, logo_url, brand_color_primary, settings')
+    .eq('id', tenantId)
+    .maybeSingle();
+  if (tenantError) throw tenantError;
+
+  const pdf = await generateThemedInvoicePdfBuffer(
+    invoice,
+    items || [],
+    tenant,
+    invoice.client
+      ? { name: invoice.client.name, email: invoice.client.email }
+      : undefined
+  );
+  const storagePath = `${tenantId}/${invoiceId}/invoice.pdf`;
 
   const { error: uploadError } = await admin.storage
     .from('invoice-documents')

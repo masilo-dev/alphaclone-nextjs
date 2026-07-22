@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Send,
@@ -33,6 +33,14 @@ import { showInvoiceCreatedWithSendPrompt } from '../common/showActionNextSteps'
 import { cn } from '@/lib/utils';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import BillableExpensesPicker from './invoicing/BillableExpensesPicker';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import {
+  buildInvoiceDocumentInput,
+  mergeInvoiceNotesMetadata,
+  resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 
 
 interface EnhancedInvoiceModalProps {
@@ -58,17 +66,9 @@ interface InvoiceFormData {
   total: number;
   dueDate: string;
   notes: string;
-  template: string;
+  template: DocumentThemeId;
   paymentMethods: string[];
 }
-
-const INVOICE_TEMPLATES = [
-  { id: 'classic', name: 'Classic', preview: '/templates/classic.png' },
-  { id: 'modern', name: 'Modern', preview: '/templates/modern.png' },
-  { id: 'dark', name: 'Dark', preview: '/templates/dark.png' },
-  { id: 'minimal', name: 'Minimal', preview: '/templates/minimal.png' },
-  { id: 'bold', name: 'Bold', preview: '/templates/bold.png' }
-];
 
 const PAYMENT_METHODS = [
   { id: 'stripe', name: 'Credit Card (Stripe)', icon: '💳' },
@@ -106,7 +106,7 @@ export default function EnhancedInvoiceModal({
     total: 0,
     dueDate: '',
     notes: '',
-    template: 'modern',
+    template: 'executive',
     paymentMethods: ['stripe']
   });
 
@@ -117,6 +117,64 @@ export default function EnhancedInvoiceModal({
   useEffect(() => {
     if (invoice?.id) setDraftInvoiceId(invoice.id);
   }, [invoice?.id]);
+
+  useEffect(() => {
+    if (!invoice?.id || !isOpen) return;
+    const metadata = businessInvoiceService.parseMetadata(invoice.notes);
+    const displayNotes = String(invoice.notes || '').replace(/---METADATA---[\s\S]*?---METADATA---\s*/, '').trim();
+    setFormData((prev) => ({
+      ...prev,
+      clientId: invoice.clientId || invoice.client_id || prev.clientId,
+      clientName: metadata?.clientName || invoice.clientName || prev.clientName,
+      clientEmail: metadata?.clientEmail || metadata?.email || invoice.clientEmail || prev.clientEmail,
+      dueDate: invoice.dueDate || invoice.due_date ? String(invoice.dueDate || invoice.due_date).slice(0, 10) : prev.dueDate,
+      notes: displayNotes,
+      template: resolveDocumentThemeId(metadata),
+      items: invoice.lineItems?.length
+        ? invoice.lineItems.map((item: { description: string; quantity: number; rate: number; amount: number }) => ({
+            description: item.description,
+            quantity: item.quantity,
+            rate: item.rate,
+            amount: item.amount,
+          }))
+        : prev.items,
+      subtotal: Number(invoice.subtotal ?? prev.subtotal),
+      tax: Number(invoice.tax ?? prev.tax),
+      total: Number(invoice.total ?? prev.total),
+    }));
+  }, [invoice, isOpen]);
+
+  const invoicePreviewInput = useMemo(() => {
+    if (!currentTenant) return null;
+    return buildInvoiceDocumentInput(
+      {
+        invoice_number: invoice?.invoiceNumber || invoice?.invoice_number || 'DRAFT',
+        issue_date: invoice?.issueDate || invoice?.issue_date || new Date().toISOString(),
+        due_date: formData.dueDate || undefined,
+        notes: formData.notes,
+        subtotal: formData.subtotal,
+        tax: formData.tax,
+        total: formData.total,
+        status: 'draft',
+        metadata: { document_theme: formData.template },
+      },
+      formData.items.map((item) => ({
+        description: item.description,
+        quantity: item.quantity,
+        rate: item.rate,
+        amount: item.amount,
+      })),
+      currentTenant,
+      { name: formData.clientName, email: formData.clientEmail }
+    );
+  }, [currentTenant, formData, invoice]);
+
+  const buildPersistedNotes = () =>
+    mergeInvoiceNotesMetadata(formData.notes, {
+      document_theme: formData.template,
+      clientName: formData.clientName,
+      clientEmail: formData.clientEmail,
+    });
 
   useEffect(() => {
     if (!draftInvoiceId || !currentTenant?.id || mode === 'send') return;
@@ -134,7 +192,7 @@ export default function EnhancedInvoiceModal({
             tax: formData.tax,
             total: formData.total,
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined,
-            notes: formData.notes,
+            notes: buildPersistedNotes(),
             line_items: formData.items.map((item) => ({
               description: item.description,
               quantity: item.quantity,
@@ -233,6 +291,7 @@ export default function EnhancedInvoiceModal({
     try {
       const invoiceData = {
         ...formData,
+        notes: buildPersistedNotes(),
         lineItems: formData.items,
         status: 'draft' as const,
         isPublic: false,
@@ -280,6 +339,7 @@ export default function EnhancedInvoiceModal({
       // Create or update invoice with sent status
       const invoiceData = {
         ...formData,
+        notes: buildPersistedNotes(),
         lineItems: formData.items,
         status: 'sent' as const,
         isPublic: true,
@@ -503,7 +563,7 @@ export default function EnhancedInvoiceModal({
         />
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">Due Date</label>
           <input
@@ -513,19 +573,12 @@ export default function EnhancedInvoiceModal({
             className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Template</label>
-          <select
-            value={formData.template}
-            onChange={(e) => setFormData(prev => ({ ...prev, template: e.target.value }))}
-            className="w-full px-3 py-2 bg-slate-800 text-white border border-slate-700 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-          >
-            {INVOICE_TEMPLATES.map(template => (
-              <option key={template.id} value={template.id}>{template.name}</option>
-            ))}
-          </select>
-        </div>
       </div>
+
+      <DocumentThemePicker
+        value={formData.template}
+        onChange={(themeId) => setFormData((prev) => ({ ...prev, template: themeId }))}
+      />
 
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-2">Notes</label>
@@ -726,62 +779,15 @@ export default function EnhancedInvoiceModal({
 
   const renderPreviewTab = () => (
     <div className="space-y-4">
-      <div className="bg-slate-800/50 p-4 rounded-lg">
-        <h3 className="font-semibold text-white mb-2">Invoice Preview</h3>
-        <p className="text-sm text-slate-400 mb-4">This is how your invoice will appear to the client</p>
+      {invoicePreviewInput ? (
+        <DocumentPreview input={invoicePreviewInput} />
+      ) : (
+        <p className="text-sm text-slate-400">Add client details and line items to preview your themed invoice.</p>
+      )}
 
-        <div className="bg-slate-950 p-6 rounded-lg border border-slate-800">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-white">INVOICE</h2>
-              <p className="text-slate-400">Invoice #: INV-{Date.now()}</p>
-            </div>
-            <div className="text-right">
-              <p className="font-medium text-white">{formData.clientName}</p>
-              <p className="text-slate-400">{formData.clientEmail}</p>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="font-semibold text-white mb-2">Items</h3>
-            {formData.items.map((item, index) => (
-              <div key={index} className="flex justify-between items-center py-2 border-b border-slate-800/50">
-                <div>
-                  <p className="font-medium text-white">{item.description || 'Item'}</p>
-                  <p className="text-sm text-slate-400">{item.quantity} × ${item.rate.toFixed(2)}</p>
-                </div>
-                <p className="font-medium text-white">${item.amount.toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t border-slate-800 pt-4 text-white">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-slate-400">Subtotal:</span>
-              <span>${formData.subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-slate-400">Tax:</span>
-              <span>${formData.tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center text-lg font-bold border-t border-slate-800 pt-2">
-              <span>Total:</span>
-              <span>${formData.total.toFixed(2)}</span>
-            </div>
-          </div>
-
-          {formData.notes && (
-            <div className="mt-6 p-4 bg-slate-900 rounded-lg">
-              <h4 className="font-medium text-white mb-2">Notes</h4>
-              <p className="text-sm text-slate-400">{formData.notes}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {invoice && (
+      {invoice ? (
         <div className="bg-teal-900/20 p-4 border border-teal-500/20 rounded-lg">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <h4 className="font-medium text-teal-400">Payment Link</h4>
               <p className="text-sm text-teal-500">Share this link with your client for payment</p>
@@ -789,10 +795,10 @@ export default function EnhancedInvoiceModal({
             <button
               onClick={handleCopyPaymentLink}
               className={cn(
-                "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
+                'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors',
                 copiedLink
-                  ? "bg-green-600 text-white"
-                  : "bg-teal-600 text-white hover:bg-teal-500"
+                  ? 'bg-green-600 text-white'
+                  : 'bg-teal-600 text-white hover:bg-teal-500'
               )}
             >
               {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -807,7 +813,7 @@ export default function EnhancedInvoiceModal({
             </button>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 

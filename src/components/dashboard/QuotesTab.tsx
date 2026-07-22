@@ -22,6 +22,13 @@ import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseData
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import {
+  buildQuoteDocumentInput,
+  resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 
 type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired' | 'converted';
 
@@ -189,10 +196,36 @@ const CreateQuoteModal: React.FC<{
   onCreated: () => void;
   tenantId: string;
 }> = ({ open, onClose, onCreated, tenantId }) => {
+  const { currentTenant } = useTenant();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState('');
+  const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
   const [saving, setSaving] = useState(false);
+
+  const previewInput = useMemo(() => {
+    if (!currentTenant || !name.trim()) return null;
+    return buildQuoteDocumentInput(
+      {
+        quote_number: 'DRAFT',
+        name: name.trim(),
+        created_at: new Date().toISOString(),
+        total_amount: parseFloat(amount) || 0,
+        status: 'draft',
+        metadata: { document_theme: documentTheme, client_email: email || undefined },
+      },
+      amount
+        ? [{
+            product_name: name.trim(),
+            description: 'Professional services',
+            quantity: 1,
+            unit_price: parseFloat(amount) || 0,
+            line_total: parseFloat(amount) || 0,
+          }]
+        : [],
+      currentTenant
+    );
+  }, [amount, currentTenant, documentTheme, email, name]);
 
   if (!open) return null;
 
@@ -207,7 +240,12 @@ const CreateQuoteModal: React.FC<{
       const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/quotes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim() || undefined, amount: parseFloat(amount) || 0 }),
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim() || undefined,
+          amount: parseFloat(amount) || 0,
+          documentTheme,
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || 'Failed to create quote');
@@ -216,6 +254,7 @@ const CreateQuoteModal: React.FC<{
       setName('');
       setEmail('');
       setAmount('');
+      setDocumentTheme('executive');
       onCreated();
       onClose();
     } catch (err: unknown) {
@@ -253,6 +292,8 @@ const CreateQuoteModal: React.FC<{
           placeholder="Amount (USD)"
           className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
         />
+        <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+        {previewInput ? <DocumentPreview input={previewInput} /> : null}
         <button
           type="submit"
           disabled={saving}
@@ -283,6 +324,7 @@ const QuoteEditModal: React.FC<{
   tenantId: string;
   userId: string;
 }> = ({ open, quote, onClose, onSaved, tenantId, userId }) => {
+  const { currentTenant } = useTenant();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<QuoteStatus>('draft');
@@ -291,7 +333,10 @@ const QuoteEditModal: React.FC<{
   const [notes, setNotes] = useState('');
   const [terms, setTerms] = useState('');
   const [currency, setCurrency] = useState('USD');
+  const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
   const [items, setItems] = useState<EditableQuoteItem[]>([]);
+  const [quoteNumber, setQuoteNumber] = useState('');
+  const [createdAt, setCreatedAt] = useState('');
 
   useEffect(() => {
     if (!open || !quote) return;
@@ -320,6 +365,9 @@ const QuoteEditModal: React.FC<{
       setNotes(fullQuote.notes || '');
       setTerms(fullQuote.termsAndConditions || '');
       setCurrency(fullQuote.currency || 'USD');
+      setDocumentTheme(resolveDocumentThemeId(fullQuote.metadata));
+      setQuoteNumber(fullQuote.quoteNumber || quote.number || '');
+      setCreatedAt(fullQuote.createdAt || quote.created_at);
 
       const loadedItems = (quoteItemsResult.items || []).map((item) => ({
         id: item.id,
@@ -351,8 +399,6 @@ const QuoteEditModal: React.FC<{
     };
   }, [open, quote?.id]);
 
-  if (!open || !quote) return null;
-
   const total = items.reduce((sum, item) => {
     const quantity = Number(item.quantity || 0);
     const unitPrice = Number(item.unitPrice || 0);
@@ -362,6 +408,41 @@ const QuoteEditModal: React.FC<{
     const lineNet = lineBase * (1 - discountPercent / 100);
     return sum + (lineNet * (1 + taxPercent / 100));
   }, 0);
+
+  const previewInput = useMemo(() => {
+    if (!currentTenant || !quote) return null;
+    return buildQuoteDocumentInput(
+      {
+        quote_number: quoteNumber || quote.number,
+        name,
+        created_at: createdAt || quote.created_at,
+        valid_until: validUntil || undefined,
+        notes,
+        status,
+        total_amount: total,
+        metadata: { document_theme: documentTheme },
+      },
+      items.map((item) => {
+        const quantity = Number(item.quantity || 0);
+        const unitPrice = Number(item.unitPrice || 0);
+        const discountPercent = Number(item.discountPercent || 0);
+        const taxPercent = Number(item.taxPercent || 0);
+        const lineBase = quantity * unitPrice;
+        const lineNet = lineBase * (1 - discountPercent / 100);
+        const lineTotal = lineNet * (1 + taxPercent / 100);
+        return {
+          product_name: item.productName,
+          description: item.description,
+          quantity,
+          unit_price: unitPrice,
+          line_total: lineTotal,
+        };
+      }),
+      currentTenant
+    );
+  }, [createdAt, currentTenant, documentTheme, items, name, notes, quote, quoteNumber, status, total, validUntil]);
+
+  if (!open || !quote) return null;
 
   const updateItem = (index: number, patch: Partial<EditableQuoteItem>) => {
     setItems((prev) => prev.map((item, idx) => idx === index ? { ...item, ...patch } : item));
@@ -410,6 +491,7 @@ const QuoteEditModal: React.FC<{
         termsAndConditions: terms,
         currency,
         items: normalizedItems,
+        documentTheme,
       }) });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || 'Failed to update quote');
@@ -494,6 +576,8 @@ const QuoteEditModal: React.FC<{
           </div>
 
           <div className="space-y-4">
+            <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+            {previewInput ? <DocumentPreview input={previewInput} /> : null}
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Notes</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={6} className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white resize-none" />

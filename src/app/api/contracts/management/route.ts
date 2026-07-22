@@ -28,9 +28,7 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-    const { user } = await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
     switch (action) {
@@ -281,7 +279,7 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
 
 export async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
   try {
-    const { contractId, recipients, subject, message, format = 'pdf', provider } = config;
+    const { contractId, recipients, subject, message, format = 'pdf', provider, resendForSignature = false } = config;
     if (!contractId || !recipients) {
       return { success: false, error: 'contractId and recipients are required' };
     }
@@ -295,6 +293,11 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
 
     if (error || !contract) {
       return { success: false, error: 'Contract not found' };
+    }
+
+    const isResend = Boolean(resendForSignature);
+    if (isResend && contract.status === 'fully_signed') {
+      return { success: false, error: 'Contract is already fully signed' };
     }
 
     const recipientEmail = Array.isArray(recipients)
@@ -340,10 +343,14 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       .single();
 
     const tenantName = tenantData?.name || 'AlphaClone Systems';
+    const urgencySubject = `Action required: Sign contract — ${contract.title} (your process is on hold)`;
+    const urgencyMessage =
+      message ||
+      `We still need your signature on "${contract.title}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link below as soon as possible.`;
     const emailResult = await sendEmailServer({
       to: recipients,
-      subject: subject || `Contract: ${contract.title}`,
-      text: `${message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
+      subject: subject || (isResend ? urgencySubject : `Contract: ${contract.title}`),
+      text: `${isResend ? urgencyMessage : message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
       html: contractEmailTemplates.signatureRequest({
         recipientEmail,
         tenantId,
@@ -351,7 +358,7 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
         contractType: contract.type || 'Service Agreement',
         signingUrl,
         workspaceName: tenantName,
-        customMessage: message || undefined,
+        customMessage: isResend ? urgencyMessage : message || undefined,
       }),
       tenantId,
       userId: actorUserId || undefined,
