@@ -2,19 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZohoService } from '../../../../../services/zoho/ZohoService';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
-function getAppUrl(req: NextRequest) {
-    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-    const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
-    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-    return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
+function getAppUrl(_req: NextRequest) {
+    return PUBLIC_APP_ORIGIN;
 }
 
-function getZohoRedirectUri(req: NextRequest) {
-    const appUrl = getAppUrl(req).replace(/\/$/, '');
+function getZohoRedirectUri(_req: NextRequest) {
     const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
     if (configured) return configured.replace(/\/$/, '');
-    return `${appUrl}/api/auth/zoho/callback`;
+    return OAUTH_CALLBACKS.zoho;
 }
 
 type ZohoTokenResponse = {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { encodeOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 /**
  * Instagram Business OAuth connect.
@@ -37,9 +39,7 @@ export async function GET(req: NextRequest) {
     }
 
     const appId = process.env.FACEBOOK_APP_ID;
-    const appUrl = (
-      process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'
-    ).replace(/\/$/, '');
+    const appUrl = PUBLIC_APP_ORIGIN;
 
     if (!appId) {
       return NextResponse.redirect(
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const redirectUri = `${appUrl}/api/auth/instagram/callback`;
+    const redirectUri = OAUTH_CALLBACKS.instagram;
 
     // Instagram Business API scopes (via Facebook Graph API)
     const scopes = [

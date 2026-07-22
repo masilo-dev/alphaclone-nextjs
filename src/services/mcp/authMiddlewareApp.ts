@@ -3,6 +3,14 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { normalizeMcpResourceUrl } from '@/lib/mcp/oauthRedirect';
+import {
+  PUBLIC_APP_ORIGIN,
+  PUBLIC_MCP_RESOURCE,
+  normalizeResourceUrl,
+  resourcesMatch,
+} from '@/lib/config/public-origin';
+import { hasRequiredScopes } from '@/lib/mcp/scopes';
+import { createHash } from 'crypto';
 
 export interface AuthResult {
   tenant_id: string;
@@ -12,6 +20,7 @@ export interface AuthResult {
   resource?: string;
   scope?: string[];
   client_id?: string;
+  token_id?: string;
 }
 
 export interface AuthError {
@@ -19,6 +28,15 @@ export interface AuthError {
   status: number;
   wwwAuthenticate?: string;
 }
+
+export type MCPAuthContext = {
+  tokenId: string;
+  clientId: string;
+  userId: string;
+  tenantId: string;
+  scopes: string[];
+  resource: string;
+};
 
 /**
  * Creates a RFC 6750 + RFC 9728 compliant WWW-Authenticate header value.
@@ -52,80 +70,47 @@ export function createWWWAuthenticateHeader(
   return parts.join(', ');
 }
 
-export function buildMcpResourceMetadataUrl(req: NextRequest): string {
-  const baseUrl =
-    `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com'}`.replace(
-      /\/$/,
-      ''
-    );
-  // Prefer env public URL when available (avoids internal Railway hosts)
-  try {
-    // Lazy import avoided — keep sync for middleware hot path
-    const envUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.NEXTAUTH_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      '';
-    const publicBase = (envUrl.trim() || baseUrl)
-      .replace(/\/+$/, '')
-      .replace(/^http:\/\//, (m) => (envUrl.includes('localhost') ? m : 'https://'));
-    return `${publicBase}/.well-known/oauth-protected-resource`;
-  } catch {
-    return `${baseUrl}/.well-known/oauth-protected-resource`;
-  }
+/** Always use the configured public origin — never request Host / 0.0.0.0. */
+export function buildMcpResourceMetadataUrl(_req?: NextRequest): string {
+  return `${PUBLIC_APP_ORIGIN}/.well-known/oauth-protected-resource`;
+}
+
+function hashAccessToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
 }
 
 /**
- * Validates that the request's resource (URL) matches the token's intended audience.
- *
- * Per RFC 8707: Resource indicators prevent token mis-redemption attacks where a token
- * issued for one resource is used to access another.
+ * Validate token audience against the configured MCP resource identity.
+ * Do NOT use request.url / internal Railway bindings (0.0.0.0:8080).
  */
 function validateResource(
-  tokenResource: string | null | undefined,
-  requestUrl: string,
-  baseUrl: string
-): { valid: boolean; error?: string } {
-  // If no resource was specified during token issuance, allow all
+  tokenResource: string | null | undefined
+): { valid: boolean; error?: string; configured?: string; token?: string } {
   if (!tokenResource) {
     return { valid: true };
   }
 
-  // Normalize URLs for comparison
-  const normalizeUrl = (url: string) => {
-    try {
-      const parsed = new URL(url);
-      return `${parsed.protocol}//${parsed.host}${parsed.pathname}`.toLowerCase().replace(/\/$/, '');
-    } catch {
-      return url.toLowerCase().replace(/\/$/, '');
+  const expected = PUBLIC_MCP_RESOURCE;
+  const normalizedToken = normalizeMcpResourceUrl(tokenResource) || tokenResource;
+
+  if (resourcesMatch(normalizedToken, expected)) {
+    return { valid: true, configured: expected, token: normalizedToken };
+  }
+
+  // Also accept exact normalizeResourceUrl equality
+  try {
+    if (normalizeResourceUrl(normalizedToken) === normalizeResourceUrl(expected)) {
+      return { valid: true, configured: expected, token: normalizedToken };
     }
-  };
-
-  const normalizedTokenResource = normalizeUrl(normalizeMcpResourceUrl(tokenResource) || tokenResource);
-  const normalizedRequestUrl = normalizeUrl(requestUrl);
-
-  // Check exact match
-  if (normalizedTokenResource === normalizedRequestUrl) {
-    return { valid: true };
-  }
-
-  // Check if request URL starts with token resource (for sub-resource access)
-  // Example: token issued for /api/mcp should work for /api/mcp/tools
-  if (normalizedRequestUrl.startsWith(normalizedTokenResource + '/')) {
-    return { valid: true };
-  }
-
-  // Special case: token issued for /api/mcp should work for the base MCP endpoints
-  const expectedResource = normalizeUrl(`${baseUrl}/api/mcp`);
-  if (normalizedTokenResource === expectedResource &&
-      (normalizedRequestUrl === expectedResource ||
-       normalizedRequestUrl.startsWith(expectedResource + '/'))) {
-    return { valid: true };
+  } catch {
+    // fall through
   }
 
   return {
     valid: false,
-    error: `Token intended for ${tokenResource} but used for ${requestUrl}`,
+    configured: expected,
+    token: normalizedToken,
+    error: 'Token resource mismatch',
   };
 }
 
@@ -136,18 +121,51 @@ function validateScope(
   tokenScopes: string[] | null | undefined,
   requiredScopes: string[]
 ): { valid: boolean; missing?: string[] } {
-  if (!requiredScopes || requiredScopes.length === 0) {
-    return { valid: true };
+  const result = hasRequiredScopes(tokenScopes, requiredScopes);
+  return { valid: result.valid, missing: result.missing };
+}
+
+async function lookupOAuthToken(
+  supabaseAdmin: SupabaseClient,
+  token: string
+): Promise<{ data: Record<string, unknown> | null; error: { message?: string; code?: string; hint?: string } | null }> {
+  const tokenHash = hashAccessToken(token);
+
+  // Prefer hash lookup when column exists; fall back to plaintext for legacy rows.
+  const byHash = await supabaseAdmin
+    .from('mcp_oauth_tokens')
+    .select('id, tenant_id, user_id, expires_at, client_id, revoked, resource, scopes, access_token')
+    .eq('access_token_hash', tokenHash)
+    .eq('revoked', false)
+    .maybeSingle();
+
+  if (!byHash.error && byHash.data) {
+    return { data: byHash.data, error: null };
   }
 
-  const scopes = tokenScopes || ['read', 'write']; // Default scopes
-  const missing = requiredScopes.filter(required => !scopes.includes(required));
+  // Column missing or no hash match — try plaintext (compatibility)
+  const withRevoked = await supabaseAdmin
+    .from('mcp_oauth_tokens')
+    .select('id, tenant_id, user_id, expires_at, client_id, revoked, resource, scopes')
+    .eq('access_token', token)
+    .eq('revoked', false)
+    .maybeSingle();
 
-  if (missing.length > 0) {
-    return { valid: false, missing };
+  if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
+    const withoutRevoked = await supabaseAdmin
+      .from('mcp_oauth_tokens')
+      .select('id, tenant_id, user_id, expires_at, client_id, resource, scopes')
+      .eq('access_token', token)
+      .maybeSingle();
+    return { data: withoutRevoked.data, error: withoutRevoked.error };
   }
 
-  return { valid: true };
+  // If hash column missing, ignore hash error and use plaintext result
+  if (byHash.error?.code === '42703' || byHash.error?.message?.includes('access_token_hash')) {
+    return { data: withRevoked.data, error: withRevoked.error };
+  }
+
+  return { data: withRevoked.data, error: withRevoked.error };
 }
 
 export async function validateMCPAuthApp(
@@ -161,9 +179,7 @@ export async function validateMCPAuthApp(
   const url = new URL(req.url);
   let token = req.headers.get('x-api-key') || url.searchParams.get('api_key');
   const resourceMetadataUrl = buildMcpResourceMetadataUrl(req);
-
-  // Build base URL for resource validation
-  const baseUrl = `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com'}`;
+  const requestId = req.headers.get('x-request-id') || req.headers.get('x-correlation-id') || undefined;
 
   if (!token && authHeader && authHeader.startsWith('Bearer ')) {
     token = authHeader.substring(7);
@@ -200,10 +216,10 @@ export async function validateMCPAuthApp(
   const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
     global: {
       headers: {
-        'Accept': 'application/json',
-        'X-Client-Info': 'mcp-auth-middleware-v2'
-      }
-    }
+        Accept: 'application/json',
+        'X-Client-Info': 'mcp-auth-middleware-v3',
+      },
+    },
   });
 
   const isOAuthAccessToken = token.startsWith('mcp_at_');
@@ -224,36 +240,17 @@ export async function validateMCPAuthApp(
 
   // ── 1. Check for OAuth Access Token ──────────────────────────────────────
   if (isOAuthAccessToken) {
-    // Prefer revoked filter when column exists; fall back if schema is behind.
-    let tokenData: any = null;
-    let tokenError: { message?: string; code?: string; hint?: string } | null = null;
-
-    const withRevoked = await supabaseAdmin
-      .from('mcp_oauth_tokens')
-      .select('tenant_id, user_id, expires_at, client_id, revoked, resource, scopes')
-      .eq('access_token', token)
-      .eq('revoked', false)
-      .maybeSingle();
-
-    if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
-      const withoutRevoked = await supabaseAdmin
-        .from('mcp_oauth_tokens')
-        .select('tenant_id, user_id, expires_at, client_id, resource, scopes')
-        .eq('access_token', token)
-        .maybeSingle();
-      tokenData = withoutRevoked.data;
-      tokenError = withoutRevoked.error;
-    } else {
-      tokenData = withRevoked.data;
-      tokenError = withRevoked.error;
-    }
+    const { data: tokenData, error: tokenError } = await lookupOAuthToken(supabaseAdmin, token);
 
     if (tokenError || !tokenData) {
       console.warn('[MCP Auth] Token lookup failed or token not found:', {
+        request_id: requestId,
         error: tokenError?.message,
         code: tokenError?.code,
         hint: tokenError?.hint,
-        token_prefix: token.substring(0, 10)
+        ...(process.env.NODE_ENV !== 'production'
+          ? { token_prefix: token.substring(0, 10) }
+          : {}),
       });
       return {
         error: 'Invalid or expired access token',
@@ -280,19 +277,18 @@ export async function validateMCPAuthApp(
       };
     }
 
-    // RFC 8707: Validate resource/audience if required
+    // RFC 8707: Validate against configured public MCP resource (not request host)
     if (options?.requireResourceMatch !== false) {
-      const resourceValidation = validateResource(
-        tokenData.resource,
-        req.url,
-        baseUrl
-      );
+      const resourceValidation = validateResource(tokenData.resource as string | null | undefined);
 
       if (!resourceValidation.valid) {
-        console.warn('[MCP Auth] Resource mismatch:', resourceValidation.error, {
+        console.warn('[MCP Auth] Resource mismatch', {
+          request_id: requestId,
           user_id: tokenData.user_id,
-          token_resource: tokenData.resource,
-          request_url: req.url,
+          tenant_id: tokenData.tenant_id,
+          configured_resource: resourceValidation.configured,
+          token_resource: resourceValidation.token,
+          reason: resourceValidation.error,
         });
         return {
           error: 'Invalid token for this resource',
@@ -309,12 +305,16 @@ export async function validateMCPAuthApp(
 
     // Validate scopes if required
     if (options?.requiredScopes && options.requiredScopes.length > 0) {
-      const scopeValidation = validateScope(tokenData.scopes, options.requiredScopes);
+      const scopeValidation = validateScope(
+        tokenData.scopes as string[] | null | undefined,
+        options.requiredScopes
+      );
 
       if (!scopeValidation.valid) {
         console.warn('[MCP Auth] Insufficient scope:', {
+          request_id: requestId,
           user_id: tokenData.user_id,
-          token_scopes: tokenData.scopes,
+          tenant_id: tokenData.tenant_id,
           required: options.requiredScopes,
           missing: scopeValidation.missing,
         });
@@ -324,14 +324,14 @@ export async function validateMCPAuthApp(
           wwwAuthenticate: createWWWAuthenticateHeader(
             'insufficient_scope',
             `Missing required scopes: ${scopeValidation.missing?.join(', ')}`,
-            tokenData.scopes,
+            tokenData.scopes as string[] | undefined,
             resourceMetadataUrl
           ),
         };
       }
     }
 
-    const expiryDate = new Date(tokenData.expires_at);
+    const expiryDate = new Date(tokenData.expires_at as string);
     const now = new Date();
 
     if (expiryDate.getTime() < now.getTime()) {
@@ -347,14 +347,25 @@ export async function validateMCPAuthApp(
       };
     }
 
+    // Best-effort last_used_at (never block auth)
+    if (tokenData.id) {
+      void supabaseAdmin
+        .from('mcp_oauth_tokens')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('id', tokenData.id)
+        .then(() => undefined)
+        .catch(() => undefined);
+    }
+
     return {
-      tenant_id: tokenData.tenant_id,
-      user_id: tokenData.user_id,
+      tenant_id: tokenData.tenant_id as string,
+      user_id: tokenData.user_id as string,
       apiKey: token,
       supabaseAdmin,
-      resource: tokenData.resource || `${baseUrl}/api/mcp`,
-      scope: tokenData.scopes || ['read', 'write'],
-      client_id: tokenData.client_id || undefined,
+      resource: (tokenData.resource as string) || PUBLIC_MCP_RESOURCE,
+      scope: (tokenData.scopes as string[]) || ['read', 'write'],
+      client_id: (tokenData.client_id as string) || undefined,
+      token_id: (tokenData.id as string) || undefined,
     };
   }
 
@@ -374,7 +385,6 @@ export async function validateMCPAuthApp(
     };
   }
 
-  // Validate scopes for API keys too
   if (options?.requiredScopes && options.requiredScopes.length > 0) {
     const scopeValidation = validateScope(keyData.scopes, options.requiredScopes);
 
@@ -397,7 +407,7 @@ export async function validateMCPAuthApp(
     user_id: keyData.user_id,
     apiKey: token,
     supabaseAdmin,
-    resource: `${baseUrl}/api/mcp`,
+    resource: PUBLIC_MCP_RESOURCE,
     scope: keyData.scopes || ['read', 'write'],
   };
 }
@@ -410,19 +420,32 @@ export async function validateMCPAuthStrict(req: NextRequest): Promise<AuthResul
   return validateMCPAuthApp(req, { requireResourceMatch: true });
 }
 
+/** Build typed MCP auth context from a successful AuthResult. */
+export function toMCPAuthContext(auth: AuthResult): MCPAuthContext {
+  return {
+    tokenId: auth.token_id || '',
+    clientId: auth.client_id || '',
+    userId: auth.user_id,
+    tenantId: auth.tenant_id,
+    scopes: auth.scope || ['read', 'write'],
+    resource: auth.resource || PUBLIC_MCP_RESOURCE,
+  };
+}
+
 const ALLOWED_MCP_ORIGINS = [
   'https://claude.ai',
   'https://manus.ai',
   'https://grok.x.ai',
   'https://chatgpt.com',
   'https://chat.openai.com',
-  'https://app.cursor.com', // Cursor AI IDE
+  'https://app.cursor.com',
 ];
 
 export const MCP_CORS_HEADERS = {
   'Access-Control-Allow-Origin': ALLOWED_MCP_ORIGINS[0],
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key, Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, x-client-label',
+  'Access-Control-Allow-Headers':
+    'Content-Type, Authorization, x-api-key, Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, x-client-label',
   'Access-Control-Expose-Headers': 'Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, WWW-Authenticate',
   'Access-Control-Max-Age': '86400',
   'Access-Control-Allow-Credentials': 'true',

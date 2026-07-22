@@ -8,6 +8,7 @@ import {
     PLATFORM_MCP_OAUTH_CLIENT_IDS,
     CHATGPT_OAUTH_REDIRECT_URIS,
 } from '@/lib/mcp/oauthRedirect';
+import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 
 /**
  * MCP OAuth2 Approve Endpoint — UI-based authorization code issuance
@@ -95,9 +96,7 @@ export async function POST(req: Request) {
         const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
-        const { error: insertError } = await supabaseAdmin
-            .from('mcp_oauth_codes')
-            .insert({
+        const codeRow: Record<string, unknown> = {
                 code,
                 client_id: client_id || null,
                 user_id,
@@ -114,7 +113,14 @@ export async function POST(req: Request) {
                 code_challenge: code_challenge || null,
                 code_challenge_method: code_challenge ? (code_challenge_method || 'S256') : null,
                 used: false,
-            });
+                resource: PUBLIC_MCP_RESOURCE,
+            };
+
+        let { error: insertError } = await supabaseAdmin.from('mcp_oauth_codes').insert(codeRow);
+        if (insertError?.code === '42703' || insertError?.message?.includes('resource')) {
+            const { resource: _r, ...legacy } = codeRow;
+            ({ error: insertError } = await supabaseAdmin.from('mcp_oauth_codes').insert(legacy));
+        }
 
         if (insertError) {
             console.error('[OAuth Approve] Failed to store auth code:', insertError);

@@ -8156,7 +8156,7 @@ Return ONLY a JSON array of 60 objects:
           const [integrationRes, settingsRes, recentLogsRes, recentMessagesRes] = await Promise.all([
             supabaseAdmin
               .from('whatsapp_integrations')
-              .select('id, phone_number, waba_id, provider, is_active, status, last_connected_at, metadata, created_at, updated_at')
+              .select('id, phone_number_id, waba_id, is_active, metadata, created_at, updated_at')
               .eq('tenant_id', tenant_id)
               .order('updated_at', { ascending: false })
               .limit(5),
@@ -8198,13 +8198,12 @@ Return ONLY a JSON array of 60 objects:
                 issues,
                 active_integration: active ? {
                   id: active.id,
-                  phone_number: active.phone_number,
-                  provider: active.provider,
-                  status: active.status,
+                  phone_number_id: active.phone_number_id,
+                  waba_id: active.waba_id,
                   is_active: active.is_active,
                   has_id_instance: Boolean(active.waba_id),
                   has_api_token: Boolean(active.metadata?.apiTokenInstance),
-                  last_connected_at: active.last_connected_at,
+                  updated_at: active.updated_at,
                 } : null,
                 settings: settingsRes.data || null,
                 recent_outreach_logs: recentLogsRes.data || [],

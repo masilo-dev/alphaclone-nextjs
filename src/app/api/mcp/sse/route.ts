@@ -10,6 +10,7 @@ import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { touchMcpApiKeyLastUsed } from '@/lib/security/mcpApiKeyLookup';
 import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -19,10 +20,8 @@ export const revalidate = 0;
 
 const MCP_PROTOCOL_VERSION = '2025-11-25';
 
-function getBaseUrl(req: NextRequest) {
-  const protocol = req.headers.get('x-forwarded-proto')?.split(',')[0] ?? 'https';
-  const host = req.headers.get('x-forwarded-host')?.split(',')[0] ?? req.headers.get('host') ?? '';
-  return `${protocol}://${host}`;
+function getBaseUrl(_req: NextRequest) {
+  return PUBLIC_APP_ORIGIN;
 }
 
 function buildForwardHeaders(req: NextRequest) {

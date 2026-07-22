@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { isProduction } from '@/lib/security/productionGuard';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
+import { PUBLIC_APP_ORIGIN, PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
+import { formatScopeString } from '@/lib/mcp/scopes';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -222,19 +224,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build full introspection response for active token
-    const baseUrl = `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com'}`;
-
+    // Build full introspection response for active token (public origin only)
     const response: Record<string, unknown> = {
       active: true,
-      scope: (tokenData.scopes || ['read', 'write']).join(' '),
+      scope: formatScopeString(tokenData.scopes || ['read', 'write']),
       client_id: tokenData.client_id,
       token_type: 'Bearer',
       exp,
       iat: tokenData.created_at ? Math.floor(new Date(tokenData.created_at).getTime() / 1000) : now,
       sub: tokenData.user_id,
-      aud: tokenData.resource || `${baseUrl}/api/mcp`,
-      iss: baseUrl,
+      aud: tokenData.resource || PUBLIC_MCP_RESOURCE,
+      iss: PUBLIC_APP_ORIGIN,
     };
 
     // Optional fields
