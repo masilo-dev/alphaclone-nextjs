@@ -1433,15 +1433,25 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const crmListRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(50);
   const loadMoreEntities = useCallback(() => setVisibleCount((c) => c + 40), []);
-  const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string }) => {
-    if (!entity.email) {
-      toast.error('No email address on this record.');
+  const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string; emails?: string[] }) => {
+    const fromArray = Array.isArray(entity.emails)
+      ? entity.emails.map((e) => String(e || '').trim()).find((e) => e.includes('@'))
+      : undefined;
+    const email = (entity.email || fromArray || '').trim();
+    if (!email) {
+      // Still open compose so user can pick any tenant contact — do not block pipeline stages
+      setTeamCompose({
+        recipients: [],
+        subject: entity.name ? `Follow-up — ${entity.name}` : 'Follow-up',
+        body: '',
+      });
+      toast('No email on this record — pick a contact in compose, or add an email first.', { icon: '✉️' });
       return;
     }
     setTeamCompose({
-      recipients: [entity.email.trim()],
+      recipients: [email],
       subject: 'Follow-up',
-      body: 'Hello,\n\n',
+      body: '',
     });
   }, []);
   // Realtime transparency: recently changed record IDs get a brief row flash
@@ -2001,7 +2011,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         type: 'lead',
         id: l.id,
         name: l.name,
-        email: l.email,
+        email: l.email || (Array.isArray((l as { emails?: string[] }).emails) ? (l as { emails?: string[] }).emails?.[0] : undefined),
         phone: l.phone,
         company: l.company,
         source: l.source,
@@ -2018,7 +2028,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         type: isClient ? 'client' : 'contact',
         id: c.id,
         name: c.name,
-        email: c.email,
+        email: c.email || (Array.isArray((c as { emails?: string[] }).emails) ? (c as { emails?: string[] }).emails?.[0] : undefined),
         phone: c.phone,
         company: c.industry || 'Private Account',
         source: c.custom_fields?.source || 'Direct',

@@ -37,6 +37,7 @@ export const BONNIE_REGISTRY_TOOLS = [
   // Bonnie meta
   'orchestrate_task', 'define_outcome', 'trigger_bonnie_dream',
   'list_skills', 'load_skill', 'activate_skill_for_session',
+  'list_pending_approvals', 'approve_pending_action', 'reject_pending_action',
   // Platform advantage
   'owner_autopilot_queue', 'revenue_recovery_agent', 'client_pulse',
   'deal_to_cash_flow', 'ai_business_readiness_score', 'business_memory_graph',
@@ -94,6 +95,9 @@ export const BONNIE_CUSTOM_TOOLS = [
   'draft_reply',
   'summarize_ticket',
   'generate_outreach_draft',
+  'list_pending_approvals',
+  'approve_pending_action',
+  'reject_pending_action',
 ] as const;
 
 export type BonnieModuleId =

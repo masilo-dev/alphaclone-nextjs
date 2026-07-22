@@ -2,21 +2,23 @@
 
 import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Inbox, Send, FileEdit, MessageSquare, AlertCircle } from 'lucide-react';
+import { Inbox, Send, FileEdit, MessageSquare, AlertCircle, Mail } from 'lucide-react';
 import type { User } from '@/types';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import UnifiedInbox from '@/components/dashboard/business/UnifiedInbox';
 import UnifiedInboxTab from '@/components/dashboard/business/UnifiedInboxTab';
+import { EmailOutreachComposer } from '@/components/dashboard/communication/EmailOutreachComposer';
 import type { InboxFolder } from '@/types/unifiedInbox';
 
-type CommsTab = 'inbox' | 'sent' | 'drafts' | 'channels' | 'needs-reply';
+type CommsTab = 'inbox' | 'sent' | 'drafts' | 'outreaches' | 'channels' | 'needs-reply';
 
 const TABS: { id: CommsTab; label: string; icon: React.ElementType }[] = [
   { id: 'inbox', label: 'Inbox', icon: Inbox },
   { id: 'sent', label: 'Sent', icon: Send },
   { id: 'drafts', label: 'Drafts', icon: FileEdit },
+  { id: 'outreaches', label: 'Outreaches', icon: Mail },
   { id: 'channels', label: 'All channels', icon: MessageSquare },
   { id: 'needs-reply', label: 'Needs reply', icon: AlertCircle },
 ];
@@ -42,7 +44,7 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
         <div className="px-3 md:px-5 pt-3 pb-2 border-b border-white/5">
           <h1 className="text-[15px] font-semibold text-[var(--ws-text-primary)]">{HUMAN_LABELS.channelsHub}</h1>
           <p className="text-[12px] text-[var(--ws-text-secondary)] mt-0.5">
-            Every email, message, and conversation in one place.
+            Inbox, outreaches, and conversations — pick contacts from your workspace and send cleanly.
           </p>
           <div className="flex gap-1 mt-3 overflow-x-auto ac-scroll-x pb-1">
             {TABS.map((tab) => (
@@ -65,7 +67,9 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden">
-          {activeTab === 'channels' || activeTab === 'needs-reply' ? (
+          {activeTab === 'outreaches' ? (
+            <EmailOutreachComposer />
+          ) : activeTab === 'channels' || activeTab === 'needs-reply' ? (
             <div className="h-full p-3 md:p-5">
               <UnifiedInboxTab needsReplyOnly={activeTab === 'needs-reply'} />
             </div>

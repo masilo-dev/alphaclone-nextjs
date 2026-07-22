@@ -56,8 +56,6 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
     const [contactSearch, setContactSearch] = useState('');
     const [showPicker, setShowPicker] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
-
-    const [showPicker, setShowPicker] = useState(false);
     const pickerRef = useRef<HTMLDivElement>(null);
     
     // Define available email providers
@@ -195,7 +193,7 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
             const response = await fetch('/api/outreach/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                    body: JSON.stringify({
                     tenantId: currentTenant.id,
                     leadEmail: selectedClient.email,
                     leadName: selectedClient.name,
@@ -207,6 +205,8 @@ export const CommunicationModal: React.FC<CommunicationModalProps> = ({
                     autoSend: true,
                     consentGranted: true,
                     confidenceScore: 100,
+                    skipCrmGate: true,
+                    directSend: true,
                     deliveryProviders: [selectedProvider],
                     preferredProvider: selectedProvider,
                     balanceByDailyLimit: false,
