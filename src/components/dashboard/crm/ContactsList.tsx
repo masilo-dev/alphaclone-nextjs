@@ -9,6 +9,10 @@ import {
 import { contactService, type ContactWithCompany } from '@/services/contactService';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useAuth } from '@/contexts/AuthContext';
+import { BulkTeamMessageModal } from '@/components/dashboard/crm/BulkTeamMessageModal';
+import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
+import toast from 'react-hot-toast';
 
 type ContactStatus = 'active' | 'inactive' | 'unsubscribed' | 'bounced';
 
@@ -25,6 +29,7 @@ const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgCol
 };
 
 export default function ContactsList({ onEditContact, onCreateContact }: ContactsListProps) {
+    const { user } = useAuth();
     const [contacts, setContacts] = useState<ContactWithCompany[]>([]);
     const [filteredContacts, setFilteredContacts] = useState<ContactWithCompany[]>([]);
     const [loading, setLoading] = useState(true);
@@ -39,6 +44,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
     const [bulkDeleting, setBulkDeleting] = useState(false);
+    const [showBulkMessage, setShowBulkMessage] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
     const [visibleCount, setVisibleCount] = useState(40);
     const loadMoreContacts = useCallback(() => setVisibleCount((c) => c + 30), []);
@@ -153,6 +159,18 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const allVisibleSelected =
         filteredContacts.length > 0 && filteredContacts.every(c => selectedIds.includes(c.id));
 
+    const selectedEmails = normalizeRecipientEmails(
+        contacts.filter((c) => selectedIds.includes(c.id)).map((c) => c.email)
+    );
+
+    const handleOpenBulkMessage = () => {
+        if (selectedEmails.length === 0) {
+            toast.error('Selected contacts do not have email addresses.');
+            return;
+        }
+        setShowBulkMessage(true);
+    };
+
     const handleExportCSV = () => {
         const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Status', 'Created At'];
         const rows = filteredContacts.map(c => [
@@ -202,13 +220,22 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                 </div>
                 <div className="flex items-center gap-2">
                     {selectedIds.length > 0 && (
-                        <button
-                            onClick={() => setShowBulkDeleteConfirm(true)}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            Delete ({selectedIds.length})
-                        </button>
+                        <>
+                            <button
+                                onClick={handleOpenBulkMessage}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-indigo-300 hover:text-indigo-200 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                            >
+                                <Mail className="w-4 h-4" />
+                                Message ({selectedIds.length})
+                            </button>
+                            <button
+                                onClick={() => setShowBulkDeleteConfirm(true)}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete ({selectedIds.length})
+                            </button>
+                        </>
                     )}
                     <button
                         onClick={handleExportCSV}
@@ -432,6 +459,16 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                         </button>
                     )}
                 </div>
+            )}
+
+            {user?.id && (
+                <BulkTeamMessageModal
+                    isOpen={showBulkMessage}
+                    onClose={() => setShowBulkMessage(false)}
+                    userId={user.id}
+                    recipients={selectedEmails}
+                    body={buildBulkTeamMessageBody()}
+                />
             )}
 
             {/* Bulk Delete Confirmation */}

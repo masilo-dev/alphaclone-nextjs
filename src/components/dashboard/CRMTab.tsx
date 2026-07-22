@@ -31,7 +31,8 @@ import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
 import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import { showActionNextSteps } from '../common/showActionNextSteps';
-import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { BulkTeamMessageModal } from './crm/BulkTeamMessageModal';
+import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
 import { CRMActionChips } from './crm/CRMActionChips';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -867,7 +868,7 @@ const Client360Detail: React.FC<{
                   toast.error('Add an email address for this client first.');
                   return;
                 }
-                router.push(buildMailComposeUrl(client.email, `Re: ${client.name}`));
+                setShowEmailModal(true);
               },
             },
             {
@@ -1018,6 +1019,8 @@ const Client360Detail: React.FC<{
         <CommunicationModal
           client={client as any}
           user={user}
+          prefilledSubject="Follow-up"
+          prefilledBody="Hello,\n\n"
           onClose={() => setShowEmailModal(false)}
           onSent={() => setShowEmailModal(false)}
         />
@@ -1422,14 +1425,25 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   const [selectedEntity, setSelectedEntity] = useState<CRMEntity | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [teamCompose, setTeamCompose] = useState<{
+    recipients: string[];
+    subject?: string;
+    body?: string;
+  } | null>(null);
   const crmListRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(50);
   const loadMoreEntities = useCallback(() => setVisibleCount((c) => c + 40), []);
   const openEmailCompose = useCallback((entity: { email?: string; name?: string; company?: string; source?: string }) => {
-    if (!entity.email) return;
-    const displayName = entity.name || entity.company || 'there';
-    router.push(buildMailComposeUrl(entity.email, `Re: ${displayName}`));
-  }, [router]);
+    if (!entity.email) {
+      toast.error('No email address on this record.');
+      return;
+    }
+    setTeamCompose({
+      recipients: [entity.email.trim()],
+      subject: 'Follow-up',
+      body: 'Hello,\n\n',
+    });
+  }, []);
   // Realtime transparency: recently changed record IDs get a brief row flash
   const [flashIds, setFlashIds] = useState<Set<string>>(new Set());
   const flashRecord = useCallback((id: string) => {
@@ -1737,33 +1751,36 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
     }
   };
 
-  const handleBulkEmail = useCallback(() => {
+  const handleBulkMessage = useCallback(() => {
     if (selectedKeys.size === 0) return;
 
-    const recipientSet = new Set<string>();
+    const emails: string[] = [];
     selectedKeys.forEach((key) => {
       const [type, id] = key.split(':');
       if (!id) return;
 
       if (type === 'lead') {
         const lead = leads.find((entry) => entry.id === id);
-        if (lead?.email) recipientSet.add(lead.email.trim());
+        if (lead?.email) emails.push(lead.email);
         return;
       }
 
       const client = clients.find((entry) => entry.id === id);
-      if (client?.email) recipientSet.add(client.email.trim());
+      if (client?.email) emails.push(client.email);
     });
 
-    const recipients = Array.from(recipientSet).filter(Boolean);
+    const recipients = normalizeRecipientEmails(emails);
     if (recipients.length === 0) {
       toast.error('Selected records do not have email addresses.');
       return;
     }
 
-    const subject = recipients.length === 1 ? 'Follow-up' : 'CRM follow-up';
-    router.push(buildMailComposeUrl(recipients, subject));
-  }, [clients, leads, router, selectedKeys]);
+    setTeamCompose({
+      recipients,
+      subject: recipients.length === 1 ? 'Follow-up' : 'Team update',
+      body: recipients.length === 1 ? 'Hello,\n\n' : buildBulkTeamMessageBody(),
+    });
+  }, [clients, leads, selectedKeys]);
 
   // Lead status transition
   const handleStatusUpdate = async (id: string, status: LeadStatus) => {
@@ -2286,11 +2303,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={handleBulkEmail}
+                  onClick={handleBulkMessage}
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-300 hover:text-indigo-200"
                 >
-                  <Mail className="w-3.5 h-3.5" />
-                  Email ({selectedCount})
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  Message ({selectedCount})
                 </button>
                 <button
                   type="button"
@@ -2354,10 +2371,18 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   ].filter(Boolean).join(' ') || undefined}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={(e) => { e.stopPropagation(); toggleEntitySelection(entity); }}
-                      className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleEntitySelection(entity);
+                        }
+                      }}
+                      className="flex-shrink-0 text-slate-500 hover:text-teal-400 cursor-pointer"
                       aria-label={selectedKeys.has(entityKey(entity)) ? 'Deselect' : 'Select'}
                     >
                       {selectedKeys.has(entityKey(entity)) ? (
@@ -2365,7 +2390,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       ) : (
                         <Square className="w-4 h-4" />
                       )}
-                    </button>
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white">{entity.name}</p>
                       <p className="text-sm text-slate-400">{entity.email || entity.phone || '-'}</p>
@@ -2491,6 +2516,17 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           />
         )}
       </DetailDrawer>
+
+      {teamCompose && (
+        <BulkTeamMessageModal
+          isOpen
+          onClose={() => setTeamCompose(null)}
+          userId={user.id}
+          recipients={teamCompose.recipients}
+          subject={teamCompose.subject}
+          body={teamCompose.body}
+        />
+      )}
     </div>
   );
 };
