@@ -5,13 +5,7 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import {
   buildQuoteDocumentInput,
 } from '@/lib/documents/documentBuilders';
-import { htmlToPdfBuffer } from '@/lib/documents/htmlToPdfBuffer';
-import { renderDocumentHtml } from '@/lib/documents/renderDocument';
-
-async function renderQuotePdfBuffer(quote: any, items: any[], tenant: any): Promise<Buffer> {
-  const html = renderDocumentHtml(buildQuoteDocumentInput(quote, items, tenant));
-  return htmlToPdfBuffer(html);
-}
+import { generateThemedQuotePdfBuffer } from '@/lib/documents/themedDocumentPdf';
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,7 +52,7 @@ export async function POST(req: NextRequest) {
         (quote as { client_email?: string }).client_email ||
         (quoteMeta.client_email as string | undefined);
 
-    const pdfBuffer = await renderQuotePdfBuffer(quote, items || [], quote.tenant);
+    const pdfBuffer = await generateThemedQuotePdfBuffer(quote, items || [], quote.tenant);
     const emailBody = [
       message || `Please find attached quote ${quote.quote_number}.`,
       '',

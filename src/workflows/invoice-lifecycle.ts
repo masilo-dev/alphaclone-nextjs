@@ -5,7 +5,7 @@ import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
 import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
-import { generateThemedInvoicePdfBuffer } from '@/lib/documents/documentBuilders';
+import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
 
 interface InvoiceLifecycleInput {
   invoiceId: string;

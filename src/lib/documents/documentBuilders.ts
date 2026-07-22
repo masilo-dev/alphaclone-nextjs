@@ -4,7 +4,6 @@ import {
   type RenderDocumentInput,
   renderDocumentHtml,
 } from '@/lib/documents/renderDocument';
-import { htmlToPdfBuffer } from '@/lib/documents/htmlToPdfBuffer';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 
 export function parseInvoiceNotesMetadata(notes: unknown): Record<string, unknown> {
@@ -143,14 +142,4 @@ export function renderThemedDocumentHtml(
   input: RenderDocumentInput
 ): string {
   return renderDocumentHtml(input);
-}
-
-export async function generateThemedInvoicePdfBuffer(
-  invoice: Record<string, unknown>,
-  items: Array<Record<string, unknown>>,
-  tenant: TenantLike | null | undefined,
-  client?: { name?: string; email?: string }
-): Promise<Buffer> {
-  const html = renderDocumentHtml(buildInvoiceDocumentInput(invoice, items, tenant, client));
-  return htmlToPdfBuffer(html);
 }
