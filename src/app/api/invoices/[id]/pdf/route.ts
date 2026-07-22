@@ -69,7 +69,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       .from('invoice_line_items')
       .select('*')
       .eq('invoice_id', invoice.id)
-      .order('position', { ascending: true });
+      .order('created_at', { ascending: true });
 
     let client: { name?: string; email?: string } | undefined;
     if (invoice.client_id) {

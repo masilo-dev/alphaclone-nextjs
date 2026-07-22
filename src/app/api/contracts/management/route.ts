@@ -30,7 +30,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
     const { user, admin: supabase } = await requireTenantAccess(tenantId);
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    try {
+      const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+      if (tenantContextError) {
+        console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+      }
+    } catch (contextError) {
+      console.warn('[contracts/management] set_tenant_context unavailable:', contextError);
+    }
 
     switch (action) {
       case 'create_contract':
@@ -207,7 +214,7 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
 
     const { data: contract, error } = await supabase
       .from('contracts')
-      .select('*, tenant:tenants(name, logo_url, brand_color_primary, settings)')
+      .select('*, tenant:tenants(name, logo_url, settings)')
       .eq('id', contractId)
       .eq('tenant_id', tenantId)
       .single();

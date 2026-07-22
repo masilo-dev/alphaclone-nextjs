@@ -5815,7 +5815,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const invoice_id = String(a.invoice_id || '').trim();
           if (!isUuidString(invoice_id)) throw new Error('invoice_id must be a valid UUID');
-          const { data, error } = await supabaseAdmin.from('invoice_line_items').select('*').eq('tenant_id', tenant_id).eq('invoice_id', invoice_id).order('position', { ascending: true });
+          const { data, error } = await supabaseAdmin.from('invoice_line_items').select('*').eq('tenant_id', tenant_id).eq('invoice_id', invoice_id).order('created_at', { ascending: true });
           if (error) throw supabaseErrorToMcpClientError('get_invoice_line_items', error.message);
           result = {
             content: [

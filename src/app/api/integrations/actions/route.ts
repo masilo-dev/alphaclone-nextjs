@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
     const supabase = createSupabaseAdminClient();
 
     // Set tenant context for RLS
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     let result: any = { success: false, data: null, error: null };
 

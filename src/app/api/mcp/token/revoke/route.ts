@@ -29,6 +29,59 @@ const CORS_HEADERS = {
   'Pragma': 'no-cache',
 };
 
+function isMissingRevokedColumn(error: { message?: string; code?: string } | null | undefined): boolean {
+  return Boolean(error?.code === '42703' || error?.message?.includes('revoked'));
+}
+
+async function findActiveOAuthToken(
+  supabase: any,
+  column: 'access_token' | 'refresh_token',
+  token: string,
+  select: string
+) {
+  const withRevoked = await supabase
+    .from('mcp_oauth_tokens')
+    .select(`${select}, revoked`)
+    .eq(column, token)
+    .eq('revoked', false)
+    .maybeSingle();
+
+  if (!isMissingRevokedColumn(withRevoked.error)) {
+    return { data: withRevoked.data as Record<string, any> | null, error: withRevoked.error };
+  }
+
+  const fallback = await supabase
+    .from('mcp_oauth_tokens')
+    .select(select)
+    .eq(column, token)
+    .maybeSingle();
+  return { data: fallback.data as Record<string, any> | null, error: fallback.error };
+}
+
+async function markTokenRevoked(
+  supabase: any,
+  tokenId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('mcp_oauth_tokens')
+    .update({
+      revoked: true,
+      revoked_at: new Date().toISOString(),
+    })
+    .eq('id', tokenId);
+
+  if (!error) return true;
+
+  if (isMissingRevokedColumn(error)) {
+    // Older schemas: delete the row so the token can no longer be used.
+    const { error: deleteError } = await supabase.from('mcp_oauth_tokens').delete().eq('id', tokenId);
+    return !deleteError;
+  }
+
+  console.warn('[MCP Token Revoke] Failed to revoke token:', error.message);
+  return false;
+}
+
 /**
  * Authenticate the client making the revocation request.
  * 
@@ -49,12 +102,12 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
     // Check if this is a valid client access token
-    const { data: clientToken } = await supabase
-      .from('mcp_oauth_tokens')
-      .select('client_id, expires_at, revoked, user_id')
-      .eq('access_token', token)
-      .eq('revoked', false)
-      .maybeSingle();
+    const { data: clientToken } = await findActiveOAuthToken(
+      supabase,
+      'access_token',
+      token,
+      'client_id, expires_at, user_id'
+    );
 
     if (clientToken && new Date(clientToken.expires_at) > new Date()) {
       return { isAuthenticated: true, clientId: clientToken.client_id || undefined };
@@ -156,12 +209,12 @@ export async function POST(req: NextRequest) {
     if (authHeader?.startsWith('Bearer ')) {
       const authToken = authHeader.substring(7).trim();
 
-      const { data: tokenData } = await supabase
-        .from('mcp_oauth_tokens')
-        .select('user_id, tenant_id')
-        .eq('access_token', authToken)
-        .eq('revoked', false)
-        .maybeSingle();
+      const { data: tokenData } = await findActiveOAuthToken(
+        supabase,
+        'access_token',
+        authToken,
+        'user_id, tenant_id'
+      );
 
       if (tokenData) {
         requestingUserId = tokenData.user_id;
@@ -185,12 +238,12 @@ export async function POST(req: NextRequest) {
     let revoked = false;
 
     if (!tokenTypeHint || tokenTypeHint === 'access_token') {
-      const { data: tokenData } = await supabase
-        .from('mcp_oauth_tokens')
-        .select('id, user_id, tenant_id, access_token')
-        .eq('access_token', token)
-        .eq('revoked', false)
-        .maybeSingle();
+      const { data: tokenData } = await findActiveOAuthToken(
+        supabase,
+        'access_token',
+        token,
+        'id, user_id, tenant_id, access_token'
+      );
 
       if (tokenData) {
         // Authorization check: user can only revoke their own tokens
@@ -204,15 +257,7 @@ export async function POST(req: NextRequest) {
           return new Response(null, { status: 200, headers: CORS_HEADERS });
         }
 
-        const { error: updateError } = await supabase
-          .from('mcp_oauth_tokens')
-          .update({
-            revoked: true,
-            revoked_at: new Date().toISOString(),
-          })
-          .eq('id', tokenData.id);
-
-        if (!updateError) {
+        if (await markTokenRevoked(supabase, tokenData.id)) {
           revoked = true;
           console.log('[MCP Token Revoke] Access token revoked:', {
             tokenId: tokenData.id,
@@ -225,12 +270,12 @@ export async function POST(req: NextRequest) {
 
     // If not found as access token, try refresh token
     if (!revoked && (!tokenTypeHint || tokenTypeHint === 'refresh_token')) {
-      const { data: tokenData } = await supabase
-        .from('mcp_oauth_tokens')
-        .select('id, user_id, tenant_id, refresh_token')
-        .eq('refresh_token', token)
-        .eq('revoked', false)
-        .maybeSingle();
+      const { data: tokenData } = await findActiveOAuthToken(
+        supabase,
+        'refresh_token',
+        token,
+        'id, user_id, tenant_id, refresh_token'
+      );
 
       if (tokenData) {
         // Authorization check
@@ -242,15 +287,7 @@ export async function POST(req: NextRequest) {
           return new Response(null, { status: 200, headers: CORS_HEADERS });
         }
 
-        const { error: updateError } = await supabase
-          .from('mcp_oauth_tokens')
-          .update({
-            revoked: true,
-            revoked_at: new Date().toISOString(),
-          })
-          .eq('id', tokenData.id);
-
-        if (!updateError) {
+        if (await markTokenRevoked(supabase, tokenData.id)) {
           revoked = true;
           console.log('[MCP Token Revoke] Refresh token revoked:', {
             tokenId: tokenData.id,

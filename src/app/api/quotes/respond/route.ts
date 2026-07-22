@@ -7,7 +7,7 @@ import { convertQuoteToInvoice } from '@/lib/quotes/convertQuoteToInvoice';
 async function findQuoteByToken(admin: ReturnType<typeof createSupabaseAdminClient>, token: string) {
     const { data: quote, error } = await admin
         .from('quotes')
-        .select('*, tenant:tenants(name, settings, logo_url, brand_color_primary)')
+        .select('*, tenant:tenants(name, settings, logo_url)')
         .eq('metadata->>public_token', token)
         .maybeSingle();
 
@@ -59,7 +59,10 @@ export async function GET(req: NextRequest) {
                 tenantName: quote.tenant?.name,
                 tenantSettings: (quote.tenant as any)?.settings || null,
                 tenantLogoUrl: (quote.tenant as any)?.logo_url || null,
-                tenantBrandColor: (quote.tenant as any)?.brand_color_primary || null,
+                tenantBrandColor:
+                  ((quote.tenant as any)?.settings?.branding?.primaryColor as string | undefined) ||
+                  ((quote.tenant as any)?.settings?.primaryColor as string | undefined) ||
+                  null,
             },
             items: (items || []).map((item: Record<string, unknown>) => ({
                 productName: item.product_name,

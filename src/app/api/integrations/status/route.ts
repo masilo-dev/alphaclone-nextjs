@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
     const { user, admin: supabase } = await requireTenantAccess(tenantId);
     
     // Set tenant context for RLS
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     const integrationStatus = await checkAllIntegrations(tenantId, user.id, supabase);
     

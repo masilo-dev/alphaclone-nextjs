@@ -32,7 +32,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
 
         const { data: tenant } = await admin
             .from('tenants')
-            .select('name, logo_url, brand_color_primary, settings')
+            .select('name, logo_url, settings')
             .eq('id', tenantId)
             .single();
 

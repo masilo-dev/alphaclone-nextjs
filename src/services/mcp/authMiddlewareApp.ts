@@ -174,12 +174,29 @@ export async function validateMCPAuthApp(
 
   // ── 1. Check for OAuth Access Token ──────────────────────────────────────
   if (isOAuthAccessToken) {
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
+    // Prefer revoked filter when column exists; fall back if schema is behind.
+    let tokenData: any = null;
+    let tokenError: { message?: string; code?: string; hint?: string } | null = null;
+
+    const withRevoked = await supabaseAdmin
       .from('mcp_oauth_tokens')
       .select('tenant_id, user_id, expires_at, client_id, revoked, resource, scopes')
       .eq('access_token', token)
       .eq('revoked', false)
       .maybeSingle();
+
+    if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
+      const withoutRevoked = await supabaseAdmin
+        .from('mcp_oauth_tokens')
+        .select('tenant_id, user_id, expires_at, client_id, resource, scopes')
+        .eq('access_token', token)
+        .maybeSingle();
+      tokenData = withoutRevoked.data;
+      tokenError = withoutRevoked.error;
+    } else {
+      tokenData = withRevoked.data;
+      tokenError = withRevoked.error;
+    }
 
     if (tokenError || !tokenData) {
       console.warn('[MCP Auth] Token lookup failed or token not found:', {
@@ -188,6 +205,14 @@ export async function validateMCPAuthApp(
         hint: tokenError?.hint,
         token_prefix: token.substring(0, 10)
       });
+      return {
+        error: 'Invalid or expired access token',
+        status: 401,
+        wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Token not found or revoked'),
+      };
+    }
+
+    if (tokenData.revoked === true) {
       return {
         error: 'Invalid or expired access token',
         status: 401,
