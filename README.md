@@ -22,6 +22,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Project Docs
 
+- [ChatGPT MCP Connector](docs/CHATGPT_MCP_CONNECTOR.md) — production MCP tools for ChatGPT Apps
 - [Alphaclone Brand Messaging Prompt Checklist](docs/alphaclone-brand-messaging-checklist.md)
 - [API Error Codes Map](docs/api-error-codes-map.md)
 - [All-in-One Competitive Analysis](docs/ALL_IN_ONE_COMPETITIVE_ANALYSIS.md)

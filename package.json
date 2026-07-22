@@ -25,7 +25,9 @@
     "api:sweep-errors": "node scripts/sweep-api-errors.mjs",
     "guidance:compact": "node scripts/compact-guidance.mjs",
     "pentest": "node scripts/platform-pentest.mjs",
-    "validate:mcp": "./node_modules/.bin/tsx scripts/validate-bonnie-mcp-tools.ts"
+    "validate:mcp": "./node_modules/.bin/tsx scripts/validate-bonnie-mcp-tools.ts",
+    "test:mcp-connector": "node --import tsx --test tests/unit/mcp-chatgpt-connector.test.mjs",
+    "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.0",

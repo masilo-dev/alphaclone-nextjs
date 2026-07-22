@@ -222,4 +222,15 @@ export function initializeRegistry() {
   require('./tools/api-health');
   require('./tools/documents');
   require('./tools/nexus-memory');
+  // ChatGPT connector surface (exact tool names for Apps discovery)
+  require('./tools/platform-ops');
+  require('./tools/bonnie-inspect');
+  require('./tools/crm-ops');
+  require('./tools/social-ops');
+  require('./tools/marketing-ops');
+  require('./tools/sales-ops');
+  require('./tools/calendar-ops');
+  require('./tools/documents-ops');
+  require('./tools/reports-ops');
+  require('./tools/integrations-health');
 }

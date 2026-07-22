@@ -46,6 +46,12 @@ const FINANCIAL_TOOLS = new Set([
   'nexus_invoice_chasing',
 ]);
 
+const PROTECTED_ADMIN_TOOLS = new Set([
+  'restart_service',
+  'delete_lead',
+  'delete_post',
+]);
+
 const DRAFT_TOOLS = new Set([
   'generate_contract_draft',
   'draft_email',
@@ -86,11 +92,30 @@ const TENANT_INTERNAL_TOOLS = new Set([
 function classifyTool(toolName: string): ToolRiskClass {
   const name = toolName.toLowerCase();
   if (TENANT_INTERNAL_TOOLS.has(name)) return 'read';
+  if (PROTECTED_ADMIN_TOOLS.has(name) || name === 'restart_service') return 'financial';
   if (name.startsWith('bulk_') || name.includes('_bulk') || name === 'bulk_update') return 'bulk';
   if (FINANCIAL_TOOLS.has(name)) return 'financial';
-  if (SEND_TOOLS.has(name)) return 'send';
+  if (SEND_TOOLS.has(name) || name === 'publish_post' || name === 'run_workflow') return 'send';
   if (DRAFT_TOOLS.has(name) || name.includes('draft')) return 'draft';
-  if (name.startsWith('get_') || name.startsWith('list_') || name.startsWith('search_') || name.startsWith('fetch_')) {
+  if (
+    name.startsWith('get_') ||
+    name.startsWith('list_') ||
+    name.startsWith('search_') ||
+    name.startsWith('fetch_') ||
+    name.startsWith('inspect_') ||
+    name.endsWith('_health') ||
+    name.endsWith('_report') ||
+    name === 'audit_platform' ||
+    name === 'pipeline_status' ||
+    name === 'opportunities' ||
+    name === 'campaigns' ||
+    name === 'funnels' ||
+    name === 'conversions' ||
+    name === 'analytics' ||
+    name === 'connected_accounts' ||
+    name === 'scheduled_posts' ||
+    name === 'integrations_status'
+  ) {
     return 'read';
   }
   if (name.startsWith('create_') || name.startsWith('update_') || name.startsWith('delete_')) return 'draft';
