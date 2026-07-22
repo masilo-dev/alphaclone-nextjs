@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMCPServer } from '@/services/mcp/MCPServer';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders, createUnauthorizedResponse } from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { getInitialBusinessAIStateForTenant } from '@/lib/mcp/getInitialBusinessAIStateForTenant';
@@ -93,18 +93,18 @@ export async function POST(req: NextRequest) {
     // Stateless fallback using api_key (e.g. for simple HTTP transport clients or initialize method)
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+      return createUnauthorizedResponse(req, 'invalid_token', auth.error);
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
   }
 
   if (!tenantId || !userId) {
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      error: { code: -32001, message: 'Authentication failed: missing tenant or user context' },
-      id: requestBody.id ?? null,
-    }, { status: 401, headers: getMcpCorsHeaders(req) });
+    return createUnauthorizedResponse(
+      req,
+      'invalid_token',
+      'Authentication failed: missing tenant or user context'
+    );
   }
 
   // Robust discovery handling for stateless environments

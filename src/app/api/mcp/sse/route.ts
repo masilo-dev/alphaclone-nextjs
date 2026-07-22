@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, MCP_CORS_HEADERS, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import {
+  validateMCPAuthApp,
+  MCP_CORS_HEADERS,
+  handleCorsApp,
+  getMcpCorsHeaders,
+  createUnauthorizedResponse,
+} from '@/services/mcp/authMiddlewareApp';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { touchMcpApiKeyLastUsed } from '@/lib/security/mcpApiKeyLookup';
@@ -49,7 +55,7 @@ export async function GET(req: NextRequest) {
     const auth = await validateMCPAuthApp(req);
     if ('error' in auth) {
       console.warn('[MCP SSE GET] Auth failed:', auth.error);
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+      return createUnauthorizedResponse(req, 'invalid_token', auth.error);
     }
 
     const { tenant_id, user_id, apiKey, supabaseAdmin } = auth;

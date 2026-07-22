@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import {
+  validateMCPAuthApp,
+  handleCorsApp,
+  getMcpCorsHeaders,
+  createUnauthorizedResponse,
+} from '@/services/mcp/authMiddlewareApp';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
@@ -106,6 +111,27 @@ async function resolveAuth(req: NextRequest) {
   return auth;
 }
 
+function unauthorizedFromAuth(req: NextRequest, auth: { error: string; status: number; wwwAuthenticate?: string }) {
+  if (auth.status === 401 || auth.status === 403) {
+    // Prefer dedicated helper so ChatGPT/Claude always get resource_metadata.
+    return createUnauthorizedResponse(
+      req,
+      auth.status === 403 ? 'insufficient_scope' : 'invalid_token',
+      auth.error
+    );
+  }
+  return NextResponse.json(
+    { error: auth.error },
+    {
+      status: auth.status,
+      headers: {
+        ...mcpJsonHeaders(req),
+        ...(auth.wwwAuthenticate ? { 'WWW-Authenticate': auth.wwwAuthenticate } : {}),
+      },
+    }
+  );
+}
+
 export async function POST(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
@@ -148,11 +174,7 @@ export async function POST(req: NextRequest) {
     if (sessionError || !session) {
       const auth = await resolveAuth(req);
       if ('error' in auth) {
-        return NextResponse.json({
-          jsonrpc: '2.0',
-          error: { code: -32001, message: 'Session not found. Please re-initialize.' },
-          id: requestBody.id ?? null,
-        }, { status: 401, headers: mcpJsonHeaders(req) });
+        return unauthorizedFromAuth(req, auth);
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
@@ -161,11 +183,7 @@ export async function POST(req: NextRequest) {
       if (expiry < new Date()) {
         const auth = await resolveAuth(req);
         if ('error' in auth) {
-          return NextResponse.json({
-            jsonrpc: '2.0',
-            error: { code: -32001, message: 'Session expired. Please re-initialize.' },
-            id: requestBody.id ?? null,
-          }, { status: 401, headers: mcpJsonHeaders(req) });
+          return unauthorizedFromAuth(req, auth);
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
@@ -177,7 +195,7 @@ export async function POST(req: NextRequest) {
   } else {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
+      return unauthorizedFromAuth(req, auth);
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
@@ -575,7 +593,7 @@ export async function GET(req: NextRequest) {
   try {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
+      return unauthorizedFromAuth(req, auth);
     }
 
     const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
@@ -608,7 +626,7 @@ export async function DELETE(req: NextRequest) {
 
   const auth = await resolveAuth(req);
   if ('error' in auth) {
-    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: mcpJsonHeaders(req) });
+    return unauthorizedFromAuth(req, auth);
   }
 
   const mcpSessionId = req.headers.get('mcp-session-id');

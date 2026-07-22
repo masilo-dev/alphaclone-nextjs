@@ -21,24 +21,58 @@ export interface AuthError {
 }
 
 /**
- * Creates a RFC 6750 compliant WWW-Authenticate header value
+ * Creates a RFC 6750 + RFC 9728 compliant WWW-Authenticate header value.
+ * MCP OAuth clients (ChatGPT Apps, Claude) require resource_metadata so they
+ * can discover the authorization server after a 401 challenge.
  */
 export function createWWWAuthenticateHeader(
   error: string = 'invalid_token',
   description?: string,
-  scopes?: string[]
+  scopes?: string[],
+  resourceMetadataUrl?: string
 ): string {
-  let header = `Bearer realm="alphaclone-mcp", error="${error}"`;
+  const parts: string[] = ['Bearer realm="alphaclone-mcp"'];
+
+  if (resourceMetadataUrl) {
+    parts.push(`resource_metadata="${resourceMetadataUrl}"`);
+  }
+
+  if (error) {
+    parts.push(`error="${error}"`);
+  }
 
   if (description) {
-    header += `, error_description="${description}"`;
+    parts.push(`error_description="${description.replace(/"/g, '\\"')}"`);
   }
 
   if (scopes && scopes.length > 0) {
-    header += `, scope="${scopes.join(' ')}"`;
+    parts.push(`scope="${scopes.join(' ')}"`);
   }
 
-  return header;
+  return parts.join(', ');
+}
+
+export function buildMcpResourceMetadataUrl(req: NextRequest): string {
+  const baseUrl =
+    `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com'}`.replace(
+      /\/$/,
+      ''
+    );
+  // Prefer env public URL when available (avoids internal Railway hosts)
+  try {
+    // Lazy import avoided — keep sync for middleware hot path
+    const envUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXTAUTH_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      '';
+    const publicBase = (envUrl.trim() || baseUrl)
+      .replace(/\/+$/, '')
+      .replace(/^http:\/\//, (m) => (envUrl.includes('localhost') ? m : 'https://'));
+    return `${publicBase}/.well-known/oauth-protected-resource`;
+  } catch {
+    return `${baseUrl}/.well-known/oauth-protected-resource`;
+  }
 }
 
 /**
@@ -126,6 +160,7 @@ export async function validateMCPAuthApp(
   const authHeader = req.headers.get('authorization');
   const url = new URL(req.url);
   let token = req.headers.get('x-api-key') || url.searchParams.get('api_key');
+  const resourceMetadataUrl = buildMcpResourceMetadataUrl(req);
 
   // Build base URL for resource validation
   const baseUrl = `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('x-forwarded-host') || req.headers.get('host') || 'alphaclonesystems.com'}`;
@@ -140,7 +175,12 @@ export async function validateMCPAuthApp(
     return {
       error: 'Authentication required. Provide x-api-key or Authorization Bearer token header.',
       status: 401,
-      wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Missing access token'),
+      wwwAuthenticate: createWWWAuthenticateHeader(
+        'invalid_token',
+        'Missing access token',
+        undefined,
+        resourceMetadataUrl
+      ),
     };
   }
 
@@ -148,7 +188,12 @@ export async function validateMCPAuthApp(
     return {
       error: 'SERVER_CONFIGURATION_ERROR',
       status: 500,
-      wwwAuthenticate: createWWWAuthenticateHeader('server_error', 'Server configuration error'),
+      wwwAuthenticate: createWWWAuthenticateHeader(
+        'server_error',
+        'Server configuration error',
+        undefined,
+        resourceMetadataUrl
+      ),
     };
   }
 
@@ -168,7 +213,12 @@ export async function validateMCPAuthApp(
     return {
       error: 'Unauthorized',
       status: 401,
-      wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Invalid token format'),
+      wwwAuthenticate: createWWWAuthenticateHeader(
+        'invalid_token',
+        'Invalid token format',
+        undefined,
+        resourceMetadataUrl
+      ),
     };
   }
 
@@ -208,7 +258,12 @@ export async function validateMCPAuthApp(
       return {
         error: 'Invalid or expired access token',
         status: 401,
-        wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Token not found or revoked'),
+        wwwAuthenticate: createWWWAuthenticateHeader(
+          'invalid_token',
+          'Token not found or revoked',
+          undefined,
+          resourceMetadataUrl
+        ),
       };
     }
 
@@ -216,7 +271,12 @@ export async function validateMCPAuthApp(
       return {
         error: 'Invalid or expired access token',
         status: 401,
-        wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Token not found or revoked'),
+        wwwAuthenticate: createWWWAuthenticateHeader(
+          'invalid_token',
+          'Token not found or revoked',
+          undefined,
+          resourceMetadataUrl
+        ),
       };
     }
 
@@ -239,7 +299,9 @@ export async function validateMCPAuthApp(
           status: 403,
           wwwAuthenticate: createWWWAuthenticateHeader(
             'insufficient_scope',
-            'Token not valid for this resource'
+            'Token not valid for this resource',
+            undefined,
+            resourceMetadataUrl
           ),
         };
       }
@@ -262,7 +324,8 @@ export async function validateMCPAuthApp(
           wwwAuthenticate: createWWWAuthenticateHeader(
             'insufficient_scope',
             `Missing required scopes: ${scopeValidation.missing?.join(', ')}`,
-            tokenData.scopes
+            tokenData.scopes,
+            resourceMetadataUrl
           ),
         };
       }
@@ -277,7 +340,9 @@ export async function validateMCPAuthApp(
         status: 401,
         wwwAuthenticate: createWWWAuthenticateHeader(
           'invalid_token',
-          'Access token has expired. Reconnect ChatGPT or Claude and authorize again.'
+          'Access token has expired. Reconnect ChatGPT or Claude and authorize again.',
+          undefined,
+          resourceMetadataUrl
         ),
       };
     }
@@ -300,7 +365,12 @@ export async function validateMCPAuthApp(
     return {
       error: 'Unauthorized',
       status: 401,
-      wwwAuthenticate: createWWWAuthenticateHeader('invalid_token', 'Invalid API key'),
+      wwwAuthenticate: createWWWAuthenticateHeader(
+        'invalid_token',
+        'Invalid API key',
+        undefined,
+        resourceMetadataUrl
+      ),
     };
   }
 
@@ -315,7 +385,8 @@ export async function validateMCPAuthApp(
         wwwAuthenticate: createWWWAuthenticateHeader(
           'insufficient_scope',
           `Missing required scopes: ${scopeValidation.missing?.join(', ')}`,
-          keyData.scopes ?? undefined
+          keyData.scopes ?? undefined,
+          resourceMetadataUrl
         ),
       };
     }
@@ -386,7 +457,13 @@ export function createUnauthorizedResponse(
   description?: string,
   scopes?: string[]
 ): NextResponse {
-  const wwwAuthenticate = createWWWAuthenticateHeader(error, description, scopes);
+  const resourceMetadataUrl = buildMcpResourceMetadataUrl(req);
+  const wwwAuthenticate = createWWWAuthenticateHeader(
+    error,
+    description,
+    scopes,
+    resourceMetadataUrl
+  );
 
   return NextResponse.json(
     {
@@ -397,6 +474,7 @@ export function createUnauthorizedResponse(
       status: 401,
       headers: {
         'WWW-Authenticate': wwwAuthenticate,
+        'MCP-Protocol-Version': '2025-11-25',
         ...getMcpCorsHeaders(req),
       },
     }
