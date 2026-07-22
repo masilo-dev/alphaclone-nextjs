@@ -206,6 +206,7 @@ export function initializeRegistry() {
   require('./tools/ai-analytics');
   require('./tools/bonnie-dream');
   require('./tools/bonnie-orchestrate');
+  require('./tools/bonnie-os');
   require('./tools/bonnie-outcomes');
   require('./tools/bonnie-approvals');
   require('./tools/bonnie-skills');

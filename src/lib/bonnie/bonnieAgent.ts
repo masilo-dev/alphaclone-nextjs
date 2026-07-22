@@ -279,7 +279,7 @@ async function planWithDeepSeek(
 
   const suggestedTools = suggestToolsForQuestion(instruction, moduleId);
   const missionHint = looksLikeComplexMission(instruction)
-    ? `\nCOMPLEX MISSION DETECTED: Prefer orchestrate_task for cross-module work, or chain multiple tool rounds until fully complete (gather → act → verify). Do not stop after the first successful tool.\n`
+    ? `\nCOMPLEX MISSION DETECTED: Prefer run_cognitive_loop (full Observe→…→Learn OS loop) or orchestrate_task for cross-module work. The Bonnie Supervisor will select specialized department agents. Chain gather → act → verify → reflect. Do not stop after the first successful tool.\n`
     : '';
   const userBlock = `WORKSPACE CONTEXT (already loaded — answer from this, do not ask to check):
 ${formatWarmContextBlock(snapshot, round === 0 ? warmPrefetch : [])}
@@ -620,6 +620,65 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   const allLogs: string[] = warmResults.map((r) => `Prefetched ${r.tool}: ${r.summary}`);
   let lastPlan: BonniePlan = { response: 'Done.' };
   let rounds = 0;
+
+  // Complex multi-module missions: run the Agentic OS cognitive loop (Supervisor + specialists)
+  if (looksLikeComplexMission(instruction)) {
+    try {
+      const { runCognitiveLoop } = await import('@/lib/bonnie/os/cognitiveLoop');
+      const cognitive = await runCognitiveLoop({
+        tenantId,
+        userId,
+        goal: instruction,
+        triggerType: 'instruction',
+        executeActions: true,
+        workflowId: workflowId || undefined,
+      });
+      allLogs.push(
+        `Cognitive OS loop: status=${cognitive.status} agents=${cognitive.selectedAgents.map((a) => a.id).join(',')}`
+      );
+      const response =
+        cognitive.status === 'awaiting_approval'
+          ? `Bonnie planned and started this mission with strategy ${String(cognitive.strategy.name || cognitive.supervisor.strategy)}. High-risk actions are waiting for your approval. Confidence: ${Math.round(cognitive.confidence * 100)}%.`
+          : cognitive.status === 'completed'
+            ? `Bonnie completed the mission via the Agentic OS loop (Observe→Learn). Strategy: ${String(cognitive.strategy.name || cognitive.supervisor.strategy)}. Agents: ${cognitive.selectedAgents.map((a) => a.name).join(', ')}. Confidence: ${Math.round(cognitive.confidence * 100)}%.`
+            : `Bonnie ran the cognitive loop but needs follow-up (${cognitive.status}). ${cognitive.supervisor.reasoning}`;
+
+      const es =
+        cognitive.status === 'awaiting_approval'
+          ? 'queued_for_approval'
+          : cognitive.status === 'completed'
+            ? 'executed'
+            : 'planning_failed';
+
+      void wfUpdate({
+        status: cognitive.status === 'awaiting_approval' ? 'waiting_for_approval' : cognitive.status === 'completed' ? 'completed' : 'failed',
+        finalResponse: response,
+        executionStatus: es,
+        rounds: cognitive.stages.length,
+        completedAt: cognitive.status !== 'awaiting_approval',
+      });
+
+      if (cognitive.status === 'completed' || cognitive.status === 'awaiting_approval') {
+        return {
+          response: sanitizeBonnieResponse(response),
+          success: true,
+          provider,
+          model,
+          toolResults: allToolResults,
+          logs: [
+            `Cognitive run ${cognitive.runId || 'local'}`,
+            ...cognitive.stages.filter((s) => s.status === 'completed').map((s) => `${s.name}: ${s.summary || s.status}`),
+          ],
+          rounds: Math.max(1, Math.ceil(cognitive.stages.length / 4)),
+          executionStatus: es,
+          workflowId: workflowId ?? undefined,
+        };
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      allLogs.push(`Cognitive loop fallback to ReAct: ${message}`);
+    }
+  }
 
   for (let round = 0; round < MAX_AGENT_ROUNDS; round++) {
     let plan: BonniePlan;

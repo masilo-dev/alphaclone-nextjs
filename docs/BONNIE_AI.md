@@ -50,7 +50,28 @@ Full module specs, tool lists, and lifecycle rules: [BONNIE_MASTER_TRAINING_v3.m
 | `PATCH /api/bonnie/approvals` | Edit approval payload before approve |
 | `POST /api/autonomous/approve` | Approve/reject and resume tool |
 | `POST /api/bonnie/voice` | Grok voice command → full agent execution |
+| `GET/POST /api/bonnie/os` | Agentic OS status + cognitive loop runner |
 | `POST /api/mcp` | MCP JSON-RPC tool server |
+
+---
+
+## Agentic Business Operating System (foundation)
+
+Bonnie is the intelligence underneath every module — not a chatbot wrapper.
+
+| Capability | Code path |
+|------------|-----------|
+| Supervisor + 24 department agents | `src/lib/bonnie/os/agentRegistry.ts`, `supervisor.ts` |
+| Cognitive loop (Observe→…→Learn) | `src/lib/bonnie/os/cognitiveLoop.ts` |
+| Layered memory (org/user/dept/short/long) | `src/lib/bonnie/os/layeredMemory.ts` |
+| Knowledge graph (persisted) | `src/lib/bonnie/os/knowledgeGraph.ts` |
+| Business digital twin | `src/lib/bonnie/os/digitalTwin.ts` |
+| Reflection + self-improvement | `src/lib/bonnie/os/reflectionEngine.ts` |
+| Event → reasoning | `src/lib/bonnie/os/eventReasoning.ts` + `process-events` cron |
+| Continuous observation | `/api/cron/bonnie-continuous` |
+| MCP tools | `list_department_agents`, `supervise_task`, `run_cognitive_loop`, `sync_knowledge_graph`, `refresh_business_digital_twin`, `get_agentic_os_status` |
+
+Complex missions in `runBonnieAgent` automatically enter the cognitive OS loop. Policy-gated approvals and `nexus_decision_log` remain the safety/audit backbone.
 
 ---
 

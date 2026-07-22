@@ -281,32 +281,18 @@ registerTool('platform-advantage', {
     required: ['tenant_id'],
   },
   handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const limit = args.limit || 50;
-    const [contactsRes, companiesRes, dealsRes, invoicesRes, sessionsRes] = await Promise.all([
-      supabase.from('contacts').select('id, first_name, last_name, full_name, email, company_id, created_at').eq('tenant_id', args.tenant_id).limit(limit),
-      supabase.from('companies').select('id, name, website, created_at').eq('tenant_id', args.tenant_id).limit(limit),
-      supabase.from('deals').select('id, name, stage, value, contact_id, company_id, updated_at').eq('tenant_id', args.tenant_id).limit(limit),
-      supabase.from('business_invoices').select('id, invoice_number, status, total_amount, client_id, created_at').eq('tenant_id', args.tenant_id).limit(limit),
-      supabase.from('mcp_sessions').select('tool_name, success, created_at').eq('tenant_id', args.tenant_id).order('created_at', { ascending: false }).limit(limit),
-    ]);
+    const { syncBusinessKnowledgeGraph } = await import('@/lib/bonnie/os/knowledgeGraph');
+    const synced = await syncBusinessKnowledgeGraph(args.tenant_id, args.limit || 50);
 
     return {
       content: [{
         type: 'text',
         text: JSON.stringify({
-          nodes: {
-            contacts: contactsRes.data || [],
-            companies: companiesRes.data || [],
-            deals: dealsRes.data || [],
-            invoices: invoicesRes.data || [],
-            recent_agent_activity: sessionsRes.data || [],
+          persisted: {
+            upserted_nodes: synced.nodes,
+            upserted_edges: synced.edges,
           },
-          edges: {
-            deal_to_contact: (dealsRes.data || []).filter((d) => d.contact_id).map((d) => ({ from: d.id, to: d.contact_id })),
-            deal_to_company: (dealsRes.data || []).filter((d) => d.company_id).map((d) => ({ from: d.id, to: d.company_id })),
-            contact_to_company: (contactsRes.data || []).filter((c) => c.company_id).map((c) => ({ from: c.id, to: c.company_id })),
-          },
+          ...synced.ephemeral,
         }, null, 2),
       }],
     };
