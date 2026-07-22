@@ -74,7 +74,7 @@ registerTool('bonnie-approvals', {
     tenant_id: z.string().uuid(),
     approval_id: z.string().uuid(),
     user_id: z.string().uuid().optional(),
-    edited_args: z.record(z.unknown()).optional(),
+    edited_args: z.record(z.string(), z.unknown()).optional(),
     resume_mission: z.boolean().optional().default(true),
   }),
   jsonSchema: {

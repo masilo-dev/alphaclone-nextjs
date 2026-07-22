@@ -270,7 +270,11 @@ registerTool('crm', {
         metadata: row.metadata || {},
       })),
       ...dealActivities,
-    ].sort((a, b) => new Date(String(b.created_at)).getTime() - new Date(String(a.created_at)).getTime());
+    ].sort((a: unknown, b: unknown) => {
+      const aAt = (a as { created_at?: unknown }).created_at;
+      const bAt = (b as { created_at?: unknown }).created_at;
+      return new Date(String(bAt)).getTime() - new Date(String(aAt)).getTime();
+    });
 
     return unified.slice(0, 50);
   },

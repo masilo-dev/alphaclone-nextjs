@@ -430,7 +430,7 @@ export async function POST(req: NextRequest) {
 
       const stats = toUtcIso({
         status_counts: statusCounts || [],
-        avg_resolution_hours: avgResolution?.avg_hours || null,
+        avg_resolution_hours: (avgResolution as { avg_hours?: number } | null)?.avg_hours || null,
         sla_breaches: slaBreaches || [],
         total_open: (statusCounts || []).filter((s: any) => s.status === 'open').reduce((sum: number, s: any) => sum + (s.count || 0), 0),
       });
