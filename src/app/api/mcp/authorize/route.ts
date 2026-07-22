@@ -11,6 +11,8 @@ import {
 } from '@/lib/mcp/oauthRedirect';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { getMcpPublicBaseUrl } from '@/lib/mcpWellKnown';
+import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
+import { ensurePlatformMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -300,11 +302,20 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
 
   const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: client } = await supabase
+  let { data: client } = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, redirect_uris, is_public')
     .eq('client_id', clientId)
     .maybeSingle();
+
+  if (!client && PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
+    await ensurePlatformMcpOAuthClient(supabase, clientId);
+    ({ data: client } = await supabase
+      .from('mcp_oauth_clients')
+      .select('client_id, redirect_uris, is_public')
+      .eq('client_id', clientId)
+      .maybeSingle());
+  }
 
   if (client) {
     const allowedRedirects: string[] = [
@@ -363,9 +374,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
-  const { error: insertError } = await supabase
-    .from('mcp_oauth_codes')
-    .insert({
+  const codeRow: Record<string, unknown> = {
       code,
       client_id: clientId,
       user_id: keyData.user_id,
@@ -376,7 +385,14 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       code_challenge: codeChallenge || null,
       code_challenge_method: codeChallenge ? codeChallengeMethod : null,
       used: false,
-    });
+      resource: PUBLIC_MCP_RESOURCE,
+    };
+
+  let { error: insertError } = await supabase.from('mcp_oauth_codes').insert(codeRow);
+  if (insertError?.code === '42703' || insertError?.message?.includes('resource')) {
+    const { resource: _r, ...legacy } = codeRow;
+    ({ error: insertError } = await supabase.from('mcp_oauth_codes').insert(legacy));
+  }
 
   if (insertError) {
     console.error('[MCP Authorize] Failed to store auth code:', insertError);

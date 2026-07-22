@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { upsertGoogleCalendarTokens } from '@/services/google/googleCalendarIntegrationService';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+    const appUrl = PUBLIC_APP_ORIGIN;
 
     if (!code || !stateNonce) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?calendar=error&reason=missing_params`);
@@ -44,7 +46,7 @@ export async function GET(req: NextRequest) {
                 code,
                 client_id: ENV.GOOGLE_CLIENT_ID!,
                 client_secret: ENV.GOOGLE_CLIENT_SECRET!,
-                redirect_uri: `${appUrl}/api/auth/google/calendar/callback`,
+                redirect_uri: OAUTH_CALLBACKS.googleCalendar,
                 grant_type: 'authorization_code',
             }),
         });

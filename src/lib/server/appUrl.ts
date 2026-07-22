@@ -1,16 +1,11 @@
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+
 const DEFAULT_APP_URL = 'https://alphaclonesystems.com';
 
 /** Public app origin for webhooks, OAuth redirects, and internal callbacks. */
-export function getPublicAppUrl(fallback = DEFAULT_APP_URL): string {
-  const raw =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    (process.env.RAILWAY_PUBLIC_DOMAIN
-      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
-      : '') ||
-    fallback;
-
-  return String(raw).replace(/\/+$/, '');
+export function getPublicAppUrl(_fallback = DEFAULT_APP_URL): string {
+  // Prefer centralized canonical origin (never Railway internal / 0.0.0.0)
+  return PUBLIC_APP_ORIGIN || DEFAULT_APP_URL;
 }
 
 /** Git commit SHA exposed to the client for release tracking. */

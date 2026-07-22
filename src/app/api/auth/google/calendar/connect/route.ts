@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -28,8 +29,7 @@ export async function GET(req: NextRequest) {
 
         const stateNonce = stateRecord.id;
         const clientId = ENV.GOOGLE_CLIENT_ID;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
-        const redirectUri = `${appUrl}/api/auth/google/calendar/callback`;
+        const redirectUri = OAUTH_CALLBACKS.googleCalendar;
 
         const scopes = [
             'https://www.googleapis.com/auth/calendar',

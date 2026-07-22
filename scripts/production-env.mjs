@@ -68,13 +68,29 @@ export function validateProductionEnv(env = process.env) {
     configured[group.label] = selected;
   }
 
-  const appUrl = env.NEXT_PUBLIC_APP_URL?.trim();
+  const appUrl =
+    env.PUBLIC_APP_ORIGIN?.trim() || env.NEXT_PUBLIC_APP_URL?.trim();
   if (!appUrl) {
-    errors.push('public application URL is missing (NEXT_PUBLIC_APP_URL)');
+    errors.push('public application URL is missing (PUBLIC_APP_ORIGIN or NEXT_PUBLIC_APP_URL)');
   } else if (!checkUrl(appUrl, { https: true, publicProduction: true })) {
     errors.push('public application URL must be a non-local HTTPS URL and must not use vercel.app');
   } else {
-    configured['public application URL'] = 'NEXT_PUBLIC_APP_URL';
+    configured['public application URL'] = env.PUBLIC_APP_ORIGIN?.trim()
+      ? 'PUBLIC_APP_ORIGIN'
+      : 'NEXT_PUBLIC_APP_URL';
+  }
+
+  const mcpResource = env.PUBLIC_MCP_RESOURCE?.trim();
+  if (mcpResource) {
+    if (!checkUrl(mcpResource, { https: true, publicProduction: true })) {
+      errors.push('PUBLIC_MCP_RESOURCE must be a non-local HTTPS URL');
+    } else if (!mcpResource.includes('/api/mcp')) {
+      errors.push('PUBLIC_MCP_RESOURCE must point at the /api/mcp resource path');
+    } else {
+      configured['MCP resource'] = 'PUBLIC_MCP_RESOURCE';
+    }
+  } else {
+    configured['MCP resource'] = 'derived from public origin';
   }
 
   const encryptionSecret = env.ENCRYPTION_SECRET?.trim();
@@ -84,6 +100,26 @@ export function validateProductionEnv(env = process.env) {
     errors.push('credential encryption secret must be exactly 32 characters (ENCRYPTION_SECRET)');
   } else {
     configured['credential encryption secret'] = 'ENCRYPTION_SECRET';
+  }
+
+  const redisUrl = env.UPSTASH_REDIS_REST_URL?.trim();
+  const redisToken = env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  const redisRequired =
+    env.REDIS_REQUIRED === 'true' ||
+    env.REDIS_REQUIRED === '1' ||
+    env.REQUIRE_REDIS === 'true';
+  if (redisRequired) {
+    if (!redisUrl || !redisToken) {
+      errors.push(
+        'Redis is required (UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN)'
+      );
+    } else if (!checkUrl(redisUrl, { https: true })) {
+      errors.push('UPSTASH_REDIS_REST_URL must be a valid HTTPS URL');
+    } else {
+      configured.Redis = 'UPSTASH_REDIS_REST_URL';
+    }
+  } else if (redisUrl && redisToken) {
+    configured.Redis = 'UPSTASH_REDIS_REST_URL';
   }
 
   return { ok: errors.length === 0, errors, configured };

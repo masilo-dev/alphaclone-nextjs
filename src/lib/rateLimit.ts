@@ -9,10 +9,10 @@ import { securityLogService } from '../services/securityLogService';
 // Add these to your .env:
 // UPSTASH_REDIS_REST_URL=your_url
 // UPSTASH_REDIS_REST_TOKEN=your_token
-const redis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+const redis = process.env.UPSTASH_REDIS_REST_URL?.trim() && process.env.UPSTASH_REDIS_REST_TOKEN?.trim()
     ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL!,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+        url: process.env.UPSTASH_REDIS_REST_URL!.trim(),
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!.trim(),
     })
     : null;
 

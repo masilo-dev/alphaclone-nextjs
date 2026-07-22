@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { encodeOAuthState } from '@/lib/oauth/oauthState';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     try {
@@ -24,14 +26,14 @@ export async function GET(req: NextRequest) {
     }
 
     const appId = process.env.FACEBOOK_APP_ID;
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/$/, '');
+    const appUrl = PUBLIC_APP_ORIGIN;
     if (!appId) {
         return NextResponse.redirect(
             `${appUrl}/dashboard/business/facebook?fb_error=app_not_configured`
         );
     }
 
-    const redirectUri = `${appUrl}/api/auth/facebook/callback`;
+    const redirectUri = OAUTH_CALLBACKS.facebook;
     const scopeMode = req.nextUrl.searchParams.get('scope_mode') === 'publishing' ? 'publishing' : 'advanced';
     const publishingScopes = [
         'pages_show_list',
