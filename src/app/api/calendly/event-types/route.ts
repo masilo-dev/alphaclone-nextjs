@@ -12,9 +12,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Missing tenant ID' }, { status: 400 });
         }
 
-        await requireTenantAccess(tenantId, req);
-
-        const supabase = createSupabaseAdminClient();
+        const { admin: supabase } = await requireTenantAccess(tenantId, req);
         const config = await refreshCalendlyTokenIfNeeded(supabase, tenantId);
         if (!config?.accessToken || !config.calendlyUserUri) {
             return NextResponse.json({ error: 'Calendly OAuth is not configured for this tenant' }, { status: 400 });

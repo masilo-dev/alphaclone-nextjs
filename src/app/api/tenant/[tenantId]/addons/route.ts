@@ -6,8 +6,7 @@ type Context = { params: Promise<{ tenantId: string }> };
 export async function GET(req: NextRequest, context: Context) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const { data, error } = await admin.from('subscription_addons').select('id, addon_type, addon_name, quantity, billing_cycle, status, activated_at')
       .eq('tenant_id', tenantId).eq('status', 'active').order('activated_at', { ascending: false });
     if (error) throw error;

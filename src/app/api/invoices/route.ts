@@ -76,8 +76,7 @@ export async function POST(req: NextRequest) {
     const parsed = schema.safeParse(normalizeInvoicePayload(await req.json().catch(() => ({}))));
     if (!parsed.success) return NextResponse.json({ error: 'Invalid invoice details', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const value = parsed.data;
-    const { user } = await requireTenantAccess(value.tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(value.tenantId, req);
     await Promise.all([assertReference(admin, 'business_clients', value.clientId, value.tenantId), assertReference(admin, 'projects', value.projectId, value.tenantId)]);
     if (value.status !== 'draft') {
       await consumeDailyResourceQuota(value.tenantId, user.id, 'invoices');

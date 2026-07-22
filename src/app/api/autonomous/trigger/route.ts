@@ -9,8 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const tenantId = String(new URL(request.url).searchParams.get('tenantId') || '').trim();
     if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
 
     // Fetch recent runs
     const { data: runs, error: runsError } = await admin

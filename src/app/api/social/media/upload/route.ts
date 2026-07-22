@@ -92,8 +92,7 @@ export async function DELETE(req: NextRequest) {
         if (!z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(assetId).success) {
             return NextResponse.json({ error: 'Valid tenantId and assetId required' }, { status: 400 });
         }
-        await requireTenantAccess(tenantId, req);
-        const admin = createSupabaseAdminClient();
+        const { admin } = await requireTenantAccess(tenantId, req);
         const { data: asset, error: readError } = await admin.from('media_assets').select('id, storage_path').eq('tenant_id', tenantId).eq('id', assetId).maybeSingle();
         if (readError) throw readError;
         if (!asset) return NextResponse.json({ error: 'Media asset not found' }, { status: 404 });

@@ -24,9 +24,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
     }
 
     const { tenantId, previousProgress, newProgress, trigger } = parsed.data;
-    await requireTenantAccess(tenantId);
-
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const result = await notifyProjectClientProgressUpdate({
       admin,
       projectId,

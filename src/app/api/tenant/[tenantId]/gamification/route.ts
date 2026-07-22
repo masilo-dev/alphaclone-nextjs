@@ -15,8 +15,7 @@ const scoreAction = (action: string) => {
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
     const [{ data: logs, error: logsError }, { data: members, error: membersError }] = await Promise.all([
       admin.from('activity_logs').select('id, user_id, action, metadata, created_at').eq('tenant_id', tenantId).gte('created_at', since).order('created_at', { ascending: false }).limit(5000),

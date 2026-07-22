@@ -28,9 +28,7 @@ export async function GET(req: NextRequest) {
     }
 
     const { tenantId, limit } = parsed.data;
-    await requireTenantAccess(tenantId);
-
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const now = new Date();
     const nowIso = now.toISOString();
     const staleIso = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();

@@ -10,8 +10,7 @@ const createSchema = z.discriminatedUnion('kind', [cashSchema, taxSchema]);
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const [cash, tax, accounts] = await Promise.all([
       admin.from('cash_flow_projections').select('*').eq('tenant_id', tenantId).order('forecast_date', { ascending: true }),
       admin.from('tax_records').select('*').eq('tenant_id', tenantId).order('tax_year', { ascending: false }).order('quarter', { ascending: false }),

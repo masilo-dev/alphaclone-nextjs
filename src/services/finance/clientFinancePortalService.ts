@@ -161,15 +161,32 @@ export async function getOrCreateClientPortalUrl(
 ): Promise<string> {
   const { data: client, error } = await admin
     .from('business_clients')
-    .select('finance_portal_token')
+    .select('id, finance_portal_token')
     .eq('id', clientId)
     .eq('tenant_id', tenantId)
-    .single();
+    .maybeSingle();
 
-  if (error || !client?.finance_portal_token) {
+  if (error) throw error;
+  if (!client) {
     throw new Error('Client not found');
   }
 
+  let token = client.finance_portal_token as string | null;
+  if (!token) {
+    const { data: updated, error: updateError } = await admin
+      .from('business_clients')
+      .update({ finance_portal_token: crypto.randomUUID() })
+      .eq('id', clientId)
+      .eq('tenant_id', tenantId)
+      .select('finance_portal_token')
+      .single();
+
+    if (updateError || !updated?.finance_portal_token) {
+      throw updateError || new Error('Failed to create client portal token');
+    }
+    token = updated.finance_portal_token;
+  }
+
   const base = (origin || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
-  return `${base}/portal/${client.finance_portal_token}`;
+  return `${base}/portal/${token}`;
 }

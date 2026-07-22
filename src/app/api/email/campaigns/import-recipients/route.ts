@@ -66,8 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId and file are required', code: 'VALIDATION_ERROR' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
 
     let rawRows: Array<Record<string, unknown>> = [];
     const isCsv = file.type.includes('csv') || file.name.toLowerCase().endsWith('.csv');

@@ -16,8 +16,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     if (!tenantId || !z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(id).success) {
       return NextResponse.json({ error: 'Valid tenant and receipt IDs are required' }, { status: 400 });
     }
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('business_receipts').select('*').eq('tenant_id', tenantId).eq('id', id).maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: 'Expense receipt not found' }, { status: 404 });
@@ -34,8 +33,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     const parsed = paymentSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return NextResponse.json({ error: 'Valid tenant and payment account are required' }, { status: 400 });
     const { tenantId, assetAccountId } = parsed.data;
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data: rows, error } = await admin.rpc('pay_business_receipt', {
       p_tenant_id: tenantId,
       p_receipt_id: id,

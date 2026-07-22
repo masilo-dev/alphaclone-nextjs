@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getClientFinancePortalData } from '@/services/finance/clientFinancePortalService';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'token is required' }, { status: 400 });
     }
 
-    const admin = createSupabaseAdminClient();
+    const admin = await resolveSupabaseAdminClient();
     const data = await getClientFinancePortalData(admin, token, req.nextUrl.origin);
 
     if (!data) {

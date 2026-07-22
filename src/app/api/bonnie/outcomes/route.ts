@@ -5,6 +5,43 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+export async function GET(req: NextRequest) {
+  try {
+    const tenantId = req.nextUrl.searchParams.get('tenantId');
+    const limit = Math.min(Number(req.nextUrl.searchParams.get('limit') || '5'), 50);
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+    }
+
+    const { admin } = await requireTenantAccess(tenantId, req);
+
+    const { data, error } = await admin
+      .from('mcp_sessions')
+      .select('id, tool_name, success, created_at, error_message')
+      .eq('tenant_id', tenantId)
+      .eq('tool_name', 'define_outcome')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const outcomes = (data || []).map((row) => ({
+      id: row.id,
+      label: row.tool_name,
+      summary: row.success ? 'Outcome recorded successfully' : row.error_message || 'Outcome recorded',
+      created_at: row.created_at,
+      success: row.success,
+    }));
+
+    return NextResponse.json({ success: true, outcomes, items: outcomes });
+  } catch (err: unknown) {
+    return routeErrorResponse(err, 'Failed to load outcomes', req);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -29,13 +66,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'criteria must be a non-empty array' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
 
     const metCount = criteria.filter((c: { met?: boolean }) => c.met).length;
     const score = Math.round((metCount / criteria.length) * 100);
 
-    const { error } = await supabase.from('mcp_sessions').insert({
+    const { error } = await admin.from('mcp_sessions').insert({
       tenant_id: tenantId,
       tool_name: 'define_outcome',
       success: status === 'success',

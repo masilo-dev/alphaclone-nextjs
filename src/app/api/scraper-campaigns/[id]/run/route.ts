@@ -15,8 +15,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
 
     const { data: campaign, error } = await supabase
       .from('scraper_campaigns')

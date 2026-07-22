@@ -45,10 +45,10 @@ async function generateAndStorePDF(invoiceId: string, tenantId: string) {
   const admin = createSupabaseAdminClient();
 
   const { data: items, error: itemsError } = await admin
-    .from('invoice_items')
+    .from('invoice_line_items')
     .select('*')
     .eq('invoice_id', invoiceId)
-    .order('created_at', { ascending: true });
+    .order('position', { ascending: true });
   if (itemsError) throw itemsError;
 
   const { data: tenant, error: tenantError } = await admin

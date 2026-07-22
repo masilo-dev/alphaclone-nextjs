@@ -12,9 +12,7 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !action) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-    const { user } = await requireTenantAccess(tenantId);
-
-    const supabase = createSupabaseAdminClient();
+    const { user, admin: supabase } = await requireTenantAccess(tenantId);
     await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
 
     switch (action) {

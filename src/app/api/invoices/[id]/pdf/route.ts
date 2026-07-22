@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { resolveSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { generateThemedInvoicePdfBuffer } from '@/lib/documents/themedDocumentPdf';
 
@@ -7,7 +8,7 @@ function sanitizeFilename(input: string): string {
   return String(input || 'invoice').replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
-async function loadInvoice(admin: ReturnType<typeof createSupabaseAdminClient>, id: string, tenantId?: string) {
+async function loadInvoice(admin: SupabaseClient, id: string, tenantId?: string) {
   let query = admin
     .from('business_invoices')
     .select('*, tenant:tenants(*)')
@@ -27,11 +28,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const tenantId = searchParams.get('tenantId');
     const publicToken = searchParams.get('token');
 
-    const admin = createSupabaseAdminClient();
+    let admin: SupabaseClient;
 
     if (tenantId) {
-      await requireTenantAccess(tenantId);
+      ({ admin } = await requireTenantAccess(tenantId, req));
     } else if (publicToken) {
+      admin = await resolveSupabaseAdminClient();
       const { data: byMetadata } = await admin
         .from('business_invoices')
         .select('*, tenant:tenants(*)')
@@ -64,10 +66,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     }
 
     const { data: items } = await admin
-      .from('invoice_items')
+      .from('invoice_line_items')
       .select('*')
       .eq('invoice_id', invoice.id)
-      .order('created_at', { ascending: true });
+      .order('position', { ascending: true });
 
     let client: { name?: string; email?: string } | undefined;
     if (invoice.client_id) {

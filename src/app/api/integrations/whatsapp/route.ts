@@ -54,8 +54,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
 
     const { data, error } = await supabase
       .from('whatsapp_integrations')
@@ -88,7 +87,7 @@ export async function POST(request: NextRequest) {
     const selectedProvider = String(provider || 'meta').toLowerCase() === 'zernio' ? 'zernio' : 'meta';
 
     const tenantCtx = await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const supabase = tenantCtx.admin;
     const { data: tenantRow, error: tenantError } = await supabase
       .from('tenants')
       .select('settings')
@@ -218,8 +217,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId and id are required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
 
     const { error } = await supabase
       .from('whatsapp_integrations')

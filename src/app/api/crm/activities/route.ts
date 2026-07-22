@@ -29,8 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = parsed.data;
-    const { user } = await requireTenantAccess(payload.tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(payload.tenantId);
 
     if (payload.type === 'stage_change' && payload.dealId && payload.fromStage && payload.toStage) {
       await logDealStageActivity(admin, {

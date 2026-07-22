@@ -9,8 +9,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const tenantId = z.string().uuid().parse(req.nextUrl.searchParams.get('tenantId'));
-    await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId);
     const { data: tenant, error } = await admin.from('tenants')
       .select('stripe_connect_id').eq('id', tenantId).single();
     if (error) throw error;

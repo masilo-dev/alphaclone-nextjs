@@ -9,8 +9,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
 
     const { data, error } = await admin
       .from('zoho_auto_responder_logs')

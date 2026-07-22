@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireTenantAccess, createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { getOrCreateClientPortalUrl } from '@/services/finance/clientFinancePortalService';
 
 export async function GET(
@@ -13,8 +13,7 @@ export async function GET(
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const admin = createAdminSupabaseClientOrThrow();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const url = await getOrCreateClientPortalUrl(admin, tenantId, clientId, req.nextUrl.origin);
 
     return NextResponse.json({ success: true, url });

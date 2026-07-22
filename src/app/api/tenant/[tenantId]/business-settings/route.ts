@@ -24,8 +24,7 @@ const settingsSchema = z.object({
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const { data, error } = await admin.from('business_settings').select('*').eq('tenant_id', tenantId).maybeSingle();
     if (error) throw error;
     return NextResponse.json({ settings: data || null });

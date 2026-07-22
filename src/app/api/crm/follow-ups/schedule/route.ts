@@ -20,8 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { tenantId, entityType, entityId, followUpAt, note } = parsed.data;
-    const { user } = await requireTenantAccess(tenantId);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId);
 
     if (entityType === 'contact') {
       await admin

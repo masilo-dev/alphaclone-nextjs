@@ -28,8 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid hub' }, { status: 400 });
     }
 
-    await requireTenantAccess(tenantId);
-    const supabase = createSupabaseAdminClient();
+    const { admin: supabase } = await requireTenantAccess(tenantId);
     const stats = await getHubKpiStats(supabase, tenantId, hub);
 
     return NextResponse.json(

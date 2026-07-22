@@ -11,8 +11,7 @@ export async function POST(req: NextRequest) {
     const filename = String(form.get('filename') || '').trim();
     if (!(file instanceof File) || !filename) return NextResponse.json({ error: 'File and filename are required' }, { status: 400 });
     if (file.size > 25 * 1024 * 1024) return NextResponse.json({ error: 'Google Drive uploads are limited to 25 MB.' }, { status: 413 });
-    const { user } = await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { user, admin } = await requireTenantAccess(tenantId, req);
     const accessToken = await getValidGoogleAccessToken({ admin, userId: user.id, tenantId });
     if (!accessToken) return NextResponse.json({ error: 'Reconnect Google Calendar with Drive access.' }, { status: 409 });
     const upload = new FormData();

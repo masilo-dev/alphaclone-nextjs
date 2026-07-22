@@ -37,8 +37,7 @@ const executionFinishSchema = z.object({
 export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
-    await requireTenantAccess(tenantId, req);
-    const admin = createSupabaseAdminClient();
+    const { admin } = await requireTenantAccess(tenantId, req);
     const workflowId = req.nextUrl.searchParams.get('workflowId');
     const view = req.nextUrl.searchParams.get('view') || 'workflows';
 
