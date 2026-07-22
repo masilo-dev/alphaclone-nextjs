@@ -38,6 +38,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'draft' | 'sent' | 'paid' | 'overdue'>('all');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [editingInvoice, setEditingInvoice] = useState<BusinessInvoice | null>(null);
     const [selectedInvoice, setSelectedInvoice] = useState<BusinessInvoice | null>(null);
     const [showPDFPreview, setShowPDFPreview] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -517,6 +518,20 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 <div className="grid grid-cols-1 gap-3">
                                     <button
                                         onClick={() => {
+                                            setEditingInvoice(selectedInvoiceForOptions);
+                                            setIsOptionsOpen(false);
+                                        }}
+                                        className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"
+                                    >
+                                        <span className="flex items-center gap-2.5">
+                                            <Edit className="w-4 h-4 text-violet-400" />
+                                            <span>Edit Invoice &amp; Theme</span>
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 font-mono">DESIGN</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
                                             handleViewPDF(selectedInvoiceForOptions);
                                             setIsOptionsOpen(false);
                                         }}
@@ -763,6 +778,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </AnimatePresence>
 
             <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
+            <EnhancedInvoiceModal
+                isOpen={Boolean(editingInvoice)}
+                onClose={() => setEditingInvoice(null)}
+                mode="edit"
+                invoice={editingInvoice || undefined}
+                onSuccess={() => {
+                    setEditingInvoice(null);
+                    void loadInvoices();
+                }}
+            />
 
             {emailCompose && user && (
                 <CommunicationModal

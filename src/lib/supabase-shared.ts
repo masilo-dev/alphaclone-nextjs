@@ -7,7 +7,7 @@ export const isSupabaseConfigured = (): boolean =>
     !isPlaceholder(ENV.VITE_SUPABASE_URL) && !isPlaceholder(ENV.VITE_SUPABASE_ANON_KEY);
 
 export const SUPABASE_NOT_CONFIGURED_MESSAGE =
-    'Supabase is not configured. Copy .env.example to .env.local and add your project URL and anon key.';
+    'Supabase is not configured. Copy .env.example to .env.local and add your project URL, anon key, and service role key.';
 
 let unavailableClientWarned = false;
 

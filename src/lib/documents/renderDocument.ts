@@ -20,7 +20,18 @@ export type DocumentThemeId =
   | 'minimal'
   | 'corporate'
   | 'legal'
-  | 'creative';
+  | 'creative'
+  | 'ocean'
+  | 'forest'
+  | 'sunset'
+  | 'ruby'
+  | 'mint'
+  | 'midnight'
+  | 'coral'
+  | 'indigo'
+  | 'gold'
+  | 'rose'
+  | 'arctic';
 
 export interface DocumentTheme {
   id: DocumentThemeId;
@@ -94,6 +105,105 @@ export const DOCUMENT_THEME_PRESETS: Record<DocumentThemeId, DocumentTheme> = {
     accentColor: '#a855f7',
     fontFamily: 'Inter, system-ui, sans-serif',
     headerStyle: 'cover',
+    roundedCorners: true,
+  },
+  ocean: {
+    id: 'ocean',
+    name: 'Ocean',
+    primaryColor: '#0c4a6e',
+    accentColor: '#38bdf8',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'banner',
+    roundedCorners: true,
+  },
+  forest: {
+    id: 'forest',
+    name: 'Forest',
+    primaryColor: '#14532d',
+    accentColor: '#4ade80',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'banner',
+    roundedCorners: true,
+  },
+  sunset: {
+    id: 'sunset',
+    name: 'Sunset',
+    primaryColor: '#7c2d12',
+    accentColor: '#fb923c',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'cover',
+    roundedCorners: true,
+  },
+  ruby: {
+    id: 'ruby',
+    name: 'Ruby',
+    primaryColor: '#881337',
+    accentColor: '#fb7185',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'banner',
+    roundedCorners: false,
+  },
+  mint: {
+    id: 'mint',
+    name: 'Mint',
+    primaryColor: '#134e4a',
+    accentColor: '#5eead4',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'minimal',
+    roundedCorners: true,
+  },
+  midnight: {
+    id: 'midnight',
+    name: 'Midnight',
+    primaryColor: '#020617',
+    accentColor: '#818cf8',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'cover',
+    roundedCorners: false,
+  },
+  coral: {
+    id: 'coral',
+    name: 'Coral',
+    primaryColor: '#9a3412',
+    accentColor: '#fdba74',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'minimal',
+    roundedCorners: true,
+  },
+  indigo: {
+    id: 'indigo',
+    name: 'Indigo',
+    primaryColor: '#312e81',
+    accentColor: '#6366f1',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'banner',
+    roundedCorners: true,
+  },
+  gold: {
+    id: 'gold',
+    name: 'Gold',
+    primaryColor: '#422006',
+    accentColor: '#fbbf24',
+    fontFamily: 'Georgia, serif',
+    headerStyle: 'cover',
+    roundedCorners: false,
+  },
+  rose: {
+    id: 'rose',
+    name: 'Rose',
+    primaryColor: '#4c0519',
+    accentColor: '#f472b6',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'banner',
+    roundedCorners: true,
+  },
+  arctic: {
+    id: 'arctic',
+    name: 'Arctic',
+    primaryColor: '#0f172a',
+    accentColor: '#e2e8f0',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'minimal',
     roundedCorners: true,
   },
 };

@@ -36,19 +36,20 @@ export async function requireAuthenticatedUser(
 ) {
     const bearer = req?.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
     if (bearer) {
-        if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+        if (!ENV.VITE_SUPABASE_URL) {
             throw new RouteAuthError(500, 'Server configuration error', 'INTERNAL_ERROR');
         }
-        const admin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
-            auth: { persistSession: false, autoRefreshToken: false },
-        });
+        const admin = ENV.SUPABASE_SERVICE_ROLE_KEY
+            ? createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY, {
+                auth: { persistSession: false, autoRefreshToken: false },
+            })
+            : createSupabaseAdminClient(bearer);
         const { data, error } = await admin.auth.getUser(bearer);
         if (error || !data?.user?.id) {
             throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
         }
-        const supabase = await getSupabaseServerClient();
-        await requireActiveProfile(data.user.id, options);
-        return { supabase, user: data.user };
+        await requireActiveProfile(admin, data.user.id, options);
+        return { supabase: admin, user: data.user, admin };
     }
 
     const supabase = await getSupabaseServerClient();
@@ -58,20 +59,24 @@ export async function requireAuthenticatedUser(
         throw new RouteAuthError(401, 'Unauthorized', 'UNAUTHORIZED');
     }
 
-    await requireActiveProfile(data.user.id, options);
+    await requireActiveProfile(supabase, data.user.id, options);
+
+    const { data: { session } } = await supabase.auth.getSession();
+    const admin = createSupabaseAdminClient(session?.access_token);
 
     return {
         supabase,
         user: data.user,
+        admin,
     };
 }
 
 async function requireActiveProfile(
+    supabase: Awaited<ReturnType<typeof getSupabaseServerClient>>,
     userId: string,
     options?: { allowMissingProfile?: boolean; allowPendingDeletion?: boolean }
 ) {
-    const admin = createSupabaseAdminClient();
-    const { data: profile, error } = await admin
+    const { data: profile, error } = await supabase
         .from('profiles')
         .select('id, role, account_status, scheduled_deletion_at')
         .eq('id', userId)
@@ -123,10 +128,14 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
         throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
     }
 
+    const { data: { session } } = await supabase.auth.getSession();
+    const admin = createSupabaseAdminClient(session?.access_token);
+
     return {
         supabase,
         user,
         membership: data as TenantMembership,
+        admin,
     };
 }
 
