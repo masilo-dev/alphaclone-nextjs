@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { authService } from '../services/authService';
 import { User } from '../types';
-import { supabase } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { AuthChangeEvent } from '@supabase/supabase-js';
 import { resetPlatformState } from '@/lib/platformReset';
 
@@ -96,6 +96,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         let isMounted = true;
+
+        if (!isSupabaseConfigured()) {
+            setLoading(false);
+            setSafeUser(null);
+            setError(null);
+            return;
+        }
 
         // Async validation — runs to confirm/retrieve session from Supabase.
         // This correctly reads sessions from HTTP-only cookies (set by the SSR callback

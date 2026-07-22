@@ -18,6 +18,7 @@ import { getPostAuthDashboardPath } from '@/lib/auth/postAuthRedirect';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
+import DevSetupBanner from '@/components/auth/DevSetupBanner';
 
 const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
     ssr: false,
@@ -527,6 +528,8 @@ function LoginContent() {
                             : 'Sign in to your business workspace'}
                     </p>
                 </div>
+
+                <DevSetupBanner />
 
                 <SocialAuthButtons
                     isLoading={isLoading}
