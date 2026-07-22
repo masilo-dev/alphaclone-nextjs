@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
-import { generateContractPDF } from '@/utils/pdfGenerator';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { z } from 'zod';
 
 const generatePdfSchema = z.object({
@@ -17,10 +17,8 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
         }
 
         const { tenantId } = parsed.data;
-        const { user } = await requireTenantAccess(tenantId);
-        const admin = createAdminSupabaseClientOrThrow();
+        const { user, admin } = await requireTenantAccess(tenantId, req);
 
-        // 1. Fetch contract
         const { data: contract, error: fetchError } = await admin
             .from('contracts')
             .select('*')
@@ -32,29 +30,24 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             return NextResponse.json({ error: 'Contract not found', code: 'NOT_FOUND' }, { status: 404 });
         }
 
-        // 2. Fetch tenant for branding
         const { data: tenant } = await admin
             .from('tenants')
-            .select('*')
+            .select('name, logo_url, brand_color_primary, settings')
             .eq('id', tenantId)
             .single();
 
-        const doc = generateContractPDF(
-            {
-                id: contract.id,
-                title: contract.title,
-                status: contract.status,
-                content: contract.content,
-                signed_at: contract.signed_at,
-                signer_name: contract.signer_name,
-                signer_email: contract.signer_email,
-                created_at: contract.created_at,
-            },
-            tenant as any
-        );
-        const pdfContent = Buffer.from(doc.output('arraybuffer'));
+        let client: { name?: string; email?: string } | undefined;
+        if (contract.client_id) {
+            const { data: clientRow } = await admin
+                .from('business_clients')
+                .select('name, email')
+                .eq('id', contract.client_id)
+                .maybeSingle();
+            if (clientRow) client = { name: clientRow.name, email: clientRow.email };
+        }
 
-        // 3. Upload to Supabase storage
+        const pdfContent = await generateThemedContractPdfBuffer(contract, tenant, client);
+
         const fileName = `${contract.id}.pdf`;
         const filePath = `contracts/${tenantId}/${fileName}`;
 
@@ -69,14 +62,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             throw new Error(`Failed to upload PDF: ${uploadError.message}`);
         }
 
-        // 4. Get public URL
         const { data: publicUrlData } = admin.storage
             .from('contracts')
             .getPublicUrl(filePath);
 
         const pdfUrl = publicUrlData?.publicUrl || '';
 
-        // 5. Update contract with pdf_url
         const { error: updateError } = await admin
             .from('contracts')
             .update({
@@ -90,7 +81,6 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             throw new Error(`Failed to update contract with pdf_url: ${updateError.message}`);
         }
 
-        // 6. Also insert into documents table for document hub
         const { error: docError } = await admin
             .from('documents')
             .insert({
@@ -106,7 +96,6 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
             });
 
         if (docError) {
-            // Non-blocking: log but don't fail
             console.error('Failed to insert document record:', docError);
         }
 
