@@ -3493,8 +3493,12 @@ class AlphaCloneMCPServer {
         case 'get_facebook_post_insights': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
-          const postId = String(a.post_id || '').trim();
-          if (!postId) throw new Error('post_id is required');
+          const postId = String(a.post_id || a.facebook_post_id || a.id || '').trim();
+          if (!postId) {
+            throw new Error(
+              'post_id is required (pass post_id, facebook_post_id, or id of the Facebook post)'
+            );
+          }
           let pageId = typeof a.page_id === 'string' ? a.page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
           let user_id = '';
@@ -8408,8 +8412,33 @@ Return ONLY a JSON array of 60 objects:
           break;
         }
 
+        case 'get_social_posts':
+        case 'list_social_posts': {
+          // Alias for connectors that ask for get_social_posts (maps to social_posts table)
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const limit = Math.min(Number(a.limit) || 50, 100);
+          const status = typeof a.status === 'string' ? a.status.trim() : '';
+          let query = supabaseAdmin
+            .from('social_posts')
+            .select('id, caption, status, scheduled_at, published_at, created_at, analytics')
+            .eq('tenant_id', tenant_id)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+          if (status) query = query.eq('status', status);
+          const { data, error } = await query;
+          if (error) throw supabaseErrorToMcpClientError('get_social_posts', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ posts: data || [], count: data?.length || 0 }, null, 2),
+            }],
+          };
+          break;
+        }
+
         default:
-          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, enable_whatsapp_chatbot, disable_whatsapp_chatbot, train_chatbot, get_chatbot_persona, update_chatbot_persona, get_chatbot_conversations, set_chatbot_handoff_rules, enable_lead_auto_outreach, set_outreach_limits, get_chatbot_performance, and many more.`);
+          throw new Error(`Unknown tool: "${name}". Available tools include get_clients, get_contacts, create_client, get_leads, create_lead, get_deals, create_deal, get_projects, create_project, update_project_status, get_project_details, get_project_timeline, get_tasks, create_task, update_task, write_task_note, get_documents, search_documents, get_balance_sheet, get_cash_flow_statement, create_journal_entry, get_finance_snapshot, create_invoice, send_invoice, create_quote, get_expenses, create_expense, generate_expense_report, reconcile_payment, nexus_payroll_sync, nexus_lead_enrichment, nexus_sales_campaign, nexus_contract_drafter, get_contract_versions, get_contract_approvals, get_current_user, send_transactional_email, enable_whatsapp_chatbot, disable_whatsapp_chatbot, train_chatbot, get_chatbot_persona, update_chatbot_persona, get_chatbot_conversations, set_chatbot_handoff_rules, enable_lead_auto_outreach, set_outreach_limits, get_chatbot_performance, get_social_posts, and many more.`);
         }
 
         // â”€â”€ Audit Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

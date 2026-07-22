@@ -12,6 +12,7 @@ import {
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { getMcpPublicBaseUrl } from '@/lib/mcpWellKnown';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
+import { ensurePlatformMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -301,11 +302,20 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
 
   const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: client } = await supabase
+  let { data: client } = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, redirect_uris, is_public')
     .eq('client_id', clientId)
     .maybeSingle();
+
+  if (!client && PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId)) {
+    await ensurePlatformMcpOAuthClient(supabase, clientId);
+    ({ data: client } = await supabase
+      .from('mcp_oauth_clients')
+      .select('client_id, redirect_uris, is_public')
+      .eq('client_id', clientId)
+      .maybeSingle());
+  }
 
   if (client) {
     const allowedRedirects: string[] = [

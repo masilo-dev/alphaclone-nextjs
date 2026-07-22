@@ -131,41 +131,84 @@ async function lookupOAuthToken(
 ): Promise<{ data: Record<string, unknown> | null; error: { message?: string; code?: string; hint?: string } | null }> {
   const tokenHash = hashAccessToken(token);
 
-  // Prefer hash lookup when column exists; fall back to plaintext for legacy rows.
-  const byHash = await supabaseAdmin
-    .from('mcp_oauth_tokens')
-    .select('id, tenant_id, user_id, expires_at, client_id, revoked, resource, scopes, access_token')
-    .eq('access_token_hash', tokenHash)
-    .eq('revoked', false)
-    .maybeSingle();
+  const isMissingCol = (err: { message?: string; code?: string } | null | undefined) =>
+    !!err &&
+    (err.code === '42703' ||
+      err.code === 'PGRST204' ||
+      /column|does not exist/i.test(err.message || ''));
 
-  if (!byHash.error && byHash.data) {
-    return { data: byHash.data, error: null };
+  // Progressive lookups: newer schema → older production schemas missing revoked/resource/hash/id
+  const attempts: Array<{
+    select: string;
+    match: 'hash' | 'plain';
+    revokedFilter: boolean;
+  }> = [
+    {
+      select: 'id, tenant_id, user_id, expires_at, client_id, revoked, resource, scopes, access_token',
+      match: 'hash',
+      revokedFilter: true,
+    },
+    {
+      select: 'id, tenant_id, user_id, expires_at, client_id, revoked, resource, scopes',
+      match: 'plain',
+      revokedFilter: true,
+    },
+    {
+      select: 'id, tenant_id, user_id, expires_at, client_id, resource, scopes',
+      match: 'plain',
+      revokedFilter: false,
+    },
+    {
+      select: 'tenant_id, user_id, expires_at, client_id, scopes, resource',
+      match: 'plain',
+      revokedFilter: false,
+    },
+    {
+      select: 'tenant_id, user_id, expires_at, client_id, scopes',
+      match: 'plain',
+      revokedFilter: false,
+    },
+    {
+      select: 'tenant_id, user_id, expires_at, client_id',
+      match: 'plain',
+      revokedFilter: false,
+    },
+  ];
+
+  let lastError: { message?: string; code?: string; hint?: string } | null = null;
+
+  for (const attempt of attempts) {
+    let query = supabaseAdmin.from('mcp_oauth_tokens').select(attempt.select);
+
+    if (attempt.match === 'hash') {
+      query = query.eq('access_token_hash', tokenHash);
+    } else {
+      query = query.eq('access_token', token);
+    }
+
+    if (attempt.revokedFilter) {
+      query = query.eq('revoked', false);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (!error && data) {
+      return { data: data as Record<string, unknown>, error: null };
+    }
+
+    if (error) {
+      lastError = error;
+      // Missing column / schema drift → try next leaner shape
+      if (isMissingCol(error)) continue;
+      // Real lookup failure (not schema) — stop
+      if (error.code && error.code !== 'PGRST116') {
+        return { data: null, error };
+      }
+    }
   }
 
-  // Column missing or no hash match — try plaintext (compatibility)
-  const withRevoked = await supabaseAdmin
-    .from('mcp_oauth_tokens')
-    .select('id, tenant_id, user_id, expires_at, client_id, revoked, resource, scopes')
-    .eq('access_token', token)
-    .eq('revoked', false)
-    .maybeSingle();
-
-  if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
-    const withoutRevoked = await supabaseAdmin
-      .from('mcp_oauth_tokens')
-      .select('id, tenant_id, user_id, expires_at, client_id, resource, scopes')
-      .eq('access_token', token)
-      .maybeSingle();
-    return { data: withoutRevoked.data, error: withoutRevoked.error };
-  }
-
-  // If hash column missing, ignore hash error and use plaintext result
-  if (byHash.error?.code === '42703' || byHash.error?.message?.includes('access_token_hash')) {
-    return { data: withRevoked.data, error: withRevoked.error };
-  }
-
-  return { data: withRevoked.data, error: withRevoked.error };
+  // No row found after exhausting shapes
+  return { data: null, error: lastError };
 }
 
 export async function validateMCPAuthApp(

@@ -6,6 +6,7 @@ import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl,
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 import { formatScopeString } from '@/lib/mcp/scopes';
+import { loadMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -77,23 +78,15 @@ async function authenticateClient(
   clientSecret: string | undefined,
   supabase: any
 ): Promise<ClientAuthResult> {
-  // If no client_id provided, we'll accept but log (for public clients)
   if (!clientId) {
     return { valid: true };
   }
 
-  // Look up the client.
-  // NOTE: mcp_oauth_clients has no `id` column — selecting it makes PostgREST
-  // fail and ChatGPT OAuth dies with a misleading invalid_client error.
-  const { data: client, error } = await supabase
-    .from('mcp_oauth_clients')
-    .select('client_id, is_public, client_secret')
-    .eq('client_id', clientId)
-    .eq('is_active', true)
-    .maybeSingle();
+  const loaded = await loadMcpOAuthClient(supabase, clientId);
+  const client = loaded.client;
 
-  if (error || !client) {
-    console.warn('[MCP Token] Client authentication failed - client not found:', clientId, error?.message);
+  if (!client) {
+    console.warn('[MCP Token] Client authentication failed - client not found:', clientId);
     return { valid: false, error: 'invalid_client' };
   }
 
@@ -107,7 +100,6 @@ async function authenticateClient(
   }
 
   // Confidential clients MUST provide client_secret
-  // Try Authorization header first (Basic auth)
   const authHeader = req.headers.get('authorization');
   let providedSecret: string | null = clientSecret || null;
 
@@ -123,7 +115,6 @@ async function authenticateClient(
     }
   }
 
-  // Verify client_secret for confidential clients
   if (!providedSecret || providedSecret !== client.client_secret) {
     console.warn('[MCP Token] Confidential client authentication failed - invalid secret:', {
       client_id: clientId,
