@@ -2,6 +2,7 @@ import 'server-only';
 
 import { htmlToPdfBuffer } from '@/lib/documents/htmlToPdfBuffer';
 import {
+  buildContractDocumentInput,
   buildInvoiceDocumentInput,
   buildQuoteDocumentInput,
 } from '@/lib/documents/documentBuilders';
@@ -30,5 +31,14 @@ export async function generateThemedQuotePdfBuffer(
   tenant: TenantLike | null | undefined
 ): Promise<Buffer> {
   const html = renderDocumentHtml(buildQuoteDocumentInput(quote, items, tenant));
+  return htmlToPdfBuffer(html);
+}
+
+export async function generateThemedContractPdfBuffer(
+  contract: Record<string, unknown>,
+  tenant: TenantLike | null | undefined,
+  client?: { name?: string; email?: string }
+): Promise<Buffer> {
+  const html = renderDocumentHtml(buildContractDocumentInput(contract, tenant, client));
   return htmlToPdfBuffer(html);
 }

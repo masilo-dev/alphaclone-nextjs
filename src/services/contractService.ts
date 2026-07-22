@@ -26,6 +26,10 @@ export interface Contract {
         signer_ip?: string;
         content_hash?: string;
         version?: string;
+        document_theme?: string;
+        client_name?: string;
+        client_email?: string;
+        [key: string]: unknown;
     };
     created_at: string;
 }

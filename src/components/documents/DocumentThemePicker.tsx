@@ -21,7 +21,7 @@ export function DocumentThemePicker({ value, onChange, className }: DocumentThem
       <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">
         Document theme
       </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-48 overflow-y-auto pr-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto pr-1">
         {themes.map((theme) => (
           <button
             key={theme.id}

@@ -15,6 +15,13 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
 import { ContractAuditLog } from './ContractAuditLog';
+import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import {
+    buildContractDocumentInput,
+    resolveDocumentThemeId,
+} from '@/lib/documents/documentBuilders';
+import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -299,6 +306,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 content: html,
                 status: 'draft',
                 client_id: selectedClientIdForLawyer || form.clientId || undefined,
+                metadata: {
+                    document_theme: documentTheme,
+                    client_name: form.clientName,
+                    client_email: form.clientEmail,
+                    source: 'lawyer_assistant',
+                },
             });
             if (error || !contract) throw new Error(typeof error === 'object' && error && 'message' in error ? String((error as any).message) : String(error || 'Failed to save contract'));
 
@@ -373,6 +386,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         contractLength: 'full',
         outputLanguage: 'en',
     });
+    const [documentTheme, setDocumentTheme] = useState<DocumentThemeId>('executive');
 
     useEffect(() => {
         if (currentTenant?.id) {
@@ -515,6 +529,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 payment_amount: parseFloat(form.totalAmount) || 0,
                 admin_signature: isSigned ? signatureData : undefined,
                 admin_signed_at: isSigned ? new Date().toISOString() : undefined,
+                metadata: {
+                    document_theme: documentTheme,
+                    client_name: form.clientName,
+                    client_email: form.clientEmail,
+                },
             });
             if (error) throw new Error(String(error));
             toast.success('Contract saved successfully!');
@@ -825,6 +844,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setSignatureData(c.admin_signature || '');
                                         setSignatureName(c.admin_signature ? 'Administrator' : '');
                                         setIsSigned(!!c.admin_signature);
+                                        setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
 
                                         // Use proxied URL if available
                                         if (c.document_url) {
@@ -1150,7 +1170,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         </button>
                                     )}
                                 </div>
-                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); setDocumentTheme('executive'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
                                     <RotateCcw className="w-3.5 h-3.5" /> New Contract
                                 </button>
                             </div>
@@ -1219,8 +1239,42 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             )}
 
                             <p className="text-slate-500 text-xs">
-                                {isEditing ? 'Editing mode enabled. Your changes will be saved to the final contract.' : 'On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area.'}
+                                {isEditing
+                                    ? 'Editing mode enabled. Your changes will be saved to the final contract.'
+                                    : 'Pick a brand theme below — preview and PDF export use the same colorful design as quotes and invoices.'}
                             </p>
+
+                            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
+                                <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+                                <DocumentPreview
+                                    input={buildContractDocumentInput(
+                                        {
+                                            id: contractId || undefined,
+                                            title: `${form.projectName || 'Service Agreement'} — ${form.clientName || 'Client'}`,
+                                            content: isEditing
+                                                ? editedHtml
+                                                : (editedHtml || generatedContract || contractToHTML(generatedContract)),
+                                            status: isSigned ? 'sent' : 'draft',
+                                            payment_amount: parseFloat(form.totalAmount) || 0,
+                                            created_at: new Date().toISOString(),
+                                            metadata: {
+                                                document_theme: documentTheme,
+                                                client_name: form.clientName,
+                                                client_email: form.clientEmail,
+                                            },
+                                        },
+                                        currentTenant
+                                            ? {
+                                                name: currentTenant.name,
+                                                logo_url: (currentTenant as { logo_url?: string }).logo_url,
+                                                brand_color_primary: (currentTenant as { brand_color_primary?: string }).brand_color_primary,
+                                                settings: (currentTenant as { settings?: unknown }).settings,
+                                            }
+                                            : null,
+                                        { name: form.clientName, email: form.clientEmail }
+                                    )}
+                                />
+                            </div>
 
                             {/* Contract Document */}
                             <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[600px]">

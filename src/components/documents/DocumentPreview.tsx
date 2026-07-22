@@ -6,22 +6,25 @@ import { renderDocumentHtml, type RenderDocumentInput } from '@/lib/documents/re
 type DocumentPreviewProps = {
   input: RenderDocumentInput;
   className?: string;
+  hideLabel?: boolean;
 };
 
-/** Live HTML preview of a themed quote, invoice, or proposal. */
-export function DocumentPreview({ input, className }: DocumentPreviewProps) {
+/** Live HTML preview of a themed quote, invoice, contract, or proposal. */
+export function DocumentPreview({ input, className, hideLabel = false }: DocumentPreviewProps) {
   const html = useMemo(() => renderDocumentHtml(input), [input]);
 
   return (
     <div className={className}>
-      <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">
-        Preview
-      </p>
+      {!hideLabel ? (
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-2">
+          Preview
+        </p>
+      ) : null}
       <div className="overflow-hidden rounded-xl border border-slate-800 bg-white shadow-inner">
         <iframe
           title="Document preview"
           srcDoc={html}
-          className="w-full h-[min(420px,55vh)] bg-white"
+          className="w-full h-[min(520px,65vh)] bg-white"
           sandbox="allow-same-origin"
         />
       </div>

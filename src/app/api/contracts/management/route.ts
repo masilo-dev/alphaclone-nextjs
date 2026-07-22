@@ -8,6 +8,7 @@ import { BrowserManager } from '@/lib/scraper/browserManager';
 import { requireTenantAccess } from '@/lib/apiAuth';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
+import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
 import { randomBytes } from 'crypto';
 import { AppUrls } from '@/lib/urls';
 import {
@@ -204,10 +205,9 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
   try {
     const { contractId, format = 'pdf', optimize = true } = config;
 
-    // Get contract from database
     const { data: contract, error } = await supabase
       .from('contracts')
-      .select('*')
+      .select('*, tenant:tenants(name, logo_url, brand_color_primary, settings)')
       .eq('id', contractId)
       .eq('tenant_id', tenantId)
       .single();
@@ -216,18 +216,43 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
       return { success: false, error: 'Contract not found' };
     }
 
-    // Generate optimized PDF
-    const pdfBuffer = await generateOptimizedContractPDF({
-      content: contract.content,
-      fontSize: contract.font_size || 12,
-      lineSpacing: contract.line_spacing || 1.2,
-      targetPages: contract.pages || 2,
-      format: format,
-      optimize: optimize,
-      template: contract.template || 'standard'
-    });
+    let pdfBuffer: Buffer;
+    if (format === 'pdf') {
+      let client: { name?: string; email?: string } | undefined;
+      if (contract.client_id) {
+        const { data: clientRow } = await supabase
+          .from('business_clients')
+          .select('name, email')
+          .eq('id', contract.client_id)
+          .maybeSingle();
+        if (clientRow) client = { name: clientRow.name, email: clientRow.email };
+      }
+      try {
+        pdfBuffer = await generateThemedContractPdfBuffer(contract, contract.tenant, client);
+      } catch (themeError) {
+        console.warn('[contracts/management] Themed PDF failed, falling back:', themeError);
+        pdfBuffer = await generateOptimizedContractPDF({
+          content: contract.content,
+          fontSize: contract.font_size || 12,
+          lineSpacing: contract.line_spacing || 1.2,
+          targetPages: contract.pages || 2,
+          format: format,
+          optimize: optimize,
+          template: contract.template || 'standard'
+        });
+      }
+    } else {
+      pdfBuffer = await generateOptimizedContractPDF({
+        content: contract.content,
+        fontSize: contract.font_size || 12,
+        lineSpacing: contract.line_spacing || 1.2,
+        targetPages: contract.pages || 2,
+        format: format,
+        optimize: optimize,
+        template: contract.template || 'standard'
+      });
+    }
 
-    // Update download count
     await supabase
       .from('contracts')
       .update({ 

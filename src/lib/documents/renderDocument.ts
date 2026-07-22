@@ -31,7 +31,12 @@ export type DocumentThemeId =
   | 'indigo'
   | 'gold'
   | 'rose'
-  | 'arctic';
+  | 'arctic'
+  | 'ember'
+  | 'sage'
+  | 'violet'
+  | 'graphite'
+  | 'lagoon';
 
 export interface DocumentTheme {
   id: DocumentThemeId;
@@ -206,6 +211,51 @@ export const DOCUMENT_THEME_PRESETS: Record<DocumentThemeId, DocumentTheme> = {
     headerStyle: 'minimal',
     roundedCorners: true,
   },
+  ember: {
+    id: 'ember',
+    name: 'Ember',
+    primaryColor: '#7f1d1d',
+    accentColor: '#f97316',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'cover',
+    roundedCorners: true,
+  },
+  sage: {
+    id: 'sage',
+    name: 'Sage',
+    primaryColor: '#365314',
+    accentColor: '#a3e635',
+    fontFamily: 'Georgia, serif',
+    headerStyle: 'banner',
+    roundedCorners: false,
+  },
+  violet: {
+    id: 'violet',
+    name: 'Violet',
+    primaryColor: '#4c1d95',
+    accentColor: '#c084fc',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'cover',
+    roundedCorners: true,
+  },
+  graphite: {
+    id: 'graphite',
+    name: 'Graphite',
+    primaryColor: '#18181b',
+    accentColor: '#a1a1aa',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'minimal',
+    roundedCorners: false,
+  },
+  lagoon: {
+    id: 'lagoon',
+    name: 'Lagoon',
+    primaryColor: '#155e75',
+    accentColor: '#22d3ee',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    headerStyle: 'banner',
+    roundedCorners: true,
+  },
 };
 
 export interface RenderDocumentInput {
@@ -268,12 +318,23 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
 
   const sectionsHtml =
     input.sections
-      ?.map(
-        (s) => `<section style="margin:24px 0;">
-        <h2 style="color:${primary};font-size:18px;margin-bottom:8px;">${escapeHtml(s.heading)}</h2>
-        <p style="color:#475569;line-height:1.6;">${escapeHtml(s.body)}</p>
-      </section>`
-      )
+      ?.map((s) => {
+        const bodyLooksHtml = /<[a-z][\s\S]*>/i.test(s.body);
+        const bodyHtml = bodyLooksHtml
+          ? s.body
+          : escapeHtml(s.body)
+              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+              .split(/\n{2,}/)
+              .map(
+                (para) =>
+                  `<p style="margin:0 0 12px;text-align:justify;color:#334155;line-height:1.75;">${para.replace(/\n/g, '<br/>')}</p>`
+              )
+              .join('');
+        return `<section style="margin:28px 0;">
+        <h2 style="color:${primary};font-size:16px;letter-spacing:0.04em;text-transform:uppercase;border-bottom:2px solid ${accent};padding-bottom:8px;margin:0 0 14px;">${escapeHtml(s.heading)}</h2>
+        <div style="color:#334155;line-height:1.75;">${bodyHtml}</div>
+      </section>`;
+      })
       .join('') || '';
 
   const headerHtml =

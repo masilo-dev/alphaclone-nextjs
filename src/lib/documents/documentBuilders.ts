@@ -138,6 +138,85 @@ export function buildInvoiceDocumentInput(
   };
 }
 
+/** Split markdown/plain contract content into themed document sections. */
+export function parseContractContentToSections(
+  content: string
+): Array<{ heading: string; body: string }> {
+  const raw = String(content || '').trim();
+  if (!raw) return [{ heading: 'Agreement', body: '' }];
+
+  const looksLikeHtml = /<[a-z][\s\S]*>/i.test(raw);
+  const textOnly = looksLikeHtml ? raw.replace(/<[^>]+>/g, '\n') : raw;
+  const hasMarkdownHeadings = /^#{1,3}\s+.+/m.test(textOnly);
+
+  if (looksLikeHtml && !hasMarkdownHeadings) {
+    return [{ heading: 'Agreement', body: raw }];
+  }
+
+  const source = looksLikeHtml ? textOnly : raw;
+  const normalized = source.replace(/\r\n/g, '\n').trim();
+  const headingRegex = /^(#{1,3})\s+(.+)$/gm;
+  const matches = [...normalized.matchAll(headingRegex)];
+
+  if (matches.length === 0) {
+    return [{ heading: 'Agreement', body: normalized }];
+  }
+
+  const sections: Array<{ heading: string; body: string }> = [];
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const heading = String(match[2] || 'Section').trim();
+    const start = (match.index || 0) + match[0].length;
+    const end = i + 1 < matches.length ? matches[i + 1].index || normalized.length : normalized.length;
+    const body = normalized.slice(start, end).trim();
+    sections.push({ heading, body: body || '—' });
+  }
+
+  // Include any preamble before the first heading
+  const firstIdx = matches[0]?.index || 0;
+  if (firstIdx > 0) {
+    const preamble = normalized.slice(0, firstIdx).trim();
+    if (preamble) {
+      sections.unshift({ heading: 'Introduction', body: preamble });
+    }
+  }
+
+  return sections.length > 0 ? sections : [{ heading: 'Agreement', body: normalized }];
+}
+
+export function buildContractDocumentInput(
+  contract: Record<string, unknown>,
+  tenant: TenantLike | null | undefined,
+  client?: { name?: string; email?: string }
+): RenderDocumentInput {
+  const meta = (contract.metadata || {}) as Record<string, unknown>;
+  const content = String(contract.content || contract.original_content || '');
+  const sections = parseContractContentToSections(content);
+  const paymentAmount = Number(contract.payment_amount ?? meta.payment_amount ?? 0);
+
+  return {
+    type: 'contract',
+    themeId: resolveDocumentThemeId(meta),
+    branding: tenantBrandingFromRecord(tenant),
+    title: String(contract.title || 'Service Agreement'),
+    documentNumber: contract.id ? String(contract.id).slice(0, 8).toUpperCase() : undefined,
+    clientName:
+      client?.name ||
+      String(meta.client_name || contract.client_name || 'Client'),
+    clientEmail: client?.email || String(meta.client_email || contract.client_email || ''),
+    issueDate: contract.created_at
+      ? new Date(String(contract.created_at)).toLocaleDateString()
+      : new Date().toLocaleDateString(),
+    dueDate: contract.payment_due_date
+      ? new Date(String(contract.payment_due_date)).toLocaleDateString()
+      : undefined,
+    sections,
+    total: paymentAmount > 0 ? paymentAmount : undefined,
+    notes: meta.notes ? String(meta.notes) : undefined,
+    status: contract.status ? String(contract.status) : undefined,
+  };
+}
+
 export function renderThemedDocumentHtml(
   input: RenderDocumentInput
 ): string {

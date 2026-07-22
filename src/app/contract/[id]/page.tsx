@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { jsPDF } from 'jspdf';
 import { FileText, Download, CheckCircle, Loader2, ShieldCheck, Printer, Share2, CheckCircle2, XCircle } from 'lucide-react';
@@ -11,6 +11,8 @@ import { contractService } from '../../../services/contractService';
 import { esignatureComplianceService } from '../../../services/esignatureComplianceService';
 import toast, { Toaster } from 'react-hot-toast';
 import AIOutputDisclaimer from '../../../components/ai/AIOutputDisclaimer';
+import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { buildContractDocumentInput } from '@/lib/documents/documentBuilders';
 
 export default function PublicContractPage() {
     const params = useParams();
@@ -299,10 +301,15 @@ export default function PublicContractPage() {
                 <div className="p-6 bg-slate-950/40 border-y border-slate-800">
                     <AIOutputDisclaimer type="contract" />
                 </div>
-                <div className="p-8 bg-white border-y border-slate-800 print-content">
-                    <div
-                        className="font-serif text-slate-900 leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: contractToStyledHtml(contract.content || '') }}
+                <div className="p-4 sm:p-6 bg-slate-950/20 border-y border-slate-800 print-content">
+                    <DocumentPreview
+                        className="!mb-0"
+                        hideLabel
+                        input={buildContractDocumentInput(
+                            contract,
+                            contract.tenant,
+                            { name: contract.metadata?.client_name, email: signerEmail || contract.metadata?.client_email }
+                        )}
                     />
                 </div>
 
