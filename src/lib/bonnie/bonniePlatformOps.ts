@@ -201,7 +201,7 @@ export async function bonnieGetAutonomousRules(tenantId: string) {
 
 export async function bonnieGetProactiveBrief(tenantId: string, userId: string) {
   const admin = createSupabaseAdminClient();
-  const [overdueInvoices, openTickets, hotLeads, staleDeals] = await Promise.all([
+  const [overdueInvoices, openTickets, hotLeads, staleDeals, needsResponseMessages] = await Promise.all([
     admin
       .from('invoices')
       .select('id,total,client_name,due_date')
@@ -228,6 +228,13 @@ export async function bonnieGetProactiveBrief(tenantId: string, userId: string) 
       .in('stage', ['lead', 'qualified', 'proposal', 'negotiation'])
       .order('updated_at', { ascending: true })
       .limit(5),
+    admin
+      .from('unified_messages')
+      .select('id,from_name,subject')
+      .eq('tenant_id', tenantId)
+      .eq('needs_response', true)
+      .eq('archived', false)
+      .limit(10),
   ]);
 
   const items: string[] = [];
@@ -243,6 +250,9 @@ export async function bonnieGetProactiveBrief(tenantId: string, userId: string) 
   if ((staleDeals.data || []).length) {
     items.push(`${staleDeals.data!.length} deal(s) may be going stale`);
   }
+  if ((needsResponseMessages.data || []).length) {
+    items.push(`${needsResponseMessages.data!.length} customer message(s) waiting for reply`);
+  }
 
   const integration = await bonnieGetIntegrationHealth(tenantId, userId);
 
@@ -252,6 +262,7 @@ export async function bonnieGetProactiveBrief(tenantId: string, userId: string) 
     open_tickets: openTickets.data || [],
     qualified_leads: hotLeads.data || [],
     stale_deals: staleDeals.data || [],
+    needs_response_messages: needsResponseMessages.data || [],
     integration_issues: integration.issues,
   };
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@/types';
 import { useTenant } from '@/contexts/TenantContext';
+import { AttentionFirstDashboard } from '../AttentionFirstDashboard';
 import { OverviewDashboard } from '../views/ModuleDashboardView';
 import { PlatformAdvantageHome } from '../platform-advantage/PlatformAdvantageHome';
 import { IntegratedIntelligencePanel } from '../IntegratedIntelligencePanel';
@@ -49,6 +50,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
       ) : null}
       <PlatformAdvantageHome />
       <IntegratedIntelligencePanel />
+      <AttentionFirstDashboard />
       <OverviewDashboard />
     </div>
   );

@@ -14,6 +14,7 @@ import { useTenant } from '../../contexts/TenantContext';
 import { User as UserType } from '../../types';
 import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
+import { useSuccessFeedback, successMessages } from '../ui/SuccessFeedback';
 import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
@@ -433,6 +434,7 @@ const TaskCreateContent: React.FC<{
 
 // ── Main TasksTab ──────────────────────────────────────────────────────────────
 const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
+  const { showSuccess } = useSuccessFeedback();
   const router = useRouter();
   const { currentTenant } = useTenant();
   const {
@@ -515,7 +517,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     });
     if (!response.ok) { toast.error('Task could not be completed'); return; }
     setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'completed' as TaskStatus } : t));
-    toast.success('Task completed! 🎉');
+    const task = tasks.find((t) => t.id === id);
+    showSuccess(successMessages.taskCompleted(task?.title || 'Task'));
   };
 
   const handleDelete = async (id: string) => {

@@ -28,6 +28,8 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
+import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
+import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { CRMActionChips } from './crm/CRMActionChips';
@@ -962,16 +964,30 @@ const Client360Detail: React.FC<{
           </div>
         )}
 
-        {/* 360 Engagement Timeline */}
+        {/* Unified Customer Timeline */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-teal-400" />
-            <h3 className="text-sm font-bold text-white">Customer 360 Logs</h3>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-teal-400" />
+              <h3 className="text-sm font-bold text-white">Customer workspace</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/comms')}
+              className="text-[11px] text-teal-400 hover:text-teal-300"
+            >
+              Open in Communication hub →
+            </button>
           </div>
 
-          {loadingAi ? (
+          {client.id ? (
+            <CustomerTimeline
+              clientId={client.id}
+              onOpenComms={() => router.push('/dashboard/comms')}
+            />
+          ) : loadingAi ? (
             <div className="h-20 flex items-center justify-center text-slate-500 text-xs">
-              Resolving audit logs...
+              Loading activity…
             </div>
           ) : profile360?.timeline && profile360.timeline.length > 0 ? (
             <div className="relative border-l border-white/5 pl-4 ml-2 space-y-5 py-2">
@@ -990,7 +1006,7 @@ const Client360Detail: React.FC<{
             </div>
           ) : (
             <div className="bg-slate-900/30 p-6 rounded-2xl border border-white/5 border-dashed text-center text-slate-500 text-xs">
-              No recent timeline history or records matched for this account.
+              {HUMAN_LABELS.needsResponse.replace('Customers', 'Start a conversation — messages and activity will appear here')}
             </div>
           )}
         </div>

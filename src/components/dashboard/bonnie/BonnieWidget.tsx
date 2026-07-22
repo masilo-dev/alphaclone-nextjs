@@ -23,12 +23,22 @@ export default function BonnieWidget() {
   const activeModule = resolveBonnieModuleFromPath(pathname || '');
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const [isOpen, setIsOpen] = useState(false);
+  const [drawerWidth, setDrawerWidth] = useState(360);
   const [showActivity, setShowActivity] = useState(false);
   const [rules, setRules] = useState<BonnieRule | null>(null);
   const [logs, setLogs] = useState<BonnieLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
   const logEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('bonnie-drawer-width');
+      if (stored) setDrawerWidth(Math.min(560, Math.max(300, Number(stored))));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const tenantId = currentTenant?.id;
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
@@ -257,6 +267,28 @@ export default function BonnieWidget() {
     if (next && hasUnreadBrief) void markBriefRead();
   };
 
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = drawerWidth;
+    const onMove = (ev: MouseEvent) => {
+      const delta = startX - ev.clientX;
+      const next = Math.min(560, Math.max(300, startWidth + delta));
+      setDrawerWidth(next);
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      try {
+        localStorage.setItem('bonnie-drawer-width', String(drawerWidth));
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   return (
     <div className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+78px)] right-3 z-[70] flex flex-col items-end md:bottom-5 md:right-5" data-tour="bonnie-widget">
       {/* Drawer / Popup Window */}
@@ -267,8 +299,16 @@ export default function BonnieWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-3 flex max-h-[min(82dvh,640px)] w-[min(100vw-1.25rem,340px)] xl:w-[360px] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/90 text-white shadow-2xl backdrop-blur-2xl"
+            style={{ width: drawerWidth }}
+            className="mb-3 relative flex max-h-[min(82dvh,640px)] max-w-[calc(100vw-1.25rem)] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/90 text-white shadow-2xl backdrop-blur-2xl"
           >
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize Bonnie panel"
+              onMouseDown={handleResizeStart}
+              className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize hover:bg-teal-500/30 z-10 hidden md:block"
+            />
             {/* Header */}
             <div className="relative flex items-center justify-between border-b border-slate-800 bg-slate-950/60 p-4">
               <div className="flex items-center gap-3">

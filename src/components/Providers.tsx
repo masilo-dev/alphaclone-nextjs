@@ -7,6 +7,7 @@ import { TenantProvider } from '@/contexts/TenantContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
 import { ToastProvider } from '@/components/Toast';
+import { SuccessFeedbackProvider } from '@/components/ui/SuccessFeedback';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -45,6 +46,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <GlobalErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
+          <SuccessFeedbackProvider>
           <AuthProvider>
             <ThemeProvider>
               <LanguageProvider>
@@ -56,6 +58,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
               </LanguageProvider>
             </ThemeProvider>
           </AuthProvider>
+          </SuccessFeedbackProvider>
         </ToastProvider>
       </QueryClientProvider>
     </GlobalErrorBoundary>

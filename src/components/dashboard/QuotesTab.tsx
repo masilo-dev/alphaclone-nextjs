@@ -14,6 +14,7 @@ import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { CommunicationModal } from './crm/CommunicationModal';
 import { DetailDrawer } from '../ui/DetailDrawer';
+import { QuoteVersionPanel } from '@/components/documents/QuoteVersionPanel';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
@@ -280,7 +281,8 @@ const QuoteEditModal: React.FC<{
   onClose: () => void;
   onSaved: () => void;
   tenantId: string;
-}> = ({ open, quote, onClose, onSaved, tenantId }) => {
+  userId: string;
+}> = ({ open, quote, onClose, onSaved, tenantId, userId }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<QuoteStatus>('draft');
@@ -517,6 +519,7 @@ const QuoteEditModal: React.FC<{
             >
               {saving ? 'Saving...' : 'Save Quote'}
             </button>
+            <QuoteVersionPanel quoteId={quote.id} userId={userId} />
           </div>
       </div>
     </DetailDrawer>
@@ -804,7 +807,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
         <FilePlus className="w-6 h-6 text-white" />
       </button>
       {currentTenant?.id && <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} tenantId={currentTenant.id} />}
-      {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} />}
+      {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} userId={user.id} />}
 
       <DetailDrawer
         open={Boolean(selected)}

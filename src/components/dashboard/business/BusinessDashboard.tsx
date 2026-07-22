@@ -58,6 +58,7 @@ import TasksTab from '../TasksTab';
 import DealsTab from '../DealsTab';
 import QuotesTab from '../QuotesTab';
 import MailTab from '../MailTab';
+import CommunicationHub from '../communication/CommunicationHub';
 import MessagesPage from './MessagesPage';
 // Lazy load heavier tabs that aren't needed on dashboard mount
 const CalendarPage = React.lazy(() => import('./CalendarPage'));
@@ -111,7 +112,7 @@ const ClientOnboardingTab = React.lazy(() => import('./ClientOnboardingTab'));
 const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
-const ApprovalCenter = React.lazy(() => import('../bonnie/ApprovalCenter'));
+const UnifiedActionCenter = React.lazy(() => import('../bonnie/UnifiedActionCenter'));
 const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
 const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
 const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
@@ -155,6 +156,7 @@ import { DashboardRouteTransition } from '../DashboardRouteTransition';
 /** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
     '/dashboard/mail',
+    '/dashboard/comms',
     '/dashboard/business/projects',
     '/dashboard/tasks',
     '/dashboard/sales-agent',
@@ -775,8 +777,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
 
+            case '/dashboard/comms':
+                return <CommunicationHub user={user} />;
+
             case '/dashboard/mail':
-                return <MailTab user={user} />;
+                return <CommunicationHub user={user} />;
 
             case '/dashboard/zoho/mail':
                 return (
@@ -851,7 +856,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/bonnie/approvals':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={3} />}>
-                        <ApprovalCenter />
+                        <UnifiedActionCenter />
                     </React.Suspense>
                 );
 

@@ -32,11 +32,11 @@ type Period = 'week' | 'month' | 'quarter' | 'year';
 type AccountingTab = 'overview' | 'income' | 'reports' | 'chart' | 'journal' | 'receipts';
 
 const ACCOUNTING_TABS: { key: AccountingTab; label: string }[] = [
-    { key: 'overview', label: 'Finance Home' },
-    { key: 'income', label: 'Performance' },
+    { key: 'overview', label: 'Money overview' },
+    { key: 'income', label: 'Money in & out' },
     { key: 'reports', label: 'Statements' },
-    { key: 'chart', label: 'Accounts' },
-    { key: 'journal', label: 'Ledger' },
+    { key: 'chart', label: 'Accounts (advanced)' },
+    { key: 'journal', label: 'Ledger (advanced)' },
     { key: 'receipts', label: 'Receipts' },
 ];
 

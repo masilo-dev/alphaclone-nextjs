@@ -54,7 +54,7 @@ interface UnifiedMessage {
   metadata: Record<string, any> | null;
 }
 
-export default function UnifiedInboxTab() {
+export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReplyOnly?: boolean }) {
   const { currentTenant: tenant } = useTenant();
   const [messages, setMessages] = useState<UnifiedMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -367,6 +367,7 @@ export default function UnifiedInboxTab() {
   };
 
   const filteredMessages = messages.filter(m => {
+    if (needsReplyOnly && !m.needs_response) return false;
     if (filterSource !== 'all' && m.source !== filterSource) return false;
     if (filterPriority !== 'all' && m.priority !== filterPriority) return false;
     return true;

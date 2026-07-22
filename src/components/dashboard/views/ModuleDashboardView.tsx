@@ -11,6 +11,7 @@ import { DashboardBarChart } from '../DashboardBarChart';
 import { DASHBOARD_COLORS } from '@/types/dashboardStats';
 import type { ModuleDashboardId } from '@/config/moduleDashboardActions';
 import { resolveModuleActions } from '@/config/moduleDashboardActions';
+import { metricLabel } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
 import { CRMNav } from '../crm/CRMNav';
@@ -188,7 +189,7 @@ function DashboardContent({
         {metrics.map((m, i) => (
           <MetricCard
             key={m.label}
-            label={m.label}
+            label={metricLabel(m.label)}
             value={m.value}
             delta={m.delta}
             deltaDir={m.deltaDir}
