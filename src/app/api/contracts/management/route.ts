@@ -305,8 +305,8 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
 export async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
   try {
     const { contractId, recipients, subject, message, format = 'pdf', provider, resendForSignature = false } = config;
-    if (!contractId || !recipients) {
-      return { success: false, error: 'contractId and recipients are required' };
+    if (!contractId) {
+      return { success: false, error: 'contractId is required' };
     }
 
     const { data: contract, error } = await supabase
@@ -325,12 +325,59 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       return { success: false, error: 'Contract is already fully signed' };
     }
 
-    const recipientEmail = Array.isArray(recipients)
+    const explicitRecipient = Array.isArray(recipients)
       ? String(recipients[0] || '').trim().toLowerCase()
       : String(recipients || '').trim().toLowerCase();
+
+    let recipientEmail = explicitRecipient.includes('@') ? explicitRecipient : '';
     if (!recipientEmail) {
-      return { success: false, error: 'At least one recipient email is required' };
+      const meta = (contract.metadata || {}) as Record<string, unknown>;
+      const metaEmail = String(meta.client_email || meta.clientEmail || meta.signer_email || '').trim().toLowerCase();
+      if (metaEmail.includes('@')) recipientEmail = metaEmail;
     }
+    if (!recipientEmail && contract.client_id) {
+      const { data: businessClient } = await supabase
+        .from('business_clients')
+        .select('email, emails, name')
+        .eq('id', contract.client_id)
+        .eq('tenant_id', tenantId)
+        .maybeSingle();
+      const clientEmail = String(businessClient?.email || '').trim().toLowerCase();
+      if (clientEmail.includes('@')) {
+        recipientEmail = clientEmail;
+      } else if (Array.isArray(businessClient?.emails) && businessClient.emails.length > 0) {
+        const first = String(businessClient.emails[0] || '').trim().toLowerCase();
+        if (first.includes('@')) recipientEmail = first;
+      }
+
+      if (!recipientEmail) {
+        const { data: contact } = await supabase
+          .from('contacts')
+          .select('email, emails')
+          .eq('id', contract.client_id)
+          .eq('tenant_id', tenantId)
+          .maybeSingle();
+        const contactEmail = String(contact?.email || '').trim().toLowerCase();
+        if (contactEmail.includes('@')) {
+          recipientEmail = contactEmail;
+        } else if (Array.isArray(contact?.emails) && contact.emails.length > 0) {
+          const first = String(contact.emails[0] || '').trim().toLowerCase();
+          if (first.includes('@')) recipientEmail = first;
+        }
+      }
+    }
+
+    if (!recipientEmail) {
+      return {
+        success: false,
+        error: 'No client email found for this contract. Add an email on the client record or enter a recipient.',
+      };
+    }
+
+    const resolvedRecipients =
+      Array.isArray(recipients) && recipients.length > 0 && explicitRecipient.includes('@')
+        ? recipients
+        : [recipientEmail];
 
     const token = randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -373,7 +420,7 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       message ||
       `We still need your signature on "${contract.title}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link below as soon as possible.`;
     const emailResult = await sendEmailServer({
-      to: recipients,
+      to: resolvedRecipients,
       subject: subject || (isResend ? urgencySubject : `Contract: ${contract.title}`),
       text: `${isResend ? urgencyMessage : message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
       html: contractEmailTemplates.signatureRequest({
