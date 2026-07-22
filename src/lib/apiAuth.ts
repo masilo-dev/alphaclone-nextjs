@@ -61,8 +61,14 @@ export async function requireAuthenticatedUser(
 
     await requireActiveProfile(supabase, data.user.id, options);
 
+    // Prefer service-role admin. Without it, reuse the cookie-authenticated server
+    // client so RLS still works even when getSession() has no access_token.
     const { data: { session } } = await supabase.auth.getSession();
-    const admin = createSupabaseAdminClient(session?.access_token);
+    const admin = ENV.SUPABASE_SERVICE_ROLE_KEY
+        ? createSupabaseAdminClient()
+        : session?.access_token
+            ? createSupabaseAdminClient(session.access_token)
+            : supabase;
 
     return {
         supabase,
@@ -110,7 +116,7 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
         throw new RouteAuthError(400, 'tenantId required', 'BAD_REQUEST');
     }
 
-    const { supabase, user } = await requireAuthenticatedUser(req);
+    const { supabase, user, admin } = await requireAuthenticatedUser(req);
 
     const { data, error } = await supabase
         .from('tenant_users')
@@ -127,9 +133,6 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
     if (!data) {
         throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
     }
-
-    const { data: { session } } = await supabase.auth.getSession();
-    const admin = createSupabaseAdminClient(session?.access_token);
 
     return {
         supabase,

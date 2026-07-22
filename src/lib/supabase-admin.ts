@@ -85,6 +85,11 @@ export async function resolveSupabaseAdminClient(): Promise<SupabaseClient> {
             if (session?.access_token) {
                 return createUserScopedClient(supabaseUrl, session.access_token);
             }
+            // Cookie-bound SSR client already carries auth for RLS queries.
+            const { data: { user } } = await server.auth.getUser();
+            if (user?.id) {
+                return server;
+            }
         } catch (error) {
             console.warn('[SupabaseAdmin] Failed to resolve dev session fallback:', error);
         }

@@ -4,7 +4,8 @@ import { BrowserManager } from '@/lib/scraper/browserManager';
 export async function htmlToPdfBuffer(html: string): Promise<Buffer> {
   const { page, close } = await BrowserManager.createPage();
   try {
-    await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
+    // Prefer load over networkidle — themed docs may reference remote fonts/images.
+    await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
     await page.emulateMedia({ media: 'print' });
     const pdf = await page.pdf({
       format: 'Letter',
