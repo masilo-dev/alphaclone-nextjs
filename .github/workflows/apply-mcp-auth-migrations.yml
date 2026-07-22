@@ -1,0 +1,28 @@
+name: Apply MCP Auth Migrations
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply:
+    name: Apply MCP OAuth / Auth SQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pg
+        run: npm install pg --no-save --no-audit --no-fund
+
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: node scripts/apply-mcp-auth-migrations.mjs
