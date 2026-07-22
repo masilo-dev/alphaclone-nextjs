@@ -28,7 +28,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const outcomes = (data || []).map((row) => ({
+    const outcomes = (data || []).map((row: {
+      id: string;
+      tool_name: string | null;
+      success: boolean | null;
+      created_at: string;
+      error_message: string | null;
+    }) => ({
       id: row.id,
       label: row.tool_name,
       summary: row.success ? 'Outcome recorded successfully' : row.error_message || 'Outcome recorded',
