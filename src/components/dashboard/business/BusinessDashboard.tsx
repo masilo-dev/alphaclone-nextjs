@@ -198,12 +198,9 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
     const hideBonnieWidget =
         route === '/dashboard/business/bonnie' ||
-        route === '/dashboard/mail' ||
-        route === '/dashboard/zoho/mail' ||
-        route === '/dashboard/contacts' ||
-        route === '/dashboard/leads' ||
-        route === '/dashboard/deals' ||
-        route.startsWith('/dashboard/crm');
+        route === '/dashboard/bonnie' ||
+        route === '/dashboard/bonnie/approvals' ||
+        route.startsWith('/dashboard/bonnie/');
     const {
         activeMeetingCallId,
         startMeeting,

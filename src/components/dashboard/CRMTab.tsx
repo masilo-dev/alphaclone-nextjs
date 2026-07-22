@@ -2086,7 +2086,6 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   return (
     <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950 select-none relative">
       <ModulePageLayout
-        showBonnieDock
         header={(
           <div className="px-4 pt-3 space-y-2.5 shrink-0">
             <div className="rounded-2xl border border-white/5 bg-slate-900/60 px-2.5 py-2">

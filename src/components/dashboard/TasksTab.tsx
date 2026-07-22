@@ -644,7 +644,6 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       <ModulePageLayout
-        showBonnieDock
         header={(
           <div className="px-4 pt-3">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />

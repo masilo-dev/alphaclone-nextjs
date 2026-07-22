@@ -748,7 +748,6 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       <ModulePageLayout
-        showBonnieDock
         header={(
           <div className="px-4 pt-3">
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
