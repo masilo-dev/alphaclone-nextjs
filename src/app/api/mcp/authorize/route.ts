@@ -6,6 +6,7 @@ import {
   isRedirectUriAllowed,
   normalizeMcpClientId,
   PLATFORM_MCP_OAUTH_CLIENT_IDS,
+  CHATGPT_OAUTH_REDIRECT_URIS,
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
@@ -306,7 +307,13 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     .maybeSingle();
 
   if (client) {
-    const allowedRedirects: string[] = client.redirect_uris || [];
+    const allowedRedirects: string[] = [
+      ...(client.redirect_uris || []),
+      // Always allow known ChatGPT Apps redirect patterns for the platform client.
+      ...(clientId === 'chatgpt-connector' || clientId === 'alphaclone-mcp-client'
+        ? CHATGPT_OAUTH_REDIRECT_URIS
+        : []),
+    ];
     if (!isRedirectUriAllowed(redirectUri, allowedRedirects)) {
       console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
       return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);

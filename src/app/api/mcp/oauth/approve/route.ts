@@ -6,6 +6,7 @@ import {
     isRedirectUriAllowed,
     normalizeMcpClientId,
     PLATFORM_MCP_OAUTH_CLIENT_IDS,
+    CHATGPT_OAUTH_REDIRECT_URIS,
 } from '@/lib/mcp/oauthRedirect';
 
 /**
@@ -60,7 +61,13 @@ export async function POST(req: Request) {
                 .maybeSingle();
 
             if (existingClient?.redirect_uris?.length) {
-                if (!isRedirectUriAllowed(redirect_uri, existingClient.redirect_uris)) {
+                const allowed = [
+                    ...existingClient.redirect_uris,
+                    ...(client_id === 'chatgpt-connector' || client_id === 'alphaclone-mcp-client'
+                        ? CHATGPT_OAUTH_REDIRECT_URIS
+                        : []),
+                ];
+                if (!isRedirectUriAllowed(redirect_uri, allowed)) {
                     return NextResponse.json(
                         { error: 'redirect_uri is not registered for this client' },
                         { status: 400 }

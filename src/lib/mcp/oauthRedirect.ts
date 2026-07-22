@@ -26,8 +26,11 @@ export function isRedirectUriAllowed(redirectUri: string, allowed: string[]): bo
 export const CHATGPT_OAUTH_REDIRECT_URIS = [
   'https://chatgpt.com/connector_platform_oauth_redirect',
   'https://chatgpt.com/connector/oauth/*',
+  'https://chatgpt.com/connector/oauth/callback',
   'https://chat.openai.com/connector_platform_oauth_redirect',
   'https://chat.openai.com/connector/oauth/*',
+  'https://chat.openai.com/connector/oauth/callback',
+  'https://platform.openai.com/apps-manage/oauth/*',
 ];
 
 const MCP_CLIENT_ID_ALIASES: Record<string, string> = {
