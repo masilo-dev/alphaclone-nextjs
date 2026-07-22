@@ -24,7 +24,10 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = createSupabaseAdminClient();
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     switch (action) {
       case 'create_post':

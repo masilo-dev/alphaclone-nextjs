@@ -19,7 +19,10 @@ export async function POST(req: NextRequest) {
     const { tenantId, action, config } = parsed.data;
 
     const { admin: supabase } = await requireTenantAccess(tenantId);
-    await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+    if (tenantContextError) {
+      console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+    }
 
     switch (action) {
       case 'find_leads':

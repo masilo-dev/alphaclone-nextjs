@@ -66,12 +66,22 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
     // Check if this is a valid client access token
-    const { data: clientToken } = await supabase
+    const withRevoked = await supabase
       .from('mcp_oauth_tokens')
       .select('client_id, expires_at, revoked')
       .eq('access_token', token)
       .eq('revoked', false)
       .maybeSingle();
+
+    let clientToken = withRevoked.data;
+    if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
+      const fallback = await supabase
+        .from('mcp_oauth_tokens')
+        .select('client_id, expires_at')
+        .eq('access_token', token)
+        .maybeSingle();
+      clientToken = fallback.data as typeof clientToken;
+    }
 
     if (clientToken && new Date(clientToken.expires_at) > new Date()) {
       return { isAuthenticated: true, clientId: clientToken.client_id || undefined };
@@ -150,25 +160,44 @@ export async function POST(req: NextRequest) {
       resource?: string;
     } | null = null;
 
-    // Try access token first
-    const { data: accessTokenData } = await supabase
-      .from('mcp_oauth_tokens')
-      .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, revoked, created_at, resource')
-      .eq('access_token', token)
-      .maybeSingle();
+    // Try access token first (revoked column may be missing on older schemas)
+    let accessTokenData: any = null;
+    {
+      const withRevoked = await supabase
+        .from('mcp_oauth_tokens')
+        .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, revoked, created_at, resource')
+        .eq('access_token', token)
+        .maybeSingle();
+      if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
+        const fallback = await supabase
+          .from('mcp_oauth_tokens')
+          .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, created_at, resource')
+          .eq('access_token', token)
+          .maybeSingle();
+        accessTokenData = fallback.data;
+      } else {
+        accessTokenData = withRevoked.data;
+      }
+    }
 
     if (accessTokenData) {
       tokenData = accessTokenData;
     } else if (tokenTypeHint !== 'access_token') {
       // Try refresh token if hint allows or no hint
-      const { data: refreshTokenData } = await supabase
+      const withRevoked = await supabase
         .from('mcp_oauth_tokens')
         .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, revoked, created_at, resource')
         .eq('refresh_token', token)
         .maybeSingle();
-
-      if (refreshTokenData) {
-        tokenData = refreshTokenData;
+      if (withRevoked.error?.message?.includes('revoked') || withRevoked.error?.code === '42703') {
+        const fallback = await supabase
+          .from('mcp_oauth_tokens')
+          .select('access_token, refresh_token, client_id, user_id, tenant_id, scopes, expires_at, created_at, resource')
+          .eq('refresh_token', token)
+          .maybeSingle();
+        if (fallback.data) tokenData = fallback.data;
+      } else if (withRevoked.data) {
+        tokenData = withRevoked.data;
       }
     }
 

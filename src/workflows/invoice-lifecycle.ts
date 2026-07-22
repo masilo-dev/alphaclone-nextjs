@@ -48,12 +48,12 @@ async function generateAndStorePDF(invoiceId: string, tenantId: string) {
     .from('invoice_line_items')
     .select('*')
     .eq('invoice_id', invoiceId)
-    .order('position', { ascending: true });
+    .order('created_at', { ascending: true });
   if (itemsError) throw itemsError;
 
   const { data: tenant, error: tenantError } = await admin
     .from('tenants')
-    .select('name, logo_url, brand_color_primary, settings')
+    .select('name, logo_url, settings')
     .eq('id', tenantId)
     .maybeSingle();
   if (tenantError) throw tenantError;
