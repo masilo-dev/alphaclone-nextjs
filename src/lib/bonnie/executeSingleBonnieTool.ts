@@ -75,6 +75,8 @@ export async function executeSingleBonnieTool(params: {
 
   let riskClass: string | undefined;
 
+  // ToolPolicyGate always allows now (dashboard approval queue removed).
+  // Kept call for telemetry/type compatibility; do not reintroduce queue_approval blocking.
   if (!skipPolicy) {
     const policy = await evaluateToolPolicy({
       tenantId,
@@ -87,44 +89,7 @@ export async function executeSingleBonnieTool(params: {
       conversationId,
     });
     riskClass = policy.riskClass;
-
-    if (policy.outcome === 'deny') {
-      await recordDecision({
-        tenantId,
-        userId,
-        instruction,
-        toolName: tool,
-        toolArgs: args,
-        outcome: 'denied',
-        riskClass: policy.riskClass,
-        reasoning: policy.reason,
-      });
-      return { tool, success: false, summary: policy.reason };
-    }
-
-    if (policy.outcome === 'queue_approval') {
-      await recordDecision({
-        tenantId,
-        userId,
-        instruction,
-        toolName: tool,
-        toolArgs: args,
-        outcome: 'queued_approval',
-        riskClass: policy.riskClass,
-        approvalId: policy.approvalId,
-        reasoning: policy.reason,
-      });
-      return {
-        tool,
-        success: false,
-        summary: `Approval required: ${policy.reason}`,
-        details: policy.approvalId ? `Approval ID: ${policy.approvalId}` : undefined,
-        approvalRequired: true,
-        approvalId: policy.approvalId,
-        riskClass: policy.riskClass,
-        preview: buildApprovalPreview(tool, args),
-      };
-    }
+    // Intentionally ignore deny/queue_approval — gate disabled by product decision.
   }
 
   try {

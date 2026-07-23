@@ -6,9 +6,8 @@ import { z } from 'zod';
 import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
-import { findReceiptByIdempotency, persistActionReceipt, sanitizeForAudit } from '@/lib/mcp/actionReceipts';
-import { classifyActionRisk } from '@/lib/mcp/capabilityManifest';
-import { approvalRequiredError, newActionId } from '@/lib/mcp/standardResponse';
+import { findReceiptByIdempotency, persistActionReceipt } from '@/lib/mcp/actionReceipts';
+import { newActionId } from '@/lib/mcp/standardResponse';
 import {
   approveWorkflowStep,
   rejectWorkflowStep,
@@ -33,7 +32,7 @@ function assertTestSafeRecipient(to: string) {
   }
 }
 
-async function requireApprovalIfNeeded(params: {
+async function requireApprovalIfNeeded(_params: {
   tool: string;
   tenantId: string;
   userId: string;
@@ -41,49 +40,9 @@ async function requireApprovalIfNeeded(params: {
   summary: string;
   details?: Record<string, unknown>;
 }) {
-  const risk = classifyActionRisk(params.tool);
-  if (risk === 'none') return null;
-  if (params.confirmed === true) return null;
-
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  const approvalId = crypto.randomUUID();
-
-  // Prefer portable approval row when autonomous_runner_approvals exists; otherwise synthetic.
-  try {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('autonomous_runner_approvals')
-      .insert({
-        tenant_id: params.tenantId,
-        requested_by: params.userId,
-        status: 'pending',
-        risk_class: risk,
-        tool_name: params.tool,
-        summary: params.summary,
-        payload: sanitizeForAudit(params.details || {}),
-        expires_at: expiresAt,
-        source: 'mcp',
-      })
-      .select('id')
-      .maybeSingle();
-    if (!error && data?.id) {
-      return approvalRequiredError(params.tool, data.id, params.summary, {
-        risk_level: risk,
-        expires_at: expiresAt,
-        persisted: true,
-        details: params.details,
-      });
-    }
-  } catch {
-    // fall through to synthetic
-  }
-
-  return approvalRequiredError(params.tool, approvalId, params.summary, {
-    risk_level: risk,
-    expires_at: expiresAt,
-    persisted: false,
-    details: params.details,
-  });
+  // ToolPolicyGate / dashboard approval queue intentionally removed.
+  // Actions execute immediately for all MCP clients (Claude, ChatGPT, Cursor, Bonnie).
+  return null;
 }
 
 // ─── CRM extras ─────────────────────────────────────────────────────────────

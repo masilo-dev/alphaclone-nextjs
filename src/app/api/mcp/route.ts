@@ -270,44 +270,64 @@ export async function POST(req: NextRequest) {
 
   // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
-    const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-
-    // Prefer live auth client_id; fall back to session metadata / UA for ChatGPT detection.
-    let clientId: string | null = null;
-    let clientLabel: string | null = null;
     try {
-      const auth = await resolveAuth(req);
-      clientId = authClientIdOf(auth);
-    } catch {
-      // ignore — cookie/session path may still work below
-    }
-    if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+
+      // Prefer live auth client_id; fall back to session metadata / UA for ChatGPT detection.
+      let clientId: string | null = null;
+      let clientLabel: string | null = null;
       try {
-        const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-        const { data: sessionMeta } = await supabaseAdmin
-          .from('mcp_sessions')
-          .select('metadata')
-          .eq('id', mcpSessionId)
-          .maybeSingle();
-        const meta = (sessionMeta?.metadata || {}) as Record<string, unknown>;
-        if (typeof meta.client_label === 'string') clientLabel = meta.client_label;
-        if (typeof meta.client_id === 'string' && !clientId) clientId = meta.client_id;
+        const auth = await resolveAuth(req);
+        clientId = authClientIdOf(auth);
       } catch {
-        // ignore
+        // ignore — cookie/session path may still work below
       }
+      if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+        try {
+          const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+          const { data: sessionMeta } = await supabaseAdmin
+            .from('mcp_sessions')
+            .select('metadata')
+            .eq('id', mcpSessionId)
+            .maybeSingle();
+          const meta = (sessionMeta?.metadata || {}) as Record<string, unknown>;
+          if (typeof meta.client_label === 'string') clientLabel = meta.client_label;
+          if (typeof meta.client_id === 'string' && !clientId) clientId = meta.client_id;
+        } catch {
+          // ignore
+        }
+      }
+
+      const tools = await getUnifiedMcpTools({
+        clientId,
+        clientLabel,
+        userAgent: req.headers.get('user-agent'),
+      });
+
+      console.info(
+        `[mcp.route tools/list] count=${tools.length} clientId=${clientId || '-'} label=${clientLabel || '-'} ua=${(req.headers.get('user-agent') || '').slice(0, 80)}`
+      );
+
+      if (tools.length === 0) {
+        console.error('[mcp.route tools/list] CRITICAL: returning empty tool list');
+      }
+
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { tools },
+      }, { headers: mcpJsonHeaders(req) });
+    } catch (err: any) {
+      console.error('[mcp.route tools/list] error:', err?.message || err);
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        error: {
+          code: -32603,
+          message: `tools/list failed: ${err?.message || 'unknown error'}`,
+        },
+      }, { status: 500, headers: mcpJsonHeaders(req) });
     }
-
-    const tools = await getUnifiedMcpTools({
-      clientId,
-      clientLabel,
-      userAgent: req.headers.get('user-agent'),
-    });
-
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      id: requestBody.id,
-      result: { tools },
-    }, { headers: mcpJsonHeaders(req) });
   }
 
   if (requestBody.method === 'resources/list') {

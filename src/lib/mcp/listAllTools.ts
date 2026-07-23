@@ -66,7 +66,9 @@ function withAnnotations(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
 /**
  * Single source of truth for MCP tool discovery across Bonnie, /api/mcp, and MCPServer.
  * Priority: registry handlers → legacy manifest → supplemental definitions.
- * Always attaches OpenAI-required annotations (readOnlyHint/openWorldHint/destructiveHint).
+ *
+ * Default = FULL catalog for Claude / Cursor / Gemini / Bonnie / generic MCP.
+ * ChatGPT curated filter applies ONLY when isChatgptClient() is true.
  */
 export async function getUnifiedMcpTools(options?: {
   sanitizeForClient?: boolean;
@@ -91,22 +93,40 @@ export async function getUnifiedMcpTools(options?: {
     !options?.forceRefresh &&
     now - cacheTime < CACHE_TTL_MS &&
     cachedFullTools &&
-    (!chatgpt || cachedChatgptTools)
+    cachedFullTools.length > 0 &&
+    (!chatgpt || (cachedChatgptTools && cachedChatgptTools.length > 0))
   ) {
-    return chatgpt ? cachedChatgptTools! : cachedFullTools;
+    const cached = chatgpt ? cachedChatgptTools! : cachedFullTools;
+    console.info(
+      `[mcp.tools/list] cache hit client=${chatgpt ? 'chatgpt' : 'full'} count=${cached.length}`
+    );
+    return cached;
   }
 
-  const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
-  initializeRegistry();
+  let registryTools: UnifiedMcpTool[] = [];
+  let registryError: string | null = null;
+  try {
+    initializeRegistry();
+    registryTools = listTools(false).map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      inputSchema: tool.inputSchema as Record<string, unknown>,
+    }));
+  } catch (err: any) {
+    registryError = err?.message || String(err);
+    console.error('[mcp.tools/list] registry initialization failed:', registryError);
+  }
 
-  const registryTools = listTools(false).map((tool) => ({
-    name: tool.name,
-    description: tool.description,
-    inputSchema: tool.inputSchema as Record<string, unknown>,
-  }));
+  let manifestLegacy: UnifiedMcpTool[] = [];
+  try {
+    const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
+    const registryNames = new Set(registryTools.map((t) => t.name));
+    manifestLegacy = (MCP_TOOLS as UnifiedMcpTool[]).filter((t) => !registryNames.has(t.name));
+  } catch (err: any) {
+    console.error('[mcp.tools/list] toolManifest load failed:', err?.message || err);
+  }
 
   const registryNames = new Set(registryTools.map((t) => t.name));
-  const manifestLegacy = (MCP_TOOLS as UnifiedMcpTool[]).filter((t) => !registryNames.has(t.name));
   const supplemental = SUPPLEMENTAL_MCP_TOOLS.filter(
     (t) => !registryNames.has(t.name) && !manifestLegacy.some((m) => m.name === t.name)
   );
@@ -119,6 +139,16 @@ export async function getUnifiedMcpTools(options?: {
 
   const merged = dedupeTools([...registryTools, ...manifestLegacy, ...supplemental, ...aliases]);
   const annotated = withAnnotations(merged);
+
+  if (merged.length === 0) {
+    console.error(
+      `[mcp.tools/list] CRITICAL: zero tools discovered. registryError=${registryError || 'none'} registry=${registryTools.length} manifest=${manifestLegacy.length}`
+    );
+  } else {
+    console.info(
+      `[mcp.tools/list] discovered total=${merged.length} registry=${registryTools.length} manifest_extra=${manifestLegacy.length} supplemental=${supplemental.length} chatgpt_filter=${chatgpt}`
+    );
+  }
 
   cachedFullTools = sanitizeForClient
     ? annotated.map((tool) => ({
@@ -139,9 +169,21 @@ export async function getUnifiedMcpTools(options?: {
     }
   }
   cachedChatgptTools.sort((a, b) => a.name.localeCompare(b.name));
-  cacheTime = now;
 
-  return chatgpt ? cachedChatgptTools : cachedFullTools;
+  // Safety: never return an empty ChatGPT curated list if the full catalog has tools.
+  // Prefer exposing the full set over silently advertising zero tools.
+  if (chatgpt && cachedChatgptTools.length === 0 && cachedFullTools.length > 0) {
+    console.error(
+      `[mcp.tools/list] ChatGPT curated filter matched 0/${cachedFullTools.length} tools — falling back to full catalog to avoid empty tools/list`
+    );
+    cacheTime = now;
+    return cachedFullTools;
+  }
+
+  cacheTime = now;
+  const result = chatgpt ? cachedChatgptTools : cachedFullTools;
+  console.info(`[mcp.tools/list] returning client=${chatgpt ? 'chatgpt' : 'full'} count=${result.length}`);
+  return result;
 }
 
 export async function getUnifiedMcpToolCount(options?: {

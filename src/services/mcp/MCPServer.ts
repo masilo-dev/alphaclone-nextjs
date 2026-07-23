@@ -1009,9 +1009,23 @@ class AlphaCloneMCPServer {
 
     // ── Tool Manifest (unified discovery) ─────────────────────────────────
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-      const tools = await getUnifiedMcpTools({ sanitizeForClient: false });
-      return { tools };
+      try {
+        const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+        // Full catalog for SDK transports (Claude Code, etc.) — never ChatGPT-curated by default.
+        const tools = await getUnifiedMcpTools({
+          sanitizeForClient: false,
+          forChatGPT: false,
+          clientLabel: 'mcp-sdk',
+        });
+        console.info(`[mcp.ListTools] returning ${tools.length} tools`);
+        if (tools.length === 0) {
+          console.error('[mcp.ListTools] CRITICAL empty tool list');
+        }
+        return { tools };
+      } catch (err: any) {
+        console.error('[mcp.ListTools] failed:', err?.message || err);
+        throw err;
+      }
     });
 
     // ── Tool Execution ──────────────────────────────────────────────────────
@@ -1058,20 +1072,17 @@ class AlphaCloneMCPServer {
     const tenantIdForPolicy = (args?.tenant_id && String(args.tenant_id).trim()) || this.ctx?.tenantId || '';
     const userIdForPolicy = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
     if (tenantIdForPolicy && userIdForPolicy) {
+      // ToolPolicyGate approval queue intentionally removed — actions execute immediately.
+      // evaluateToolPolicy is a no-op allow; kept for telemetry/type compatibility only.
       const { evaluateToolPolicy } = await import('@/lib/ai/ToolPolicyGate');
-      const policy = await evaluateToolPolicy({
+      await evaluateToolPolicy({
         tenantId: tenantIdForPolicy,
         userId: userIdForPolicy,
         toolName: name,
         source: 'mcp',
         args: args || {},
       });
-      if (policy.outcome === 'deny' || policy.outcome === 'queue_approval') {
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ error: true, message: policy.reason, approvalId: policy.approvalId }) }],
-          isError: true,
-        };
-      }
+      // Do NOT deny or queue_approval — gate was a dead end with no dashboard release surface.
     }
 
     // Check new registry first
@@ -3287,15 +3298,12 @@ class AlphaCloneMCPServer {
           if (!binary.length) throw new Error('file_base64 is invalid or empty');
 
           const isVideo = mime_type.startsWith('video/');
-          const isImage = mime_type.startsWith('image/');
-          if (!isVideo && !isImage) {
-            throw new Error('Unsupported media type. Only image/* or video/* is allowed.');
+          // No size/type restriction — accept any media from external AI tools (Kling, etc.).
+          // Prefer media_urls on create_post when content already lives on an external host.
+          if (!mime_type.includes('/') ) {
+            throw new Error('mime_type must be a valid MIME string (e.g. image/png, video/mp4, application/octet-stream).');
           }
-          const maxBytes = isVideo ? 200 * 1024 * 1024 : 10 * 1024 * 1024;
-          if (binary.length > maxBytes) {
-            throw new Error(`Media exceeds max size of ${Math.round(maxBytes / 1024 / 1024)}MB.`);
-          }
-          const assetType = isVideo ? 'video' : mime_type.includes('gif') ? 'gif' : 'image';
+          const assetType = isVideo ? 'video' : mime_type.includes('gif') ? 'gif' : mime_type.startsWith('image/') ? 'image' : 'file';
           const ext = String(file_name).split('.').pop() || (isVideo ? 'mp4' : 'bin');
           const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
@@ -3627,8 +3635,9 @@ class AlphaCloneMCPServer {
           const postSanitized = sanitizePost(finalCaption);
           finalCaption = postSanitized.clean;
 
-          // B. Direct base64 Multimedia Ingestion
+          // B. Direct base64 Multimedia Ingestion (optional — prefer external media_urls)
           const uploadedAssetUrls: string[] = [];
+          const uploadFailures: string[] = [];
           if (Array.isArray(media_base64_data) && media_base64_data.length > 0) {
             for (const item of media_base64_data) {
               try {
@@ -3637,6 +3646,7 @@ class AlphaCloneMCPServer {
                   const normalizedBase = base64.includes('base64,') ? base64.split('base64,')[1] : base64;
                   const binary = Buffer.from(normalizedBase, 'base64');
                   if (binary.length > 0) {
+                    // No size limit — accept video and any MIME from external AI tools.
                     const ext = String(file_name).split('.').pop() || (file_type.startsWith('video/') ? 'mp4' : 'bin');
                     const storagePath = `media/${tenant_id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
                     const { error: uploadError } = await supabaseAdmin.storage
@@ -3645,31 +3655,39 @@ class AlphaCloneMCPServer {
                         contentType: file_type,
                         upsert: false,
                       });
-                    if (!uploadError) {
-                      const { data: urlData } = supabaseAdmin.storage.from('public-assets').getPublicUrl(storagePath);
-                      const publicUrl = urlData.publicUrl;
-                      const assetType = file_type.startsWith('video/') ? 'video' : file_type.includes('gif') ? 'gif' : 'image';
-                      await supabaseAdmin
-                        .from('media_assets')
-                        .insert({
-                          tenant_id,
-                          user_id,
-                          file_name: file_name.trim(),
-                          file_type: file_type.trim(),
-                          asset_type: assetType,
-                          storage_path: storagePath,
-                          public_url: publicUrl,
-                          file_size_bytes: binary.length,
-                          alt_text: '',
-                          tags: ['mcp-direct-upload'],
-                        });
-                      uploadedAssetUrls.push(publicUrl);
+                    if (uploadError) {
+                      uploadFailures.push(`${file_name}: ${uploadError.message}`);
+                      continue;
                     }
+                    const { data: urlData } = supabaseAdmin.storage.from('public-assets').getPublicUrl(storagePath);
+                    const publicUrl = urlData.publicUrl;
+                    const assetType = file_type.startsWith('video/') ? 'video' : file_type.includes('gif') ? 'gif' : 'image';
+                    await supabaseAdmin
+                      .from('media_assets')
+                      .insert({
+                        tenant_id,
+                        user_id,
+                        file_name: file_name.trim(),
+                        file_type: file_type.trim(),
+                        asset_type: assetType,
+                        storage_path: storagePath,
+                        public_url: publicUrl,
+                        file_size_bytes: binary.length,
+                        alt_text: '',
+                        tags: ['mcp-direct-upload'],
+                      });
+                    uploadedAssetUrls.push(publicUrl);
                   }
                 }
-              } catch (err) {
+              } catch (err: any) {
+                uploadFailures.push(err?.message || 'unknown upload error');
                 console.error('Failed to upload direct base64 asset inside create_social_post:', err);
               }
+            }
+            if (uploadedAssetUrls.length === 0 && uploadFailures.length > 0) {
+              throw new Error(
+                `All media_base64_data uploads failed: ${uploadFailures.join('; ')}. Pass media_urls from the external AI tool instead.`
+              );
             }
           }
 
@@ -3705,7 +3723,23 @@ class AlphaCloneMCPServer {
             throw new Error('No connected Facebook pages were found for this workspace.');
           }
 
-          const normalizedMediaUrls = Array.isArray(media_urls) ? media_urls.filter((u) => typeof u === 'string') : [];
+          const normalizedMediaUrls = Array.isArray(media_urls)
+            ? media_urls.filter((u) => typeof u === 'string' && String(u).trim())
+            : [];
+          // External AI/content tool URLs are first-class — no requirement to store in our DB first.
+          if (normalizedMediaUrls.length > 0) {
+            const { assertMediaUrlReachable } = await import('@/lib/social/uploadMediaAsset');
+            for (const url of normalizedMediaUrls) {
+              try {
+                await assertMediaUrlReachable(url);
+              } catch (mediaErr: any) {
+                throw new Error(
+                  mediaErr?.message ||
+                    `Media URL rejected: ${url}. Pass a reachable public URL from the generator tool.`
+                );
+              }
+            }
+          }
           let resolvedAssetUrls: string[] = [];
           if (Array.isArray(media_asset_ids) && media_asset_ids.length > 0) {
             const ids = media_asset_ids.filter((id) => typeof id === 'string');
@@ -3718,6 +3752,11 @@ class AlphaCloneMCPServer {
             resolvedAssetUrls = (assets || [])
               .map((asset: any) => String(asset.public_url || ''))
               .filter(Boolean);
+            if (resolvedAssetUrls.length === 0) {
+              throw new Error(
+                `None of the provided media_asset_ids resolved to a public URL for tenant ${tenant_id}.`
+              );
+            }
           }
 
           const mergedMediaUrls = [...normalizedMediaUrls, ...resolvedAssetUrls, ...uploadedAssetUrls];
