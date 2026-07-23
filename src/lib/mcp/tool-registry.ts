@@ -205,6 +205,7 @@ export function initializeRegistry() {
   if (initialized) return;
   initialized = true;
 
+<<<<<<< HEAD
   // Statically import modules to register tools (per-module isolation)
   const modules = [
     './tools/crm',
@@ -260,4 +261,52 @@ export function initializeRegistry() {
   }
 
   console.info(`[mcp.registry] initialized with ${registry.size} tools`);
+=======
+  // Statically import modules to register tools
+  require('./tools/crm');
+  require('./tools/deals');
+  require('./tools/projects');
+  require('./tools/invoicing');
+  require('./tools/contracts');
+  require('./tools/outreach');
+  require('./tools/social');
+  require('./tools/workspace');
+  require('./tools/messaging');
+  require('./tools/gamification');
+  require('./tools/video');
+  require('./tools/files');
+  require('./tools/facebook');
+  require('./tools/ai-analytics');
+  require('./tools/bonnie-dream');
+  require('./tools/bonnie-orchestrate');
+  require('./tools/bonnie-os');
+  require('./tools/bonnie-outcomes');
+  require('./tools/bonnie-approvals');
+  require('./tools/bonnie-skills');
+  require('./tools/google-workspace');
+  require('./tools/microsoft');
+  require('./tools/microsoft-diagnostics');
+  require('./tools/x');
+  require('./tools/accounting');
+  require('./tools/campaigns');
+  require('./tools/business-state');
+  require('./tools/solo-owner');
+  require('./tools/platform-advantage');
+  require('./tools/api-health');
+  require('./tools/documents');
+  require('./tools/document-os');
+  require('./tools/nexus-memory');
+  // ChatGPT connector surface (exact tool names for Apps discovery)
+  require('./tools/platform-ops');
+  require('./tools/bonnie-inspect');
+  require('./tools/crm-ops');
+  require('./tools/social-ops');
+  require('./tools/marketing-ops');
+  require('./tools/sales-ops');
+  require('./tools/calendar-ops');
+  require('./tools/documents-ops');
+  require('./tools/reports-ops');
+  require('./tools/integrations-health');
+  require('./tools/chatgpt-aliases');
+>>>>>>> origin/bonnie/document-operating-system-1d2b
 }
