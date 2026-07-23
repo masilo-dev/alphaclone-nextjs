@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Bot, Check, X, Loader2, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 function AuthorizeContent() {
     const { user, loading } = useAuth();
@@ -44,9 +45,23 @@ function AuthorizeContent() {
                 .filter((s, i, arr) => arr.indexOf(s) === i)
                 .join(' ');
 
+            // Prefer Bearer from the browser session. Cookie-only auth often 401s
+            // on /authorize because ChatGPT opens this page with a client session
+            // that may not be mirrored into SSR auth cookies yet.
+            const { data: sessionData } = await supabase.auth.getSession();
+            const accessToken = sessionData.session?.access_token;
+            if (!accessToken) {
+                const currentUrl = window.location.pathname + window.location.search;
+                router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
+                return;
+            }
+
             const res = await fetch('/api/mcp/oauth/approve', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${accessToken}`,
+                },
                 credentials: 'include',
                 body: JSON.stringify({
                     client_id: clientId,
@@ -58,7 +73,13 @@ function AuthorizeContent() {
                 })
             });
 
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
+
+            if (res.status === 401) {
+                const currentUrl = window.location.pathname + window.location.search;
+                router.push(`/auth/login?returnTo=${encodeURIComponent(currentUrl)}`);
+                return;
+            }
 
             if (!res.ok) {
                 throw new Error(data.error || 'Failed to approve authorization');
