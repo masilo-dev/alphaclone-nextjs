@@ -7,6 +7,11 @@ import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 import { formatScopeString } from '@/lib/mcp/scopes';
 import { loadMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
+import {
+  assertRefreshClientBinding,
+  logOAuthTokenIssuance,
+  revokeActiveTokensForClient,
+} from '@/lib/mcp/oauthTokenIsolation';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -381,13 +386,31 @@ export async function POST(req: NextRequest) {
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString(); // 1 hour
       const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
 
+      const issuedClientId = storedClientId || client_id || null;
+
+      // Per-client isolation: rotate only this client's prior active rows.
+      // Other MCP clients for the same user keep their tokens untouched.
+      if (issuedClientId && authCode.user_id) {
+        const revokePrior = await revokeActiveTokensForClient(supabase, {
+          userId: authCode.user_id,
+          clientId: issuedClientId,
+        });
+        if (revokePrior.error) {
+          console.warn('[MCP Token] Failed to revoke prior tokens for client (continuing):', {
+            client_id: issuedClientId,
+            user_id: authCode.user_id,
+            error: revokePrior.error.message,
+          });
+        }
+      }
+
       const tokenRow: Record<string, unknown> = {
         access_token: accessToken,
         refresh_token: refreshToken,
         access_token_hash: hashToken(accessToken),
         refresh_token_hash: hashToken(refreshToken),
         token_type: 'Bearer',
-        client_id: storedClientId || client_id || null,
+        client_id: issuedClientId,
         user_id: authCode.user_id,
         tenant_id: authCode.tenant_id,
         scopes: authCode.scopes || ['read', 'write'],
@@ -416,11 +439,17 @@ export async function POST(req: NextRequest) {
           code: tokenInsertError.code,
           userId: authCode.user_id,
           tenantId: authCode.tenant_id,
+          client_id: issuedClientId,
         });
         return tokenError('server_error', 'Failed to issue tokens (database error)', 500);
       }
 
-      console.log('[MCP Token] SUCCESS. Issued for user:', authCode.user_id, 'tenant:', authCode.tenant_id);
+      logOAuthTokenIssuance({
+        grantType: 'authorization_code',
+        clientId: issuedClientId,
+        userId: authCode.user_id,
+        tenantId: authCode.tenant_id,
+      });
 
       return NextResponse.json({
         access_token: accessToken,
@@ -505,7 +534,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Rotate: revoke previous refresh atomically, issue new pair
+      const sessionClientId = normalizeMcpClientId(session.client_id) ?? session.client_id;
+      const clientBind = assertRefreshClientBinding({
+        requestClientId: client_id,
+        tokenClientId: sessionClientId,
+      });
+      if (!clientBind.ok) {
+        console.warn('[MCP Token] Refresh client binding failed:', clientBind.reason);
+        return tokenError(
+          'invalid_grant',
+          'client_id does not match the refresh token',
+          401,
+          'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+        );
+      }
+
+      // Rotate: revoke previous refresh atomically, issue new pair for THIS client only
       const newAccessToken = `mcp_at_${crypto.randomUUID().replace(/-/g, '')}`;
       const newRefreshToken = `mcp_rt_${crypto.randomUUID().replace(/-/g, '')}`;
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
@@ -528,7 +572,7 @@ export async function POST(req: NextRequest) {
         access_token_hash: hashToken(newAccessToken),
         refresh_token_hash: hashToken(newRefreshToken),
         token_type: 'Bearer',
-        client_id: normalizeMcpClientId(session.client_id) ?? session.client_id,
+        client_id: sessionClientId,
         user_id: session.user_id,
         tenant_id: session.tenant_id,
         scopes: session.scopes,
@@ -557,9 +601,20 @@ export async function POST(req: NextRequest) {
       }
 
       if (rotateError) {
-        console.error('[MCP Token] Refresh rotation failed:', rotateError.message);
+        console.error('[MCP Token] Refresh rotation failed:', {
+          error: rotateError.message,
+          client_id: sessionClientId,
+          user_id: session.user_id,
+        });
         return tokenError('server_error', 'Failed to rotate tokens', 500);
       }
+
+      logOAuthTokenIssuance({
+        grantType: 'refresh_token',
+        clientId: sessionClientId,
+        userId: session.user_id,
+        tenantId: session.tenant_id,
+      });
 
       return NextResponse.json({
         access_token: newAccessToken,

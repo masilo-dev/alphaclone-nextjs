@@ -10,6 +10,7 @@ import {
   resourcesMatch,
 } from '@/lib/config/public-origin';
 import { hasRequiredScopes } from '@/lib/mcp/scopes';
+import { logOAuthTokenLookup } from '@/lib/mcp/oauthTokenIsolation';
 import { createHash } from 'crypto';
 
 export interface AuthResult {
@@ -286,6 +287,13 @@ export async function validateMCPAuthApp(
     const { data: tokenData, error: tokenError } = await lookupOAuthToken(supabaseAdmin, token);
 
     if (tokenError || !tokenData) {
+      logOAuthTokenLookup({
+        outcome: 'miss',
+        clientId: null,
+        userId: null,
+        tenantId: null,
+        requestId,
+      });
       console.warn('[MCP Auth] Token lookup failed or token not found:', {
         request_id: requestId,
         error: tokenError?.message,
@@ -308,6 +316,14 @@ export async function validateMCPAuthApp(
     }
 
     if (tokenData.revoked === true) {
+      logOAuthTokenLookup({
+        outcome: 'revoked',
+        clientId: tokenData.client_id as string | undefined,
+        userId: tokenData.user_id as string | undefined,
+        tenantId: tokenData.tenant_id as string | undefined,
+        tokenId: tokenData.id as string | undefined,
+        requestId,
+      });
       return {
         error: 'Invalid or expired access token',
         status: 401,
@@ -325,8 +341,17 @@ export async function validateMCPAuthApp(
       const resourceValidation = validateResource(tokenData.resource as string | null | undefined);
 
       if (!resourceValidation.valid) {
+        logOAuthTokenLookup({
+          outcome: 'resource_mismatch',
+          clientId: tokenData.client_id as string | undefined,
+          userId: tokenData.user_id as string | undefined,
+          tenantId: tokenData.tenant_id as string | undefined,
+          tokenId: tokenData.id as string | undefined,
+          requestId,
+        });
         console.warn('[MCP Auth] Resource mismatch', {
           request_id: requestId,
+          client_id: tokenData.client_id,
           user_id: tokenData.user_id,
           tenant_id: tokenData.tenant_id,
           configured_resource: resourceValidation.configured,
@@ -354,8 +379,17 @@ export async function validateMCPAuthApp(
       );
 
       if (!scopeValidation.valid) {
+        logOAuthTokenLookup({
+          outcome: 'insufficient_scope',
+          clientId: tokenData.client_id as string | undefined,
+          userId: tokenData.user_id as string | undefined,
+          tenantId: tokenData.tenant_id as string | undefined,
+          tokenId: tokenData.id as string | undefined,
+          requestId,
+        });
         console.warn('[MCP Auth] Insufficient scope:', {
           request_id: requestId,
+          client_id: tokenData.client_id,
           user_id: tokenData.user_id,
           tenant_id: tokenData.tenant_id,
           required: options.requiredScopes,
@@ -378,6 +412,14 @@ export async function validateMCPAuthApp(
     const now = new Date();
 
     if (expiryDate.getTime() < now.getTime()) {
+      logOAuthTokenLookup({
+        outcome: 'expired',
+        clientId: tokenData.client_id as string | undefined,
+        userId: tokenData.user_id as string | undefined,
+        tenantId: tokenData.tenant_id as string | undefined,
+        tokenId: tokenData.id as string | undefined,
+        requestId,
+      });
       return {
         error: 'Access token has expired',
         status: 401,
@@ -402,6 +444,15 @@ export async function validateMCPAuthApp(
     () => undefined
   );
     }
+
+    logOAuthTokenLookup({
+      outcome: 'hit',
+      clientId: tokenData.client_id as string | undefined,
+      userId: tokenData.user_id as string | undefined,
+      tenantId: tokenData.tenant_id as string | undefined,
+      tokenId: tokenData.id as string | undefined,
+      requestId,
+    });
 
     return {
       tenant_id: tokenData.tenant_id as string,
