@@ -181,21 +181,17 @@ export async function executeTool(
 }
 
 // ── Register all tools by importing the modules ────────────────────────────
-// Note: We use require/dynamic imports or direct registrations inside the module files themselves.
-// To resolve circular dependency warning, the registry modules can import and register.
-// We will call an initialize function to register all tools.
+// IMPORTANT: webpack/Next.js production bundles cannot resolve `require(variable)`.
+// Each module path MUST be a static string literal so it is included in the bundle.
+// Per-module try/catch keeps one broken module from wiping the entire tools/list.
 let initialized = false;
 
-/**
- * Load a tool module for registration. One broken module must NOT wipe the
- * entire tools/list — log the failure and continue with the rest.
- */
-function loadToolModule(modulePath: string) {
+function loadToolModule(loader: () => unknown, label: string) {
   try {
-    require(modulePath);
+    loader();
   } catch (err: any) {
     console.error(
-      `[mcp.registry] Failed to register tools from ${modulePath}:`,
+      `[mcp.registry] Failed to register tools from ${label}:`,
       err?.message || err
     );
   }
@@ -205,59 +201,52 @@ export function initializeRegistry() {
   if (initialized) return;
   initialized = true;
 
-  // Statically import modules to register tools (per-module isolation)
-  const modules = [
-    './tools/crm',
-    './tools/deals',
-    './tools/projects',
-    './tools/invoicing',
-    './tools/contracts',
-    './tools/outreach',
-    './tools/social',
-    './tools/workspace',
-    './tools/messaging',
-    './tools/gamification',
-    './tools/video',
-    './tools/files',
-    './tools/facebook',
-    './tools/ai-analytics',
-    './tools/bonnie-dream',
-    './tools/bonnie-orchestrate',
-    './tools/bonnie-os',
-    './tools/bonnie-outcomes',
-    './tools/bonnie-approvals',
-    './tools/bonnie-skills',
-    './tools/google-workspace',
-    './tools/microsoft',
-    './tools/microsoft-diagnostics',
-    './tools/x',
-    './tools/accounting',
-    './tools/campaigns',
-    './tools/business-state',
-    './tools/solo-owner',
-    './tools/platform-advantage',
-    './tools/api-health',
-    './tools/documents',
-    './tools/nexus-memory',
-    // Connector / multi-client surface
-    './tools/platform-ops',
-    './tools/bonnie-inspect',
-    './tools/crm-ops',
-    './tools/social-ops',
-    './tools/marketing-ops',
-    './tools/sales-ops',
-    './tools/calendar-ops',
-    './tools/documents-ops',
-    './tools/reports-ops',
-    './tools/integrations-health',
-    './tools/chatgpt-aliases',
-    './tools/autonomous-ops',
-    './tools/document-os',
-  ];
-
-  for (const mod of modules) {
-    loadToolModule(mod);
-  }
+  loadToolModule(() => require('./tools/crm'), './tools/crm');
+  loadToolModule(() => require('./tools/deals'), './tools/deals');
+  loadToolModule(() => require('./tools/projects'), './tools/projects');
+  loadToolModule(() => require('./tools/invoicing'), './tools/invoicing');
+  loadToolModule(() => require('./tools/contracts'), './tools/contracts');
+  loadToolModule(() => require('./tools/outreach'), './tools/outreach');
+  loadToolModule(() => require('./tools/social'), './tools/social');
+  loadToolModule(() => require('./tools/workspace'), './tools/workspace');
+  loadToolModule(() => require('./tools/messaging'), './tools/messaging');
+  loadToolModule(() => require('./tools/gamification'), './tools/gamification');
+  loadToolModule(() => require('./tools/video'), './tools/video');
+  loadToolModule(() => require('./tools/files'), './tools/files');
+  loadToolModule(() => require('./tools/facebook'), './tools/facebook');
+  loadToolModule(() => require('./tools/ai-analytics'), './tools/ai-analytics');
+  loadToolModule(() => require('./tools/bonnie-dream'), './tools/bonnie-dream');
+  loadToolModule(() => require('./tools/bonnie-orchestrate'), './tools/bonnie-orchestrate');
+  loadToolModule(() => require('./tools/bonnie-os'), './tools/bonnie-os');
+  loadToolModule(() => require('./tools/bonnie-outcomes'), './tools/bonnie-outcomes');
+  loadToolModule(() => require('./tools/bonnie-approvals'), './tools/bonnie-approvals');
+  loadToolModule(() => require('./tools/bonnie-skills'), './tools/bonnie-skills');
+  loadToolModule(() => require('./tools/google-workspace'), './tools/google-workspace');
+  loadToolModule(() => require('./tools/microsoft'), './tools/microsoft');
+  loadToolModule(() => require('./tools/microsoft-diagnostics'), './tools/microsoft-diagnostics');
+  loadToolModule(() => require('./tools/x'), './tools/x');
+  loadToolModule(() => require('./tools/accounting'), './tools/accounting');
+  loadToolModule(() => require('./tools/campaigns'), './tools/campaigns');
+  loadToolModule(() => require('./tools/business-state'), './tools/business-state');
+  loadToolModule(() => require('./tools/solo-owner'), './tools/solo-owner');
+  loadToolModule(() => require('./tools/platform-advantage'), './tools/platform-advantage');
+  loadToolModule(() => require('./tools/api-health'), './tools/api-health');
+  loadToolModule(() => require('./tools/documents'), './tools/documents');
+  loadToolModule(() => require('./tools/nexus-memory'), './tools/nexus-memory');
+  // Connector / multi-client surface
+  loadToolModule(() => require('./tools/platform-ops'), './tools/platform-ops');
+  loadToolModule(() => require('./tools/bonnie-inspect'), './tools/bonnie-inspect');
+  loadToolModule(() => require('./tools/crm-ops'), './tools/crm-ops');
+  loadToolModule(() => require('./tools/social-ops'), './tools/social-ops');
+  loadToolModule(() => require('./tools/marketing-ops'), './tools/marketing-ops');
+  loadToolModule(() => require('./tools/sales-ops'), './tools/sales-ops');
+  loadToolModule(() => require('./tools/calendar-ops'), './tools/calendar-ops');
+  loadToolModule(() => require('./tools/documents-ops'), './tools/documents-ops');
+  loadToolModule(() => require('./tools/reports-ops'), './tools/reports-ops');
+  loadToolModule(() => require('./tools/integrations-health'), './tools/integrations-health');
+  loadToolModule(() => require('./tools/chatgpt-aliases'), './tools/chatgpt-aliases');
+  loadToolModule(() => require('./tools/autonomous-ops'), './tools/autonomous-ops');
+  loadToolModule(() => require('./tools/document-os'), './tools/document-os');
 
   console.info(`[mcp.registry] initialized with ${registry.size} tools`);
 }
