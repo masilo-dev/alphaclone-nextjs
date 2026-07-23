@@ -221,6 +221,7 @@ export function initializeRegistry() {
   require('./tools/platform-advantage');
   require('./tools/api-health');
   require('./tools/documents');
+  require('./tools/document-os');
   require('./tools/nexus-memory');
   // ChatGPT connector surface (exact tool names for Apps discovery)
   require('./tools/platform-ops');

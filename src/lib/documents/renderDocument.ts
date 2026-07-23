@@ -337,19 +337,22 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
       })
       .join('') || '';
 
+  const isAgreement = ['contract'].includes(input.type);
+  const showTotalBox = input.total != null && !isAgreement;
+
   const headerHtml =
-    theme.headerStyle === 'cover'
-      ? `<div style="background:linear-gradient(135deg,${primary},${accent});color:#fff;padding:48px 40px;text-align:center;">
-          ${branding.logoUrl ? `<img src="${escapeHtml(branding.logoUrl)}" alt="" style="max-height:60px;margin-bottom:16px;" />` : ''}
-          <h1 style="font-size:32px;margin:0;">${escapeHtml(input.title)}</h1>
+    theme.headerStyle === 'cover' && !isAgreement
+      ? `<div style="background:${primary};color:#fff;padding:48px 40px;text-align:center;">
+          ${branding.logoUrl ? `<img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:60px;max-width:200px;width:auto;height:auto;object-fit:contain;margin-bottom:16px;" />` : `<strong style="font-size:20px;">${escapeHtml(branding.name || 'Unconfigured Business')}</strong>`}
+          <h1 style="font-size:28px;margin:0;">${escapeHtml(input.title)}</h1>
           ${input.documentNumber ? `<p style="opacity:0.9;margin-top:8px;">#${escapeHtml(input.documentNumber)}</p>` : ''}
         </div>`
       : `<div style="background:${primary};color:#fff;padding:24px 40px;display:flex;justify-content:space-between;align-items:center;">
           <div>
-            ${branding.logoUrl ? `<img src="${escapeHtml(branding.logoUrl)}" alt="" style="max-height:40px;margin-bottom:8px;" />` : `<strong style="font-size:20px;">${escapeHtml(branding.name || 'Your Business')}</strong>`}
+            ${branding.logoUrl ? `<img src="${escapeHtml(branding.logoUrl)}" alt="${escapeHtml(branding.name || '')}" style="max-height:40px;max-width:180px;width:auto;height:auto;object-fit:contain;margin-bottom:8px;" />` : `<strong style="font-size:20px;">${escapeHtml(branding.name || 'Unconfigured Business')}</strong>`}
           </div>
           <div style="text-align:right;">
-            <div style="font-size:24px;font-weight:bold;">${escapeHtml(input.title)}</div>
+            <div style="font-size:22px;font-weight:bold;">${escapeHtml(input.title)}</div>
             ${input.documentNumber ? `<div style="opacity:0.9;">#${escapeHtml(input.documentNumber)}</div>` : ''}
           </div>
         </div>`;
@@ -361,13 +364,18 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(input.title)} ${input.documentNumber ? `#${escapeHtml(input.documentNumber)}` : ''}</title>
   <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    @page { @bottom-center { content: "Page " counter(page) " of " counter(pages); font-size: 8.5pt; color: #64748b; } }
     body { font-family: ${theme.fontFamily}; margin: 0; padding: 0; color: #1e293b; background: #fff; }
     .content { padding: 40px; max-width: 800px; margin: 0 auto; }
     .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-    .total-box { background: ${accent}15; border: 2px solid ${accent}; border-radius: ${theme.roundedCorners ? '12px' : '0'}; padding: 24px; text-align: right; margin-top: 24px; }
-    .total-amount { font-size: 36px; font-weight: bold; color: ${primary}; }
-    .status-ribbon { display: inline-block; padding: 4px 12px; border-radius: 999px; background: ${accent}; color: #fff; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+    .total-box { background: #f8fafc; border: 1px solid ${accent}; border-radius: 0; padding: 20px; text-align: right; margin-top: 24px; }
+    .total-amount { font-size: 28px; font-weight: bold; color: ${primary}; }
+    .status-ribbon { display: inline-block; padding: 4px 12px; border-radius: 2px; border: 1px solid ${accent}; color: ${primary}; font-size: 12px; font-weight: 600; text-transform: uppercase; }
     .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+    h2 { page-break-after: avoid; }
+    .signature-block { page-break-inside: avoid; }
+    table thead { display: table-header-group; }
   </style>
 </head>
 <body>
@@ -386,20 +394,20 @@ export function renderDocumentHtml(input: RenderDocumentInput): string {
       </div>
     </div>
     ${sectionsHtml}
-    ${lineItemsHtml}
+    ${isAgreement ? '' : lineItemsHtml}
     ${
-      input.total != null
+      showTotalBox
         ? `<div class="total-box">
             <div style="color:#64748b;font-size:14px;">Total due</div>
-            <div class="total-amount">$${input.total.toFixed(2)}</div>
+            <div class="total-amount">$${input.total!.toFixed(2)}</div>
             ${input.subtotal != null ? `<div style="color:#64748b;font-size:12px;margin-top:8px;">Subtotal: $${input.subtotal.toFixed(2)}${input.tax != null ? ` · Tax: $${input.tax.toFixed(2)}` : ''}</div>` : ''}
           </div>`
         : ''
     }
-    ${input.notes ? `<div style="margin-top:32px;padding:16px;background:#f8fafc;border-radius:8px;"><strong>Notes</strong><p style="margin:8px 0 0;">${escapeHtml(input.notes)}</p></div>` : ''}
-    ${input.paymentInstructions ? `<div style="margin-top:16px;"><strong>Payment details</strong><p style="margin:8px 0 0;">${escapeHtml(input.paymentInstructions)}</p></div>` : ''}
+    ${input.notes ? `<div style="margin-top:32px;padding:16px;border:1px solid #e2e8f0;"><strong>Notes</strong><p style="margin:8px 0 0;">${escapeHtml(input.notes)}</p></div>` : ''}
+    ${input.paymentInstructions && !isAgreement ? `<div style="margin-top:16px;"><strong>Payment details</strong><p style="margin:8px 0 0;">${escapeHtml(input.paymentInstructions)}</p></div>` : ''}
     <div class="footer">
-      ${escapeHtml(branding.name || 'Your Business')}
+      ${escapeHtml(branding.name || 'Unconfigured Business')}
       ${branding.supportEmail ? ` · ${escapeHtml(branding.supportEmail)}` : ''}
     </div>
   </div>
