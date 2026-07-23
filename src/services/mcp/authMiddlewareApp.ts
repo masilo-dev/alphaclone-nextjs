@@ -192,9 +192,9 @@ async function lookupOAuthToken(
 
     const { data, error } = await query.maybeSingle();
 
-    if (!error && data) {
-      return { data: data as Record<string, unknown>, error: null };
-    }
+        if (!error && data && typeof data === 'object') {
+          return { data: data as unknown as Record<string, unknown>, error: null };
+        }
 
     if (error) {
       lastError = error;
@@ -392,12 +392,15 @@ export async function validateMCPAuthApp(
 
     // Best-effort last_used_at (never block auth)
     if (tokenData.id) {
-      void supabaseAdmin
-        .from('mcp_oauth_tokens')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('id', tokenData.id)
-        .then(() => undefined)
-        .catch(() => undefined);
+  void Promise.resolve(
+    supabaseAdmin
+      .from('mcp_oauth_tokens')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('id', tokenData.id)
+  ).then(
+    () => undefined,
+    () => undefined
+  );
     }
 
     return {

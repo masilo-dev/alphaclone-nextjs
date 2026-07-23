@@ -59,12 +59,13 @@ export function hasRequiredScopes(
   required: string[]
 ): { valid: boolean; missing: string[] } {
   if (!required.length) return { valid: true, missing: [] };
-  const held = new Set(sanitizeScopes(tokenScopes));
+  // Use Set<string> so required scope strings type-check against held scopes.
+  const held = new Set<string>(sanitizeScopes(tokenScopes));
   // Legacy tokens with only read/write still cover tools/resources when both present
   if (held.has(MCP_SCOPES.READ) && held.has(MCP_SCOPES.WRITE)) {
     held.add(MCP_SCOPES.TOOLS);
     held.add(MCP_SCOPES.RESOURCES);
   }
-  const missing = required.filter((s) => !held.has(s as McpScope) && !held.has(s));
+  const missing = required.filter((s) => !held.has(s));
   return { valid: missing.length === 0, missing };
 }
