@@ -399,8 +399,13 @@ export async function POST(req: NextRequest) {
 
       let tokenInsertError = (await supabase.from('mcp_oauth_tokens').insert(tokenRow)).error;
 
-      // Compatibility: older schemas without hash / refresh_expires_at columns
-      if (tokenInsertError?.code === '42703') {
+      // Compatibility: older schemas / stale PostgREST cache without hash columns
+      // PGRST204 = column missing from schema cache; 42703 = undefined_column
+      if (
+        tokenInsertError?.code === '42703' ||
+        tokenInsertError?.code === 'PGRST204' ||
+        /access_token_hash|refresh_token_hash|refresh_expires_at|token_type/i.test(tokenInsertError?.message || '')
+      ) {
         const { access_token_hash: _a, refresh_token_hash: _r, refresh_expires_at: _e, token_type: _t, ...legacy } = tokenRow;
         tokenInsertError = (await supabase.from('mcp_oauth_tokens').insert(legacy)).error;
       }
@@ -535,7 +540,11 @@ export async function POST(req: NextRequest) {
       };
 
       let rotateError = (await supabase.from('mcp_oauth_tokens').insert(rotateRow)).error;
-      if (rotateError?.code === '42703') {
+      if (
+        rotateError?.code === '42703' ||
+        rotateError?.code === 'PGRST204' ||
+        /access_token_hash|refresh_token_hash|refresh_expires_at|token_type|token_family_id/i.test(rotateError?.message || '')
+      ) {
         const {
           access_token_hash: _a,
           refresh_token_hash: _r,
