@@ -685,6 +685,7 @@ type FacebookIntegrationIdentity = {
   pageAccessToken: string | null;
   metadata: Record<string, unknown> | null;
   updated_at?: string | null;
+  expires_at?: string | null;
 };
 
 function canPublishFacebookPage(identity: FacebookIntegrationIdentity): boolean {
@@ -866,6 +867,7 @@ class AlphaCloneMCPServer {
           pageAccessToken: tokens.pageAccessToken,
           metadata: row.metadata,
           updated_at: row.updated_at,
+          expires_at: row.expires_at,
         });
       }
       return resolved;
@@ -3778,12 +3780,42 @@ class AlphaCloneMCPServer {
           let status: 'scheduled' | 'queued' | 'published' = publish_now ? 'queued' : 'scheduled';
           let publishedAt: string | null = null;
           let facebookPostId: string | null = null;
+          let facebookPostUrl: string | null = null;
           const assuredIntegration = hasFacebook ? integration : null;
 
           if (publish_now && hasFacebook) {
             if (!assuredIntegration?.pageAccessToken) {
               throw new Error('Connected integration is not publishable for this page. Connect a Facebook Page with publish permissions.');
             }
+
+            const {
+              confirmFacebookPublish,
+              FacebookPublishError,
+              inspectFacebookPublishToken,
+              logFacebookPublishTokenHealth,
+            } = await import('@/lib/facebook/verifyFacebookPost');
+
+            const tokenHealth = inspectFacebookPublishToken({
+              pageId: resolvedPageId,
+              pageAccessToken: assuredIntegration.pageAccessToken,
+              expiresAt: assuredIntegration.expires_at || null,
+              metadata: assuredIntegration.metadata,
+            });
+            logFacebookPublishTokenHealth(tokenHealth);
+
+            if (tokenHealth.isExpired) {
+              throw new FacebookPublishError(
+                'Facebook page token is expired or about to expire. Reconnect the Facebook Page in AlphaClone Integrations before posting.',
+                'TOKEN_EXPIRED'
+              );
+            }
+            if (!tokenHealth.hasPagesManagePosts) {
+              throw new FacebookPublishError(
+                'Facebook page token is missing publish permission (pages_manage_posts / CREATE_CONTENT). Reconnect the Page and grant pages_manage_posts.',
+                'MISSING_SCOPE'
+              );
+            }
+
             const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
             graph.searchParams.set('access_token', assuredIntegration.pageAccessToken);
             const body = new URLSearchParams();
@@ -3809,9 +3841,17 @@ class AlphaCloneMCPServer {
               const msg = fb?.error?.message || 'Facebook publish failed';
               throw new Error(msg);
             }
+
+            // Hard verification: require Graph post id + confirm via GET /{post-id}
+            const verified = await confirmFacebookPublish({
+              graphResponse: fb,
+              pageAccessToken: assuredIntegration.pageAccessToken,
+              pageId: resolvedPageId,
+            });
             status = 'published';
             publishedAt = new Date().toISOString();
-            facebookPostId = fb?.id || null;
+            facebookPostId = verified.postId;
+            facebookPostUrl = verified.postUrl;
           }
 
           const { data, error } = await supabaseAdmin
@@ -3896,9 +3936,14 @@ class AlphaCloneMCPServer {
               {
                 type: 'text',
                 text: `Social post created: ${JSON.stringify({
-                  post: data,
+                  post: {
+                    ...data,
+                    facebook_post_url: facebookPostUrl,
+                    verified: publish_now && hasFacebook ? true : undefined,
+                  },
                   task: taskResult,
                   page: hasFacebook ? { page_id: resolvedPageId, page_name: integration?.page_name || null } : null,
+                  facebook_post_url: facebookPostUrl,
                   refinement: auto_refine_with_context !== false ? 'applied brand context' : 'skipped',
                   logged_run: { agent: detectedAgent, status: 'completed' },
                   has_cta: postPrep.has_cta,
