@@ -137,22 +137,47 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const since = new Date(Date.now() - args.days * 86400000).toISOString();
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('social_posts')
-      .select('id, platform, status, published_at, analytics, engagement, likes, comments, shares, impressions')
+      .select('id, platforms, platform, status, published_at, analytics, caption, likes, comments, shares, impressions, engagement')
       .eq('tenant_id', args.tenant_id)
       .gte('published_at', since)
       .limit(500);
+
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data, error } = await supabase
+        .from('social_posts')
+        .select('id, platforms, status, published_at, analytics, caption')
+        .eq('tenant_id', args.tenant_id)
+        .gte('published_at', since)
+        .limit(500));
+    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
-    const posts = data || [];
+    const posts = (data || []).map((p: any) => {
+      const platforms: string[] = Array.isArray(p.platforms)
+        ? p.platforms
+        : p.platform
+          ? [p.platform]
+          : ['unknown'];
+      const analytics = p.analytics || {};
+      return {
+        ...p,
+        platform: p.platform || platforms[0] || 'unknown',
+        likes: Number(p.likes ?? analytics.likes ?? 0),
+        comments: Number(p.comments ?? analytics.comments ?? 0),
+        shares: Number(p.shares ?? analytics.shares ?? 0),
+        impressions: Number(p.impressions ?? analytics.impressions ?? 0),
+      };
+    });
+
     const totals = posts.reduce(
       (acc: any, p: any) => {
         acc.posts += 1;
-        acc.likes += Number(p.likes || p.analytics?.likes || 0);
-        acc.comments += Number(p.comments || p.analytics?.comments || 0);
-        acc.shares += Number(p.shares || p.analytics?.shares || 0);
-        acc.impressions += Number(p.impressions || p.analytics?.impressions || 0);
+        acc.likes += p.likes;
+        acc.comments += p.comments;
+        acc.shares += p.shares;
+        acc.impressions += p.impressions;
         return acc;
       },
       { posts: 0, likes: 0, comments: 0, shares: 0, impressions: 0 }
@@ -192,21 +217,37 @@ defineConnectorTool({
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
     const status = args.status || (args.scheduled_at ? 'scheduled' : 'queued');
-    const { data, error } = await supabase
-      .from('social_posts')
-      .insert({
+    const now = new Date().toISOString();
+    const payload = {
+      tenant_id: args.tenant_id,
+      user_id: ctx.userId,
+      created_by: ctx.userId,
+      platforms: [args.platform],
+      platform: args.platform,
+      caption: args.content,
+      content: args.content,
+      status,
+      scheduled_at: args.scheduled_at || now,
+      media_urls: args.media_urls || [],
+      created_at: now,
+      updated_at: now,
+    };
+
+    let { data, error } = await supabase.from('social_posts').insert(payload).select().single();
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      const minimal = {
         tenant_id: args.tenant_id,
-        created_by: ctx.userId,
-        platform: args.platform,
-        content: args.content,
+        user_id: ctx.userId,
+        platforms: [args.platform],
+        caption: args.content,
         status,
-        scheduled_at: args.scheduled_at || new Date().toISOString(),
+        scheduled_at: args.scheduled_at || now,
         media_urls: args.media_urls || [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+        created_at: now,
+        updated_at: now,
+      };
+      ({ data, error } = await supabase.from('social_posts').insert(minimal).select().single());
+    }
     if (error) throwConnectorError('CREATE_FAILED', error.message);
     return data;
   },
@@ -235,10 +276,27 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { data: existing, error: findErr } = await supabase
       .from('social_posts')
-      .select('id, status, platform')
+      .select('id, status, platforms, platform')
       .eq('tenant_id', args.tenant_id)
       .eq('id', args.post_id)
       .maybeSingle();
+    if (findErr && (findErr.code === '42703' || /column|does not exist/i.test(findErr.message || ''))) {
+      const retry = await supabase
+        .from('social_posts')
+        .select('id, status, platforms')
+        .eq('tenant_id', args.tenant_id)
+        .eq('id', args.post_id)
+        .maybeSingle();
+      if (retry.error) throwConnectorError('QUERY_FAILED', retry.error.message);
+      if (!retry.data) throwConnectorError('NOT_FOUND', 'Post not found');
+      const { error } = await supabase
+        .from('social_posts')
+        .delete()
+        .eq('tenant_id', args.tenant_id)
+        .eq('id', args.post_id);
+      if (error) throwConnectorError('DELETE_FAILED', error.message);
+      return { deleted: true, post: retry.data };
+    }
     if (findErr) throwConnectorError('QUERY_FAILED', findErr.message);
     if (!existing) throwConnectorError('NOT_FOUND', 'Post not found');
 
@@ -273,27 +331,39 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const since = new Date(Date.now() - args.days * 86400000).toISOString();
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('social_posts')
-      .select('platform, status, likes, comments, shares, impressions, published_at, analytics')
+      .select('platforms, platform, status, likes, comments, shares, impressions, published_at, analytics')
       .eq('tenant_id', args.tenant_id)
       .gte('created_at', since)
       .limit(1000);
+
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data, error } = await supabase
+        .from('social_posts')
+        .select('platforms, status, published_at, analytics')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(1000));
+    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
     const byPlatform: Record<string, any> = {};
     for (const post of data || []) {
-      const platform = String((post as any).platform || 'unknown');
-      if (!byPlatform[platform]) {
-        byPlatform[platform] = { posts: 0, likes: 0, comments: 0, shares: 0, impressions: 0 };
+      const platforms: string[] = Array.isArray((post as any).platforms) && (post as any).platforms.length
+        ? (post as any).platforms
+        : [(post as any).platform || 'unknown'];
+      for (const platform of platforms) {
+        if (!byPlatform[platform]) {
+          byPlatform[platform] = { posts: 0, likes: 0, comments: 0, shares: 0, impressions: 0 };
+        }
+        const analytics = (post as any).analytics || {};
+        byPlatform[platform].posts += 1;
+        byPlatform[platform].likes += Number((post as any).likes ?? analytics.likes ?? 0);
+        byPlatform[platform].comments += Number((post as any).comments ?? analytics.comments ?? 0);
+        byPlatform[platform].shares += Number((post as any).shares ?? analytics.shares ?? 0);
+        byPlatform[platform].impressions += Number((post as any).impressions ?? analytics.impressions ?? 0);
       }
-      byPlatform[platform].posts += 1;
-      byPlatform[platform].likes += Number((post as any).likes || (post as any).analytics?.likes || 0);
-      byPlatform[platform].comments += Number((post as any).comments || (post as any).analytics?.comments || 0);
-      byPlatform[platform].shares += Number((post as any).shares || (post as any).analytics?.shares || 0);
-      byPlatform[platform].impressions += Number(
-        (post as any).impressions || (post as any).analytics?.impressions || 0
-      );
     }
 
     return { window_days: args.days, by_platform: byPlatform, generated_at: new Date().toISOString() };

@@ -73,15 +73,40 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { limit, offset } = normalizePagination(args);
     const q = args.query.replace(/[%_,]/g, ' ').trim();
-    const { data, error, count } = await supabase
+    const orFilter = [
+      `business_name.ilike.%${q}%`,
+      `email.ilike.%${q}%`,
+      `phone.ilike.%${q}%`,
+      `notes.ilike.%${q}%`,
+      `contact_name.ilike.%${q}%`,
+    ].join(',');
+
+    let query = supabase
       .from('leads')
-      .select('*', { count: 'exact' })
-      .eq('tenant_id', args.tenant_id)
-      .or(
-        `business_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,contact_name.ilike.%${q}%,notes.ilike.%${q}%`
+      .select(
+        'id, tenant_id, owner_id, business_name, contact_name, email, phone, industry, location, source, stage, status, value, notes, created_at, updated_at',
+        { count: 'exact' }
       )
+      .eq('tenant_id', args.tenant_id)
+      .or(orFilter)
       .order('updated_at', { ascending: false })
       .range(offset, offset + limit - 1);
+
+    let { data, error, count } = await query;
+
+    // Compatibility: if contact_name/updated_at/status not yet migrated, retry with core columns.
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data, error, count } = await supabase
+        .from('leads')
+        .select(
+          'id, tenant_id, owner_id, business_name, email, phone, industry, location, source, stage, value, notes, created_at',
+          { count: 'exact' }
+        )
+        .eq('tenant_id', args.tenant_id)
+        .or(`business_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,notes.ilike.%${q}%`)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1));
+    }
 
     if (error) throwConnectorError('QUERY_FAILED', error.message);
     return okResult('search_leads', { leads: data || [], query: args.query }, {
@@ -91,6 +116,7 @@ defineConnectorTool({
         returned: (data || []).length,
         total: count ?? null,
       }),
+      receipt: null,
     });
   },
 });
@@ -136,27 +162,42 @@ defineConnectorTool({
 
     const supabase = createSupabaseAdminClient();
     const phone = normalizePhoneForStorage(args.phone);
-    const { data, error } = await supabase
-      .from('leads')
-      .insert({
+    const now = new Date().toISOString();
+    const fullPayload: Record<string, unknown> = {
+      tenant_id: args.tenant_id,
+      owner_id: ctx.userId,
+      business_name: primaryName,
+      contact_name: args.contact_name || null,
+      email: args.email || null,
+      phone: phone || null,
+      industry: args.industry || null,
+      location: args.location || null,
+      source: args.source || 'mcp_connector',
+      notes: args.notes || null,
+      linkedin_url: args.linkedin_url || null,
+      status: 'new',
+      stage: 'new',
+      created_at: now,
+      updated_at: now,
+    };
+
+    let { data, error } = await supabase.from('leads').insert(fullPayload).select().single();
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      const minimal = {
         tenant_id: args.tenant_id,
         owner_id: ctx.userId,
         business_name: primaryName,
-        contact_name: args.contact_name || null,
         email: args.email || null,
         phone: phone || null,
         industry: args.industry || null,
         location: args.location || null,
-        source: args.source || 'mcp_chatgpt',
+        source: args.source || 'mcp_connector',
         notes: args.notes || null,
-        linkedin_url: args.linkedin_url || null,
-        status: 'new',
         stage: 'new',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+        created_at: now,
+      };
+      ({ data, error } = await supabase.from('leads').insert(minimal).select().single());
+    }
 
     if (error) throwConnectorError('CREATE_FAILED', error.message);
     try {
@@ -222,13 +263,28 @@ defineConnectorTool({
     }
     if (args.phone !== undefined) updates.phone = normalizePhoneForStorage(args.phone);
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('leads')
       .update(updates)
       .eq('tenant_id', args.tenant_id)
       .eq('id', args.lead_id)
       .select()
       .single();
+
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      const fallback: Record<string, unknown> = {};
+      for (const key of ['business_name', 'email', 'industry', 'location', 'source', 'notes', 'stage'] as const) {
+        if (args[key] !== undefined) fallback[key] = args[key];
+      }
+      if (args.phone !== undefined) fallback.phone = normalizePhoneForStorage(args.phone);
+      ({ data, error } = await supabase
+        .from('leads')
+        .update(fallback)
+        .eq('tenant_id', args.tenant_id)
+        .eq('id', args.lead_id)
+        .select()
+        .single());
+    }
 
     if (error) throwConnectorError('UPDATE_FAILED', error.message);
     return data;
@@ -268,7 +324,7 @@ defineConnectorTool({
       return { deleted: true, lead_id: args.lead_id, mode: 'hard' };
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('leads')
       .update({
         status: 'archived',
@@ -279,6 +335,16 @@ defineConnectorTool({
       .eq('id', args.lead_id)
       .select('id, status, stage')
       .single();
+
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data, error } = await supabase
+        .from('leads')
+        .update({ stage: 'closed_lost' })
+        .eq('tenant_id', args.tenant_id)
+        .eq('id', args.lead_id)
+        .select('id, stage')
+        .single());
+    }
 
     if (error) throwConnectorError('DELETE_FAILED', error.message);
     return { deleted: true, lead: data, mode: 'soft_archive' };
@@ -384,25 +450,33 @@ defineConnectorTool({
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data: leads, error } = await supabase
+    let { data: leads, error } = await supabase
       .from('leads')
       .select('id, stage, status, created_at, updated_at')
       .eq('tenant_id', args.tenant_id)
       .limit(5000);
+
+    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data: leads, error } = await supabase
+        .from('leads')
+        .select('id, stage, created_at')
+        .eq('tenant_id', args.tenant_id)
+        .limit(5000));
+    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
     const byStage: Record<string, number> = {};
     const byStatus: Record<string, number> = {};
     for (const lead of leads || []) {
       const stage = String((lead as any).stage || 'unknown');
-      const status = String((lead as any).status || 'unknown');
+      const status = String((lead as any).status || (lead as any).stage || 'unknown');
       byStage[stage] = (byStage[stage] || 0) + 1;
       byStatus[status] = (byStatus[status] || 0) + 1;
     }
 
     const { data: deals } = await supabase
       .from('deals')
-      .select('id, stage, value, status')
+      .select('id, stage, value')
       .eq('tenant_id', args.tenant_id)
       .limit(2000);
 

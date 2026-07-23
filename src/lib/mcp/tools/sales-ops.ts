@@ -29,15 +29,26 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { limit, offset } = normalizePagination(args);
     let query = supabase
-      .from('invoices')
+      .from('business_invoices')
       .select('*', { count: 'exact' })
       .eq('tenant_id', args.tenant_id)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
     if (args.status) query = query.eq('status', args.status);
-    const { data, error, count } = await query;
+    let { data, error, count } = await query;
+
+    if (error?.code === '42P01') {
+      let q = supabase
+        .from('invoices')
+        .select('*', { count: 'exact' })
+        .eq('tenant_id', args.tenant_id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+      if (args.status) q = q.eq('status', args.status);
+      ({ data, error, count } = await q);
+    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
-    return okResult('invoices', { invoices: data || [] }, {
+    return okResult('invoices', { invoices: data || [], source: 'business_invoices' }, {
       pagination: buildPaginationMeta({
         limit,
         offset,
@@ -156,12 +167,22 @@ defineConnectorTool({
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('subscriptions')
+    // Map to tenant_subscriptions (subscriptions view or direct table)
+    let { data, error } = await supabase
+      .from('tenant_subscriptions')
       .select('*')
       .eq('tenant_id', args.tenant_id)
       .order('created_at', { ascending: false })
       .limit(args.limit);
+
+    if (error?.code === '42P01') {
+      ({ data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('tenant_id', args.tenant_id)
+        .order('created_at', { ascending: false })
+        .limit(args.limit));
+    }
 
     if (error?.code === '42P01') {
       const { data: tenant } = await supabase
@@ -172,7 +193,7 @@ defineConnectorTool({
       return { subscriptions: tenant ? [tenant] : [], source: 'tenants' };
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
-    return { subscriptions: data || [] };
+    return { subscriptions: data || [], source: 'tenant_subscriptions' };
   },
 });
 
@@ -198,23 +219,47 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const since = new Date(Date.now() - args.days * 86400000).toISOString();
 
-    const { data: invoices } = await supabase
-      .from('invoices')
-      .select('id, status, total, amount_due, amount_paid, created_at, paid_at')
+    let { data: invoices, error } = await supabase
+      .from('business_invoices')
+      .select('id, status, total, amount_paid, balance_due, created_at, paid_at, currency')
       .eq('tenant_id', args.tenant_id)
       .gte('created_at', since)
       .limit(2000);
 
-    const paid = (invoices || []).filter((i: any) => String(i.status).toLowerCase() === 'paid');
-    const outstanding = (invoices || []).filter((i: any) =>
-      ['sent', 'overdue', 'partial'].includes(String(i.status).toLowerCase())
+    if (error && (error.code === '42P01' || error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data: invoices, error } = await supabase
+        .from('business_invoices')
+        .select('id, status, total, created_at')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(2000));
+    }
+
+    if (error?.code === '42P01') {
+      ({ data: invoices, error } = await supabase
+        .from('invoices')
+        .select('id, status, amount, total, amount_paid, amount_due, created_at, paid_at, currency')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(2000));
+    }
+
+    if (error) throwConnectorError('QUERY_FAILED', error.message);
+
+    const rows = (invoices || []).map((i: any) => ({
+      ...i,
+      total: Number(i.total ?? i.amount ?? 0),
+      amount_paid: Number(i.amount_paid ?? (String(i.status).toLowerCase() === 'paid' ? i.total ?? i.amount ?? 0 : 0)),
+      amount_due: Number(i.amount_due ?? i.balance_due ?? Math.max(Number(i.total ?? i.amount ?? 0) - Number(i.amount_paid ?? 0), 0)),
+    }));
+
+    const paid = rows.filter((i) => String(i.status).toLowerCase() === 'paid');
+    const outstanding = rows.filter((i) =>
+      ['sent', 'overdue', 'partial', 'partially_paid'].includes(String(i.status).toLowerCase())
     );
 
-    const paidTotal = paid.reduce((s: number, i: any) => s + (Number(i.total || i.amount_paid) || 0), 0);
-    const outstandingTotal = outstanding.reduce(
-      (s: number, i: any) => s + (Number(i.amount_due || i.total) || 0),
-      0
-    );
+    const paidTotal = paid.reduce((s, i) => s + (Number(i.amount_paid || i.total) || 0), 0);
+    const outstandingTotal = outstanding.reduce((s, i) => s + (Number(i.amount_due || i.total) || 0), 0);
 
     const { data: deals } = await supabase
       .from('deals')
@@ -227,7 +272,7 @@ defineConnectorTool({
 
     return {
       window_days: args.days,
-      invoices_created: (invoices || []).length,
+      invoices_created: rows.length,
       paid_total: paidTotal,
       outstanding_total: outstandingTotal,
       pipeline_value: pipelineValue,

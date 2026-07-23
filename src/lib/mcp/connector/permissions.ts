@@ -59,6 +59,7 @@ const ROLE_PERMISSIONS: Record<ConnectorRole, ConnectorPermission[]> = {
   member: [
     'platform:read',
     'audit:read',
+    'audit:run',
     'bonnie:read',
     'bonnie:write',
     'bonnie:execute',
@@ -99,40 +100,56 @@ function normalizeRole(raw: unknown): ConnectorRole {
   if (role === 'owner' || role === 'admin' || role === 'member' || role === 'viewer' || role === 'guest') {
     return role;
   }
-  if (role === 'super_admin' || role === 'superadmin') return 'owner';
+  if (role === 'super_admin' || role === 'superadmin' || role === 'tenant_admin') return 'owner';
   return 'member';
+}
+
+async function isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
+  const supabase = createSupabaseAdminClient();
+  const { data: tenant } = await supabase.from('tenants').select('*').eq('id', tenantId).maybeSingle();
+  if (!tenant) return false;
+  const ownerId =
+    (tenant as any).owner_id || (tenant as any).created_by || (tenant as any).user_id || null;
+  return Boolean(ownerId && ownerId === userId);
+}
+
+async function readMembershipRole(tenantId: string, userId: string): Promise<ConnectorRole | null> {
+  const supabase = createSupabaseAdminClient();
+
+  // Prefer tenant_users (canonical in many deployments)
+  const { data: tu, error: tuErr } = await supabase
+    .from('tenant_users')
+    .select('role')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!tuErr && tu?.role) return normalizeRole(tu.role);
+
+  const { data: tm, error: tmErr } = await supabase
+    .from('tenant_members')
+    .select('role')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (!tmErr && tm?.role) return normalizeRole(tm.role);
+
+  return null;
 }
 
 export async function resolveTenantRole(
   tenantId: string,
   userId: string
 ): Promise<{ role: ConnectorRole; permissions: ConnectorPermission[] }> {
-  const supabase = createSupabaseAdminClient();
+  const membershipRole = await readMembershipRole(tenantId, userId);
+  const owner = await isTenantOwner(tenantId, userId);
 
-  const { data: membership } = await supabase
-    .from('tenant_members')
-    .select('role')
-    .eq('tenant_id', tenantId)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  if (membership?.role) {
-    const role = normalizeRole(membership.role);
-    return { role, permissions: ROLE_PERMISSIONS[role] };
+  // Root cause: owners were often stored as membership role=member, blocking audit:run.
+  if (owner) {
+    return { role: 'owner', permissions: ROLE_PERMISSIONS.owner };
   }
 
-  // Fallback: tenant owners table / profiles
-  const { data: tenant, error: tenantErr } = await supabase
-    .from('tenants')
-    .select('*')
-    .eq('id', tenantId)
-    .maybeSingle();
-
-  if (!tenantErr && tenant) {
-    const ownerId = (tenant as any).owner_id || (tenant as any).created_by || (tenant as any).user_id;
-    if (ownerId && ownerId === userId) {
-      return { role: 'owner', permissions: ROLE_PERMISSIONS.owner };
-    }
+  if (membershipRole) {
+    return { role: membershipRole, permissions: ROLE_PERMISSIONS[membershipRole] };
   }
 
   return { role: 'member', permissions: ROLE_PERMISSIONS.member };

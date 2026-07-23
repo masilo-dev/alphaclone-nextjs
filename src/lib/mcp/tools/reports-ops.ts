@@ -71,22 +71,45 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const since = new Date(Date.now() - args.days * 86400000).toISOString();
-    const { data, error } = await supabase
-      .from('invoices')
+    let { data, error } = await supabase
+      .from('business_invoices')
       .select('id, status, total, amount_paid, currency, created_at, paid_at')
       .eq('tenant_id', args.tenant_id)
       .gte('created_at', since)
       .limit(5000);
+
+    if (error && (error.code === '42P01' || error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
+      ({ data, error } = await supabase
+        .from('business_invoices')
+        .select('id, status, total, created_at')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(5000));
+    }
+
+    if (error?.code === '42P01') {
+      ({ data, error } = await supabase
+        .from('invoices')
+        .select('id, status, amount, total, amount_paid, currency, created_at, paid_at')
+        .eq('tenant_id', args.tenant_id)
+        .gte('created_at', since)
+        .limit(5000));
+    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
-    const rows = data || [];
-    const paid = rows.filter((r: any) => String(r.status).toLowerCase() === 'paid');
+    const rows = (data || []).map((r: any) => ({
+      ...r,
+      total: Number(r.total ?? r.amount ?? 0),
+      amount_paid: Number(r.amount_paid ?? 0),
+    }));
+    const paid = rows.filter((r) => String(r.status).toLowerCase() === 'paid');
     return {
       window_days: args.days,
       invoice_count: rows.length,
       paid_count: paid.length,
-      paid_revenue: paid.reduce((s: number, r: any) => s + (Number(r.amount_paid || r.total) || 0), 0),
-      invoiced_total: rows.reduce((s: number, r: any) => s + (Number(r.total) || 0), 0),
+      paid_revenue: paid.reduce((s, r) => s + (Number(r.amount_paid || r.total) || 0), 0),
+      invoiced_total: rows.reduce((s, r) => s + (Number(r.total) || 0), 0),
+      source: 'business_invoices',
     };
   },
 });

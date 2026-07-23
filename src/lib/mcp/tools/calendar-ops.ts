@@ -30,17 +30,18 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { limit, offset } = normalizePagination(args);
+    // Prefer calendar_events (canonical). Avoid EventBus `events` table.
     let query = supabase
-      .from('events')
+      .from('calendar_events')
       .select('*', { count: 'exact' })
       .eq('tenant_id', args.tenant_id)
-      .order('start_at', { ascending: true })
+      .order('start_time', { ascending: true })
       .range(offset, offset + limit - 1);
-    if (args.from) query = query.gte('start_at', args.from);
-    if (args.to) query = query.lte('start_at', args.to);
+    if (args.from) query = query.gte('start_time', args.from);
+    if (args.to) query = query.lte('start_time', args.to);
 
     let { data, error, count } = await query;
-    if (error?.code === '42P01' || error?.message?.includes('start_at')) {
+    if (error && (error.code === '42703' || /start_time|does not exist/i.test(error.message || ''))) {
       ({ data, error, count } = await supabase
         .from('calendar_events')
         .select('*', { count: 'exact' })
@@ -49,7 +50,7 @@ defineConnectorTool({
         .range(offset, offset + limit - 1));
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
-    return okResult('events', { events: data || [] }, {
+    return okResult('events', { events: data || [], source: 'calendar_events' }, {
       pagination: buildPaginationMeta({
         limit,
         offset,
@@ -172,23 +173,33 @@ defineConnectorTool({
     const supabase = createSupabaseAdminClient();
     const { limit, offset } = normalizePagination(args);
 
+    // Prefer appointments view (maps calendar_events) then calendar_events directly
     let { data, error, count } = await supabase
-      .from('appointments')
+      .from('calendar_events')
       .select('*', { count: 'exact' })
       .eq('tenant_id', args.tenant_id)
-      .order('start_at', { ascending: true })
+      .order('start_time', { ascending: true })
       .range(offset, offset + limit - 1);
 
-    if (error?.code === '42P01') {
+    if (error && (error.code === '42703' || /start_time|does not exist/i.test(error.message || ''))) {
       ({ data, error, count } = await supabase
-        .from('meetings')
+        .from('calendar_events')
         .select('*', { count: 'exact' })
         .eq('tenant_id', args.tenant_id)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1));
     }
+
+    if (error?.code === '42P01') {
+      ({ data, error, count } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact' })
+        .eq('tenant_id', args.tenant_id)
+        .order('start_at', { ascending: true })
+        .range(offset, offset + limit - 1));
+    }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
-    return okResult('appointments', { appointments: data || [] }, {
+    return okResult('appointments', { appointments: data || [], source: 'calendar_events' }, {
       pagination: buildPaginationMeta({
         limit,
         offset,

@@ -9,6 +9,7 @@ import { isProduction } from '@/lib/security/productionGuard';
 
 let redisClient: Redis | null = null;
 let redisInitAttempted = false;
+let redisMissingWarned = false;
 
 export const isRedisConfigured = (): boolean => {
   return Boolean(ENV.UPSTASH_REDIS_REST_URL?.trim() && ENV.UPSTASH_REDIS_REST_TOKEN?.trim());
@@ -29,6 +30,12 @@ export function getRedis(options?: { requireConfigured?: boolean }): Redis | nul
     if (required) {
       throw new Error(
         'UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required for this operation'
+      );
+    }
+    if (!redisMissingWarned && process.env.NODE_ENV !== 'test') {
+      redisMissingWarned = true;
+      console.warn(
+        '[redis] Unavailable: set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN. Falling back to in-process/no-op paths.'
       );
     }
     return null;

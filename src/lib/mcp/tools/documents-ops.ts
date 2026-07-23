@@ -30,31 +30,43 @@ defineConnectorTool({
     const { limit, offset } = normalizePagination(args);
     const q = args.query.replace(/[%_]/g, ' ').trim();
 
-    const { data: docs, error: docErr, count } = await supabase
+    let { data: docs, error: docErr, count } = await supabase
       .from('documents')
-      .select('id, title, name, mime_type, created_at, updated_at, storage_path', { count: 'exact' })
+      .select('id, title, name, mime_type, created_at, updated_at, storage_path, version', { count: 'exact' })
       .eq('tenant_id', args.tenant_id)
       .or(`title.ilike.%${q}%,name.ilike.%${q}%`)
       .order('updated_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (docErr?.code === '42P01') {
-      const { data: files, error, count: fileCount } = await supabase
-        .from('files')
-        .select('id, name, mime_type, created_at, updated_at, storage_path', { count: 'exact' })
-        .eq('tenant_id', args.tenant_id)
-        .ilike('name', `%${q}%`)
+      // Fall back to collaboration_documents (no tenant_id in some dumps — filter by title only when possible)
+      const { data: collab, error, count: cCount } = await supabase
+        .from('collaboration_documents')
+        .select('id, title, type, version, created_at, updated_at', { count: 'exact' })
+        .ilike('title', `%${q}%`)
         .order('updated_at', { ascending: false })
         .range(offset, offset + limit - 1);
       if (error) throwConnectorError('QUERY_FAILED', error.message);
-      return okResult('search_documents', { documents: files || [], source: 'files' }, {
-        pagination: buildPaginationMeta({
-          limit,
-          offset,
-          returned: (files || []).length,
-          total: fileCount ?? null,
-        }),
-      });
+      return okResult(
+        'search_documents',
+        {
+          documents: (collab || []).map((d: any) => ({
+            ...d,
+            name: d.title,
+            mime_type: 'text/plain',
+            storage_path: null,
+          })),
+          source: 'collaboration_documents',
+        },
+        {
+          pagination: buildPaginationMeta({
+            limit,
+            offset,
+            returned: (collab || []).length,
+            total: cCount ?? null,
+          }),
+        }
+      );
     }
     if (docErr) throwConnectorError('QUERY_FAILED', docErr.message);
     return okResult('search_documents', { documents: docs || [] }, {

@@ -47,10 +47,26 @@ export type PaginationMeta = {
   next_cursor: string | null;
 };
 
+export type ActionReceipt = {
+  action_id: string;
+  status: string;
+  provider?: string | null;
+  provider_reference?: string | null;
+  timestamp: string;
+  entity_id?: string | null;
+  entity_type?: string | null;
+  live_url?: string | null;
+  verification?: Record<string, unknown>;
+  rollback_available?: boolean;
+  retry_available?: boolean;
+};
+
 export type ConnectorSuccess<T> = {
   ok: true;
   tool: string;
   data: T;
+  receipt?: ActionReceipt | null;
+  error?: null;
   pagination?: PaginationMeta;
   meta?: Record<string, unknown>;
 };
@@ -58,11 +74,16 @@ export type ConnectorSuccess<T> = {
 export type ConnectorErrorBody = {
   ok: false;
   tool: string;
+  data?: null;
+  receipt?: null;
   error: {
     code: string;
     message: string;
+    retryable?: boolean;
+    approval_id?: string;
     details?: unknown;
   };
+  meta?: Record<string, unknown>;
 };
 
 export type ConnectorResult<T> = ConnectorSuccess<T> | ConnectorErrorBody;

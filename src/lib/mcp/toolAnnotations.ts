@@ -152,6 +152,28 @@ export const CHATGPT_CONNECTOR_TOOL_NAMES = [
   // ChatGPT Deep Research / company-knowledge style aliases
   'search',
   'fetch',
+  // Autonomous write surface (CRM / email / social / finance / workflow)
+  'search_contacts',
+  'update_contact',
+  'update_company',
+  'add_note',
+  'change_pipeline_stage',
+  'create_follow_up',
+  'send_transactional_email',
+  'get_delivery_status',
+  'upload_media',
+  'create_post',
+  'publish_now',
+  'schedule_post',
+  'get_post_status',
+  'get_post_analytics',
+  'mark_invoice_paid',
+  'validate_document',
+  'approve_workflow_step',
+  'reject_workflow_step',
+  'resume_workflow',
+  'get_workflow_run',
+  'negotiate_capabilities',
 ] as const;
 
 export function isChatgptClient(input?: {
