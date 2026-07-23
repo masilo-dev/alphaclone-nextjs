@@ -1,7 +1,14 @@
+export type McpToolAnnotations = {
+  readOnlyHint: boolean;
+  openWorldHint: boolean;
+  destructiveHint: boolean;
+};
+
 export type McpDiscoveryTool = {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
+  annotations?: McpToolAnnotations;
 };
 
 const tenantIdProp = { type: 'string', description: 'AlphaClone Workspace ID' };

@@ -163,6 +163,10 @@ describe('mcp connector helpers', () => {
         `registry missing ${modulePath}`
       );
     }
+    assert.ok(
+      registrySrc.includes("require('./tools/chatgpt-aliases')"),
+      'registry missing chatgpt-aliases'
+    );
   });
 
   it('exports platform audit engine', () => {
@@ -181,6 +185,26 @@ describe('mcp connector helpers', () => {
     );
     const missing = REQUIRED_CONNECTOR_TOOLS.filter((name) => !doc.tools?.[name]);
     assert.deepEqual(missing, [], `Missing ChatGPT annotations: ${missing.join(', ')}`);
+  });
+
+  it('attaches OpenAI-required annotations on unified tools/list output', () => {
+    const listSrc = fs.readFileSync(path.join(process.cwd(), 'src/lib/mcp/listAllTools.ts'), 'utf8');
+    const annSrc = fs.readFileSync(path.join(process.cwd(), 'src/lib/mcp/toolAnnotations.ts'), 'utf8');
+    const routeSrc = fs.readFileSync(path.join(process.cwd(), 'src/app/api/mcp/route.ts'), 'utf8');
+    const aliasSrc = fs.readFileSync(path.join(process.cwd(), 'src/lib/mcp/tools/chatgpt-aliases.ts'), 'utf8');
+
+    assert.match(listSrc, /resolveToolAnnotations/);
+    assert.match(listSrc, /annotations:/);
+    assert.match(listSrc, /forChatGPT/);
+    assert.match(listSrc, /name: 'search'/);
+    assert.match(listSrc, /name: 'fetch'/);
+    assert.match(annSrc, /readOnlyHint/);
+    assert.match(annSrc, /openWorldHint/);
+    assert.match(annSrc, /destructiveHint/);
+    assert.match(annSrc, /chatgpt-app-submission\.json/);
+    assert.match(routeSrc, /getUnifiedMcpTools\(\{/);
+    assert.match(aliasSrc, /name: 'search'/);
+    assert.match(aliasSrc, /name: 'fetch'/);
   });
 
   it('documents deployment and ChatGPT compatibility', () => {

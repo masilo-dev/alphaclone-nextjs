@@ -101,6 +101,7 @@ async function resolveAuth(req: NextRequest) {
         return {
           tenant_id: resolvedTenantId,
           user_id: user.id,
+          client_id: undefined as string | undefined,
         };
       }
     }
@@ -109,6 +110,11 @@ async function resolveAuth(req: NextRequest) {
   }
 
   return auth;
+}
+
+function authClientIdOf(auth: { client_id?: string } | { error: string }): string | null {
+  if ('error' in auth) return null;
+  return auth.client_id || null;
 }
 
 function unauthorizedFromAuth(req: NextRequest, auth: { error: string; status: number; wwwAuthenticate?: string }) {
@@ -212,6 +218,13 @@ export async function POST(req: NextRequest) {
       const initialAiState = await getInitialBusinessAIStateForTenant(tenantId);
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
+      let initClientId: string | null = null;
+      try {
+        const auth = await resolveAuth(req);
+        initClientId = authClientIdOf(auth);
+      } catch {
+        // ignore
+      }
       const { data: sessionRow, error: sessionError } = await supabaseAdmin
         .from('mcp_sessions')
         .insert({
@@ -220,6 +233,7 @@ export async function POST(req: NextRequest) {
           expires_at: expiresAt,
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
+            client_id: initClientId,
             protocol_version: protocolVersion,
             business_ai_version: initialAiState.version,
             business_ai_state: initialAiState,
@@ -257,7 +271,37 @@ export async function POST(req: NextRequest) {
   // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
     const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await getUnifiedMcpTools();
+
+    // Prefer live auth client_id; fall back to session metadata / UA for ChatGPT detection.
+    let clientId: string | null = null;
+    let clientLabel: string | null = null;
+    try {
+      const auth = await resolveAuth(req);
+      clientId = authClientIdOf(auth);
+    } catch {
+      // ignore — cookie/session path may still work below
+    }
+    if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+        const { data: sessionMeta } = await supabaseAdmin
+          .from('mcp_sessions')
+          .select('metadata')
+          .eq('id', mcpSessionId)
+          .maybeSingle();
+        const meta = (sessionMeta?.metadata || {}) as Record<string, unknown>;
+        if (typeof meta.client_label === 'string') clientLabel = meta.client_label;
+        if (typeof meta.client_id === 'string' && !clientId) clientId = meta.client_id;
+      } catch {
+        // ignore
+      }
+    }
+
+    const tools = await getUnifiedMcpTools({
+      clientId,
+      clientLabel,
+      userAgent: req.headers.get('user-agent'),
+    });
 
     return NextResponse.json({
       jsonrpc: '2.0',
@@ -597,7 +641,10 @@ export async function GET(req: NextRequest) {
     }
 
     const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await getUnifiedMcpTools();
+    const tools = await getUnifiedMcpTools({
+      clientId: authClientIdOf(auth),
+      userAgent: req.headers.get('user-agent'),
+    });
 
     return NextResponse.json({ tools, count: tools.length }, {
       headers: mcpJsonHeaders(req, {

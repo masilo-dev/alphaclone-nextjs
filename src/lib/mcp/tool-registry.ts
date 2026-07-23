@@ -233,4 +233,5 @@ export function initializeRegistry() {
   require('./tools/documents-ops');
   require('./tools/reports-ops');
   require('./tools/integrations-health');
+  require('./tools/chatgpt-aliases');
 }

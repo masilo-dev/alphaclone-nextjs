@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
   const mcpSessionId = req.headers.get('mcp-session-id');
   let tenantId = '';
   let userId = '';
+  let authClientId: string | null = null;
 
   // Handle Authentication for all methods
   if (mcpSessionId) {
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     });
     const { data: session, error: sessionError } = await supabaseAdmin
       .from('mcp_sessions')
-      .select('tenant_id, user_id, expires_at')
+      .select('tenant_id, user_id, expires_at, metadata')
       .eq('id', mcpSessionId)
       .single();
 
@@ -70,8 +71,11 @@ export async function POST(req: NextRequest) {
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
+      authClientId = auth.client_id || null;
     } else {
       const expiry = session.expires_at ? new Date(session.expires_at) : new Date(0);
+      const meta = (session.metadata || {}) as Record<string, unknown>;
+      if (typeof meta.client_id === 'string') authClientId = meta.client_id;
       if (expiry < new Date()) {
         // Session expired, fallback to api_key if possible
         const auth = await validateMCPAuthApp(req);
@@ -84,6 +88,7 @@ export async function POST(req: NextRequest) {
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
+        authClientId = auth.client_id || authClientId;
       } else {
         tenantId = session.tenant_id;
         userId = session.user_id;
@@ -97,6 +102,7 @@ export async function POST(req: NextRequest) {
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
+    authClientId = auth.client_id || null;
   }
 
   if (!tenantId || !userId) {
@@ -110,7 +116,10 @@ export async function POST(req: NextRequest) {
   // Robust discovery handling for stateless environments
   if (requestBody.method === 'tools/list') {
     const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-    const tools = await getUnifiedMcpTools();
+    const tools = await getUnifiedMcpTools({
+      clientId: authClientId,
+      userAgent: req.headers.get('user-agent'),
+    });
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
