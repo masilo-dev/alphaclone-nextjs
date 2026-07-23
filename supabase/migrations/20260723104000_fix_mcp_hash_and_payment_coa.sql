@@ -116,14 +116,11 @@ NOTIFY pgrst, 'reload schema';
 DO $$
 DECLARE
   r RECORD;
-  a RECORD;
-  accounts CONSTANT text[][] := ARRAY[
-    ARRAY['1000', 'Cash on Hand', 'asset', 'current_asset', 'debit'],
-    ARRAY['1100', 'Accounts Receivable', 'asset', 'current_asset', 'debit'],
-    ARRAY['2100', 'Sales Tax Payable', 'liability', 'current_liability', 'credit'],
-    ARRAY['4000', 'Sales Income', 'revenue', 'operating_revenue', 'credit'],
-    ARRAY['4100', 'Service Revenue', 'revenue', 'operating_revenue', 'credit']
-  ];
+  v_code text;
+  v_name text;
+  v_type text;
+  v_subtype text;
+  v_balance text;
 BEGIN
   BEGIN
     CREATE UNIQUE INDEX IF NOT EXISTS chart_of_accounts_tenant_code_uidx
@@ -132,29 +129,44 @@ BEGIN
     NULL;
   END;
 
-  FOR r IN SELECT id AS tenant_id FROM public.tenants LOOP
-    FOREACH a SLICE 1 IN ARRAY accounts LOOP
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM public.chart_of_accounts
-          WHERE tenant_id = r.tenant_id AND account_code = a[1]
-        ) THEN
-          INSERT INTO public.chart_of_accounts (
-            tenant_id, account_code, account_name, account_type, account_subtype,
-            normal_balance, is_system_account, is_active
-          ) VALUES (
-            r.tenant_id, a[1], a[2], a[3], a[4], a[5], true, true
-          );
-        ELSE
-          UPDATE public.chart_of_accounts
-          SET deleted_at = NULL,
-              is_active = true
-          WHERE tenant_id = r.tenant_id AND account_code = a[1];
-        END IF;
-      EXCEPTION WHEN OTHERS THEN
-        RAISE WARNING 'COA seed skipped for tenant % account %: %', r.tenant_id, a[1], SQLERRM;
-      END;
-    END LOOP;
+  FOR r IN
+    SELECT t.id AS tenant_id, a.account_code, a.account_name, a.account_type, a.account_subtype, a.normal_balance
+    FROM public.tenants t
+    CROSS JOIN (
+      VALUES
+        ('1000', 'Cash on Hand', 'asset', 'current_asset', 'debit'),
+        ('1100', 'Accounts Receivable', 'asset', 'current_asset', 'debit'),
+        ('2100', 'Sales Tax Payable', 'liability', 'current_liability', 'credit'),
+        ('4000', 'Sales Income', 'revenue', 'operating_revenue', 'credit'),
+        ('4100', 'Service Revenue', 'revenue', 'operating_revenue', 'credit')
+    ) AS a(account_code, account_name, account_type, account_subtype, normal_balance)
+  LOOP
+    v_code := r.account_code;
+    v_name := r.account_name;
+    v_type := r.account_type;
+    v_subtype := r.account_subtype;
+    v_balance := r.normal_balance;
+
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM public.chart_of_accounts
+        WHERE tenant_id = r.tenant_id AND account_code = v_code
+      ) THEN
+        INSERT INTO public.chart_of_accounts (
+          tenant_id, account_code, account_name, account_type, account_subtype,
+          normal_balance, is_system_account, is_active
+        ) VALUES (
+          r.tenant_id, v_code, v_name, v_type, v_subtype, v_balance, true, true
+        );
+      ELSE
+        UPDATE public.chart_of_accounts
+        SET deleted_at = NULL,
+            is_active = true
+        WHERE tenant_id = r.tenant_id AND account_code = v_code;
+      END IF;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE WARNING 'COA seed skipped for tenant % account %: %', r.tenant_id, v_code, SQLERRM;
+    END;
   END LOOP;
 END $$;
 
