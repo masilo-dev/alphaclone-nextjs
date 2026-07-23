@@ -96,7 +96,7 @@ defineConnectorTool({
 
     // Compatibility: if contact_name/updated_at/status not yet migrated, retry with core columns.
     if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      ({ data, error, count } = await supabase
+      const fallback = await supabase
         .from('leads')
         .select(
           'id, tenant_id, owner_id, business_name, email, phone, industry, location, source, stage, value, notes, created_at',
@@ -105,7 +105,10 @@ defineConnectorTool({
         .eq('tenant_id', args.tenant_id)
         .or(`business_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%,notes.ilike.%${q}%`)
         .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1));
+        .range(offset, offset + limit - 1);
+      data = fallback.data as typeof data;
+      error = fallback.error;
+      count = fallback.count;
     }
 
     if (error) throwConnectorError('QUERY_FAILED', error.message);
@@ -457,11 +460,13 @@ defineConnectorTool({
       .limit(5000);
 
     if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      ({ data: leads, error } = await supabase
+      const fallback = await supabase
         .from('leads')
         .select('id, stage, created_at')
         .eq('tenant_id', args.tenant_id)
-        .limit(5000));
+        .limit(5000);
+      leads = fallback.data as typeof leads;
+      error = fallback.error;
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 

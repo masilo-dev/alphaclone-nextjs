@@ -145,12 +145,14 @@ defineConnectorTool({
       .limit(500);
 
     if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      ({ data, error } = await supabase
+      const fallback = await supabase
         .from('social_posts')
         .select('id, platforms, status, published_at, analytics, caption')
         .eq('tenant_id', args.tenant_id)
         .gte('published_at', since)
-        .limit(500));
+        .limit(500);
+      data = fallback.data as typeof data;
+      error = fallback.error;
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
@@ -339,12 +341,14 @@ defineConnectorTool({
       .limit(1000);
 
     if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      ({ data, error } = await supabase
+      const fallback = await supabase
         .from('social_posts')
         .select('platforms, status, published_at, analytics')
         .eq('tenant_id', args.tenant_id)
         .gte('created_at', since)
-        .limit(1000));
+        .limit(1000);
+      data = fallback.data as typeof data;
+      error = fallback.error;
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 

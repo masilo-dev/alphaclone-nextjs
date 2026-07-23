@@ -298,6 +298,7 @@ export async function executeRun(runId: string, tenantId: string, autoHighRisk: 
             ({ data, error } = await supabase.from('leads').insert(payload).select('id, business_name, source').single());
           }
           if (error) throw new Error(error.message);
+          if (!data) throw new Error('Lead insert returned no data');
           output = { lead_id: data.id, lead: data };
           providerReference = String(data.id);
           verificationEvidence = await verifyLeadCreated(tenantId, data.id);

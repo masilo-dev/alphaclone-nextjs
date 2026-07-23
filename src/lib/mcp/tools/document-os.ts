@@ -481,7 +481,7 @@ registerTool('document-os', {
     required: ['tenant_id', 'envelope'],
   },
   handler: async (args) => {
-    return textResult(getSignatureStatus(args.envelope as Parameters<typeof getSignatureStatus>[0]));
+    return textResult(getSignatureStatus(args.envelope as unknown as Parameters<typeof getSignatureStatus>[0]));
   },
 });
 

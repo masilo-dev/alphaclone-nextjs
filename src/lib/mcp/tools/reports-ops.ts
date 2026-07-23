@@ -79,21 +79,25 @@ defineConnectorTool({
       .limit(5000);
 
     if (error && (error.code === '42P01' || error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      ({ data, error } = await supabase
+      const fallback = await supabase
         .from('business_invoices')
         .select('id, status, total, created_at')
         .eq('tenant_id', args.tenant_id)
         .gte('created_at', since)
-        .limit(5000));
+        .limit(5000);
+      data = fallback.data as typeof data;
+      error = fallback.error;
     }
 
     if (error?.code === '42P01') {
-      ({ data, error } = await supabase
+      const legacy = await supabase
         .from('invoices')
         .select('id, status, amount, total, amount_paid, currency, created_at, paid_at')
         .eq('tenant_id', args.tenant_id)
         .gte('created_at', since)
-        .limit(5000));
+        .limit(5000);
+      data = legacy.data as typeof data;
+      error = legacy.error;
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 

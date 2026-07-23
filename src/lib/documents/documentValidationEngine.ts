@@ -169,7 +169,11 @@ export function validateContract(input: ContractValidationInput): DocumentValida
     });
   }
 
-  if (input.hasPageNumbers === false || (input.pageCount != null && input.pageCount > 1 && input.hasPageNumbers === false)) {
+  // Explicit false always warns; undefined only warns for multi-page docs.
+  if (
+    input.hasPageNumbers === false ||
+    (input.pageCount != null && input.pageCount > 1 && input.hasPageNumbers == null)
+  ) {
     findings.push({
       id: 'missing-page-numbers',
       severity: 'warning',

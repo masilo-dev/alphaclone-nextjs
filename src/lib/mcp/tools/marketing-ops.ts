@@ -88,7 +88,9 @@ defineConnectorTool({
         .select('id, name, status, metrics, stats, sent_count, open_count, click_count, created_at, updated_at')
         .eq('tenant_id', args.tenant_id);
       if (args.campaign_id) cQuery = cQuery.eq('id', args.campaign_id);
-      ({ data, error } = await cQuery.limit(100));
+      const fallback = await cQuery.limit(100);
+      data = fallback.data as typeof data;
+      error = fallback.error;
     }
     if (error) throwConnectorError('QUERY_FAILED', error.message);
 
