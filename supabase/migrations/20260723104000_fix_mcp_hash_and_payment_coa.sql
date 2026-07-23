@@ -143,33 +143,16 @@ BEGIN
             tenant_id, account_code, account_name, account_type, account_subtype,
             normal_balance, is_system_account, is_active
           ) VALUES (
-            r.tenant_id, a[1], a[2], a[3]::public.account_type, a[4]::public.account_subtype,
-            a[5], true, true
+            r.tenant_id, a[1], a[2], a[3], a[4], a[5], true, true
           );
         ELSE
           UPDATE public.chart_of_accounts
           SET deleted_at = NULL,
-              is_active = true,
-              updated_at = COALESCE(now(), updated_at)
+              is_active = true
           WHERE tenant_id = r.tenant_id AND account_code = a[1];
         END IF;
       EXCEPTION WHEN OTHERS THEN
-        -- Fallback without enum casts if types differ
-        BEGIN
-          IF NOT EXISTS (
-            SELECT 1 FROM public.chart_of_accounts
-            WHERE tenant_id = r.tenant_id AND account_code = a[1]
-          ) THEN
-            INSERT INTO public.chart_of_accounts (
-              tenant_id, account_code, account_name, account_type, account_subtype,
-              normal_balance, is_system_account, is_active
-            ) VALUES (
-              r.tenant_id, a[1], a[2], a[3], a[4], a[5], true, true
-            );
-          END IF;
-        EXCEPTION WHEN OTHERS THEN
-          RAISE WARNING 'COA seed skipped for tenant % account %: %', r.tenant_id, a[1], SQLERRM;
-        END;
+        RAISE WARNING 'COA seed skipped for tenant % account %: %', r.tenant_id, a[1], SQLERRM;
       END;
     END LOOP;
   END LOOP;
