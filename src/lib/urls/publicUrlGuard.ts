@@ -4,11 +4,11 @@
 
 const PRODUCTION_DOMAINS = [
   'alphaclonesystems.com',
-  'www.alphaclonesystems.com',
+  'www.alphaclonesystems.com', // accepted then rewritten to apex
   'alphaclone.com',
   'www.alphaclone.com',
-  'alphaclone.vercel.app',
   'alphaclone.tech',
+  'railway.app',
 ];
 
 const BLOCKED_HOSTNAMES = new Set([
@@ -34,13 +34,20 @@ export interface PublicUrlValidationResult {
   reason?: string;
 }
 
-/** Resolve the canonical production base URL — never localhost. */
+/** Resolve the canonical production base URL — never localhost, never www apex. */
 export function getProductionBaseUrl(): string {
   const raw = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
-  const cleaned = raw.replace(/^https:\/\/www\./, 'https://').replace(/\/$/, '');
+  const cleaned = raw
+    .replace(/^https:\/\/www\.alphaclonesystems\.com/i, 'https://alphaclonesystems.com')
+    .replace(/^http:\/\/www\.alphaclonesystems\.com/i, 'https://alphaclonesystems.com')
+    .replace(/\/$/, '');
 
   try {
     const parsed = new URL(cleaned);
+    if (parsed.hostname.toLowerCase() === 'www.alphaclonesystems.com') {
+      parsed.hostname = 'alphaclonesystems.com';
+      return parsed.origin;
+    }
     if (BLOCKED_HOSTNAMES.has(parsed.hostname) || isBlockedUrl(cleaned)) {
       return 'https://alphaclonesystems.com';
     }

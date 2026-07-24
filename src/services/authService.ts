@@ -3,6 +3,17 @@ import { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE, supabase } from 
 import { User, UserRole } from '../types';
 import { signInSchema, signUpSchema } from '../schemas/validation';
 import { z } from 'zod';
+import { getOAuthRedirectOrigin } from '../lib/config/public-origin';
+
+/** Always apex for production OAuth — www.alphaclonesystems.com is NXDOMAIN. */
+function buildAuthCallbackRedirect(nextPath?: string): string {
+  const origin = getOAuthRedirectOrigin(
+    typeof window !== 'undefined' ? window.location.origin : undefined
+  );
+  return nextPath
+    ? `${origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
+    : `${origin}/auth/callback`;
+}
 
 /**
  * Utility to forcefully break Supabase internal storage/Web Locks API deadlocks.
@@ -297,7 +308,9 @@ export const authService = {
 
         try {
             const { error } = await withAuthTimeout(supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/auth/reset-password`,
+                redirectTo: `${getOAuthRedirectOrigin(
+                    typeof window !== 'undefined' ? window.location.origin : undefined
+                )}/auth/reset-password`,
             }));
 
             if (error) {
@@ -387,9 +400,7 @@ export const authService = {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const redirectTo = nextPath
-                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-                : `${window.location.origin}/auth/callback`;
+            const redirectTo = buildAuthCallbackRedirect(nextPath);
 
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'google',
@@ -433,9 +444,7 @@ export const authService = {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const redirectTo = nextPath
-                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-                : `${window.location.origin}/auth/callback`;
+            const redirectTo = buildAuthCallbackRedirect(nextPath);
 
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'linkedin_oidc',
@@ -536,9 +545,7 @@ export const authService = {
                 sessionStorage.setItem('auth_callback_in_progress', 'true');
             }
 
-            const redirectTo = nextPath
-                ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`
-                : `${window.location.origin}/auth/callback`;
+            const redirectTo = buildAuthCallbackRedirect(nextPath);
 
             const { error } = await withAuthTimeout(supabase.auth.signInWithOAuth({
                 provider: 'facebook',
