@@ -3,7 +3,7 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { stripe } from '@/lib/stripe';
 import { PLAN_PRICING, SubscriptionPlan } from '@/services/tenancy/types';
 import { requireTenantRole } from '@/lib/apiAuth';
-import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: NextRequest) {
     try {
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
             if (!turnstileToken) {
                 return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
             }
-            const verified = await verifyTurnstileToken(turnstileToken);
+            const verified = await verifyTurnstileToken(turnstileToken, readClientIp(req));
             if (!verified) {
                 return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
             }

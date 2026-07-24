@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { isTurnstileEnforced, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readClientIp, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 /**
  * Pre-auth human check for login/register.
@@ -12,12 +12,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const token = String(body?.turnstileToken || body?.turnstile_token || '').trim();
+    const token = String(
+      body?.turnstileToken || body?.turnstile_token || body?.['cf-turnstile-response'] || ''
+    ).trim();
     if (!token) {
       return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
     }
 
-    const ok = await verifyTurnstileToken(token);
+    const ok = await verifyTurnstileToken(token, readClientIp(request));
     if (!ok) {
       return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
     }

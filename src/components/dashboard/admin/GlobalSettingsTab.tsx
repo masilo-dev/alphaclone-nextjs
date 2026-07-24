@@ -305,7 +305,7 @@ const GlobalSettingsTab: React.FC = () => {
                                         name="Cloudflare Turnstile"
                                         configured={envStatus.turnstile}
                                         description="Bot protection on public forms and login."
-                                        details="TURNSTILE_SECRET_KEY and NEXT_PUBLIC_TURNSTILE_SITE_KEY"
+                                        details="TURNSTILE_SECRET (or TURNSTILE_SECRET_KEY) and NEXT_PUBLIC_TURNSTILE_SITE_KEY"
                                     />
                                     <IntegrationItem
                                         name="Web Push (VAPID)"

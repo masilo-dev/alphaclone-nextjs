@@ -51,7 +51,7 @@ export function validateProductionEnv(env = process.env) {
     },
     {
       label: "Cloudflare Turnstile secret",
-      names: ["TURNSTILE_SECRET_KEY"],
+      names: ["TURNSTILE_SECRET", "TURNSTILE_SECRET_KEY"],
     },
     {
       label: "Cloudflare Turnstile site key",

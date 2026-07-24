@@ -11,8 +11,8 @@ function validEnv(overrides = {}) {
     INTERNAL_API_KEY: "internal-secret",
     ENCRYPTION_SECRET: "12345678901234567890123456789012",
     BREVO_PLATFORM_API_KEY: "platform-email-key",
-    TURNSTILE_SECRET_KEY: "turnstile-secret",
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY: "turnstile-site-key",
+    TURNSTILE_SECRET: "turnstile-secret",
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAAD53DAgC52ZBZnji",
     ...overrides,
   };
 }
@@ -21,6 +21,14 @@ test("accepts the critical production environment", () => {
   const result = validateProductionEnv(validEnv());
   assert.equal(result.ok, true);
   assert.deepEqual(result.errors, []);
+});
+
+test("accepts TURNSTILE_SECRET_KEY as legacy alias for Turnstile secret", () => {
+  const env = validEnv({
+    TURNSTILE_SECRET: "",
+    TURNSTILE_SECRET_KEY: "legacy-turnstile-secret",
+  });
+  assert.equal(validateProductionEnv(env).ok, true);
 });
 
 test("accepts supported Supabase and cron aliases", () => {

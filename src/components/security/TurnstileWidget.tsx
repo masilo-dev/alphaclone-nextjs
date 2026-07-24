@@ -9,6 +9,7 @@ declare global {
         container: HTMLElement,
         options: {
           sitekey: string;
+          action?: string;
           callback?: (token: string) => void;
           'expired-callback'?: () => void;
           'error-callback'?: () => void;
@@ -94,6 +95,7 @@ export default function TurnstileWidget({
 
         widgetIdRef.current = window.turnstile.render(containerRef.current, {
           sitekey: siteKey,
+          action: 'turnstile-spin-v2',
           theme,
           appearance: 'always',
           callback: (token) => onTokenChange(token),

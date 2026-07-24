@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
-import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 import type { FormField } from '@/types/tenantForms';
 
 export const dynamic = 'force-dynamic';
@@ -66,11 +66,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (isTurnstileEnforced()) {
-      const turnstileToken = readTurnstileToken(data);
+      const turnstileToken = readTurnstileToken(data) || readTurnstileToken(body);
       if (!turnstileToken) {
         return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
       }
-      const ok = await verifyTurnstileToken(turnstileToken);
+      const ok = await verifyTurnstileToken(turnstileToken, readClientIp(req));
       if (!ok) {
         return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
       }
