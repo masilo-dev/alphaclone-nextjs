@@ -61,7 +61,7 @@ const SETUP_STEPS = [
     number: 4,
     emoji: '📋',
     title: 'Paste this text into that file',
-    body: 'Open the file, delete everything in it, and paste the text below. Then save the file.',
+    body: 'Open the file, delete everything in it, and paste the Claude Desktop text below (or the Claude Code snippet if you use Claude Code). Then save the file.',
     isConfigStep: true,
   },
   {
@@ -494,11 +494,32 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
   };
 
   const connectionUrl = buildConnectionUrl(connectionToken);
-
-  const configJson = `{
+  const mcpKey = connectionToken || 'YOUR_KEY_HERE';
+  // Claude Desktop's claude_desktop_config.json only accepts stdio (command/args).
+  // A bare "url" entry is invalid there and is skipped/stripped. Bridge via mcp-remote.
+  // Claude Code requires "type": "http" (or "sse"/"ws"); url-without-type is treated as stdio and fails.
+  // See: https://code.claude.com/docs/en/mcp#option-1-add-a-remote-http-server
+  const desktopConfigJson = `{
   "mcpServers": {
     "alphaclone": {
-      "url": "${connectionUrl}"
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "${connectionUrl}"
+      ]
+    }
+  }
+}`;
+
+  const claudeCodeConfigJson = `{
+  "mcpServers": {
+    "alphaclone": {
+      "type": "http",
+      "url": "${mcpOrigin}/api/mcp",
+      "headers": {
+        "Authorization": "Bearer ${mcpKey}"
+      }
     }
   }
 }`;
@@ -590,10 +611,15 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
         )}
 
         {setupType === 'claude' && (
-          <div className="mb-6 p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+          <div className="mb-6 p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-2">
             <p className="text-slate-200 text-sm">
-              <strong>Claude.ai web connector:</strong> use the OAuth credentials above (Client ID + MCP Server URL).
-              <strong className="block mt-2">Claude Desktop:</strong> use your personal Connection URL in Step 2 (includes your API key).
+              <strong>Claude.ai web connector:</strong> use the OAuth credentials above (Client ID + MCP Server URL). Remote MCP is added as a Custom Connector — not via a bare <code className="text-teal-400 text-xs">url</code> in Desktop settings.
+            </p>
+            <p className="text-slate-200 text-sm">
+              <strong>Claude Desktop:</strong> paste the <em>stdio</em> config from Step 4 into <code className="text-teal-400 text-xs">claude_desktop_config.json</code>. Desktop only accepts <code className="text-teal-400 text-xs">command</code>/<code className="text-teal-400 text-xs">args</code> (we bridge with <code className="text-teal-400 text-xs">mcp-remote</code>).
+            </p>
+            <p className="text-slate-200 text-sm">
+              <strong>Claude Code:</strong> use the separate Claude Code snippet in Step 4 — it must include <code className="text-teal-400 text-xs">&quot;type&quot;: &quot;http&quot;</code>. A <code className="text-teal-400 text-xs">url</code> without <code className="text-teal-400 text-xs">type</code> is treated as stdio and fails.
             </p>
           </div>
         )}
@@ -793,23 +819,43 @@ const MCPSetupGuide: React.FC<MCPSetupGuideProps> = ({ initialType }) => {
 
                         {/* Config JSON copy */}
                         {showConfigStep && (
-                          <div className="mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Text to paste into the file:</p>
-                              <button
-                                onClick={() => copyText(configJson, 'Config text')}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-all"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                                Copy all
-                              </button>
+                          <div className="mb-4 space-y-5">
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Desktop — paste into claude_desktop_config.json:</p>
+                                <button
+                                  onClick={() => copyText(desktopConfigJson, 'Desktop config')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold transition-all"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy Desktop
+                                </button>
+                              </div>
+                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-teal-400 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                {desktopConfigJson}
+                              </pre>
+                              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                                Requires Node.js so <code className="text-slate-400">npx mcp-remote</code> can bridge Desktop&apos;s stdio-only config to our HTTP MCP endpoint. Open the file, replace its contents with this JSON, save, then restart Claude.
+                              </p>
                             </div>
-                            <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-teal-400 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
-                              {configJson}
-                            </pre>
-                            <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-                              📝 <span className="text-slate-400">What to do:</span> Open the file, select all the text inside (Ctrl+A or Cmd+A), delete it, then paste this text. Save the file (Ctrl+S or Cmd+S).
-                            </p>
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Claude Code — .mcp.json or claude mcp add-json:</p>
+                                <button
+                                  onClick={() => copyText(claudeCodeConfigJson, 'Claude Code config')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all"
+                                >
+                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy Claude Code
+                                </button>
+                              </div>
+                              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-700 text-indigo-300 text-xs font-mono overflow-x-auto leading-relaxed whitespace-pre-wrap">
+                                {claudeCodeConfigJson}
+                              </pre>
+                              <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+                                <code className="text-slate-400">&quot;type&quot;: &quot;http&quot;</code> is required. Prefer the Bearer header over putting the key in the URL. Prefer <code className="text-slate-400">${'{ALPHACLONE_MCP_KEY}'}</code> in shared configs so the secret is not committed.
+                              </p>
+                            </div>
                           </div>
                         )}
 
