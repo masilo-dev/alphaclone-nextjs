@@ -59,8 +59,14 @@ export async function GET(
 
         if (error) {
             console.error(`Storage Proxy: Error fetching ${bucket}/${filePath}:`, error);
-            const status =
-                error.name === 'StorageApiError' && error.message.includes('not found') ? 404 : 500;
+            const msg = String(error.message || '').toLowerCase();
+            const notFound =
+                msg.includes('not found') ||
+                msg.includes('does not exist') ||
+                msg.includes('object not found') ||
+                (error as { statusCode?: string | number }).statusCode === '404' ||
+                (error as { statusCode?: string | number }).statusCode === 404;
+            const status = notFound ? 404 : 500;
             return new NextResponse(status === 404 ? 'File not found' : 'Error fetching file', {
                 status,
             });

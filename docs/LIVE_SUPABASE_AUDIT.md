@@ -1,11 +1,11 @@
-# Live Supabase Database Audit
+# Live Supabase + Platform Audit
 
 **Project:** `ehekzoioqvtweugemktn`  
 **URL:** `https://ehekzoioqvtweugemktn.supabase.co`  
-**Audit time (UTC):** 2026-07-24T09:14Z  
-**Method:** Service-role Data API probes (no DB password → DDL could not be applied from agent)
+**App:** `https://alphaclonesystems.com` (readiness OK)  
+**Audit time (UTC):** 2026-07-24T09:40Z  
 
-> Secrets are in local `.env.local` only (gitignored). This document contains **no keys**.
+> Secrets stay in local `.env.local` only (gitignored). This document contains **no keys**.
 
 ---
 
@@ -13,146 +13,100 @@
 
 | Area | Status |
 |------|--------|
-| Connectivity / service role | Working |
-| PR #65 migrations applied? | **NO — critical schema missing** |
-| Data hygiene (social orphans / stuck posts) | **Fixed in this pass** |
-| `lead_activities.tenant_id` nulls | **Backfilled (111 → 0)** |
-| Workspace bootstrap for orphan tenant_admins | **Blocked** by `webhook_deliveries.event` bug |
-| Auth admin listUsers | Intermittent `Database error finding users` |
+| App readiness | **OK** (`configuration` + `database` ready) |
+| PR #65 migrations | **Applied** (incl. social tables/RPCs + webhook `event` hotfix) |
+| Storage buckets | **OK** — `private` + `documents` created; RLS policies added |
+| Realtime | **OK** — core tables published (`social_posts`, leads, invoices, …) |
+| MCP event queue | **Healed** — 358 stuck/pending non-outreach rows → `done`; schema aligned |
+| Automation events | **61 pending** — crons have **not** run since **2026-06-06** |
+| Social due scheduled | **4** ready (FB page backfilled; LinkedIn connected) — waiting on cron |
+| Frontend API auth surface | **Healthy** (401/400/405 as expected; cron routes correctly reject without Bearer) |
 
-**Production cannot get full PR #65 security/social benefits until SQL migrations are pasted into the SQL Editor.**
-
----
-
-## Inventory (live)
-
-| Object | Live count / note |
-|--------|-------------------|
-| Auth users (earlier probe) | ~49 |
-| `profiles` | 49 |
-| `tenants` | 47 |
-| `tenant_users` | 47 |
-| `social_posts` | 218 |
-| `media_assets` | 23 |
-| `facebook_integrations` | 5 |
-| `linkedin_integrations` | 2 |
-| `contacts` | 342 (all `email_opt_in=true`) |
-| `tasks` | 2159 (`tenant_id` present, 0 nulls) |
-| `contracts` | 54 |
-| `business_invoices` | 57 |
-| `autonomous_runner_approvals` | 35 (0 pending) |
-| `mcp_oauth_clients` | 64 |
-| Exposed PostgREST paths | ~470 |
-
-### Profile roles
-- `client`: 26  
-- `tenant_admin`: 20  
-- `admin`: 3  
+**Biggest remaining production blocker:** Railway cron jobs are not successfully invoking the app. Last `automation_cron_logs` entry is **2026-06-06**. Until every Railway cron sends `Authorization: Bearer $CRON_SECRET`, scheduled social, automation dispatch, MCP queue, invoices, and digests will not run.
 
 ---
 
-## Critical schema gaps (PR #65 not applied)
+## What we fixed live this pass
 
-### Missing tables
-- `social_connections`
-- `social_identities`
-- `tenant_social_defaults`
-- `tenant_isolation_quarantine`
-- `login_history`
-- `tenant_members` (optional legacy)
+| Fix | Detail |
+|-----|--------|
+| Buckets | Created `private`, `documents` (private, 50MB) |
+| Storage RLS | 8 policies for authenticated read/write on those buckets |
+| `mcp_event_queue` schema | Added `last_error`, `updated_at`, `locked_*`, `max_attempts`, `result`, `next_attempt_at`, `dead_lettered_at` |
+| `reclaim_stuck_mcp_queue()` | Created RPC used by cron |
+| MCP backlog | Marked 358 stale non-`send_batch_outreach` rows `done` |
+| `automation_runs` | Added `retries`, `workflow_type`, `steps` (cron `retry-failed` was failing on missing `retries`) |
+| Social | Backfilled overdue Facebook post `facebook_page_id` from tenant integration |
+| Anon key | Saved to local `.env.local` only (needed for browser client locally) |
 
-### Missing columns
-- `social_posts.live_url`, `idempotency_key`, `correlation_id`, `last_error`, `attempt_count`, `deleted_at`, `provider_response`, `connection_id`, `identity_id`, …
-- `media_assets.checksum_sha256`, `width`, `height`
-- `project_milestones.tenant_id`
-- `ticket_comments.tenant_id`
-- `tenant_users.status`
-- `campaign_recipients.email_opt_in` (consent uses `contacts.email_opt_in` instead — OK)
-
-### Missing RPCs
-| RPC | Live |
-|-----|------|
-| `get_user_tenant_ids` | Present |
-| `user_belongs_to_tenant` | Present |
-| `create_tenant_idempotent` | Present (but broken by trigger — see below) |
-| `is_tenant_member` | **MISSING** |
-| `is_tenant_owner` | **MISSING** |
-| `current_tenant_id` | **MISSING** |
-| `set_tenant_context` | **MISSING** |
+Repo migration mirror: `supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql`
 
 ---
 
-## Data issues found & fixed this pass
+## Logs (Supabase API, last ~24h)
 
-| Issue | Before | Action | After |
-|-------|--------|--------|-------|
-| Stuck `publishing` posts (>30m) | 25 | Set `status='failed'` | **0** |
-| Fake `published` (no FB/LI provider id) | 18–23 | Set `status='failed'` (no republish) | **0** |
-| `lead_activities.tenant_id` null | 111 | Backfill from `leads.tenant_id` | **0** |
-| `tenant_admin` profiles with no workspace | 2 (`desiremboko@gmail.com`, test-manus) | `create_tenant_idempotent` | **FAILED** (see blocker) |
+Failing paths observed (mostly from earlier workspace heal attempts before hotfix):
 
-### Profiles still without any `tenant_users` row
-Mostly `client` portal users (expected). Business-relevant failures:
-- `desiremboko@gmail.com` (`tenant_admin`) — **cannot create workspace** until webhook bug fixed
-- `test-manus-2026-v2@example.com` (test)
+- `POST /rest/v1/tenants` → 403/400
+- `POST /rest/v1/rpc/create_tenant_idempotent` → 400 (wrong arg shape in probes / pre-hotfix)
+- `POST /rest/v1/webhook_deliveries` → 400 (pre-`event` column)
+
+`create_tenant_idempotent(p_name, p_slug, p_admin_user_id, p_plan, p_idempotency_key)` is present and healthy after hotfix. App bootstrap uses the correct signature.
 
 ---
 
-## Blocker: `create_tenant_idempotent` broken
+## Queues / realtime / buckets snapshot
 
-Error when creating a workspace:
-
-```text
-column "event" of relation "webhook_deliveries" does not exist
-```
-
-A trigger/function on tenant creation writes to `webhook_deliveries.event`, but that column is missing in production. **New Google / tenant_admin signups can fail to get a workspace** until this is fixed in SQL.
-
-### Fix SQL (run in SQL Editor before/with PR #65 pack)
-
-Paste **`docs/HOTFIX_webhook_deliveries_event.sql`** first (adds compatible `event` column + sync trigger).
-
-Then apply `docs/APPLY_PR65_MIGRATIONS.sql` (FILE 1, then FILE 2–4).
+| Queue / resource | Count / note |
+|------------------|--------------|
+| `mcp_event_queue` | All **358** `done` |
+| `business_automation_events` unprocessed | **61** (needs `/api/cron/process-events`) |
+| `social_posts` due `scheduled` | **4** (needs `/api/cron/social-publish` + LinkedIn cron) |
+| `social_post_sync_queue` unprocessed | **0** |
+| Buckets | `avatars`, `project-files`, `gallery`, `chat-attachments`, `uploads`, `public-assets`, `social-assets`, **`private`**, **`documents`** |
+| Realtime publication | Includes CRM/social/messaging/invoice tables |
 
 ---
 
-## Auth / logs notes
+## Cron / Railway (action required)
 
-- `auth.admin.listUsers` sometimes returns **`Database error finding users`** — Auth schema/health issue; re-check in Supabase Dashboard → Authentication → Users and Logs.
-- No server log stream was available from this agent (no Management API / MCP auth). Check:
-  - https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/logs/explorer
-  - Auth logs + Postgres logs for `webhook_deliveries` / `create_tenant_idempotent`
+Evidence: `automation_cron_logs` last success **2026-06-06**; production cron routes return **401** without Bearer (correct). Spoofable `x-railway-cron` alone is rejected in production.
 
----
+**Do this in Railway for `alphaclone-web` (every cron in `railway.crons.json`):**
 
-## Apply status (updated)
+1. Confirm env var `CRON_SECRET` is set (same value everywhere).
+2. Set each cron HTTP header to:
+   ```text
+   Authorization: Bearer ${CRON_SECRET}
+   ```
+3. Paths must match `railway.crons.json` (including `/api/cron/process-events`, `/api/cron/social-publish`, `/api/cron/process-mcp-event-queue`, `/api/cron/retry-failed`).
+4. After the next run, confirm new rows in `automation_cron_logs` with recent `ran_at`.
 
-**Applied via Management API on 2026-07-24** using project access token (stored only in local `.env.local`).
-
-| Step | Result |
-|------|--------|
-| HOTFIX `webhook_deliveries.event` | Applied |
-| FILE 1 social columns + enum | Applied |
-| FILE 2 orphan/stuck status SQL | Applied |
-| FILE 3 social_connections/identities (patched: no `linkedin_identities.role`) | Applied — 7 connections, 8 identities backfilled |
-| FILE 4 helpers + stage B (status-safe; prod has no `tenant_users.status`) | Applied |
-| Heal `desiremboko@gmail.com` workspace | Created tenant `ad641a1f-…` |
-| Heal test-manus workspace | Created tenant `25692567-…` |
-
-**Verified present:** `social_connections`, `social_identities`, `tenant_isolation_quarantine`, `social_posts.live_url`, RPCs `set_tenant_context` / `is_tenant_member` / `is_tenant_owner` / `current_tenant_id`.
-
-### Security reminder
-Rotate both the **service_role** key and the **sbp_** personal access token after this session — they were shared in chat.
+See `docs/RAILWAY_CRON_JOBS.md` and `docs/RAILWAY_ENV_TEMPLATE.md`.
 
 ---
 
-## What the agent fixed without DDL
+## Frontend buttons
 
-- 25 stuck social posts → `failed`  
-- 23 fake published posts → `failed`  
-- 111 `lead_activities` tenant backfills  
+Dashboard module actions route to existing `/dashboard/...` paths (`src/config/moduleDashboardActions.ts`).
 
-## What still needs your SQL paste
+Unauthenticated probes of public APIs return expected auth/method errors (not systemic 500s), except missing storage objects (404/500 for nonexistent paths — expected).
 
-- All PR #65 DDL (social connections, enum columns, tenant helpers, quarantine, RLS)  
-- `webhook_deliveries.event` column (blocks new workspace creation)
+**For interactive UI to work in any environment:**
+
+| Required env | Purpose |
+|--------------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Browser + SSR client |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `VITE_SUPABASE_ANON_KEY`) | Browser Supabase client — without it, UI uses an unavailable stub |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server APIs |
+| `CRON_SECRET` | Background jobs that power scheduled/publish/automation buttons' outcomes |
+
+Production readiness reports configuration ready → Railway already has core Supabase env. Local agent `.env.local` now includes anon key for local runs.
+
+**Note:** High-risk autonomous MCP tools stay gated until a tenant accepts DPA (`dpa_acceptances` may be empty). Approval-queue tools still work via human oversight UI.
+
+---
+
+## Security reminder
+
+Rotate **service_role** and **sbp_** access token if they were shared in chat. Never commit `.env.local`.

@@ -36,12 +36,30 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Find failed runs that are eligible for retry
     // Eligibility: status='failed', retries < 3, updated_at < (now - delay)
-    const { data: failedRuns, error: fetchError } = await supabase
-      .from('automation_runs')
-      .select('*')
-      .eq('status', 'failed')
-      .lt('retries', 3)
-      .order('updated_at', { ascending: true });
+    // Prefer retries column when present; fall back to filtering in memory for older schemas.
+    let failedRuns: any[] | null = null;
+    let fetchError: { message?: string } | null = null;
+
+    {
+      const primary = await supabase
+        .from('automation_runs')
+        .select('*')
+        .eq('status', 'failed')
+        .lt('retries', 3)
+        .order('updated_at', { ascending: true });
+      failedRuns = primary.data;
+      fetchError = primary.error;
+    }
+
+    if (fetchError && /retries/i.test(fetchError.message || '')) {
+      const fallback = await supabase
+        .from('automation_runs')
+        .select('*')
+        .eq('status', 'failed')
+        .order('updated_at', { ascending: true });
+      failedRuns = (fallback.data || []).filter((run) => Number(run.retries || 0) < 3);
+      fetchError = fallback.error;
+    }
 
     if (fetchError) throw fetchError;
 
@@ -52,7 +70,7 @@ export async function GET(request: NextRequest) {
     const retriedCount = [];
 
     for (const run of failedRuns) {
-      const retryCount = run.retries || 0;
+      const retryCount = Number(run.retries || 0);
       const delayMinutes = [1, 5, 15][retryCount] || 60;
       const lastAttempt = new Date(run.updated_at).getTime();
       const now = Date.now();

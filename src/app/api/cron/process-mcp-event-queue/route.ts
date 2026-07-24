@@ -174,6 +174,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
+      const doneAt = new Date().toISOString();
       await admin
         .from('mcp_event_queue')
         .update({
@@ -182,7 +183,8 @@ export async function GET(req: NextRequest) {
           locked_at: null,
           locked_by: null,
           result: outcome,
-          updated_at: new Date().toISOString(),
+          processed_at: doneAt,
+          updated_at: doneAt,
         })
         .eq('id', event.id);
 
