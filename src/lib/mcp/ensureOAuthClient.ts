@@ -18,7 +18,7 @@ const PLATFORM_CLIENT_SEEDS: Record<
     client_name: string;
     redirect_uris: string[];
     scopes: string[];
-    /** curated = smaller tool list for size-limited Apps connectors */
+    /** full = entire platform (default). curated = optional Apps-sized subset only. */
     toolCatalog?: ToolCatalogMode;
   }
 > = {
@@ -26,7 +26,8 @@ const PLATFORM_CLIENT_SEEDS: Record<
     client_name: 'OpenAI Apps MCP Connector',
     redirect_uris: [...OPENAI_APPS_OAUTH_REDIRECT_URIS],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    toolCatalog: 'curated',
+    // Full platform — size handled by schema compaction in tools/list, not by cutting tools.
+    toolCatalog: 'full',
   },
   // Generic public client — NOT an alias of chatgpt-connector
   'alphaclone-mcp-client': {
@@ -46,7 +47,11 @@ const PLATFORM_CLIENT_SEEDS: Record<
   },
   '1778309945386-41bab8272f61': {
     client_name: 'Claude (Anthropic)',
-    redirect_uris: ['https://claude.ai/api/mcp/auth_callback'],
+    redirect_uris: [
+      'https://claude.ai/api/mcp/auth_callback',
+      'https://claude.ai/settings/oauth-callback',
+      'https://api.claude.ai/v1/oauth/callback',
+    ],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
     toolCatalog: 'full',
   },
@@ -58,7 +63,11 @@ const PLATFORM_CLIENT_SEEDS: Record<
   },
 };
 
-/** Registered-client catalog policy (no User-Agent sniffing). */
+/**
+ * Registered-client catalog policy (no User-Agent sniffing).
+ * Default is the FULL platform catalog. Payload size is solved by compacting
+ * schemas in tools/list — never by hiding AlphaClone tools from Claude/ChatGPT.
+ */
 export function getToolCatalogModeForClient(clientId: string | null | undefined): ToolCatalogMode {
   if (!clientId) return 'full';
   return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || 'full';

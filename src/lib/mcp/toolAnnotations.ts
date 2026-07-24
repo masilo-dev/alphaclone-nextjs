@@ -70,7 +70,7 @@ export function resolveToolAnnotations(toolName: string): McpToolAnnotations {
   return inferToolAnnotations(toolName);
 }
 
-/** ChatGPT-facing curated connector tools (keeps Scan Tools under a usable size). */
+/** Size-limited connector tool surface (ChatGPT Apps, Claude.ai, etc.). */
 export const CHATGPT_CONNECTOR_TOOL_NAMES = [
   'get_platform_status',
   'get_system_health',

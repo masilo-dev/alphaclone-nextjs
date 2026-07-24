@@ -13,13 +13,12 @@ export function sanitizeToolSchemaForClient(schema: Record<string, unknown> | un
     ? (schema.required as string[]).filter((f) => !SESSION_FIELDS.has(f))
     : [];
 
+  // Do not append a long session disclaimer onto every schema — that alone can push
+  // Claude past undocumented tools/list size limits (connected + zero tools).
   return {
-    ...schema,
+    type: 'object',
     properties,
-    required,
-    description: schema.description
-      ? `${schema.description} (Workspace and user are resolved from your MCP API key or OAuth session. CRM client_id is a contact UUID — use get_clients or search_email/search_name if unknown.)`
-      : 'Workspace and user are resolved from your MCP API key or OAuth session. CRM client_id is a contact UUID — use get_clients or search_email/search_name if unknown.',
+    ...(required.length > 0 ? { required } : {}),
   };
 }
 

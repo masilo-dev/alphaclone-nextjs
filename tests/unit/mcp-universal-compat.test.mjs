@@ -17,11 +17,13 @@ test('normalizeMcpClientId never aliases generic client to chatgpt-connector', (
   assert.equal(normalizeMcpClientId('cursor-mcp'), 'cursor-mcp');
 });
 
-test('tool catalog mode is registration-based, not UA-based', () => {
-  assert.equal(getToolCatalogModeForClient('chatgpt-connector'), 'curated');
+test('tool catalog mode defaults to full platform for all clients', () => {
+  assert.equal(getToolCatalogModeForClient('chatgpt-connector'), 'full');
   assert.equal(getToolCatalogModeForClient('alphaclone-mcp-client'), 'full');
   assert.equal(getToolCatalogModeForClient('1778309945386-41bab8272f61'), 'full');
   assert.equal(getToolCatalogModeForClient('some-new-client'), 'full');
+  assert.equal(getToolCatalogModeForClient(null), 'full');
+  assert.equal(getToolCatalogModeForClient(undefined), 'full');
   assert.equal(isChatgptClient({ clientId: 'alphaclone-mcp-client', userAgent: 'ChatGPT' }), false);
   assert.equal(isChatgptClient({ clientId: 'chatgpt-connector' }), true);
 });
