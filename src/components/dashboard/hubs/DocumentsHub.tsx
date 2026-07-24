@@ -20,8 +20,8 @@ interface DocumentsHubProps {
 export default function DocumentsHub({ children }: DocumentsHubProps) {
   return (
     <HubShell
-      title="Documents Hub"
-      description="Contracts, project files, vault, and onboarding"
+      title="Files"
+      description="Contracts, documents, projects, and your vault"
       tabs={DOCUMENTS_TABS}
       accent="amber"
     >

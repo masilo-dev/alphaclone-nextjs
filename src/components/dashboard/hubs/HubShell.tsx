@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
+import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 
@@ -94,7 +95,9 @@ export default function HubShell({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 ac-scroll-full px-4 py-4 md:py-5 ac-safe-bottom">{children}</div>
+      <div className="flex-1 min-h-0 ac-scroll-full px-4 py-4 md:py-5 ac-safe-bottom">
+        <BonnieModulePageShell>{children}</BonnieModulePageShell>
+      </div>
     </div>
   );
 }

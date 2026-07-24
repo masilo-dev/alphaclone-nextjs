@@ -25,8 +25,8 @@ interface SalesHubProps {
 export default function SalesHub({ children }: SalesHubProps) {
   return (
     <HubShell
-      title="Sales Hub"
-      description="Pipeline, leads, deals, and contacts in one workspace"
+      title="Sales"
+      description="Customers waiting, deals in progress, and people ready to buy"
       tabs={SALES_TABS}
       accent="teal"
     >

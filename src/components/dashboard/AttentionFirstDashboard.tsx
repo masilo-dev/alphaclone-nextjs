@@ -182,6 +182,33 @@ export function AttentionFirstDashboard() {
         </Link>
       </section>
 
+      {/* Recent business activity */}
+      <section className="ac-workspace-panel p-4">
+        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3 flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-amber-400" aria-hidden="true" />
+          Recent activity
+        </h2>
+        {Array.isArray(stats?.recentActivity) && (stats.recentActivity as Array<{ text?: string; time?: string }>).length > 0 ? (
+          <ul className="space-y-2">
+            {(stats.recentActivity as Array<{ text?: string; time?: string }>).slice(0, 5).map((item, i) => (
+              <li key={`${item.text}-${i}`} className="flex items-start justify-between gap-3 text-[12px]">
+                <span className="text-[var(--ws-text-secondary)] line-clamp-2">{item.text || 'Update'}</span>
+                {item.time ? (
+                  <span className="text-[10px] text-[var(--ws-text-tertiary)] shrink-0">{item.time}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-[12px] text-[var(--ws-text-secondary)]">
+            Wins and updates will show here as invoices, deals, and messages move forward.
+          </p>
+        )}
+        <Link href="/dashboard/notifications" className="inline-block mt-3 text-[11px] text-teal-400 hover:text-teal-300">
+          View all activity →
+        </Link>
+      </section>
+
       {/* Money Snapshot */}
       <section className="ac-workspace-panel p-4">
         <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3 flex items-center gap-2">

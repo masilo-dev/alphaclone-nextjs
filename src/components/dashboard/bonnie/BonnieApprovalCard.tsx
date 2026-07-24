@@ -8,6 +8,9 @@ export type BonnieApprovalCardProps = {
   tool: string;
   riskClass?: string;
   summary?: string;
+  reason?: string;
+  impact?: string;
+  recommendation?: string;
   preview?: { target?: string; draft?: string; previousDraft?: string };
   payloadDiff?: Record<string, { before?: unknown; after?: unknown }>;
   onApprove: (editedArgs?: Record<string, unknown>) => Promise<{ success: boolean; message?: string }>;
@@ -40,6 +43,9 @@ export default function BonnieApprovalCard({
   tool,
   riskClass,
   summary,
+  reason,
+  impact,
+  recommendation,
   preview,
   payloadDiff,
   onApprove,
@@ -54,6 +60,18 @@ export default function BonnieApprovalCard({
     () => editing && draftText !== (preview?.draft || ''),
     [editing, draftText, preview?.draft]
   );
+
+  const whatLabel = summary || `Run ${tool.replace(/_/g, ' ')}`;
+  const whyLabel = reason || 'Bonnie needs your OK before this can change customer or money data.';
+  const impactLabel =
+    impact ||
+    (riskClass === 'financial' || riskClass === 'high' || riskClass === 'critical'
+      ? 'May send money-related messages or change invoices.'
+      : riskClass === 'send' || riskClass === 'bulk'
+        ? 'May contact customers or publish outward-facing content.'
+        : 'Updates your workspace records.');
+  const recommendationLabel =
+    recommendation || 'Approve if this matches what you asked Bonnie to do. Edit first if the draft needs a tweak.';
 
   const handleApprove = async () => {
     setBusy(true);
@@ -93,10 +111,28 @@ export default function BonnieApprovalCard({
         )}
       </div>
 
-      <p className="text-sm font-medium text-slate-100">
-        <span className="font-mono text-teal-300">{tool}</span>
-      </p>
-      {summary && <p className="mt-1 text-xs text-slate-400">{summary}</p>}
+      <dl className="space-y-2 text-xs">
+        <div>
+          <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">What</dt>
+          <dd className="mt-0.5 text-sm font-medium text-slate-100">
+            <span className="font-mono text-teal-300">{tool}</span>
+            <span className="text-slate-400"> — {whatLabel}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Why</dt>
+          <dd className="mt-0.5 text-slate-300">{whyLabel}</dd>
+        </div>
+        <div>
+          <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Impact</dt>
+          <dd className="mt-0.5 text-slate-300">{impactLabel}</dd>
+        </div>
+        <div>
+          <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Bonnie recommendation</dt>
+          <dd className="mt-0.5 text-teal-200/90">{recommendationLabel}</dd>
+        </div>
+      </dl>
+
       {preview?.target && (
         <p className="mt-2 text-xs text-slate-300">
           <span className="text-slate-500">Target:</span> {preview.target}

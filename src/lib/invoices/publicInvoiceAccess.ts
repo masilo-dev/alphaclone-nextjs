@@ -1,14 +1,16 @@
 import crypto from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { AppUrls } from '@/lib/urls';
+import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
 
 export function buildPublicInvoiceUrl(
   invoiceId: string,
   publicToken: string,
-  origin?: string
+  _origin?: string
 ): string {
-  const base = (origin || process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com').replace(/\/+$/, '').replace(/^https:\/\/www\./, 'https://');
-  return `${base}/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`;
+  // Always use validated production URLs — ignore localhost/dev origins for customer links.
+  return buildValidatedPublicUrl(
+    `/invoice/${invoiceId}?token=${encodeURIComponent(publicToken)}`
+  );
 }
 
 /** Ensure invoice is public and has a stable client payment token. Returns the token. */

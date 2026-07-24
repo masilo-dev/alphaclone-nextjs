@@ -6,7 +6,11 @@ import type { LucideIcon } from 'lucide-react';
 import { Bot, Sparkles } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
-import type { EmptyStateQuickAction } from '@/config/emptyStatePresets';
+import {
+  getEmptyStatePreset,
+  type EmptyStateModuleId,
+  type EmptyStateQuickAction,
+} from '@/config/emptyStatePresets';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -147,3 +151,35 @@ export function EmptyState({
 }
 
 export default EmptyState;
+
+/** Convenience wrapper — guided empty states from shared presets. */
+export function EmptyStateFromPreset({
+  moduleId,
+  onAction,
+  actionLabel,
+  className,
+  action,
+}: {
+  moduleId: EmptyStateModuleId;
+  onAction?: () => void;
+  actionLabel?: string;
+  className?: string;
+  action?: React.ReactNode;
+}) {
+  const preset = getEmptyStatePreset(moduleId);
+  return (
+    <EmptyState
+      icon={preset.icon}
+      title={preset.title}
+      description={preset.description}
+      actionLabel={actionLabel ?? preset.actionLabel}
+      onAction={onAction}
+      action={action}
+      className={className}
+      quickActions={preset.quickActions}
+      bonnieSuggestion={preset.bonnieSuggestion}
+      templateLinks={preset.templateLinks}
+      importOptions={preset.importOptions}
+    />
+  );
+}

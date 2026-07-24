@@ -36,7 +36,8 @@ import ComposeEmailModal from './ComposeEmailModal';
 import EmailLeadInsightPanel from '../inbox/EmailLeadInsightPanel';
 import AiDraftReviewBanner from '../inbox/AiDraftReviewBanner';
 import { parseEmailFromHeader } from '../crm/emailRecipient';
-import type { InboxFolder, InboxProvider, UnifiedInboxMessage } from '@/types/unifiedInbox';
+import type { InboxFolder, InboxLabel, InboxProvider, UnifiedInboxMessage } from '@/types/unifiedInbox';
+import { INBOX_LABEL_OPTIONS } from '@/types/unifiedInbox';
 import type { DeliveryEmailProvider } from '@/lib/email/emailProviderOptions';
 import {
   normalizeDeliveryProvider,
@@ -119,6 +120,8 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeDraft, setComposeDraft] = useState<ComposeState>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeLabel, setActiveLabel] = useState<InboxLabel | 'all'>('all');
+  const [labelMap, setLabelMap] = useState<Record<string, InboxLabel[]>>({});
   const [loadingBody, setLoadingBody] = useState(false);
   const [emailClassification, setEmailClassification] = useState<EmailClassification>('Direct');
   const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
@@ -232,16 +235,52 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     if (initialFolder) setFolder(initialFolder);
   }, [initialFolder, setFolder]);
 
+  useEffect(() => {
+    if (!currentTenant?.id || typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(`inbox_labels_${currentTenant.id}`);
+      if (raw) setLabelMap(JSON.parse(raw) as Record<string, InboxLabel[]>);
+    } catch {
+      /* ignore */
+    }
+  }, [currentTenant?.id]);
+
+  const persistLabels = useCallback(
+    (next: Record<string, InboxLabel[]>) => {
+      setLabelMap(next);
+      if (currentTenant?.id && typeof window !== 'undefined') {
+        window.localStorage.setItem(`inbox_labels_${currentTenant.id}`, JSON.stringify(next));
+      }
+    },
+    [currentTenant?.id]
+  );
+
+  const toggleMessageLabel = useCallback(
+    (messageId: string, label: InboxLabel) => {
+      const key = `${provider}:${messageId}`;
+      const current = labelMap[key] || [];
+      const nextLabels = current.includes(label)
+        ? current.filter((l) => l !== label)
+        : [...current, label];
+      persistLabels({ ...labelMap, [key]: nextLabels });
+    },
+    [labelMap, persistLabels, provider]
+  );
+
   const filteredEmails = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return emails;
-    return emails.filter(
-      (email) =>
+    return emails.filter((email) => {
+      const key = `${provider}:${email.id}`;
+      const labels = email.labels || labelMap[key] || [];
+      if (activeLabel !== 'all' && !labels.includes(activeLabel)) return false;
+      if (!q) return true;
+      return (
         (email.subject || '').toLowerCase().includes(q) ||
         (email.from || '').toLowerCase().includes(q) ||
         (email.snippet || '').toLowerCase().includes(q)
-    );
-  }, [emails, searchQuery]);
+      );
+    });
+  }, [emails, searchQuery, activeLabel, labelMap, provider]);
 
   const selectedEmail = useMemo(
     () => filteredEmails.find((email) => email.id === selectedId) || null,
@@ -782,6 +821,38 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 </button>
               ))}
             </div>
+
+            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Mail labels">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeLabel === 'all'}
+                onClick={() => setActiveLabel('all')}
+                className={`px-2.5 py-1 text-[10px] font-semibold rounded-full whitespace-nowrap ${
+                  activeLabel === 'all'
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                }`}
+              >
+                All labels
+              </button>
+              {INBOX_LABEL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeLabel === opt.id}
+                  onClick={() => setActiveLabel(opt.id)}
+                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-full whitespace-nowrap ${
+                    activeLabel === opt.id
+                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
+                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-white/5" role="list" aria-label={`${folder} messages`}>
@@ -835,6 +906,18 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                       : email.subject || '(no subject)'}
                   </p>
                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">{email.snippet}</p>
+                  {(labelMap[`${provider}:${email.id}`] || email.labels || []).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
+                        <span
+                          key={lab}
+                          className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-500/20"
+                        >
+                          {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {folder === 'drafts' && (
                     <span className="inline-block mt-1 text-[10px] font-bold uppercase text-amber-400">
                       Tap to edit draft
@@ -882,6 +965,26 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     {selectedEmail.subject || '(no subject)'}
                   </h3>
                   <p className="text-xs text-slate-400 truncate">{selectedEmail.from}</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {INBOX_LABEL_OPTIONS.map((opt) => {
+                      const key = `${provider}:${selectedEmail.id}`;
+                      const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
+                          className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border transition-colors ${
+                            assigned
+                              ? 'bg-teal-500/20 text-teal-200 border-teal-500/40'
+                              : 'bg-transparent text-slate-500 border-white/10 hover:border-teal-500/30 hover:text-slate-300'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                   {senderKnown === false && (
                     <div className="mt-2 flex items-center gap-2">
                       <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>

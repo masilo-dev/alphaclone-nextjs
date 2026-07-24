@@ -258,6 +258,31 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
             </p>
           )}
 
+          <div className="mt-2 grid gap-1.5 rounded-xl border border-white/5 bg-slate-950/50 p-2.5 text-[11px] text-slate-400">
+            <p>
+              <span className="font-bold uppercase tracking-wider text-slate-500">What:</span>{' '}
+              {approval.toolName
+                ? `Bonnie wants to run ${approval.toolName.replace(/_/g, ' ')}`
+                : 'Bonnie wants to take an action in your workspace'}
+            </p>
+            <p>
+              <span className="font-bold uppercase tracking-wider text-slate-500">Why:</span>{' '}
+              {approval.reason || 'This needs your OK before it can change customer or money data.'}
+            </p>
+            <p>
+              <span className="font-bold uppercase tracking-wider text-slate-500">Impact:</span>{' '}
+              {isHighRisk
+                ? 'High impact — may contact customers, move money, or change critical records.'
+                : 'Updates workspace records; review the details before approving.'}
+            </p>
+            <p>
+              <span className="font-bold uppercase tracking-wider text-teal-500/80">Bonnie recommendation:</span>{' '}
+              {isHighRisk
+                ? 'Review carefully. Edit the draft if needed, then approve only if this matches your intent.'
+                : 'Safe to approve if this matches what you asked Bonnie to do.'}
+            </p>
+          </div>
+
           {target && (
             <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500">
               <Wrench className="h-3 w-3 shrink-0" />

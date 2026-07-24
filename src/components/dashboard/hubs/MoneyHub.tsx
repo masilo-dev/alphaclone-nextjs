@@ -23,8 +23,8 @@ interface MoneyHubProps {
 export default function MoneyHub({ children }: MoneyHubProps) {
   return (
     <HubShell
-      title="Money Hub"
-      description="Invoicing, accounting, expenses, and financial reports"
+      title="Money"
+      description="Money coming in, bills to pay, and invoices waiting"
       tabs={MONEY_TABS}
       dataTour="money-hub"
       accent="amber"

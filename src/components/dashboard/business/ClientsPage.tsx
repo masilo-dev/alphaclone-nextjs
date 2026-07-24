@@ -40,7 +40,8 @@ import {
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
 import { startClientVideoCall } from '@/services/instantMeetingService';
@@ -978,11 +979,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         })}
                         {filteredClients.length === 0 && (
                             <div className="col-span-full">
-                                <EmptyState
-                                    icon={Users}
-                                    title="No contacts yet"
-                                    description="Add your first contact to start tracking deals, communication, and billing from one place."
-                                />
+                                <EmptyStateFromPreset moduleId="clients" />
                             </div>
                         )}
                     </div>
@@ -1198,54 +1195,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                     {/* Tabs Content */}
                                     <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar mb-6">
-                                        {activeTab === 'timeline' && (
-                                            <div className="space-y-4">
-                                                {timelineLoading ? (
-                                                    <div className="flex justify-center items-center py-12">
-                                                        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                                                    </div>
-                                                ) : !clientTimeline?.activities || clientTimeline.activities.length === 0 ? (
-                                                    <EmptyState
-                                                        icon={Clock}
-                                                        title="No timeline activity yet"
-                                                        description="This contact has not logged notes, invoices, payments, or communication activity yet."
-                                                        className="py-12"
-                                                    />
-                                                ) : (
-                                                    <div className="relative pl-6 border-l-2 border-slate-800 space-y-6 py-2">
-                                                        {clientTimeline.activities.map((act: any) => {
-                                                            let typeColor = 'bg-slate-800 text-slate-400 border-slate-700';
-                                                            if (act.activity_type === 'message') typeColor = 'bg-indigo-950 text-indigo-400 border-indigo-900';
-                                                            else if (act.activity_type === 'payment') typeColor = 'bg-emerald-950 text-emerald-400 border-emerald-900';
-                                                            else if (act.activity_type === 'invoice') typeColor = 'bg-amber-950 text-amber-400 border-amber-900';
-                                                            else if (act.activity_type === 'contract') typeColor = 'bg-teal-950 text-teal-400 border-teal-900';
-                                                            else if (act.activity_type === 'note') typeColor = 'bg-violet-950 text-violet-400 border-violet-900';
-                                                            else if (act.activity_type === 'meeting' || act.activity_type === 'call') typeColor = 'bg-cyan-950 text-cyan-400 border-cyan-900';
-
-                                                            return (
-                                                                <div key={act.id} className="relative group">
-                                                                    {/* Marker */}
-                                                                    <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 ${typeColor} flex items-center justify-center transition-transform group-hover:scale-125`} />
-                                                                    
-                                                                    <div>
-                                                                        <div className="flex items-center justify-between gap-4">
-                                                                            <h4 className="text-sm font-bold text-slate-200">{act.title}</h4>
-                                                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-950 border border-slate-850 px-2 py-0.5 rounded-full font-mono">
-                                                                                {new Date(act.created_at).toLocaleDateString()}
-                                                                            </span>
-                                                                        </div>
-                                                                        {act.description && (
-                                                                            <p className="text-xs text-slate-400 mt-1 whitespace-pre-wrap leading-relaxed bg-slate-950/40 p-2.5 rounded-xl border border-slate-805/30 group-hover:border-slate-805/65 transition-colors">
-                                                                                {act.description}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                            </div>
+                                        {activeTab === 'timeline' && selectedClient?.id && (
+                                            <CustomerTimeline
+                                                clientId={selectedClient.id}
+                                                onOpenComms={() => router.push('/dashboard/comms')}
+                                            />
                                         )}
 
                                         {activeTab === 'notes' && (

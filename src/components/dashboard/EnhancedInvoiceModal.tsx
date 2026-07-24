@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import BillableExpensesPicker from './invoicing/BillableExpensesPicker';
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
 import {
   buildInvoiceDocumentInput,
@@ -584,6 +585,17 @@ export default function EnhancedInvoiceModal({
       <DocumentThemePicker
         value={formData.template}
         onChange={(themeId) => setFormData((prev) => ({ ...prev, template: themeId }))}
+      />
+
+      <DocumentQualityPanel
+        input={{
+          type: 'invoice',
+          hasLogo: Boolean(currentTenant && ((currentTenant as { logo_url?: string }).logo_url || (currentTenant as { settings?: { logo_url?: string } }).settings?.logo_url)),
+          hasClientName: Boolean(formData.clientName?.trim()),
+          hasPricing: formData.items.some((item) => Number(item.quantity) > 0 && Number(item.rate) > 0),
+          hasPaymentDetails: true,
+          clientEmail: formData.clientEmail,
+        }}
       />
 
       <div>

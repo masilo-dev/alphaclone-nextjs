@@ -71,13 +71,11 @@ export async function getClientFinancePortalData(
     .order('issue_date', { ascending: false })
     .limit(50);
 
-  const base = origin || process.env.NEXT_PUBLIC_APP_URL || '';
-
   const invoiceRows = (invoices || []).map((inv) => {
     const metadata = (inv.metadata || {}) as Record<string, string>;
     const publicToken = metadata.public_token || '';
     const payUrl = publicToken
-      ? buildPublicInvoiceUrl(inv.id, publicToken, base)
+      ? buildPublicInvoiceUrl(inv.id, publicToken)
       : AppUrls.payInvoice(inv.id);
     return {
       id: inv.id,
@@ -187,6 +185,5 @@ export async function getOrCreateClientPortalUrl(
     token = updated.finance_portal_token;
   }
 
-  const base = (origin || process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
-  return `${base}/portal/${token}`;
+  return AppUrls.clientFinancePortal(token);
 }

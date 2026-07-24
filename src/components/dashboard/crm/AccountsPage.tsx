@@ -7,13 +7,14 @@ import { companyService, type Company } from '@/services/unified/CompanyService'
 import ListViewToolbar from './ListViewToolbar';
 import RecordPageShell from './RecordPageShell';
 import RecordFilesTab from './RecordFilesTab';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import toast from 'react-hot-toast';
 import { CRMNav } from './CRMNav';
 import { usePathname } from 'next/navigation';
 import { AccountFormModal } from './AccountFormModal';
 import { useTenant } from '@/contexts/TenantContext';
 import { CrmSyncToolbar } from './CrmSyncToolbar';
+import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 
 const STAGE_FILTERS = [
   { value: 'all', label: 'All' },
@@ -204,7 +205,35 @@ export default function AccountsPage() {
           )}
           {detailTab === 'files' && <RecordFilesTab companyId={selected.id} />}
           {detailTab === 'activity' && (
-            <RelatedList items={relations?.activities || []} labelKey="subject" fallback="Activity" />
+            <div className="space-y-4">
+              {(() => {
+                const primaryContact = (relations?.contacts || [])[0] as
+                  | { business_client_id?: string; client_id?: string; id?: string }
+                  | undefined;
+                const linkedClientId =
+                  primaryContact?.business_client_id ||
+                  primaryContact?.client_id ||
+                  undefined;
+                if (linkedClientId) {
+                  return (
+                    <CustomerTimeline
+                      clientId={linkedClientId}
+                      onOpenComms={() => router.push('/dashboard/comms')}
+                    />
+                  );
+                }
+                if ((relations?.activities || []).length === 0) {
+                  return (
+                    <EmptyStateFromPreset
+                      moduleId="messages"
+                      actionLabel="Open customers"
+                      onAction={() => router.push('/dashboard/crm/workspace')}
+                    />
+                  );
+                }
+                return <RelatedList items={relations?.activities || []} labelKey="subject" fallback="Activity" />;
+              })()}
+            </div>
           )}
           <button
             type="button"

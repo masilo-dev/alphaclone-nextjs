@@ -17,7 +17,8 @@ import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
 import { LinkedInOrgPanel, normalizeLinkedInScopes } from './LinkedInOrgPanel';
 import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiVideoGenerationService';
 import { motion, AnimatePresence } from 'framer-motion';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import { SocialContentCalendar } from './SocialContentCalendar';
 import { WORKSPACE } from '@/constants/design';
 import { buildBusinessSocialPrompt } from '@/lib/ai/businessContext';
 
@@ -103,6 +104,8 @@ export default function SocialCommandCenter() {
     const [activePlatform, setActivePlatform] = useState<'linkedin' | 'facebook' | 'x'>('linkedin');
     // Social Manager Subview Filter: 'queue' (scheduled), 'published', 'analytics'
     const [activeSubView, setActiveSubView] = useState<'queue' | 'published' | 'publishing' | 'analytics'>('queue');
+    const [queueDisplayMode, setQueueDisplayMode] = useState<'list' | 'week' | 'month'>('list');
+    const [calendarAnchor, setCalendarAnchor] = useState(() => new Date());
     
     // State lists
     const [posts, setPosts] = useState<SocialPost[]>([]);
@@ -796,6 +799,34 @@ export default function SocialCommandCenter() {
                         })}
                     </div>
 
+                    {activeSubView !== 'analytics' && (
+                        <div className="flex items-center justify-between gap-2 px-3 py-2 bg-slate-950/80 border-b border-white/5">
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                Content calendar
+                            </p>
+                            <div className="flex bg-slate-900 p-0.5 rounded-lg border border-white/5">
+                                {([
+                                    { id: 'list', label: 'List' },
+                                    { id: 'week', label: 'Week' },
+                                    { id: 'month', label: 'Month' },
+                                ] as const).map((mode) => (
+                                    <button
+                                        key={mode.id}
+                                        type="button"
+                                        onClick={() => setQueueDisplayMode(mode.id)}
+                                        className={`px-2.5 py-1 text-[10px] font-bold rounded-md ${
+                                            queueDisplayMode === mode.id
+                                                ? 'bg-teal-600 text-white'
+                                                : 'text-slate-500 hover:text-slate-300'
+                                        }`}
+                                    >
+                                        {mode.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Main Platform Content */}
                     <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4 pb-24 ac-safe-bottom">
                         {activePlatform === 'linkedin' && activeSubView !== 'analytics' ? (
@@ -900,14 +931,21 @@ export default function SocialCommandCenter() {
                         ) : (
                             /* Feed List / Queue with Swipe gestures */
                             <div className="space-y-1">
+                                {queueDisplayMode !== 'list' && filteredPosts.length > 0 ? (
+                                    <SocialContentCalendar
+                                        mode={queueDisplayMode}
+                                        anchor={calendarAnchor}
+                                        onAnchorChange={setCalendarAnchor}
+                                        posts={filteredPosts}
+                                        onSelectPost={setSelectedPost}
+                                    />
+                                ) : null}
                                 {filteredPosts.length === 0 ? (
-                                    <EmptyState
-                                        icon={ActivityIcon}
-                                        title="No posts in this queue"
-                                        description="Create your first draft or schedule content for this platform to populate the queue."
+                                    <EmptyStateFromPreset
+                                        moduleId="social"
                                         className={`max-w-none py-16 border border-dashed border-[var(--ws-border)] ${WORKSPACE.panel.radius}`}
                                     />
-                                ) : (
+                                ) : queueDisplayMode === 'list' ? (
                                     <div className="space-y-4">
                                         {filteredPosts.map((post) => {
                                             const offset = swipeState[post.id] || 0;
@@ -1058,7 +1096,7 @@ export default function SocialCommandCenter() {
                                             );
                                         })}
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         )}
                     </div>

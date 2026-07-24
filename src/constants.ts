@@ -129,25 +129,34 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
 ];
 
-// --- TENANT_ADMIN NAVIGATION (aligned with hub names: Sales, Marketing, Money, Insights, Documents) ---
+// --- TENANT_ADMIN NAVIGATION (purpose groups: Customers → Settings + Bonnie) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
-  { label: 'Workspace home', href: '/dashboard', icon: Zap },
-  { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
-  { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+  { label: 'Home', href: '/dashboard', icon: Zap },
+  { label: 'Bonnie', href: '/dashboard/business/bonnie', icon: Brain },
+
+  {
+    label: 'Customers',
+    href: '#',
+    icon: Users,
+    subItems: [
+      { label: 'Customer workspace', href: '/dashboard/crm/workspace', icon: Users },
+      { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
+      { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
+      { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
+    ],
+  },
 
   {
     label: 'Sales',
     href: '#',
-    icon: Users,
+    icon: Target,
     subItems: [
-      { label: 'Customers', href: '/dashboard/crm/workspace', icon: Users },
       { label: 'Lead Finder', href: '/dashboard/leads/campaigns', icon: Search },
-      { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
+      { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
       { label: 'Deals', href: '/dashboard/deals', icon: Target },
       { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
       { label: 'Quotes', href: '/dashboard/business/quotes', icon: FileText },
-      { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-      { label: 'More…', href: '/dashboard/crm', icon: Users },
+      { label: 'Sales overview', href: '/dashboard/crm', icon: BarChart3 },
     ],
   },
 
@@ -156,12 +165,12 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: Globe,
     subItems: [
-      { label: 'Email Campaigns', href: '/dashboard/business/campaigns', icon: Presentation },
+      { label: 'Email campaigns', href: '/dashboard/business/campaigns', icon: Presentation },
       { label: 'Social', href: '/dashboard/business/social', icon: Globe },
-      { label: 'Compose', href: '/dashboard/business/social/compose', icon: PenSquare },
+      { label: 'Compose post', href: '/dashboard/business/social/compose', icon: PenSquare },
       { label: 'Forms', href: '/dashboard/business/forms', icon: FileText },
       { label: 'SMS', href: '/dashboard/business/sms', icon: Smartphone },
-      { label: 'More…', href: '/dashboard/business/social-command', icon: Calendar },
+      { label: 'Social command', href: '/dashboard/business/social-command', icon: Calendar },
     ],
   },
 
@@ -175,17 +184,32 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
       { label: 'Expenses', href: '/dashboard/finance/manage', icon: Receipt },
       { label: 'Cash flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
-      { label: 'More…', href: '/dashboard/accounting/banking', icon: DollarSign },
+      { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
     ],
   },
 
   {
-    label: 'Insights',
+    label: 'Work',
     href: '#',
-    icon: Activity,
+    icon: Briefcase,
     subItems: [
-      { label: 'Executive', href: '/dashboard/executive', icon: BarChart3 },
+      { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+      { label: 'Projects', href: '/dashboard/business/projects', icon: Layers },
+      { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+      { label: 'Workflows', href: '/dashboard/business/workflows', icon: Zap },
       { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
+      { label: 'Executive view', href: '/dashboard/executive', icon: BarChart3 },
+    ],
+  },
+
+  {
+    label: 'Communication',
+    href: '#',
+    icon: MessageSquare,
+    subItems: [
+      { label: 'Inbox', href: '/dashboard/comms', icon: Mail },
+      { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
+      { label: 'Team messages', href: '/dashboard/business/messages', icon: MessageSquare },
       { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
     ],
   },
@@ -197,20 +221,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Documents', href: '/dashboard/business/documents', icon: FileText },
       { label: 'Contracts', href: '/dashboard/business/contracts', icon: ShieldCheck },
-      { label: 'Projects', href: '/dashboard/business/projects', icon: Layers },
       { label: 'Vault', href: '/dashboard/business/vault', icon: ShieldCheck },
-    ],
-  },
-
-  {
-    label: 'Communication',
-    href: '#',
-    icon: MessageSquare,
-    subItems: [
-      { label: 'Communication hub', href: '/dashboard/comms', icon: Mail },
-      { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
-      { label: 'Team messages', href: '/dashboard/business/messages', icon: MessageSquare },
-      { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
     ],
   },
 
@@ -226,14 +237,13 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Workspace',
+    label: 'Settings',
     href: '#',
     icon: Settings,
     subItems: [
-      { label: 'Integration Marketplace', href: '/dashboard/marketplace', icon: Globe },
-      { label: 'Workflow Builder', href: '/dashboard/business/workflows', icon: Zap },
+      { label: 'System settings', href: '/dashboard/business/settings', icon: Settings },
+      { label: 'Integrations', href: '/dashboard/marketplace', icon: Globe },
       { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
-      { label: 'System Settings', href: '/dashboard/business/settings', icon: Settings },
     ],
   },
 ];

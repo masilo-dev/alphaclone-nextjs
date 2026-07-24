@@ -37,8 +37,8 @@ interface MarketingHubProps {
 export default function MarketingHub({ children }: MarketingHubProps) {
   return (
     <HubShell
-      title="Marketing & Social"
-      description="Publish, schedule, and run campaigns from one place"
+      title="Marketing"
+      description="Campaigns, social posts, and forms that bring in customers"
       tabs={MARKETING_TABS}
       accent="teal"
     >

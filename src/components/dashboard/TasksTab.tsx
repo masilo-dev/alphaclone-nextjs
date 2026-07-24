@@ -18,7 +18,7 @@ import { useSuccessFeedback, successMessages } from '../ui/SuccessFeedback';
 import { useRouter } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
-import EmptyState from '../ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '../ui/EmptyState';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
@@ -748,11 +748,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
         ) : tasks.length === 0 ? (
           <div className="p-6">
-            <EmptyState
-              icon={ListChecks}
-              title="No tasks yet"
-              description="Use the + button to create your first task and track follow-ups in one place."
-            />
+            <EmptyStateFromPreset moduleId="tasks" />
           </div>
         ) : viewMode === 'board' ? (
           <div className="p-4">

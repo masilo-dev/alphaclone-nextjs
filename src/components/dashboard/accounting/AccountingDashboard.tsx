@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { StandardStatCard, type CardTheme } from '@/components/ui/design-system';
 import { WORKSPACE } from '@/constants/design';
-import EmptyState from '@/components/ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { supabase } from '../../../lib/supabase';
 import ReceiptUploadModal from './ReceiptUploadModal';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
@@ -385,10 +385,8 @@ export default function AccountingDashboard() {
                         </div>
                         <div className="divide-y divide-white/5">
                             {receipts.length === 0 ? (
-                                <EmptyState
-                                    icon={Receipt}
-                                    title="No receipts captured yet"
-                                    description="Upload supplier receipts here to keep expenses, proof of payment, and ledger postings in one place."
+                                <EmptyStateFromPreset
+                                    moduleId="accounting"
                                     actionLabel="Upload receipt"
                                     onAction={() => setIsUploadOpen(true)}
                                     className="max-w-none py-12"

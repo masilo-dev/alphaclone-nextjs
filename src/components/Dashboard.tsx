@@ -349,6 +349,25 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [taskSchedulerOpen, setTaskSchedulerOpen] = useState(false);
+  const [celebration, setCelebration] = useState<{ show: boolean; title: string; message: string }>({
+    show: false,
+    title: 'Done!',
+    message: '',
+  });
+
+  // Celebrate completed work (invoice paid, campaign sent, Bonnie finished, etc.)
+  useEffect(() => {
+    const onCelebrate = (event: Event) => {
+      const detail = (event as CustomEvent<{ title?: string; message?: string }>).detail || {};
+      setCelebration({
+        show: true,
+        title: detail.title || 'Done!',
+        message: detail.message || 'Completed successfully.',
+      });
+    };
+    window.addEventListener('action-celebration', onCelebrate as EventListener);
+    return () => window.removeEventListener('action-celebration', onCelebrate as EventListener);
+  }, []);
 
   // Global Command Palette Hotkey (/)
   useEffect(() => {
@@ -2111,11 +2130,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         onComplete={() => setShowProductTour(false)}
         userRole={user.role}
       />
-      <CelebrationOverlay 
-        isOpen={false} 
-        onClose={() => {}} 
-        title="Mission Accomplished" 
-        message="Achievement unlocked." 
+      <CelebrationOverlay
+        isOpen={celebration.show}
+        onClose={() => setCelebration((p) => ({ ...p, show: false }))}
+        title={celebration.title}
+        message={celebration.message}
       />
       {!location.startsWith('/dashboard/bonnie') &&
         location !== '/dashboard/business/bonnie' && <BonnieWidget />}

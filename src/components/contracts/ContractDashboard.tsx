@@ -16,6 +16,7 @@ import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
 import { ContractAuditLog } from './ContractAuditLog';
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
 import {
     buildContractDocumentInput,
@@ -1339,6 +1340,21 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
                             <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-4">
                                 <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+                                <DocumentQualityPanel
+                                    input={{
+                                        type: 'contract',
+                                        hasClientName: Boolean(form.clientName?.trim()),
+                                        hasSignature: Boolean(isSigned || signatureName),
+                                        hasTerms: Boolean(editedHtml || generatedContract),
+                                        clientEmail: form.clientEmail,
+                                        hasLogo: Boolean(
+                                            currentTenant &&
+                                                ((currentTenant as { logo_url?: string }).logo_url ||
+                                                    (currentTenant as { settings?: { logo_url?: string } }).settings?.logo_url)
+                                        ),
+                                        hasPricing: Number(form.totalAmount) > 0,
+                                    }}
+                                />
                                 <DocumentPreview
                                     input={buildContractDocumentInput(
                                         {

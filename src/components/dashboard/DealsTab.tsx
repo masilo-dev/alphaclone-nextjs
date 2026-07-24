@@ -19,7 +19,7 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { DealRevenueTimeline } from './deals/DealRevenueTimeline';
-import EmptyState from '../ui/EmptyState';
+import EmptyState, { EmptyStateFromPreset } from '../ui/EmptyState';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
@@ -1037,11 +1037,8 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   if (!loading && deals.length === 0) {
     return (
       <div className="relative flex flex-col h-full bg-slate-950 p-6">
-        <EmptyState
-          icon={TrendingUp}
-          title="No pipeline records yet"
-          description="Create your first deal to start tracking movement, value, and next-step risk."
-          actionLabel="Create deal"
+        <EmptyStateFromPreset
+          moduleId="deals"
           onAction={() => setShowCreateModal(true)}
         />
       </div>

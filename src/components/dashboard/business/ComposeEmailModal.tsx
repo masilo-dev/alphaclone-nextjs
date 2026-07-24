@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
@@ -22,6 +23,17 @@ import {
   loadLocalComposeDraft,
   saveLocalComposeDraft,
 } from '@/lib/email/composeDraftStorage';
+
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+
+const COMPOSE_QUILL_MODULES = {
+  toolbar: [
+    ['bold', 'italic', 'underline'],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    ['link'],
+    ['clean'],
+  ],
+};
 
 function parseRecipientList(value: string): string[] {
     return value
@@ -701,12 +713,15 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
                                 <div>
                                     <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">Message</label>
-                                    <textarea
-                                        value={body}
-                                        onChange={e => setBody(e.target.value)}
-                                        placeholder="Type your message…"
-                                        className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:border-teal-500/40 outline-none h-[140px] max-h-[140px] resize-none overflow-y-auto"
-                                    />
+                                    <div className="rounded-xl border border-white/10 overflow-hidden bg-slate-950/50 [&_.ql-toolbar]:border-white/10 [&_.ql-toolbar]:bg-slate-900/80 [&_.ql-container]:border-white/10 [&_.ql-editor]:min-h-[180px] [&_.ql-editor]:max-h-[320px] [&_.ql-editor]:text-sm [&_.ql-editor]:text-white [&_.ql-stroke]:stroke-slate-400 [&_.ql-picker]:text-slate-300">
+                                        <ReactQuill
+                                            theme="snow"
+                                            value={body}
+                                            onChange={setBody}
+                                            modules={COMPOSE_QUILL_MODULES}
+                                            placeholder="Type your message…"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>

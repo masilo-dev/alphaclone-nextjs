@@ -23,6 +23,7 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
+import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
 import {
   buildQuoteDocumentInput,
@@ -295,6 +296,16 @@ const CreateQuoteModal: React.FC<{
           className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm"
         />
         <DocumentThemePicker value={documentTheme} onChange={setDocumentTheme} />
+        <DocumentQualityPanel
+          input={{
+            type: 'quote',
+            hasClientName: Boolean(name.trim()),
+            hasPricing: Number(amount) > 0,
+            hasTerms: true,
+            clientEmail: email,
+            hasLogo: Boolean(currentTenant && ((currentTenant as { logo_url?: string }).logo_url)),
+          }}
+        />
         {previewInput ? <DocumentPreview input={previewInput} /> : null}
         <button
           type="submit"

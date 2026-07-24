@@ -795,6 +795,49 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                         )}
                     </div>
                 </div>
+                {selectedFile ? (
+                    <div className="px-4 py-2 border-b border-white/5 bg-slate-950/80">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                            Related versions
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                            {files
+                                .filter((f) => {
+                                    const base = (name: string) =>
+                                        name.replace(/\.(docx?|pdf|txt)$/i, '').replace(/ \(\d+\)$/, '');
+                                    return (
+                                        base(f.original_filename) ===
+                                            base(selectedFile.original_filename) &&
+                                        f.id !== selectedFile.id
+                                    );
+                                })
+                                .slice(0, 8)
+                                .map((f) => (
+                                    <button
+                                        key={f.id}
+                                        type="button"
+                                        onClick={() => setSelectedFile(f)}
+                                        className="text-[10px] px-2 py-1 rounded-lg border border-white/10 text-slate-300 hover:border-teal-500/40 hover:text-teal-300"
+                                    >
+                                        {f.original_filename} ·{' '}
+                                        {new Date(f.created_at || f.uploaded_at || Date.now()).toLocaleDateString()}
+                                    </button>
+                                ))}
+                            {files.filter((f) => {
+                                const base = (name: string) =>
+                                    name.replace(/\.(docx?|pdf|txt)$/i, '').replace(/ \(\d+\)$/, '');
+                                return (
+                                    base(f.original_filename) === base(selectedFile.original_filename) &&
+                                    f.id !== selectedFile.id
+                                );
+                            }).length === 0 ? (
+                                <span className="text-[11px] text-slate-500">
+                                    Save edits to create another version of this file.
+                                </span>
+                            ) : null}
+                        </div>
+                    </div>
+                ) : null}
                 {renderEmailModal()}
 
                 {/* Content Area */}
