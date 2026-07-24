@@ -820,7 +820,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                         className="text-[10px] px-2 py-1 rounded-lg border border-white/10 text-slate-300 hover:border-teal-500/40 hover:text-teal-300"
                                     >
                                         {f.original_filename} ·{' '}
-                                        {new Date(f.created_at || f.uploaded_at || Date.now()).toLocaleDateString()}
+                                        {new Date(f.created_at).toLocaleDateString()}
                                     </button>
                                 ))}
                             {files.filter((f) => {
