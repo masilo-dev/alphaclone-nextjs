@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/middleware';
+import { rateLimit, rateLimitConfigs } from '@/lib/rateLimit';
 
 type PlatformPolicy = {
     maintenanceMode: boolean;
@@ -78,6 +79,55 @@ function applyRequiredOwaspHeaders(response: NextResponse) {
     return response;
 }
 
+function clientIp(request: NextRequest): string {
+    return (
+        request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        request.headers.get('x-real-ip')?.trim() ||
+        '127.0.0.1'
+    );
+}
+
+async function applyGlobalApiRateLimit(request: NextRequest): Promise<NextResponse | null> {
+    const { pathname } = request.nextUrl;
+    if (!pathname.startsWith('/api/')) return null;
+    if (
+        pathname === '/api/health' ||
+        pathname === '/api/readiness' ||
+        pathname.startsWith('/api/cron/') ||
+        pathname.startsWith('/api/webhooks/')
+    ) {
+        return null;
+    }
+
+    const ip = clientIp(request);
+    const isAuth =
+        pathname.startsWith('/api/auth/') ||
+        pathname.includes('/login') ||
+        pathname.includes('/signup');
+    const isMcp = pathname === '/api/mcp' || pathname.startsWith('/api/mcp/');
+    const config = isAuth
+        ? rateLimitConfigs.auth.login
+        : isMcp
+          ? rateLimitConfigs.api.heavy
+          : rateLimitConfigs.api.standard;
+    const key = `${isAuth ? 'auth' : isMcp ? 'mcp' : 'api'}:${ip}:${pathname.split('/').slice(0, 4).join('/')}`;
+
+    const result = await rateLimit(request, config, key);
+    if (result.success) return null;
+
+    return NextResponse.json(
+        { error: 'Too many requests. Please try again later.', code: 'RATE_LIMITED' },
+        {
+            status: 429,
+            headers: {
+                'Retry-After': String(Math.max(1, Math.ceil((result.reset - Date.now()) / 1000))),
+                'X-RateLimit-Limit': String(result.limit),
+                'X-RateLimit-Remaining': String(result.remaining),
+            },
+        }
+    );
+}
+
 export async function proxy(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
     const host = request.headers.get('host');
@@ -89,7 +139,11 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(url, 301);
     }
 
-    // CRITICAL: Bypass ALL middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
+    // Global sliding-window rate limit for API surfaces (incl. MCP)
+    const rateLimited = await applyGlobalApiRateLimit(request);
+    if (rateLimited) return rateLimited;
+
+    // CRITICAL: Bypass remaining middleware logic for MCP API routes to ensure no interference with SSE/JSON-RPC
     // and to eliminate latency from platform policy fetches (prevents handshake timeouts).
     if (pathname === '/api/mcp' || pathname.startsWith('/api/mcp/')) {
         return NextResponse.next();

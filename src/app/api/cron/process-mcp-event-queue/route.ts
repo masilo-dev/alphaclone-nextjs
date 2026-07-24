@@ -25,7 +25,10 @@ async function processBatchOutreachEvent(
   const { createMCPServer } = await import('@/services/mcp/MCPServer');
   const leadIds = Array.isArray(payload.lead_ids) ? (payload.lead_ids as string[]) : [];
   const clientIds = Array.isArray(payload.client_ids) ? (payload.client_ids as string[]) : [];
-  const server = userId ? createMCPServer({ tenantId, userId }) : createMCPServer();
+  if (!userId) {
+    throw new Error('mcp_event_queue row missing user_id — cannot execute tenant-scoped MCP tools');
+  }
+  const server = createMCPServer({ tenantId, userId });
 
   let sent = 0;
   let failed = 0;
@@ -132,6 +135,35 @@ export async function GET(req: NextRequest) {
     const maxAttempts = Number(event.max_attempts || MAX_ATTEMPTS);
 
     try {
+      const { assertCronRowTenantContext, quarantineTenantIsolationRow } = await import(
+        '@/lib/tenant/platformTenant'
+      );
+      try {
+        assertCronRowTenantContext(event);
+      } catch (qErr: any) {
+        await quarantineTenantIsolationRow({
+          tableName: 'mcp_event_queue',
+          recordId: event.id,
+          reason: 'missing_tenant_id',
+          payload: { event_name: event.event_name },
+        }).catch(() => undefined);
+        await admin
+          .from('mcp_event_queue')
+          .update({
+            status: 'dead_letter',
+            last_error: 'missing_tenant_id',
+            updated_at: nowIso,
+          })
+          .eq('id', event.id);
+        results.push({
+          id: event.id,
+          ok: false,
+          quarantined: true,
+          error: qErr?.message || 'missing_tenant_id',
+        });
+        continue;
+      }
+
       let outcome: Record<string, unknown> = { skipped: true };
 
       if (event.event_name === 'send_batch_outreach') {
@@ -142,6 +174,7 @@ export async function GET(req: NextRequest) {
         );
       }
 
+      const doneAt = new Date().toISOString();
       await admin
         .from('mcp_event_queue')
         .update({
@@ -150,7 +183,8 @@ export async function GET(req: NextRequest) {
           locked_at: null,
           locked_by: null,
           result: outcome,
-          updated_at: new Date().toISOString(),
+          processed_at: doneAt,
+          updated_at: doneAt,
         })
         .eq('id', event.id);
 

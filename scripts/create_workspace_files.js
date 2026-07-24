@@ -1,16 +1,17 @@
-const { Client } = require('pg');
+const { Client } = require("pg");
 
 async function run() {
-  const databaseUrl = "postgresql://postgres.ehekzoioqvtweugemktn:Amgseries%40gmail.com@aws-1-eu-central-1.pooler.supabase.com:6543/postgres";
+  const databaseUrl =
+    "postgresql://postgres.ehekzoioqvtweugemktn:Amgseries%40gmail.com@aws-1-eu-central-1.pooler.supabase.com:6543/postgres";
 
-  console.log('Connecting to database via pooler...');
+  console.log("Connecting to database via pooler...");
   const client = new Client({
     connectionString: databaseUrl,
     ssl: { rejectUnauthorized: false },
   });
 
   await client.connect();
-  console.log('Connected. Creating table workspace_files...');
+  console.log("Connected. Creating table workspace_files...");
 
   const sql = `
     CREATE TABLE IF NOT EXISTS public.workspace_files (
@@ -43,9 +44,11 @@ async function run() {
 
   try {
     await client.query(sql);
-    console.log('workspace_files table and RLS policy verified/created successfully!');
+    console.log(
+      "workspace_files table and RLS policy verified/created successfully!",
+    );
   } catch (err) {
-    console.error('Error executing query:', err);
+    console.error("Error executing query:", err);
   } finally {
     await client.end();
   }

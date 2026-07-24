@@ -18,6 +18,14 @@ const SENSITIVE_KEYS = new Set([
   'api_key',
   'token',
   'secret',
+  'page_access_token',
+  'user_access_token',
+  'authorization',
+  'cookie',
+  'ssn',
+  'bodyhtml',
+  'bodytext',
+  'rawpayload',
 ]);
 
 export type ServerAuditEvent = {
@@ -33,6 +41,8 @@ export type ServerAuditEvent = {
   metadata?: Record<string, unknown>;
   ipHash?: string;
   userAgent?: string;
+  /** When true and AUDIT_REQUIRED=true, failures throw instead of soft-failing. */
+  critical?: boolean;
 };
 
 function getServiceClient(): SupabaseClient | null {
@@ -58,10 +68,15 @@ function redactMetadata(meta: Record<string, unknown> | undefined): Record<strin
 }
 
 /**
- * Insert an audit row with service role. Failures are logged as operational alerts
- * and do not throw (must not break successful requests).
+ * Insert an audit row with service role.
+ * Soft-fails by default (must not break successful requests).
+ * When AUDIT_REQUIRED=true and event.critical, failures throw.
  */
 export async function writeServerAuditLog(event: ServerAuditEvent): Promise<{ ok: boolean }> {
+  const requireAudit =
+    event.critical === true &&
+    (process.env.AUDIT_REQUIRED === 'true' || process.env.AUDIT_REQUIRED === '1');
+
   try {
     const admin = getServiceClient();
     if (!admin) {
@@ -69,6 +84,7 @@ export async function writeServerAuditLog(event: ServerAuditEvent): Promise<{ ok
         action: event.action,
         request_id: event.requestId,
       });
+      if (requireAudit) throw new Error('Audit logging unavailable');
       return { ok: false };
     }
 
@@ -96,6 +112,7 @@ export async function writeServerAuditLog(event: ServerAuditEvent): Promise<{ ok
         code: error.code,
         message: error.message,
       });
+      if (requireAudit) throw new Error(`Audit log insert failed: ${error.message}`);
       return { ok: false };
     }
     return { ok: true };
@@ -105,6 +122,7 @@ export async function writeServerAuditLog(event: ServerAuditEvent): Promise<{ ok
       request_id: event.requestId,
       error: err instanceof Error ? err.message : 'unknown',
     });
+    if (requireAudit) throw err;
     return { ok: false };
   }
 }

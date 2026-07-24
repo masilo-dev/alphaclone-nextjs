@@ -454,6 +454,25 @@ export async function validateMCPAuthApp(
       requestId,
     });
 
+    try {
+      const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+      await assertTenantMembership(
+        tokenData.tenant_id as string,
+        tokenData.user_id as string
+      );
+    } catch {
+      return {
+        error: 'Unauthorized',
+        status: 401,
+        wwwAuthenticate: createWWWAuthenticateHeader(
+          'invalid_token',
+          'Workspace membership is not active',
+          undefined,
+          resourceMetadataUrl
+        ),
+      };
+    }
+
     return {
       tenant_id: tokenData.tenant_id as string,
       user_id: tokenData.user_id as string,
@@ -467,7 +486,7 @@ export async function validateMCPAuthApp(
   }
 
   // ── 2. Fallback to API Key ───────────────────────────────────────────────
-  const keyData = await lookupMcpApiKey(supabaseAdmin, token);
+  const keyData = await lookupMcpApiKey(supabaseAdmin, token, { requireActive: true });
 
   if (!keyData) {
     return {
@@ -497,6 +516,22 @@ export async function validateMCPAuthApp(
         ),
       };
     }
+  }
+
+  try {
+    const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+    await assertTenantMembership(keyData.tenant_id, keyData.user_id);
+  } catch {
+    return {
+      error: 'Unauthorized',
+      status: 401,
+      wwwAuthenticate: createWWWAuthenticateHeader(
+        'invalid_token',
+        'Workspace membership is not active',
+        undefined,
+        resourceMetadataUrl
+      ),
+    };
   }
 
   return {

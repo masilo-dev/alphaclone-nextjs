@@ -1,16 +1,16 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
 function run() {
-  const dryRunFile = path.join(process.cwd(), 'db_push_dry_run.txt');
+  const dryRunFile = path.join(process.cwd(), "db_push_dry_run.txt");
   if (!fs.existsSync(dryRunFile)) {
-    console.error('❌ Dry run file not found. Please run dry run first.');
+    console.error("❌ Dry run file not found. Please run dry run first.");
     process.exit(1);
   }
 
-  const content = fs.readFileSync(dryRunFile, 'utf8');
-  const lines = content.split('\n');
+  const content = fs.readFileSync(dryRunFile, "utf8");
+  const lines = content.split("\n");
   const filesToMove = [];
 
   for (const line of lines) {
@@ -21,9 +21,11 @@ function run() {
     }
   }
 
-  console.log(`Found ${filesToMove.length} historical migration files to move temporarily.`);
+  console.log(
+    `Found ${filesToMove.length} historical migration files to move temporarily.`,
+  );
 
-  const tempDir = path.join(process.cwd(), 'tmp', 'migrations_backup');
+  const tempDir = path.join(process.cwd(), "tmp", "migrations_backup");
   if (!fs.existsSync(tempDir)) {
     fs.mkdirSync(tempDir, { recursive: true });
   }
@@ -43,14 +45,16 @@ function run() {
   let errorOccurred = null;
   try {
     console.log('Running: npx supabase db push -p "Amgseries@22" --yes');
-    const output = execSync('npx supabase db push -p "Amgseries@22" --yes', { stdio: 'inherit' });
-    console.log('✅ Push completed successfully!');
+    const output = execSync('npx supabase db push -p "Amgseries@22" --yes', {
+      stdio: "inherit",
+    });
+    console.log("✅ Push completed successfully!");
   } catch (err) {
-    console.error('❌ Push failed:', err.message);
+    console.error("❌ Push failed:", err.message);
     errorOccurred = err;
   }
 
-  console.log('Restoring migration files...');
+  console.log("Restoring migration files...");
   let restoredCount = 0;
   for (const file of movedFiles) {
     if (fs.existsSync(file.dest)) {

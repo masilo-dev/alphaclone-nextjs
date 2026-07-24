@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { emailCampaignService } from '@/services/emailCampaignService';
 import { isEmailSuppressed } from '@/lib/email/suppression';
+import { hasRecipientMarketingConsent } from '@/lib/email/marketingConsent';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { sendWhatsAppMessage, isWhatsAppConfigured } from '@/lib/whatsapp/sendWhatsApp';
@@ -369,6 +370,23 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .update({
                         status: 'failed',
                         error_message: 'Recipient is suppressed',
+                    })
+                    .eq('id', recipient.id);
+                failedCount += 1;
+                continue;
+            }
+
+            const tenantId = String(c.tenant_id || '');
+            const consentOk = await hasRecipientMarketingConsent(admin, tenantId, {
+                email: recipient.email,
+                contactId: recipient.contact_id,
+            });
+            if (!consentOk) {
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'failed',
+                        error_message: 'Marketing consent not granted (email_opt_in)',
                     })
                     .eq('id', recipient.id);
                 failedCount += 1;

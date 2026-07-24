@@ -5,6 +5,7 @@ import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { getPublicInvoicePaymentUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { logInvoiceEvent } from '@/lib/audit/invoiceAuditLogger';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,11 @@ async function processInvoiceOverdueReminders() {
         if (sentError) throw sentError;
 
         for (const invoice of sentInvoices || []) {
+            const guard = await guardCronTenantRow(invoice, 'business_invoices', {
+                phase: 'mark_overdue',
+            });
+            if (!guard.ok) continue;
+
             await admin
                 .from('business_invoices')
                 .update({ status: 'overdue', updated_at: nowIso })
@@ -59,6 +65,11 @@ async function processInvoiceOverdueReminders() {
         if (activeError) throw activeError;
 
         for (const invoice of activeInvoices || []) {
+            const guard = await guardCronTenantRow(invoice, 'business_invoices', {
+                phase: 'send_reminder',
+            });
+            if (!guard.ok) continue;
+
             const daysOverdue = invoice.due_date
                 ? Math.floor((Date.now() - new Date(invoice.due_date).getTime()) / 86400000)
                 : 0;

@@ -104,3 +104,11 @@ Thumbs.db
 
 # workflow library generates a root /app dir at runtime; must not be committed
 /app/
+
+# Explicit secret files — NEVER commit
+.env.local
+.env
+.env.production
+.env.development
+.env*.local
+*.pem

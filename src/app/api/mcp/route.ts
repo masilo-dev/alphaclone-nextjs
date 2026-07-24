@@ -83,26 +83,24 @@ async function resolveAuth(req: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (!userError && user) {
-      const tenantIdHeader = req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId');
-      let resolvedTenantId = tenantIdHeader || '';
+      // Hint is NEVER authoritative — must verify membership first.
+      const hinted =
+        req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId') || '';
 
-      if (!resolvedTenantId) {
-        const { data: userTenant } = await supabase
-          .from('tenant_users')
-          .select('tenant_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        resolvedTenantId = userTenant?.tenant_id || '';
-      }
-
-      if (resolvedTenantId) {
+      try {
+        const { resolveActiveTenantForUser } = await import('@/lib/tenant/platformTenant');
+        const resolved = await resolveActiveTenantForUser({
+          userId: user.id,
+          hintedTenantId: hinted || null,
+        });
         return {
-          tenant_id: resolvedTenantId,
+          tenant_id: resolved.tenantId,
           user_id: user.id,
           client_id: undefined as string | undefined,
         };
+      } catch (membershipErr) {
+        console.warn('[MCP Route Auth Fallback] tenant membership rejected:', membershipErr);
+        // Fall through to unauthorized
       }
     }
   } catch (fallbackErr) {
@@ -205,6 +203,17 @@ export async function POST(req: NextRequest) {
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
+  }
+
+  // Re-validate active membership for every request (sessions/tokens alone are not enough)
+  try {
+    const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+    await assertTenantMembership(tenantId, userId);
+  } catch {
+    return NextResponse.json(
+      { error: 'Unauthorized', message: 'Workspace membership is not active' },
+      { status: 401, headers: mcpJsonHeaders(req) }
+    );
   }
 
   // 2. Short-circuit handshake methods (SDK import crashes in serverless for initialize)
@@ -701,7 +710,12 @@ export async function DELETE(req: NextRequest) {
   if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-      await supabaseAdmin.from('mcp_sessions').delete().eq('id', mcpSessionId);
+      await supabaseAdmin
+        .from('mcp_sessions')
+        .delete()
+        .eq('id', mcpSessionId)
+        .eq('tenant_id', auth.tenant_id)
+        .eq('user_id', auth.user_id);
       console.log('[MCP HTTP DELETE] Session terminated:', mcpSessionId);
     } catch (err) {
       console.warn('[MCP HTTP DELETE] Session cleanup failed:', err);

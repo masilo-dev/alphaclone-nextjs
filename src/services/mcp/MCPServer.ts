@@ -702,15 +702,14 @@ function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]
   const publishable = identities.filter(canPublishFacebookPage);
   if (!publishable.length) return null;
 
-  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary));
+  // Explicit tenant primary only — never silently switch pages when multiple exist
+  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary || item?.metadata?.is_default));
   if (explicitPrimary) return explicitPrimary;
 
-  const sorted = [...publishable].sort((a, b) => {
-    const aTs = Date.parse(String(a.updated_at || '')) || 0;
-    const bTs = Date.parse(String(b.updated_at || '')) || 0;
-    return bTs - aTs;
-  });
-  return sorted[0] || null;
+  // Auto-select only when exactly one publishable page for this tenant
+  if (publishable.length === 1) return publishable[0];
+
+  return null;
 }
 
 /**
@@ -797,25 +796,16 @@ class AlphaCloneMCPServer {
     this.setupToolHandlers();
   }
 
-  /** Workspace scope for this HTTP connection (from MCP API key). */
+  /** Workspace scope for this HTTP connection (from MCP API key / OAuth). */
   private requireTenant(args: Record<string, any>): string {
     if (this.ctx?.tenantId) {
       // Session-scoped MCP: always use connection tenant; ignore echoed tenant_id from agents.
       return this.ctx.tenantId;
     }
-    const t = args.tenant_id;
-    if (!t || typeof t !== 'string') {
-      throw new Error(
-        'tenant_id is required unless you use the MCP connection URL from the dashboard (API-key scoped workspace). Pass your workspace UUID as tenant_id.'
-      );
-    }
-    const tid = t.trim();
-    if (!isUuidString(tid)) {
-      throw new Error(
-        'tenant_id must be a valid workspace UUID from your MCP dashboard URL, not a name or slug.'
-      );
-    }
-    return tid;
+    // Fail closed: never trust AI/client-supplied tenant_id without a bound session.
+    throw new Error(
+      'Active workspace required. Connect via the MCP dashboard URL or OAuth session — tenant_id from the model is not authoritative.'
+    );
   }
 
   private requireProfileUser(args: Record<string, any>): string {
@@ -827,13 +817,9 @@ class AlphaCloneMCPServer {
       }
       return this.ctx.userId;
     }
-    const u = args.user_id;
-    if (!u || typeof u !== 'string') throw new Error('user_id is required');
-    const uid = u.trim();
-    if (!isUuidString(uid)) {
-      throw new Error('user_id must be a valid UUID from your MCP connection URL.');
-    }
-    return uid;
+    throw new Error(
+      'Authenticated user required. Connect via the MCP dashboard URL or OAuth session — user_id from the model is not authoritative.'
+    );
   }
 
   private async getFacebookIntegrations(
@@ -876,7 +862,8 @@ class AlphaCloneMCPServer {
     const selectCols =
       'id, page_id, page_name, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token';
 
-    // 1. Try to query with tenant_id + user_id
+    // Tenant-scoped only. NEVER fall back to user_id across tenants.
+    // Co-members of the same tenant may share pages (tenant_id filter, optional user filter).
     let query = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
@@ -886,47 +873,23 @@ class AlphaCloneMCPServer {
       query = query.eq('page_id', pageId);
     }
     
-    const { data: tenantRows, error: tenantError } = await query
+    // Prefer tenant + user, then tenant-wide (same workspace). Never user-only.
+    const { data: tenantUserRows, error: tenantUserError } = await query
       .eq('tenant_id', tenantId)
       .eq('user_id', userId);
 
-    if (!tenantError && tenantRows && tenantRows.length > 0) {
-      return resolveTokens(tenantRows as Parameters<typeof resolveTokens>[0]);
+    if (!tenantUserError && tenantUserRows && tenantUserRows.length > 0) {
+      return resolveTokens(tenantUserRows as Parameters<typeof resolveTokens>[0]);
     }
 
-    // 2. Fallback: Query with user_id only (in case tenant_id mismatch/missing in connection flow)
-    let fallbackQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
-    
-    if (activeOnly) {
-      fallbackQuery = fallbackQuery.eq('is_active', true);
-    }
-    if (pageId) {
-      fallbackQuery = fallbackQuery.eq('page_id', pageId);
-    }
-
-    const { data: userRows, error: userError } = await fallbackQuery
-      .eq('user_id', userId);
-
-    if (!userError && userRows && userRows.length > 0) {
-      console.log(`[Facebook Fallback] Found ${userRows.length} integrations by user_id ${userId} (tenant_id mismatch)`);
-      return resolveTokens(userRows as Parameters<typeof resolveTokens>[0]);
-    }
-
-    // 3. Last fallback: Query by tenant_id only (no user_id filter)
     let tenantOnlyQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
-
-    if (activeOnly) {
-      tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
-    }
-    if (pageId) {
-      tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
-    }
+    if (activeOnly) tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
+    if (pageId) tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
 
     const { data: tenantOnlyRows, error: tenantOnlyError } = await tenantOnlyQuery
       .eq('tenant_id', tenantId);
 
     if (!tenantOnlyError && tenantOnlyRows && tenantOnlyRows.length > 0) {
-      console.log(`[Facebook Fallback] Found ${tenantOnlyRows.length} integrations by tenant_id ${tenantId} (user_id mismatch)`);
       return resolveTokens(tenantOnlyRows as Parameters<typeof resolveTokens>[0]);
     }
 
@@ -1074,17 +1037,48 @@ class AlphaCloneMCPServer {
     const tenantIdForPolicy = (args?.tenant_id && String(args.tenant_id).trim()) || this.ctx?.tenantId || '';
     const userIdForPolicy = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
     if (tenantIdForPolicy && userIdForPolicy) {
-      // ToolPolicyGate approval queue intentionally removed — actions execute immediately.
-      // evaluateToolPolicy is a no-op allow; kept for telemetry/type compatibility only.
       const { evaluateToolPolicy } = await import('@/lib/ai/ToolPolicyGate');
-      await evaluateToolPolicy({
+      const policy = await evaluateToolPolicy({
         tenantId: tenantIdForPolicy,
         userId: userIdForPolicy,
         toolName: name,
         source: 'mcp',
         args: args || {},
       });
-      // Do NOT deny or queue_approval — gate was a dead end with no dashboard release surface.
+      if (policy.outcome === 'deny') {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: true,
+                code: 'POLICY_DENIED',
+                message: policy.reason,
+                risk_class: policy.riskClass,
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+      if (policy.outcome === 'queue_approval') {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                queued_for_approval: true,
+                approval_id: policy.approvalId,
+                risk_class: policy.riskClass,
+                message: policy.reason,
+                next_step:
+                  'Call list_pending_approvals then approve_pending_action with approval_id to execute.',
+              }),
+            },
+          ],
+        };
+      }
     }
 
     // Check new registry first
@@ -3722,7 +3716,9 @@ class AlphaCloneMCPServer {
           }
 
           if (hasFacebook && !resolvedPageId) {
-            throw new Error('No connected Facebook pages were found for this workspace.');
+            throw new Error(
+              'page_id is required when this tenant has multiple Facebook Pages. Call get_social_identities or get_facebook_identities and pass identity_id/page_id.'
+            );
           }
 
           const normalizedMediaUrls = Array.isArray(media_urls)

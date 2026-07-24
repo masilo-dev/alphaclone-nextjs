@@ -53,7 +53,7 @@ export type StandardMcpError = {
 export type StandardMcpResult<T = unknown> = StandardMcpSuccess<T> | StandardMcpError;
 
 export const MCP_PROTOCOL_VERSION = '2025-06-18';
-export const MCP_TOOL_CATALOG_VERSION = 'alphaclone-bos-1.0';
+export const MCP_TOOL_CATALOG_VERSION = 'alphaclone-bos-social-2.0';
 
 export function newActionId(): string {
   return crypto.randomUUID();

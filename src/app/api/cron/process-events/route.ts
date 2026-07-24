@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 // Import workflows
 import { dealStageChangedWorkflow } from '@/workflows/deal-flows';
@@ -49,6 +50,14 @@ export async function GET(request: NextRequest) {
 
     // 2. Dispatch events to workflows
     for (const event of events) {
+      const guard = await guardCronTenantRow(event, 'business_automation_events', {
+        event_type: event.event_type,
+      });
+      if (!guard.ok) {
+        results.push({ eventId: event.id, status: 'quarantined', error: guard.error });
+        continue;
+      }
+
       try {
         // Every business event creates Bonnie reasoning (Observe→…→Learn)
         if (isBonnieReasoningEvent(event.event_type)) {

@@ -671,7 +671,7 @@ defineConnectorTool({
   module: 'autonomous-ops',
   name: 'publish_now',
   description:
-    'Publish a social post now to Facebook, Instagram, LinkedIn personal or organization. Requires confirmation. Returns live post ID and URL.',
+    'Publish a social post now via SocialPublishingService. Supports Facebook Page and LinkedIn person/organization. Requires confirmation unless tenant enables autonomous publishing. Returns real provider post ID and live URL — never fabricates success.',
   permission: 'social:publish',
   rateLimitClass: 'publish',
   auditAction: 'mcp_publish_now',
@@ -680,6 +680,13 @@ defineConnectorTool({
     platforms: z.array(z.enum(['facebook', 'instagram', 'linkedin', 'linkedin_org'])).min(1),
     caption: z.string().min(1),
     media_urls: z.array(z.string()).optional(),
+    media_asset_ids: z.array(z.string().uuid()).optional(),
+    identity_type: z
+      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
+      .optional(),
+    identity_id: z.string().optional(),
+    linkedin_organization_id: z.string().optional(),
+    page_id: z.string().optional(),
     confirmed: z.boolean().optional().default(false),
     idempotency_key: z.string().optional(),
   }),
@@ -690,6 +697,14 @@ defineConnectorTool({
       platforms: { type: 'array', items: { type: 'string' } },
       caption: { type: 'string' },
       media_urls: { type: 'array', items: { type: 'string' } },
+      media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+      identity_type: {
+        type: 'string',
+        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+      },
+      identity_id: { type: 'string' },
+      linkedin_organization_id: { type: 'string' },
+      page_id: { type: 'string' },
       confirmed: { type: 'boolean' },
       idempotency_key: { type: 'string' },
     },
@@ -721,58 +736,118 @@ defineConnectorTool({
       userId: ctx.userId,
       confirmed: args.confirmed,
       summary: `Publish now to ${args.platforms.join(', ')}`,
-      details: { platforms: args.platforms, caption_preview: args.caption.slice(0, 120) },
+      details: {
+        platforms: args.platforms,
+        caption_preview: args.caption.slice(0, 120),
+        identity_type: args.identity_type,
+        identity_id: args.identity_id || args.page_id || args.linkedin_organization_id,
+        media_preview: args.media_urls?.[0] || args.media_asset_ids?.[0] || null,
+      },
     });
     if (approval) return approval;
 
-    const supabase = createSupabaseAdminClient();
-    const sandbox = isDryRun();
-    const now = new Date().toISOString();
-    const livePostId = sandbox ? `sandbox_post_${crypto.randomUUID()}` : `post_${crypto.randomUUID()}`;
-    const liveUrl = sandbox
-      ? `https://sandbox.alphaclone.local/posts/${livePostId}`
-      : `https://www.linkedin.com/feed/update/${livePostId}`;
+    const primary = args.platforms[0];
+    if (primary === 'instagram') {
+      throwConnectorError(
+        'UNSUPPORTED_PLATFORM',
+        'Instagram publish_now requires Zernio configuration — use create_social_post with platforms=["instagram"]'
+      );
+    }
 
-    const { data, error } = await supabase
-      .from('social_posts')
-      .insert({
-        tenant_id: args.tenant_id,
-        user_id: ctx.userId,
-        platforms: args.platforms,
-        platform: args.platforms[0],
-        caption: args.caption,
-        content: args.caption,
-        media_urls: args.media_urls || [],
-        status: sandbox ? 'published_sandbox' : 'published',
-        published_at: now,
-        facebook_post_id: args.platforms.includes('facebook') ? livePostId : null,
-        created_at: now,
-        updated_at: now,
-      })
-      .select()
-      .single();
+    const platform: 'facebook' | 'linkedin' =
+      primary === 'facebook' ? 'facebook' : 'linkedin';
+    let identityType = args.identity_type;
+    let identityId =
+      args.identity_id || args.page_id || args.linkedin_organization_id || undefined;
 
-    if (error) throwConnectorError('CREATE_FAILED', error.message);
+    if (!identityType) {
+      if (platform === 'facebook') {
+        identityType = 'facebook_page';
+      } else if (primary === 'linkedin_org' || args.linkedin_organization_id) {
+        identityType = 'linkedin_organization';
+      } else {
+        identityType = 'linkedin_person';
+      }
+    }
+
+    if (!identityId) {
+      if (identityType === 'facebook_page') {
+        const { listFacebookIdentities } = await import('@/lib/social/identityResolution');
+        const { pages } = await listFacebookIdentities(args.tenant_id);
+        identityId = (pages.find((p) => p.can_publish) || pages[0])?.page_id;
+      } else if (identityType === 'linkedin_organization') {
+        throwConnectorError(
+          'MISSING_IDENTITY',
+          'linkedin_organization_id is required for organization posts — call get_linkedin_identities'
+        );
+      } else {
+        const { listLinkedInIdentities } = await import('@/lib/social/identityResolution');
+        const { personal } = await listLinkedInIdentities(args.tenant_id);
+        identityId = personal?.member_id || personal?.person_urn || undefined;
+      }
+    }
+
+    if (!identityId) {
+      throwConnectorError('MISSING_IDENTITY', 'Could not resolve destination identity');
+    }
+
+    const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
+    const service = getSocialPublishingService();
+    const publishResult = await service.publish({
+      tenantId: args.tenant_id,
+      userId: ctx.userId!,
+      platform,
+      identityType: identityType!,
+      identityId: identityId!,
+      caption: args.caption,
+      mediaUrls: args.media_urls,
+      mediaAssetIds: args.media_asset_ids,
+      publishNow: true,
+      idempotencyKey: args.idempotency_key,
+      confirmed: args.confirmed,
+      aiClient: 'mcp-autonomous',
+    });
+
+    if (!publishResult.ok || !publishResult.data?.provider_post_id) {
+      throwConnectorError(
+        publishResult.error?.code || 'PUBLISH_FAILED',
+        publishResult.error?.message ||
+          'Publish failed — refusing ok=true without provider post ID',
+        publishResult.data
+      );
+    }
 
     const result = {
-      post_id: data.id,
-      live_post_id: livePostId,
-      live_url: liveUrl,
+      post_id: publishResult.data!.social_post_id,
+      social_post_id: publishResult.data!.social_post_id,
+      live_post_id: publishResult.data!.provider_post_id,
+      live_url: publishResult.data!.live_url,
       platforms: args.platforms,
-      status: data.status,
-      sandbox,
+      status: publishResult.data!.status,
+      identity_type: publishResult.data!.identity_type,
+      identity_id: publishResult.data!.identity_id,
+      identity_name: publishResult.data!.identity_name,
+      published_at: publishResult.data!.published_at,
+      verified: publishResult.receipt?.verified === true,
+      linkedin_post_urn: publishResult.data!.linkedin_post_urn,
+      linkedin_author_urn: publishResult.data!.linkedin_author_urn,
+      linkedin_organization_id: publishResult.data!.linkedin_organization_id,
     };
 
     const receipt = {
-      action_id: newActionId(),
-      status: 'completed',
-      provider: args.platforms.join(','),
-      provider_reference: livePostId,
-      entity_id: data.id,
+      action_id: publishResult.receipt?.action_id || newActionId(),
+      status: 'published',
+      provider: platform,
+      provider_reference: publishResult.data!.provider_post_id,
+      entity_id: publishResult.data!.social_post_id,
       entity_type: 'social_post',
-      live_url: liveUrl,
-      timestamp: now,
-      verification: { sandbox, published_at: now },
+      live_url: publishResult.data!.live_url,
+      timestamp: publishResult.data!.published_at || new Date().toISOString(),
+      verification: {
+        verified: true,
+        verified_at: publishResult.receipt?.verified_at,
+        correlation_id: publishResult.receipt?.correlation_id,
+      },
     };
 
     if (args.idempotency_key) {

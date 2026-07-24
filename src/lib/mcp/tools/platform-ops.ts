@@ -26,6 +26,8 @@ defineConnectorTool({
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const toolCount = await getUnifiedMcpToolCount();
+    const { MCP_TOOL_CATALOG_VERSION } = await import('@/lib/mcp/standardResponse');
+    const { SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } = await import('@/lib/social/types');
     const { count: leadCount } = await supabase
       .from('leads')
       .select('id', { count: 'exact', head: true })
@@ -37,9 +39,12 @@ defineConnectorTool({
       mcp: {
         protocol_version: '2025-11-25',
         discovered_tools: toolCount,
+        tool_catalog_version: MCP_TOOL_CATALOG_VERSION,
+        social_publish_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION,
         transport: 'streamable-http',
         endpoint: '/api/mcp',
       },
+      tool_catalog_version: MCP_TOOL_CATALOG_VERSION,
       tenant: {
         id: args.tenant_id,
         lead_count: leadCount ?? 0,

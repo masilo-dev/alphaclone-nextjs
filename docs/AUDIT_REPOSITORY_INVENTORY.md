@@ -6,79 +6,79 @@ Generated: 2026-07-17T21:40:39.800Z
 
 ## Summary
 
-| Artifact | Count |
-| --- | ---: |
-| files | 2346 |
-| pages | 81 |
-| routeHandlers | 397 |
-| apiRoutes | 385 |
-| serverActions | 1 |
-| clientServices | 309 |
-| migrations | 353 |
-| canonicalMigrations | 255 |
-| legacyMigrations | 98 |
-| tables | 361 |
-| storageBuckets | 8 |
-| cronRoutes | 35 |
-| workers | 5 |
-| externalIntegrationFiles | 708 |
-| mcpFiles | 128 |
-| mcpTools | 426 |
-| navigationFiles | 244 |
-| modals | 32 |
-| destructiveActionFiles | 278 |
-| publicUrls | 995 |
-| environmentVariables | 308 |
-| featureFlags | 8 |
-| tests | 12 |
+| Artifact                 | Count |
+| ------------------------ | ----: |
+| files                    |  2346 |
+| pages                    |    81 |
+| routeHandlers            |   397 |
+| apiRoutes                |   385 |
+| serverActions            |     1 |
+| clientServices           |   309 |
+| migrations               |   353 |
+| canonicalMigrations      |   255 |
+| legacyMigrations         |    98 |
+| tables                   |   361 |
+| storageBuckets           |     8 |
+| cronRoutes               |    35 |
+| workers                  |     5 |
+| externalIntegrationFiles |   708 |
+| mcpFiles                 |   128 |
+| mcpTools                 |   426 |
+| navigationFiles          |   244 |
+| modals                   |    32 |
+| destructiveActionFiles   |   278 |
+| publicUrls               |   995 |
+| environmentVariables     |   308 |
+| featureFlags             |     8 |
+| tests                    |    12 |
 
 ## Module matrix
 
-| Module | UI | API | Database | Permissions | Tests | Status |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| Authentication | 7 | 40 | 13 | 48 | 0 | Partially complete |
-| Tenant and workspace | 0 | 3 | 25 | 65 | 1 | Backend only |
-| CRM | 3 | 30 | 42 | 140 | 1 | Partially complete |
-| Lead Finder | 0 | 16 | 1 | 26 | 0 | Backend only |
-| Projects | 2 | 8 | 9 | 30 | 1 | Partially complete |
-| Contracts | 2 | 7 | 6 | 26 | 0 | Partially complete |
-| Quotes | 1 | 4 | 3 | 10 | 0 | Partially complete |
-| Invoices and payments | 1 | 35 | 14 | 65 | 0 | Partially complete |
-| Accounting | 0 | 7 | 11 | 47 | 1 | Backend only |
-| Documents | 0 | 4 | 5 | 30 | 0 | Backend only |
-| Email and campaigns | 1 | 35 | 18 | 97 | 0 | Partially complete |
-| SMS and WhatsApp | 0 | 14 | 7 | 31 | 0 | Backend only |
-| Integrations | 1 | 41 | 25 | 90 | 0 | Partially complete |
-| Bonnie, Nexus and MCP | 0 | 35 | 27 | 132 | 0 | Backend only |
-| Notifications | 0 | 4 | 8 | 19 | 0 | Backend only |
-| Search | 1 | 2 | 3 | 10 | 0 | Partially complete |
-| Settings | 0 | 10 | 9 | 36 | 2 | Backend only |
+| Module                |  UI | API | Database | Permissions | Tests | Status             |
+| --------------------- | --: | --: | -------: | ----------: | ----: | ------------------ |
+| Authentication        |   7 |  40 |       13 |          48 |     0 | Partially complete |
+| Tenant and workspace  |   0 |   3 |       25 |          65 |     1 | Backend only       |
+| CRM                   |   3 |  30 |       42 |         140 |     1 | Partially complete |
+| Lead Finder           |   0 |  16 |        1 |          26 |     0 | Backend only       |
+| Projects              |   2 |   8 |        9 |          30 |     1 | Partially complete |
+| Contracts             |   2 |   7 |        6 |          26 |     0 | Partially complete |
+| Quotes                |   1 |   4 |        3 |          10 |     0 | Partially complete |
+| Invoices and payments |   1 |  35 |       14 |          65 |     0 | Partially complete |
+| Accounting            |   0 |   7 |       11 |          47 |     1 | Backend only       |
+| Documents             |   0 |   4 |        5 |          30 |     0 | Backend only       |
+| Email and campaigns   |   1 |  35 |       18 |          97 |     0 | Partially complete |
+| SMS and WhatsApp      |   0 |  14 |        7 |          31 |     0 | Backend only       |
+| Integrations          |   1 |  41 |       25 |          90 |     0 | Partially complete |
+| Bonnie, Nexus and MCP |   0 |  35 |       27 |         132 |     0 | Backend only       |
+| Notifications         |   0 |   4 |        8 |          19 |     0 | Backend only       |
+| Search                |   1 |   2 |        3 |          10 |     0 | Partially complete |
+| Settings              |   0 |  10 |        9 |          36 |     2 | Backend only       |
 
 ## Risk-marker scan
 
-| Marker | Files |
-| --- | ---: |
-| TODO | 53 |
-| FIXME | 3 |
-| HACK | 3 |
-| temporary | 15 |
-| placeholder | 231 |
-| coming soon | 12 |
-| mock/fake/demo | 61 |
-| hardcoded | 15 |
-| not implemented | 5 |
-| console.log | 221 |
-| alert | 9 |
-| window.confirm | 11 |
-| as any | 212 |
-| @ts-ignore | 9 |
-| eslint-disable | 15 |
-| localhost | 31 |
-| vercel.app | 8 |
-| service-role use | 484 |
-| raw SQL | 7 |
-| direct browser writes | 0 |
-| unrestricted delete | 9 |
+| Marker                | Files |
+| --------------------- | ----: |
+| TODO                  |    53 |
+| FIXME                 |     3 |
+| HACK                  |     3 |
+| temporary             |    15 |
+| placeholder           |   231 |
+| coming soon           |    12 |
+| mock/fake/demo        |    61 |
+| hardcoded             |    15 |
+| not implemented       |     5 |
+| console.log           |   221 |
+| alert                 |     9 |
+| window.confirm        |    11 |
+| as any                |   212 |
+| @ts-ignore            |     9 |
+| eslint-disable        |    15 |
+| localhost             |    31 |
+| vercel.app            |     8 |
+| service-role use      |   484 |
+| raw SQL               |     7 |
+| direct browser writes |     0 |
+| unrestricted delete   |     9 |
 
 ## Detailed artifacts
 
@@ -3115,4 +3115,3 @@ Generated: 2026-07-17T21:40:39.800Z
 ```bash
 node scripts/generate-repository-inventory.mjs
 ```
-

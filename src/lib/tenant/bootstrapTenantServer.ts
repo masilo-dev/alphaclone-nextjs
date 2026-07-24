@@ -31,12 +31,28 @@ export async function ensureUserProfile(
     String(user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User').trim();
   const { data: existing } = await admin
     .from('profiles')
-    .select('id')
+    .select('id, role')
     .eq('id', user.id)
     .maybeSingle();
 
   if (existing?.id) {
-    await admin.from('profiles').update({ email: user.email, name }).eq('id', user.id);
+    // Google OAuth / first login: promote placeholder roles so BusinessDashboard mounts.
+    // DashboardClientPage only renders BusinessDashboard for tenant_admin (and aliases).
+    const role = String(existing.role || '').toLowerCase();
+    const needsBusinessRole =
+      !role ||
+      role === 'visitor' ||
+      role === 'client' ||
+      role === 'user' ||
+      role === 'authenticated';
+    await admin
+      .from('profiles')
+      .update({
+        email: user.email,
+        name,
+        ...(needsBusinessRole ? { role: 'tenant_admin' } : {}),
+      })
+      .eq('id', user.id);
   } else {
     await admin.from('profiles').insert({
       id: user.id,

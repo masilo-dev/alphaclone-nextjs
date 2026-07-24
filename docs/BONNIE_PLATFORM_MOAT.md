@@ -8,16 +8,16 @@ This document explains why AlphaClone stays defensible even as Claude, Grok, Cha
 
 ## The moat (why models alone cannot replace us)
 
-| Layer | What it is | Why external AI cannot copy it |
-|-------|------------|--------------------------------|
-| **Tenant data plane** | CRM, deals, invoices, leads, tickets, campaigns — scoped by RLS | Models have no access to your live business DB |
-| **200+ MCP tools** | Real execution, not simulated responses | Connectors + policy gates + audit trail |
-| **nexus_memory** | Persistent qualification criteria, patterns, preferences | Cross-session learning tied to your workspace |
-| **nexus_decision_log** | Every tool decision recorded | Compliance + trust ledger |
-| **Approval queue** | Inline Approve/Edit/Cancel for sends/financial | Enterprise-safe autonomy |
-| **Durable workflows** | Vercel Workflow missions (invoice/contract/lead lifecycles) | Multi-hour jobs with verification |
-| **Multi-model router** | DeepSeek (agent), Grok (voice/social), Claude/OpenAI fallback | Best model per task — not locked to one vendor |
-| **Integration mesh** | Facebook, WhatsApp, Microsoft, LinkedIn, Stripe, scraper | OAuth + webhooks + tenant isolation |
+| Layer                  | What it is                                                      | Why external AI cannot copy it                 |
+| ---------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
+| **Tenant data plane**  | CRM, deals, invoices, leads, tickets, campaigns — scoped by RLS | Models have no access to your live business DB |
+| **200+ MCP tools**     | Real execution, not simulated responses                         | Connectors + policy gates + audit trail        |
+| **nexus_memory**       | Persistent qualification criteria, patterns, preferences        | Cross-session learning tied to your workspace  |
+| **nexus_decision_log** | Every tool decision recorded                                    | Compliance + trust ledger                      |
+| **Approval queue**     | Inline Approve/Edit/Cancel for sends/financial                  | Enterprise-safe autonomy                       |
+| **Durable workflows**  | Vercel Workflow missions (invoice/contract/lead lifecycles)     | Multi-hour jobs with verification              |
+| **Multi-model router** | DeepSeek (agent), Grok (voice/social), Claude/OpenAI fallback   | Best model per task — not locked to one vendor |
+| **Integration mesh**   | Facebook, WhatsApp, Microsoft, LinkedIn, Stripe, scraper        | OAuth + webhooks + tenant isolation            |
 
 **ChatGPT/Claude in a browser** can draft text. **Bonnie** drafts, scores, finds leads, sends (with approval), logs decisions, and remembers your criteria — inside one OS.
 
@@ -39,24 +39,24 @@ When a new model ships, we swap the router — not the product. Your workflows, 
 
 ## Module coverage (Bonnie today)
 
-| Module | Capabilities |
-|--------|----------------|
-| **CRM / Clients** | Contacts, clients, activity logs, customer 360 |
-| **Leads** | Find, qualify, scraper campaigns, Facebook search, ingest paste → lead |
-| **Deals** | Pipeline, stage moves, scoring, win probability |
-| **Quotes** | List, create, send (module dock) |
-| **Invoices / Accounting** | AR, revenue, send, chase, snapshots |
-| **Contracts** | Create, send, lifecycle workflows |
-| **Campaigns** | Diagnose, bulk send, sequences |
-| **Social** | LinkedIn, Facebook, schedule, Grok video scripts |
-| **WhatsApp** | Send, chatbot, status |
-| **Mail / Inbox** | Microsoft mail, email → lead context |
-| **Tasks / Projects** | CRUD, project tasks |
-| **Meetings / Calendar** | Schedule, Teams |
-| **Tickets** | Create, list, summarize, escalate |
-| **Automation** | Playbooks, Chief of Staff, orchestrate_task |
-| **Analytics** | Dashboard stats, API health, proactive brief |
-| **Workspace** | Full account overview, integration health, autonomous rules |
+| Module                    | Capabilities                                                           |
+| ------------------------- | ---------------------------------------------------------------------- |
+| **CRM / Clients**         | Contacts, clients, activity logs, customer 360                         |
+| **Leads**                 | Find, qualify, scraper campaigns, Facebook search, ingest paste → lead |
+| **Deals**                 | Pipeline, stage moves, scoring, win probability                        |
+| **Quotes**                | List, create, send (module dock)                                       |
+| **Invoices / Accounting** | AR, revenue, send, chase, snapshots                                    |
+| **Contracts**             | Create, send, lifecycle workflows                                      |
+| **Campaigns**             | Diagnose, bulk send, sequences                                         |
+| **Social**                | LinkedIn, Facebook, schedule, Grok video scripts                       |
+| **WhatsApp**              | Send, chatbot, status                                                  |
+| **Mail / Inbox**          | Microsoft mail, email → lead context                                   |
+| **Tasks / Projects**      | CRUD, project tasks                                                    |
+| **Meetings / Calendar**   | Schedule, Teams                                                        |
+| **Tickets**               | Create, list, summarize, escalate                                      |
+| **Automation**            | Playbooks, Chief of Staff, orchestrate_task                            |
+| **Analytics**             | Dashboard stats, API health, proactive brief                           |
+| **Workspace**             | Full account overview, integration health, autonomous rules            |
 
 ---
 
@@ -76,7 +76,7 @@ Browser speech-to-text can call this endpoint. Bonnie is not text-only.
 4. **Module dock on every page** — context-aware everywhere
 5. **Tenant-trained playbooks** — Bonnie writes and replays your SOPs
 6. **Marketplace skills** — install vertical packs (HVAC, dental, legal)
-7. **MCP as platform API** — Claude/Grok/Manus connect *to* AlphaClone, not the reverse
+7. **MCP as platform API** — Claude/Grok/Manus connect _to_ AlphaClone, not the reverse
 8. **Cognitive OS loop** — Observe→Understand→Reason→Plan→Simulate→Risk→Execute→Verify→Reflect→Learn ✅ foundation live
 9. **Knowledge graph + digital twin** — persisted world model for continuous business reasoning ✅ foundation live
 10. **Event-driven agency** — every lead/invoice/deal/ticket event creates reasoning ✅ foundation live

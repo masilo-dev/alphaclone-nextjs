@@ -238,11 +238,12 @@ export const Avatar: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ classNa
 
 export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({ className = '', src, alt, ...props }) => {
   const imageProps = props as Omit<React.ComponentProps<typeof Image>, 'src' | 'alt' | 'fill'>;
+  const imageSrc = typeof src === 'string' ? src : undefined;
 
-  return src ? (
+  return imageSrc ? (
     <Image
       {...imageProps}
-      src={src}
+      src={imageSrc}
       alt={alt || ''}
       fill
       className={`object-cover ${className}`}

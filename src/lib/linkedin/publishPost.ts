@@ -165,16 +165,38 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       if (!scopes.includes('w_organization_social')) {
         return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
       }
-      if (!selectedCompany && companyPages.length > 0) {
-        console.warn(
-          `[publishLinkedInPost] linkedin_organization_id=${requestedOrganizationId} not in cached company pages; posting anyway`
-        );
+      // Only publish to orgs resolved for this tenant — never arbitrary numeric IDs.
+      if (!selectedCompany) {
+        return {
+          ok: false,
+          platform: 'linkedin',
+          reason: `LinkedIn organization ${requestedOrganizationId} is not available for this tenant`,
+        };
       }
-    } else if (!scopes.includes('w_member_social')) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+    } else {
+      // If post metadata insists on organization, never fall back to personal
+      const metaType = post.metadata?.identity_type;
+      if (metaType === 'linkedin_organization') {
+        return {
+          ok: false,
+          platform: 'linkedin',
+          reason:
+            'linkedin_organization was requested but linkedin_organization_id is missing — refusing personal fallback',
+        };
+      }
+      if (!scopes.includes('w_member_social')) {
+        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+      }
     }
 
     const canPostAsCompany = Boolean(requestedOrganizationId && scopes.includes('w_organization_social'));
+    if (requestedOrganizationId && !canPostAsCompany) {
+      return {
+        ok: false,
+        platform: 'linkedin',
+        reason: 'Cannot publish as organization without w_organization_social',
+      };
+    }
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
       : integration.linkedin_person_urn;

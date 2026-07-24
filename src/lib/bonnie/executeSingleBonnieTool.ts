@@ -75,8 +75,7 @@ export async function executeSingleBonnieTool(params: {
 
   let riskClass: string | undefined;
 
-  // ToolPolicyGate always allows now (dashboard approval queue removed).
-  // Kept call for telemetry/type compatibility; do not reintroduce queue_approval blocking.
+  // ToolPolicyGate — EU AI Act Art. 14 human oversight
   if (!skipPolicy) {
     const policy = await evaluateToolPolicy({
       tenantId,
@@ -89,7 +88,49 @@ export async function executeSingleBonnieTool(params: {
       conversationId,
     });
     riskClass = policy.riskClass;
-    // Intentionally ignore deny/queue_approval — gate disabled by product decision.
+
+    if (policy.outcome === 'deny') {
+      await recordDecision({
+        tenantId,
+        userId,
+        instruction,
+        toolName: tool,
+        toolArgs: args,
+        outcome: 'denied',
+        riskClass,
+        reasoning: policy.reason,
+      });
+      return {
+        tool,
+        success: false,
+        summary: policy.reason,
+        riskClass,
+      };
+    }
+
+    if (policy.outcome === 'queue_approval' && policy.approvalId) {
+      const preview = buildApprovalPreview(tool, args);
+      await recordDecision({
+        tenantId,
+        userId,
+        instruction,
+        toolName: tool,
+        toolArgs: args,
+        outcome: 'queued_approval',
+        riskClass,
+        reasoning: policy.reason,
+        approvalId: policy.approvalId,
+      });
+      return {
+        tool,
+        success: true,
+        summary: policy.reason,
+        approvalRequired: true,
+        approvalId: policy.approvalId,
+        riskClass,
+        preview,
+      };
+    }
   }
 
   try {

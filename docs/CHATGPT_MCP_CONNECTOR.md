@@ -23,17 +23,17 @@ ChatGPT / Claude / Cursor
 
 ### Connector modules (`src/lib/mcp/tools/`)
 
-| Module | Tools |
-|--------|-------|
-| `platform-ops` | `get_platform_status`, `get_system_health`, `get_version`, `get_environment`, `get_feature_flags`, `get_recent_errors`, `get_audit_logs`, `restart_service`, `audit_platform` |
-| `bonnie-inspect` | conversations, workflows, inspect_* (reasoning, memory, tools, prompts, vector store, embeddings, RAG, planner, executor, scheduler, task queue) |
-| `crm-ops` | `list_leads`, `search_leads`, `create_lead`, `update_lead`, `delete_lead`, `list_contacts`, `list_companies`, `pipeline_status`, `opportunities` |
-| `social-ops` | `connected_accounts`, `scheduled_posts`, `drafts`, `analytics`, `publish_post`, `delete_post`, `engagement_report` |
-| `marketing-ops` | `campaigns`, `campaign_metrics`, `email_campaigns`, `funnels`, `landing_pages`, `conversions` |
-| `sales-ops` | `invoices`, `quotes`, `payments`, `subscriptions`, `revenue_dashboard` |
-| `calendar-ops` | `events`, `tasks`, `reminders`, `appointments` |
-| `documents-ops` | `search_documents`, `upload_document`, `retrieve_document`, `document_versions` |
-| `reports-ops` | `dashboard_metrics`, `revenue_report`, `growth_report`, `customer_report`, `AI_usage_report` |
+| Module                | Tools                                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `platform-ops`        | `get_platform_status`, `get_system_health`, `get_version`, `get_environment`, `get_feature_flags`, `get_recent_errors`, `get_audit_logs`, `restart_service`, `audit_platform`                                |
+| `bonnie-inspect`      | conversations, workflows, inspect\_\* (reasoning, memory, tools, prompts, vector store, embeddings, RAG, planner, executor, scheduler, task queue)                                                           |
+| `crm-ops`             | `list_leads`, `search_leads`, `create_lead`, `update_lead`, `delete_lead`, `list_contacts`, `list_companies`, `pipeline_status`, `opportunities`                                                             |
+| `social-ops`          | `connected_accounts`, `scheduled_posts`, `drafts`, `analytics`, `publish_post`, `delete_post`, `engagement_report`                                                                                           |
+| `marketing-ops`       | `campaigns`, `campaign_metrics`, `email_campaigns`, `funnels`, `landing_pages`, `conversions`                                                                                                                |
+| `sales-ops`           | `invoices`, `quotes`, `payments`, `subscriptions`, `revenue_dashboard`                                                                                                                                       |
+| `calendar-ops`        | `events`, `tasks`, `reminders`, `appointments`                                                                                                                                                               |
+| `documents-ops`       | `search_documents`, `upload_document`, `retrieve_document`, `document_versions`                                                                                                                              |
+| `reports-ops`         | `dashboard_metrics`, `revenue_report`, `growth_report`, `customer_report`, `AI_usage_report`                                                                                                                 |
 | `integrations-health` | `github_health`, `gmail_health`, `google_calendar_health`, `zoho_health`, `stripe_health`, `calendly_health`, `railway_health`, `supabase_health`, `openai_health`, `deepseek_health`, `integrations_status` |
 
 Shared infrastructure lives under `src/lib/mcp/connector/` (permissions, pagination, rate limits, structured responses). The audit engine is `src/lib/mcp/audit/platformAuditEngine.ts`.

@@ -1,27 +1,29 @@
-const fs = require('fs');
-const path = require('path');
-const { createClient } = require('@supabase/supabase-js');
+const fs = require("fs");
+const path = require("path");
+const { createClient } = require("@supabase/supabase-js");
 
 function getEnv(key) {
-  const envFiles = ['.env.local', '.env.production.local', '.env'];
+  const envFiles = [".env.local", ".env.production.local", ".env"];
   for (const file of envFiles) {
     try {
-      const content = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
-      const lines = content.split('\n');
+      const content = fs.readFileSync(path.join(process.cwd(), file), "utf8");
+      const lines = content.split("\n");
       for (const line of lines) {
-        const [k, ...v] = line.split('=');
-        if (k.trim() === key) return v.join('=').trim().replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+        const [k, ...v] = line.split("=");
+        if (k.trim() === key)
+          return v.join("=").trim().replace(/^"|"$/g, "").replace(/^'|'$/g, "");
       }
     } catch (e) {}
   }
   return process.env[key];
 }
 
-const SUPABASE_URL = getEnv('NEXT_PUBLIC_SUPABASE_URL') || getEnv('VITE_SUPABASE_URL');
-const SERVICE_ROLE_KEY = getEnv('SUPABASE_SERVICE_ROLE_KEY');
+const SUPABASE_URL =
+  getEnv("NEXT_PUBLIC_SUPABASE_URL") || getEnv("VITE_SUPABASE_URL");
+const SERVICE_ROLE_KEY = getEnv("SUPABASE_SERVICE_ROLE_KEY");
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { persistSession: false }
+  auth: { persistSession: false },
 });
 
 async function run() {
@@ -33,11 +35,13 @@ async function run() {
     ORDER BY routine_name;
   `;
 
-  const { data, error } = await supabase.rpc('secure_read_only_query', { query_string: sql });
+  const { data, error } = await supabase.rpc("secure_read_only_query", {
+    query_string: sql,
+  });
   if (error) {
-    console.error('Error fetching routines:', error);
+    console.error("Error fetching routines:", error);
   } else {
-    console.log('Available Routines:', JSON.stringify(data, null, 2));
+    console.log("Available Routines:", JSON.stringify(data, null, 2));
   }
 }
 

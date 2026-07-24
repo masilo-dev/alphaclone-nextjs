@@ -59,9 +59,16 @@ export async function GET(req: NextRequest) {
 
         const deletionStart = Date.now();
         let accountDeletions: { processed: number; failed: string[] } | null = null;
+        let dataDeletionRequests: {
+            processed: number;
+            scheduled: number;
+            failed: string[];
+        } | null = null;
         try {
             const { accountDeletionService } = await import('@/services/accountDeletionService');
             accountDeletions = await accountDeletionService.processScheduledDeletions();
+            dataDeletionRequests =
+                await accountDeletionService.processVerifiedDataDeletionRequests();
         } catch (deletionErr) {
             console.error('Scheduled account deletions:', deletionErr);
         }
@@ -76,6 +83,7 @@ export async function GET(req: NextRequest) {
             morning,
             intelligence,
             accountDeletions,
+            dataDeletionRequests,
         });
 
     } catch (error) {

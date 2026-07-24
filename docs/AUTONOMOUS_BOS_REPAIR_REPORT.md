@@ -2,28 +2,29 @@
 
 ## 1. Root-cause report
 
-| Failure | Root cause | Fix |
-|---|---|---|
-| `search_leads` / `pipeline_status` fail on `leads.updated_at` | Production `leads` lacked `updated_at`/`status`/`contact_name`; tools selected them unconditionally | Migration adds columns + triggers; tools soft-fallback on `42703` |
-| `revenue_report` on `invoices.total` | ChatGPT sales/report tools queried Stripe-style `invoices` instead of `business_invoices` | Point tools at `business_invoices`; add compat columns on `invoices` |
-| `subscriptions` missing | No `public.subscriptions` table | Compatibility **view** over `tenant_subscriptions` |
-| `campaigns` missing | No `public.campaigns` | View over `email_campaigns`; tools query `email_campaigns` first |
-| `appointments` missing | No appointments table; meetings lack `tenant_id` | View over `calendar_events`; tools use `calendar_events` |
-| `documents` missing | No tenant documents table | Create `documents` + `tenant_document_versions` with RLS |
-| `funnels` / `landing_pages` missing | Tables never created | Create empty tenant tables + lead-stage funnel fallback |
-| Social analytics on `social_posts.platform` | Schema uses `platforms[]` + `caption` + `analytics` | Compat columns + code maps platforms/caption |
-| `audit:run` denied for owner-as-member | Membership role resolved as `member` before ownership elevation | Elevate tenant owners to `owner`; grant `audit:run` to members |
-| `tool_name = null` | Connection sessions / empty names inserted | `normalizeToolName` + migration default `_connection` |
-| High-risk workflow “completed” while outreach skipped | `auto_high_risk=false` set `approval_required` inconsistently; no portable approval; race on steps | Steps inserted before execute; `awaiting_approval` + portable approval payload; never mark completed unless all steps complete |
-| Redis unavailable | Missing Upstash env; hard throw on proxy use | Clear one-time warning; null-safe `getRedis()` |
-| Queue stuck / no DLQ | Cron not in Railway; no reclaim; status only `failed` | Cron registered; reclaim stuck processing; exponential backoff; `dead_letter` status |
-| Heap near limit | `next start` used `--max-old-space-size=768` | Raised default to **2048** |
-| No tenant embedding memory | Table absent | `tenant_memory_embeddings` (+ optional pgvector) |
-| Model-specific coupling risk | ChatGPT-only curated surface | Capability negotiation + standard envelopes + model router for all MCP clients |
+| Failure                                                       | Root cause                                                                                          | Fix                                                                                                                            |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `search_leads` / `pipeline_status` fail on `leads.updated_at` | Production `leads` lacked `updated_at`/`status`/`contact_name`; tools selected them unconditionally | Migration adds columns + triggers; tools soft-fallback on `42703`                                                              |
+| `revenue_report` on `invoices.total`                          | ChatGPT sales/report tools queried Stripe-style `invoices` instead of `business_invoices`           | Point tools at `business_invoices`; add compat columns on `invoices`                                                           |
+| `subscriptions` missing                                       | No `public.subscriptions` table                                                                     | Compatibility **view** over `tenant_subscriptions`                                                                             |
+| `campaigns` missing                                           | No `public.campaigns`                                                                               | View over `email_campaigns`; tools query `email_campaigns` first                                                               |
+| `appointments` missing                                        | No appointments table; meetings lack `tenant_id`                                                    | View over `calendar_events`; tools use `calendar_events`                                                                       |
+| `documents` missing                                           | No tenant documents table                                                                           | Create `documents` + `tenant_document_versions` with RLS                                                                       |
+| `funnels` / `landing_pages` missing                           | Tables never created                                                                                | Create empty tenant tables + lead-stage funnel fallback                                                                        |
+| Social analytics on `social_posts.platform`                   | Schema uses `platforms[]` + `caption` + `analytics`                                                 | Compat columns + code maps platforms/caption                                                                                   |
+| `audit:run` denied for owner-as-member                        | Membership role resolved as `member` before ownership elevation                                     | Elevate tenant owners to `owner`; grant `audit:run` to members                                                                 |
+| `tool_name = null`                                            | Connection sessions / empty names inserted                                                          | `normalizeToolName` + migration default `_connection`                                                                          |
+| High-risk workflow “completed” while outreach skipped         | `auto_high_risk=false` set `approval_required` inconsistently; no portable approval; race on steps  | Steps inserted before execute; `awaiting_approval` + portable approval payload; never mark completed unless all steps complete |
+| Redis unavailable                                             | Missing Upstash env; hard throw on proxy use                                                        | Clear one-time warning; null-safe `getRedis()`                                                                                 |
+| Queue stuck / no DLQ                                          | Cron not in Railway; no reclaim; status only `failed`                                               | Cron registered; reclaim stuck processing; exponential backoff; `dead_letter` status                                           |
+| Heap near limit                                               | `next start` used `--max-old-space-size=768`                                                        | Raised default to **2048**                                                                                                     |
+| No tenant embedding memory                                    | Table absent                                                                                        | `tenant_memory_embeddings` (+ optional pgvector)                                                                               |
+| Model-specific coupling risk                                  | ChatGPT-only curated surface                                                                        | Capability negotiation + standard envelopes + model router for all MCP clients                                                 |
 
 ## 2. Modified / added files (high signal)
 
 **New**
+
 - `supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql`
 - `src/lib/mcp/standardResponse.ts`
 - `src/lib/mcp/capabilityManifest.ts`
@@ -37,6 +38,7 @@
 - `tests/unit/_workflowRiskHelper.mjs`
 
 **Updated**
+
 - `src/lib/mcp/tools/crm-ops.ts`, `social-ops.ts`, `sales-ops.ts`, `marketing-ops.ts`, `calendar-ops.ts`, `documents-ops.ts`, `reports-ops.ts`
 - `src/lib/mcp/connector/permissions.ts`, `response.ts`, `types.ts`
 - `src/lib/mcp/tool-registry.ts`, `toolAnnotations.ts`
@@ -51,6 +53,7 @@
 See `docs/SCHEMA_COMPATIBILITY_REPORT.md`.
 
 Apply:
+
 ```bash
 npx supabase db push
 # or
@@ -83,21 +86,22 @@ Live provider E2E (email/social/charge) remains **blocked** unless `TEST_MODE=tr
 
 ## 7. Environment variables
 
-| Variable | Purpose |
-|---|---|
-| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Redis |
-| `REDIS_REQUIRED` | Fail closed if Redis missing |
-| `TEST_MODE` / `MCP_DRY_RUN` | Sandbox / dry-run |
-| `SANDBOX_EMAIL_ONLY` | Restrict recipients |
-| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY` | Model router |
-| `OPENAI_MODEL`, `ANTHROPIC_MODEL`, `GEMINI_MODEL`, `DEEPSEEK_MODEL` | Model IDs |
-| Provider OAuth secrets (Zoho/Brevo/Gmail/Outlook/Resend/SendGrid/Meta/LinkedIn) | Live send/publish |
-| `CRON_SECRET` | Queue worker auth |
-| `NODE_OPTIONS=--max-old-space-size=2048` | Heap (defaulted in `npm start`) |
+| Variable                                                                                                                           | Purpose                         |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`                                                                              | Redis                           |
+| `REDIS_REQUIRED`                                                                                                                   | Fail closed if Redis missing    |
+| `TEST_MODE` / `MCP_DRY_RUN`                                                                                                        | Sandbox / dry-run               |
+| `SANDBOX_EMAIL_ONLY`                                                                                                               | Restrict recipients             |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` / `GOOGLE_GENERATIVE_AI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY` | Model router                    |
+| `OPENAI_MODEL`, `ANTHROPIC_MODEL`, `GEMINI_MODEL`, `DEEPSEEK_MODEL`                                                                | Model IDs                       |
+| Provider OAuth secrets (Zoho/Brevo/Gmail/Outlook/Resend/SendGrid/Meta/LinkedIn)                                                    | Live send/publish               |
+| `CRON_SECRET`                                                                                                                      | Queue worker auth               |
+| `NODE_OPTIONS=--max-old-space-size=2048`                                                                                           | Heap (defaulted in `npm start`) |
 
 ## 8. Deployment steps
 
 ### Supabase
+
 1. Review `20260723160000_autonomous_bos_schema_compat.sql`
 2. `npx supabase link --project-ref <ref>`
 3. `npx supabase db push`
@@ -105,6 +109,7 @@ Live provider E2E (email/social/charge) remains **blocked** unless `TEST_MODE=tr
 5. Confirm RLS on `documents`, `mcp_action_receipts`, `tenant_memory_embeddings`
 
 ### Railway
+
 1. Deploy this branch
 2. Ensure `railway.crons.json` includes `/api/cron/process-mcp-event-queue` every 2 minutes
 3. Set Redis Upstash vars
@@ -114,24 +119,24 @@ Live provider E2E (email/social/charge) remains **blocked** unless `TEST_MODE=tr
 
 ## 9. End-to-end test matrix
 
-| Test | Result |
-|---|---|
-| CRM search schema (no `updated_at` crash) | **PASS** (unit + code path) |
-| Lead search fallback | **PASS** |
-| Transactional email dry-run envelope | **PASS** (unit) |
-| Sandbox email live provider | **BLOCKED** (needs credentials) |
-| Generated image upload | **BLOCKED** (needs storage buckets live) |
-| Social sandbox publish | **PASS** (logic; live Meta/LinkedIn blocked) |
-| Paid invoice balance_due=0 | **PASS** |
-| Contract originality contradiction | **PASS** |
-| Workflow → awaiting_approval | **PASS** (runtime rewrite) |
-| Approve resumes blocked step | **PASS** (runtime) |
-| Failed never reports completed | **PASS** |
-| Idempotency dedupe | **PASS** (receipt layer) |
-| Tenant isolation RLS | **PASS** (policies in migration; live cross-tenant blocked without DB) |
-| Stuck jobs → done/dead_letter | **PASS** (worker logic) |
-| Action audit receipt | **PASS** |
-| Multi-client capability negotiate | **PASS** |
+| Test                                      | Result                                                                 |
+| ----------------------------------------- | ---------------------------------------------------------------------- |
+| CRM search schema (no `updated_at` crash) | **PASS** (unit + code path)                                            |
+| Lead search fallback                      | **PASS**                                                               |
+| Transactional email dry-run envelope      | **PASS** (unit)                                                        |
+| Sandbox email live provider               | **BLOCKED** (needs credentials)                                        |
+| Generated image upload                    | **BLOCKED** (needs storage buckets live)                               |
+| Social sandbox publish                    | **PASS** (logic; live Meta/LinkedIn blocked)                           |
+| Paid invoice balance_due=0                | **PASS**                                                               |
+| Contract originality contradiction        | **PASS**                                                               |
+| Workflow → awaiting_approval              | **PASS** (runtime rewrite)                                             |
+| Approve resumes blocked step              | **PASS** (runtime)                                                     |
+| Failed never reports completed            | **PASS**                                                               |
+| Idempotency dedupe                        | **PASS** (receipt layer)                                               |
+| Tenant isolation RLS                      | **PASS** (policies in migration; live cross-tenant blocked without DB) |
+| Stuck jobs → done/dead_letter             | **PASS** (worker logic)                                                |
+| Action audit receipt                      | **PASS**                                                               |
+| Multi-client capability negotiate         | **PASS**                                                               |
 
 ## 10. Example multi-client commands
 

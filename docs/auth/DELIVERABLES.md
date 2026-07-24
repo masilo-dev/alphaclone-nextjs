@@ -10,23 +10,23 @@ See `docs/auth/PLATFORM_AUTH_AUDIT.md`.
 
 ## 2. External provider callback URLs (configure in provider consoles)
 
-| Provider | Callback URL |
-|---|---|
-| Supabase Auth | `https://alphaclonesystems.com/auth/callback` |
-| Microsoft | `https://alphaclonesystems.com/auth/microsoft/callback` |
-| Google Gmail | `https://alphaclonesystems.com/api/auth/google/gmail/callback` |
+| Provider        | Callback URL                                                      |
+| --------------- | ----------------------------------------------------------------- |
+| Supabase Auth   | `https://alphaclonesystems.com/auth/callback`                     |
+| Microsoft       | `https://alphaclonesystems.com/auth/microsoft/callback`           |
+| Google Gmail    | `https://alphaclonesystems.com/api/auth/google/gmail/callback`    |
 | Google Calendar | `https://alphaclonesystems.com/api/auth/google/calendar/callback` |
-| Facebook | `https://alphaclonesystems.com/api/auth/facebook/callback` |
-| Instagram | `https://alphaclonesystems.com/api/auth/instagram/callback` |
-| LinkedIn | `https://alphaclonesystems.com/api/auth/linkedin/callback` |
-| X | `https://alphaclonesystems.com/api/auth/callback/x` |
-| HubSpot | `https://alphaclonesystems.com/api/auth/hubspot/callback` |
-| Zoho | `https://alphaclonesystems.com/api/auth/zoho/callback` |
-| Calendly | `https://alphaclonesystems.com/api/auth/calendly/callback` |
-| Slack | `https://alphaclonesystems.com/api/slack/oauth/callback` |
-| Zoom | `https://alphaclonesystems.com/api/zoom/oauth/callback` |
-| Stripe Connect | `https://alphaclonesystems.com/api/stripe/connect/callback` |
-| MCP consent | `https://alphaclonesystems.com/authorize` |
+| Facebook        | `https://alphaclonesystems.com/api/auth/facebook/callback`        |
+| Instagram       | `https://alphaclonesystems.com/api/auth/instagram/callback`       |
+| LinkedIn        | `https://alphaclonesystems.com/api/auth/linkedin/callback`        |
+| X               | `https://alphaclonesystems.com/api/auth/callback/x`               |
+| HubSpot         | `https://alphaclonesystems.com/api/auth/hubspot/callback`         |
+| Zoho            | `https://alphaclonesystems.com/api/auth/zoho/callback`            |
+| Calendly        | `https://alphaclonesystems.com/api/auth/calendly/callback`        |
+| Slack           | `https://alphaclonesystems.com/api/slack/oauth/callback`          |
+| Zoom            | `https://alphaclonesystems.com/api/zoom/oauth/callback`           |
+| Stripe Connect  | `https://alphaclonesystems.com/api/stripe/connect/callback`       |
+| MCP consent     | `https://alphaclonesystems.com/authorize`                         |
 
 ChatGPT MCP redirects (client `chatgpt-connector`): OpenAI connector redirect URIs (chatgpt.com / chat.openai.com), not Alphaclone callbacks.
 
@@ -101,30 +101,30 @@ UPSTASH_REDIS_REST_TOKEN=...
 
 ## 10. Deployment steps
 
-1. Backup `mcp_oauth_*` tables  
-2. Apply migration `20260722140000_platform_auth_oauth_hardening.sql`  
-3. Set `PUBLIC_APP_ORIGIN`, `PUBLIC_MCP_RESOURCE`, Redis vars on Railway  
-4. Deploy this branch  
-5. `GET /api/internal/auth-health` with `Authorization: Bearer $CRON_SECRET`  
-6. Disconnect ChatGPT connector → reconnect fresh OAuth  
-7. Confirm token issue + `/api/mcp` initialize + tools/list  
+1. Backup `mcp_oauth_*` tables
+2. Apply migration `20260722140000_platform_auth_oauth_hardening.sql`
+3. Set `PUBLIC_APP_ORIGIN`, `PUBLIC_MCP_RESOURCE`, Redis vars on Railway
+4. Deploy this branch
+5. `GET /api/internal/auth-health` with `Authorization: Bearer $CRON_SECRET`
+6. Disconnect ChatGPT connector → reconnect fresh OAuth
+7. Confirm token issue + `/api/mcp` initialize + tools/list
 
 ## 11. Rollback
 
-1. Redeploy previous Railway image/commit  
-2. Do **not** drop new columns (additive migration is backward compatible)  
+1. Redeploy previous Railway image/commit
+2. Do **not** drop new columns (additive migration is backward compatible)
 3. If needed, unset `PUBLIC_MCP_RESOURCE` only after confirming old code path (not recommended)
 
 ## 12. Production verification checklist
 
-- [ ] Auth health all `true`  
-- [ ] Well-known resource = `https://alphaclonesystems.com/api/mcp` (no 0.0.0.0)  
-- [ ] ChatGPT OAuth authorize → consent → token  
-- [ ] MCP bearer auth succeeds (no resource mismatch)  
-- [ ] initialize / tools/list OK  
-- [ ] Read tool OK; write tool only with write scope  
-- [ ] Replayed auth code → `invalid_grant`  
-- [ ] Evil redirect still rejected  
-- [ ] No secrets in logs  
-- [ ] Audit insert via service role succeeds  
-- [ ] WhatsApp status tool no longer errors on `phone_number`  
+- [ ] Auth health all `true`
+- [ ] Well-known resource = `https://alphaclonesystems.com/api/mcp` (no 0.0.0.0)
+- [ ] ChatGPT OAuth authorize → consent → token
+- [ ] MCP bearer auth succeeds (no resource mismatch)
+- [ ] initialize / tools/list OK
+- [ ] Read tool OK; write tool only with write scope
+- [ ] Replayed auth code → `invalid_grant`
+- [ ] Evil redirect still rejected
+- [ ] No secrets in logs
+- [ ] Audit insert via service role succeeds
+- [ ] WhatsApp status tool no longer errors on `phone_number`

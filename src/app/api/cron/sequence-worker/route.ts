@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
         // We assume campaign_recipients has a 'next_step_at' column for drips
         const { data: waiting, error } = await admin
             .from('campaign_recipients')
-            .select('id, campaign_id, contact_id, email')
+            .select('id, campaign_id, contact_id, email, email_campaigns!inner(tenant_id)')
             .eq('status', 'waiting')
             .lte('next_step_at', now.toISOString())
             .limit(50);
@@ -34,6 +35,14 @@ export async function GET(req: NextRequest) {
 
         let processed = 0;
         for (const record of waiting) {
+            const campaignJoin = (record as { email_campaigns?: { tenant_id?: string } }).email_campaigns;
+            const guard = await guardCronTenantRow(
+                { id: record.id, tenant_id: campaignJoin?.tenant_id },
+                'campaign_recipients',
+                { campaign_id: record.campaign_id }
+            );
+            if (!guard.ok) continue;
+
             // Logic to trigger the next email step
             // 1. Move from 'waiting' to 'pending' so the campaign server picks it up
             // 2. Call the server for that campaign

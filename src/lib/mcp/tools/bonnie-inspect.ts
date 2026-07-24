@@ -673,15 +673,26 @@ defineConnectorTool({
 
     const { data: social } = await supabase
       .from('social_posts')
-      .select('id, status, scheduled_at, platform')
+      .select(
+        'id, status, scheduled_at, platforms, platform, facebook_page_id, linkedin_organization_id, linkedin_post_urn, published_at, error_message'
+      )
       .eq('tenant_id', args.tenant_id)
       .eq('status', 'scheduled')
       .order('scheduled_at', { ascending: true })
       .limit(50);
 
+    const now = Date.now();
+    const overdue = (social || []).filter((p) => {
+      if (!p.scheduled_at) return false;
+      return new Date(p.scheduled_at).getTime() <= now - 5 * 60 * 1000;
+    });
+
     return {
       scheduled_ai_tasks: scheduledAi || [],
       scheduled_social_posts: social || [],
+      overdue_social_posts: overdue,
+      source_of_truth: 'social_posts',
+      note: 'scheduled_posts tool and inspect_scheduler both read social_posts where status=scheduled',
     };
   },
 });

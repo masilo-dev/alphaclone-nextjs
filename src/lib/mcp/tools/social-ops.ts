@@ -7,7 +7,8 @@ import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
 defineConnectorTool({
   module: 'social-ops',
   name: 'connected_accounts',
-  description: 'List connected social media accounts for the tenant.',
+  description:
+    'List connected social media accounts for the tenant (Facebook Pages + LinkedIn person/org from dedicated integration tables).',
   permission: 'social:read',
   inputSchema: z.object({ tenant_id: tenantIdField }),
   jsonSchema: {
@@ -16,22 +17,13 @@ defineConnectorTool({
     required: ['tenant_id'],
   },
   handler: async (args) => {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase
-      .from('integrations')
-      .select('id, type, enabled, config, updated_at')
-      .eq('tenant_id', args.tenant_id)
-      .in('type', ['linkedin', 'twitter', 'x', 'facebook', 'instagram', 'youtube', 'tiktok']);
-    if (error) throwConnectorError('QUERY_FAILED', error.message);
-
-    const { data: linkedin } = await supabase
-      .from('linkedin_integrations')
-      .select('linkedin_member_id, linkedin_person_urn, is_active, updated_at, scopes')
-      .eq('tenant_id', args.tenant_id)
-      .eq('is_active', true)
-      .limit(5);
-
-    return { accounts: data || [], linkedin: linkedin || [] };
+    const { listSocialAccounts } = await import('@/lib/social/identityResolution');
+    const resolved = await listSocialAccounts(args.tenant_id);
+    return {
+      accounts: resolved.accounts,
+      facebook: resolved.facebook,
+      linkedin: resolved.linkedin,
+    };
   },
 });
 
@@ -192,7 +184,8 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'social-ops',
   name: 'publish_post',
-  description: 'Create and optionally schedule/publish a social post.',
+  description:
+    'Publish or schedule a social post via SocialPublishingService. For LinkedIn company pages pass identity_type=linkedin_organization and identity_id. Immediate publish returns provider post ID + live URL or ok=false.',
   permission: 'social:publish',
   rateLimitClass: 'publish',
   auditAction: 'mcp_publish_post',
@@ -202,7 +195,16 @@ defineConnectorTool({
     content: z.string().min(1),
     scheduled_at: z.string().datetime().optional(),
     media_urls: z.array(z.string()).optional(),
-    status: z.enum(['draft', 'scheduled', 'queued']).optional().default('scheduled'),
+    media_asset_ids: z.array(z.string().uuid()).optional(),
+    identity_type: z
+      .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
+      .optional(),
+    identity_id: z.string().optional(),
+    page_id: z.string().optional(),
+    linkedin_organization_id: z.string().optional(),
+    publish_now: z.boolean().optional(),
+    idempotency_key: z.string().optional(),
+    status: z.enum(['draft', 'scheduled', 'queued']).optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -212,46 +214,114 @@ defineConnectorTool({
       content: { type: 'string' },
       scheduled_at: { type: 'string', format: 'date-time' },
       media_urls: { type: 'array', items: { type: 'string' } },
+      media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+      identity_type: {
+        type: 'string',
+        enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+      },
+      identity_id: { type: 'string' },
+      page_id: { type: 'string' },
+      linkedin_organization_id: { type: 'string' },
+      publish_now: { type: 'boolean' },
+      idempotency_key: { type: 'string' },
       status: { type: 'string', enum: ['draft', 'scheduled', 'queued'] },
     },
     required: ['tenant_id', 'platform', 'content'],
   },
   handler: async (args, ctx) => {
-    const supabase = createSupabaseAdminClient();
-    const status = args.status || (args.scheduled_at ? 'scheduled' : 'queued');
-    const now = new Date().toISOString();
-    const payload = {
-      tenant_id: args.tenant_id,
-      user_id: ctx.userId,
-      created_by: ctx.userId,
-      platforms: [args.platform],
-      platform: args.platform,
-      caption: args.content,
-      content: args.content,
-      status,
-      scheduled_at: args.scheduled_at || now,
-      media_urls: args.media_urls || [],
-      created_at: now,
-      updated_at: now,
-    };
-
-    let { data, error } = await supabase.from('social_posts').insert(payload).select().single();
-    if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
-      const minimal = {
-        tenant_id: args.tenant_id,
-        user_id: ctx.userId,
-        platforms: [args.platform],
-        caption: args.content,
-        status,
-        scheduled_at: args.scheduled_at || now,
-        media_urls: args.media_urls || [],
-        created_at: now,
-        updated_at: now,
-      };
-      ({ data, error } = await supabase.from('social_posts').insert(minimal).select().single());
+    const platform = String(args.platform).toLowerCase();
+    if (platform !== 'facebook' && platform !== 'linkedin') {
+      throwConnectorError(
+        'UNSUPPORTED_PLATFORM',
+        `publish_post supports facebook|linkedin (got ${args.platform})`
+      );
     }
-    if (error) throwConnectorError('CREATE_FAILED', error.message);
-    return data;
+
+    let identityType = args.identity_type;
+    let identityId =
+      args.identity_id || args.page_id || args.linkedin_organization_id || undefined;
+
+    const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
+    const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
+
+    try {
+      const stored = await resolveTenantIdentityForPublish({
+        tenantId: args.tenant_id,
+        identityId,
+        identityType:
+          identityType ||
+          (platform === 'facebook'
+            ? 'facebook_page'
+            : args.linkedin_organization_id
+              ? 'linkedin_organization'
+              : undefined),
+        provider: platform,
+        allowDefault: !identityId,
+      });
+      identityType = stored.identity_type as typeof identityType;
+      identityId = stored.provider_identity_id;
+    } catch (err) {
+      if (err instanceof TenantIsolationError) {
+        throwConnectorError(err.code, err.message);
+      }
+      throw err;
+    }
+
+    if (!identityId || !identityType) {
+      throwConnectorError(
+        'MISSING_IDENTITY',
+        'identity_id is required — call get_social_identities and select a destination'
+      );
+    }
+
+    const publishNow =
+      args.publish_now === true ||
+      (!args.scheduled_at && args.status !== 'draft' && args.status !== 'scheduled');
+
+    const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
+    const service = getSocialPublishingService();
+    const result = await service.publish({
+      tenantId: args.tenant_id,
+      userId: ctx.userId!,
+      platform: platform as 'facebook' | 'linkedin',
+      identityType: identityType!,
+      identityId: identityId!,
+      caption: args.content,
+      mediaUrls: args.media_urls,
+      mediaAssetIds: args.media_asset_ids,
+      publishNow: publishNow && !args.scheduled_at,
+      scheduledAt: args.scheduled_at || (args.status === 'scheduled' ? new Date().toISOString() : null),
+      idempotencyKey: args.idempotency_key,
+      aiClient: 'chatgpt-connector',
+    });
+
+    if (!result.ok) {
+      throwConnectorError(
+        result.error?.code || 'PUBLISH_FAILED',
+        result.error?.message || 'Publish failed',
+        result.data
+      );
+    }
+
+    return okResult('publish_post', result.data, {
+      receipt: result.receipt
+        ? {
+            action_id: result.receipt.action_id,
+            status: result.data?.status || 'published',
+            provider: result.receipt.provider,
+            provider_reference: result.receipt.provider_reference,
+            live_url: result.receipt.live_url,
+            timestamp: result.receipt.verified_at || new Date().toISOString(),
+            entity_id: result.data?.social_post_id,
+            entity_type: 'social_post',
+            verification: {
+              verified: result.receipt.verified,
+              verified_at: result.receipt.verified_at,
+              correlation_id: result.receipt.correlation_id,
+            },
+          }
+        : null,
+    });
   },
 });
 

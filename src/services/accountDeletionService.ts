@@ -203,4 +203,73 @@ export const accountDeletionService = {
 
         return { processed, failed };
     },
+
+    /**
+     * Process GDPR/CCPA data_deletion_requests that were email-verified and are due.
+     * Links to profiles by email and schedules or purges as configured.
+     */
+    async processVerifiedDataDeletionRequests(): Promise<{
+        processed: number;
+        scheduled: number;
+        failed: string[];
+    }> {
+        const admin = createSupabaseAdminClient();
+        const now = new Date().toISOString();
+        const { data: due, error } = await admin
+            .from('data_deletion_requests')
+            .select('id, email, status, confirmation_code, user_id')
+            .in('status', ['verified', 'confirmed', 'pending_purge'])
+            .or(`scheduled_purge_at.is.null,scheduled_purge_at.lte.${now}`)
+            .limit(50);
+
+        if (error) {
+            console.error('[accountDeletion] data_deletion_requests list failed:', error.message);
+            return { processed: 0, scheduled: 0, failed: [] };
+        }
+
+        const failed: string[] = [];
+        let processed = 0;
+        let scheduled = 0;
+
+        for (const row of due || []) {
+            try {
+                const email = normalizeEmail(row.email);
+                let userId = row.user_id as string | null;
+                if (!userId && email) {
+                    const { data: profile } = await admin
+                        .from('profiles')
+                        .select('id')
+                        .eq('email', email)
+                        .maybeSingle();
+                    userId = profile?.id || null;
+                }
+
+                if (userId) {
+                    const schedule = await this.scheduleAccountDeletion(userId);
+                    if (!schedule.success) {
+                        failed.push(`${row.id}: ${schedule.error}`);
+                        continue;
+                    }
+                    scheduled += 1;
+                }
+
+                await admin
+                    .from('data_deletion_requests')
+                    .update({
+                        status: userId ? 'scheduled' : 'completed_no_account',
+                        processed_at: now,
+                        updated_at: now,
+                        user_id: userId,
+                    })
+                    .eq('id', row.id);
+                processed += 1;
+            } catch (err) {
+                failed.push(
+                    `${row.id}: ${err instanceof Error ? err.message : 'unknown error'}`
+                );
+            }
+        }
+
+        return { processed, scheduled, failed };
+    },
 };

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { updateSocialPostLinkedInUrnWithRetry } from '@/lib/social/linkedinPublishHelpers';
 
@@ -28,6 +29,22 @@ export async function GET(req: NextRequest) {
   const results: Array<{ id: string; ok: boolean; detail?: string }> = [];
 
   for (const row of rows ?? []) {
+    const guard = await guardCronTenantRow(row, 'social_post_sync_queue', {
+      platform: row.platform,
+    });
+    if (!guard.ok) {
+      await admin
+        .from('social_post_sync_queue')
+        .update({
+          processed_at: new Date().toISOString(),
+          last_error: 'missing tenant_id — quarantined',
+          attempts: (row.attempts ?? 0) + 1,
+        })
+        .eq('id', row.id);
+      results.push({ id: row.id, ok: false, detail: 'quarantined' });
+      continue;
+    }
+
     if (!row.external_id || !row.social_post_id) {
       await admin
         .from('social_post_sync_queue')

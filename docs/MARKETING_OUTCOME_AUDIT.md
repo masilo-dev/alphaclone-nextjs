@@ -8,13 +8,13 @@
 
 ## Executive verdict
 
-| Question | Answer |
-|----------|--------|
+| Question                               | Answer                                                                                                          |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Does the site sell outcome or product? | **Was ~40% outcome / ~60% product.** Remediation in progress (see [Implementation](#implementation-june-2025)). |
-| Is the pain clear? | Partially — “tool sprawl” lands; quantified business cost was missing |
-| Is transformation clear? | Weak — few before/after workflows, no verified metrics |
-| Why trust it? | Underdeveloped — anonymous quotes, meta “we have legal pages” proof |
-| Does it hide the platform? | No — it over-exposed features and under-sold results |
+| Is the pain clear?                     | Partially — “tool sprawl” lands; quantified business cost was missing                                           |
+| Is transformation clear?               | Weak — few before/after workflows, no verified metrics                                                          |
+| Why trust it?                          | Underdeveloped — anonymous quotes, meta “we have legal pages” proof                                             |
+| Does it hide the platform?             | No — it over-exposed features and under-sold results                                                            |
 
 **Core promise (site-wide):**
 
@@ -24,16 +24,16 @@
 
 ## Scoring (pre-remediation)
 
-| Page | Pain | Outcome | Product | Trust |
-|------|------|---------|---------|-------|
-| Homepage `/` | 4 | 3 | 4 | 2 |
-| Pricing `/pricing` | 3 | 2 | 5 | 3 |
-| Services `/services` | 5 | 4 | 4 | 2 |
-| About `/about` | 4 | 5 | 3 | 3 |
-| Who we serve | 4 | 3 | 4 | 2 |
-| Customers | 3 | 3 | 2 | 1 |
-| FAQ | 2 | 1 | 5 | 2 |
-| Marketing feature pages | 2 | 1 | 5 | 2 |
+| Page                    | Pain | Outcome | Product | Trust |
+| ----------------------- | ---- | ------- | ------- | ----- |
+| Homepage `/`            | 4    | 3       | 4       | 2     |
+| Pricing `/pricing`      | 3    | 2       | 5       | 3     |
+| Services `/services`    | 5    | 4       | 4       | 2     |
+| About `/about`          | 4    | 5       | 3       | 3     |
+| Who we serve            | 4    | 3       | 4       | 2     |
+| Customers               | 3    | 3       | 2       | 1     |
+| FAQ                     | 2    | 1       | 5       | 2     |
+| Marketing feature pages | 2    | 1       | 5       | 2     |
 
 ---
 
@@ -73,13 +73,13 @@ Per `docs/alphaclone-brand-messaging-checklist.md`:
 
 Lead with these; features are proof underneath.
 
-| Outcome | Pain it kills | Modules (footnote) |
-|---------|---------------|-------------------|
-| **Win & keep clients** | Leads fall through cracks | CRM, forms, AI outreach |
-| **Get paid without chasing** | Invoices disconnected from delivery | Invoicing, accounting |
-| **Deliver without chaos** | Sales context lost in projects | Projects, tasks, contracts |
-| **Look professional** | Scattered tools = weak client experience | Branded invoices, booking, video |
-| **Reclaim time** | Tab-switching and duplicate entry | Unified workspace, automation |
+| Outcome                      | Pain it kills                            | Modules (footnote)               |
+| ---------------------------- | ---------------------------------------- | -------------------------------- |
+| **Win & keep clients**       | Leads fall through cracks                | CRM, forms, AI outreach          |
+| **Get paid without chasing** | Invoices disconnected from delivery      | Invoicing, accounting            |
+| **Deliver without chaos**    | Sales context lost in projects           | Projects, tasks, contracts       |
+| **Look professional**        | Scattered tools = weak client experience | Branded invoices, booking, video |
+| **Reclaim time**             | Tab-switching and duplicate entry        | Unified workspace, automation    |
 
 ---
 
@@ -96,33 +96,33 @@ Lead with these; features are proof underneath.
 
 ## Homepage structure (target)
 
-1. Hero — pain + outcome + ICP + CTA  
-2. Before/after — three workflow transformations  
-3. How it works — connect → run client work → get paid  
-4. Outcome stories — representative scenarios (link to `/results`)  
-5. Capabilities — modules as enablers, not headlines  
-6. Pricing teaser — outcome + from $15  
-7. Trust — security, policies, support (substance, not meta)  
-8. Contact  
+1. Hero — pain + outcome + ICP + CTA
+2. Before/after — three workflow transformations
+3. How it works — connect → run client work → get paid
+4. Outcome stories — representative scenarios (link to `/results`)
+5. Capabilities — modules as enablers, not headlines
+6. Pricing teaser — outcome + from $15
+7. Trust — security, policies, support (substance, not meta)
+8. Contact
 
 ---
 
 ## Implementation (June 2025)
 
-| Item | Status | Location |
-|------|--------|----------|
-| Outcome config (promise, before/after, case studies) | Done | `src/config/marketingOutcomes.ts` |
-| Homepage hero + proof bar rewrite | Done | `src/components/LandingPage.tsx` |
-| Before/after section on homepage | Done | `src/components/LandingPage.tsx` |
-| Remove fake “limited-time offer” | Done | `src/components/LandingPage.tsx` |
-| Replace meta stats section | Done | `src/components/LandingPage.tsx` |
-| Pricing hero + plan taglines | Done | `src/app/pricing/PricingPageContent.tsx`, `src/config/pricingPlans.ts` |
-| Honest outcome scenarios (no star ratings) | Done | `src/config/marketingTestimonials.ts`, carousel |
-| `/results` case study page | Done | `src/app/results/page.tsx` |
-| `/customers` → `/results` redirect | Done | `src/app/customers/page.tsx` |
-| Nav + footer Results link | Done | `PublicNavigation`, `MarketingFooter` |
-| FAQ split (buyer vs product) | Done | `src/config/faqItems.ts`, `src/app/faq/page.tsx` |
-| Who-we-serve outcome rewrite + claim fixes | Done | `WhoWeServeContent.tsx`, `marketingOutcomes.ts` |
+| Item                                                 | Status | Location                                                               |
+| ---------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| Outcome config (promise, before/after, case studies) | Done   | `src/config/marketingOutcomes.ts`                                      |
+| Homepage hero + proof bar rewrite                    | Done   | `src/components/LandingPage.tsx`                                       |
+| Before/after section on homepage                     | Done   | `src/components/LandingPage.tsx`                                       |
+| Remove fake “limited-time offer”                     | Done   | `src/components/LandingPage.tsx`                                       |
+| Replace meta stats section                           | Done   | `src/components/LandingPage.tsx`                                       |
+| Pricing hero + plan taglines                         | Done   | `src/app/pricing/PricingPageContent.tsx`, `src/config/pricingPlans.ts` |
+| Honest outcome scenarios (no star ratings)           | Done   | `src/config/marketingTestimonials.ts`, carousel                        |
+| `/results` case study page                           | Done   | `src/app/results/page.tsx`                                             |
+| `/customers` → `/results` redirect                   | Done   | `src/app/customers/page.tsx`                                           |
+| Nav + footer Results link                            | Done   | `PublicNavigation`, `MarketingFooter`                                  |
+| FAQ split (buyer vs product)                         | Done   | `src/config/faqItems.ts`, `src/app/faq/page.tsx`                       |
+| Who-we-serve outcome rewrite + claim fixes           | Done   | `WhoWeServeContent.tsx`, `marketingOutcomes.ts`                        |
 
 ---
 
@@ -139,13 +139,13 @@ Lead with these; features are proof underneath.
 
 ## Quick copy reference
 
-| Avoid (product) | Prefer (outcome) |
-|-----------------|------------------|
-| 12 modules in one place | One client journey from lead to paid invoice |
-| Operational Authority | Run your client business without tool chaos |
-| Simple plans. Every feature. | One price. Your whole operation connected. |
-| Includes Video | Client meetings from their CRM record — no extra app |
-| Verified apps you can connect | Works with the tools you already use |
+| Avoid (product)               | Prefer (outcome)                                     |
+| ----------------------------- | ---------------------------------------------------- |
+| 12 modules in one place       | One client journey from lead to paid invoice         |
+| Operational Authority         | Run your client business without tool chaos          |
+| Simple plans. Every feature.  | One price. Your whole operation connected.           |
+| Includes Video                | Client meetings from their CRM record — no extra app |
+| Verified apps you can connect | Works with the tools you already use                 |
 
 ---
 
@@ -153,7 +153,7 @@ Lead with these; features are proof underneath.
 
 Before publishing any marketing copy, run `docs/alphaclone-brand-messaging-checklist.md` and confirm:
 
-- [ ] Headline states a verifiable business outcome  
-- [ ] Social proof is real or explicitly labeled as illustrative  
-- [ ] No scarcity/urgency unless true  
-- [ ] Feature lists support the outcome; they do not replace it  
+- [ ] Headline states a verifiable business outcome
+- [ ] Social proof is real or explicitly labeled as illustrative
+- [ ] No scarcity/urgency unless true
+- [ ] Feature lists support the outcome; they do not replace it

@@ -111,7 +111,7 @@ export default function DashboardClientPage() {
     return (
         <BuildErrorLogger>
             <SubscriptionGuard>
-                {user.role === 'tenant_admin' ? (
+                {user.role === 'tenant_admin' || user.role === 'business_dashboard' ? (
                     <TenantAdminDashboardShell user={user} onLogout={handleLogout} />
                 ) : (
                     <Dashboard

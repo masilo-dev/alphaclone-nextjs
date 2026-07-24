@@ -18,12 +18,14 @@
 ## Route inventory (summary)
 
 ### MCP OAuth
+
 - `GET/POST /api/mcp/authorize` · `POST /api/mcp/oauth/approve` · `GET /authorize`
 - `POST /api/mcp/token` · introspect · revoke · register
 - `GET /api/mcp` · `/api/mcp/sse` · tools · resources · prompts · health
 - `/.well-known/oauth-authorization-server` · `oauth-protected-resource` (+ `/api/mcp/well-known/*`)
 
 ### Integration callbacks (must use public origin)
+
 - `/auth/callback` (Supabase)
 - `/auth/microsoft/callback`
 - `/api/auth/google/gmail/callback` · `/api/auth/google/calendar/callback`
@@ -33,6 +35,7 @@
 - `/api/slack/oauth/callback` · `/api/zoom/oauth/callback` · `/api/stripe/connect/callback`
 
 ### Providers
+
 ChatGPT MCP, Claude MCP, Supabase Auth, Google (Gmail/Calendar), Microsoft, Meta/Facebook, Instagram, LinkedIn, X, HubSpot, Zoho, Calendly, Slack, Zoom, Stripe Connect.
 
 ## Repair strategy

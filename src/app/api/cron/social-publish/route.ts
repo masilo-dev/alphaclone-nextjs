@@ -7,15 +7,26 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
 
   try {
+    // Canonical publisher only (social_posts). Legacy scheduled_posts dual-path is
+    // opt-in via SOCIAL_LEGACY_SCHEDULED_POSTS=true to avoid duplicate publishes.
     const publishedCount = await publishDueSocialPosts();
-    const scheduledPublishedCount = await publishScheduledPosts();
+    let scheduledPublishedCount = 0;
+    if (
+      process.env.SOCIAL_LEGACY_SCHEDULED_POSTS === 'true' ||
+      process.env.SOCIAL_LEGACY_SCHEDULED_POSTS === '1'
+    ) {
+      scheduledPublishedCount = await publishScheduledPosts();
+    }
 
     return NextResponse.json({
       success: true,
       publishedCount,
       scheduledPublishedCount,
       totalCount: publishedCount + scheduledPublishedCount,
-      timestamp: new Date().toISOString()
+      legacyScheduledPostsEnabled:
+        process.env.SOCIAL_LEGACY_SCHEDULED_POSTS === 'true' ||
+        process.env.SOCIAL_LEGACY_SCHEDULED_POSTS === '1',
+      timestamp: new Date().toISOString(),
     });
   } catch (err: unknown) {
     console.error('[cron/social-publish] failed to trigger workflow:', err);
