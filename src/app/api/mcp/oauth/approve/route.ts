@@ -41,24 +41,84 @@ export async function POST(req: Request) {
 
         const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-        // ── Resolve tenant ─────────────────────────────────────────────────
-        const { data: tenantUser } = await supabaseAdmin
+        // ── Resolve tenant (must match assertTenantMembership: active only) ─
+        // Never use .single() — multi-workspace users would fail before auth code issue.
+        const { data: memberships, error: membershipError } = await supabaseAdmin
             .from('tenant_users')
-            .select('tenant_id')
-            .eq('user_id', user_id)
-            .single();
+            .select('tenant_id, role, status')
+            .eq('user_id', user_id);
 
-        const tenant_id = tenantUser?.tenant_id;
+        const isActiveStatus = (status: unknown) => {
+            const s = String(status || 'active').toLowerCase();
+            return s !== 'suspended' && s !== 'removed' && s !== 'invited' && s !== 'pending';
+        };
+
+        let tenant_id: string | undefined;
+        if (!membershipError && Array.isArray(memberships) && memberships.length) {
+            const active = memberships.find((m) => isActiveStatus((m as { status?: string }).status));
+            // Refuse inactive-only memberships — otherwise Claude gets a token then
+            // handshake 401 → McpAuthorizationError ("rejected the credentials it just issued").
+            tenant_id = active?.tenant_id;
+        }
+
         if (!tenant_id) {
-            return NextResponse.json({ error: 'No workspace found for your account' }, { status: 403 });
+            // Fallback: tenant_members table on some deployments
+            const { data: altMembers } = await supabaseAdmin
+                .from('tenant_members')
+                .select('tenant_id, status')
+                .eq('user_id', user_id);
+            const activeAlt = (altMembers || []).find((m) => isActiveStatus((m as { status?: string }).status));
+            tenant_id = activeAlt?.tenant_id;
+        }
+
+        if (!tenant_id) {
+            return NextResponse.json(
+                {
+                    error: 'No active workspace found for your account',
+                    error_description:
+                        'Sign in to Alphaclone, finish workspace setup, then reconnect Claude.',
+                },
+                { status: 403 }
+            );
+        }
+
+        // Double-check with the same gate used on /api/mcp Bearer handshake
+        try {
+            const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+            await assertTenantMembership(tenant_id, user_id);
+        } catch (membershipErr) {
+            console.warn('[OAuth Approve] Membership gate blocked approve:', {
+                user_id,
+                tenant_id,
+                error: membershipErr instanceof Error ? membershipErr.message : membershipErr,
+            });
+            return NextResponse.json(
+                {
+                    error: 'Workspace membership is not active',
+                    error_description:
+                        'Your Alphaclone workspace membership is inactive. Reactivate or create a workspace, then reconnect.',
+                },
+                { status: 403 }
+            );
         }
 
         if (client_id) {
-            const { data: existingClient } = await supabaseAdmin
+            let { data: existingClient } = await supabaseAdmin
                 .from('mcp_oauth_clients')
                 .select('client_id, redirect_uris, is_public')
                 .eq('client_id', client_id)
                 .maybeSingle();
+
+            // Seed/merge known platform clients (Claude) so redirect allowlists stay complete
+            if ((!existingClient || !existingClient.redirect_uris?.length) && PLATFORM_MCP_OAUTH_CLIENT_IDS.has(client_id)) {
+                const { ensurePlatformMcpOAuthClient } = await import('@/lib/mcp/ensureOAuthClient');
+                await ensurePlatformMcpOAuthClient(supabaseAdmin, client_id);
+                ({ data: existingClient } = await supabaseAdmin
+                    .from('mcp_oauth_clients')
+                    .select('client_id, redirect_uris, is_public')
+                    .eq('client_id', client_id)
+                    .maybeSingle());
+            }
 
             if (existingClient?.redirect_uris?.length) {
                 if (!isRedirectUriAllowed(redirect_uri, existingClient.redirect_uris)) {

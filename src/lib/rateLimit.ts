@@ -33,7 +33,8 @@ export const rateLimitConfigs: {
     api: {
         standard: { limit: number; window: Duration };
         heavy: { limit: number; window: Duration };
-
+        /** MCP JSON-RPC + OAuth — Anthropic/OpenAI share egress IPs */
+        mcp: { limit: number; window: Duration };
     };
     public: {
         contact: { limit: number; window: Duration };
@@ -55,7 +56,9 @@ export const rateLimitConfigs: {
     api: {
         standard: { limit: 100, window: '1m' }, // 100 requests per minute
         heavy: { limit: 20, window: '1m' }, // 20 requests per minute (AI, exports)
-
+        // Claude/ChatGPT connectors share egress IPs; 20/min caused McpAuthorizationError
+        // ("integration rejected the credentials it just issued") on post-token initialize.
+        mcp: { limit: 300, window: '1m' },
     },
 
     // Public endpoints - lenient limits

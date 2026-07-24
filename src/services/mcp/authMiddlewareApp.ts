@@ -460,7 +460,14 @@ export async function validateMCPAuthApp(
         tokenData.tenant_id as string,
         tokenData.user_id as string
       );
-    } catch {
+    } catch (membershipErr) {
+      console.warn('[MCP Auth] Fresh token rejected — inactive membership', {
+        request_id: requestId,
+        client_id: tokenData.client_id,
+        user_id: tokenData.user_id,
+        tenant_id: tokenData.tenant_id,
+        error: membershipErr instanceof Error ? membershipErr.message : membershipErr,
+      });
       return {
         error: 'Unauthorized',
         status: 401,

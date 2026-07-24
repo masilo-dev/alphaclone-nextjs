@@ -30,24 +30,51 @@ export type OAuthTokenUpdateClient = {
  */
 export async function revokeActiveTokensForClient(
   supabase: OAuthTokenUpdateClient,
-  params: { userId: string; clientId: string }
+  params: { userId: string; clientId: string },
 ): Promise<{ error: { message?: string; code?: string } | null }> {
   const { userId, clientId } = params;
   if (!userId || !clientId) {
-    return { error: { message: 'userId and clientId are required to revoke per-client tokens' } };
+    return {
+      error: {
+        message: "userId and clientId are required to revoke per-client tokens",
+      },
+    };
   }
 
-  const result = await supabase
-    .from('mcp_oauth_tokens')
+  const withRevokedAt = await supabase
+    .from("mcp_oauth_tokens")
     .update({
       revoked: true,
       revoked_at: new Date().toISOString(),
     })
-    .eq('user_id', userId)
-    .eq('client_id', clientId)
-    .eq('revoked', false);
+    .eq("user_id", userId)
+    .eq("client_id", clientId)
+    .eq("revoked", false);
 
-  return { error: (result as { error?: { message?: string; code?: string } | null })?.error ?? null };
+  const err =
+    (withRevokedAt as { error?: { message?: string; code?: string } | null })
+      ?.error ?? null;
+  if (
+    err &&
+    (err.code === "42703" ||
+      err.code === "PGRST204" ||
+      /revoked_at|column|does not exist/i.test(err.message || ""))
+  ) {
+    // Older schemas may lack revoked_at — still clear the unique active index.
+    const fallback = await supabase
+      .from("mcp_oauth_tokens")
+      .update({ revoked: true })
+      .eq("user_id", userId)
+      .eq("client_id", clientId)
+      .eq("revoked", false);
+    return {
+      error:
+        (fallback as { error?: { message?: string; code?: string } | null })
+          ?.error ?? null,
+    };
+  }
+
+  return { error: err };
 }
 
 /**
@@ -58,8 +85,8 @@ export function assertRefreshClientBinding(params: {
   requestClientId: string | null | undefined;
   tokenClientId: string | null | undefined;
 }): { ok: true } | { ok: false; reason: string } {
-  const request = (params.requestClientId || '').trim();
-  const token = (params.tokenClientId || '').trim();
+  const request = (params.requestClientId || "").trim();
+  const token = (params.tokenClientId || "").trim();
 
   if (!request || !token) {
     return { ok: true };
@@ -81,30 +108,38 @@ export function assertRefreshClientBinding(params: {
  */
 export function tokensAreIsolatedAcrossClients(
   tokenA: OAuthTokenRowLike,
-  tokenB: OAuthTokenRowLike
+  tokenB: OAuthTokenRowLike,
 ): boolean {
   if (!tokenA.user_id || !tokenB.user_id) return false;
   if (tokenA.user_id !== tokenB.user_id) return false;
   if (!tokenA.client_id || !tokenB.client_id) return false;
   if (tokenA.client_id === tokenB.client_id) return false;
   if (tokenA.revoked === true || tokenB.revoked === true) return false;
-  if (tokenA.access_token && tokenB.access_token && tokenA.access_token === tokenB.access_token) {
+  if (
+    tokenA.access_token &&
+    tokenB.access_token &&
+    tokenA.access_token === tokenB.access_token
+  ) {
     return false;
   }
-  if (tokenA.refresh_token && tokenB.refresh_token && tokenA.refresh_token === tokenB.refresh_token) {
+  if (
+    tokenA.refresh_token &&
+    tokenB.refresh_token &&
+    tokenA.refresh_token === tokenB.refresh_token
+  ) {
     return false;
   }
   return true;
 }
 
 export function logOAuthTokenIssuance(params: {
-  grantType: 'authorization_code' | 'refresh_token';
+  grantType: "authorization_code" | "refresh_token";
   clientId: string | null | undefined;
   userId: string | null | undefined;
   tenantId: string | null | undefined;
   tokenId?: string | null;
 }): void {
-  console.log('[MCP Token] Issued tokens', {
+  console.log("[MCP Token] Issued tokens", {
     grant_type: params.grantType,
     client_id: params.clientId || null,
     user_id: params.userId || null,
@@ -118,10 +153,16 @@ export function logOAuthTokenLookup(params: {
   userId: string | null | undefined;
   tenantId: string | null | undefined;
   tokenId?: string | null;
-  outcome: 'hit' | 'miss' | 'expired' | 'revoked' | 'resource_mismatch' | 'insufficient_scope';
+  outcome:
+    | "hit"
+    | "miss"
+    | "expired"
+    | "revoked"
+    | "resource_mismatch"
+    | "insufficient_scope";
   requestId?: string;
 }): void {
-  console.log('[MCP Auth] Token lookup', {
+  console.log("[MCP Auth] Token lookup", {
     outcome: params.outcome,
     client_id: params.clientId || null,
     user_id: params.userId || null,
