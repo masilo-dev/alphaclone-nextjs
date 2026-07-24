@@ -214,12 +214,25 @@ class TenantService {
     }
 
     /**
-     * Remove user from tenant
+     * Remove user from tenant. Pass purge=true to permanently delete the account
+     * when they only belong to this workspace.
      */
-    async removeUserFromTenant(tenantId: string, userId: string): Promise<void> {
-        const response = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/members?userId=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+    async removeUserFromTenant(
+        tenantId: string,
+        userId: string,
+        options?: { purge?: boolean }
+    ): Promise<{ purged: boolean; message?: string }> {
+        const purge = options?.purge ? '&purge=true' : '';
+        const response = await fetch(
+            `/api/tenant/${encodeURIComponent(tenantId)}/members?userId=${encodeURIComponent(userId)}${purge}`,
+            { method: 'DELETE' }
+        );
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || 'Team member could not be removed');
+        return {
+            purged: Boolean(payload.purged),
+            message: typeof payload.message === 'string' ? payload.message : undefined,
+        };
     }
 
     /**

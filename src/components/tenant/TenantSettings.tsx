@@ -272,12 +272,31 @@ function TeamSettings({ tenant, isAdmin }: any) {
     }
   };
 
-  const handleRemove = async (userId: string) => {
-    if (!window.confirm('Remove this person from the workspace?')) return;
+  const handleRemove = async (userId: string, memberRole: string) => {
+    const ownerCount = teamMembers.filter((m: any) =>
+      ['owner', 'tenant_admin'].includes(String(m.role || '').toLowerCase())
+    ).length;
+    const isLastOwner =
+      ['owner', 'tenant_admin'].includes(String(memberRole || '').toLowerCase()) && ownerCount <= 1;
+    if (isLastOwner) {
+      toast.error('The final workspace owner cannot be removed');
+      return;
+    }
+
+    const choice = window.confirm(
+      'Remove this person from the workspace?\n\nOK = remove from workspace only (account stays on the platform)\nCancel = keep them'
+    );
+    if (!choice) return;
+
+    const purge =
+      window.confirm(
+        'Also permanently delete their platform account?\n\nOnly works if they belong to this workspace alone.\n\nOK = delete account\nCancel = workspace remove only'
+      );
+
     try {
-      await tenantService.removeUserFromTenant(tenant.id, userId);
+      const result = await tenantService.removeUserFromTenant(tenant.id, userId, { purge });
       await loadTeamMembers();
-      toast.success('Team member removed');
+      toast.success(result.message || (result.purged ? 'User deleted' : 'Team member removed'));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Team member could not be removed');
     }
@@ -374,11 +393,25 @@ function TeamSettings({ tenant, isAdmin }: any) {
                     {member.role}
                   </span>
 
-                  {isAdmin && member.role !== 'owner' && (
-                    <button onClick={() => handleRemove(member.user_id)} className="p-2 text-slate-400 hover:text-red-400 transition-colors" aria-label="Remove team member">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                  {isAdmin && (() => {
+                    const ownerCount = teamMembers.filter((m: any) =>
+                      ['owner', 'tenant_admin'].includes(String(m.role || '').toLowerCase())
+                    ).length;
+                    const isLastOwner =
+                      ['owner', 'tenant_admin'].includes(String(member.role || '').toLowerCase()) &&
+                      ownerCount <= 1;
+                    if (isLastOwner) return null;
+                    return (
+                      <button
+                        onClick={() => handleRemove(member.user_id, member.role)}
+                        className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                        aria-label="Remove team member"
+                        title="Remove from workspace"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             ))}

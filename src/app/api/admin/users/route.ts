@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requirePlatformSuperAdmin, routeErrorResponse } from '@/lib/apiAuth';
 import { accountDeletionService } from '@/services/accountDeletionService';
@@ -78,6 +79,16 @@ export async function DELETE(req: NextRequest) {
     }
     if (userId === actor.id) {
       return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 });
+    }
+
+    if (!ENV.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        {
+          error:
+            'SUPABASE_SERVICE_ROLE_KEY is required to permanently delete platform users (auth.users).',
+        },
+        { status: 503 }
+      );
     }
 
     const result = await accountDeletionService.purgeUserAccount(userId, 'admin_delete');

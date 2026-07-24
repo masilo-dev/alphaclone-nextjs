@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from './supabase-admin';
 import { clientErrorResponse } from './api/clientErrorResponse';
 import { RouteAuthError } from './api/routeAuthError';
 import { ENV } from '@/config/env';
+import { isPlatformAdminRole } from '@/lib/platformAdmin';
 
 export { RouteAuthError };
 
@@ -151,7 +152,8 @@ export async function requireTenantRole(tenantId: string, allowedRoles: string[]
 }
 
 /**
- * Platform super-admin: profiles.role in ('admin', 'super_admin') (not tenant-scoped).
+ * Platform super-admin: profiles.role is a platform admin alias (not tenant-scoped).
+ * Business/workspace owners are intentionally excluded — they manage membership, not platform accounts.
  */
 export async function requirePlatformSuperAdmin() {
     const { supabase, user } = await requireAuthenticatedUser();
@@ -167,11 +169,15 @@ export async function requirePlatformSuperAdmin() {
         throw new RouteAuthError(500, 'Failed to verify admin access', 'INTERNAL_ERROR');
     }
 
-    if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
-        throw new RouteAuthError(403, 'Forbidden', 'FORBIDDEN');
+    if (!isPlatformAdminRole(profile?.role)) {
+        throw new RouteAuthError(
+            403,
+            'Platform admin role required to manage platform users. Workspace owners can remove members from Team settings instead.',
+            'FORBIDDEN'
+        );
     }
 
-    return { supabase, user };
+    return { supabase, user, profile };
 }
 
 /**
