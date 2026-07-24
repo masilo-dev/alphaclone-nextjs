@@ -74,6 +74,18 @@ const serwist = new Serwist({
     },
     runtimeCaching: [
         {
+            // OAuth consent + approve must never be SW-intercepted (524/Response.error breaks Claude).
+            matcher({ url }) {
+                return (
+                    url.pathname === '/authorize' ||
+                    url.pathname.startsWith('/authorize/') ||
+                    url.pathname.startsWith('/api/mcp/') ||
+                    url.pathname === '/api/mcp'
+                );
+            },
+            handler: new NetworkOnly(),
+        },
+        {
             // ALL dashboard routes must bypass the cache entirely.
             matcher({ url }) {
                 return url.pathname.startsWith('/dashboard');

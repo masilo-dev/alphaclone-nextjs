@@ -57,20 +57,33 @@ test("Claude redirect seed includes api/oauth/callback and merges URIs", async (
   assert.match(ensureSrc, /never shrinks/);
 });
 
-test("OAuth approve uses active membership (not .single)", () => {
+test("OAuth approve bootstraps workspace and tolerates missing status column", () => {
   const src = fs.readFileSync(
     new URL("../../src/app/api/mcp/oauth/approve/route.ts", import.meta.url),
     "utf8",
   );
-  assert.match(src, /assertTenantMembership/);
+  assert.match(src, /bootstrapTenantForUser/);
+  assert.match(src, /isMissingColumnError/);
+  assert.match(src, /CLAUDE_OAUTH_REDIRECT_URIS/);
+  assert.match(src, /maxDuration/);
+  assert.match(src, /mcp-oauth-approve-v1/);
   assert.match(src, /No active workspace/);
   assert.match(src, /ensurePlatformMcpOAuthClient/);
   assert.match(src, /maybeSingle\(\)/);
-  // Strip comments — the file documents "Never use .single()" intentionally
   const codeOnly = src
     .replace(/\/\/.*$/gm, "")
     .replace(/\/\*[\s\S]*?\*\//g, "");
   assert.equal(/\.\s*single\s*\(/.test(codeOnly), false);
+});
+
+test("service worker bypasses authorize and MCP OAuth network-only", () => {
+  const src = fs.readFileSync(
+    new URL("../../src/app/sw.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(src, /pathname === '\/authorize'/);
+  assert.match(src, /\/api\/mcp/);
+  assert.match(src, /new NetworkOnly\(\)/);
 });
 
 test("token revoke falls back when revoked_at column missing", () => {

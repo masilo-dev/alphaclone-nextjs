@@ -63,6 +63,7 @@ function AuthorizeContent() {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 credentials: 'include',
+                cache: 'no-store',
                 body: JSON.stringify({
                     client_id: clientId,
                     redirect_uri: redirectUri,
@@ -81,8 +82,16 @@ function AuthorizeContent() {
                 return;
             }
 
+            if (res.status === 524 || res.status === 502 || res.status === 504) {
+                throw new Error(
+                    'Authorization timed out. Wait a few seconds and click Authorize Access again.'
+                );
+            }
+
             if (!res.ok) {
-                throw new Error(data.error || 'Failed to approve authorization');
+                throw new Error(
+                    data.error_description || data.error || 'Failed to approve authorization'
+                );
             }
 
             if (data.redirectUrl) {
