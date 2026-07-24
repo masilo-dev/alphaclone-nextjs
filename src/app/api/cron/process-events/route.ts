@@ -62,6 +62,35 @@ export async function GET(request: NextRequest) {
         // Every business event creates Bonnie reasoning (Observe→…→Learn)
         if (isBonnieReasoningEvent(event.event_type)) {
           try {
+            // Durable runtime: persist to event inbox first (duplicate-safe), then wake subscriptions.
+            try {
+              const { isDurableRuntimeEnabled } = await import('@/lib/bonnie/runtime');
+              if (isDurableRuntimeEnabled()) {
+                const { persistInboxEvent, processInboxEvent } = await import(
+                  '@/lib/bonnie/runtime/inboxService'
+                );
+                const inbox = await persistInboxEvent({
+                  tenantId: event.tenant_id,
+                  providerEventId: `bae:${event.id}`,
+                  eventType: event.event_type,
+                  entityType: (event.payload as any)?.entityType || null,
+                  entityId:
+                    (event.payload as any)?.invoiceId ||
+                    (event.payload as any)?.leadId ||
+                    (event.payload as any)?.dealId ||
+                    null,
+                  payload: (event.payload || {}) as Record<string, unknown>,
+                  signatureVerified: true,
+                  correlationId: event.id,
+                });
+                if (!inbox.duplicate) {
+                  await processInboxEvent(inbox.id, event.tenant_id);
+                }
+              }
+            } catch (inboxErr) {
+              console.warn('[Automation] durable inbox failed:', inboxErr);
+            }
+
             const cognitive = await reasonAboutBusinessEvent({
               tenantId: event.tenant_id,
               eventType: event.event_type,
