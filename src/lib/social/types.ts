@@ -156,9 +156,13 @@ export const CANONICAL_SOCIAL_MCP_TOOLS = [
   'get_facebook_page_capabilities',
   'get_linkedin_identities',
   'upload_media',
+  'get_media',
+  'delete_media',
   'create_social_post',
   'create_social_post_with_media',
   'publish_social_post',
+  'publish_post',
+  'get_post_status',
   'verify_social_post_published',
   'get_social_post',
   'get_social_posts',
@@ -169,4 +173,4 @@ export const CANONICAL_SOCIAL_MCP_TOOLS = [
 
 export type CanonicalSocialMcpTool = (typeof CANONICAL_SOCIAL_MCP_TOOLS)[number];
 
-export const SOCIAL_PUBLISH_TOOL_CATALOG_VERSION = 'social-publishing-2.0';
+export const SOCIAL_PUBLISH_TOOL_CATALOG_VERSION = 'social-publishing-2.1';

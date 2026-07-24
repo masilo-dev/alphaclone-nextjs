@@ -1,6 +1,10 @@
 # MCP Media + Email Guide
 
-## Upload generated images (ChatGPT / Claude)
+## Publish AI-generated images (ChatGPT / Claude / any MCP client)
+
+Local sandbox paths like `/mnt/data/…png` **cannot** be sent to Facebook. Upload bytes first, then publish.
+
+### 1. Upload with `upload_media`
 
 ```json
 {
@@ -11,21 +15,57 @@
 }
 ```
 
+Aliases accepted: `file`, `file_base64` → `content_base64`; `content_type` → `mime_type`.
+
 Or:
 
 ```json
-{ "data_url": "data:image/png;base64,...", "purpose": "social_post" }
+{ "data_url": "data:image/png;base64,...", "filename": "post.png" }
 ```
 
-Or:
+Or ingest an already-public HTTPS URL:
 
 ```json
 { "url": "https://cdn.example.com/image.png" }
 ```
 
-Response includes `asset.id` and `asset.url`.
+### 2. Response
 
-## Publish with media
+```json
+{
+  "success": true,
+  "media_id": "abc123-uuid",
+  "media_asset_id": "abc123-uuid",
+  "media_url": "https://….supabase.co/storage/v1/object/public/public-assets/media/{tenantId}/….png",
+  "public_url": "https://…",
+  "asset": { "id": "…", "filename": "…", "mime_type": "image/png", "url": "…" }
+}
+```
+
+`media_url` is a permanent public HTTPS URL (correct `Content-Type`, no cookies). Facebook/LinkedIn can fetch it directly.
+
+### 3. Publish with `publish_post` (or `publish_social_post`)
+
+```json
+{
+  "platform": "facebook",
+  "content": "Your Facebook caption",
+  "media_urls": ["https://….supabase.co/storage/v1/object/public/public-assets/media/{tenantId}/….png"],
+  "status": "queued"
+}
+```
+
+Or with the asset id:
+
+```json
+{
+  "platform": "facebook",
+  "content": "Your Facebook caption",
+  "media_asset_ids": ["<media_id from upload_media>"]
+}
+```
+
+Unified media bag on `publish_social_post`:
 
 ```json
 {
@@ -37,15 +77,18 @@ Response includes `asset.id` and `asset.url`.
 }
 ```
 
-Backward compatible:
+### Related media tools
 
-```json
-{
-  "caption": "...",
-  "media_urls": ["https://..."],
-  "media_asset_ids": ["<uuid>"]
-}
-```
+| Tool | Purpose |
+|------|---------|
+| `upload_media` | Upload base64 / data URL / HTTPS URL → public `media_url` |
+| `get_media` | Fetch asset by `media_id` (tenant-scoped) |
+| `delete_media` | Remove asset + storage object (tenant-scoped) |
+| `get_media_asset` / `list_media_assets` | Library helpers |
+| `publish_post` / `publish_social_post` | Publish using `media_urls` or `media_asset_ids` |
+| `get_post_status` | Check publish status |
+
+Storage: Supabase bucket `public-assets` at `media/{tenantId}/…`. Tenant isolation is enforced on upload/get/delete/publish.
 
 ## Send email
 
