@@ -1,137 +1,71 @@
 # Bonnie Agentic Business Operating System
 
-**Date:** 2026-07-24  
-**Branch:** `bonnie/agentic-bos-goals-engine-218f`
+**Deploy target: Railway only** (no Vercel).  
+**Authoritative runtime:** PostgreSQL `agent_*` tables + Railway crons + optional `bonnie-worker` service.  
+**Flag:** `BONNIE_DURABLE_RUNTIME=true`
 
-Bonnie is no longer framed as a chatbot. It is the Agentic Business Operating System for Alphaclone Systems: goal-driven, multi-agent, event-woken, approval-gated, and multi-tenant.
+## What shipped in this pass
 
----
+- Audit: `docs/BONNIE_AGENTIC_BOS_AUDIT.md`
+- Railway env example: `docs/bonnie.railway.env.example`
+- Long-running worker: `src/bonnie/worker.ts` (`npm run bonnie:worker`)
+- Zod runtime schemas, verification service, chasing policies
+- Invoice collection workflow template (`workflowTemplate: "invoice_collection"`)
+- Migration: `supabase/migrations/20260724180000_bonnie_agentic_bos_extensions.sql`
+- Workspace views: Chat / Plan / Task Graph / Activity / Approvals / Interventions / Audit / Results
 
-## Architecture
+## Railway services
 
-```text
-User objective / platform event
-        │
-        ▼
-┌───────────────────┐
-│  Executive / COO  │  plan + coordinate
-│  + Supervisor     │
-└─────────┬─────────┘
-          │ selects specialists
-          ▼
-┌─────────────────────────────────────────────┐
-│ CRM · Finance · Accounting · Documents ·    │
-│ Contracts · Email · Calendar · Marketing ·  │
-│ Social · Support · Reporting · Compliance · │
-│ Security · Workflow · Knowledge · Memory ·  │
-│ Research · Integration · Notification ·     │
-│ Monitoring · Audit · Evaluation             │
-└─────────┬───────────────────────────────────┘
-          │
-          ▼
- Persistent Goal (bonnie_goals + subtasks)
-          │
-          ├── Cognitive loop (Observe→Learn)
-          ├── Approval gates (high-risk tools)
-          ├── Event wake (invoice_paid, …)
-          └── Goal chase cron (resume / complete)
+| Service | Command / path | Role |
+|---------|----------------|------|
+| `alphaclone-web` | `npm run start` | Next.js UI + APIs |
+| Cron jobs | `railway.crons.json` | Worker / outbox / reconcile / timers |
+| `bonnie-worker` (optional) | `npm run bonnie:worker` | Continuous poller for durable tasks |
+
+Do **not** embed the worker inside a serverless request lifecycle as the only runner. Prefer Railway cron + dedicated worker service.
+
+### Create `bonnie-worker` on Railway
+
+1. Duplicate/add a service from the same repo
+2. Start command: `npm run bonnie:worker`
+3. Copy env from web service (especially Supabase + `BONNIE_DURABLE_RUNTIME=true`)
+4. Health: process logs `[bonnie-worker] starting on Railway`
+
+## Apply migrations
+
+```bash
+npm run migrate
+# or: npx supabase db push
 ```
 
----
+Additive tables: `agent_verifications`, `agent_chasing_policies`, `agent_runtime_limits`.
 
-## Persistent goals
+## API
 
-Tables:
+```http
+POST /api/bonnie/runtime/runs
+{
+  "tenantId": "...",
+  "objective": "Chase unpaid invoices…",
+  "workflowTemplate": "invoice_collection"
+}
+```
 
-- `bonnie_goals` — title, owner, tenant, priority, progress, blockers, waiting_for, execution_mode, linked conversation/workflow/run
-- `bonnie_goal_subtasks` — agent-assigned steps with tools, approval links, results
+Generic objectives omit `workflowTemplate` (or use `"generic"`).
 
-Goals survive refresh, logout, and deploy. Cognitive runs attach via `goal_id`.
+## Rollback
 
-### APIs
+1. Set `BONNIE_DURABLE_RUNTIME=false` on Railway web + worker
+2. Stop `bonnie-worker` service / disable new crons if needed
+3. Keep tables (non-destructive); UI views still render empty runs
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| GET | `/api/bonnie/goals?tenantId=` | List open goals |
-| POST | `/api/bonnie/goals` | Create (cognitive) or `action: chase` |
-| GET | `/api/bonnie/goals/[id]?tenantId=` | Goal + subtasks |
-| PATCH | `/api/bonnie/goals/[id]` | cancel / resume / chase / status |
-| GET | `/api/bonnie/os?tenantId=` | Agents + open goals + twin |
+## Known limitations
 
-### Crons
+- Specialist tool stages in the durable worker still use **simulated** side effects (`bonnie_runtime` provider refs) until wired through `ToolPolicyGate` + real providers per task type
+- Supabase MCP auth was unavailable in this agent environment; apply migration via `supabase db push` / Railway deploy pipeline
+- Temporal / BullMQ / LangGraph / OPA / full OTEL intentionally **not** installed (see audit)
+- Full chaos/e2e against live Temporal is N/A; use Railway redeploy + duplicate webhook tests against inbox uniqueness
 
-- `/api/cron/bonnie-goals-chase` every 10m — resume open goals
-- `/api/cron/bonnie-continuous` — twin + KG + light chase
-- Existing `process-events` — wakes goals via `wakeGoalsForEvent`
+## Acceptance (durable PG runtime)
 
-Auth: `Authorization: Bearer ${CRON_SECRET}`
-
----
-
-## Agent contract
-
-Each specialist exposes:
-
-- capabilities
-- permissions (`writeAllowed` + `supportedModes`)
-- required tools / supported actions
-- confidence prior
-- health status
-
-Execution modes: `ask_only` · `plan_only` · `approval_required` · `semi_autonomous` · `fully_autonomous`
-
-High-risk actions (payments, deletions, external email, social publish, contract changes, permission updates, financial exports, compliance) always require a human approval card.
-
----
-
-## Reasoning loop
-
-Before important actions Bonnie runs:
-
-1. Understand objective  
-2. Gather context  
-3. Search related records  
-4. Check permissions  
-5. Evaluate risks  
-6. Create execution plan  
-7. Predict outcome  
-8. Execute  
-9. Verify result  
-10. Learn / update memory  
-
-Implemented as the cognitive stages in `src/lib/bonnie/os/cognitiveLoop.ts`.
-
----
-
-## What this PR delivers vs full COO vision
-
-**Shipped now**
-
-- Persistent goals + subtasks schema and engine
-- Enriched multi-agent registry (28 specialists including Contracts, Integration, Notification, Monitoring)
-- Event wake map expansion
-- Goal chase API + cron
-- Goals panel in Bonnie workspace Operations sidebar
-- Complex missions create/chase persistent goals
-
-**Still phased**
-
-- Full rollback / checkpoint recovery UX
-- Per-module “Ask Bonnie” goal surfaces everywhere
-- Rich learning memory across all preference dimensions
-- Fully autonomous mode only after explicit low-risk allowlists per tenant
-
----
-
-## Example
-
-User: “Recover overdue payments.”
-
-Bonnie:
-
-1. Creates a persistent goal  
-2. Routes Finance + Accounting + Email + CRM  
-3. Plans AR recovery steps  
-4. Queues reminder drafts for approval  
-5. After approval / payment events, wakes and continues  
-6. Reports progress in the Operations goals panel  
+With flag on: create invoice collection run → close browser → worker/cron continues → approvals pause side effects → timers advance chase → payment event wakes subscription → verification marks outcome → no duplicate idempotent sends.

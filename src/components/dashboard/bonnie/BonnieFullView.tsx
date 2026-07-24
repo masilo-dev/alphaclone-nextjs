@@ -24,6 +24,9 @@ import BonnieChatPanel from './BonnieChatPanel';
 import BonnieSidebar from './workspace/BonnieSidebar';
 import BonnieWelcome, { type BonnieSuggestion } from './workspace/BonnieWelcome';
 import BonnieContextPanel, { type BonnieContextItem } from './workspace/BonnieContextPanel';
+import BonnieWorkspaceViews, {
+  type BonnieWorkspaceView,
+} from './workspace/BonnieWorkspaceViews';
 
 type BonnieFullViewProps = {
   variant?: 'default' | 'popout';
@@ -66,6 +69,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const [showWelcome, setShowWelcome] = useState(true);
   const [externalPrompt, setExternalPrompt] = useState<string | null>(null);
   const [goalsChasing, setGoalsChasing] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<BonnieWorkspaceView>('chat');
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [contextItems, setContextItems] = useState<BonnieContextItem[]>([
     {
       id: 'perm-tenant',
@@ -350,35 +355,47 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
         </header>
 
         <div className="relative min-h-0 flex-1">
-          {showWelcome && !activeConversationId ? (
-            <BonnieWelcome
-              workspaceName={currentTenant?.name}
-              suggestions={suggestions}
-              onSelect={(prompt) => {
-                setShowWelcome(false);
-                setExternalPrompt(prompt);
-              }}
-            />
-          ) : (
-            <div className="absolute inset-0 p-2 sm:p-3">
-              <BonnieChatPanel
-                workspaceMode
-                streaming
-                conversationId={activeConversationId}
-                storageKey={tenantId ? `bonnie_chat_ws_${tenantId}` : undefined}
-                externalPrompt={externalPrompt}
-                onExternalPromptConsumed={() => setExternalPrompt(null)}
-                placeholder="State a business objective… Use @customer @invoice @project · / for commands"
-                introMessage="I'm Bonnie — your Alphaclone Systems Chief Operating Officer. State a business objective and I'll plan, coordinate specialist agents, request approval when needed, and keep chasing until the work is done."
-                onSend={handleBonnieMessage}
-                onStreamSend={handleBonnieStream}
-                onResolveApproval={handleResolveApproval}
-                tenantId={tenantId}
-                pathname={contextPath || undefined}
-                userRole={user?.role}
-              />
-            </div>
-          )}
+          <BonnieWorkspaceViews
+            tenantId={tenantId}
+            view={workspaceView}
+            onChangeView={(v) => {
+              setWorkspaceView(v);
+              if (v !== 'chat') setShowWelcome(false);
+            }}
+            selectedRunId={selectedRunId}
+            onSelectRun={setSelectedRunId}
+            chatSlot={
+              showWelcome && !activeConversationId ? (
+                <BonnieWelcome
+                  workspaceName={currentTenant?.name}
+                  suggestions={suggestions}
+                  onSelect={(prompt) => {
+                    setShowWelcome(false);
+                    setExternalPrompt(prompt);
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 p-2 sm:p-3">
+                  <BonnieChatPanel
+                    workspaceMode
+                    streaming
+                    conversationId={activeConversationId}
+                    storageKey={tenantId ? `bonnie_chat_ws_${tenantId}` : undefined}
+                    externalPrompt={externalPrompt}
+                    onExternalPromptConsumed={() => setExternalPrompt(null)}
+                    placeholder="State a business objective… Use @customer @invoice @project · / for commands"
+                    introMessage="I'm Bonnie — your Alphaclone Systems Chief Operating Officer. State a business objective and I'll plan, coordinate specialist agents, request approval when needed, and keep chasing until the work is done."
+                    onSend={handleBonnieMessage}
+                    onStreamSend={handleBonnieStream}
+                    onResolveApproval={handleResolveApproval}
+                    tenantId={tenantId}
+                    pathname={contextPath || undefined}
+                    userRole={user?.role}
+                  />
+                </div>
+              )
+            }
+          />
         </div>
       </section>
 

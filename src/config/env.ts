@@ -65,6 +65,16 @@ const envSchema = z.object({
     CRON_SECRET: z.string().optional(),
     INTERNAL_API_KEY: z.string().optional(),
 
+    // Bonnie Agentic BOS (Railway durable runtime)
+    BONNIE_DURABLE_RUNTIME: z.enum(['true', 'false', '1', '0']).optional(),
+    BONNIE_WORKER_POLL_MS: z.string().optional(),
+    BONNIE_MAX_TASKS_PER_RUN: z.string().optional(),
+    BONNIE_MAX_PARALLEL_TASKS: z.string().optional(),
+    BONNIE_MAX_RETRIES: z.string().optional(),
+    BONNIE_MAX_GRAPH_DEPTH: z.string().optional(),
+    BONNIE_EVENT_SIGNING_SECRET: z.string().optional(),
+    BONNIE_INTERNAL_SERVICE_TOKEN: z.string().optional(),
+
     // Daily.co
     VITE_DAILY_DOMAIN: z.string().optional(),
     DAILY_API_KEY: z.string().optional(),
@@ -298,6 +308,14 @@ function validateEnv() {
 
         CRON_SECRET: process.env.CRON_SECRET,
         INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
+        BONNIE_DURABLE_RUNTIME: process.env.BONNIE_DURABLE_RUNTIME,
+        BONNIE_WORKER_POLL_MS: process.env.BONNIE_WORKER_POLL_MS,
+        BONNIE_MAX_TASKS_PER_RUN: process.env.BONNIE_MAX_TASKS_PER_RUN,
+        BONNIE_MAX_PARALLEL_TASKS: process.env.BONNIE_MAX_PARALLEL_TASKS,
+        BONNIE_MAX_RETRIES: process.env.BONNIE_MAX_RETRIES,
+        BONNIE_MAX_GRAPH_DEPTH: process.env.BONNIE_MAX_GRAPH_DEPTH,
+        BONNIE_EVENT_SIGNING_SECRET: process.env.BONNIE_EVENT_SIGNING_SECRET,
+        BONNIE_INTERNAL_SERVICE_TOKEN: process.env.BONNIE_INTERNAL_SERVICE_TOKEN,
         SCRAPER_SERVICE_URL: normalizeScraperServiceUrl(
             process.env.SCRAPER_SERVICE_URL || process.env.RAILWAY_SCRAPER_SERVICE_URL
         ),

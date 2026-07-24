@@ -6,7 +6,7 @@ Bonnie is AlphaClone's fully autonomous AI Chief of Staff — built into the pla
 
 **Constitution:** [BONNIE_MASTER_TRAINING_v3.md](./BONNIE_MASTER_TRAINING_v3.md) — platform-wide agent guidelines (v3.0, all 25 modules). All prompts, sanitizer rules, and quality gates trace to this document.
 
-**Core stack:** DeepSeek API (primary), Claude fallback (high-stakes), MCP tool registry (`/api/mcp`), Supabase backend, Vercel deployment, policy-gated execution via `business_ai_state`.
+**Core stack:** DeepSeek API (primary), Claude fallback (high-stakes), MCP tool registry (`/api/mcp`), Supabase backend, **Railway** deployment, policy-gated execution via `business_ai_state`, durable Bonnie runtime (`agent_*` + Railway worker/crons).
 
 ---
 

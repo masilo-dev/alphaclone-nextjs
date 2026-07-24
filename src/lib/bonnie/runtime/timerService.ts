@@ -71,27 +71,36 @@ export async function fireDueTimers(limit = 50): Promise<{ fired: number }> {
           .maybeSingle();
 
         if (task && ['RETRY_SCHEDULED', 'WAITING_FOR_EVENT', 'PAUSED', 'WAITING_FOR_APPROVAL'].includes(task.status)) {
-          await transitionTask({
-            tenantId: task.tenant_id,
-            taskId: task.id,
-            to: 'READY',
-            trigger: 'timer_fired',
-            actorType: 'timer',
-            actorId: worker,
-            expectedVersion: task.version,
-            patch: { scheduled_at: null },
-          });
-          await insertOutboxEvent({
-            tenantId: task.tenant_id,
-            eventType: 'task.ready',
-            payload: {
-              task_id: task.id,
-              run_id: task.run_id,
-              tenant_id: task.tenant_id,
-              correlation_id: task.correlation_id,
-            },
-            correlationId: task.correlation_id,
-          });
+          const chasePayload = (timer.payload || {}) as { chase?: boolean };
+          if (chasePayload.chase && timer.timer_type === 'escalation') {
+            const { advanceChaseAfterTimeout } = await import('./chasingService');
+            await advanceChaseAfterTimeout({
+              tenantId: task.tenant_id,
+              taskId: task.id,
+            });
+          } else {
+            await transitionTask({
+              tenantId: task.tenant_id,
+              taskId: task.id,
+              to: 'READY',
+              trigger: 'timer_fired',
+              actorType: 'timer',
+              actorId: worker,
+              expectedVersion: task.version,
+              patch: { scheduled_at: null },
+            });
+            await insertOutboxEvent({
+              tenantId: task.tenant_id,
+              eventType: 'task.ready',
+              payload: {
+                task_id: task.id,
+                run_id: task.run_id,
+                tenant_id: task.tenant_id,
+                correlation_id: task.correlation_id,
+              },
+              correlationId: task.correlation_id,
+            });
+          }
         }
       }
 

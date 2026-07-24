@@ -21,4 +21,8 @@ export * from './subscriptionService';
 export * from './timerService';
 export * from './interventionService';
 export * from './observability';
+export * from './schemas';
+export * from './verificationService';
+export * from './chasingService';
+export { startInvoiceCollectionRun } from './workflows/invoiceCollection';
 export { runFullReconciliation } from './reconciliation';
