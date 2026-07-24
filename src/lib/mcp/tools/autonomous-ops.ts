@@ -510,6 +510,14 @@ defineConnectorTool({
     }
 
     const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+    type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
+    const preferredOutbound: OutboundEmailProvider | undefined =
+      preferred === 'zoho' ||
+      preferred === 'brevo' ||
+      preferred === 'sendgrid' ||
+      preferred === 'resend'
+        ? preferred
+        : undefined;
     const sendResult = await sendEmailServer({
       tenantId: args.tenant_id,
       userId: ctx.userId,
@@ -517,7 +525,8 @@ defineConnectorTool({
       subject: args.subject,
       html: args.body_html,
       text: args.body_text,
-      preferredProvider: preferred === 'outlook' ? undefined : preferred,
+      // gmail/outlook are OAuth paths; sendEmailServer only accepts API providers
+      preferredProvider: preferredOutbound,
     });
 
     if (!sendResult.success) {

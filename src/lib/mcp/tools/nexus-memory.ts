@@ -52,7 +52,7 @@ registerTool('nexus-memory', {
     tenant_id: z.string().uuid(),
     category: z.enum(['preference', 'pattern', 'workflow', 'reliability', 'general']),
     key: z.string().min(1).max(80),
-    value: z.record(z.unknown()),
+    value: z.record(z.string(), z.unknown()),
     source: z.enum(['dream', 'manual', 'agent']).optional().default('agent'),
     confidence: z.number().min(0).max(1).optional(),
   }),
