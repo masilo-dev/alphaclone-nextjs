@@ -33,6 +33,7 @@ test("department agent roster includes required specialists", () => {
     "email",
     "calendar",
     "document",
+    "contracts",
     "customer_success",
     "support",
     "compliance",
@@ -45,10 +46,23 @@ test("department agent roster includes required specialists", () => {
     "audit",
     "memory",
     "evaluation",
+    "integration",
+    "notification",
+    "monitoring",
   ]) {
     assert.equal(ids.has(required), true, `missing agent ${required}`);
   }
-  assert.ok(DEPARTMENT_AGENTS.length >= 24);
+  assert.ok(DEPARTMENT_AGENTS.length >= 28);
+});
+
+test("agents expose capabilities, modes, and confidence", () => {
+  const finance = getAgentById("finance");
+  assert.ok(finance);
+  assert.ok((finance.capabilities || []).length >= 1);
+  assert.ok((finance.supportedModes || []).includes("ask_only"));
+  assert.ok(typeof finance.confidencePrior === "number");
+  assert.equal(finance.healthStatus, "healthy");
+  assert.equal(getAgentById("ceo")?.name, "Executive Agent");
 });
 
 test("supervisor selects finance agents for overdue invoice goals", () => {
@@ -116,10 +130,28 @@ test("reflection synthesizes lessons and memory updates", () => {
 test("event reasoning catalog covers core business events", () => {
   assert.equal(isBonnieReasoningEvent("lead_created"), true);
   assert.equal(isBonnieReasoningEvent("invoice_overdue"), true);
+  assert.equal(isBonnieReasoningEvent("document_uploaded"), true);
+  assert.equal(isBonnieReasoningEvent("campaign_finished"), true);
+  assert.equal(isBonnieReasoningEvent("oauth_expiring"), true);
   assert.equal(isBonnieReasoningEvent("unknown_event"), false);
   const goal = BONNIE_EVENT_GOALS.lead_created({ leadId: "abc" });
   assert.match(goal, /qualification score/i);
   assert.match(goal, /abc/);
+});
+
+test("goal title and execution mode helpers", () => {
+  const titleFromGoal = (goal) => {
+    const cleaned = goal.replace(/\s+/g, " ").trim();
+    return cleaned.slice(0, 120) || "Untitled goal";
+  };
+  const modeFromRisk = (risk, requiresApproval) => {
+    if (risk === "critical" || risk === "high" || requiresApproval) return "approval_required";
+    return "semi_autonomous";
+  };
+  assert.equal(titleFromGoal("  Recover overdue payments  "), "Recover overdue payments");
+  assert.equal(modeFromRisk("high", false), "approval_required");
+  assert.equal(modeFromRisk("low", true), "approval_required");
+  assert.equal(modeFromRisk("low", false), "semi_autonomous");
 });
 
 test("complex mission detector still triggers cognitive path", () => {

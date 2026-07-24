@@ -3,14 +3,14 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { refreshDigitalTwin } from '@/lib/bonnie/os/digitalTwin';
 import { syncBusinessKnowledgeGraph } from '@/lib/bonnie/os/knowledgeGraph';
-import { runCognitiveLoop } from '@/lib/bonnie/os/cognitiveLoop';
+import { chaseOpenGoals, runCognitiveLoop } from '@/lib/bonnie/os';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Continuous observation for Bonnie Agentic OS.
  * Refreshes digital twin + knowledge graph per tenant; runs a lightweight
- * cognitive monitor when health risk is elevated.
+ * cognitive monitor when health risk is elevated; chases open goals.
  */
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
         const kg = await syncBusinessKnowledgeGraph(tenantId, 40);
         let cognitiveRunId: string | null = null;
         let cognitiveStatus: string | null = null;
+        let goalsChased = 0;
 
         const health = Number(twin.snapshot.kpis.health_score || 100);
         if (health < 75 || (twin.snapshot.risks || []).length > 0) {
@@ -45,6 +46,26 @@ export async function GET(req: NextRequest) {
           cognitiveStatus = cognitive.status;
         }
 
+        try {
+          const chase = await chaseOpenGoals({
+            tenantId,
+            limit: 3,
+            runCognitive: async (goal) =>
+              runCognitiveLoop({
+                tenantId,
+                goal: goal.description || goal.title,
+                triggerType: 'continuous',
+                goalId: goal.id,
+                conversationId: goal.conversation_id || undefined,
+                workflowId: goal.workflow_id || undefined,
+                executeActions: true,
+              }),
+          });
+          goalsChased = chase.chased;
+        } catch (chaseErr) {
+          console.warn('[bonnie-continuous] goal chase failed:', chaseErr);
+        }
+
         results.push({
           tenantId,
           success: true,
@@ -54,6 +75,7 @@ export async function GET(req: NextRequest) {
           kgEdges: kg.edges,
           cognitiveRunId,
           cognitiveStatus,
+          goalsChased,
         });
       } catch (tenantErr: unknown) {
         const message = tenantErr instanceof Error ? tenantErr.message : String(tenantErr);

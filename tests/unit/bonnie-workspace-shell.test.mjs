@@ -11,9 +11,12 @@ test('Bonnie workspace shell components exist', () => {
     'src/components/dashboard/bonnie/workspace/BonnieWelcome.tsx',
     'src/components/dashboard/bonnie/workspace/BonnieContextPanel.tsx',
     'src/components/dashboard/bonnie/workspace/BonnieToolActivityCard.tsx',
+    'src/components/dashboard/bonnie/workspace/BonnieGoalsPanel.tsx',
     'src/hooks/useBonnieConversations.ts',
+    'src/hooks/useBonnieGoals.ts',
     'src/app/api/bonnie/conversations/[id]/route.ts',
     'docs/BONNIE_WORKSPACE_REDESIGN.md',
+    'docs/BONNIE_AGENTIC_BOS.md',
   ]) {
     assert.equal(fs.existsSync(path.join(root, rel)), true, rel);
   }
@@ -41,6 +44,8 @@ test('BonnieFullView mounts workspace shell pieces', () => {
   assert.match(src, /BonnieContextPanel/);
   assert.match(src, /workspaceMode/);
   assert.match(src, /useBonnieConversations/);
+  assert.match(src, /useBonnieGoals/);
+  assert.match(src, /Agentic BOS/);
 });
 
 test('Bonnie welcome headline exists', () => {

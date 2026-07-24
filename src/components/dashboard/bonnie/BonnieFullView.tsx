@@ -19,6 +19,7 @@ import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService'
 import type { BonniePendingApprovalResponse } from '@/services/bonnieService';
 import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
 import { useBonnieConversations } from '@/hooks/useBonnieConversations';
+import { useBonnieGoals } from '@/hooks/useBonnieGoals';
 import BonnieChatPanel from './BonnieChatPanel';
 import BonnieSidebar from './workspace/BonnieSidebar';
 import BonnieWelcome, { type BonnieSuggestion } from './workspace/BonnieWelcome';
@@ -49,6 +50,14 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     patchConversation,
     deleteConversation,
   } = useBonnieConversations(tenantId);
+  const {
+    goals,
+    loading: goalsLoading,
+    refresh: refreshGoals,
+    chaseGoals,
+    patchGoal,
+    openCount: openGoalsCount,
+  } = useBonnieGoals(tenantId);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -56,6 +65,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [externalPrompt, setExternalPrompt] = useState<string | null>(null);
+  const [goalsChasing, setGoalsChasing] = useState(false);
   const [contextItems, setContextItems] = useState<BonnieContextItem[]>([
     {
       id: 'perm-tenant',
@@ -73,45 +83,50 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const suggestions: BonnieSuggestion[] = useMemo(
     () => [
       {
+        id: 'recover-payments',
+        title: 'Recover overdue payments',
+        description: 'Identify overdue invoices, draft reminders, and chase collections.',
+        prompt:
+          'Recover overdue payments: identify overdue invoices, group customers, analyse payment history, prepare reminder drafts for my approval, update CRM, and schedule follow-ups.',
+        icon: 'invoice',
+      },
+      {
         id: 'priorities',
-        title: 'Review today’s business priorities',
-        description: 'Summarise open deals, overdue tasks, and urgent follow-ups.',
-        prompt: 'Review today’s business priorities across CRM, tasks, and invoices.',
+        title: 'Own today’s business priorities',
+        description: 'Plan and chase open deals, overdue tasks, and urgent follow-ups.',
+        prompt:
+          'Take ownership of today’s business priorities across CRM, tasks, and invoices. Create a goal, assign specialist agents, and keep chasing until complete.',
         icon: 'workflow',
       },
       {
         id: 'leads',
-        title: 'Follow up with overdue leads',
-        description: 'Find stale leads and draft personalised outreach.',
-        prompt: 'Find overdue leads that need follow-up and draft outreach for my approval.',
+        title: 'Revive overdue leads',
+        description: 'Find stale leads, draft outreach, and monitor replies.',
+        prompt:
+          'Revive overdue leads: find stale leads, draft personalised outreach for approval, update CRM, and monitor replies.',
         icon: 'crm',
       },
       {
-        id: 'invoices',
-        title: 'Analyse unpaid invoices',
-        description: 'Identify overdue invoices and recommend next steps.',
-        prompt: 'Analyse unpaid and overdue invoices and recommend reminder actions.',
-        icon: 'invoice',
-      },
-      {
         id: 'social',
-        title: 'Prepare this week’s social posts',
-        description: 'Draft a short content plan for LinkedIn and Facebook.',
-        prompt: 'Prepare this week’s social posts for LinkedIn and Facebook as drafts.',
+        title: 'Plan this week’s social posts',
+        description: 'Draft a LinkedIn/Facebook plan as approval-gated drafts.',
+        prompt:
+          'Prepare this week’s social posts for LinkedIn and Facebook as drafts and request approval before publishing.',
         icon: 'social',
       },
       {
         id: 'calendar',
-        title: 'Review upcoming calendar events',
+        title: 'Prep upcoming meetings',
         description: 'Highlight meetings that need prep or follow-up.',
-        prompt: 'Review upcoming calendar events and tell me what needs preparation.',
+        prompt: 'Review upcoming calendar events and prepare agendas plus post-meeting follow-ups.',
         icon: 'calendar',
       },
       {
         id: 'risks',
-        title: 'Find business risks',
-        description: 'Scan for stalled deals, cash risk, and SLA issues.',
-        prompt: 'Find the top business risks across deals, invoices, and support.',
+        title: 'Watch business risks',
+        description: 'Scan stalled deals, cash risk, SLA issues, and failed automations.',
+        prompt:
+          'Monitor the top business risks across deals, invoices, support, and automations. Open goals for anything above threshold.',
         icon: 'risk',
       },
     ],
@@ -157,6 +172,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     if (res.success) {
       void refreshApprovals();
       void refresh();
+      void refreshGoals();
       return mapInstructionResult(res);
     }
     return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
@@ -181,6 +197,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     if (res.success) {
       void refreshApprovals();
       void refresh();
+      void refreshGoals();
       return mapInstructionResult(res);
     }
     return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
@@ -192,6 +209,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     editedArgs?: Record<string, unknown>
   ) => {
     const result = await handleApproval(approvalId, status, editedArgs);
+    void refreshGoals();
     return {
       success: result.success,
       message: result.execution?.result?.summary || result.execution?.error,
@@ -209,6 +227,13 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       toast.error(err?.message || 'Could not start a new chat');
     }
   }, [createConversation, activeModule]);
+
+  const runChase = useCallback(() => {
+    setGoalsChasing(true);
+    void chaseGoals()
+      .catch((err: any) => toast.error(err?.message || 'Goal chase failed'))
+      .finally(() => setGoalsChasing(false));
+  }, [chaseGoals]);
 
   const bonnieDashboardRoute = resolveBonnieDashboardRoute(pathname, user?.role);
 
@@ -281,7 +306,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
               {activeConversation?.title || 'Bonnie AI workspace'}
             </h1>
             <p className="truncate text-[11px] text-slate-500">
-              {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Bonnie AI · Agentic
+              {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Agentic BOS
+              {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
               {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
             </p>
           </div>
@@ -342,8 +368,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                 storageKey={tenantId ? `bonnie_chat_ws_${tenantId}` : undefined}
                 externalPrompt={externalPrompt}
                 onExternalPromptConsumed={() => setExternalPrompt(null)}
-                placeholder="Message Bonnie… Use @customer @invoice @project · / for commands"
-                introMessage="I'm Bonnie — your Alphaclone Systems operating assistant. Ask for research, drafts, or actions. High-risk work always waits for your approval."
+                placeholder="State a business objective… Use @customer @invoice @project · / for commands"
+                introMessage="I'm Bonnie — your Alphaclone Systems Chief Operating Officer. State a business objective and I'll plan, coordinate specialist agents, request approval when needed, and keep chasing until the work is done."
                 onSend={handleBonnieMessage}
                 onStreamSend={handleBonnieStream}
                 onResolveApproval={handleResolveApproval}
@@ -364,6 +390,28 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
           onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
           pendingApprovals={pendingCount}
           connectionStatus="connected"
+          goals={goals}
+          goalsLoading={goalsLoading}
+          goalsChasing={goalsChasing}
+          onChaseGoals={runChase}
+          onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
+          onResumeGoal={(id) => void patchGoal(id, { resume: true })}
+          onSelectGoal={(id) => {
+            setContextItems((prev) => {
+              if (prev.some((item) => item.id === `goal-${id}`)) return prev;
+              const goal = goals.find((g) => g.id === id);
+              if (!goal) return prev;
+              return [
+                {
+                  id: `goal-${id}`,
+                  kind: 'goal',
+                  label: goal.title,
+                  detail: `${goal.status} · ${Math.round(Number(goal.progress_pct) || 0)}%`,
+                },
+                ...prev,
+              ];
+            });
+          }}
         />
       </div>
 
@@ -375,6 +423,12 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             items={contextItems}
             onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
             pendingApprovals={pendingCount}
+            goals={goals}
+            goalsLoading={goalsLoading}
+            goalsChasing={goalsChasing}
+            onChaseGoals={runChase}
+            onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
+            onResumeGoal={(id) => void patchGoal(id, { resume: true })}
           />
         </div>
       )}
