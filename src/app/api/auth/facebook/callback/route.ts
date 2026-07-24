@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { upsertFacebookIntegration } from '@/services/facebook/facebookIntegrationService';
 import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
 const ALLOWED_FB_RETURN = ['/dashboard/business/facebook', '/dashboard/business/settings'] as const;
 
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
     const state = searchParams.get('state');
     const error = searchParams.get('error');
 
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || '').replace(/\/$/, '');
+    const appUrl = PUBLIC_APP_ORIGIN;
 
     if (error) {
         return redirectOAuthEarly(appUrl, error);

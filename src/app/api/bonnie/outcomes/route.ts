@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { normalizeDefineOutcomeArgs } from '@/lib/bonnie/outcomeArgs';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -50,31 +50,23 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const tenantId = body.tenant_id || body.tenantId;
-    const { criteria, status, session_id, notes } = body;
+    const body = await req.json().catch(() => ({}));
+    const normalized = normalizeDefineOutcomeArgs(
+      body && typeof body === 'object' ? (body as Record<string, unknown>) : {}
+    );
+    const tenantId = normalized.tenant_id;
 
-    if (!tenantId || !criteria || !status) {
+    if (!tenantId) {
       return NextResponse.json(
         { error: 'tenant_id, criteria, and status are required' },
         { status: 400 }
       );
     }
 
-    if (!['success', 'partial', 'failure'].includes(status)) {
-      return NextResponse.json(
-        { error: 'status must be one of: success, partial, failure' },
-        { status: 400 }
-      );
-    }
-
-    if (!Array.isArray(criteria) || criteria.length === 0) {
-      return NextResponse.json({ error: 'criteria must be a non-empty array' }, { status: 400 });
-    }
-
+    const { criteria, status, session_id, notes } = normalized;
     const { admin } = await requireTenantAccess(tenantId);
 
-    const metCount = criteria.filter((c: { met?: boolean }) => c.met).length;
+    const metCount = criteria.filter((c) => c.met).length;
     const score = Math.round((metCount / criteria.length) * 100);
 
     const { error } = await admin.from('mcp_sessions').insert({

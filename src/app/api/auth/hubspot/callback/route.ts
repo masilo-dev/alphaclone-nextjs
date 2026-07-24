@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { upsertHubSpotIntegration } from '@/services/hubspot/hubspotIntegrationService';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
-    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclonesystems.com').replace(/\/$/, '');
+    const appUrl = PUBLIC_APP_ORIGIN;
 
     if (!code || !stateNonce) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=missing_params`);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { publicAppUrl } from '@/lib/config/public-origin';
 
 export async function GET(req: NextRequest) {
     try {
@@ -18,7 +19,9 @@ export async function GET(req: NextRequest) {
     const redirectUri = ENV.VITE_CALENDLY_REDIRECT_URI;
 
     if (!clientId || !redirectUri) {
-        return NextResponse.redirect(new URL(`/dashboard/settings?tab=booking&error=calendly_not_configured`, req.url));
+        return NextResponse.redirect(
+          publicAppUrl('/dashboard/settings?tab=booking&error=calendly_not_configured')
+        );
     }
 
     const admin = createSupabaseAdminClient();

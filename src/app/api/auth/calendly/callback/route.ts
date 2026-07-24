@@ -8,6 +8,7 @@ import {
     registerCalendlyWebhook,
     resolveTenantHostUser,
 } from '@/lib/calendly/syncToNative';
+import { PUBLIC_APP_ORIGIN, publicAppUrl } from '@/lib/config/public-origin';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -74,7 +75,8 @@ export async function GET(req: NextRequest) {
         const schedulingUrl = userData.resource.scheduling_url;
 
         // Tenant row verified above; tokens stored in calendly_integration_secrets.
-        const appOrigin = (ENV.NEXT_PUBLIC_APP_URL || new URL(req.url).origin).replace(/\/$/, '');
+        // Never use request.url — Railway listens on 0.0.0.0:PORT internally.
+        const appOrigin = PUBLIC_APP_ORIGIN;
         const webhookUrl = `${appOrigin}/api/webhooks/calendly`;
         const webhookSubscriptionUri = await registerCalendlyWebhook(
             tokens.access_token,
@@ -112,7 +114,9 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        return NextResponse.redirect(new URL('/dashboard/settings?tab=booking&success=calendly_connected', req.url));
+        return NextResponse.redirect(
+          publicAppUrl('/dashboard/settings?tab=booking&success=calendly_connected')
+        );
 
     } catch (err: any) {
         console.error('Calendly OAuth Callback Error:', err);
