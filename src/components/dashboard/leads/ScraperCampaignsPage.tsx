@@ -85,7 +85,7 @@ export default function ScraperCampaignsPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-white">Lead Finder</h1>
           <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-            Apollo-style SMB prospecting with live pipeline analytics. Search by niche and location, qualify leads, sync to CRM, and run outreach.
+            Reach-based SMB prospecting on free open data. Search by niche + radius, watch the live scrape, map results, qualify, and save to CRM.
           </p>
         </div>
         <div className="flex rounded-lg border border-slate-800 overflow-hidden shrink-0">

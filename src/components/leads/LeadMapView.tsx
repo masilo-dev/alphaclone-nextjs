@@ -40,6 +40,16 @@ const SOURCE_ICONS: Record<string, L.Icon> = {
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
   }),
+  wikidata: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+  }),
+  browser: L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+  }),
   default: DefaultIcon,
 };
 
@@ -113,7 +123,10 @@ const SOURCE_LABEL: Record<string, string> = {
   yelp: 'Yelp',
   here: 'HERE Maps',
   osm:  'OpenStreetMap',
-  google: 'Google Places',
+  google: 'Free places',
+  wikidata: 'Wikidata',
+  browser: 'Web scrape',
+  firecrawl: 'Web crawl',
 };
 
 export default function LeadMapView({

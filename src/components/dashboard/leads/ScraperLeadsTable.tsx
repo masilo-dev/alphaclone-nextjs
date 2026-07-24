@@ -15,7 +15,7 @@ import {
 import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 
-interface ScraperLead {
+export interface ScraperLead {
   id: string;
   name?: string;
   email?: string;
@@ -29,7 +29,13 @@ interface ScraperLead {
   source?: string;
   industry?: string;
   source_label?: string;
+  source_id?: string;
+  source_url?: string;
   crm_lead_id?: string;
+  address?: string;
+  lat?: number | null;
+  lng?: number | null;
+  reach_km?: number | null;
 }
 
 interface Props {
@@ -38,6 +44,8 @@ interface Props {
   locationFilter?: string;
   showAllWhenNoCampaign?: boolean;
   onActionComplete?: () => void;
+  onLeadsChange?: (leads: ScraperLead[]) => void;
+  refreshToken?: number;
 }
 
 const GRADE_COLORS: Record<string, string> = {
@@ -69,6 +77,8 @@ export default function ScraperLeadsTable({
   locationFilter,
   showAllWhenNoCampaign = false,
   onActionComplete,
+  onLeadsChange,
+  refreshToken = 0,
 }: Props) {
   const tenant = useCurrentTenantSafe();
   const [leads, setLeads] = useState<ScraperLead[]>([]);
@@ -82,6 +92,7 @@ export default function ScraperLeadsTable({
     if (!tenant?.id) return;
     if (!campaignId && !showAllWhenNoCampaign) {
       setLeads([]);
+      onLeadsChange?.([]);
       return;
     }
     setLoading(true);
@@ -96,18 +107,29 @@ export default function ScraperLeadsTable({
       const res = await fetch(`/api/scraper-leads?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setLeads(data.leads || []);
+      const next = (data.leads || []) as ScraperLead[];
+      setLeads(next);
+      onLeadsChange?.(next);
       setSelectedIds(new Set());
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to load leads');
     } finally {
       setLoading(false);
     }
-  }, [tenant?.id, campaignId, minScore, grade, hasEmailOnly, locationFilter, showAllWhenNoCampaign]);
+  }, [
+    tenant?.id,
+    campaignId,
+    minScore,
+    grade,
+    hasEmailOnly,
+    locationFilter,
+    showAllWhenNoCampaign,
+    onLeadsChange,
+  ]);
 
   useEffect(() => {
     loadLeads();
-  }, [loadLeads]);
+  }, [loadLeads, refreshToken]);
 
   const allSelected = leads.length > 0 && selectedIds.size === leads.length;
   const selectedLeads = useMemo(
@@ -291,6 +313,7 @@ export default function ScraperLeadsTable({
                 <th className="text-left py-2 px-2">Phone</th>
                 <th className="text-left py-2 px-2">Company</th>
                 <th className="text-left py-2 px-2 hidden lg:table-cell">Location / source</th>
+                <th className="text-center py-2 px-2 hidden md:table-cell">Reach</th>
                 <th className="text-center py-2 px-2">Score</th>
                 <th className="text-center py-2 px-2">Grade</th>
                 <th className="text-left py-2 px-2">Status</th>
@@ -317,8 +340,11 @@ export default function ScraperLeadsTable({
                   <td className="py-2 px-2 text-slate-300">{lead.email || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.phone || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.company || '—'}</td>
-                  <td className="py-2 px-2 text-slate-400 text-xs hidden lg:table-cell max-w-[140px] truncate">
-                    {lead.source_label || lead.industry || lead.source || '—'}
+                  <td className="py-2 px-2 text-slate-400 text-xs hidden lg:table-cell max-w-[160px] truncate">
+                    {lead.address || lead.source_label || lead.industry || lead.source || '—'}
+                  </td>
+                  <td className="py-2 px-2 text-center text-slate-300 tabular-nums text-xs hidden md:table-cell">
+                    {lead.reach_km != null ? `${lead.reach_km} km` : '—'}
                   </td>
                   <td className="py-2 px-2 text-center text-white tabular-nums">{lead.score ?? '—'}</td>
                   <td className="py-2 px-2 text-center">
