@@ -12,6 +12,7 @@ const {
   rejectOrExtractDataUri,
   extractImageDimensions,
   redactSecrets,
+  assertPublicMediaUrl,
 } = await import('../../src/lib/social/mediaUpload.ts');
 
 const {
@@ -237,4 +238,46 @@ test('verification detects missing provider posts (Facebook helper)', async () =
       }),
     (err) => err instanceof FacebookPublishError && err.code === 'VERIFICATION_FAILED'
   );
+});
+
+test('assertPublicMediaUrl blocks SSRF private hosts', () => {
+  assert.throws(() => assertPublicMediaUrl(new URL('http://127.0.0.1/x.png')));
+  assert.throws(() => assertPublicMediaUrl(new URL('http://10.0.0.5/x.png')));
+  assert.throws(() => assertPublicMediaUrl(new URL('http://169.254.169.254/latest/meta')));
+  assert.throws(() => assertPublicMediaUrl(new URL('http://localhost/x.png')));
+  assert.doesNotThrow(() => assertPublicMediaUrl(new URL('https://cdn.example.com/x.png')));
+});
+
+test('social MCP tools require membership + permission (source)', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/lib/mcp/tools/social-publishing.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /requireSocialAuth/);
+  assert.match(src, /assertTenantMembership/);
+  assert.match(src, /assertPermission/);
+});
+
+test('status migration extends enum not CHECK-only (source)', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL(
+      '../../supabase/migrations/20260724120000_social_publishing_repair.sql',
+      import.meta.url
+    ),
+    'utf8'
+  );
+  assert.match(src, /ALTER TYPE public\.social_post_status ADD VALUE/);
+  assert.equal(/ADD CONSTRAINT social_posts_status_check/.test(src), false);
+});
+
+test('scheduled claim uses status=scheduled predicate (source)', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/lib/social/SocialPublishingService.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /\.eq\('status',\s*'scheduled'\)/);
+  assert.match(src, /fbBody\.caption|caption: post\.caption/);
 });

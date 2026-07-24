@@ -135,6 +135,35 @@ export async function GET(req: NextRequest) {
     const maxAttempts = Number(event.max_attempts || MAX_ATTEMPTS);
 
     try {
+      const { assertCronRowTenantContext, quarantineTenantIsolationRow } = await import(
+        '@/lib/tenant/platformTenant'
+      );
+      try {
+        assertCronRowTenantContext(event);
+      } catch (qErr: any) {
+        await quarantineTenantIsolationRow({
+          tableName: 'mcp_event_queue',
+          recordId: event.id,
+          reason: 'missing_tenant_id',
+          payload: { event_name: event.event_name },
+        }).catch(() => undefined);
+        await admin
+          .from('mcp_event_queue')
+          .update({
+            status: 'dead_letter',
+            last_error: 'missing_tenant_id',
+            updated_at: nowIso,
+          })
+          .eq('id', event.id);
+        results.push({
+          id: event.id,
+          ok: false,
+          quarantined: true,
+          error: qErr?.message || 'missing_tenant_id',
+        });
+        continue;
+      }
+
       let outcome: Record<string, unknown> = { skipped: true };
 
       if (event.event_name === 'send_batch_outreach') {

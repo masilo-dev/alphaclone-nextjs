@@ -162,11 +162,36 @@ export async function upsertFacebookIntegration(params: {
     updated_at: new Date().toISOString(),
   };
 
-  const { data, error } = await admin
-    .from('facebook_integrations')
-    .upsert(row, { onConflict: 'user_id,page_id' })
-    .select('id')
-    .single();
+  // Prefer tenant-scoped uniqueness so the same user+page can exist per tenant.
+  let data: { id: string } | null = null;
+  let error: { message?: string; code?: string } | null = null;
+  if (params.tenantId) {
+    const scoped = await admin
+      .from('facebook_integrations')
+      .upsert(row, { onConflict: 'tenant_id,user_id,page_id' })
+      .select('id')
+      .single();
+    data = scoped.data;
+    error = scoped.error;
+    // Legacy DBs may still only have (user_id,page_id) — fall back once.
+    if (error && /conflict|constraint|on conflict/i.test(error.message || '')) {
+      const legacy = await admin
+        .from('facebook_integrations')
+        .upsert(row, { onConflict: 'user_id,page_id' })
+        .select('id')
+        .single();
+      data = legacy.data;
+      error = legacy.error;
+    }
+  } else {
+    const legacy = await admin
+      .from('facebook_integrations')
+      .upsert(row, { onConflict: 'user_id,page_id' })
+      .select('id')
+      .single();
+    data = legacy.data;
+    error = legacy.error;
+  }
 
   if (error || !data?.id) return { integrationId: null, error: error?.message || 'upsert failed' };
   const integrationId = String(data.id);

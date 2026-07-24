@@ -202,12 +202,13 @@ export class SocialPublishingService {
     idempotencyKey?: string | null;
     correlationId: string;
     aiClient?: string | null;
-  }): Promise<{ id: string }> {
+  }): Promise<{ id: string; reused?: boolean; status?: string; hasProviderId?: boolean }> {
     const admin = createSupabaseAdminClient();
     const now = new Date().toISOString();
     const platform = params.identity.platform;
 
-    // Idempotency: return existing row if key already used
+    // Idempotency: return existing row if key already used (caller must not re-publish
+    // when status is publishing/published).
     if (params.idempotencyKey) {
       const { data: existing } = await admin
         .from('social_posts')
@@ -216,7 +217,12 @@ export class SocialPublishingService {
         .eq('idempotency_key', params.idempotencyKey)
         .maybeSingle();
       if (existing?.id) {
-        return { id: existing.id };
+        return {
+          id: existing.id,
+          reused: true,
+          status: String(existing.status || ''),
+          hasProviderId: Boolean(existing.facebook_post_id || existing.linkedin_post_urn),
+        };
       }
     }
 
@@ -422,7 +428,6 @@ export class SocialPublishingService {
           mediaType === 'video' ||
           (typeof mediaUrl === 'string' && /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(mediaUrl));
         const fbBody: Record<string, string> = {
-          message: post.caption,
           access_token: integration.pageAccessToken,
         };
         if (post.link_url) fbBody.link = post.link_url;
@@ -432,7 +437,10 @@ export class SocialPublishingService {
             fbBody.description = post.caption;
           } else {
             fbBody.url = mediaUrl;
+            fbBody.caption = post.caption;
           }
+        } else {
+          fbBody.message = post.caption;
         }
         const endpoint = mediaUrl
           ? `https://graph.facebook.com/v19.0/${pageId}/${isVideo ? 'videos' : 'photos'}`
@@ -839,6 +847,65 @@ export class SocialPublishingService {
         aiClient: input.aiClient,
       });
 
+      // Idempotent replay / in-flight guard
+      if (record.reused) {
+        if (record.status === 'publishing') {
+          return {
+            ok: false,
+            data: null,
+            receipt: null,
+            error: {
+              code: 'PUBLISH_IN_PROGRESS',
+              message: 'A publish with this idempotency_key is already in progress',
+              retryable: true,
+            },
+          };
+        }
+        if (record.status === 'published' && record.hasProviderId) {
+          const admin = createSupabaseAdminClient();
+          const { data: existing } = await admin
+            .from('social_posts')
+            .select(
+              'id, status, facebook_post_id, linkedin_post_urn, linkedin_author_urn, linkedin_organization_id, live_url, published_at, metadata'
+            )
+            .eq('id', record.id)
+            .maybeSingle();
+          if (existing) {
+            const providerId = existing.facebook_post_id || existing.linkedin_post_urn;
+            const receipt = this.createActionReceipt({
+              provider: identity.platform,
+              providerReference: providerId,
+              verified: true,
+              verifiedAt: existing.published_at,
+              correlationId,
+              liveUrl: existing.live_url,
+            });
+            return {
+              ok: true,
+              data: {
+                social_post_id: existing.id,
+                platform: identity.platform,
+                identity_type: identity.identity_type,
+                identity_id: identity.identity_id,
+                identity_name: identity.identity_name,
+                status: 'published',
+                provider_post_id: providerId,
+                live_url: existing.live_url,
+                published_at: existing.published_at,
+                media_asset_ids: media.assetIds,
+                linkedin_post_urn: existing.linkedin_post_urn,
+                linkedin_author_urn: existing.linkedin_author_urn,
+                linkedin_organization_id: existing.linkedin_organization_id,
+                organization_name:
+                  identity.identity_type === 'linkedin_organization' ? identity.identity_name : null,
+              },
+              receipt,
+              error: null,
+            };
+          }
+        }
+      }
+
       // Stamp internal identity linkage when columns exist
       await this.updatePostRecord(record.id, {
         identity_type: identity.identity_type,
@@ -846,55 +913,6 @@ export class SocialPublishingService {
         provider_identity_id: identity.identity_id,
         connection_id: null,
       }).catch(() => undefined);
-
-      // Idempotent replay of already-published post
-      if (input.idempotencyKey) {
-        const admin = createSupabaseAdminClient();
-        const { data: existing } = await admin
-          .from('social_posts')
-          .select(
-            'id, status, facebook_post_id, linkedin_post_urn, linkedin_author_urn, linkedin_organization_id, live_url, published_at, metadata'
-          )
-          .eq('id', record.id)
-          .maybeSingle();
-        if (
-          existing &&
-          existing.status === 'published' &&
-          (existing.facebook_post_id || existing.linkedin_post_urn)
-        ) {
-          const providerId = existing.facebook_post_id || existing.linkedin_post_urn;
-          const receipt = this.createActionReceipt({
-            provider: identity.platform,
-            providerReference: providerId,
-            verified: true,
-            verifiedAt: existing.published_at,
-            correlationId,
-            liveUrl: existing.live_url,
-          });
-          return {
-            ok: true,
-            data: {
-              social_post_id: existing.id,
-              platform: identity.platform,
-              identity_type: identity.identity_type,
-              identity_id: identity.identity_id,
-              identity_name: identity.identity_name,
-              status: 'published',
-              provider_post_id: providerId,
-              live_url: existing.live_url,
-              published_at: existing.published_at,
-              media_asset_ids: media.assetIds,
-              linkedin_post_urn: existing.linkedin_post_urn,
-              linkedin_author_urn: existing.linkedin_author_urn,
-              linkedin_organization_id: existing.linkedin_organization_id,
-              organization_name:
-                identity.identity_type === 'linkedin_organization' ? identity.identity_name : null,
-            },
-            receipt,
-            error: null,
-          };
-        }
-      }
 
       if (!publishNow) {
         const status: SocialPostStatus = scheduledAt ? 'scheduled' : 'draft';
@@ -1311,13 +1329,21 @@ export class SocialPublishingService {
     let failed = 0;
 
     for (const post of duePosts || []) {
-      // Claim lock
-      const claim = await updatePost(post.id, {
-        status: 'publishing',
-        error_message: null,
-        updated_at: new Date().toISOString(),
-      });
-      if (claim.error) continue;
+      // Atomic claim: only one worker may move scheduled → publishing
+      const adminClaim = createSupabaseAdminClient();
+      const claimedAt = new Date().toISOString();
+      const { data: claimed, error: claimError } = await adminClaim
+        .from('social_posts')
+        .update({
+          status: 'publishing',
+          error_message: null,
+          updated_at: claimedAt,
+        })
+        .eq('id', post.id)
+        .eq('status', 'scheduled')
+        .select('id')
+        .maybeSingle();
+      if (claimError || !claimed?.id) continue;
 
       const platform = (Array.isArray(post.platforms) ? post.platforms[0] : post.platform) as
         | 'facebook'

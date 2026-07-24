@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
         const { data: campaigns, error } = await admin
             .from('email_campaigns')
-            .select('id, tenant_id')
+            .select('id, tenant_id, status, scheduled_at')
             .eq('status', 'scheduled')
             .lte('scheduled_at', now);
 
@@ -31,13 +31,33 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: 'No campaigns to process' });
         }
 
-        const { assertCronRowTenantContext } = await import('@/lib/tenant/platformTenant');
+        const { assertCronRowTenantContext, quarantineTenantIsolationRow } = await import(
+            '@/lib/tenant/platformTenant'
+        );
         const results = [];
         for (const campaign of campaigns) {
             try {
                 assertCronRowTenantContext(campaign);
             } catch (quarantineErr: any) {
                 console.error('[cron/process-campaigns] quarantined:', quarantineErr?.message);
+                await quarantineTenantIsolationRow({
+                    tableName: 'email_campaigns',
+                    recordId: campaign.id,
+                    reason: 'missing_tenant_id',
+                    payload: {
+                        status: campaign.status,
+                        scheduled_at: campaign.scheduled_at,
+                    },
+                }).catch(() => undefined);
+                // Move out of scheduled so we do not retry forever
+                await admin
+                    .from('email_campaigns')
+                    .update({
+                        status: 'draft',
+                        updated_at: now,
+                    })
+                    .eq('id', campaign.id)
+                    .eq('status', 'scheduled');
                 results.push({
                     id: campaign.id,
                     ok: false,

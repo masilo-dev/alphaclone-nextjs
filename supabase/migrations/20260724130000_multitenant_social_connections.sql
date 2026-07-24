@@ -236,6 +236,8 @@ WHERE sc.provider = 'facebook'
 ON CONFLICT (tenant_id, provider, identity_type, provider_identity_id) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   connection_id = EXCLUDED.connection_id,
+  can_publish = EXCLUDED.can_publish,
+  can_upload_media = EXCLUDED.can_upload_media,
   is_active = EXCLUDED.is_active,
   updated_at = now();
 
@@ -288,11 +290,13 @@ ON CONFLICT (tenant_id, provider, identity_type, provider_identity_id) DO UPDATE
   can_publish = EXCLUDED.can_publish,
   updated_at = now();
 
+-- Pick at most one LinkedIn connection per tenant to avoid
+-- "ON CONFLICT DO UPDATE cannot affect row a second time".
 INSERT INTO public.social_identities (
   tenant_id, connection_id, provider, identity_type, provider_identity_id,
   provider_identity_urn, display_name, can_publish, can_upload_media, is_active, metadata, updated_at
 )
-SELECT
+SELECT DISTINCT ON (lid.tenant_id, lid.linkedin_organization_id)
   lid.tenant_id,
   sc.id,
   'linkedin',
@@ -306,13 +310,35 @@ SELECT
   jsonb_build_object('role', lid.role, 'legacy_identity_id', lid.id),
   now()
 FROM public.linkedin_identities lid
-LEFT JOIN public.social_connections sc
-  ON sc.tenant_id = lid.tenant_id AND sc.provider = 'linkedin'
+LEFT JOIN LATERAL (
+  SELECT sc0.id
+  FROM public.social_connections sc0
+  WHERE sc0.tenant_id = lid.tenant_id
+    AND sc0.provider = 'linkedin'
+  ORDER BY
+    CASE WHEN sc0.connection_status = 'active' THEN 0 ELSE 1 END,
+    sc0.updated_at DESC NULLS LAST,
+    sc0.created_at DESC NULLS LAST
+  LIMIT 1
+) sc ON true
 WHERE lid.type = 'organization'
   AND lid.linkedin_organization_id IS NOT NULL
   AND lid.tenant_id IS NOT NULL
+ORDER BY lid.tenant_id, lid.linkedin_organization_id, lid.updated_at DESC NULLS LAST
 ON CONFLICT (tenant_id, provider, identity_type, provider_identity_id) DO UPDATE SET
   display_name = EXCLUDED.display_name,
   can_publish = EXCLUDED.can_publish,
   provider_identity_urn = EXCLUDED.provider_identity_urn,
+  connection_id = COALESCE(EXCLUDED.connection_id, public.social_identities.connection_id),
   updated_at = now();
+
+-- Facebook can_publish must not be blindly true — require active connection only
+-- (page task verification happens at sync time in app code).
+UPDATE public.social_identities si
+SET can_publish = (sc.connection_status = 'active'),
+    can_upload_media = (sc.connection_status = 'active'),
+    updated_at = now()
+FROM public.social_connections sc
+WHERE si.connection_id = sc.id
+  AND si.provider = 'facebook'
+  AND si.identity_type = 'facebook_page';

@@ -205,6 +205,17 @@ export async function POST(req: NextRequest) {
     userId = auth.user_id;
   }
 
+  // Re-validate active membership for every request (sessions/tokens alone are not enough)
+  try {
+    const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+    await assertTenantMembership(tenantId, userId);
+  } catch {
+    return NextResponse.json(
+      { error: 'Unauthorized', message: 'Workspace membership is not active' },
+      { status: 401, headers: mcpJsonHeaders(req) }
+    );
+  }
+
   // 2. Short-circuit handshake methods (SDK import crashes in serverless for initialize)
   if (requestBody.method === 'initialize') {
     const protocolVersion = negotiateProtocolVersion(requestBody.params?.protocolVersion);
@@ -699,7 +710,12 @@ export async function DELETE(req: NextRequest) {
   if (mcpSessionId && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
-      await supabaseAdmin.from('mcp_sessions').delete().eq('id', mcpSessionId);
+      await supabaseAdmin
+        .from('mcp_sessions')
+        .delete()
+        .eq('id', mcpSessionId)
+        .eq('tenant_id', auth.tenant_id)
+        .eq('user_id', auth.user_id);
       console.log('[MCP HTTP DELETE] Session terminated:', mcpSessionId);
     } catch (err) {
       console.warn('[MCP HTTP DELETE] Session cleanup failed:', err);

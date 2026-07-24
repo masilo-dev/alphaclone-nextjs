@@ -395,12 +395,15 @@ export async function syncTenantSocialIdentitiesFromLegacy(
 
     const meta = (row.metadata || {}) as Record<string, unknown>;
     const tasks = Array.isArray(meta.page_tasks) ? meta.page_tasks.map(String) : [];
+    // If page_tasks are known, require a content-capable task. Otherwise allow
+    // active integrations (Graph often omits tasks on older rows).
+    const hasTaskSignal = tasks.length > 0;
     const canPublish =
-      row.is_active &&
-      (tasks.includes('MANAGE') ||
+      row.is_active === true &&
+      (!hasTaskSignal ||
+        tasks.includes('MANAGE') ||
         tasks.includes('CREATE_CONTENT') ||
-        tasks.includes('ADVERTISE') ||
-        true);
+        tasks.includes('ADVERTISE'));
 
     await admin.from('social_identities').upsert(
       {

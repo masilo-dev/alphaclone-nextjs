@@ -99,6 +99,20 @@ export async function assertTenantMembership(
   }
 
   if (!data) {
+    // Some deployments use tenant_members instead of / in addition to tenant_users
+    const members = await admin
+      .from('tenant_members')
+      .select('tenant_id, user_id, role, status')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (!members.error && members.data) {
+      const status = String((members.data as any).status || 'active').toLowerCase();
+      if (status === 'suspended' || status === 'removed' || status === 'invited') {
+        throw new PlatformTenantError('Workspace membership is not active', 'SUSPENDED');
+      }
+      return members.data as TenantMembershipRow;
+    }
     throw new PlatformTenantError('Not a member of this workspace', 'NOT_A_MEMBER');
   }
 
@@ -206,6 +220,59 @@ export function assertCronRowTenantContext(row: {
     );
   }
   return tid;
+}
+
+/** Persist a quarantine row for cron/workers (idempotent-ish). */
+export async function quarantineTenantIsolationRow(params: {
+  tableName: string;
+  recordId?: string | null;
+  reason: string;
+  payload?: Record<string, unknown>;
+}): Promise<void> {
+  const admin = createSupabaseAdminClient();
+  const recordId = params.recordId || null;
+  if (recordId) {
+    const { data: existing } = await admin
+      .from('tenant_isolation_quarantine')
+      .select('id')
+      .eq('table_name', params.tableName)
+      .eq('record_id', recordId)
+      .is('reviewed_at', null)
+      .maybeSingle();
+    if (existing?.id) return;
+  }
+  await admin.from('tenant_isolation_quarantine').insert({
+    table_name: params.tableName,
+    record_id: recordId,
+    reason: params.reason,
+    payload: params.payload || null,
+  });
+}
+
+/**
+ * Private storage paths must be tenant-prefixed:
+ *   tenant/{tenantId}/...
+ * Reject cross-tenant path probes.
+ */
+export function assertTenantStoragePath(params: {
+  filePath: string;
+  tenantId: string;
+  allowLegacyUserPaths?: boolean;
+  userId?: string | null;
+}): void {
+  const path = String(params.filePath || '').replace(/^\/+/, '');
+  const expectedPrefix = `tenant/${params.tenantId}/`;
+  if (path.startsWith(expectedPrefix)) return;
+
+  if (
+    params.allowLegacyUserPaths &&
+    params.userId &&
+    (path.startsWith(`${params.userId}/`) || path.includes(`/${params.userId}/`))
+  ) {
+    return;
+  }
+
+  throw new PlatformTenantError('Storage path not found for this workspace', 'NOT_FOUND');
 }
 
 /** Strip secrets / cross-tenant fields from error messages returned to clients. */

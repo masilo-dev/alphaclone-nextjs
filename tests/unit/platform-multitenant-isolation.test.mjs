@@ -10,6 +10,7 @@ const {
   tenantCacheKey,
   tenantStoragePath,
   assertCronRowTenantContext,
+  assertTenantStoragePath,
   sanitizeTenantErrorMessage,
   PlatformTenantError,
   isUuid,
@@ -118,7 +119,46 @@ test('file uploads use tenant-prefixed storage paths (source)', async () => {
     'utf8'
   );
   assert.match(src, /tenantStoragePath/);
+  assert.equal(src.includes('`${finalUserId as string}/${timestamp}'), false);
   assert.equal(src.includes('`${userId}/${timestamp}'), false);
+});
+
+test('storage proxy enforces tenant path prefix (source)', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/app/api/storage/[bucket]/[...path]/route.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /assertTenantStoragePath/);
+  assert.match(src, /resolveActiveTenantForUser/);
+});
+
+test('connector permissions fail closed without membership (source)', async () => {
+  const fs = await import('node:fs');
+  const src = fs.readFileSync(
+    new URL('../../src/lib/mcp/connector/permissions.ts', import.meta.url),
+    'utf8'
+  );
+  assert.match(src, /Fail closed/);
+  assert.equal(src.includes("return { role: 'member', permissions: ROLE_PERMISSIONS.member };"), false);
+});
+
+test('assertTenantStoragePath rejects cross-tenant paths', () => {
+  const tid = '11111111-1111-4111-8111-111111111111';
+  assert.throws(
+    () =>
+      assertTenantStoragePath({
+        filePath: `tenant/22222222-2222-4222-8222-222222222222/uploads/x/a.pdf`,
+        tenantId: tid,
+      }),
+    (err) => err instanceof PlatformTenantError && err.code === 'NOT_FOUND'
+  );
+  assert.doesNotThrow(() =>
+    assertTenantStoragePath({
+      filePath: `tenant/${tid}/uploads/x/a.pdf`,
+      tenantId: tid,
+    })
+  );
 });
 
 test('CacheKeys exposes tenant-scoped builders', async () => {

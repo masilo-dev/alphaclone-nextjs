@@ -19,9 +19,28 @@ import { uploadSocialMedia } from '@/lib/social/mediaUpload';
 import { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
 
 function requireTenantId(args: { tenant_id?: string }, ctx: { tenantId?: string }) {
-  const tenantId = args.tenant_id || ctx.tenantId;
+  // Session tenant is authoritative — never prefer model-supplied tenant_id.
+  const tenantId = ctx.tenantId || args.tenant_id;
   if (!tenantId) throw new Error('tenant_id is required');
-  return tenantId;
+  if (ctx.tenantId && args.tenant_id && ctx.tenantId !== args.tenant_id) {
+    throw new Error('tenant_id does not match active workspace');
+  }
+  return ctx.tenantId || tenantId;
+}
+
+async function requireSocialAuth(
+  args: { tenant_id?: string },
+  ctx: { tenantId?: string; userId?: string },
+  permission: 'social:read' | 'social:write' | 'social:publish'
+): Promise<{ tenantId: string; userId: string }> {
+  const tenantId = requireTenantId(args, ctx);
+  const userId = ctx.userId;
+  if (!userId) throw new Error('Authenticated user required');
+  const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+  const { assertPermission } = await import('@/lib/mcp/connector/permissions');
+  await assertTenantMembership(tenantId, userId);
+  await assertPermission(tenantId, userId, permission);
+  return { tenantId, userId };
 }
 
 // ─── Identity tools ─────────────────────────────────────────────────────────
@@ -45,7 +64,7 @@ registerTool('social-publishing', {
     required: [],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     const { listTenantSocialIdentities, syncTenantSocialIdentitiesFromLegacy } = await import(
       '@/lib/social/socialIdentityStore'
     );
@@ -84,7 +103,7 @@ registerTool('social-publishing', {
     required: [],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     return listFacebookIdentities(tenantId);
   },
 });
@@ -104,7 +123,7 @@ registerTool('social-publishing', {
     required: [],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     return getFacebookPageCapabilities(tenantId, args.page_id);
   },
 });
@@ -124,7 +143,7 @@ registerTool('social-publishing', {
     required: [],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     return listLinkedInIdentities(tenantId);
   },
 });
@@ -142,7 +161,7 @@ registerTool('social-publishing', {
     required: [],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     return listSocialAccounts(tenantId);
   },
 });
@@ -171,11 +190,10 @@ registerTool('social-publishing', {
     required: ['filename', 'mime_type', 'content_base64'],
   },
   handler: async (args, ctx) => {
-    if (!ctx.userId) throw new Error('user_id is required');
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     return uploadSocialMedia({
       tenantId,
-      userId: ctx.userId,
+      userId,
       filename: args.filename,
       mimeType: args.mime_type,
       contentBase64: args.content_base64,
@@ -226,8 +244,7 @@ registerTool('social-publishing', {
     required: ['caption'],
   },
   handler: async (args, ctx) => {
-    if (!ctx.userId) throw new Error('user_id is required');
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
 
     const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
     const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
@@ -261,7 +278,7 @@ registerTool('social-publishing', {
     const service = getSocialPublishingService();
     const result = await service.publish({
       tenantId,
-      userId: ctx.userId,
+      userId,
       platform,
       identityType,
       identityId: stored.provider_identity_id,
@@ -367,8 +384,7 @@ registerTool('social-publishing', {
     required: ['caption'],
   },
   handler: async (args, ctx) => {
-    if (!ctx.userId) throw new Error('user_id is required');
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
     const platform = (args.platform ||
       (Array.isArray(args.platforms) ? args.platforms[0] : 'facebook')) as
       | 'facebook'
@@ -411,7 +427,7 @@ registerTool('social-publishing', {
     const service = getSocialPublishingService();
     const result = await service.publish({
       tenantId,
-      userId: ctx.userId,
+      userId,
       platform,
       identityType,
       identityId,
@@ -504,15 +520,14 @@ registerTool('social-publishing', {
     required: ['caption', 'mime_type'],
   },
   handler: async (args, ctx) => {
-    if (!ctx.userId) throw new Error('user_id is required');
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
     const filename = args.filename || args.file_name || 'upload.bin';
     const contentBase64 = args.content_base64 || args.file_base64;
     if (!contentBase64) throw new Error('content_base64 (or file_base64) is required');
 
     const asset = await uploadSocialMedia({
       tenantId,
-      userId: ctx.userId,
+      userId,
       filename,
       mimeType: args.mime_type,
       contentBase64,
@@ -525,7 +540,7 @@ registerTool('social-publishing', {
 
     // Delegate to create_social_post handler logic via service
     const { executeTool } = await import('../tool-registry');
-    return executeTool(tenantId, ctx.userId, 'create_social_post', {
+    return executeTool(tenantId, userId, 'create_social_post', {
       tenant_id: tenantId,
       platform,
       platforms: args.platforms || [platform],
@@ -557,7 +572,7 @@ registerTool('social-publishing', {
     required: ['social_post_id'],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     const service = getSocialPublishingService();
     const result = await service.verifyProviderPost({
       tenantId,
@@ -592,7 +607,7 @@ registerTool('social-publishing', {
     required: ['social_post_id'],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('social_posts')
@@ -623,7 +638,7 @@ registerTool('social-publishing', {
     required: [],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     const supabase = createSupabaseAdminClient();
     let query = supabase
       .from('social_posts')
@@ -656,13 +671,12 @@ registerTool('social-publishing', {
     required: ['social_post_id'],
   },
   handler: async (args, ctx) => {
-    if (!ctx.userId) throw new Error('user_id is required');
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
     const service = getSocialPublishingService();
     const result = await service.retryFailedPost({
       tenantId,
       postId: args.social_post_id,
-      userId: ctx.userId,
+      userId,
     });
     if (!result.ok) {
       return toMcpContent(
@@ -696,7 +710,7 @@ registerTool('social-publishing', {
     required: ['social_post_id'],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const supabase = createSupabaseAdminClient();
     const { data: post, error } = await supabase
       .from('social_posts')
@@ -707,6 +721,7 @@ registerTool('social-publishing', {
     if (error) throw error;
     if (!post) throw new Error('Social post not found');
 
+    void userId;
     const evidence: Record<string, unknown> = {};
     if (args.delete_from_provider !== false && post.facebook_post_id) {
       const { getFacebookIntegrationWithToken } = await import(
@@ -764,7 +779,7 @@ registerTool('social-publishing', {
     required: ['social_post_id'],
   },
   handler: async (args, ctx) => {
-    const tenantId = requireTenantId(args, ctx);
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
     const supabase = createSupabaseAdminClient();
     const { data: post, error } = await supabase
       .from('social_posts')
@@ -836,15 +851,19 @@ defineConnectorTool({
     required: ['tenant_id', 'caption', 'media_asset_ids'],
   },
   handler: async (args, ctx) => {
+    const tenantId = ctx.tenantId;
+    if (!tenantId || !ctx.userId) {
+      throwConnectorError('AUTH_REQUIRED', 'Active workspace and user required');
+    }
     let pageId = args.page_id;
     if (!pageId) {
-      const { pages } = await listFacebookIdentities(args.tenant_id);
+      const { pages } = await listFacebookIdentities(tenantId!);
       pageId = (pages.find((p) => p.can_publish) || pages[0])?.page_id;
     }
     if (!pageId) throwConnectorError('MISSING_IDENTITY', 'No Facebook Page connected');
     const service = getSocialPublishingService();
     const result = await service.publish({
-      tenantId: args.tenant_id,
+      tenantId: tenantId!,
       userId: ctx.userId!,
       platform: 'facebook',
       identityType: 'facebook_page',

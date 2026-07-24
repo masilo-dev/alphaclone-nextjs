@@ -352,11 +352,52 @@ export async function resolveMediaUrls(params: {
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       throw new Error(`Unsupported media_url protocol: ${parsed.protocol}`);
     }
+    assertPublicMediaUrl(parsed);
     urls.push(raw);
     types.push(/\.(mp4|mov|webm|mkv)(\?|$)/i.test(raw) ? 'video' : 'image');
   }
 
   return { urls, assetIds, types };
+}
+
+/** Block SSRF via media_urls (localhost, private, link-local, metadata IPs). */
+export function assertPublicMediaUrl(parsed: URL): void {
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (
+    host === 'localhost' ||
+    host === 'metadata.google.internal' ||
+    host.endsWith('.localhost') ||
+    host.endsWith('.local') ||
+    host.endsWith('.internal')
+  ) {
+    throw new Error('media_url host is not allowed');
+  }
+  // IPv4 private / loopback / link-local / CGNAT
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+    if (
+      a === 10 ||
+      a === 127 ||
+      a === 0 ||
+      (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127)
+    ) {
+      throw new Error('media_url resolves to a private network address');
+    }
+  }
+  // IPv6 loopback / ULA / link-local
+  if (
+    host === '::1' ||
+    host === '0:0:0:0:0:0:0:1' ||
+    host.startsWith('fc') ||
+    host.startsWith('fd') ||
+    host.startsWith('fe80')
+  ) {
+    throw new Error('media_url resolves to a private network address');
+  }
 }
 
 /** Redact tokens from logs / errors. */

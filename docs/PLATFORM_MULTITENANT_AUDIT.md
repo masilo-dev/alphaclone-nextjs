@@ -31,13 +31,18 @@ This repair ships **Stage A (auth/context)** + **Stage B foundation (schema help
 ## Repairs shipped (this PR branch)
 
 ### Code
-- `src/lib/tenant/platformTenant.ts` — session bind, membership assert, cache/storage key helpers, cron quarantine
-- MCP route: hint only after `resolveActiveTenantForUser` membership verification
+- `src/lib/tenant/platformTenant.ts` — session bind, membership assert, cache/storage key helpers, cron quarantine persistence, storage path assert
+- MCP route: hint only after `resolveActiveTenantForUser`; **every request** re-checks active membership (sessions included)
+- MCP DELETE scopes session cleanup to `tenant_id` + `user_id`
+- OAuth tokens + API keys: `requireActive` + membership revalidation
+- Connector permissions: **fail closed** (no invented `member` role)
 - MCPServer: **fail closed** without session ctx (no client tenant trust)
 - `defineConnectorTool`: session-only tenant/user
 - Cache keys: `tenantApiResponse`, `tenantUserPermissions`, `tenantScoped`
-- File uploads: `tenant/{tenantId}/uploads/...`
-- Cron campaigns: require `tenant_id` or quarantine
+- File uploads (buffer **and** UI `uploadFile`): `tenant/{tenantId}/uploads/...` + required tenant_id
+- Storage proxy: rejects private paths outside `tenant/{activeTenantId}/...`
+- Cron campaigns + MCP queue: quarantine table write + move out of retry loop
+- Social: enum `ALTER TYPE` migration, SSRF media URL block, atomic scheduled claim, MCP tool membership/permissions
 - MCP event queue: always `createMCPServer({ tenantId, userId })`
 
 ### Migrations

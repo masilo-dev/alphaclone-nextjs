@@ -152,7 +152,14 @@ export async function resolveTenantRole(
     return { role: membershipRole, permissions: ROLE_PERMISSIONS[membershipRole] };
   }
 
-  return { role: 'member', permissions: ROLE_PERMISSIONS.member };
+  // Fail closed: never invent "member" for users with no membership row.
+  throwConnectorError(
+    'PERMISSION_DENIED',
+    'Not a member of this workspace',
+    { tenant_id: tenantId, user_id: userId }
+  );
+  // Unreachable — satisfy TypeScript
+  return { role: 'guest', permissions: ROLE_PERMISSIONS.guest };
 }
 
 export async function assertPermission(

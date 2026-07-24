@@ -324,8 +324,11 @@ class FileUploadService {
                 finalUserId = user.id;
             }
 
-            // Get tenant
+            // Get tenant — required for multi-tenant isolation
             const finalTenantId = explicitTenantId || tenantService.getCurrentTenantId();
+            if (!finalTenantId) {
+                return { success: false, error: 'Active workspace required for uploads' };
+            }
 
             // Check per-user storage limit
             const currentUsage = await this.getUserStorageUsage(finalUserId as string);
@@ -337,11 +340,17 @@ class FileUploadService {
                 };
             }
 
-            // Generate unique filename
+            // Generate unique tenant-prefixed filename
             const timestamp = Date.now();
             const randomString = crypto.randomUUID();
             const extension = file.name.split('.').pop();
-            const filename = `${finalUserId as string}/${timestamp}-${randomString}.${extension}`;
+            const { tenantStoragePath } = await import('@/lib/tenant/platformTenant');
+            const filename = tenantStoragePath(
+                finalTenantId,
+                'uploads',
+                finalUserId as string,
+                `${timestamp}-${randomString}.${extension}`
+            );
 
             // Upload to Supabase Storage
             const { data: uploadData, error: uploadError } = await supabase.storage
