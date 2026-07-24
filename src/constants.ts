@@ -141,6 +141,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     icon: Users,
     subItems: [
       { label: 'Customers', href: '/dashboard/crm/workspace', icon: Users },
+      { label: 'Lead Finder', href: '/dashboard/leads/campaigns', icon: Search },
       { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
       { label: 'Deals', href: '/dashboard/deals', icon: Target },
       { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },

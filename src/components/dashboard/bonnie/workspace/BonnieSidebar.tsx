@@ -93,7 +93,7 @@ export default function BonnieSidebar({
             <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-700 dark:text-teal-300">
               Alphaclone Systems
             </p>
-            <h2 className="truncate text-base font-semibold tracking-tight">Bonnie AI</h2>
+            <h2 className="truncate text-sm font-semibold tracking-tight">Bonnie AI</h2>
           </div>
         )}
         <button
@@ -113,7 +113,7 @@ export default function BonnieSidebar({
             onNewChat();
             onCloseMobile();
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
         >
           <MessageSquarePlus className="h-4 w-4" />
           {!collapsed && <span>New chat</span>}
@@ -130,7 +130,7 @@ export default function BonnieSidebar({
                 onSearch(e.target.value);
               }}
               placeholder="Search conversations"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none ring-teal-500/30 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-xs outline-none ring-teal-500/30 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900"
             />
           </label>
         )}

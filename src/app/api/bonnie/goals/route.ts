@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         goal: goalText,
         triggerType: 'instruction',
         conversationId: body.conversationId || undefined,
-        executeActions: body.executeActions === true,
+        executeActions: body.executeActions !== false,
       });
       return NextResponse.json({
         success: cognitive.status !== 'failed',

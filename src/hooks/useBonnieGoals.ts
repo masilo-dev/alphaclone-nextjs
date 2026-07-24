@@ -62,7 +62,7 @@ export function useBonnieGoals(tenantId?: string | null) {
           tenantId,
           action: 'create',
           goal,
-          executeActions: opts?.executeActions === true,
+          executeActions: opts?.executeActions !== false,
         }),
       });
       const data = await res.json();

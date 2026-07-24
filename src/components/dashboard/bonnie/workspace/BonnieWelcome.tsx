@@ -38,24 +38,24 @@ type Props = {
 
 export default function BonnieWelcome({ workspaceName, suggestions, onSelect }: Props) {
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center px-4 py-10 sm:px-6">
-      <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-sm">
-          <Sparkles className="h-6 w-6" aria-hidden />
+    <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center px-4 py-6 sm:px-6">
+      <div className="mb-6 text-center">
+        <div className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
+          <Sparkles className="h-4 w-4" aria-hidden />
         </div>
-        <p className="text-sm font-medium text-teal-700 dark:text-teal-300">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-teal-700 dark:text-teal-300">
           {workspaceName || 'Your workspace'} · Bonnie AI
         </p>
-        <h1 className="mt-2 text-balance text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-4xl">
-          What would you like Bonnie to handle today?
+        <h1 className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-2xl">
+          What should Bonnie execute?
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-pretty text-sm text-slate-600 dark:text-slate-400">
-          Plan work, review records, draft messages, and approve important actions without leaving
-          Alphaclone Systems.
+        <p className="mx-auto mt-2 max-w-lg text-pretty text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+          Post socially, chase invoices, find leads, send outreach, and run accounting actions —
+          Bonnie executes tools in this workspace.
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {suggestions.map((item) => {
           const Icon = ICONS[item.icon || 'workflow'] || Target;
           return (
@@ -63,13 +63,13 @@ export default function BonnieWelcome({ workspaceName, suggestions, onSelect }: 
               key={item.id}
               type="button"
               onClick={() => onSelect(item.prompt)}
-              className="rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:border-teal-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-teal-700"
+              className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-teal-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-teal-700"
             >
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
-                <Icon className="h-4 w-4" />
+              <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
+                <Icon className="h-3.5 w-3.5" />
               </div>
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">{item.title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-semibold text-slate-900 dark:text-slate-50">{item.title}</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
                 {item.description}
               </p>
             </button>
