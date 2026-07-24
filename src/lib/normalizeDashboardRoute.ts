@@ -12,7 +12,7 @@ export function stripRouteQueryAndHash(path: string): string {
 /** Map legacy/shared paths to tenant-admin business routes when needed. */
 export function normalizeBusinessRoute(path: string, role?: string): string {
     const base = stripRouteQueryAndHash(path);
-    if (role !== 'tenant_admin') return base;
+    if (role !== 'tenant_admin' && role !== 'business_dashboard') return base;
 
     const tenantAliases: Record<string, string> = {
         // bare /dashboard/business resolves to home

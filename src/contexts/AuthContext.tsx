@@ -129,12 +129,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         authError.toLowerCase().includes('expired') ||
                         authError.toLowerCase().includes('unauthorized') ||
                         authError.toLowerCase().includes('not found') ||
-                        authError.toLowerCase().includes('profile') ||
                         authError.toLowerCase().includes('account');
 
+                    // Do NOT treat transient "profile" sync races (common after Google OAuth)
+                    // as a hard session wipe — retry once via getCurrentUser path instead.
                     if (isAuthError) {
                         clearAuthSession();
                         setSafeUser(null);
+                        setError(authError);
+                    } else if (authError.toLowerCase().includes('profile')) {
+                        console.warn('[AuthContext] Profile not ready yet after OAuth — retrying once');
+                        setTimeout(() => {
+                            if (!isMounted) return;
+                            void initSession();
+                        }, 1200);
                         setError(authError);
                     } else {
                         setSafeUser(null);

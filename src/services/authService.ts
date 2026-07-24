@@ -704,6 +704,34 @@ export const authService = {
 
             if (!profile) {
                 console.warn("AuthService: Canonical profile retrieval failed.", lastError);
+                // After Google OAuth, profile/tenant bootstrap can lag — heal via server bootstrap.
+                if (isAuthCallback || typeof window !== 'undefined') {
+                    try {
+                        const ensureRes = await fetch('/api/tenant/bootstrap', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ mode: 'ensure' }),
+                        });
+                        if (ensureRes.ok) {
+                            const { data: p2 } = await withAuthTimeout(
+                                supabase
+                                    .from('profiles')
+                                    .select('*, account_status, scheduled_deletion_at')
+                                    .eq('id', session.user.id)
+                                    .maybeSingle(),
+                                3000
+                            );
+                            if (p2) profile = p2;
+                        }
+                    } catch (ensureErr) {
+                        console.warn('AuthService: tenant bootstrap fallback failed', ensureErr);
+                    }
+                }
+            }
+
+            if (!profile) {
+                console.warn("AuthService: Canonical profile retrieval failed.", lastError);
                 return { user: null, error: 'Your account profile could not be verified. Please sign in again.' };
             }
 

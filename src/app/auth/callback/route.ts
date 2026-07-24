@@ -107,6 +107,18 @@ export async function GET(request: Request) {
                     }
                 } catch (tenantErr) {
                     console.error('[auth/callback] Failed to ensure tenant for OAuth user:', tenantErr);
+                    // Still try to ensure a profile exists so getCurrentUser does not clear the session.
+                    try {
+                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                        const { ensureUserProfile } = await import('@/lib/tenant/bootstrapTenantServer');
+                        const admin = createSupabaseAdminClient();
+                        await ensureUserProfile(admin, user);
+                    } catch (profileErr) {
+                        console.error('[auth/callback] Profile ensure also failed:', profileErr);
+                        return NextResponse.redirect(
+                            `${origin}/auth/login?error=${encodeURIComponent('workspace_bootstrap_failed')}`
+                        );
+                    }
                 }
 
                 if (provider === 'linkedin_oidc') {
