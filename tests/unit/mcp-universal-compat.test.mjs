@@ -20,8 +20,12 @@ test('normalizeMcpClientId never aliases generic client to chatgpt-connector', (
 test('tool catalog mode is registration-based, not UA-based', () => {
   assert.equal(getToolCatalogModeForClient('chatgpt-connector'), 'curated');
   assert.equal(getToolCatalogModeForClient('alphaclone-mcp-client'), 'full');
-  assert.equal(getToolCatalogModeForClient('1778309945386-41bab8272f61'), 'full');
-  assert.equal(getToolCatalogModeForClient('some-new-client'), 'full');
+  // Claude.ai custom connectors silently drop oversized tools/list — must be curated.
+  assert.equal(getToolCatalogModeForClient('1778309945386-41bab8272f61'), 'curated');
+  // Unknown / DCR / API-key (null client) → curated, not full.
+  assert.equal(getToolCatalogModeForClient('some-new-client'), 'curated');
+  assert.equal(getToolCatalogModeForClient(null), 'curated');
+  assert.equal(getToolCatalogModeForClient(undefined), 'curated');
   assert.equal(isChatgptClient({ clientId: 'alphaclone-mcp-client', userAgent: 'ChatGPT' }), false);
   assert.equal(isChatgptClient({ clientId: 'chatgpt-connector' }), true);
 });

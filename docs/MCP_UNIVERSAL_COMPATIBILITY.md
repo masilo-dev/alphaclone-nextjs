@@ -40,7 +40,7 @@ Any standards-compliant MCP client (ChatGPT Apps, Claude, Claude Code, Cursor, V
 - Live ChatGPT/Claude/Cursor connection tests need production OAuth credentials (not run in this agent).
 - Plaintext token columns still supported for migration compatibility (hash preferred).
 - Introspection is still relatively broad (resource-server style); tighten further if needed.
-- Curated tool catalog still exists for `chatgpt-connector` only (OpenAI Apps size limits) — configured as client seed metadata, not User-Agent hacks.
+- Curated tool catalog for size-limited connectors (`chatgpt-connector`, Claude `1778309945386-41bab8272f61`, Manus, Grok, and unknown/DCR clients). Full catalog is opt-in (`alphaclone-mcp-client` / SDK `forChatGPT: false`). Claude clients that receive the full registry often connect successfully but show **zero tools** (silent schema-size drop).
 - `alphaclone-mcp-client` seed has empty `redirect_uris` until DCR/admin sets them (intentional — no longer inherits OpenAI redirects).
 
 ## Spec compliance summary

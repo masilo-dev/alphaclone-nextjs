@@ -45,14 +45,14 @@ test("ToolPolicyGate enforces human oversight for high-risk tools (source)", asy
   assert.match(src, /requiresApproval/);
 });
 
-test("unified tools/list returns non-empty full catalog for Claude-like clients", async () => {
+test("unified tools/list returns non-empty full catalog for internal alphaclone client", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: false,
     forceRefresh: true,
     clientId: "alphaclone-mcp-client",
-    clientLabel: "claude.ai",
-    userAgent: "Claude-User",
+    clientLabel: "internal",
+    userAgent: null,
   });
   assert.ok(tools.length > 50, `expected full catalog, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
@@ -65,4 +65,38 @@ test("unified tools/list returns non-empty full catalog for Claude-like clients"
   ]) {
     assert.ok(names.has(required), `missing required tool ${required}`);
   }
+});
+
+test("Claude OAuth client gets curated non-empty catalog (not silent zero tools)", async () => {
+  invalidateUnifiedMcpToolCache();
+  const tools = await getUnifiedMcpTools({
+    sanitizeForClient: true,
+    forceRefresh: true,
+    clientId: "1778309945386-41bab8272f61",
+    clientLabel: "claude.ai",
+    userAgent: "Claude-User",
+  });
+  assert.ok(tools.length > 20, `expected curated catalog, got ${tools.length}`);
+  assert.ok(
+    tools.length <= CHATGPT_CONNECTOR_TOOL_NAMES.length + 5,
+    `Claude catalog should stay near curated size, got ${tools.length}`,
+  );
+  const names = new Set(tools.map((t) => t.name));
+  for (const required of ["create_lead", "search_leads", "list_leads", "inspect_tools"]) {
+    assert.ok(names.has(required), `missing curated tool ${required}`);
+  }
+});
+
+test("API-key path (null clientId) defaults to curated for Claude Desktop safety", async () => {
+  invalidateUnifiedMcpToolCache();
+  const tools = await getUnifiedMcpTools({
+    sanitizeForClient: true,
+    forceRefresh: true,
+    clientId: null,
+  });
+  assert.ok(tools.length > 20, `expected curated default, got ${tools.length}`);
+  assert.ok(
+    tools.length <= CHATGPT_CONNECTOR_TOOL_NAMES.length + 5,
+    `null clientId must not dump full registry (${tools.length})`,
+  );
 });

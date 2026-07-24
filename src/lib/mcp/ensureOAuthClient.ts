@@ -26,9 +26,11 @@ const PLATFORM_CLIENT_SEEDS: Record<
     client_name: 'OpenAI Apps MCP Connector',
     redirect_uris: [...OPENAI_APPS_OAUTH_REDIRECT_URIS],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    // OpenAI Apps / Claude.ai custom connectors silently drop oversized tools/list payloads.
     toolCatalog: 'curated',
   },
-  // Generic public client — NOT an alias of chatgpt-connector
+  // Generic public client — NOT an alias of chatgpt-connector.
+  // Keep full only for first-party/internal callers that can digest the whole registry.
   'alphaclone-mcp-client': {
     client_name: 'Alphaclone MCP Client',
     redirect_uris: [],
@@ -42,26 +44,35 @@ const PLATFORM_CLIENT_SEEDS: Record<
       'https://manus.ai/api/mcp/auth_callback',
     ],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    toolCatalog: 'full',
+    toolCatalog: 'curated',
   },
   '1778309945386-41bab8272f61': {
     client_name: 'Claude (Anthropic)',
-    redirect_uris: ['https://claude.ai/api/mcp/auth_callback'],
+    redirect_uris: [
+      'https://claude.ai/api/mcp/auth_callback',
+      'https://claude.ai/settings/oauth-callback',
+      'https://api.claude.ai/v1/oauth/callback',
+    ],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    toolCatalog: 'full',
+    // Same size-limited connector surface as ChatGPT — full catalog registers as "connected" with 0 tools.
+    toolCatalog: 'curated',
   },
   'grok-connector': {
     client_name: 'Grok',
     redirect_uris: [],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    toolCatalog: 'full',
+    toolCatalog: 'curated',
   },
 };
 
-/** Registered-client catalog policy (no User-Agent sniffing). */
+/**
+ * Registered-client catalog policy (no User-Agent sniffing).
+ * Default is curated: Claude.ai / Desktop / DCR remote clients silently show zero tools
+ * when tools/list schemas exceed their undocumented payload limit. Opt into full via seed.
+ */
 export function getToolCatalogModeForClient(clientId: string | null | undefined): ToolCatalogMode {
-  if (!clientId) return 'full';
-  return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || 'full';
+  if (!clientId) return 'curated';
+  return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || 'curated';
 }
 
 function isMissingColumnError(error: { message?: string; code?: string } | null | undefined): boolean {

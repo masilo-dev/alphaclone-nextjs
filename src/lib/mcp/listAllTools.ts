@@ -65,8 +65,8 @@ function withAnnotations(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
 
 /**
  * Single source of truth for MCP tool discovery.
- * Default = FULL catalog for every standards-compliant client.
- * Curated catalog only when the registered client seed opts in (size-limited Apps connectors).
+ * Default = CURATED catalog for remote/size-limited connectors (Claude.ai, ChatGPT Apps, DCR clients).
+ * Full catalog only when the registered client seed opts in (e.g. alphaclone-mcp-client / internal).
  * Never sniff User-Agent to decide capabilities.
  */
 export async function getUnifiedMcpTools(options?: {
@@ -79,9 +79,14 @@ export async function getUnifiedMcpTools(options?: {
   userAgent?: string | null;
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
+  // Explicit forChatGPT true/false still wins (SDK ListTools forces full via false).
+  // Otherwise use registered-client policy; null/unknown clients default to curated.
   const curated =
-    options?.forChatGPT === true ||
-    getToolCatalogModeForClient(options?.clientId) === 'curated';
+    options?.forChatGPT === true
+      ? true
+      : options?.forChatGPT === false
+        ? false
+        : getToolCatalogModeForClient(options?.clientId) === 'curated';
   const now = Date.now();
 
   if (
