@@ -213,7 +213,7 @@ function ApprovalCard({ approval, onApprove, onReject, isProcessing, userRole }:
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="rounded-2xl border border-white/5 bg-slate-900 overflow-hidden shadow-md"
+      className="rounded-lg border border-white/10 bg-slate-900 overflow-hidden"
     >
       {/* Card header */}
       <div className="flex items-start gap-3 px-4 py-3">
@@ -544,7 +544,7 @@ export default function ApprovalCenter() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-col items-center justify-center py-24 text-center"
         >
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-lg border border-slate-800 bg-slate-900">
             <Inbox className="h-7 w-7 text-slate-600" />
           </div>
           <h3 className="text-sm font-bold text-slate-400">No pending approvals</h3>

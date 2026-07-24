@@ -2,15 +2,24 @@
 
 import React from 'react';
 import {
+  Box,
+  Button,
+  Heading,
+  SimpleGrid,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
+import {
   AlertTriangle,
+  Brain,
   CalendarDays,
   FileText,
   Megaphone,
   Receipt,
-  Sparkles,
   Target,
   Users,
 } from 'lucide-react';
+import { BONNIE_CHAKRA } from '../bonnieChakra';
 
 export type BonnieSuggestion = {
   id: string;
@@ -38,44 +47,86 @@ type Props = {
 
 export default function BonnieWelcome({ workspaceName, suggestions, onSelect }: Props) {
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col justify-center px-4 py-6 sm:px-6">
-      <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white shadow-sm">
-          <Sparkles className="h-4 w-4" aria-hidden />
-        </div>
-        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-teal-700 dark:text-teal-300">
-          {workspaceName || 'Your workspace'} · Bonnie AI
-        </p>
-        <h1 className="mt-1.5 text-balance text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-2xl">
+    <Box
+      mx="auto"
+      h="full"
+      w="full"
+      maxW="3xl"
+      display="flex"
+      flexDirection="column"
+      justifyContent="center"
+      px={{ base: 4, sm: 6 }}
+      py={6}
+    >
+      <VStack spacing={2} mb={6} textAlign="center">
+        <Box
+          h={9}
+          w={9}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          borderRadius="md"
+          bg="teal.600"
+          color="white"
+        >
+          <Brain size={16} aria-hidden />
+        </Box>
+        <Text fontSize="11px" fontWeight="semibold" textTransform="uppercase" letterSpacing="0.12em" color="teal.300">
+          {workspaceName || 'Your workspace'} · Bonnie
+        </Text>
+        <Heading size="md" color="white" letterSpacing="-0.02em" fontWeight="semibold">
           What should Bonnie execute?
-        </h1>
-        <p className="mx-auto mt-2 max-w-lg text-pretty text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+        </Heading>
+        <Text fontSize="sm" color="gray.400" maxW="lg" lineHeight="tall">
           Post socially, chase invoices, find leads, send outreach, and run accounting actions —
           Bonnie executes tools in this workspace.
-        </p>
-      </div>
+        </Text>
+      </VStack>
 
-      <div className="grid gap-2.5 sm:grid-cols-2">
+      <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={2.5}>
         {suggestions.map((item) => {
           const Icon = ICONS[item.icon || 'workflow'] || Target;
           return (
-            <button
+            <Button
               key={item.id}
-              type="button"
+              variant="outline"
+              h="auto"
+              py={3}
+              px={3}
+              borderRadius={BONNIE_CHAKRA.radii.panel}
+              borderColor="whiteAlpha.200"
+              bg="gray.950"
+              justifyContent="flex-start"
+              textAlign="left"
+              whiteSpace="normal"
               onClick={() => onSelect(item.prompt)}
-              className="rounded-xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-teal-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-teal-700"
+              _hover={{ borderColor: 'teal.500', bg: 'whiteAlpha.50' }}
+              _focusVisible={{ boxShadow: '0 0 0 2px var(--chakra-colors-teal-500)' }}
             >
-              <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
-                <Icon className="h-3.5 w-3.5" />
-              </div>
-              <p className="text-xs font-semibold text-slate-900 dark:text-slate-50">{item.title}</p>
-              <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                {item.description}
-              </p>
-            </button>
+              <VStack align="start" spacing={2} w="full">
+                <Box
+                  h={7}
+                  w={7}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  borderRadius="md"
+                  bg="teal.900"
+                  color="teal.300"
+                >
+                  <Icon size={14} />
+                </Box>
+                <Text fontSize="xs" fontWeight="semibold" color="white">
+                  {item.title}
+                </Text>
+                <Text fontSize="11px" color="gray.500" lineHeight="tall" fontWeight="normal">
+                  {item.description}
+                </Text>
+              </VStack>
+            </Button>
           );
         })}
-      </div>
-    </div>
+      </SimpleGrid>
+    </Box>
   );
 }

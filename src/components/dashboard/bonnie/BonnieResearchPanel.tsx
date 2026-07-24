@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { BookOpen, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { BookOpen, Brain, Loader2, RefreshCw } from 'lucide-react';
 import type { ResearchBriefing, ResearchRecommendation } from '@/lib/bonnie/research/researchCatalog';
 
 type BonnieResearchPanelProps = {
@@ -61,12 +61,12 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden">
-      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/5">
+    <div className="rounded-lg border border-white/10 bg-slate-900 overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10">
         <div className="flex items-center gap-2 min-w-0">
           <BookOpen className="w-4 h-4 text-teal-400 shrink-0" />
           <div className="min-w-0">
-            <h3 className="text-sm font-bold text-white">Bonnie Research</h3>
+            <h3 className="text-sm font-semibold text-white">Bonnie Research</h3>
             <p className="text-[11px] text-slate-500 truncate">
               Continuous OSS + architecture evaluation for the agentic OS
             </p>
@@ -76,7 +76,7 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
           type="button"
           onClick={refresh}
           disabled={refreshing}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] font-bold text-slate-300 hover:text-white disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1.5 text-[11px] font-semibold text-slate-300 hover:text-white disabled:opacity-50"
         >
           {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Rescore
@@ -92,9 +92,9 @@ export function BonnieResearchPanel({ tenantId }: BonnieResearchPanelProps) {
           <p className="text-xs text-rose-400">{error}</p>
         ) : briefing ? (
           <>
-            <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3 space-y-2">
-              <p className="text-[10px] font-black uppercase tracking-widest text-teal-400 flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3" /> Priority for AlphaClone
+            <div className="rounded-lg border border-teal-500/20 bg-teal-500/5 p-3 space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                <Brain className="w-3 h-3" /> Priority for AlphaClone
               </p>
               <ul className="space-y-1.5">
                 {briefing.priorities.map((item) => (

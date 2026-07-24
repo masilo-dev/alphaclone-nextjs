@@ -2,11 +2,21 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  Box,
+  Flex,
+  Heading,
+  HStack,
+  IconButton,
+  Link as ChakraLink,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
+import {
+  Brain,
   ExternalLink,
   Menu,
   PanelRight,
   Share2,
-  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -27,6 +37,7 @@ import BonnieContextPanel, { type BonnieContextItem } from './workspace/BonnieCo
 import BonnieWorkspaceViews, {
   type BonnieWorkspaceView,
 } from './workspace/BonnieWorkspaceViews';
+import { BC } from './bonnieChakra';
 
 type BonnieFullViewProps = {
   variant?: 'default' | 'popout';
@@ -245,23 +256,31 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
 
   if (!tenantId) {
     return (
-      <div className="flex h-[calc(100vh-140px)] items-center justify-center bg-slate-50 p-8 text-center dark:bg-slate-950">
-        <div className="max-w-md space-y-3">
-          <Sparkles className="mx-auto h-10 w-10 text-teal-600" />
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Select a workspace</h3>
-          <p className="text-sm text-slate-500">
+      <Flex h="calc(100vh - 140px)" align="center" justify="center" bg="gray.950" p={8} textAlign="center">
+        <VStack spacing={3} maxW="md">
+          <Brain size={36} color="#0D9488" />
+          <Heading size="md" color="white">
+            Select a workspace
+          </Heading>
+          <Text fontSize="sm" color="gray.400">
             Bonnie needs an active Alphaclone Systems workspace before it can plan or execute work.
-          </p>
-        </div>
-      </div>
+          </Text>
+        </VStack>
+      </Flex>
     );
   }
 
   return (
-    <div
-      className={`flex overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 ${
-        isPopout ? 'h-dvh' : 'h-[calc(100dvh-8.5rem)] min-h-[560px]'
-      }`}
+    <Flex
+      overflow="hidden"
+      borderWidth="1px"
+      borderColor="whiteAlpha.200"
+      borderRadius={BC.radii.panel}
+      bg="gray.950"
+      color="whiteAlpha.900"
+      h={isPopout ? '100dvh' : 'calc(100dvh - 8.5rem)'}
+      minH="560px"
+      className="ac-enterprise-module"
     >
       <BonnieSidebar
         collapsed={sidebarCollapsed}
@@ -297,65 +316,82 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
         onOpenApprovals={() => router.push('/dashboard/bonnie/approvals')}
       />
 
-      <section className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-4">
-          <button
-            type="button"
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden dark:hover:bg-slate-900"
+      <Flex direction="column" minW={0} flex={1}>
+        <Flex {...BC.toolbarProps} gap={3}>
+          <IconButton
             aria-label="Open conversations"
+            display={{ base: 'inline-flex', md: 'none' }}
+            variant="ghost"
+            color="gray.400"
+            icon={<Menu size={20} />}
             onClick={() => setMobileSidebarOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xs font-semibold sm:text-sm">
-              {activeConversation?.title || 'Bonnie AI workspace'}
-            </h1>
-            <p className="truncate text-[10px] text-slate-500">
+            borderRadius="md"
+            minW={11}
+            minH={11}
+          />
+          <Box minW={0} flex={1}>
+            <Heading size="xs" color="white" noOfLines={1} fontWeight="semibold">
+              {activeConversation?.title || 'Bonnie workspace'}
+            </Heading>
+            <Text fontSize="10px" color="gray.500" noOfLines={1}>
               {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Executes tools
               {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
               {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5">
+            </Text>
+          </Box>
+          <HStack spacing={1}>
             {!isPopout && (
-              <button
-                type="button"
-                onClick={() => openBonniePopoutWindow(pathname || undefined)}
-                className="hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100 sm:inline-flex dark:hover:bg-slate-900"
+              <IconButton
                 aria-label="Pop out Bonnie"
-              >
-                <ExternalLink className="h-4 w-4" />
-              </button>
+                display={{ base: 'none', sm: 'inline-flex' }}
+                variant="ghost"
+                color="gray.400"
+                icon={<ExternalLink size={16} />}
+                onClick={() => openBonniePopoutWindow(pathname || undefined)}
+                borderRadius="md"
+                minW={11}
+                minH={11}
+              />
             )}
             {isPopout && (
-              <Link
+              <ChakraLink
+                as={Link}
                 href={bonnieDashboardRoute}
-                className="rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
+                fontSize="xs"
+                fontWeight="medium"
+                color="gray.300"
+                px={2}
+                py={1.5}
+                borderRadius="md"
+                _hover={{ bg: 'whiteAlpha.100', textDecoration: 'none' }}
               >
                 Open in app
-              </Link>
+              </ChakraLink>
             )}
-            <button
-              type="button"
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+            <IconButton
               aria-label="Share conversation"
+              variant="ghost"
+              color="gray.400"
+              icon={<Share2 size={16} />}
               onClick={() => toast('Share links coming soon')}
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+              borderRadius="md"
+              minW={11}
+              minH={11}
+            />
+            <IconButton
               aria-label="Toggle context panel"
+              variant="ghost"
+              color="gray.400"
+              icon={<PanelRight size={16} />}
               onClick={() => setContextOpen((v) => !v)}
-            >
-              <PanelRight className="h-4 w-4" />
-            </button>
-          </div>
-        </header>
+              borderRadius="md"
+              minW={11}
+              minH={11}
+            />
+          </HStack>
+        </Flex>
 
-        <div className="relative min-h-0 flex-1">
+        <Box position="relative" minH={0} flex={1}>
           <BonnieWorkspaceViews
             tenantId={tenantId}
             view={workspaceView}
@@ -376,7 +412,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                   }}
                 />
               ) : (
-                <div className="absolute inset-0 p-2 sm:p-3">
+                <Box position="absolute" inset={0} p={{ base: 2, sm: 3 }}>
                   <BonnieChatPanel
                     workspaceMode
                     streaming
@@ -393,14 +429,14 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
                     pathname={contextPath || undefined}
                     userRole={user?.role}
                   />
-                </div>
+                </Box>
               )
             }
           />
-        </div>
-      </section>
+        </Box>
+      </Flex>
 
-      <div className={`${contextOpen ? 'hidden lg:flex' : 'hidden'} h-full`}>
+      <Flex display={{ base: 'none', lg: contextOpen ? 'flex' : 'none' }} h="full">
         <BonnieContextPanel
           open={contextOpen}
           onClose={() => setContextOpen(false)}
@@ -432,10 +468,23 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             });
           }}
         />
-      </div>
+      </Flex>
 
       {contextOpen && (
-        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[55vh] overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950 lg:hidden">
+        <Box
+          display={{ base: 'block', lg: 'none' }}
+          position="fixed"
+          insetX={0}
+          bottom={0}
+          zIndex={30}
+          maxH="55vh"
+          overflow="hidden"
+          borderTopRadius="lg"
+          borderWidth="1px"
+          borderColor="whiteAlpha.200"
+          bg="gray.950"
+          boxShadow="md"
+        >
           <BonnieContextPanel
             open
             onClose={() => setContextOpen(false)}
@@ -450,8 +499,8 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             onResumeGoal={(id) => void patchGoal(id, { resume: true })}
             tenantId={tenantId}
           />
-        </div>
+        </Box>
       )}
-    </div>
+    </Flex>
   );
 }
