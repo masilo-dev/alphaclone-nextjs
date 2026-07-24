@@ -96,12 +96,12 @@ test("invoice lifecycle has non-MCP dashboard API (source)", async () => {
   assert.equal(modal.includes("callMcpTool('start_invoice_lifecycle'"), false);
 });
 
-test("production Redis is required by default (source)", async () => {
+test("production Redis is opt-in via REDIS_REQUIRED (source)", async () => {
   const fs = await import("node:fs");
   const src = fs.readFileSync(
     new URL("../../scripts/production-env.mjs", import.meta.url),
     "utf8",
   );
-  assert.match(src, /env\.NODE_ENV === "production"/);
-  assert.match(src, /REDIS_REQUIRED === "false"/);
+  assert.match(src, /REDIS_REQUIRED === "true"/);
+  assert.match(src, /Opt-in only/);
 });
