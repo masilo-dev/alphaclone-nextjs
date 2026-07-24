@@ -19,6 +19,7 @@ type Props = {
   previewCenter?: [number, number] | null;
   previewRadiusKm?: number;
   emptyHint?: string;
+  defaultStyle?: 'detailed' | 'satellite' | 'hybrid' | 'dark';
 };
 
 export default function LeadFinderMapPanel({
@@ -26,6 +27,7 @@ export default function LeadFinderMapPanel({
   previewCenter = null,
   previewRadiusKm = 25,
   emptyHint = 'Run a search to plot free geo leads on the map.',
+  defaultStyle = 'satellite',
 }: Props) {
   const pinned = leads.filter((l) => l.lat != null && l.lng != null);
 
@@ -37,7 +39,7 @@ export default function LeadFinderMapPanel({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">Reach map</p>
             <p className="text-[11px] text-slate-500 truncate">
-              {pinned.length} pinned · OSM tiles · free geodata
+              {pinned.length} pinned · aerial satellite · free geodata
             </p>
           </div>
         </div>
@@ -56,6 +58,7 @@ export default function LeadFinderMapPanel({
           leads={leads}
           previewCenter={previewCenter}
           previewRadiusKm={previewRadiusKm}
+          initialStyle={defaultStyle}
         />
       )}
     </div>

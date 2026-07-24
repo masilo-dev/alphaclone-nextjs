@@ -117,6 +117,7 @@ interface LeadMapViewProps {
   zoom?:    number;
   previewCenter?: [number, number] | null;
   previewRadiusKm?: number;
+  initialStyle?: 'detailed' | 'satellite' | 'hybrid' | 'dark';
 }
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -135,6 +136,7 @@ export default function LeadMapView({
   zoom = 11,
   previewCenter = null,
   previewRadiusKm = 25,
+  initialStyle = 'detailed',
 }: LeadMapViewProps) {
   const mapLeads = useMemo(() => {
     const normalizeText = (value?: string) => (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -175,7 +177,7 @@ export default function LeadMapView({
     return deduped;
   }, [leads]);
   const pinnable = mapLeads;
-  const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'hybrid' | 'dark'>('detailed');
+  const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'hybrid' | 'dark'>(initialStyle);
   const [zoomLevel, setZoomLevel] = useState<number>(zoom);
   const [showRoute, setShowRoute] = useState<boolean>(true);
   const [showHeat, setShowHeat] = useState<boolean>(false);
@@ -317,24 +319,10 @@ export default function LeadMapView({
         <div className="flex items-center gap-1 mb-1">
           <button
             type="button"
-            onClick={() => setMapStyle('detailed')}
-            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
-          >
-            Detail
-          </button>
-          <button
-            type="button"
-            onClick={() => setMapStyle('dark')}
-            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
-          >
-            Dark
-          </button>
-          <button
-            type="button"
             onClick={() => setMapStyle('satellite')}
             className={`px-1.5 py-0.5 rounded border ${mapStyle === 'satellite' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
           >
-            Satellite
+            Aerial
           </button>
           <button
             type="button"
@@ -342,6 +330,20 @@ export default function LeadMapView({
             className={`px-1.5 py-0.5 rounded border ${mapStyle === 'hybrid' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
           >
             Hybrid
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapStyle('detailed')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Streets
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapStyle('dark')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'dark' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Dark
           </button>
           <button
             type="button"
@@ -506,13 +508,37 @@ export default function LeadMapView({
                 {lead.lat != null && lead.lng != null && (
                   <div className="flex flex-wrap gap-2 pt-1">
                     <a
-                      href={`https://www.mapillary.com/app/?lat=${lead.lat}&lng=${lead.lng}&z=17`}
+                      href={getBuildingViewUrl(lead.lat, lead.lng)}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-900 underline"
                     >
                       <ExternalLink className="w-3 h-3" />
-                      Street (Mapillary)
+                      Building 3D
+                    </a>
+                    <a
+                      href={`https://www.bing.com/maps?cp=${lead.lat}~${lead.lng}&lvl=20&style=h`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                    >
+                      Birds-eye
+                    </a>
+                    <a
+                      href={`https://www.mapillary.com/app/?lat=${lead.lat}&lng=${lead.lng}&z=17`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                    >
+                      Street
+                    </a>
+                    <a
+                      href={`https://osmbuildings.org/?lat=${lead.lat}&lon=${lead.lng}&zoom=18`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                    >
+                      OSM Buildings
                     </a>
                     <a
                       href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lead.lat},${lead.lng}`}
@@ -521,14 +547,6 @@ export default function LeadMapView({
                       className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
                     >
                       Pano
-                    </a>
-                    <a
-                      href={getBuildingViewUrl(lead.lat, lead.lng)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
-                    >
-                      3D building
                     </a>
                   </div>
                 )}

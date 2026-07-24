@@ -113,7 +113,7 @@ export default function ScraperCampaignsPage() {
               </Badge>
             </HStack>
             <Text color="gray.400" fontSize="sm">
-              Reach-based prospecting with live scrape, auto email/phone enrichment, decision makers, and free street views.
+              Reach-based prospecting with live scrape, auto enrichment, decision makers, plus free aerial / building 3D / birds-eye views.
               Only contactable leads are returned.
             </Text>
           </VStack>

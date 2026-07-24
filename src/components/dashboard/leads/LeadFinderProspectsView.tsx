@@ -29,7 +29,7 @@ import LeadFinderSmartBar from './LeadFinderSmartBar';
 import LeadFinderBeginnerGuide from './LeadFinderBeginnerGuide';
 import LeadFinderLiveProgress from './LeadFinderLiveProgress';
 import LeadFinderMapPanel from './LeadFinderMapPanel';
-import LeadFinderStreetViews from './LeadFinderStreetViews';
+import LeadFinderAerialStudio, { type AerialLead } from './LeadFinderAerialStudio';
 
 type Props = {
   onActivity?: () => void;
@@ -65,16 +65,29 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
     [mapLeads]
   );
 
+  const aerialLeads: AerialLead[] = useMemo(
+    () =>
+      mapLeads
+        .filter((l) => l.lat != null && l.lng != null)
+        .map((l) => ({
+          id: l.id,
+          business_name: l.company || l.name || 'Lead',
+          lat: l.lat ?? undefined,
+          lng: l.lng ?? undefined,
+          address: l.address,
+          phone: l.phone,
+          website: l.company_website || l.source_url,
+        })),
+    [mapLeads]
+  );
+
   const focusedLead = useMemo(() => {
-    const hit = mapLeads.find((l) => l.id === focusedLeadId) || mapLeads.find((l) => l.lat != null);
-    if (!hit) return null;
-    return {
-      business_name: hit.company || hit.name || 'Lead',
-      lat: hit.lat ?? undefined,
-      lng: hit.lng ?? undefined,
-      address: hit.address,
-    };
-  }, [mapLeads, focusedLeadId]);
+    const hit =
+      aerialLeads.find((l) => l.id === focusedLeadId) ||
+      aerialLeads[0] ||
+      null;
+    return hit;
+  }, [aerialLeads, focusedLeadId]);
 
   const previewCenter = useMemo((): [number, number] | null => {
     const withGeo = mapLeads.find((l) => l.lat != null && l.lng != null);
@@ -360,8 +373,15 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             previewCenter={previewCenter}
             previewRadiusKm={radiusKm}
             emptyHint="Search to plot contactable leads on the free map."
+            defaultStyle="satellite"
           />
-          <LeadFinderStreetViews lead={focusedLead} allLeads={mapPins} />
+          <LeadFinderAerialStudio
+            lead={focusedLead}
+            allLeads={aerialLeads}
+            onSelectLead={(lead) => {
+              if (lead.id) setFocusedLeadId(lead.id);
+            }}
+          />
           <Box maxH="min(36vh,320px)" overflowY="auto" className="ac-scroll-full">
             <LeadFinderSystemPanel compact />
           </Box>
