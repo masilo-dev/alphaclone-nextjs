@@ -130,6 +130,7 @@ export const accountDeletionService = {
             await safeDelete(admin, 'upgrade_prompts', 'user_id', userId);
             await safeDelete(admin, 'department_members', 'user_id', userId);
             await safeDelete(admin, 'tenant_users', 'user_id', userId);
+            await safeDelete(admin, 'tenant_members', 'user_id', userId);
             await safeDelete(admin, 'mcp_sessions', 'user_id', userId);
 
             await safeUpdate(admin, 'tasks', 'assigned_to', userId, { assigned_to: null });

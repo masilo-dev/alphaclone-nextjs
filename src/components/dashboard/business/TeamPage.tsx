@@ -73,14 +73,32 @@ const TeamPage: React.FC<TeamPageProps> = ({ user }) => {
     };
 
     const handleRemoveMember = async (userId: string) => {
-        if (!confirm('Are you sure you want to remove this team member?')) return;
-
         if (!currentTenant) return;
 
+        const member = teamMembers.find((m) => m.user_id === userId);
+        const ownerCount = teamMembers.filter((m) =>
+            ['owner', 'tenant_admin'].includes(String(m.role || '').toLowerCase())
+        ).length;
+        const isLastOwner =
+            ['owner', 'tenant_admin'].includes(String(member?.role || '').toLowerCase()) &&
+            ownerCount <= 1;
+        if (isLastOwner) {
+            toast.error('The final workspace owner cannot be removed');
+            return;
+        }
+
+        if (!confirm('Remove this person from the workspace? Their platform account will remain unless you choose to delete it next.')) {
+            return;
+        }
+
+        const purge = confirm(
+            'Also permanently delete their platform account?\n\nOnly works if they belong to this workspace alone.\n\nOK = delete account\nCancel = workspace remove only'
+        );
+
         try {
-            await tenantService.removeUserFromTenant(currentTenant.id, userId);
-            setTeamMembers(teamMembers.filter(m => m.user_id !== userId));
-            toast.success('Team member removed');
+            const result = await tenantService.removeUserFromTenant(currentTenant.id, userId, { purge });
+            setTeamMembers(teamMembers.filter((m) => m.user_id !== userId));
+            toast.success(result.message || (result.purged ? 'User deleted' : 'Team member removed'));
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Team member could not be removed');
         }
@@ -337,8 +355,9 @@ const TeamMemberCard = ({ member, onRemove, isCurrentUser, canManage }: any) => 
                 {canManage && !isCurrentUser && (
                     <button
                         onClick={() => onRemove(member.user_id)}
-                        className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all"
-                        title="Remove Member"
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Remove from workspace or delete account"
+                        aria-label="Remove team member"
                     >
                         <Trash2 className="w-4 h-4 text-red-400" />
                     </button>
