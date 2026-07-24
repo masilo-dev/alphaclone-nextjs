@@ -542,7 +542,7 @@ export default function BonnieChatPanel({
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[90%] rounded-xl px-3 py-2 text-sm leading-relaxed ${
+              className={`max-w-[90%] rounded-xl px-3 py-2 text-xs leading-relaxed sm:text-[13px] ${
                 msg.role === 'user'
                   ? 'bg-teal-600 text-white'
                   : msg.error
@@ -762,7 +762,7 @@ export default function BonnieChatPanel({
                 : placeholder
             }
             aria-label="Message Bonnie"
-            className={`min-h-[44px] flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 disabled:opacity-50 ${
+            className={`min-h-[40px] flex-1 resize-none rounded-xl border px-3 py-2 text-xs sm:text-[13px] focus:outline-none focus:ring-1 disabled:opacity-50 ${
               workspaceMode
                 ? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white'
                 : 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-teal-500'

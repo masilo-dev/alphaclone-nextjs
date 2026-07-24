@@ -66,8 +66,8 @@ export default function BonnieContextPanel({
     >
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Operations</h2>
-          <p className="text-[11px] text-slate-500">Goals, context, and approvals</p>
+          <h2 className="text-xs font-semibold text-slate-900 dark:text-slate-50">Operations</h2>
+          <p className="text-[10px] text-slate-500">Goals, modules, and context</p>
         </div>
         <button
           type="button"
@@ -84,14 +84,62 @@ export default function BonnieContextPanel({
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
             Connection
           </p>
-          <p className="mt-1 text-sm font-medium capitalize text-slate-800 dark:text-slate-100">
+          <p className="mt-1 text-xs font-medium capitalize text-slate-800 dark:text-slate-100">
             {connectionStatus}
           </p>
           {pendingApprovals > 0 && (
-            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+            <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-300">
               {pendingApprovals} pending approval{pendingApprovals === 1 ? '' : 's'}
             </p>
           )}
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            Execute modules
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            <li>
+              <a
+                href="/dashboard/leads/campaigns"
+                className="block text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
+              >
+                Lead Finder / scraping
+              </a>
+            </li>
+            <li>
+              <a
+                href="/dashboard/business/social"
+                className="block text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
+              >
+                Social publishing
+              </a>
+            </li>
+            <li>
+              <a
+                href="/dashboard/business/billing/manage"
+                className="block text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
+              >
+                Invoices & collections
+              </a>
+            </li>
+            <li>
+              <a
+                href="/dashboard/accounting"
+                className="block text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
+              >
+                Accounting
+              </a>
+            </li>
+            <li>
+              <a
+                href="/dashboard/outreach"
+                className="block text-xs font-medium text-teal-700 hover:underline dark:text-teal-300"
+              >
+                Outreach
+              </a>
+            </li>
+          </ul>
         </div>
 
         <BonnieGoalsPanel
@@ -129,7 +177,7 @@ export default function BonnieContextPanel({
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
+                    <p className="truncate text-xs font-medium text-slate-800 dark:text-slate-100">
                       {item.label}
                     </p>
                     {item.detail && (

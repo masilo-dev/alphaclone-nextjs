@@ -7,9 +7,10 @@ import { evaluateBusinessAIState } from '@/services/mcp/businessAIState';
 /**
  * ToolPolicyGate — EU AI Act Art. 14 human oversight + ISO 42001 A.4.
  *
- * High-risk tools (send / bulk / financial) queue for approval unless the
- * workspace is in autonomous mode with DPA accepted and runner rules allowing
- * auto-send. Approval Center + MCP approve_pending_action are the release paths.
+ * High-risk tools (send / bulk / financial) queue for approval for playbooks
+ * unless the workspace is in autonomous mode. In-app Bonnie and MCP connectors
+ * auto-execute authenticated tool calls (no DPA gate) — the user already issued
+ * the command in chat / connector.
  */
 
 export type ToolRiskClass = 'read' | 'draft' | 'send' | 'bulk' | 'financial';
@@ -34,7 +35,17 @@ const SEND_TOOLS = new Set([
   'nexus_invoice_chasing',
   'create_linkedin_post',
   'create_social_post',
+  'create_social_post_with_media',
   'create_post_with_ai_image',
+  'create_post',
+  'publish_social_post',
+  'publish_post',
+  'publish_now',
+  'schedule_social_post',
+  'publish_facebook_reel',
+  'publish_facebook_multi_photo',
+  'reply_to_email',
+  'microsoft_send_email',
 ]);
 
 const META_ORCHESTRATION_TOOLS = new Set([
@@ -62,6 +73,8 @@ const DRAFT_TOOLS = new Set([
   'draft_email',
   'draft_reply',
   'create_draft',
+  'create_email_draft',
+  'generate_outreach_draft',
 ]);
 
 function classifyTool(toolName: string): ToolRiskClass {
@@ -70,12 +83,14 @@ function classifyTool(toolName: string): ToolRiskClass {
   if (name.startsWith('bulk_') || name.includes('_bulk') || name === 'bulk_update') return 'bulk';
   if (FINANCIAL_TOOLS.has(name)) return 'financial';
   if (SEND_TOOLS.has(name)) return 'send';
+  if (name.startsWith('publish_') || name.startsWith('send_')) return 'send';
   if (DRAFT_TOOLS.has(name) || name.includes('draft')) return 'draft';
   if (
     name.startsWith('get_') ||
     name.startsWith('list_') ||
     name.startsWith('search_') ||
-    name.startsWith('fetch_')
+    name.startsWith('fetch_') ||
+    name.startsWith('find_')
   ) {
     return 'read';
   }
@@ -115,17 +130,6 @@ function requiresApproval(
   );
 }
 
-async function tenantHasDpaAcceptance(tenantId: string): Promise<boolean> {
-  const admin = createSupabaseAdminClient();
-  const { data, error } = await admin
-    .from('dpa_acceptances')
-    .select('id')
-    .eq('tenant_id', tenantId)
-    .limit(1)
-    .maybeSingle();
-  return Boolean(data?.id) && !error;
-}
-
 export async function evaluateToolPolicy(params: {
   tenantId: string;
   userId: string;
@@ -148,13 +152,17 @@ export async function evaluateToolPolicy(params: {
   } = params;
   const riskClass = classifyTool(toolName);
 
-  // ChatGPT / Claude MCP connectors: explicit tool calls are auto-approved.
-  // Auth is already enforced by MCP OAuth / API key scoping to the tenant.
-  if (source === 'mcp') {
+  // ChatGPT / Claude MCP connectors AND in-app Bonnie: authenticated user already
+  // issued the command. Auto-execute — do not block on DPA or approval queues.
+  // Playbooks still go through the full policy path below.
+  if (source === 'mcp' || source === 'bonnie') {
     return {
       outcome: 'allow',
       riskClass,
-      reason: 'MCP connector auto-approves tool execution.',
+      reason:
+        source === 'bonnie'
+          ? 'Bonnie auto-executes authenticated in-app tool calls.'
+          : 'MCP connector auto-approves tool execution.',
     };
   }
 
@@ -178,23 +186,6 @@ export async function evaluateToolPolicy(params: {
       riskClass,
       reason: `Agent mode "${agentMode}" blocks ${riskClass} actions for tool "${toolName}".`,
     };
-  }
-
-  // Autonomous high-risk execution requires Enterprise DPA acceptance (ISO 42001 / GDPR).
-  if (
-    agentMode === 'autonomous' &&
-    !highRiskRequired &&
-    (riskClass === 'send' || riskClass === 'bulk' || riskClass === 'financial')
-  ) {
-    const dpaOk = await tenantHasDpaAcceptance(tenantId);
-    if (!dpaOk) {
-      return {
-        outcome: 'deny',
-        riskClass,
-        reason:
-          'Autonomous high-risk actions require Enterprise DPA acceptance before execution. Accept the DPA in Integrations, then retry.',
-      };
-    }
   }
 
   let needsApproval = requiresApproval(agentMode, riskClass, highRiskRequired);

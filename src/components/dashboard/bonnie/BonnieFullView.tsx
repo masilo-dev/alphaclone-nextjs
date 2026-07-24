@@ -89,50 +89,51 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     () => [
       {
         id: 'recover-payments',
-        title: 'Recover overdue payments',
-        description: 'Identify overdue invoices, draft reminders, and chase collections.',
+        title: 'Chase overdue invoices',
+        description: 'Find overdue invoices and send payment reminders now.',
         prompt:
-          'Recover overdue payments: identify overdue invoices, group customers, analyse payment history, prepare reminder drafts for my approval, update CRM, and schedule follow-ups.',
+          'Chase overdue invoices now: pull AR aging, group by customer, send payment reminders with nexus_invoice_chasing / send_invoice, update CRM notes, and report what was sent.',
         icon: 'invoice',
       },
       {
-        id: 'priorities',
-        title: 'Own today’s business priorities',
-        description: 'Plan and chase open deals, overdue tasks, and urgent follow-ups.',
+        id: 'find-leads',
+        title: 'Find and qualify leads',
+        description: 'Run Lead Finder / scraper discovery and return ranked prospects.',
         prompt:
-          'Take ownership of today’s business priorities across CRM, tasks, and invoices. Create a goal, assign specialist agents, and keep chasing until complete.',
-        icon: 'workflow',
-      },
-      {
-        id: 'leads',
-        title: 'Revive overdue leads',
-        description: 'Find stale leads, draft outreach, and monitor replies.',
-        prompt:
-          'Revive overdue leads: find stale leads, draft personalised outreach for approval, update CRM, and monitor replies.',
+          'Find leads for my ideal customer profile: run find_and_qualify_leads (or create_scraper_campaign + run_scraper_campaign), score them, save hot leads to CRM, and list the top results with next outreach steps.',
         icon: 'crm',
       },
       {
-        id: 'social',
-        title: 'Plan this week’s social posts',
-        description: 'Draft a LinkedIn/Facebook plan as approval-gated drafts.',
+        id: 'outreach',
+        title: 'Send outreach now',
+        description: 'Personalise and send outreach to hot leads.',
         prompt:
-          'Prepare this week’s social posts for LinkedIn and Facebook as drafts and request approval before publishing.',
+          'Send outreach now: pull hot/scraper leads, generate personalised messages, send via email or batch outreach, and log activity in CRM.',
+        icon: 'workflow',
+      },
+      {
+        id: 'social',
+        title: 'Publish social posts',
+        description: 'Create and publish Facebook/LinkedIn posts immediately.',
+        prompt:
+          'Publish social posts now for LinkedIn and Facebook: write captions, create the posts with the social tools, publish them, and confirm live status. Do not stop at drafts.',
         icon: 'social',
       },
       {
-        id: 'calendar',
-        title: 'Prep upcoming meetings',
-        description: 'Highlight meetings that need prep or follow-up.',
-        prompt: 'Review upcoming calendar events and prepare agendas plus post-meeting follow-ups.',
-        icon: 'calendar',
+        id: 'priorities',
+        title: 'Own today’s priorities',
+        description: 'Execute across deals, tasks, and collections until done.',
+        prompt:
+          'Take ownership of today’s business priorities across CRM, tasks, and invoices. Create a goal with executeActions, assign specialist agents, execute tools, and keep chasing until complete.',
+        icon: 'workflow',
       },
       {
-        id: 'risks',
-        title: 'Watch business risks',
-        description: 'Scan stalled deals, cash risk, SLA issues, and failed automations.',
+        id: 'accounting',
+        title: 'Accounting snapshot + act',
+        description: 'Review money modules then fix overdue cash risk.',
         prompt:
-          'Monitor the top business risks across deals, invoices, support, and automations. Open goals for anything above threshold.',
-        icon: 'risk',
+          'Run accounting_snapshot and get_accounts_receivable_aging, then chase the highest-risk overdue invoices and report what you executed.',
+        icon: 'invoice',
       },
     ],
     []
@@ -307,11 +308,11 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             <Menu className="h-5 w-5" />
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-sm font-semibold sm:text-base">
+            <h1 className="truncate text-xs font-semibold sm:text-sm">
               {activeConversation?.title || 'Bonnie AI workspace'}
             </h1>
-            <p className="truncate text-[11px] text-slate-500">
-              {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Agentic BOS
+            <p className="truncate text-[10px] text-slate-500">
+              {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Executes tools
               {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
               {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
             </p>
