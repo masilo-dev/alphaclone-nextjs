@@ -621,9 +621,41 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   let lastPlan: BonniePlan = { response: 'Done.' };
   let rounds = 0;
 
-  // Complex multi-module missions: run the Agentic OS cognitive loop (Supervisor + specialists)
+  // Complex multi-module missions: durable runtime (preferred) or cognitive loop
   if (looksLikeComplexMission(instruction)) {
     try {
+      const { isDurableRuntimeEnabled, createRunForObjective, getRunProgressSummary } = await import(
+        '@/lib/bonnie/runtime'
+      );
+      if (isDurableRuntimeEnabled()) {
+        const created = await createRunForObjective({
+          tenantId,
+          userId,
+          conversationId: conversationId || null,
+          objective: instruction,
+          seedGraph: true,
+        });
+        const progress = await getRunProgressSummary(created.run.id, tenantId);
+        const response = `I've created a durable run for this objective and will continue it even if you close this chat. Run ${created.run.id.slice(0, 8)}… — ${progress?.summary || 'work is queued for workers.'} High-risk steps will wait for your approval.`;
+        allLogs.push(`Durable runtime run=${created.run.id} goal=${created.goalId || 'none'} graph=${created.graphId || 'none'}`);
+        void wfUpdate({
+          status: 'running',
+          finalResponse: response,
+          executionStatus: 'executed',
+          rounds: 1,
+          completedAt: false,
+        });
+        return {
+          response,
+          success: true,
+          toolsExecuted: [],
+          logs: allLogs,
+          rounds: 1,
+          executionStatus: 'executed',
+          workflowId: workflowId ?? undefined,
+        };
+      }
+
       const { runCognitiveLoop } = await import('@/lib/bonnie/os/cognitiveLoop');
       const cognitive = await runCognitiveLoop({
         tenantId,

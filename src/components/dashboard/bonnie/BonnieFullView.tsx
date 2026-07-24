@@ -396,6 +396,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
           onChaseGoals={runChase}
           onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
           onResumeGoal={(id) => void patchGoal(id, { resume: true })}
+          tenantId={tenantId}
           onSelectGoal={(id) => {
             setContextItems((prev) => {
               if (prev.some((item) => item.id === `goal-${id}`)) return prev;
@@ -429,6 +430,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             onChaseGoals={runChase}
             onCancelGoal={(id) => void patchGoal(id, { cancel: true })}
             onResumeGoal={(id) => void patchGoal(id, { resume: true })}
+            tenantId={tenantId}
           />
         </div>
       )}

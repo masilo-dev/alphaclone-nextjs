@@ -3,6 +3,7 @@
 import React from 'react';
 import { Link2, Shield, X } from 'lucide-react';
 import BonnieGoalsPanel from './BonnieGoalsPanel';
+import BonnieRuntimePanel from '../runtime/BonnieRuntimePanel';
 import type { BonnieGoalSummary } from '@/hooks/useBonnieGoals';
 
 export type BonnieContextItem = {
@@ -37,6 +38,7 @@ type Props = {
   onCancelGoal?: (id: string) => void;
   onResumeGoal?: (id: string) => void;
   onSelectGoal?: (id: string) => void;
+  tenantId?: string;
 };
 
 export default function BonnieContextPanel({
@@ -53,6 +55,7 @@ export default function BonnieContextPanel({
   onCancelGoal,
   onResumeGoal,
   onSelectGoal,
+  tenantId,
 }: Props) {
   if (!open) return null;
 
@@ -100,6 +103,8 @@ export default function BonnieContextPanel({
           onResume={onResumeGoal}
           onSelect={onSelectGoal}
         />
+
+        {tenantId ? <BonnieRuntimePanel tenantId={tenantId} /> : null}
 
         <div>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
