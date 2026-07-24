@@ -6,7 +6,7 @@
 -- Postgres validates SQL-function bodies at CREATE time (ERROR 42703).
 -- to_jsonb(tu)->>'status' is safe whether or not the column exists.
 CREATE OR REPLACE FUNCTION public.get_user_tenant_ids()
-RETURNS TABLE(tenant_id uuid)
+RETURNS SETOF uuid
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
@@ -56,7 +56,7 @@ AS $$
     FROM public.tenant_users tu
     WHERE tu.tenant_id = p_tenant_id
       AND tu.user_id = auth.uid()
-      AND lower(COALESCE(tu.role, '')) IN ('owner', 'admin', 'administrator', 'super_admin')
+      AND lower(COALESCE(tu.role, '')) IN ('owner', 'admin', 'administrator', 'super_admin', 'tenant_admin')
       AND COALESCE(to_jsonb(tu)->>'status', 'active') = 'active'
   );
 $$;
