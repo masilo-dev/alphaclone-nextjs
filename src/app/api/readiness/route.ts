@@ -4,12 +4,20 @@ import { ENV } from '@/config/env';
 export const dynamic = 'force-dynamic';
 
 function configurationReady(): boolean {
+  // Core runtime: Supabase + public app URL.
+  // Cron/encryption are reported in the body as optionalOpsReady so a missing
+  // CRON_SECRET cannot brick Railway health-gated rollouts.
   return Boolean(
     ENV.VITE_SUPABASE_URL &&
       ENV.VITE_SUPABASE_ANON_KEY &&
       ENV.SUPABASE_SERVICE_ROLE_KEY &&
-      ENV.NEXT_PUBLIC_APP_URL &&
-      (process.env.CRON_SECRET || process.env.INTERNAL_API_KEY) &&
+      ENV.NEXT_PUBLIC_APP_URL
+  );
+}
+
+function optionalOpsReady(): boolean {
+  return Boolean(
+    (process.env.CRON_SECRET || process.env.INTERNAL_API_KEY) &&
       process.env.ENCRYPTION_SECRET?.length === 32
   );
 }
@@ -41,11 +49,13 @@ export async function GET() {
     }
   }
 
+  const opsReady = optionalOpsReady();
   const healthy = configured && dbStatus === 'ready';
   const body = {
     status: healthy ? 'ok' : 'degraded',
     configuration: configured ? 'ready' : 'degraded',
     database: dbStatus,
+    ops: opsReady ? 'ready' : 'degraded',
     responseTime: Date.now() - startedAt,
     timestamp: new Date().toISOString(),
   };
