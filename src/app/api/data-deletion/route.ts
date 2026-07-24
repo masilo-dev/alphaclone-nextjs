@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { z } from 'zod';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
-import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 const requestSchema = z.object({
     email: z.string().trim().email().max(320),
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         const { email, name, reason } = requestSchema.parse(raw);
         if (isTurnstileEnforced()) {
             const token = readTurnstileToken(raw);
-            if (!token || !(await verifyTurnstileToken(token))) {
+            if (!token || !(await verifyTurnstileToken(token, readClientIp(req)))) {
                 return NextResponse.json({ error: 'Security verification failed.' }, { status: 403 });
             }
         }

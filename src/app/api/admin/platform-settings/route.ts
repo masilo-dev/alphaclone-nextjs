@@ -36,8 +36,8 @@ function buildEnvStatus(): PlatformEnvStatus {
     gmail: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
     deepseek: !!process.env.DEEPSEEK_API_KEY,
     turnstile: !!(
-      process.env.TURNSTILE_SECRET_KEY &&
-      process.env.TURNSTILE_SECRET_KEY !== 'placeholder' &&
+      ((process.env.TURNSTILE_SECRET && process.env.TURNSTILE_SECRET !== 'placeholder') ||
+        (process.env.TURNSTILE_SECRET_KEY && process.env.TURNSTILE_SECRET_KEY !== 'placeholder')) &&
       process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     ),
     webPush: isVapidConfigured(),

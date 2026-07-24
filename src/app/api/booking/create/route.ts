@@ -10,7 +10,7 @@ import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 // const supabase = createClient(...);
 
 import { ENV } from '@/config/env';
-import { isTurnstileEnforced, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
 
 export async function POST(req: Request) {
     try {
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
             if (!turnstile_token) {
                 return NextResponse.json({ error: 'Security verification required' }, { status: 400 });
             }
-            const ok = await verifyTurnstileToken(turnstile_token);
+            const ok = await verifyTurnstileToken(turnstile_token, readClientIp(req));
             if (!ok) {
                 return NextResponse.json(
                     { error: 'Security verification failed. Please try again.' },

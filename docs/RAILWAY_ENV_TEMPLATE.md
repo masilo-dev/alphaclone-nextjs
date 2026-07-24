@@ -25,8 +25,8 @@ This template covers the full Railway deployment for AlphaClone.
 | `AUDIT_REQUIRED`                 | When `true`, critical audit writes fail the request if insert fails                                                  |
 | `BREVO_PLATFORM_API_KEY`         | Platform transactional and privacy email delivery                                                                    |
 | `BREVO_PLATFORM_FROM_EMAIL`      | Verified platform sender address                                                                                     |
-| `TURNSTILE_SECRET_KEY`           | Server-side Cloudflare Turnstile verification key                                                                    |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile widget key                                                                               |
+| `TURNSTILE_SECRET`               | Server-side Cloudflare Turnstile verification key (Spin canonical; `TURNSTILE_SECRET_KEY` still accepted) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public Cloudflare Turnstile widget key (`0x4AAAAAAD53DAgC52ZBZnji` for Alphaclone Systems)               |
 
 ### Common integrations
 
