@@ -3,7 +3,9 @@ builder = "NIXPACKS"
 buildCommand = "NODE_OPTIONS='--max-old-space-size=6144' npm run build"
 
 [deploy]
-startCommand = "npm run start"
+# Start Next directly so missing optional env (Redis/Turnstile/etc.) cannot
+# prevent the process from listening — that was failing Railway healthchecks.
+startCommand = "NODE_OPTIONS='--max-old-space-size=2048' next start -H 0.0.0.0 -p ${PORT:-3000}"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
