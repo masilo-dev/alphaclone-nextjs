@@ -190,11 +190,11 @@ function McpOAuthCredentialsPanel({
 }
 
 /** Paste at the start of a session so the AI uses AlphaClone MCP correctly. */
-const MCP_MASTER_INSTRUCTION = `You are connected to my AlphaClone business workspace via MCP. Use AlphaClone tools for CRM, leads, deals, tasks, invoices, contracts, and messages — do not guess or make up data.
+const MCP_MASTER_INSTRUCTION = `You are connected to my AlphaClone business workspace via MCP. Use AlphaClone tools for CRM, leads, deals, tasks, invoices, contracts, and messages — do not guess or make up data. MCP tool calls execute immediately (no dashboard approval queue).
 
 Rules:
 1. Before creating records, search for duplicates (same email, company, or name).
-2. Confirm destructive actions (delete, close deal, mark paid) before executing.
+2. Confirm destructive actions (delete, close deal, mark paid) with me in chat before executing.
 3. Summarize what you changed after each action (what was created/updated and IDs if returned).
 4. If a tool fails, tell me the error and suggest one fix — do not retry blindly.
 5. Keep responses concise: bullet lists for data, short paragraphs for recommendations.

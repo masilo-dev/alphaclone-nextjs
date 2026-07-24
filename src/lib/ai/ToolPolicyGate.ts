@@ -147,6 +147,17 @@ export async function evaluateToolPolicy(params: {
     conversationId,
   } = params;
   const riskClass = classifyTool(toolName);
+
+  // ChatGPT / Claude MCP connectors: explicit tool calls are auto-approved.
+  // Auth is already enforced by MCP OAuth / API key scoping to the tenant.
+  if (source === 'mcp') {
+    return {
+      outcome: 'allow',
+      riskClass,
+      reason: 'MCP connector auto-approves tool execution.',
+    };
+  }
+
   const admin = createSupabaseAdminClient();
 
   const [{ data: rulesRow }, aiState] = await Promise.all([
