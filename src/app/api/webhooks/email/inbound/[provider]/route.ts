@@ -149,8 +149,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                     to: message.to,
                     subject: message.subject,
                     bodyPreview: shortBody,
-                    bodyText: message.text,
-                    bodyHtml: message.html,
+                    // Do not persist full email bodies in activity logs (PII minimization)
                     messageId: message.messageId,
                     integrationId: integration.id,
                     receivedAt: new Date().toISOString(),

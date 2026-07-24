@@ -13,9 +13,16 @@ This template covers the full Railway deployment for AlphaClone.
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
-| `CRON_SECRET` | Secret for cron auth |
-| `INTERNAL_API_KEY` | Service-to-service auth |
+| `CRON_SECRET` | **Required.** Railway cron must send `Authorization: Bearer ${CRON_SECRET}` (header alone is rejected in production) |
+| `INTERNAL_API_KEY` | Service-to-service auth (fallback for cron Bearer) |
 | `ENCRYPTION_SECRET` | Exactly 32 characters |
+| `UPSTASH_REDIS_REST_URL` | **Required in production** for global rate limits |
+| `UPSTASH_REDIS_REST_TOKEN` | **Required in production** |
+| `REDIS_REQUIRED` | Default on in production; set `false` only for emergency single-instance |
+| `ZERNIO_WEBHOOK_SECRET` | WhatsApp webhook auth (`Authorization: Bearer` or `x-zernio-webhook-secret`) |
+| `READINESS_ALWAYS_200` | Emergency only — keep readiness HTTP 200 even when DB/config degraded |
+| `SOCIAL_LEGACY_SCHEDULED_POSTS` | Opt-in dual legacy `scheduled_posts` publisher (off by default) |
+| `AUDIT_REQUIRED` | When `true`, critical audit writes fail the request if insert fails |
 | `BREVO_PLATFORM_API_KEY` | Platform transactional and privacy email delivery |
 | `BREVO_PLATFORM_FROM_EMAIL` | Verified platform sender address |
 | `TURNSTILE_SECRET_KEY` | Server-side Cloudflare Turnstile verification key |

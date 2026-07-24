@@ -63,8 +63,8 @@ Social-specific multi-tenant work remains on the social repair PR (`social_conne
 |-------|------|
 | B2 | Backfill remaining child tables; composite FKs `(tenant_id, parent_id)` |
 | B3 | Replace JWT-claim RLS policies with `user_belongs_to_tenant` |
-| C1 | All cron workers: tenant-batch + quarantine missing tenant_id |
-| C2 | Storage proxy: reject non-`tenant/{id}/` private paths |
+| C2 | ~~Storage proxy: reject non-`tenant/{id}/` private paths~~ **done** |
+| C1 | Remaining cron workers: tenant-batch + quarantine missing tenant_id |
 | C3 | RAG/embedding tables with mandatory tenant filter before ship |
 | C4 | Tenant A/B penetration suite per module (CRM, finance, docs, email, Bonnie) |
 | C5 | Support-access grant flow (time-limited, audited) |

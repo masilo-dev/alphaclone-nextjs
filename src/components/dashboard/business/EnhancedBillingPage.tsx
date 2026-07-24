@@ -636,8 +636,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                             setIsOptionsOpen(false);
                                             const toastId = toast.loading('Starting invoice lifecycle...');
                                             try {
-                                                const { callMcpTool } = await import('@/services/mcp/toolCaller');
-                                                await callMcpTool('start_invoice_lifecycle', { invoice_id: selectedInvoiceForOptions.id });
+                                                if (!currentTenant?.id) throw new Error('Active workspace required');
+                                                const { startInvoiceLifecycleFromDashboard } = await import(
+                                                    '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+                                                );
+                                                await startInvoiceLifecycleFromDashboard({
+                                                    tenantId: currentTenant.id,
+                                                    invoiceId: selectedInvoiceForOptions.id,
+                                                });
                                                 toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
                                             } catch (err: any) {
                                                 toast.error(`Failed to start lifecycle: ${err.message}`, { id: toastId });
@@ -751,8 +757,14 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     if (!selectedInvoiceForOptions) return;
                                     const toastId = toast.loading('Starting invoice lifecycle...');
                                     try {
-                                        const { callMcpTool } = await import('@/services/mcp/toolCaller');
-                                        await callMcpTool('start_invoice_lifecycle', { invoice_id: selectedInvoiceForOptions.id });
+                                        if (!currentTenant?.id) throw new Error('Active workspace required');
+                                        const { startInvoiceLifecycleFromDashboard } = await import(
+                                            '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+                                        );
+                                        await startInvoiceLifecycleFromDashboard({
+                                            tenantId: currentTenant.id,
+                                            invoiceId: selectedInvoiceForOptions.id,
+                                        });
                                         toast.success('Lifecycle started — email + reminders now automated.', { id: toastId });
                                         setShowPDFPreview(null);
                                     } catch (err: any) {

@@ -14,10 +14,18 @@ function configurationReady(): boolean {
   );
 }
 
+/**
+ * Liveness + readiness.
+ * - Soft mode (READINESS_ALWAYS_200=true): always HTTP 200 for Railway bootstrap.
+ * - Default production: HTTP 503 when config or database is not ready so traffic
+ *   is not routed to a broken instance.
+ */
 export async function GET() {
   const startedAt = Date.now();
+  const soft =
+    process.env.READINESS_ALWAYS_200 === 'true' || process.env.READINESS_ALWAYS_200 === '1';
   const configured = configurationReady();
-  let dbStatus = 'unchecked';
+  let dbStatus: 'unchecked' | 'ready' | 'degraded' = 'unchecked';
 
   if (configured) {
     try {
@@ -33,19 +41,18 @@ export async function GET() {
     }
   }
 
-  // Always return 200 — Railway only needs the server to be alive.
-  // Configuration/DB issues are surfaced in the response body for observability.
-  return NextResponse.json(
-    {
-      status: 'ok',
-      configuration: configured ? 'ready' : 'degraded',
-      database: dbStatus,
-      responseTime: Date.now() - startedAt,
-      timestamp: new Date().toISOString(),
-    },
-    {
-      status: 200,
-      headers: { 'Cache-Control': 'no-store' },
-    }
-  );
+  const healthy = configured && dbStatus === 'ready';
+  const body = {
+    status: healthy ? 'ok' : 'degraded',
+    configuration: configured ? 'ready' : 'degraded',
+    database: dbStatus,
+    responseTime: Date.now() - startedAt,
+    timestamp: new Date().toISOString(),
+  };
+
+  const status = soft || healthy ? 200 : 503;
+  return NextResponse.json(body, {
+    status,
+    headers: { 'Cache-Control': 'no-store' },
+  });
 }

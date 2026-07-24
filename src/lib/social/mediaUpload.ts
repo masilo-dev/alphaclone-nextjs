@@ -179,11 +179,7 @@ export async function uploadSocialMedia(
 
   const effectiveMime =
     declaredMime === 'image/jpeg' || declaredMime === 'image/png' || declaredMime === 'image/webp'
-      ? declaredMime.startsWith(detectedFamily)
-        ? declaredMime === 'image/jpg'
-          ? 'image/jpeg'
-          : declaredMime
-        : detectedNorm
+      ? declaredMime
       : detectedNorm === 'video/quicktime' && declaredMime.startsWith('video/')
         ? declaredMime
         : detectedNorm;

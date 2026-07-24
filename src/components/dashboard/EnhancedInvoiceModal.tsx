@@ -363,14 +363,20 @@ export default function EnhancedInvoiceModal({
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
       // Trigger durable invoice lifecycle (PDF -> send -> reminders -> overdue)
+      // Prefer authenticated API — does not require MCP/AI availability.
       try {
-        const { callMcpTool } = await import('@/services/mcp/toolCaller');
-        await callMcpTool('start_invoice_lifecycle', {
-          invoice_id: finalInvoice.id,
+        const tenantId = currentTenant?.id;
+        if (!tenantId) throw new Error('Active workspace required');
+        const { startInvoiceLifecycleFromDashboard } = await import(
+          '@/lib/invoices/startInvoiceLifecycleFromDashboard'
+        );
+        await startInvoiceLifecycleFromDashboard({
+          tenantId,
+          invoiceId: finalInvoice.id,
         });
         toast.success("Invoice lifecycle started — email + reminders now managed automatically.", { id: toastId });
       } catch (dispatchError: any) {
-        console.error('MCP Dispatch Error:', dispatchError);
+        console.error('Invoice lifecycle Error:', dispatchError);
         toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });
       }
 

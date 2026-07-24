@@ -104,14 +104,20 @@ export function validateProductionEnv(env = process.env) {
 
   const redisUrl = env.UPSTASH_REDIS_REST_URL?.trim();
   const redisToken = env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  const redisOptOut =
+    env.REDIS_REQUIRED === 'false' ||
+    env.REDIS_REQUIRED === '0' ||
+    env.REQUIRE_REDIS === 'false';
   const redisRequired =
-    env.REDIS_REQUIRED === 'true' ||
-    env.REDIS_REQUIRED === '1' ||
-    env.REQUIRE_REDIS === 'true';
+    !redisOptOut &&
+    (env.NODE_ENV === 'production' ||
+      env.REDIS_REQUIRED === 'true' ||
+      env.REDIS_REQUIRED === '1' ||
+      env.REQUIRE_REDIS === 'true');
   if (redisRequired) {
     if (!redisUrl || !redisToken) {
       errors.push(
-        'Redis is required (UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN)'
+        'Redis is required in production (UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN). Set REDIS_REQUIRED=false only for emergency single-instance deploys.'
       );
     } else if (!checkUrl(redisUrl, { https: true })) {
       errors.push('UPSTASH_REDIS_REST_URL must be a valid HTTPS URL');

@@ -115,7 +115,7 @@ export async function loadTenantScopedRow<T extends Record<string, unknown>>(par
       'NOT_FOUND'
     );
   }
-  return (data as T) || null;
+  return (data as unknown as T) || null;
 }
 
 /** Strip secrets from objects before MCP / logs. */
