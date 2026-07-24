@@ -125,15 +125,24 @@ Then apply `docs/APPLY_PR65_MIGRATIONS.sql` (FILE 1, then FILE 2–4).
 
 ---
 
-## Required operator actions (copy/paste)
+## Apply status (updated)
 
-1. Open SQL Editor: https://supabase.com/dashboard/project/ehekzoioqvtweugemktn/sql  
-2. Run the **webhook_deliveries repair** SQL above.  
-3. Run **FILE 1** from `docs/APPLY_PR65_MIGRATIONS.sql`.  
-4. Run **FILE 2–4** from the same file.  
-5. Re-test Google sign-in → should land in business dashboard with a workspace.  
-6. **Rotate** the service_role key (it was shared in chat).  
-7. Add `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local` (anon key was never provided).
+**Applied via Management API on 2026-07-24** using project access token (stored only in local `.env.local`).
+
+| Step | Result |
+|------|--------|
+| HOTFIX `webhook_deliveries.event` | Applied |
+| FILE 1 social columns + enum | Applied |
+| FILE 2 orphan/stuck status SQL | Applied |
+| FILE 3 social_connections/identities (patched: no `linkedin_identities.role`) | Applied — 7 connections, 8 identities backfilled |
+| FILE 4 helpers + stage B (status-safe; prod has no `tenant_users.status`) | Applied |
+| Heal `desiremboko@gmail.com` workspace | Created tenant `ad641a1f-…` |
+| Heal test-manus workspace | Created tenant `25692567-…` |
+
+**Verified present:** `social_connections`, `social_identities`, `tenant_isolation_quarantine`, `social_posts.live_url`, RPCs `set_tenant_context` / `is_tenant_member` / `is_tenant_owner` / `current_tenant_id`.
+
+### Security reminder
+Rotate both the **service_role** key and the **sbp_** personal access token after this session — they were shared in chat.
 
 ---
 
