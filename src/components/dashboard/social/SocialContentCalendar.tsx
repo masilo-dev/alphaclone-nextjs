@@ -12,12 +12,12 @@ type CalendarPost = {
   status?: string;
 };
 
-type SocialContentCalendarProps = {
+type SocialContentCalendarProps<T extends CalendarPost> = {
   mode: 'week' | 'month';
   anchor: Date;
   onAnchorChange: (next: Date) => void;
-  posts: CalendarPost[];
-  onSelectPost: (post: CalendarPost) => void;
+  posts: T[];
+  onSelectPost: (post: T) => void;
 };
 
 function startOfDay(d: Date) {
@@ -39,13 +39,13 @@ function postDate(post: CalendarPost): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function SocialContentCalendar({
+export function SocialContentCalendar<T extends CalendarPost>({
   mode,
   anchor,
   onAnchorChange,
   posts,
   onSelectPost,
-}: SocialContentCalendarProps) {
+}: SocialContentCalendarProps<T>) {
   const days = useMemo(() => {
     if (mode === 'week') {
       const start = startOfDay(anchor);
@@ -61,7 +61,7 @@ export function SocialContentCalendar({
   }, [anchor, mode]);
 
   const byDay = useMemo(() => {
-    const map = new Map<string, CalendarPost[]>();
+    const map = new Map<string, T[]>();
     for (const post of posts) {
       const d = postDate(post);
       if (!d) continue;

@@ -3,7 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 import { buildPublicInvoiceUrl } from '@/lib/invoices/publicInvoiceAccess';
-import { AppUrls } from '@/lib/urls';
+import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
 
 export type ClientFinancePortalData = {
   client: { id: string; name: string; email?: string | null };
@@ -130,7 +130,7 @@ export async function getClientFinancePortalData(
       status: q.status,
       totalAmount: Number(q.total_amount || 0),
       validUntil: q.valid_until,
-      viewUrl: quoteToken ? `${base.replace(/\/$/, '')}/quote/${quoteToken}` : '',
+      viewUrl: quoteToken ? buildValidatedPublicUrl(`/quote/${encodeURIComponent(quoteToken)}`) : '',
     };
   });
 
@@ -183,6 +183,10 @@ export async function getOrCreateClientPortalUrl(
       throw updateError || new Error('Failed to create client portal token');
     }
     token = updated.finance_portal_token;
+  }
+
+  if (!token) {
+    throw new Error('Failed to create client portal token');
   }
 
   return AppUrls.clientFinancePortal(token);
