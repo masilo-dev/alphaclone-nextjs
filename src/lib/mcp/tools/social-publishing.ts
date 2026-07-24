@@ -171,12 +171,15 @@ registerTool('social-publishing', {
 registerTool('social-publishing', {
   name: 'upload_media',
   description:
-    'Upload base64 media to tenant-scoped storage. Returns media_asset_id and a public provider-fetchable URL. Never stores data URIs in posts.',
+    'Upload media into the tenant media library. Accepts content_base64 (+filename/mime_type), or url, or data_url. Returns asset id and a public https URL. Never returns storage credentials.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
-    filename: z.string().min(1),
-    mime_type: z.string().min(1),
-    content_base64: z.string().min(1),
+    filename: z.string().optional(),
+    mime_type: z.string().optional(),
+    content_base64: z.string().optional(),
+    url: z.string().optional(),
+    data_url: z.string().optional(),
+    purpose: z.string().optional(),
     alt_text: z.string().optional(),
   }),
   jsonSchema: {
@@ -184,14 +187,71 @@ registerTool('social-publishing', {
     properties: {
       filename: { type: 'string' },
       mime_type: { type: 'string' },
-      content_base64: { type: 'string' },
+      content_base64: { type: 'string', description: 'Raw base64 or data URL' },
+      url: { type: 'string', description: 'Public HTTPS URL to ingest' },
+      data_url: { type: 'string', description: 'data:image/...;base64,...' },
+      purpose: { type: 'string' },
       alt_text: { type: 'string' },
     },
-    required: ['filename', 'mime_type', 'content_base64'],
+    required: [],
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
-    return uploadSocialMedia({
+    const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+
+    if (args.data_url || (args.content_base64 && String(args.content_base64).startsWith('data:'))) {
+      const asset = await ingestMediaInput({
+        tenantId,
+        userId,
+        purpose: args.purpose || 'social_post',
+        media: {
+          type: 'data_url',
+          dataUrl: args.data_url || String(args.content_base64),
+          filename: args.filename,
+        },
+      });
+      return {
+        ok: true,
+        asset: {
+          id: asset.id,
+          filename: asset.filename,
+          mime_type: asset.mime_type,
+          size_bytes: asset.size_bytes,
+          url: asset.url,
+          status: asset.status,
+        },
+        media_asset_id: asset.id,
+        public_url: asset.url,
+      };
+    }
+
+    if (args.url) {
+      const asset = await ingestMediaInput({
+        tenantId,
+        userId,
+        purpose: args.purpose || 'social_post',
+        media: { type: 'url', url: args.url, filename: args.filename },
+      });
+      return {
+        ok: true,
+        asset: {
+          id: asset.id,
+          filename: asset.filename,
+          mime_type: asset.mime_type,
+          size_bytes: asset.size_bytes,
+          url: asset.url,
+          status: asset.status,
+        },
+        media_asset_id: asset.id,
+        public_url: asset.url,
+      };
+    }
+
+    if (!args.content_base64 || !args.filename || !args.mime_type) {
+      throw new Error('Provide content_base64+filename+mime_type, or url, or data_url');
+    }
+
+    const uploaded = await uploadSocialMedia({
       tenantId,
       userId,
       filename: args.filename,
@@ -199,6 +259,19 @@ registerTool('social-publishing', {
       contentBase64: args.content_base64,
       altText: args.alt_text,
     });
+    return {
+      ok: true,
+      asset: {
+        id: uploaded.media_asset_id,
+        filename: uploaded.filename,
+        mime_type: uploaded.mime_type,
+        size_bytes: uploaded.size_bytes,
+        url: uploaded.public_url,
+        status: 'ready',
+      },
+      media_asset_id: uploaded.media_asset_id,
+      public_url: uploaded.public_url,
+    };
   },
 });
 
@@ -213,13 +286,18 @@ registerTool('social-publishing', {
     identity_id: z.string().min(1).optional(),
     platform: z.enum(['facebook', 'linkedin']).optional(),
     identity_type: z.enum(['facebook_page', 'linkedin_person', 'linkedin_organization']).optional(),
-    caption: z.string().min(1),
+    caption: z.string().optional(),
+    content: z.string().optional(),
+    media: z.array(z.record(z.unknown())).optional(),
     media_asset_ids: z.array(z.string().uuid()).optional(),
     media_urls: z.array(z.string()).optional(),
     link_url: z.string().url().optional(),
     publish_now: z.boolean().optional().default(false),
+    status: z.enum(['publish_now', 'draft', 'scheduled']).optional(),
     scheduled_at: z.string().datetime().optional(),
     idempotency_key: z.string().optional(),
+  }).refine((v) => Boolean(String(v.caption || v.content || '').trim()), {
+    message: 'caption or content is required',
   }),
   jsonSchema: {
     type: 'object',
@@ -234,20 +312,30 @@ registerTool('social-publishing', {
         enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
       },
       caption: { type: 'string' },
+      content: { type: 'string', description: 'Alias for caption' },
+      media: {
+        type: 'array',
+        description:
+          'Unified media inputs: {type:asset_id|base64|data_url|url, ...}. Prefer upload_media then asset_id.',
+        items: { type: 'object' },
+      },
       media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
       media_urls: { type: 'array', items: { type: 'string' } },
       link_url: { type: 'string' },
       publish_now: { type: 'boolean' },
+      status: { type: 'string', enum: ['publish_now', 'draft', 'scheduled'] },
       scheduled_at: { type: 'string', format: 'date-time' },
       idempotency_key: { type: 'string' },
     },
-    required: ['caption'],
+    required: [],
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
 
     const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
     const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
+    const { ingestPublishMedia } = await import('@/lib/media/ingestMedia');
+    const { persistActionReceipt } = await import('@/lib/mcp/actionReceipts');
 
     let stored;
     try {
@@ -275,6 +363,17 @@ registerTool('social-publishing', {
       | 'linkedin_person'
       | 'linkedin_organization';
 
+    const ingested = await ingestPublishMedia({
+      tenantId,
+      userId,
+      media: args.media as any,
+      mediaUrls: args.media_urls,
+      mediaAssetIds: args.media_asset_ids,
+    });
+
+    const publishNow =
+      args.publish_now === true || args.status === 'publish_now' || (!args.scheduled_at && args.status !== 'draft');
+
     const service = getSocialPublishingService();
     const result = await service.publish({
       tenantId,
@@ -282,11 +381,11 @@ registerTool('social-publishing', {
       platform,
       identityType,
       identityId: stored.provider_identity_id,
-      caption: args.caption,
-      mediaAssetIds: args.media_asset_ids,
-      mediaUrls: args.media_urls,
+      caption: args.caption || args.content || '',
+      mediaAssetIds: ingested.assetIds,
+      mediaUrls: ingested.urls,
       linkUrl: args.link_url,
-      publishNow: args.publish_now,
+      publishNow,
       scheduledAt: args.scheduled_at,
       idempotencyKey: args.idempotency_key,
       aiClient: 'mcp',
@@ -304,32 +403,52 @@ registerTool('social-publishing', {
       );
     }
 
+    const receiptPayload = result.receipt
+      ? {
+          action_id: result.receipt.action_id,
+          status: result.data?.status || 'published',
+          provider: result.receipt.provider,
+          provider_reference: result.receipt.provider_reference,
+          live_url: result.receipt.live_url,
+          timestamp: result.receipt.verified_at || new Date().toISOString(),
+          entity_id: result.data?.social_post_id,
+          entity_type: 'social_post',
+          verification: {
+            verified: result.receipt.verified,
+            verified_at: result.receipt.verified_at,
+            correlation_id: result.receipt.correlation_id,
+          },
+        }
+      : null;
+
+    if (receiptPayload && args.idempotency_key) {
+      await persistActionReceipt({
+        tenantId,
+        userId,
+        tool: 'publish_social_post',
+        idempotencyKey: args.idempotency_key,
+        receipt: receiptPayload,
+        success: true,
+        sanitizedInput: {
+          platform,
+          identity_id: stored.identity_id,
+          media_asset_ids: ingested.assetIds,
+        },
+        sanitizedOutput: result.data,
+      }).catch(() => undefined);
+    }
+
     return toMcpContent(
       okResult(
         'publish_social_post',
         {
           ...result.data,
+          media_asset_ids: ingested.assetIds,
           identity_id: stored.identity_id,
           identity_display_name: stored.display_name,
         },
         {
-          receipt: result.receipt
-            ? {
-                action_id: result.receipt.action_id,
-                status: result.data?.status || 'published',
-                provider: result.receipt.provider,
-                provider_reference: result.receipt.provider_reference,
-                live_url: result.receipt.live_url,
-                timestamp: result.receipt.verified_at || new Date().toISOString(),
-                entity_id: result.data?.social_post_id,
-                entity_type: 'social_post',
-                verification: {
-                  verified: result.receipt.verified,
-                  verified_at: result.receipt.verified_at,
-                  correlation_id: result.receipt.correlation_id,
-                },
-              }
-            : null,
+          receipt: receiptPayload,
           meta: { tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
         }
       )
