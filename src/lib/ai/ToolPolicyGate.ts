@@ -220,7 +220,7 @@ export async function evaluateToolPolicy(params: {
       risk_level: riskClass === 'bulk' || riskClass === 'financial' ? 'high' : 'medium',
       confidence_score: 70,
       status: 'pending',
-      source: source === 'bonnie' ? 'bonnie' : 'autonomous_runner',
+      source: 'autonomous_runner',
       workflow_id: workflowId || null,
       conversation_id: conversationId || null,
       reason:
