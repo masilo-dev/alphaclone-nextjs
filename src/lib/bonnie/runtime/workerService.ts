@@ -20,6 +20,8 @@ import { scheduleReadyTasks } from './schedulerService';
 import { getRunProgressSummary } from './goalRunService';
 import { classifyError, backoffWithJitter } from './utils';
 import { openIntervention } from './interventionService';
+import { startChaseForTask } from './chasingService';
+import { verifyTaskSideEffect } from './verificationService';
 
 function workerId() {
   return `bonnie-worker-${process.pid}-${Date.now()}`;
@@ -208,7 +210,13 @@ async function executeTaskStages(params: {
     }
 
     if (stage === 'verify') {
-      intermediate.verified = true;
+      const side = await verifyTaskSideEffect({
+        tenantId,
+        taskId: task.id,
+        expectedProvider: 'bonnie_runtime',
+      });
+      intermediate.verified = side.ok;
+      intermediate.verifyDetail = side.detail;
       intermediate.verifiedAt = new Date().toISOString();
     }
 
@@ -223,34 +231,35 @@ async function executeTaskStages(params: {
     });
   }
 
-  // Monitor tasks wait for events instead of completing immediately
+  // Monitor / chase tasks wait for durable events + bounded follow-up timers
   if (task.task_type === 'monitor') {
-    await createEventSubscription({
+    const input = (task.structured_input || {}) as Record<string, unknown>;
+    await startChaseForTask({
       tenantId,
       runId: task.run_id,
-      waitingTaskId: task.id,
-      eventType: 'invoice_paid',
-      matchConditions: { objective: task.structured_input },
-      expiresAt: new Date(Date.now() + 7 * 24 * 3600_000).toISOString(),
-    });
-    await transitionTask({
-      tenantId,
       taskId: task.id,
-      to: 'WAITING_FOR_EVENT',
-      trigger: 'await_external',
-      actorType: 'worker',
-      actorId: worker,
-      relatedAttemptId: attemptId,
-      patch: {
-        structured_output: intermediate,
-        worker_id: null,
-        lease_token: null,
-        lease_expires_at: null,
-      },
+      policy: (input.chase as any) || undefined,
+      entityType: input.invoiceId ? 'invoice' : undefined,
+      entityId: input.invoiceId ? String(input.invoiceId) : undefined,
     });
+    // Keep createEventSubscription path for non-chase monitors without chase policy
+    if (!input.chase) {
+      await createEventSubscription({
+        tenantId,
+        runId: task.run_id,
+        waitingTaskId: task.id,
+        eventType: 'invoice_paid',
+        matchConditions: { objective: task.structured_input },
+        expiresAt: new Date(Date.now() + 7 * 24 * 3600_000).toISOString(),
+      });
+    }
     await admin
       .from('agent_task_attempts')
-      .update({ status: 'completed', ended_at: new Date().toISOString(), output: intermediate })
+      .update({
+        status: 'completed',
+        ended_at: new Date().toISOString(),
+        output: { ...intermediate, chasing: true },
+      })
       .eq('id', attemptId);
     return { status: 'WAITING_FOR_EVENT' as const };
   }

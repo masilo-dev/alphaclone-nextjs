@@ -9,6 +9,7 @@ import {
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { listInterventions } from '@/lib/bonnie/runtime/interventionService';
 import { decideApproval } from '@/lib/bonnie/runtime/approvalDurabilityService';
+import { verifyRunOutcomes } from '@/lib/bonnie/runtime/verificationService';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,15 +35,35 @@ export async function GET(
     const admin = createSupabaseAdminClient();
     const taskIds = (graph?.tasks || []).map((t: { id: string }) => t.id);
     let timeline: unknown[] = [];
+    let approvals: unknown[] = [];
     if (taskIds.length) {
-      const { data } = await admin
-        .from('agent_state_transitions')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .in('entity_id', taskIds)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      timeline = data || [];
+      const [{ data: transitions }, { data: approvalRows }] = await Promise.all([
+        admin
+          .from('agent_state_transitions')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .in('entity_id', taskIds)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        admin
+          .from('agent_approvals')
+          .select('*')
+          .eq('tenant_id', tenantId)
+          .eq('run_id', id)
+          .order('created_at', { ascending: false })
+          .limit(40),
+      ]);
+      timeline = transitions || [];
+      approvals = approvalRows || [];
+    }
+
+    let verification = null;
+    if (request.nextUrl.searchParams.get('verify') === '1') {
+      try {
+        verification = await verifyRunOutcomes({ tenantId, runId: id });
+      } catch {
+        verification = null;
+      }
     }
 
     return NextResponse.json({
@@ -52,6 +73,8 @@ export async function GET(
       graph,
       interventions: interventions.filter((i) => i.run_id === id),
       timeline,
+      approvals,
+      verification,
     });
   } catch (err: unknown) {
     return routeErrorResponse(err);

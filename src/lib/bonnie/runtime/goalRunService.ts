@@ -7,6 +7,7 @@ import { createGoalFromPlan } from '@/lib/bonnie/os/goalEngine';
 import { selectAgentsForGoal, collectToolsFromAgents, decideSupervision } from '@/lib/bonnie/os/supervisor';
 import type { AgentRunRow, RunStatus } from './types';
 import { createInitialGraphForObjective } from './plannerService';
+import { verifyRunOutcomes } from './verificationService';
 
 export async function createRunForObjective(params: {
   tenantId: string;
@@ -151,20 +152,49 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
   const running = (byStatus.RUNNING || 0) + (byStatus.CLAIMED || 0) + (byStatus.QUEUED || 0) + (byStatus.READY || 0);
 
   const progressPct = Math.round((done / total) * 100);
+  const terminal = list.length > 0 && running === 0 && waiting === 0;
+  let verification = null as Awaited<ReturnType<typeof verifyRunOutcomes>> | null;
+
+  if (terminal && (done + failed >= total || failed > 0)) {
+    try {
+      verification = await verifyRunOutcomes({ tenantId, runId });
+    } catch (err) {
+      console.warn('[goalRunService] verification failed:', err);
+    }
+  }
+
+  const nextStatus = verification
+    ? verification.outcome === 'COMPLETED'
+      ? 'completed'
+      : verification.outcome === 'COMPLETED_WITH_EXCEPTIONS'
+        ? 'completed_with_exceptions'
+        : verification.outcome === 'FAILED'
+          ? 'failed'
+          : verification.outcome === 'PARTIALLY_COMPLETED'
+            ? 'partially_completed'
+            : failed && done + failed >= total
+              ? 'completed_with_exceptions'
+              : done >= total
+                ? 'completed'
+                : 'running'
+    : failed && done + failed >= total
+      ? 'completed_with_exceptions'
+      : done >= total
+        ? 'completed'
+        : waiting && !running
+          ? 'waiting'
+          : 'running';
+
   await admin
     .from('agent_runs')
     .update({
       progress_pct: progressPct,
       last_progress_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      status:
-        failed && done + failed >= total
-          ? 'completed_with_exceptions'
-          : done >= total
-            ? 'completed'
-            : waiting && !running
-              ? 'waiting'
-              : 'running',
+      status: nextStatus,
+      ...(String(nextStatus).startsWith('completed') || nextStatus === 'failed' || nextStatus === 'partially_completed'
+        ? { completed_at: new Date().toISOString() }
+        : {}),
     })
     .eq('id', runId)
     .eq('tenant_id', tenantId);
@@ -174,7 +204,9 @@ export async function getRunProgressSummary(runId: string, tenantId: string) {
     taskCount: list.length,
     byStatus,
     progressPct,
-    summary: `Bonnie has ${done} completed, ${running} active, ${waiting} waiting, and ${failed} failed of ${list.length} tasks.`,
+    summary: verification?.summary
+      || `Bonnie has ${done} completed, ${running} active, ${waiting} waiting, and ${failed} failed of ${list.length} tasks.`,
+    verification,
     tasks: list,
   };
 }

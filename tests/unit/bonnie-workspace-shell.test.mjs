@@ -12,6 +12,7 @@ test('Bonnie workspace shell components exist', () => {
     'src/components/dashboard/bonnie/workspace/BonnieContextPanel.tsx',
     'src/components/dashboard/bonnie/workspace/BonnieToolActivityCard.tsx',
     'src/components/dashboard/bonnie/workspace/BonnieGoalsPanel.tsx',
+    'src/components/dashboard/bonnie/workspace/BonnieWorkspaceViews.tsx',
     'src/hooks/useBonnieConversations.ts',
     'src/hooks/useBonnieGoals.ts',
     'src/app/api/bonnie/conversations/[id]/route.ts',
@@ -46,6 +47,7 @@ test('BonnieFullView mounts workspace shell pieces', () => {
   assert.match(src, /useBonnieConversations/);
   assert.match(src, /useBonnieGoals/);
   assert.match(src, /Agentic BOS/);
+  assert.match(src, /BonnieWorkspaceViews/);
 });
 
 test('Bonnie welcome headline exists', () => {

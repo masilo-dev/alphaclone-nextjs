@@ -5,6 +5,8 @@ import {
   listRuns,
   getRunProgressSummary,
   isDurableRuntimeEnabled,
+  createRunRequestSchema,
+  startInvoiceCollectionRun,
 } from '@/lib/bonnie/runtime';
 import { getRuntimeMetrics } from '@/lib/bonnie/runtime/observability';
 
@@ -39,26 +41,63 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const tenantId = String(body.tenantId || '').trim();
-    const objective = String(body.objective || body.goal || '').trim();
-    if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
-    if (!objective) return NextResponse.json({ error: 'objective is required' }, { status: 400 });
-
-    const { user } = await requireTenantAccess(tenantId);
-    const created = await createRunForObjective({
-      tenantId,
-      userId: user.id,
-      conversationId: body.conversationId || null,
-      objective,
+    const parsed = createRunRequestSchema.safeParse({
+      tenantId: body.tenantId,
+      objective: body.objective || body.goal,
+      conversationId: body.conversationId ?? null,
       executionMode: body.executionMode,
       priority: body.priority,
       successCriteria: body.successCriteria,
-      seedGraph: body.seedGraph !== false,
+      seedGraph: body.seedGraph,
+      workflowTemplate: body.workflowTemplate || body.template,
     });
 
-    const progress = await getRunProgressSummary(created.run.id, tenantId);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid run request', details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { user } = await requireTenantAccess(parsed.data.tenantId);
+
+    if (parsed.data.workflowTemplate === 'invoice_collection') {
+      const created = await startInvoiceCollectionRun({
+        tenantId: parsed.data.tenantId,
+        userId: user.id,
+        conversationId: parsed.data.conversationId,
+        objective: parsed.data.objective,
+        invoiceIds: Array.isArray(body.invoiceIds) ? body.invoiceIds : undefined,
+        limit: typeof body.limit === 'number' ? body.limit : undefined,
+      });
+      const progress = await getRunProgressSummary(created.run.id, parsed.data.tenantId);
+      return NextResponse.json({
+        success: true,
+        template: 'invoice_collection',
+        run: created.run,
+        goalId: created.goalId,
+        graphId: created.graphId,
+        invoiceCount: created.invoiceCount,
+        policy: created.policy,
+        progress,
+      });
+    }
+
+    const created = await createRunForObjective({
+      tenantId: parsed.data.tenantId,
+      userId: user.id,
+      conversationId: parsed.data.conversationId,
+      objective: parsed.data.objective,
+      executionMode: parsed.data.executionMode,
+      priority: parsed.data.priority,
+      successCriteria: parsed.data.successCriteria,
+      seedGraph: parsed.data.seedGraph !== false,
+    });
+
+    const progress = await getRunProgressSummary(created.run.id, parsed.data.tenantId);
     return NextResponse.json({
       success: true,
+      template: 'generic',
       run: created.run,
       goalId: created.goalId,
       graphId: created.graphId,
