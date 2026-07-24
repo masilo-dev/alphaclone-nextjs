@@ -11,6 +11,8 @@ cmds = ["npm ci --legacy-peer-deps"]
 [phases.build]
 # Remove any runtime-generated root /app dir (workflow library) before next build
 # to prevent webpack from seeing both /app and /src/app at compile time.
+# Note: when railway.toml sets buildCommand, this phase is overridden — cleanup
+# is also in package.json "build" and railway.toml buildCommand.
 cmds = ["rm -rf app/ || true", "npm run build"]
 
 [start]

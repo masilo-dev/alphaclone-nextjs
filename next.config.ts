@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
+import path from "node:path";
 
 import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
 import { withBotId } from "botid/next/config";
 import { withWorkflow } from "workflow/next";
+
+const srcDir = path.resolve(process.cwd(), "src");
 
 const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
@@ -108,6 +111,13 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer }) => {
     // Critical: Increase timeout for long-running builds/bundling to prevent stalls
     config.output.chunkLoadTimeout = 180000;
+
+    // Belt-and-suspenders: pin @ -> src even if a conflicting root app/ directory
+    // confuses Next's jsconfig-paths plugin during Railway/Nixpacks builds.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": srcDir,
+    };
 
     if (!isServer) {
       config.resolve.fallback = {
