@@ -2,10 +2,26 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { AlertCircle, BookOpen, CheckCircle2, Clock, Loader2, Mic, MicOff, Send, Trash2, Wrench, XCircle, Zap } from 'lucide-react';
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  Mic,
+  MicOff,
+  Paperclip,
+  Send,
+  Square,
+  Trash2,
+  Wrench,
+  XCircle,
+  Zap,
+} from 'lucide-react';
 import BonnieApprovalCard from './BonnieApprovalCard';
 import AgentPlanViewer, { AgentPlanStep } from './AgentPlanViewer';
 import ExecutionTimelineEvent, { ExecutionTimelineEventProps } from './ExecutionTimelineEvent';
+import BonnieToolActivityCard from './workspace/BonnieToolActivityCard';
 import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
 import { normalizeBonnieNavPath, parseBonnieDeepLink } from '@/lib/bonnie/bonnieDeepLink';
 import { useBonniePersistence } from '@/hooks/useBonniePersistence';
@@ -97,6 +113,11 @@ type BonnieChatPanelProps = {
   disabled?: boolean;
   storageKey?: string;
   streaming?: boolean;
+  /** Workspace chrome: lighter surfaces + activity cards */
+  workspaceMode?: boolean;
+  conversationId?: string | null;
+  externalPrompt?: string | null;
+  onExternalPromptConsumed?: () => void;
   onSend: (
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>
@@ -105,7 +126,8 @@ type BonnieChatPanelProps = {
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }>,
     onToken: (token: string) => void,
-    onPhase?: (phase: string, meta?: Record<string, unknown>) => void
+    onPhase?: (phase: string, meta?: Record<string, unknown>) => void,
+    signal?: AbortSignal
   ) => Promise<BonnieChatSendResult>;
   onResolveApproval?: (
     approvalId: string,
@@ -178,6 +200,10 @@ export default function BonnieChatPanel({
   disabled = false,
   storageKey,
   streaming = false,
+  workspaceMode = false,
+  conversationId = null,
+  externalPrompt = null,
+  onExternalPromptConsumed,
   onSend,
   onStreamSend,
   onResolveApproval,
@@ -188,7 +214,9 @@ export default function BonnieChatPanel({
   // ── Persistent chat history (localStorage, survives reloads) ──────────────
   const { messages, setMessages, clearHistory } = useBonniePersistence({
     tenantId,
-    userId: storageKey, // storageKey already encodes userId at call sites
+    userId: conversationId
+      ? `${storageKey || 'bonnie'}_${conversationId}`
+      : storageKey,
     introMessage,
   });
 
@@ -203,6 +231,7 @@ export default function BonnieChatPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();
@@ -320,8 +349,8 @@ export default function BonnieChatPanel({
     };
   }, [tenantId, sending]);
 
-  const handleSend = async () => {
-    const text = input.trim();
+  const handleSend = async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim();
     if (!text || sending || disabled) return;
 
     const userMsg: BonnieChatMessage = {
@@ -333,6 +362,8 @@ export default function BonnieChatPanel({
     setInput('');
     setSending(true);
     setAgentPhase('thinking');
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
 
     const history = messages
       .filter((m) => m.id !== 'intro')
@@ -376,7 +407,8 @@ export default function BonnieChatPanel({
             if (phase === 'tools' && Array.isArray(meta?.tools)) {
               setPlanSteps(mapToolsToPlanSteps(meta.tools as Array<{ tool: string; success?: boolean; summary?: string }>));
             }
-          }
+          },
+          abortRef.current.signal
         );
 
         window.clearTimeout(phaseTimer);
@@ -423,22 +455,45 @@ export default function BonnieChatPanel({
         // Deep-link navigation intent
         if (result.text) emitNavIntent(result.text, userRole);
       }
-    } catch {
+    } catch (err: any) {
       window.clearTimeout(phaseTimer);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `assistant-${Date.now()}`,
-          role: 'assistant',
-          text: 'Something went wrong. Check that DEEPSEEK_API_KEY is set and try again.',
-          error: true,
-        },
-      ]);
+      if (err?.name === 'AbortError') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-stop-${Date.now()}`,
+            role: 'assistant',
+            text: 'Generation stopped.',
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `assistant-${Date.now()}`,
+            role: 'assistant',
+            text: 'Something went wrong. Check that DEEPSEEK_API_KEY is set and try again.',
+            error: true,
+          },
+        ]);
+      }
     } finally {
       setSending(false);
       setAgentPhase('idle');
+      abortRef.current = null;
       inputRef.current?.focus();
     }
+  };
+
+  useEffect(() => {
+    if (!externalPrompt?.trim()) return;
+    void handleSend(externalPrompt);
+    onExternalPromptConsumed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalPrompt]);
+
+  const stopGeneration = () => {
+    abortRef.current?.abort();
   };
 
   const clearChat = () => {
@@ -532,7 +587,11 @@ export default function BonnieChatPanel({
                 </div>
               ) : null}
               {msg.tools && msg.tools.length > 0 && (
-                <div className="mt-2 space-y-1 border-t border-slate-700/50 pt-2">
+                <div className="mt-2 space-y-1 border-t border-slate-700/50 pt-2 dark:border-slate-700/50">
+                  {workspaceMode ? (
+                    <BonnieToolActivityCard tools={msg.tools} />
+                  ) : (
+                    <>
                   <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     <Wrench className="h-3 w-3" /> Actions run
                   </p>
@@ -556,6 +615,8 @@ export default function BonnieChatPanel({
                         </div>
                       ))
                   }
+                    </>
+                  )}
                   {/* Agent plan viewer for current in-progress message */}
                   {planSteps.length > 0 && messages[messages.length - 1]?.id === msg.id && (
                     <AgentPlanViewer steps={planSteps} isRunning={sending} />
@@ -674,6 +735,15 @@ export default function BonnieChatPanel({
           Platform guide & glossary
         </Link>
         <div className="flex items-end gap-2">
+          <button
+            type="button"
+            disabled
+            title="Attachments coming next"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-500 opacity-60"
+            aria-label="Attach file (coming soon)"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
           <textarea
             ref={inputRef}
             value={input}
@@ -686,9 +756,17 @@ export default function BonnieChatPanel({
             }}
             rows={compact ? 2 : 3}
             disabled={disabled || sending}
-            placeholder={placeholder}
+            placeholder={
+              workspaceMode
+                ? 'Message Bonnie… Use @customer @invoice @project · / for commands'
+                : placeholder
+            }
             aria-label="Message Bonnie"
-            className="min-h-[44px] flex-1 resize-none rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50"
+            className={`min-h-[44px] flex-1 resize-none rounded-xl border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 disabled:opacity-50 ${
+              workspaceMode
+                ? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white'
+                : 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-teal-500'
+            }`}
           />
           <button
             type="button"
@@ -704,18 +782,29 @@ export default function BonnieChatPanel({
           >
             {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
-          <button
-            type="button"
-            onClick={() => void handleSend()}
-            disabled={disabled || sending || !input.trim()}
-            aria-label="Send to Bonnie"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </button>
+          {sending ? (
+            <button
+              type="button"
+              onClick={stopGeneration}
+              aria-label="Stop generation"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white transition-colors hover:bg-rose-500"
+            >
+              <Square className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void handleSend()}
+              disabled={disabled || !input.trim()}
+              aria-label="Send to Bonnie"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <p className="mt-2 text-[10px] leading-relaxed text-slate-500">
-          Enter to send · Mic uses Web Speech → voice API · Bonnie will show when an action was blocked by provider billing instead of silently failing
+          Enter to send · Shift+Enter for newline · Stop cancels in-flight generation · High-risk actions always ask for approval
         </p>
       </div>
     </div>

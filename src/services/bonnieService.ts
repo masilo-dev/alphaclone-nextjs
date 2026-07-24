@@ -362,6 +362,7 @@ export const bonnieService = {
       onToken?: (token: string) => void;
       onPhase?: (phase: string, meta?: Record<string, unknown>) => void;
       onTools?: (tools: BonnieToolExecuted[]) => void;
+      signal?: AbortSignal;
     }
   ): Promise<BonnieInstructionResult> {
     const response = await fetch('/api/bonnie/stream', {
@@ -374,6 +375,7 @@ export const bonnieService = {
         pathname: options.pathname,
         moduleContext: options.moduleContext,
       }),
+      signal: options.signal,
     });
 
     if (!response.ok || !response.body) {

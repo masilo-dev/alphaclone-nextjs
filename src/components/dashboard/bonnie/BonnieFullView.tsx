@@ -1,23 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Brain, Play, Pause, RefreshCw,
-  CheckCircle2, AlertCircle, Clock, Sparkles, Activity, ShieldAlert, BookOpen, ExternalLink
+  ExternalLink,
+  Menu,
+  PanelRight,
+  Share2,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
-import { bonnieService, BonnieLog, BonnieRule, resolveBonnieNavIntent } from '../../../services/bonnieService';
-import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '../../../lib/bonnie/bonnieToolCatalog';
-import { useTenant } from '../../../contexts/TenantContext';
-import { useAuth } from '../../../contexts/AuthContext';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
+import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '@/lib/bonnie/bonnieToolCatalog';
+import { useTenant } from '@/contexts/TenantContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
+import type { BonniePendingApprovalResponse } from '@/services/bonnieService';
+import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
+import { useBonnieConversations } from '@/hooks/useBonnieConversations';
 import BonnieChatPanel from './BonnieChatPanel';
-import { BonnieResearchPanel } from './BonnieResearchPanel';
-import { useBonnieApprovals } from '../../../hooks/useBonnieApprovals';
-import type { BonniePendingApprovalResponse } from '../../../services/bonnieService';
+import BonnieSidebar from './workspace/BonnieSidebar';
+import BonnieWelcome, { type BonnieSuggestion } from './workspace/BonnieWelcome';
+import BonnieContextPanel, { type BonnieContextItem } from './workspace/BonnieContextPanel';
 
 type BonnieFullViewProps = {
   variant?: 'default' | 'popout';
@@ -31,120 +36,87 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const searchParams = useSearchParams();
   const contextPath = searchParams.get('from') || pathname || '';
   const activeModule = resolveBonnieModuleFromPath(contextPath);
-  const isPopout = variant === 'popout';
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
-  const [rules, setRules] = useState<BonnieRule | null>(null);
-  const [logs, setLogs] = useState<BonnieLog[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isTriggering, setIsTriggering] = useState(false);
-  const logEndRef = useRef<HTMLDivElement>(null);
-
+  const isPopout = variant === 'popout';
   const tenantId = currentTenant?.id;
+
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
+  const {
+    conversations,
+    loading: conversationsLoading,
+    refresh,
+    createConversation,
+    patchConversation,
+    deleteConversation,
+  } = useBonnieConversations(tenantId);
 
-  // Load Rules and Logs when tenant changes
-  useEffect(() => {
-    if (!tenantId) return;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [contextOpen, setContextOpen] = useState(true);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [externalPrompt, setExternalPrompt] = useState<string | null>(null);
+  const [contextItems, setContextItems] = useState<BonnieContextItem[]>([
+    {
+      id: 'perm-tenant',
+      kind: 'permission',
+      label: 'Tenant-scoped tools',
+      detail: 'Bonnie only accesses records in this workspace',
+    },
+  ]);
 
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const rulesData = await bonnieService.getRules(tenantId);
-        setRules(rulesData);
+  const activeConversation = useMemo(
+    () => conversations.find((c) => c.id === activeConversationId) || null,
+    [conversations, activeConversationId]
+  );
 
-        const logsData = await bonnieService.getCombinedLogs(tenantId);
-        setLogs(logsData);
-      } catch (err) {
-        console.error('Failed to load Bonnie data:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Set up polling for logs every 8 seconds to keep feed live-updating
-    const interval = setInterval(async () => {
-      try {
-        const logsData = await bonnieService.getCombinedLogs(tenantId);
-        setLogs(logsData);
-      } catch (e) {
-        // ignore polling errors
-      }
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [tenantId]);
-
-  // Scroll logs to bottom on update
-  useEffect(() => {
-    if (logEndRef.current) {
-      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [logs]);
-
-  if (!tenantId) {
-    return (
-      <div className="flex h-[calc(100vh-140px)] items-center justify-center bg-slate-950 p-8 text-center text-slate-500">
-        <div className="max-w-md space-y-4">
-          <Brain className="mx-auto h-16 w-16 text-slate-700 opacity-40 animate-pulse" />
-          <h3 className="text-xl font-black text-white uppercase tracking-wider">Select a Tenant</h3>
-          <p className="text-sm text-slate-400">
-            Please switch to a valid tenant space to activate the Bonnie AI assistant console.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleToggleStatus = async () => {
-    if (!rules) return;
-    try {
-      const nextEnabled = !rules.enabled;
-      const updated = await bonnieService.updateRules(tenantId, { enabled: nextEnabled });
-      setRules(updated);
-      toast.success(
-        nextEnabled 
-          ? 'Bonnie background execution resumed.' 
-          : 'Bonnie background execution paused.'
-      );
-
-      setLogs(await bonnieService.getCombinedLogs(tenantId));
-    } catch (err) {
-      toast.error('Failed to toggle executing status.');
-    }
-  };
-
-  const handleTriggerManualRun = async () => {
-    if (isTriggering) return;
-    setIsTriggering(true);
-    toast.loading('Triggering Bonnie execution scan...', { id: 'manual-trigger' });
-    try {
-      const res = await bonnieService.triggerManualRun(tenantId);
-      if (res.success) {
-        toast.success('Bonnie manual execution completed successfully.', { id: 'manual-trigger' });
-        // Refresh logs
-        const logsData = await bonnieService.getCombinedLogs(tenantId);
-        setLogs(logsData);
-      } else {
-        toast.error(res.error || 'Failed to complete execution run.', { id: 'manual-trigger' });
-      }
-    } catch (err) {
-      toast.error('Execution failed.', { id: 'manual-trigger' });
-    } finally {
-      setIsTriggering(false);
-    }
-  };
-
-  const isRunning = rules?.enabled ?? true;
-  const effectiveMode =
-    !rules
-      ? 'Unknown'
-      : !rules.enabled
-        ? 'Paused'
-        : rules.auto_send_enabled && !rules.high_risk_approval_required
-          ? 'Autonomous'
-          : 'Act with approval';
+  const suggestions: BonnieSuggestion[] = useMemo(
+    () => [
+      {
+        id: 'priorities',
+        title: 'Review today’s business priorities',
+        description: 'Summarise open deals, overdue tasks, and urgent follow-ups.',
+        prompt: 'Review today’s business priorities across CRM, tasks, and invoices.',
+        icon: 'workflow',
+      },
+      {
+        id: 'leads',
+        title: 'Follow up with overdue leads',
+        description: 'Find stale leads and draft personalised outreach.',
+        prompt: 'Find overdue leads that need follow-up and draft outreach for my approval.',
+        icon: 'crm',
+      },
+      {
+        id: 'invoices',
+        title: 'Analyse unpaid invoices',
+        description: 'Identify overdue invoices and recommend next steps.',
+        prompt: 'Analyse unpaid and overdue invoices and recommend reminder actions.',
+        icon: 'invoice',
+      },
+      {
+        id: 'social',
+        title: 'Prepare this week’s social posts',
+        description: 'Draft a short content plan for LinkedIn and Facebook.',
+        prompt: 'Prepare this week’s social posts for LinkedIn and Facebook as drafts.',
+        icon: 'social',
+      },
+      {
+        id: 'calendar',
+        title: 'Review upcoming calendar events',
+        description: 'Highlight meetings that need prep or follow-up.',
+        prompt: 'Review upcoming calendar events and tell me what needs preparation.',
+        icon: 'calendar',
+      },
+      {
+        id: 'risks',
+        title: 'Find business risks',
+        description: 'Scan for stalled deals, cash risk, and SLA issues.',
+        prompt: 'Find the top business risks across deals, invoices, and support.',
+        icon: 'risk',
+      },
+    ],
+    []
+  );
 
   const mapInstructionResult = (res: {
     response: string;
@@ -171,45 +143,22 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = []
   ) => {
-    setLogs(prev => [
-      {
-        id: String(Date.now()),
-        created_at: new Date().toISOString(),
-        type: 'log',
-        level: 'info',
-        message: `Command received: "${text}"`,
-      },
-      ...prev,
-    ]);
-
+    if (!tenantId) return { text: 'Select a workspace first.', error: true };
+    setShowWelcome(false);
     const nav = resolveBonnieNavIntent(text, user?.role);
     if (nav) {
       router.push(nav.route);
-      setLogs(prev => [
-        {
-          id: String(Date.now() + 1),
-          created_at: new Date().toISOString(),
-          type: 'action',
-          level: 'success',
-          message: `Navigated to ${nav.label}`,
-          details: nav.route,
-        },
-        ...prev,
-      ]);
       return { text: `Opening ${nav.label} for you now.` };
     }
-
     const res = await bonnieService.sendInstruction(tenantId, text, history, {
       pathname: contextPath || undefined,
       moduleContext: activeModule,
     });
     if (res.success) {
-      const logsData = await bonnieService.getCombinedLogs(tenantId);
-      setLogs(logsData);
       void refreshApprovals();
+      void refresh();
       return mapInstructionResult(res);
     }
-
     return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
@@ -217,18 +166,21 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     text: string,
     history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
     onToken: (token: string) => void,
-    onPhase?: (phase: string, meta?: Record<string, unknown>) => void
+    onPhase?: (phase: string, meta?: Record<string, unknown>) => void,
+    signal?: AbortSignal
   ) => {
+    if (!tenantId) return { text: 'Select a workspace first.', error: true };
+    setShowWelcome(false);
     const res = await bonnieService.streamInstruction(tenantId, text, history, {
       pathname: contextPath || undefined,
       moduleContext: activeModule,
       onToken,
       onPhase: (phase, meta) => onPhase?.(phase, meta),
+      signal,
     });
     if (res.success) {
-      const logsData = await bonnieService.getCombinedLogs(tenantId);
-      setLogs(logsData);
       void refreshApprovals();
+      void refresh();
       return mapInstructionResult(res);
     }
     return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
@@ -240,10 +192,6 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     editedArgs?: Record<string, unknown>
   ) => {
     const result = await handleApproval(approvalId, status, editedArgs);
-    if (result.success) {
-      const logsData = await bonnieService.getCombinedLogs(tenantId);
-      setLogs(logsData);
-    }
     return {
       success: result.success,
       message: result.execution?.result?.summary || result.execution?.error,
@@ -251,250 +199,185 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     };
   };
 
+  const handleNewChat = useCallback(async () => {
+    try {
+      const created = await createConversation('New conversation', activeModule);
+      setActiveConversationId(created.id);
+      setShowWelcome(true);
+      setExternalPrompt(null);
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not start a new chat');
+    }
+  }, [createConversation, activeModule]);
+
   const bonnieDashboardRoute = resolveBonnieDashboardRoute(pathname, user?.role);
 
+  if (!tenantId) {
+    return (
+      <div className="flex h-[calc(100vh-140px)] items-center justify-center bg-slate-50 p-8 text-center dark:bg-slate-950">
+        <div className="max-w-md space-y-3">
+          <Sparkles className="mx-auto h-10 w-10 text-teal-600" />
+          <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Select a workspace</h3>
+          <p className="text-sm text-slate-500">
+            Bonnie needs an active Alphaclone Systems workspace before it can plan or execute work.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex w-full flex-col gap-4 md:gap-6 bg-slate-950 text-white overflow-y-auto ${isPopout ? 'min-h-dvh p-3 md:p-4' : 'min-h-[calc(100dvh-10rem)] p-1 md:p-2'}`}>
-      {/* Header Banner */}
-      <div className="flex flex-col justify-between gap-4 rounded-3xl border border-slate-800 bg-[#090d16] p-4 md:p-6 sm:flex-row sm:items-center shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500 to-cyan-500 shadow-xl shadow-teal-500/20">
-            <Brain className="h-7 w-7 text-white animate-pulse" />
-            <span className={`absolute -bottom-0.5 -right-0.5 h-4.5 w-4.5 rounded-full border-3 border-slate-950 ${isRunning ? 'bg-emerald-500 shadow-[0_0_12px_#10b981]' : 'bg-amber-500 shadow-[0_0_12px_#f59e0b]'}`} />
-          </div>
-          <div>
-            <h1 className="text-xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-400">
-              {isPopout ? 'Bonnie Workspace' : 'Bonnie AI System Console'}
+    <div
+      className={`flex overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50 ${
+        isPopout ? 'h-dvh' : 'h-[calc(100dvh-8.5rem)] min-h-[560px]'
+      }`}
+    >
+      <BonnieSidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        conversations={conversations}
+        activeId={activeConversationId}
+        loading={conversationsLoading}
+        workspaceName={currentTenant?.name}
+        userLabel={user?.email || undefined}
+        pendingApprovals={pendingCount}
+        onNewChat={() => void handleNewChat()}
+        onSelect={(id) => {
+          setActiveConversationId(id);
+          setShowWelcome(false);
+        }}
+        onRename={(id, title) => void patchConversation(id, { title })}
+        onPin={(id, pinned) => void patchConversation(id, { pinned })}
+        onArchive={(id) => {
+          const current = conversations.find((c) => c.id === id);
+          void patchConversation(id, { archive: !current?.archived });
+        }}
+        onDelete={(id) =>
+          void deleteConversation(id).then(() => {
+            if (activeConversationId === id) {
+              setActiveConversationId(null);
+              setShowWelcome(true);
+            }
+          })
+        }
+        onSearch={(q) => void refresh({ q, includeArchived: true })}
+        onOpenApprovals={() => router.push('/dashboard/bonnie/approvals')}
+      />
+
+      <section className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950 sm:px-4">
+          <button
+            type="button"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden dark:hover:bg-slate-900"
+            aria-label="Open conversations"
+            onClick={() => setMobileSidebarOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-sm font-semibold sm:text-base">
+              {activeConversation?.title || 'Bonnie AI workspace'}
             </h1>
-            <p className="text-sm text-slate-400">
-              {isPopout
-                ? `Dedicated window · context: ${moduleHint.label}`
-                : 'Bonnie AI executes real actions across CRM, finance, outreach, social, and automation. Ask for actions like "run scan", "list overdue invoices", or "publish LinkedIn post".'}
+            <p className="truncate text-[11px] text-slate-500">
+              {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Bonnie AI · Agentic
+              {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
             </p>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {isPopout ? (
-            <Link
-              href={bonnieDashboardRoute}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-teal-500/40 hover:text-teal-300 transition-all"
-            >
-              <BookOpen size={14} />
-              Open in app
-            </Link>
-          ) : (
-            <>
+          <div className="flex items-center gap-1.5">
+            {!isPopout && (
               <button
                 type="button"
                 onClick={() => openBonniePopoutWindow(pathname || undefined)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-cyan-500/40 hover:text-cyan-300 transition-all"
+                className="hidden rounded-lg p-2 text-slate-500 hover:bg-slate-100 sm:inline-flex dark:hover:bg-slate-900"
+                aria-label="Pop out Bonnie"
               >
-                <ExternalLink size={14} />
-                Pop out window
+                <ExternalLink className="h-4 w-4" />
               </button>
+            )}
+            {isPopout && (
               <Link
-                href="/dashboard/help"
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-300 border border-slate-700 hover:border-teal-500/40 hover:text-teal-300 transition-all"
+                href={bonnieDashboardRoute}
+                className="rounded-lg px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900"
               >
-                <BookOpen size={14} />
-                Platform guide
+                Open in app
               </Link>
-            </>
-          )}
-          <button
-            onClick={handleToggleStatus}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md ${
-              isRunning
-                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
-                : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-            }`}
-          >
-            {isRunning ? (
-              <>
-                <Pause size={14} /> Pause Agent
-              </>
-            ) : (
-              <>
-                <Play size={14} /> Resume Agent
-              </>
             )}
-          </button>
-
-          <button
-            onClick={handleTriggerManualRun}
-            disabled={isTriggering}
-            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md"
-          >
-            <RefreshCw size={14} className={isTriggering ? 'animate-spin' : ''} />
-            Scan Now
-          </button>
-        </div>
-      </div>
-
-      {/* Main Split Interface */}
-      <div className="flex flex-1 flex-col lg:flex-row gap-4 lg:gap-6 min-h-0">
-        
-        {/* Left Side: System Information & Activity Log */}
-        <div className="flex w-full lg:w-80 xl:w-96 flex-col gap-4 lg:gap-6 shrink-0 lg:max-h-[calc(100dvh-12rem)] lg:overflow-y-auto pr-0 lg:pr-1 custom-scrollbar">
-          {/* Status Panel */}
-          <div className="rounded-3xl border border-slate-800 bg-[#090d16] p-6 space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <Activity size={14} className="text-teal-400" />
-              Agent Core Status
-            </h3>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
-                <span className="text-slate-400">Background Worker</span>
-                <span className={`font-bold ${isRunning ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {isRunning ? 'ACTIVE' : 'PAUSED'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
-                <span className="text-slate-400">Chat commands</span>
-                <span className="font-bold text-teal-400">Always available</span>
-              </div>
-              <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
-                <span className="text-slate-400">Background scans</span>
-                <span className={`font-bold ${isRunning ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {isRunning ? 'Scheduled + manual' : 'Paused'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm py-1 border-b border-slate-800/40">
-                <span className="text-slate-400">High-risk sends</span>
-                <span className="font-bold text-slate-300">
-                  {effectiveMode === 'Autonomous' ? 'Autonomous allowed' : 'Approval required'}
-                </span>
-              </div>
-            </div>
-
-            {/* Active rules and objectives */}
-            {rules && (
-              <div className="space-y-2 pt-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Autonomous Mandates</span>
-                <div className="space-y-1.5 text-xs text-slate-300 leading-relaxed bg-slate-950/40 border border-slate-800/60 p-3.5 rounded-2xl">
-                  <div className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5" />
-                    <span>Cross-module data integrity scans</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5" />
-                    <span>Real-time anomaly identification</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5" />
-                    <span>Auto-enrich client profiles via pipeline updates</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <button
+              type="button"
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+              aria-label="Share conversation"
+              onClick={() => toast('Share links coming soon')}
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-900"
+              aria-label="Toggle context panel"
+              onClick={() => setContextOpen((v) => !v)}
+            >
+              <PanelRight className="h-4 w-4" />
+            </button>
           </div>
+        </header>
 
-          <BonnieResearchPanel tenantId={tenantId} />
-
-          {/* Activity / Execution Log */}
-          <div className="flex-1 rounded-3xl border border-slate-800 bg-[#090d16] p-6 flex flex-col min-h-[300px]">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
-              <Clock size={14} className="text-teal-400" />
-              Agent Execution Stream
-            </h3>
-
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs custom-scrollbar">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                  <RefreshCw className="h-6 w-6 animate-spin text-teal-500/40 mb-2" />
-                  <span>Loading logs stream...</span>
-                </div>
-              ) : logs.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  <span>No log entries recorded.</span>
-                </div>
-              ) : (
-                logs.map((log) => {
-                  let badgeColor = 'text-slate-500 bg-slate-500/10 border-slate-500/20';
-                  let Icon = Clock;
-
-                  if (log.level === 'success' || log.type === 'action') {
-                    badgeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-                    Icon = CheckCircle2;
-                  } else if (log.level === 'warning') {
-                    badgeColor = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
-                    Icon = AlertCircle;
-                  } else if (log.level === 'error') {
-                    badgeColor = 'text-red-400 bg-red-500/10 border-red-500/20';
-                    Icon = ShieldAlert;
-                  }
-
-                  return (
-                    <div
-                      key={log.id}
-                      className="group flex flex-col gap-1.5 p-3 rounded-2xl border border-slate-800/40 bg-slate-950/40 hover:border-slate-800 transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${badgeColor}`}>
-                          <Icon size={10} />
-                          {log.type === 'action' ? 'Trigger' : log.level}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          {new Date(log.created_at).toLocaleTimeString()}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-300 leading-relaxed break-words">
-                        {log.message}
-                      </p>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={logEndRef} />
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Chat Interface */}
-        <div className="flex flex-1 flex flex-col bg-[#090d16] border border-slate-800 rounded-3xl p-4 md:p-6 relative min-h-[min(70dvh,720px)] lg:min-h-[480px]">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800/50 mb-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-teal-400" />
-              <span className="text-sm font-black uppercase tracking-wider text-slate-200">Talk to Bonnie</span>
-            </div>
-            <div className="flex items-center gap-2">
-              {pendingCount > 0 && (
-                <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
-                  {pendingCount} pending
-                </span>
-              )}
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full">
-                <span className="text-[10px] font-black text-teal-400/80 uppercase tracking-wider">
-                  Bonnie AI · Agentic
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-[280px]">
-            <BonnieChatPanel
-              streaming
-              storageKey={tenantId ? `bonnie_chat_full_${tenantId}` : undefined}
-              placeholder="Tell Bonnie what to run (e.g. audit overdue invoices, send WhatsApp, publish campaign, find Facebook leads)…"
-              introMessage="I'm Bonnie AI — your full-stack workspace agent. Chat naturally; I execute real tools across CRM, finance, outreach, social, WhatsApp, and automation."
-              onSend={handleBonnieMessage}
-              onStreamSend={handleBonnieStream}
-              onResolveApproval={handleResolveApproval}
-              tenantId={tenantId}
-              pathname={contextPath || undefined}
-              userRole={user?.role}
+        <div className="relative min-h-0 flex-1">
+          {showWelcome && !activeConversationId ? (
+            <BonnieWelcome
+              workspaceName={currentTenant?.name}
+              suggestions={suggestions}
+              onSelect={(prompt) => {
+                setShowWelcome(false);
+                setExternalPrompt(prompt);
+              }}
             />
-          </div>
+          ) : (
+            <div className="absolute inset-0 p-2 sm:p-3">
+              <BonnieChatPanel
+                workspaceMode
+                streaming
+                conversationId={activeConversationId}
+                storageKey={tenantId ? `bonnie_chat_ws_${tenantId}` : undefined}
+                externalPrompt={externalPrompt}
+                onExternalPromptConsumed={() => setExternalPrompt(null)}
+                placeholder="Message Bonnie… Use @customer @invoice @project · / for commands"
+                introMessage="I'm Bonnie — your Alphaclone Systems operating assistant. Ask for research, drafts, or actions. High-risk work always waits for your approval."
+                onSend={handleBonnieMessage}
+                onStreamSend={handleBonnieStream}
+                onResolveApproval={handleResolveApproval}
+                tenantId={tenantId}
+                pathname={contextPath || undefined}
+                userRole={user?.role}
+              />
+            </div>
+          )}
         </div>
+      </section>
 
+      <div className={`${contextOpen ? 'hidden lg:flex' : 'hidden'} h-full`}>
+        <BonnieContextPanel
+          open={contextOpen}
+          onClose={() => setContextOpen(false)}
+          items={contextItems}
+          onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
+          pendingApprovals={pendingCount}
+          connectionStatus="connected"
+        />
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
-      ` }} />
+      {contextOpen && (
+        <div className="fixed inset-x-0 bottom-0 z-30 max-h-[55vh] overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-950 lg:hidden">
+          <BonnieContextPanel
+            open
+            onClose={() => setContextOpen(false)}
+            items={contextItems}
+            onRemove={(id) => setContextItems((prev) => prev.filter((item) => item.id !== id))}
+            pendingApprovals={pendingCount}
+          />
+        </div>
+      )}
     </div>
   );
 }
