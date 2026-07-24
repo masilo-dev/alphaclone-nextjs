@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Apply uploads Storage RLS migration.
+ * Apply tenant membership helper fix + uploads Storage RLS.
+ * Fixes: ERROR 42703 column tu.status does not exist
  * Usage: DATABASE_URL='postgresql://...' node scripts/apply-uploads-storage-rls.mjs
  */
 import fs from "node:fs";
@@ -37,8 +38,10 @@ function getEnv(key) {
   return process.env[key];
 }
 
-const MIGRATION =
-  "supabase/migrations/20260724223000_uploads_storage_tenant_rls.sql";
+const MIGRATIONS = [
+  "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+  "supabase/migrations/20260724230001_uploads_storage_policies_dashboard.sql",
+];
 
 async function main() {
   const dbUrl =
@@ -55,13 +58,6 @@ async function main() {
     process.exit(1);
   }
 
-  const full = path.resolve(process.cwd(), MIGRATION);
-  if (!fs.existsSync(full)) {
-    console.error(`Migration not found: ${MIGRATION}`);
-    process.exit(1);
-  }
-
-  const sql = fs.readFileSync(full, "utf8");
   const client = new Client({
     connectionString: dbUrl,
     ssl: { rejectUnauthorized: false },
@@ -72,15 +68,23 @@ async function main() {
   console.log("Connected to database");
 
   try {
-    console.log(`Applying ${MIGRATION}...`);
-    await client.query("BEGIN");
-    try {
-      await client.query(sql);
-      await client.query("COMMIT");
-      console.log(`OK ${MIGRATION}`);
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
+    for (const migration of MIGRATIONS) {
+      const full = path.resolve(process.cwd(), migration);
+      if (!fs.existsSync(full)) {
+        console.error(`Migration not found: ${migration}`);
+        process.exit(1);
+      }
+      const sql = fs.readFileSync(full, "utf8");
+      console.log(`Applying ${migration}...`);
+      await client.query("BEGIN");
+      try {
+        await client.query(sql);
+        await client.query("COMMIT");
+        console.log(`OK ${migration}`);
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      }
     }
   } finally {
     await client.end();

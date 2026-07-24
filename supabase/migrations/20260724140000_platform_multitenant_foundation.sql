@@ -2,6 +2,9 @@
 -- Alphaclone Systems is one ordinary tenant — never a global default.
 
 -- ─── Membership helpers ─────────────────────────────────────────────────────
+-- NOTE: Do not reference tu.status directly — older schemas lack that column and
+-- Postgres validates SQL-function bodies at CREATE time (ERROR 42703).
+-- to_jsonb(tu)->>'status' is safe whether or not the column exists.
 CREATE OR REPLACE FUNCTION public.get_user_tenant_ids()
 RETURNS SETOF uuid
 LANGUAGE sql
@@ -12,13 +15,7 @@ AS $$
   SELECT tu.tenant_id
   FROM public.tenant_users tu
   WHERE tu.user_id = auth.uid()
-    AND (
-      NOT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND table_name = 'tenant_users' AND column_name = 'status'
-      )
-      OR COALESCE(tu.status, 'active') = 'active'
-    );
+    AND COALESCE(to_jsonb(tu)->>'status', 'active') = 'active';
 $$;
 
 CREATE OR REPLACE FUNCTION public.user_belongs_to_tenant(p_tenant_id uuid)
@@ -33,13 +30,7 @@ AS $$
     FROM public.tenant_users tu
     WHERE tu.tenant_id = p_tenant_id
       AND tu.user_id = auth.uid()
-      AND (
-        NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_schema = 'public' AND table_name = 'tenant_users' AND column_name = 'status'
-        )
-        OR COALESCE(tu.status, 'active') = 'active'
-      )
+      AND COALESCE(to_jsonb(tu)->>'status', 'active') = 'active'
   );
 $$;
 
@@ -65,14 +56,8 @@ AS $$
     FROM public.tenant_users tu
     WHERE tu.tenant_id = p_tenant_id
       AND tu.user_id = auth.uid()
-      AND lower(COALESCE(tu.role, '')) IN ('owner', 'admin', 'administrator', 'super_admin')
-      AND (
-        NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_schema = 'public' AND table_name = 'tenant_users' AND column_name = 'status'
-        )
-        OR COALESCE(tu.status, 'active') = 'active'
-      )
+      AND lower(COALESCE(tu.role, '')) IN ('owner', 'admin', 'administrator', 'super_admin', 'tenant_admin')
+      AND COALESCE(to_jsonb(tu)->>'status', 'active') = 'active'
   );
 $$;
 
