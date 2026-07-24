@@ -238,7 +238,7 @@ defineConnectorTool({
     provider: z
       .enum(['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'])
       .optional(),
-    attachments: z.array(z.record(z.unknown())).optional(),
+    attachments: z.array(z.record(z.string(), z.unknown())).optional(),
     idempotency_key: z.string().min(1),
   }),
   jsonSchema: {
@@ -314,7 +314,13 @@ defineConnectorTool({
             contentType: a.contentType,
           }))
         : undefined,
-      preferredProvider: args.provider,
+      preferredProvider:
+        args.provider === 'zoho' ||
+        args.provider === 'brevo' ||
+        args.provider === 'sendgrid' ||
+        args.provider === 'resend'
+          ? args.provider
+          : undefined,
     });
 
     if (!result.success) {

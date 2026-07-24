@@ -228,39 +228,44 @@ export async function ingestPublishMedia(params: {
   if (Array.isArray(params.media)) {
     for (const item of params.media) {
       if (!item || typeof item !== 'object') continue;
-      // Accept snake_case variants from MCP clients
-      const raw = item as MediaInput & {
-        asset_id?: string;
-        mime_type?: string;
-        data_url?: string;
-        document_id?: string;
-        storage_bucket?: string;
-        storage_path?: string;
-      };
-      if (raw.type === 'asset_id' || raw.asset_id) {
-        inputs.push({ type: 'asset_id', assetId: raw.assetId || raw.asset_id! });
-      } else if (raw.type === 'base64' || (raw as { data?: string }).data) {
+      // Accept snake_case variants from MCP clients (loose bag — MediaInput intersection
+      // collapses discriminant fields under TypeScript).
+      const raw = item as Record<string, unknown>;
+      const type = typeof raw.type === 'string' ? raw.type : undefined;
+      if (type === 'asset_id' || typeof raw.asset_id === 'string' || typeof raw.assetId === 'string') {
+        inputs.push({
+          type: 'asset_id',
+          assetId: String(raw.assetId || raw.asset_id),
+        });
+      } else if (type === 'base64' || typeof raw.data === 'string') {
         inputs.push({
           type: 'base64',
-          data: (raw as { data: string }).data,
-          mimeType: raw.mimeType || raw.mime_type || 'image/png',
-          filename: raw.filename || 'upload.png',
+          data: String(raw.data),
+          mimeType: String(raw.mimeType || raw.mime_type || 'image/png'),
+          filename: String(raw.filename || 'upload.png'),
         });
-      } else if (raw.type === 'data_url' || raw.data_url) {
+      } else if (type === 'data_url' || typeof raw.data_url === 'string' || typeof raw.dataUrl === 'string') {
         inputs.push({
           type: 'data_url',
-          dataUrl: (raw as { dataUrl?: string }).dataUrl || raw.data_url!,
-          filename: raw.filename,
+          dataUrl: String(raw.dataUrl || raw.data_url),
+          filename: typeof raw.filename === 'string' ? raw.filename : undefined,
         });
-      } else if (raw.type === 'url' || (raw as { url?: string }).url) {
-        inputs.push({ type: 'url', url: (raw as { url: string }).url, filename: raw.filename });
-      } else if (raw.type === 'document_id' || raw.document_id) {
-        inputs.push({ type: 'document_id', documentId: raw.documentId || raw.document_id! });
-      } else if (raw.type === 'storage_path' || raw.storage_path) {
+      } else if (type === 'url' || typeof raw.url === 'string') {
+        inputs.push({
+          type: 'url',
+          url: String(raw.url),
+          filename: typeof raw.filename === 'string' ? raw.filename : undefined,
+        });
+      } else if (type === 'document_id' || typeof raw.document_id === 'string' || typeof raw.documentId === 'string') {
+        inputs.push({
+          type: 'document_id',
+          documentId: String(raw.documentId || raw.document_id),
+        });
+      } else if (type === 'storage_path' || typeof raw.storage_path === 'string' || typeof raw.path === 'string') {
         inputs.push({
           type: 'storage_path',
-          bucket: raw.bucket || raw.storage_bucket || 'public-assets',
-          path: raw.path || raw.storage_path!,
+          bucket: String(raw.bucket || raw.storage_bucket || 'public-assets'),
+          path: String(raw.path || raw.storage_path),
         });
       }
     }

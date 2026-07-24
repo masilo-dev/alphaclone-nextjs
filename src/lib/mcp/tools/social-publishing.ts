@@ -288,7 +288,7 @@ registerTool('social-publishing', {
     identity_type: z.enum(['facebook_page', 'linkedin_person', 'linkedin_organization']).optional(),
     caption: z.string().optional(),
     content: z.string().optional(),
-    media: z.array(z.record(z.unknown())).optional(),
+    media: z.array(z.record(z.string(), z.unknown())).optional(),
     media_asset_ids: z.array(z.string().uuid()).optional(),
     media_urls: z.array(z.string()).optional(),
     link_url: z.string().url().optional(),
