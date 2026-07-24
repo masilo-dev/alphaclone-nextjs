@@ -220,11 +220,11 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-5 min-w-0">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 sm:gap-3 mb-1 min-w-0">
-                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-teal-600 to-cyan-600 rounded-xl sm:rounded-2xl shadow-xl shadow-violet-500/20 shrink-0">
+                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-teal-600 to-cyan-600 rounded-xl sm:rounded-lg shadow-xl shadow-teal-900/20 shrink-0">
                             <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
                         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight break-words">
-                            Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">Overview</span>
+                            Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-teal-500">Overview</span>
                         </h2>
                     </div>
                     <p className="text-slate-500 text-sm ml-1 mt-2 flex items-center gap-2">
@@ -267,7 +267,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-bold text-slate-900 transition-all hover:bg-violet-50 active:scale-95 shadow-xl hover:shadow-white/10"
+                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-bold text-slate-900 transition-all hover:bg-teal-50 active:scale-95 shadow-xl hover:shadow-white/10"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         New Project
@@ -280,7 +280,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 {viewMode === 'list' ? (
                     <div className="h-full flex flex-col space-y-4">
                         {/* List Header */}
-                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-full text-[11px] font-black uppercase tracking-[0.22em] text-slate-500">
+                        <div className="hidden lg:grid grid-cols-12 gap-4 px-5 py-3 bg-slate-900/40 border border-white/5 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                             <div className="col-span-5">Project</div>
                             <div className="col-span-2 text-center">Status</div>
                             <div className="col-span-2 text-center">Health & Risk</div>
@@ -364,7 +364,7 @@ const ProjectListRow = ({
     return (
         <div 
             onClick={() => onViewDetails(project)}
-            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-violet-500/30 rounded-2xl transition-all duration-300 relative overflow-hidden cursor-pointer"
+            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-teal-500/30 rounded-lg transition-all duration-300 relative overflow-hidden cursor-pointer"
         >
             {/* Status Indicator Line */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-red-500 animate-pulse' :
@@ -393,7 +393,7 @@ const ProjectListRow = ({
                         )}
                         <div className="w-24 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
-                                className="h-full bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full transition-all duration-1000"
+                                className="h-full bg-gradient-to-r from-teal-500 to-cyan-600 rounded-full transition-all duration-1000"
                                 style={{ width: `${project.progress}%` }}
                             />
                         </div>
@@ -443,7 +443,7 @@ const ProjectListRow = ({
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
                     <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                        project.status === 'in_progress' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
+                        project.status === 'in_progress' ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' :
                             'bg-slate-800 text-slate-400 border-white/5'
                         }`}>
                         {project.status.replace('_', ' ')}
@@ -469,7 +469,7 @@ const ProjectListRow = ({
                 <div className="flex items-end justify-end gap-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                        className="h-8 w-8 p-0.5 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-full transition-all"
+                        className="h-8 w-8 p-0.5 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-full transition-all"
                         title="Edit project"
                     >
                         <Activity className="w-3.5 h-3.5" />
@@ -487,7 +487,7 @@ const ProjectListRow = ({
             {/* Status */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                    project.status === 'in_progress' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
+                    project.status === 'in_progress' ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
                     }`}>
                     {project.status.replace('_', ' ')}
@@ -520,7 +520,7 @@ const ProjectListRow = ({
             <div className="hidden lg:flex col-span-1 lg:col-span-1 justify-end gap-1">
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                    className="p-2 hover:bg-violet-500/10 text-slate-500 hover:text-violet-400 rounded-lg transition-all"
+                    className="p-2 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-lg transition-all"
                     title="Edit project"
                 >
                     <Activity className="w-4 h-4" />
@@ -555,8 +555,8 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
                     label="Total Projects"
                     value={stats.total}
                     icon={Briefcase}
-                    color="text-violet-400"
-                    bg="bg-violet-500/10"
+                    color="text-teal-400"
+                    bg="bg-teal-500/10"
                 />
                 <HealthStatCard
                     label="Portfolio Value"
@@ -613,7 +613,7 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
 const HealthStatCard = ({ label, value, icon: Icon, color, bg, warning }: any) => (
     <div className={`p-6 rounded-3xl border transition-all duration-500 group hover:scale-[1.02] ${warning ? 'bg-red-500/5 border-red-500/20' : 'bg-slate-900/40 border-white/5 hover:border-white/10'}`}>
         <div className="flex items-start justify-between mb-4">
-            <div className={`p-3 rounded-2xl ${bg} ${warning ? 'animate-pulse' : ''}`}>
+            <div className={`p-3 rounded-lg ${bg} ${warning ? 'animate-pulse' : ''}`}>
                 <Icon className={`w-5 h-5 ${color}`} />
             </div>
             {warning && <span className="flex h-2 w-2 rounded-full bg-red-500" />}
@@ -655,8 +655,8 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
     }, [initialData]);
 
     return (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center z-[1100] p-0 sm:p-4 overflow-y-auto">
-            <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-[2rem] p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-violet-500/10 animate-in zoom-in-95 duration-200 my-auto">
+        <div className="fixed inset-0 bg-slate-950/80  flex items-end sm:items-center justify-center z-[1100] p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-teal-900/20 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
@@ -665,24 +665,24 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                     <div className="space-y-1.5">
                         <label className="text-sm font-semibold text-slate-300 ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-medium focus:border-violet-400 outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-medium focus:border-teal-500 outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-sm font-semibold text-slate-300 ml-1">Briefing</label>
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-normal focus:border-violet-400 outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-normal focus:border-teal-500 outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-300 ml-1">Due Date</label>
                             <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-violet-400 outline-none" />
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-300 ml-1">Client</label>
                             <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-violet-400 outline-none appearance-none">
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none appearance-none">
                                 <option value="">Internal</option>
                                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
@@ -695,7 +695,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             <select
                                 value={formData.currentStage}
                                 onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-violet-400 outline-none appearance-none"
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none appearance-none"
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
                                     const currentIdx = initialData ? PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(initialData.currentStage)) : 0;
@@ -710,7 +710,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             <select
                                 value={formData.health}
                                 onChange={(e) => setFormData({ ...formData, health: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-violet-400 outline-none appearance-none"
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none appearance-none"
                             >
                                 <option value="On Track">On Track</option>
                                 <option value="At Risk">At Risk</option>
@@ -725,14 +725,14 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             type="number"
                             value={formData.budget}
                             onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
-                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-2xl text-white font-bold focus:border-violet-400 outline-none shadow-inner"
+                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none shadow-inner"
                             placeholder="0.00"
                         />
                     </div>
 
                     <div className="flex gap-4 pt-6">
-                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl font-bold text-sm text-slate-300 transition-all">Cancel</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-violet-600 hover:bg-violet-500 text-white rounded-2xl font-bold text-sm transition-all shadow-lg shadow-violet-500/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
+                        <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold text-sm text-slate-300 transition-all">Cancel</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-teal-900/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
             </div>
@@ -784,19 +784,19 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                     const width = Math.max(2, endPos - startPos);
 
                     return (
-                        <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-violet-500/30">
+                        <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-teal-500/30">
                             <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-white/5 bg-slate-900/20 backdrop-blur-sm">
-                                <h4 className="text-xs font-bold text-slate-200 group-hover:text-violet-400 transition-colors truncate">{proj.name}</h4>
+                                <h4 className="text-xs font-bold text-slate-200 group-hover:text-teal-400 transition-colors truncate">{proj.name}</h4>
                             </div>
                             <div className="flex-1 relative h-14 flex items-center px-2">
                                 <div className="absolute inset-0 flex divide-x divide-white/5 pointer-events-none">
                                     {months.map((_, i) => <div key={i} className="flex-1 h-full"></div>)}
                                 </div>
                                 <div
-                                    className="absolute h-6 rounded-lg group-hover:h-7 transition-all duration-300 flex items-center shadow-lg hover:shadow-violet-500/10 overflow-hidden cursor-pointer bg-gradient-to-r from-violet-500/20 to-indigo-500/20 border border-violet-500/30"
+                                    className="absolute h-6 rounded-lg group-hover:h-7 transition-all duration-300 flex items-center shadow-lg hover:shadow-teal-900/20 overflow-hidden cursor-pointer bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-teal-500/30"
                                     style={{ left: `${startPos}%`, width: `${width}%` }}
                                 >
-                                    <div className="absolute top-0 bottom-0 left-0 bg-violet-500/20" style={{ width: `${proj.progress}%` }}></div>
+                                    <div className="absolute top-0 bottom-0 left-0 bg-teal-500/20" style={{ width: `${proj.progress}%` }}></div>
                                     <span className="relative px-3 text-xs text-white truncate drop-shadow-md">{proj.name}</span>
                                 </div>
                             </div>
@@ -1028,7 +1028,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-3xl md:rounded-2xl bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[1110] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
+                className="fixed bottom-0 left-0 right-0 md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full h-[92vh] md:h-auto md:max-h-[85vh] md:max-w-md rounded-t-lg md:rounded-lg bg-slate-950 border-t md:border border-white/10 flex flex-col overflow-hidden z-[1110] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
             >
                 {/* Drag Handle Indicator */}
                 <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto my-3 md:hidden" />
@@ -1051,11 +1051,11 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                         <p className="text-slate-400 text-sm leading-relaxed">{project.description || 'No description provided.'}</p>
                     </div>
 
-                    <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-6">
+                    <div className="bg-slate-900/40 border border-white/5 rounded-lg p-4 flex items-center justify-between gap-6">
                         <div className="relative w-24 h-24 flex-shrink-0">
                             <svg className="w-full h-full transform -rotate-90">
                                 <circle cx="48" cy="48" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                                <circle cx="48" cy="48" r={radius} className="stroke-violet-500 transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+                                <circle cx="48" cy="48" r={radius} className="stroke-teal-500 transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
                                 {progress || 0}%
@@ -1086,7 +1086,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                         </div>
                         <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
-                                className="h-full bg-gradient-to-r from-teal-500 to-indigo-500 rounded-full transition-all duration-1000"
+                                className="h-full bg-gradient-to-r from-teal-500 to-cyan-600 rounded-full transition-all duration-1000"
                                 style={{ width: `${progress || 0}%` }}
                             />
                         </div>
@@ -1119,7 +1119,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                 </span>
                             )}
                         </div>
-                        <div className="space-y-2 bg-slate-950/20 rounded-2xl p-3 border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2 bg-slate-950/20 rounded-lg p-3 border border-white/5 max-h-48 overflow-y-auto custom-scrollbar">
                             {milestonesLoading ? (
                                 [...Array(4)].map((_, i) => <div key={i} className="h-6 bg-slate-900/60 rounded animate-pulse" />)
                             ) : milestones.length === 0 ? (
@@ -1154,7 +1154,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                     </div>
 
                     {(clientEmail || clientName) && (
-                        <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-4 space-y-1">
+                        <div className="rounded-lg border border-white/5 bg-slate-900/40 p-4 space-y-1">
                             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Client Inbox</p>
                             <p className="text-sm text-white font-semibold truncate">{clientName || 'Linked client'}</p>
                             {clientEmail ? (
@@ -1179,7 +1179,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Project Notes</span>
                             <span className="text-[11px] text-slate-500">{comments.length} messages</span>
                         </div>
-                        <div className="space-y-2 bg-slate-950/20 rounded-2xl p-3 border border-white/5 max-h-72 overflow-y-auto custom-scrollbar">
+                        <div className="space-y-2 bg-slate-950/20 rounded-lg p-3 border border-white/5 max-h-72 overflow-y-auto custom-scrollbar">
                             {commentsLoading ? (
                                 [...Array(3)].map((_, i) => <div key={i} className="h-16 bg-slate-900/60 rounded-xl animate-pulse" />)
                             ) : comments.length === 0 ? (
@@ -1217,13 +1217,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                 <input
                                     value={commentAuthorName}
                                     onChange={(e) => setCommentAuthorName(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-violet-400"
+                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-teal-500"
                                     placeholder="Your name"
                                 />
                                 <input
                                     value={commentAuthorEmail}
                                     onChange={(e) => setCommentAuthorEmail(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-violet-400"
+                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-teal-500"
                                     placeholder="Your email"
                                     type="email"
                                 />
@@ -1231,13 +1231,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             <textarea
                                 value={commentDraft}
                                 onChange={(e) => setCommentDraft(e.target.value)}
-                                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-violet-400 resize-none min-h-[96px]"
+                                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-teal-500 resize-none min-h-[96px]"
                                 placeholder="Leave a note, ask a question, or record a client update..."
                             />
                             <button
                                 type="submit"
                                 disabled={postingComment || !commentDraft.trim() || !commentAuthorName.trim()}
-                                className="w-full px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all"
+                                className="w-full px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all"
                             >
                                 {postingComment ? 'Saving...' : 'Add Note'}
                             </button>
@@ -1246,11 +1246,11 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                 </div>
 
                 {/* Sticky Action Footer */}
-                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md px-6 py-4 border-t border-white/10 z-10 flex gap-3 items-center justify-end">
+                <div className="absolute bottom-0 left-0 right-0 bg-slate-950/90 px-6 py-4 border-t border-white/10 z-10 flex gap-3 items-center justify-end">
                     <button
                         onClick={handleShareWithClient}
                         title="Copy a public link to share this project's progress and milestones with the client"
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/30 rounded-xl font-bold text-xs transition-all"
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 rounded-md font-semibold text-xs transition-all"
                     >
                         <Share2 className="w-3.5 h-3.5" />
                         Share with Client

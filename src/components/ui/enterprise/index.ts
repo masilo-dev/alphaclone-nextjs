@@ -6,8 +6,9 @@ export { EnterpriseDataTable, type EnterpriseColumn } from '@/components/ui/Ente
 export { MetricCard, MetricCardSkeleton } from '@/components/dashboard/MetricCard';
 export { ModuleDashboardLayout } from '@/components/dashboard/ModuleDashboardLayout';
 export { EmptyState } from '@/components/ui/EmptyState';
-export { StatusBadge, invoiceStatusVariant, quoteStatusVariant, inboxStatusVariant, dealStatusVariant, expenseStatusVariant, ticketStatusVariant, userStatusVariant } from '@/components/ui/StatusBadge';
+export { StatusBadge, invoiceStatusVariant, quoteStatusVariant, inboxStatusVariant, dealStatusVariant, expenseStatusVariant, ticketStatusVariant, ticketPriorityVariant, userStatusVariant } from '@/components/ui/StatusBadge';
 export type { StatusBadgeVariant } from '@/components/ui/StatusBadge';
+export { AC, alphacloneChakraTheme } from '@/theme/chakraTheme';
 export { useBlurValidation } from '@/hooks/useBlurValidation';
 export { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 export { ENTERPRISE, WORKSPACE } from '@/constants/design';

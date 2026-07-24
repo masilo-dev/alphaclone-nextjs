@@ -47,7 +47,7 @@ import {
 | Finance             | EnterpriseDataTable (invoices) | expense + invoice detail | invoice/expense |
 | Contact Submissions | EnterpriseDataTable            | detail                   | inbox           |
 | CRM                 | responsive table               | create + qualify         | —               |
-| DeepDesk            | split pane                     | create ticket            | —               |
+| DeepDesk            | Chakra split pane              | create ticket            | status/priority |
 | Admin Users         | EnterpriseDataTable            | —                        | user status     |
 | Document Vault      | table                          | upload                   | —               |
 
