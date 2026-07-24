@@ -179,7 +179,15 @@ export const authService = {
         password: string,
         name: string,
         role: UserRole = 'tenant_admin',
-        options?: { businessName?: string; plan?: string; referralCode?: string }
+        options?: {
+            businessName?: string;
+            plan?: string;
+            referralCode?: string;
+            marketingOptIn?: boolean;
+            euConsent?: boolean;
+            ageConfirmed?: boolean;
+            legalAccepted?: boolean;
+        }
     ): Promise<{ user: User | null; error: string | null; needsEmailConfirmation?: boolean }> {
         const configError = supabaseConfigError();
         if (configError) {
@@ -221,32 +229,56 @@ export const authService = {
                 console.warn('Failed to fetch location for registration', e);
             }
 
+            // Email confirmation links must land on /auth/callback so workspace + prefs can finish.
+            const emailRedirectTo = buildAuthCallbackRedirect('/dashboard');
+
             const { data, error } = await withAuthTimeout(supabase.auth.signUp({
                 email: validated.email,
                 password: validated.password,
                 options: {
+                    emailRedirectTo,
                     data: {
                         name: validated.name,
+                        full_name: validated.name,
                         role,
                         account_type: 'business_owner',
                         registration_country: registrationCountry,
                         business_name: options?.businessName?.trim() || undefined,
                         plan: options?.plan || 'free',
                         referral_code: options?.referralCode?.trim() || undefined,
+                        // Persist consent through email-confirmation (no session until confirmed).
+                        marketing_opt_in: Boolean(options?.marketingOptIn),
+                        legal_accepted: options?.legalAccepted !== false,
+                        eu_consent: Boolean(options?.euConsent),
+                        age_confirmed: Boolean(options?.ageConfirmed),
+                        signup_method: 'email',
                     },
                 },
             }));
 
             if (error) {
                 console.error("SignUp Error:", error);
-                if (String(error.message || '').toLowerCase().includes('permanently blocked')) {
+                const msg = String(error.message || '').toLowerCase();
+                if (msg.includes('permanently blocked')) {
                     return { user: null, error: 'This email address is permanently blocked after account deletion.' };
+                }
+                if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('already exists')) {
+                    return { user: null, error: 'An account with this email already exists. Please sign in instead, or reset your password.' };
                 }
                 return { user: null, error: error.message };
             }
 
             if (!data.user) {
                 return { user: null, error: 'No user data returned' };
+            }
+
+            // Supabase anti-enumeration: existing emails return a user with empty identities and no error.
+            const identities = Array.isArray(data.user.identities) ? data.user.identities : [];
+            if (identities.length === 0) {
+                return {
+                    user: null,
+                    error: 'An account with this email already exists. Please sign in instead, or reset your password.',
+                };
             }
 
             const user: User = {

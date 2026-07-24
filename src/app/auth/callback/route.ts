@@ -201,6 +201,51 @@ export async function GET(request: Request) {
                     }
                 }
 
+                // Apply signup consent prefs after email confirmation (no session existed at signUp).
+                if (user.user_metadata?.signup_method === 'email' && !user.user_metadata?.communication_prefs_applied_at) {
+                    try {
+                        const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
+                        const admin = createSupabaseAdminClient()
+                        const marketing = Boolean(user.user_metadata?.marketing_opt_in)
+                        const profileName = String(
+                            user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+                        ).trim()
+                        const consentAt = new Date().toISOString()
+                        await admin.from('profiles').upsert(
+                            {
+                                id: user.id,
+                                email: user.email,
+                                name: profileName,
+                                role: 'tenant_admin',
+                                communication_prefs: {
+                                    transactional: true,
+                                    product_updates: true,
+                                    marketing,
+                                    sms: false,
+                                    legal_acceptance: {
+                                        accepted_at: consentAt,
+                                        policy_version: '2026-06-01',
+                                        eu_consent: Boolean(user.user_metadata?.eu_consent) || null,
+                                        age_confirmed: Boolean(user.user_metadata?.age_confirmed) || null,
+                                        terms_url: 'https://alphaclonesystems.com/terms-of-service',
+                                        privacy_url: 'https://alphaclonesystems.com/privacy-policy',
+                                    },
+                                },
+                                gdpr_consent_date: consentAt,
+                            },
+                            { onConflict: 'id' }
+                        )
+                        await admin.auth.admin.updateUserById(user.id, {
+                            user_metadata: {
+                                ...user.user_metadata,
+                                communication_prefs_applied_at: consentAt,
+                            },
+                        })
+                    } catch (prefsErr) {
+                        console.error('[auth/callback] Failed to apply registration communication prefs:', prefsErr)
+                    }
+                }
+
                 let next = requestedNext ?? '/dashboard'
                 if (requestedNext) {
                     // Only allow same-origin relative redirects (OAuth return, dashboard).

@@ -213,6 +213,10 @@ function LoginContent() {
                       businessName,
                       plan: selectedPlan,
                       referralCode: referralCodeParam,
+                      marketingOptIn,
+                      euConsent,
+                      ageConfirmed,
+                      legalAccepted,
                     });
                     
                     if (signupResult.error) {
@@ -271,7 +275,9 @@ function LoginContent() {
                     } else if (errorMsg.toLowerCase().includes('permanently blocked') || errorMsg.toLowerCase().includes('blocked after account deletion')) {
                         setError('This email was permanently deleted and is banned from registering again.');
                     } else if (errorMsg.toLowerCase().includes('password')) {
-                        setError('Your password does not meet the security requirements. Use at least 8 characters.');
+                        setError(errorMsg.includes('12') || errorMsg.toLowerCase().includes('uppercase') || errorMsg.toLowerCase().includes('special')
+                            ? errorMsg
+                            : 'Your password does not meet the security requirements. Use at least 12 characters with upper, lower, number, and special character.');
                     } else {
                         setError(errorMsg);
                     }
