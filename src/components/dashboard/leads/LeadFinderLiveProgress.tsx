@@ -26,8 +26,9 @@ const STEP_HINTS = [
   'Geocoding location (Nominatim / Photon)',
   'Scraping OpenStreetMap Overpass',
   'Querying Wikidata organizations',
-  'Merging free directory fallbacks',
-  'Ranking by reach distance',
+  'Railway Playwright contact scrape',
+  'Extracting decision makers from websites',
+  'Dropping leads without phone or email',
 ];
 
 export default function LeadFinderLiveProgress({
@@ -152,7 +153,7 @@ export default function LeadFinderLiveProgress({
 
         <p className="text-[11px] text-slate-500 flex items-start gap-1.5">
           <MapPin className="w-3 h-3 mt-0.5 shrink-0 text-teal-500" />
-          Free sources only: OpenStreetMap Overpass, Nominatim/Photon geocoding, Wikidata, DuckDuckGo, Foursquare free tier.
+          Free sources + Railway Playwright enrichment. Every returned lead has phone or email — website-only rows are dropped.
         </p>
       </div>
     </div>
