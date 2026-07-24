@@ -28,7 +28,8 @@ test("ChatGPT connector clients are still detected for curated catalog", () => {
     isChatgptClient({ clientId: "chatgpt-connector", userAgent: "ChatGPT" }),
     true,
   );
-  assert.equal(isChatgptClient({ clientLabel: "OpenAI Apps Connector" }), true);
+  // Labels/UA alone must NOT flip curated mode — registration id does
+  assert.equal(isChatgptClient({ clientLabel: "OpenAI Apps Connector" }), false);
   assert.ok(CHATGPT_CONNECTOR_TOOL_NAMES.length > 20);
 });
 

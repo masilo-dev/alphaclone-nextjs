@@ -4,6 +4,9 @@
  * Supports exact matches and a trailing `/*` path-prefix pattern, with strict
  * parsing: exact scheme + hostname, allowed path prefix, no userinfo,
  * no open redirects via encoded paths or suffix domains.
+ *
+ * Universal MCP: redirect allowlists come from registered client metadata only.
+ * Do not inject provider-specific URIs at authorize time.
  */
 export function isRedirectUriAllowed(redirectUri: string, allowed: string[]): boolean {
   if (!redirectUri || !allowed?.length) return false;
@@ -15,10 +18,8 @@ export function isRedirectUriAllowed(redirectUri: string, allowed: string[]): bo
     return false;
   }
 
-  // Reject credentials in URL (https://chatgpt.com@evil.com/...)
   if (target.username || target.password) return false;
 
-  // Reject path tricks that escape intended prefixes
   if (target.pathname.includes('..') || target.pathname.includes('%2e') || target.pathname.includes('%2E')) {
     return false;
   }
@@ -28,18 +29,16 @@ export function isRedirectUriAllowed(redirectUri: string, allowed: string[]): bo
 
     try {
       if (pattern.endsWith('/*')) {
-        const prefix = pattern.slice(0, -1); // keep trailing /
+        const prefix = pattern.slice(0, -1);
         const base = new URL(prefix);
 
         if (base.username || base.password) continue;
         if (target.protocol !== base.protocol) continue;
         if (target.hostname.toLowerCase() !== base.hostname.toLowerCase()) continue;
-        // Exact host only — never suffix-domain match (chatgpt.com.evil.com)
         if (target.port !== base.port) continue;
 
         const allowedPath = base.pathname.endsWith('/') ? base.pathname : `${base.pathname}/`;
         const targetPath = target.pathname.endsWith('/') ? target.pathname : `${target.pathname}/`;
-        // Path must start with the allowed prefix (after normalizing trailing slash for compare)
         if (
           target.pathname === base.pathname.replace(/\/$/, '') ||
           target.pathname.startsWith(allowedPath) ||
@@ -50,7 +49,6 @@ export function isRedirectUriAllowed(redirectUri: string, allowed: string[]): bo
       } else if (pattern === redirectUri) {
         return true;
       } else {
-        // Exact URL compare ignoring trailing slash on path
         const exact = new URL(pattern);
         if (exact.username || exact.password) continue;
         if (
@@ -70,7 +68,8 @@ export function isRedirectUriAllowed(redirectUri: string, allowed: string[]): bo
   return false;
 }
 
-export const CHATGPT_OAUTH_REDIRECT_URIS = [
+/** Seed redirect URIs for the OpenAI Apps connector client only (stored on that client row). */
+export const OPENAI_APPS_OAUTH_REDIRECT_URIS = [
   'https://chatgpt.com/connector_platform_oauth_redirect',
   'https://chatgpt.com/connector/oauth/*',
   'https://chatgpt.com/connector/oauth/callback',
@@ -80,11 +79,14 @@ export const CHATGPT_OAUTH_REDIRECT_URIS = [
   'https://platform.openai.com/apps-manage/oauth/*',
 ];
 
-const MCP_CLIENT_ID_ALIASES: Record<string, string> = {
-  'alphaclone-mcp-client': 'chatgpt-connector',
-};
+/** @deprecated Use OPENAI_APPS_OAUTH_REDIRECT_URIS — kept for import compatibility */
+export const CHATGPT_OAUTH_REDIRECT_URIS = OPENAI_APPS_OAUTH_REDIRECT_URIS;
 
-/** Pre-registered OAuth clients for AI connectors (ChatGPT, Claude, Grok, Manus). */
+/**
+ * Optional bootstrap client ids that may be auto-seeded if missing.
+ * These are convenience seeds, not runtime capability gates.
+ * Any other client must use Dynamic Client Registration.
+ */
 export const PLATFORM_MCP_OAUTH_CLIENT_IDS = new Set([
   'chatgpt-connector',
   'alphaclone-mcp-client',
@@ -93,10 +95,13 @@ export const PLATFORM_MCP_OAUTH_CLIENT_IDS = new Set([
   '1778309945386-41bab8272f61',
 ]);
 
-/** Map known connector aliases to the canonical client id we store in the database. */
+/**
+ * Identity-preserving client id normalization.
+ * Never collapse a generic client into a provider-specific id.
+ */
 export function normalizeMcpClientId(clientId: string | null | undefined): string | null {
   if (!clientId) return null;
-  return MCP_CLIENT_ID_ALIASES[clientId] || clientId;
+  return clientId.trim();
 }
 
 /** Treat /api/mcp/sse as an alias for the canonical /api/mcp resource. */
@@ -132,8 +137,8 @@ export function isMcpResourceEquivalent(
 }
 
 /**
- * Browser OAuth connectors (ChatGPT, Claude.ai, etc.) send PKCE and expect a login +
- * consent page — not the legacy MCP API-key form.
+ * Browser OAuth clients send PKCE and expect login + consent — not API-key form.
+ * Decision is based on PKCE / public client flags, never provider name.
  */
 export function shouldUseBrowserOAuthConsent(params: {
   clientId: string;
@@ -141,13 +146,9 @@ export function shouldUseBrowserOAuthConsent(params: {
   isPublicClient?: boolean;
 }): boolean {
   if (params.codeChallenge) return true;
-  if (
-    PLATFORM_MCP_OAUTH_CLIENT_IDS.has(params.clientId) ||
-    PLATFORM_MCP_OAUTH_CLIENT_IDS.has(normalizeMcpClientId(params.clientId) || '')
-  ) {
-    return true;
-  }
-  return params.isPublicClient === true;
+  if (params.isPublicClient === true) return true;
+  if (PLATFORM_MCP_OAUTH_CLIENT_IDS.has(params.clientId)) return true;
+  return false;
 }
 
 export function buildAuthorizePageUrl(origin: string, searchParams: URLSearchParams): string {

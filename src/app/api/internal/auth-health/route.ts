@@ -31,13 +31,12 @@ export async function GET(req: NextRequest) {
         global: { headers: { 'X-Client-Info': 'auth-health-check' } },
       });
 
-      const { data: client } = await admin
+      const { count } = await admin
         .from('mcp_oauth_clients')
-        .select('client_id, is_active')
-        .eq('client_id', 'chatgpt-connector')
+        .select('client_id', { count: 'exact', head: true })
         .eq('is_active', true)
-        .maybeSingle();
-      oauthClientRegistered = Boolean(client?.client_id);
+        .limit(1);
+      oauthClientRegistered = (count || 0) > 0;
 
       const probe = await admin
         .from('mcp_oauth_tokens')

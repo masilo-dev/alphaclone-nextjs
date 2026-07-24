@@ -3,21 +3,21 @@ import { sanitizeToolSchemaForClient } from '@/lib/mcp/sanitizeToolSchema';
 import { SUPPLEMENTAL_MCP_TOOLS, type McpDiscoveryTool } from '@/lib/mcp/supplementalToolDefinitions';
 import {
   CHATGPT_CONNECTOR_TOOL_NAMES,
-  isChatgptClient,
   resolveToolAnnotations,
 } from '@/lib/mcp/toolAnnotations';
+import { getToolCatalogModeForClient } from '@/lib/mcp/ensureOAuthClient';
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
 let cachedFullTools: UnifiedMcpTool[] | null = null;
-let cachedChatgptTools: UnifiedMcpTool[] | null = null;
+let cachedCuratedTools: UnifiedMcpTool[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 60_000;
 
-const CHATGPT_TOOL_SET = new Set<string>(CHATGPT_CONNECTOR_TOOL_NAMES);
+const CURATED_TOOL_SET = new Set<string>(CHATGPT_CONNECTOR_TOOL_NAMES);
 
-/** Minimal ChatGPT aliases expected by some connector modes. */
-const CHATGPT_ALIAS_TOOLS: UnifiedMcpTool[] = [
+/** Optional discovery aliases (search/fetch) available to all clients. */
+const DISCOVERY_ALIAS_TOOLS: UnifiedMcpTool[] = [
   {
     name: 'search',
     description:
@@ -64,29 +64,24 @@ function withAnnotations(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
 }
 
 /**
- * Single source of truth for MCP tool discovery across Bonnie, /api/mcp, and MCPServer.
- * Priority: registry handlers → legacy manifest → supplemental definitions.
- *
- * Default = FULL catalog for Claude / Cursor / Gemini / Bonnie / generic MCP.
- * ChatGPT curated filter applies ONLY when isChatgptClient() is true.
+ * Single source of truth for MCP tool discovery.
+ * Default = FULL catalog for every standards-compliant client.
+ * Curated catalog only when the registered client seed opts in (size-limited Apps connectors).
+ * Never sniff User-Agent to decide capabilities.
  */
 export async function getUnifiedMcpTools(options?: {
   sanitizeForClient?: boolean;
   forceRefresh?: boolean;
-  /** Prefer a curated ChatGPT connector catalog when true or when client hints match ChatGPT. */
+  /** @deprecated Prefer clientId + registered catalog mode */
   forChatGPT?: boolean;
   clientId?: string | null;
   clientLabel?: string | null;
   userAgent?: string | null;
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  const chatgpt =
+  const curated =
     options?.forChatGPT === true ||
-    isChatgptClient({
-      clientId: options?.clientId,
-      clientLabel: options?.clientLabel,
-      userAgent: options?.userAgent,
-    });
+    getToolCatalogModeForClient(options?.clientId) === 'curated';
   const now = Date.now();
 
   if (
@@ -94,11 +89,11 @@ export async function getUnifiedMcpTools(options?: {
     now - cacheTime < CACHE_TTL_MS &&
     cachedFullTools &&
     cachedFullTools.length > 0 &&
-    (!chatgpt || (cachedChatgptTools && cachedChatgptTools.length > 0))
+    (!curated || (cachedCuratedTools && cachedCuratedTools.length > 0))
   ) {
-    const cached = chatgpt ? cachedChatgptTools! : cachedFullTools;
+    const cached = curated ? cachedCuratedTools! : cachedFullTools;
     console.info(
-      `[mcp.tools/list] cache hit client=${chatgpt ? 'chatgpt' : 'full'} count=${cached.length}`
+      `[mcp.tools/list] cache hit catalog=${curated ? 'curated' : 'full'} count=${cached.length}`
     );
     return cached;
   }
@@ -130,7 +125,7 @@ export async function getUnifiedMcpTools(options?: {
   const supplemental = SUPPLEMENTAL_MCP_TOOLS.filter(
     (t) => !registryNames.has(t.name) && !manifestLegacy.some((m) => m.name === t.name)
   );
-  const aliases = CHATGPT_ALIAS_TOOLS.filter(
+  const aliases = DISCOVERY_ALIAS_TOOLS.filter(
     (t) =>
       !registryNames.has(t.name) &&
       !manifestLegacy.some((m) => m.name === t.name) &&
@@ -146,7 +141,7 @@ export async function getUnifiedMcpTools(options?: {
     );
   } else {
     console.info(
-      `[mcp.tools/list] discovered total=${merged.length} registry=${registryTools.length} manifest_extra=${manifestLegacy.length} supplemental=${supplemental.length} chatgpt_filter=${chatgpt}`
+      `[mcp.tools/list] discovered total=${merged.length} registry=${registryTools.length} manifest_extra=${manifestLegacy.length} supplemental=${supplemental.length} curated_filter=${curated}`
     );
   }
 
@@ -157,10 +152,10 @@ export async function getUnifiedMcpTools(options?: {
       }))
     : annotated;
 
-  cachedChatgptTools = cachedFullTools.filter((tool) => CHATGPT_TOOL_SET.has(tool.name));
-  for (const alias of withAnnotations(CHATGPT_ALIAS_TOOLS)) {
-    if (!cachedChatgptTools.some((t) => t.name === alias.name)) {
-      cachedChatgptTools.push({
+  cachedCuratedTools = cachedFullTools.filter((tool) => CURATED_TOOL_SET.has(tool.name));
+  for (const alias of withAnnotations(DISCOVERY_ALIAS_TOOLS)) {
+    if (!cachedCuratedTools.some((t) => t.name === alias.name)) {
+      cachedCuratedTools.push({
         ...alias,
         inputSchema: sanitizeForClient
           ? sanitizeToolSchemaForClient(alias.inputSchema)
@@ -168,26 +163,25 @@ export async function getUnifiedMcpTools(options?: {
       });
     }
   }
-  cachedChatgptTools.sort((a, b) => a.name.localeCompare(b.name));
+  cachedCuratedTools.sort((a, b) => a.name.localeCompare(b.name));
 
-  // Safety: never return an empty ChatGPT curated list if the full catalog has tools.
-  // Prefer exposing the full set over silently advertising zero tools.
-  if (chatgpt && cachedChatgptTools.length === 0 && cachedFullTools.length > 0) {
+  if (curated && cachedCuratedTools.length === 0 && cachedFullTools.length > 0) {
     console.error(
-      `[mcp.tools/list] ChatGPT curated filter matched 0/${cachedFullTools.length} tools — falling back to full catalog to avoid empty tools/list`
+      `[mcp.tools/list] curated filter matched 0/${cachedFullTools.length} tools — falling back to full catalog`
     );
     cacheTime = now;
     return cachedFullTools;
   }
 
   cacheTime = now;
-  const result = chatgpt ? cachedChatgptTools : cachedFullTools;
-  console.info(`[mcp.tools/list] returning client=${chatgpt ? 'chatgpt' : 'full'} count=${result.length}`);
+  const result = curated ? cachedCuratedTools : cachedFullTools;
+  console.info(`[mcp.tools/list] returning catalog=${curated ? 'curated' : 'full'} count=${result.length}`);
   return result;
 }
 
 export async function getUnifiedMcpToolCount(options?: {
   forChatGPT?: boolean;
+  clientId?: string | null;
 }): Promise<number> {
   const tools = await getUnifiedMcpTools(options);
   return tools.length;
@@ -195,7 +189,7 @@ export async function getUnifiedMcpToolCount(options?: {
 
 export function invalidateUnifiedMcpToolCache(): void {
   cachedFullTools = null;
-  cachedChatgptTools = null;
+  cachedCuratedTools = null;
   cacheTime = 0;
 }
 

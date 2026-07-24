@@ -6,7 +6,6 @@ import {
     isRedirectUriAllowed,
     normalizeMcpClientId,
     PLATFORM_MCP_OAUTH_CLIENT_IDS,
-    CHATGPT_OAUTH_REDIRECT_URIS,
 } from '@/lib/mcp/oauthRedirect';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 
@@ -62,33 +61,35 @@ export async function POST(req: Request) {
                 .maybeSingle();
 
             if (existingClient?.redirect_uris?.length) {
-                const allowed = [
-                    ...existingClient.redirect_uris,
-                    ...(client_id === 'chatgpt-connector' || client_id === 'alphaclone-mcp-client'
-                        ? CHATGPT_OAUTH_REDIRECT_URIS
-                        : []),
-                ];
-                if (!isRedirectUriAllowed(redirect_uri, allowed)) {
+                if (!isRedirectUriAllowed(redirect_uri, existingClient.redirect_uris)) {
                     return NextResponse.json(
                         { error: 'redirect_uri is not registered for this client' },
                         { status: 400 }
                     );
                 }
+            } else if (existingClient && !existingClient.redirect_uris?.length) {
+                return NextResponse.json(
+                    { error: 'Client has no registered redirect_uris' },
+                    { status: 400 }
+                );
             } else if (!PLATFORM_MCP_OAUTH_CLIENT_IDS.has(client_id)) {
-                // Dynamic clients only — do not overwrite pre-registered platform redirect URIs
-                await supabaseAdmin
-                    .from('mcp_oauth_clients')
-                    .upsert(
-                        {
-                            client_id,
-                            client_name: client_id.startsWith('177') ? 'Claude Desktop' : client_id,
-                            client_secret: 'dynamic',
-                            redirect_uris: [redirect_uri],
-                            is_public: true,
-                            is_active: true,
-                        },
-                        { onConflict: 'client_id' }
-                    );
+                // Unknown clients must use Dynamic Client Registration — do not upsert here
+                return NextResponse.json(
+                    {
+                        error: 'invalid_client',
+                        error_description:
+                            'Unknown client_id. Register via POST /api/mcp/register before authorizing.',
+                    },
+                    { status: 400 }
+                );
+            } else {
+                return NextResponse.json(
+                    {
+                        error: 'invalid_client',
+                        error_description: 'Platform client is not configured. Contact support.',
+                    },
+                    { status: 400 }
+                );
             }
         }
 

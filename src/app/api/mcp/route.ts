@@ -116,13 +116,11 @@ function authClientIdOf(auth: { client_id?: string } | { error: string }): strin
 }
 
 function unauthorizedFromAuth(req: NextRequest, auth: { error: string; status: number; wwwAuthenticate?: string }) {
-  if (auth.status === 401 || auth.status === 403) {
-    // Prefer dedicated helper so ChatGPT/Claude always get resource_metadata.
-    return createUnauthorizedResponse(
-      req,
-      auth.status === 403 ? 'insufficient_scope' : 'invalid_token',
-      auth.error
-    );
+  if (auth.status === 403) {
+    return createUnauthorizedResponse(req, 'insufficient_scope', auth.error, undefined, 403);
+  }
+  if (auth.status === 401) {
+    return createUnauthorizedResponse(req, 'invalid_token', auth.error, undefined, 401);
   }
   return NextResponse.json(
     { error: auth.error },
@@ -376,6 +374,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { prompts } }, { headers: mcpJsonHeaders(req) });
   }
 
+  if (requestBody.method === 'prompts/get') {
+    const { getMcpPrompt } = await import('@/lib/mcp/prompts/review_bonnie_patterns');
+    const name = String(requestBody.params?.name || '');
+    const prompt = getMcpPrompt(name);
+    if (!prompt) {
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        error: { code: -32602, message: `Unknown prompt: ${name}` },
+      }, { status: 400, headers: mcpJsonHeaders(req) });
+    }
+    const args = (requestBody.params?.arguments || {}) as Record<string, string>;
+    const text = prompt.template(args);
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: {
+        description: prompt.description,
+        messages: [
+          {
+            role: 'user',
+            content: { type: 'text', text },
+          },
+        ],
+      },
+    }, { headers: mcpJsonHeaders(req) });
+  }
+
   if (requestBody.method?.startsWith('notifications/')) {
     return new NextResponse(null, { status: 204, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
   }
@@ -384,6 +410,28 @@ export async function POST(req: NextRequest) {
   if (requestBody.method === 'tools/call') {
     const toolName = requestBody.params?.name;
     const toolArgs = requestBody.params?.arguments || {};
+
+    // Enforce OAuth scopes before any tool side effects
+    try {
+      const auth = await resolveAuth(req);
+      if (!('error' in auth)) {
+        const { requiredScopesForTool, hasRequiredScopes } = await import('@/lib/mcp/scopes');
+        const scopes = (auth as { scope?: string[] }).scope || ['read', 'write'];
+        const required = requiredScopesForTool(String(toolName || ''));
+        const check = hasRequiredScopes(scopes, required);
+        if (!check.valid) {
+          return createUnauthorizedResponse(
+            req,
+            'insufficient_scope',
+            `Missing scopes: ${check.missing.join(', ')}`,
+            check.missing,
+            403
+          );
+        }
+      }
+    } catch {
+      // resolveAuth already enforced above for session path; continue
+    }
 
     if (toolName === 'create_ticket') {
       const admin = createAdminSupabaseClientOrThrow();
