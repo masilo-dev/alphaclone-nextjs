@@ -197,6 +197,62 @@ class FileUploadService {
     /**
      * Upload a file from a binary buffer (used by MCP/Server-side)
      */
+    /**
+     * Upload via authenticated Next.js API (service role after membership check).
+     * Returns null when the request cannot be attempted (e.g. no window / SSR).
+     */
+    private async uploadViaServerApi(
+        file: File,
+        tenantId: string,
+        entityType?: string,
+        entityId?: string,
+        metadata?: { tags?: string[]; category?: string; aiSummary?: string }
+    ): Promise<FileUploadResult | null> {
+        if (typeof window === 'undefined' || typeof fetch !== 'function') {
+            return null;
+        }
+
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            if (entityType) form.append('entityType', entityType);
+            if (entityId) form.append('entityId', entityId);
+            if (metadata?.category) form.append('category', metadata.category);
+            if (metadata?.aiSummary) form.append('aiSummary', metadata.aiSummary);
+            if (metadata?.tags?.length) form.append('tags', JSON.stringify(metadata.tags));
+
+            const response = await fetch(`/api/tenant/${tenantId}/files`, {
+                method: 'POST',
+                body: form,
+                credentials: 'include',
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                console.error('Server upload failed:', response.status, payload);
+                return {
+                    success: false,
+                    error:
+                        (typeof payload?.error === 'string' && payload.error) ||
+                        'Failed to upload file to storage',
+                };
+            }
+
+            return {
+                success: true,
+                fileId: payload.fileId,
+                url: payload.url || payload.proxiedUrl,
+                proxiedUrl: payload.proxiedUrl || payload.url,
+            };
+        } catch (error) {
+            console.error('Server upload exception:', error);
+            return {
+                success: false,
+                error: 'Failed to upload file to storage',
+            };
+        }
+    }
+
     async uploadFileFromBuffer(
         buffer: Buffer,
         filename: string,
@@ -247,8 +303,18 @@ class FileUploadService {
                 `${timestamp}-${randomString}.${extension}`
             );
 
-            // 4. Upload to Storage
-            const { data: uploadData, error: uploadError } = await supabase.storage
+            // 4. Upload to Storage (prefer service role on server to avoid Storage RLS blocks)
+            let storageClient = supabase;
+            try {
+                if (typeof window === 'undefined') {
+                    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                    storageClient = createSupabaseAdminClient();
+                }
+            } catch {
+                storageClient = supabase;
+            }
+
+            const { data: uploadData, error: uploadError } = await storageClient.storage
                 .from('uploads')
                 .upload(storagePath, buffer, {
                     contentType: mimeType,
@@ -257,11 +323,17 @@ class FileUploadService {
 
             if (uploadError) {
                 console.error('Buffer upload error:', uploadError);
-                return { success: false, error: 'Failed to upload file to storage' };
+                const msg = String(uploadError.message || '');
+                return {
+                    success: false,
+                    error: msg.toLowerCase().includes('row-level security')
+                        ? 'Upload blocked by storage security policy'
+                        : 'Failed to upload file to storage',
+                };
             }
 
             // 5. Record in Database
-            const { data: fileRecord, error: dbError } = await supabase
+            const { data: fileRecord, error: dbError } = await storageClient
                 .from('file_uploads')
                 .insert({
                     user_id: userId,
@@ -284,7 +356,7 @@ class FileUploadService {
 
             if (dbError) {
                 console.error('Database error after buffer upload:', dbError);
-                await supabase.storage.from('uploads').remove([storagePath]);
+                await storageClient.storage.from('uploads').remove([storagePath]);
                 return { success: false, error: 'Failed to record upload in database' };
             }
 
@@ -340,7 +412,44 @@ class FileUploadService {
                 };
             }
 
-            // Generate unique tenant-prefixed filename
+            // Prefer server upload (service role after membership check) so Storage RLS
+            // cannot block document hub / vault uploads from the browser.
+            const serverResult = await this.uploadViaServerApi(
+                file,
+                finalTenantId,
+                entityType,
+                entityId,
+                metadata
+            );
+            if (serverResult) {
+                if (!serverResult.success) {
+                    return serverResult;
+                }
+
+                await activityService.logActivity(finalUserId as string, 'Document Uploaded', {
+                    fileId: serverResult.fileId,
+                    filename: file.name,
+                    entityType,
+                }, finalTenantId || undefined);
+
+                auditLoggingService.logAction(
+                    'file_uploaded',
+                    'file_upload',
+                    serverResult.fileId || 'unknown',
+                    undefined,
+                    {
+                        filename: file.name,
+                        size: file.size,
+                        type: file.type,
+                        entityType,
+                        entityId,
+                    }
+                ).catch(err => console.error('Failed to log audit:', err));
+
+                return serverResult;
+            }
+
+            // Fallback: direct browser → Supabase Storage (requires uploads RLS policies)
             const timestamp = Date.now();
             const randomString = crypto.randomUUID();
             const extension = file.name.split('.').pop();
@@ -352,7 +461,6 @@ class FileUploadService {
                 `${timestamp}-${randomString}.${extension}`
             );
 
-            // Upload to Supabase Storage
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('uploads')
                 .upload(filename, file, {
@@ -362,14 +470,17 @@ class FileUploadService {
 
             if (uploadError) {
                 console.error('Upload error:', uploadError);
-                return { success: false, error: 'Failed to upload file to storage' };
+                const msg = String(uploadError.message || '');
+                return {
+                    success: false,
+                    error: msg.toLowerCase().includes('row-level security')
+                        ? 'Upload blocked by storage security policy. Ask an admin to apply the uploads RLS migration, or retry after deploy.'
+                        : 'Failed to upload file to storage',
+                };
             }
 
-            // Get public URL
             const publicUrl = this.getProxiedUrl('uploads', filename);
-            const urlData = { publicUrl };
 
-            // Record upload in database
             const { data: fileRecord, error: dbError } = await supabase
                 .from('file_uploads')
                 .insert({
@@ -392,19 +503,16 @@ class FileUploadService {
 
             if (dbError) {
                 console.error('Database error:', dbError);
-                // File uploaded but not recorded - should clean up
                 await supabase.storage.from('uploads').remove([filename]);
                 return { success: false, error: 'Failed to record upload in database' };
             }
 
-            // Log activity
             await activityService.logActivity(finalUserId as string, 'Document Uploaded', {
                 fileId: fileRecord.id,
                 filename: file.name,
                 entityType,
             }, finalTenantId || undefined);
 
-            // Audit log
             auditLoggingService.logAction(
                 'file_uploaded',
                 'file_upload',
@@ -419,7 +527,6 @@ class FileUploadService {
                 }
             ).catch(err => console.error('Failed to log audit:', err));
 
-            // Background task: Perform actual scanning here if implemented
             supabase
                 .from('file_uploads')
                 .update({ scan_status: 'clean' })
@@ -429,7 +536,7 @@ class FileUploadService {
             return {
                 success: true,
                 fileId: fileRecord.id,
-                url: urlData.publicUrl,
+                url: publicUrl,
                 proxiedUrl: this.getProxiedUrl('uploads', filename),
             };
         } catch (error) {

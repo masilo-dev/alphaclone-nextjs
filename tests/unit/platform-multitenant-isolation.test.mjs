@@ -130,8 +130,21 @@ test("file uploads use tenant-prefixed storage paths (source)", async () => {
     "utf8",
   );
   assert.match(src, /tenantStoragePath/);
+  assert.match(src, /uploadViaServerApi/);
   assert.equal(src.includes("`${finalUserId as string}/${timestamp}"), false);
   assert.equal(src.includes("`${userId}/${timestamp}"), false);
+});
+
+test("tenant files API exposes POST upload (source)", async () => {
+  const fs = await import("node:fs");
+  const src = fs.readFileSync(
+    new URL("../../src/app/api/tenant/[tenantId]/files/route.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(src, /export async function POST/);
+  assert.match(src, /tenantStoragePath/);
+  assert.match(src, /requireTenantAccess/);
+  assert.match(src, /\.from\('uploads'\)/);
 });
 
 test("storage proxy enforces tenant path prefix (source)", async () => {
@@ -145,6 +158,7 @@ test("storage proxy enforces tenant path prefix (source)", async () => {
   );
   assert.match(src, /assertTenantStoragePath/);
   assert.match(src, /resolveActiveTenantForUser/);
+  assert.match(src, /createSupabaseAdminClient/);
 });
 
 test("connector permissions fail closed without membership (source)", async () => {

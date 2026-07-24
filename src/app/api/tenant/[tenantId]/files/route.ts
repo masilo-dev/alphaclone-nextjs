@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { tenantStoragePath } from '@/lib/tenant/platformTenant';
+
+export const runtime = 'nodejs';
+
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+const ALLOWED_MIME = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.ms-powerpoint',
+  'application/zip',
+  'application/x-zip-compressed',
+  'text/plain',
+  'application/json',
+  'application/xml',
+]);
 
 const annotationSchema = z.array(z.record(z.string(), z.unknown())).max(500);
 const classificationSchema = z.object({ id: z.string().uuid(), category: z.enum(['Agreement', 'Financial', 'Tax', 'Identity']), securityLevel: z.enum(['public', 'internal', 'confidential', 'restricted']) });
@@ -11,6 +35,113 @@ const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('annotations'), fileId: z.string().uuid(), annotations: annotationSchema }),
   z.object({ action: z.literal('classify'), classifications: z.array(classificationSchema).min(1).max(200) }),
 ]);
+
+/**
+ * POST multipart upload — bypasses Storage RLS via service role after membership check.
+ * Fixes "new row violates row-level security policy" on client-side storage uploads.
+ */
+export async function POST(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
+  try {
+    const { tenantId } = await context.params;
+    const { user, admin } = await requireTenantAccess(tenantId, req);
+
+    const form = await req.formData();
+    const file = form.get('file');
+    if (!(file instanceof File)) {
+      return NextResponse.json({ error: 'file is required' }, { status: 400 });
+    }
+    if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json({ error: 'File exceeds the 100MB upload limit' }, { status: 400 });
+    }
+
+    const mimeType = file.type || 'application/octet-stream';
+    if (!ALLOWED_MIME.has(mimeType)) {
+      return NextResponse.json({ error: `File type ${mimeType} is not allowed` }, { status: 400 });
+    }
+
+    const entityType = String(form.get('entityType') || '').trim() || null;
+    const entityIdRaw = String(form.get('entityId') || '').trim();
+    const entityId = z.string().uuid().safeParse(entityIdRaw).success ? entityIdRaw : null;
+    const category = String(form.get('category') || '').trim() || null;
+    const aiSummary = String(form.get('aiSummary') || '').trim() || null;
+    let tags: string[] = [];
+    try {
+      const parsedTags = JSON.parse(String(form.get('tags') || '[]'));
+      if (Array.isArray(parsedTags)) {
+        tags = parsedTags.map((t) => String(t)).filter(Boolean).slice(0, 50);
+      }
+    } catch {
+      tags = [];
+    }
+
+    const extension = (file.name.split('.').pop() || 'bin').replace(/[^a-zA-Z0-9]/g, '') || 'bin';
+    const storagePath = tenantStoragePath(
+      tenantId,
+      'uploads',
+      user.id,
+      `${Date.now()}-${crypto.randomUUID()}.${extension}`
+    );
+
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const supabaseAdmin = admin || createSupabaseAdminClient();
+
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+      .from('uploads')
+      .upload(storagePath, bytes, {
+        contentType: mimeType,
+        upsert: false,
+        cacheControl: '3600',
+      });
+
+    if (uploadError) {
+      console.error('[tenant/files] storage upload:', uploadError);
+      return NextResponse.json(
+        { error: 'Failed to upload file to storage', detail: uploadError.message },
+        { status: 500 }
+      );
+    }
+
+    const { data: fileRecord, error: dbError } = await supabaseAdmin
+      .from('file_uploads')
+      .insert({
+        user_id: user.id,
+        tenant_id: tenantId,
+        filename: storagePath,
+        original_filename: file.name,
+        file_type: mimeType,
+        file_size: file.size,
+        storage_path: uploadData?.path || storagePath,
+        scan_status: 'clean',
+        entity_type: entityType,
+        entity_id: entityId,
+        tags,
+        category,
+        ai_summary: aiSummary,
+      })
+      .select('id, storage_path')
+      .single();
+
+    if (dbError) {
+      console.error('[tenant/files] file_uploads insert:', dbError);
+      await supabaseAdmin.storage.from('uploads').remove([storagePath]).catch(() => undefined);
+      return NextResponse.json(
+        { error: 'Failed to record upload in database', detail: dbError.message },
+        { status: 500 }
+      );
+    }
+
+    const proxiedUrl = `/api/storage/uploads/${storagePath}`;
+    return NextResponse.json({
+      success: true,
+      fileId: fileRecord.id,
+      url: proxiedUrl,
+      proxiedUrl,
+      storagePath,
+    });
+  } catch (error) {
+    return routeErrorResponse(error, 'File upload failed', req);
+  }
+}
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
