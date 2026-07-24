@@ -194,47 +194,15 @@ export const CHATGPT_CONNECTOR_TOOL_NAMES = [
 ] as const;
 
 /**
- * Detect OpenAI ChatGPT Apps / ChatGPT connector ONLY.
- *
- * CRITICAL: Do NOT treat generic Alphaclone MCP OAuth clients
- * (`alphaclone-mcp-client`) or Claude/Cursor/Gemini as ChatGPT.
- * That mis-detection applied the ChatGPT curated catalog to Claude and
- * could yield an empty/near-empty tools/list for non-ChatGPT clients.
+ * @deprecated Prefer getToolCatalogModeForClient(clientId).
+ * Kept for tests that historically sniffed client labels.
+ * Only exact registered curated client ids return true — no UA heuristics.
  */
 export function isChatgptClient(input?: {
   clientId?: string | null;
   clientLabel?: string | null;
   userAgent?: string | null;
 }): boolean {
-  const haystack = [input?.clientId, input?.clientLabel, input?.userAgent]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-  if (!haystack) return false;
-
-  // Explicit non-ChatGPT clients always get the full catalog.
-  if (
-    haystack.includes('claude') ||
-    haystack.includes('anthropic') ||
-    haystack.includes('cursor') ||
-    haystack.includes('gemini') ||
-    haystack.includes('deepseek') ||
-    haystack.includes('bonnie')
-  ) {
-    return false;
-  }
-
-  // Generic Alphaclone MCP client id is shared by Claude.ai / Claude Code / etc.
-  // Never treat it as ChatGPT-only.
-  if (haystack.includes('alphaclone-mcp-client') && !haystack.includes('chatgpt')) {
-    return false;
-  }
-
-  return (
-    haystack.includes('chatgpt') ||
-    haystack.includes('chatgpt-connector') ||
-    // Narrow OpenAI Apps connector signals — bare "openai" is too broad.
-    (haystack.includes('openai') &&
-      (haystack.includes('apps') || haystack.includes('connector') || haystack.includes('chatgpt')))
-  );
+  const id = (input?.clientId || '').trim().toLowerCase();
+  return id === 'chatgpt-connector';
 }

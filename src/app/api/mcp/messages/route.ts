@@ -131,15 +131,62 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: { resources: [] }
+      result: {
+        resources: [
+          {
+            uri: 'mcp://business/snapshot',
+            name: 'Business Snapshot',
+            description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
+            mimeType: 'application/json',
+          },
+          {
+            uri: 'mcp://business/ai-state',
+            name: 'Business AI State',
+            description: 'Current AI operating posture, model preference, and audit mode for this workspace.',
+            mimeType: 'application/json',
+          },
+        ],
+      },
     }, { headers: getMcpCorsHeaders(req) });
   }
 
   if (requestBody.method === 'prompts/list') {
+    const { listMcpPrompts } = await import('@/lib/mcp/prompts/review_bonnie_patterns');
+    const prompts = listMcpPrompts().map((p) => ({
+      name: p.name,
+      description: p.description,
+      arguments: (p.arguments || []).map((a: any) => ({
+        name: a.name,
+        description: a.description,
+        required: a.required ?? false,
+      })),
+    }));
     return NextResponse.json({
       jsonrpc: '2.0',
       id: requestBody.id,
-      result: { prompts: [] }
+      result: { prompts },
+    }, { headers: getMcpCorsHeaders(req) });
+  }
+
+  if (requestBody.method === 'prompts/get') {
+    const { getMcpPrompt } = await import('@/lib/mcp/prompts/review_bonnie_patterns');
+    const name = String(requestBody.params?.name || '');
+    const prompt = getMcpPrompt(name);
+    if (!prompt) {
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        error: { code: -32602, message: `Unknown prompt: ${name}` },
+      }, { status: 400, headers: getMcpCorsHeaders(req) });
+    }
+    const args = (requestBody.params?.arguments || {}) as Record<string, string>;
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: {
+        description: prompt.description,
+        messages: [{ role: 'user', content: { type: 'text', text: prompt.template(args) } }],
+      },
     }, { headers: getMcpCorsHeaders(req) });
   }
 
@@ -195,8 +242,10 @@ export async function POST(req: NextRequest) {
           user_id: userId,
           expires_at: expiresAt,
           metadata: {
+            client_id: authClientId,
             client_label: requestBody.params?.clientInfo?.name || 'mcp-messages-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
+            initial_ai_state: initialAiState,
             business_ai_version: initialAiState.version,
             business_ai_state: initialAiState,
           },

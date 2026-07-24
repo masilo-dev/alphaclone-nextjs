@@ -6,7 +6,6 @@ import {
   isRedirectUriAllowed,
   normalizeMcpClientId,
   PLATFORM_MCP_OAUTH_CLIENT_IDS,
-  CHATGPT_OAUTH_REDIRECT_URIS,
   shouldUseBrowserOAuthConsent,
 } from '@/lib/mcp/oauthRedirect';
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
@@ -318,13 +317,15 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   }
 
   if (client) {
-    const allowedRedirects: string[] = [
-      ...(client.redirect_uris || []),
-      // Always allow known ChatGPT Apps redirect patterns for the platform client.
-      ...(clientId === 'chatgpt-connector' || clientId === 'alphaclone-mcp-client'
-        ? CHATGPT_OAUTH_REDIRECT_URIS
-        : []),
-    ];
+    const allowedRedirects: string[] = [...(client.redirect_uris || [])];
+    if (!allowedRedirects.length) {
+      return oauthError(
+        null,
+        'invalid_client',
+        'Client has no registered redirect_uris. Register via Dynamic Client Registration or update the client record.',
+        state
+      );
+    }
     if (!isRedirectUriAllowed(redirectUri, allowedRedirects)) {
       console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
       return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
@@ -339,7 +340,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     );
   }
 
-  // ChatGPT / Claude / other PKCE connectors → login + consent UI (not API-key form)
+  // PKCE / public clients → login + consent UI (not legacy API-key form)
   if (
     !apiKey &&
     shouldUseBrowserOAuthConsent({

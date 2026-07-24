@@ -1,4 +1,7 @@
-import { CHATGPT_OAUTH_REDIRECT_URIS, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
+import {
+  OPENAI_APPS_OAUTH_REDIRECT_URIS,
+  PLATFORM_MCP_OAUTH_CLIENT_IDS,
+} from '@/lib/mcp/oauthRedirect';
 
 export type McpOAuthClientRow = {
   client_id: string;
@@ -7,19 +10,30 @@ export type McpOAuthClientRow = {
   is_active?: boolean | null;
 };
 
+export type ToolCatalogMode = 'full' | 'curated';
+
 const PLATFORM_CLIENT_SEEDS: Record<
   string,
-  { client_name: string; redirect_uris: string[]; scopes: string[] }
+  {
+    client_name: string;
+    redirect_uris: string[];
+    scopes: string[];
+    /** curated = smaller tool list for size-limited Apps connectors */
+    toolCatalog?: ToolCatalogMode;
+  }
 > = {
   'chatgpt-connector': {
-    client_name: 'ChatGPT',
-    redirect_uris: [...CHATGPT_OAUTH_REDIRECT_URIS],
+    client_name: 'OpenAI Apps MCP Connector',
+    redirect_uris: [...OPENAI_APPS_OAUTH_REDIRECT_URIS],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    toolCatalog: 'curated',
   },
+  // Generic public client — NOT an alias of chatgpt-connector
   'alphaclone-mcp-client': {
-    client_name: 'ChatGPT (legacy id)',
-    redirect_uris: [...CHATGPT_OAUTH_REDIRECT_URIS],
+    client_name: 'Alphaclone MCP Client',
+    redirect_uris: [],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    toolCatalog: 'full',
   },
   'manus-ai': {
     client_name: 'Manus AI',
@@ -28,13 +42,27 @@ const PLATFORM_CLIENT_SEEDS: Record<
       'https://manus.ai/api/mcp/auth_callback',
     ],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    toolCatalog: 'full',
   },
   '1778309945386-41bab8272f61': {
     client_name: 'Claude (Anthropic)',
     redirect_uris: ['https://claude.ai/api/mcp/auth_callback'],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    toolCatalog: 'full',
+  },
+  'grok-connector': {
+    client_name: 'Grok',
+    redirect_uris: [],
+    scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
+    toolCatalog: 'full',
   },
 };
+
+/** Registered-client catalog policy (no User-Agent sniffing). */
+export function getToolCatalogModeForClient(clientId: string | null | undefined): ToolCatalogMode {
+  if (!clientId) return 'full';
+  return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || 'full';
+}
 
 function isMissingColumnError(error: { message?: string; code?: string } | null | undefined): boolean {
   if (!error) return false;
@@ -65,12 +93,13 @@ export async function ensurePlatformMcpOAuthClient(
     grant_types: ['authorization_code', 'refresh_token'],
     response_types: ['code'],
     token_endpoint_auth_method: 'none',
+    metadata: { tool_catalog: seed.toolCatalog || 'full' },
   };
 
   let { error } = await supabase.from('mcp_oauth_clients').upsert(fullRow, { onConflict: 'client_id' });
 
   if (isMissingColumnError(error)) {
-    const { grant_types: _g, response_types: _r, token_endpoint_auth_method: _t, is_active: _a, ...minimal } =
+    const { grant_types: _g, response_types: _r, token_endpoint_auth_method: _t, is_active: _a, metadata: _m, ...minimal } =
       fullRow;
     ({ error } = await supabase.from('mcp_oauth_clients').upsert(minimal, { onConflict: 'client_id' }));
   }
@@ -84,13 +113,12 @@ export async function ensurePlatformMcpOAuthClient(
 
 /**
  * Load an OAuth client without failing when optional columns (is_active) are missing.
- * Auto-seeds known ChatGPT/Claude/Manus clients when absent.
+ * Auto-seeds known bootstrap clients when absent. Unknown clients must use DCR.
  */
 export async function loadMcpOAuthClient(
   supabase: any,
   clientId: string
 ): Promise<{ client: McpOAuthClientRow | null; error?: string }> {
-  // Prefer active filter when column exists
   let result = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, is_public, client_secret, is_active')
@@ -99,7 +127,6 @@ export async function loadMcpOAuthClient(
     .maybeSingle();
 
   if (isMissingColumnError(result.error)) {
-    // Schema without is_active (or select list mismatch)
     result = await supabase
       .from('mcp_oauth_clients')
       .select('client_id, is_public, client_secret')
@@ -111,7 +138,6 @@ export async function loadMcpOAuthClient(
     return { client: result.data as McpOAuthClientRow };
   }
 
-  // Not found — seed platform clients and retry once
   if (PLATFORM_MCP_OAUTH_CLIENT_IDS.has(clientId) || PLATFORM_CLIENT_SEEDS[clientId]) {
     const seeded = await ensurePlatformMcpOAuthClient(supabase, clientId);
     if (seeded) {

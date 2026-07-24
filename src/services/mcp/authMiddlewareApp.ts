@@ -564,32 +564,58 @@ export function toMCPAuthContext(auth: AuthResult): MCPAuthContext {
   };
 }
 
-const ALLOWED_MCP_ORIGINS = [
-  'https://claude.ai',
-  'https://manus.ai',
-  'https://grok.x.ai',
-  'https://chatgpt.com',
-  'https://chat.openai.com',
-  'https://app.cursor.com',
-];
+const BLOCKED_MCP_CORS_ORIGINS = new Set([
+  'null',
+  'file://',
+]);
+
+function isAllowedMcpBrowserOrigin(origin: string | null): boolean {
+  if (!origin || BLOCKED_MCP_CORS_ORIGINS.has(origin)) return false;
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    // Dev localhost only over http
+    if (url.protocol === 'http:') {
+      return url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    }
+    // Any https origin — universal MCP browser clients (ChatGPT, Claude, Cursor, VS Code web, etc.)
+    if (
+      url.hostname === 'localhost' ||
+      url.hostname === '127.0.0.1' ||
+      url.hostname === '0.0.0.0' ||
+      url.hostname.endsWith('.local')
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const MCP_CORS_HEADERS = {
-  'Access-Control-Allow-Origin': ALLOWED_MCP_ORIGINS[0],
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers':
     'Content-Type, Authorization, x-api-key, Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, x-client-label',
   'Access-Control-Expose-Headers': 'Mcp-Session-Id, MCP-Protocol-Version, x-mcp-version, WWW-Authenticate',
   'Access-Control-Max-Age': '86400',
-  'Access-Control-Allow-Credentials': 'true',
 };
 
 export function getMcpCorsHeaders(req: NextRequest) {
   const origin = req.headers.get('origin');
-  const allowedOrigin = origin && ALLOWED_MCP_ORIGINS.includes(origin) ? origin : ALLOWED_MCP_ORIGINS[0];
+  if (origin && isAllowedMcpBrowserOrigin(origin)) {
+    return {
+      ...MCP_CORS_HEADERS,
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Credentials': 'true',
+      Vary: 'Origin',
+    };
+  }
 
   return {
     ...MCP_CORS_HEADERS,
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': '*',
   };
 }
 
@@ -604,13 +630,14 @@ export function handleCorsApp(req: NextRequest) {
 }
 
 /**
- * Creates a standardized 401 Unauthorized response with WWW-Authenticate header
+ * Creates a standardized Unauthorized / Forbidden response with WWW-Authenticate header
  */
 export function createUnauthorizedResponse(
   req: NextRequest,
   error: string = 'invalid_token',
   description?: string,
-  scopes?: string[]
+  scopes?: string[],
+  status: 401 | 403 = 401
 ): NextResponse {
   const resourceMetadataUrl = buildMcpResourceMetadataUrl(req);
   const wwwAuthenticate = createWWWAuthenticateHeader(
@@ -626,11 +653,12 @@ export function createUnauthorizedResponse(
       error_description: description || 'Authentication required',
     },
     {
-      status: 401,
+      status,
       headers: {
-        'WWW-Authenticate': wwwAuthenticate,
-        'MCP-Protocol-Version': '2025-11-25',
         ...getMcpCorsHeaders(req),
+        'WWW-Authenticate': wwwAuthenticate,
+        'Cache-Control': 'no-store',
+        'MCP-Protocol-Version': '2025-11-25',
       },
     }
   );

@@ -84,14 +84,17 @@ async function markTokenRevoked(
 
 /**
  * Authenticate the client making the revocation request.
- * 
- * Per RFC 7009: The authorization server first validates the credentials
- * of the client requesting the revocation.
+ *
+ * Confidential clients must authenticate (Basic).
+ * Public clients may revoke by proving possession of the token being revoked
+ * (token in body). Anonymous callers without a matching public-client token
+ * are rejected.
  */
-async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: boolean; clientId?: string; error?: string }> {
+async function authenticateClient(
+  req: NextRequest
+): Promise<{ isAuthenticated: boolean; clientId?: string; isPublic?: boolean; error?: string }> {
   const authHeader = req.headers.get('authorization');
 
-  // Try Bearer token authentication (client's access token)
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7).trim();
 
@@ -101,7 +104,6 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
 
     const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
-    // Check if this is a valid client access token
     const { data: clientToken } = await findActiveOAuthToken(
       supabase,
       'access_token',
@@ -110,10 +112,9 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
     );
 
     if (clientToken && new Date(clientToken.expires_at) > new Date()) {
-      return { isAuthenticated: true, clientId: clientToken.client_id || undefined };
+      return { isAuthenticated: true, clientId: clientToken.client_id || undefined, isPublic: true };
     }
 
-    // Check if this is an API key (internal service)
     const { data: apiKeyData } = await supabase
       .from('mcp_api_keys')
       .select('tenant_id, user_id')
@@ -122,11 +123,12 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
       .maybeSingle();
 
     if (apiKeyData) {
-      return { isAuthenticated: true, clientId: 'internal-service' };
+      return { isAuthenticated: true, clientId: 'internal-service', isPublic: false };
     }
+
+    return { isAuthenticated: false, error: 'invalid_client' };
   }
 
-  // Try client credentials (for confidential clients)
   if (authHeader?.startsWith('Basic ')) {
     try {
       const credentials = Buffer.from(authHeader.substring(6), 'base64').toString('utf-8');
@@ -143,17 +145,20 @@ async function authenticateClient(req: NextRequest): Promise<{ isAuthenticated: 
           .maybeSingle();
 
         if (clientData && !clientData.is_public && clientData.client_secret === clientSecret) {
-          return { isAuthenticated: true, clientId };
+          return { isAuthenticated: true, clientId, isPublic: false };
+        }
+        if (clientData?.is_public) {
+          return { isAuthenticated: true, clientId, isPublic: true };
         }
       }
     } catch {
       // Invalid Basic auth format
     }
+    return { isAuthenticated: false, error: 'invalid_client' };
   }
 
-  // For public clients (PKCE), allow revocation without authentication
-  // but only for their own tokens (verified by token ownership)
-  return { isAuthenticated: true, clientId: 'public-client' };
+  // No client auth — allow possession-based revocation only (validated later against token row)
+  return { isAuthenticated: true, clientId: undefined, isPublic: true };
 }
 
 export async function POST(req: NextRequest) {
@@ -242,14 +247,22 @@ export async function POST(req: NextRequest) {
         supabase,
         'access_token',
         token,
-        'id, user_id, tenant_id, access_token'
+        'id, user_id, tenant_id, access_token, client_id'
       );
 
       if (tokenData) {
-        // Authorization check: user can only revoke their own tokens
-        // unless they're an admin/internal service
+        // Confidential / authenticated client may only revoke its own tokens
+        if (
+          auth.clientId &&
+          auth.clientId !== 'internal-service' &&
+          tokenData.client_id &&
+          auth.clientId !== tokenData.client_id
+        ) {
+          return new Response(null, { status: 200, headers: CORS_HEADERS });
+        }
+
+        // User-bound bearer may only revoke own tokens
         if (requestingUserId && requestingUserId !== tokenData.user_id && auth.clientId !== 'internal-service') {
-          // Return 200 to avoid information leakage, but don't actually revoke
           console.warn('[MCP Token Revoke] Unauthorized revocation attempt', {
             requestingUser: requestingUserId,
             tokenUser: tokenData.user_id,
@@ -257,12 +270,27 @@ export async function POST(req: NextRequest) {
           return new Response(null, { status: 200, headers: CORS_HEADERS });
         }
 
+        // Unauthenticated possession-based revoke: require the token to belong to a public client
+        if (!auth.clientId && !requestingUserId) {
+          const { data: owningClient } = await supabase
+            .from('mcp_oauth_clients')
+            .select('is_public')
+            .eq('client_id', tokenData.client_id)
+            .maybeSingle();
+          if (owningClient && owningClient.is_public === false) {
+            return NextResponse.json(
+              { error: 'invalid_client', error_description: 'Client authentication required to revoke this token' },
+              { status: 401, headers: CORS_HEADERS }
+            );
+          }
+        }
+
         if (await markTokenRevoked(supabase, tokenData.id)) {
           revoked = true;
           console.log('[MCP Token Revoke] Access token revoked:', {
             tokenId: tokenData.id,
             userId: tokenData.user_id,
-            revokedBy: requestingUserId || auth.clientId,
+            revokedBy: requestingUserId || auth.clientId || 'possession',
           });
         }
       }
@@ -274,11 +302,19 @@ export async function POST(req: NextRequest) {
         supabase,
         'refresh_token',
         token,
-        'id, user_id, tenant_id, refresh_token'
+        'id, user_id, tenant_id, refresh_token, client_id'
       );
 
       if (tokenData) {
-        // Authorization check
+        if (
+          auth.clientId &&
+          auth.clientId !== 'internal-service' &&
+          tokenData.client_id &&
+          auth.clientId !== tokenData.client_id
+        ) {
+          return new Response(null, { status: 200, headers: CORS_HEADERS });
+        }
+
         if (requestingUserId && requestingUserId !== tokenData.user_id && auth.clientId !== 'internal-service') {
           console.warn('[MCP Token Revoke] Unauthorized refresh token revocation attempt', {
             requestingUser: requestingUserId,
@@ -287,12 +323,26 @@ export async function POST(req: NextRequest) {
           return new Response(null, { status: 200, headers: CORS_HEADERS });
         }
 
+        if (!auth.clientId && !requestingUserId) {
+          const { data: owningClient } = await supabase
+            .from('mcp_oauth_clients')
+            .select('is_public')
+            .eq('client_id', tokenData.client_id)
+            .maybeSingle();
+          if (owningClient && owningClient.is_public === false) {
+            return NextResponse.json(
+              { error: 'invalid_client', error_description: 'Client authentication required to revoke this token' },
+              { status: 401, headers: CORS_HEADERS }
+            );
+          }
+        }
+
         if (await markTokenRevoked(supabase, tokenData.id)) {
           revoked = true;
           console.log('[MCP Token Revoke] Refresh token revoked:', {
             tokenId: tokenData.id,
             userId: tokenData.user_id,
-            revokedBy: requestingUserId || auth.clientId,
+            revokedBy: requestingUserId || auth.clientId || 'possession',
           });
         }
       }

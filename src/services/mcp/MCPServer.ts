@@ -7,7 +7,9 @@ import {
   // @ts-ignore
   ReadResourceRequestSchema,
   // @ts-ignore
-  ListPromptsRequestSchema
+  ListPromptsRequestSchema,
+  // @ts-ignore
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { MCP_TOOLS } from './toolManifest';
 import { unitsForTextGeneration } from '../../config/aiUsageQuotas';
@@ -970,6 +972,23 @@ class AlphaCloneMCPServer {
         })),
       }));
       return { prompts };
+    });
+
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request: any) => {
+      const { getMcpPrompt } = await import('../../lib/mcp/prompts/review_bonnie_patterns');
+      const name = String(request.params?.name || '');
+      const prompt = getMcpPrompt(name);
+      if (!prompt) throw new Error(`Unknown prompt: ${name}`);
+      const args = (request.params?.arguments || {}) as Record<string, string>;
+      return {
+        description: prompt.description,
+        messages: [
+          {
+            role: 'user',
+            content: { type: 'text', text: prompt.template(args) },
+          },
+        ],
+      };
     });
 
     // ── Tool Manifest (unified discovery) ─────────────────────────────────
