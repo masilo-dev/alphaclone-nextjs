@@ -96,7 +96,32 @@ test("registry handlers exist for canonical social tools", () => {
 
 test("tool_catalog_version is bumped for social repair", () => {
   assert.match(MCP_TOOL_CATALOG_VERSION, /social-2\.0|2\.0/);
-  assert.equal(SOCIAL_PUBLISH_TOOL_CATALOG_VERSION, "social-publishing-2.0");
+  assert.equal(SOCIAL_PUBLISH_TOOL_CATALOG_VERSION, "social-publishing-2.1");
+});
+
+test("upload_media / get_media / delete_media are ChatGPT-discoverable with AI image guidance", async () => {
+  initializeRegistry();
+  invalidateUnifiedMcpToolCache();
+  const chatgpt = await getUnifiedMcpTools({
+    forceRefresh: true,
+    forChatGPT: true,
+    clientId: "chatgpt-connector",
+    userAgent: "ChatGPT",
+  });
+  const byName = new Map(chatgpt.map((t) => [t.name, t]));
+  for (const name of ["upload_media", "get_media", "delete_media", "publish_post", "get_post_status"]) {
+    assert.ok(byName.has(name), `ChatGPT catalog missing ${name}`);
+  }
+  const upload = byName.get("upload_media");
+  const desc = String(upload.description || "");
+  assert.match(desc, /content_base64/i);
+  assert.match(desc, /media_url/i);
+  assert.match(desc, /\/mnt\/data/i);
+  const props = upload.inputSchema?.properties || upload.parameters?.properties || {};
+  assert.ok(
+    props.content_base64 || props.file || props.file_base64,
+    "upload_media schema must expose a base64 field",
+  );
 });
 
 test("PNG signature detection and dimension extraction", () => {

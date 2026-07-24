@@ -185,7 +185,8 @@ defineConnectorTool({
   module: 'social-ops',
   name: 'publish_post',
   description:
-    'Publish or schedule a social post via SocialPublishingService. For LinkedIn company pages pass identity_type=linkedin_organization and identity_id. Immediate publish returns provider post ID + live URL or ok=false.',
+    'Publish/schedule a social post. AI images: upload_media(content_base64) first, then media_urls=[media_url] or media_asset_ids=[media_id]. ' +
+    'Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.',
   permission: 'social:publish',
   rateLimitClass: 'publish',
   auditAction: 'mcp_publish_post',
@@ -213,8 +214,17 @@ defineConnectorTool({
       platform: { type: 'string' },
       content: { type: 'string' },
       scheduled_at: { type: 'string', format: 'date-time' },
-      media_urls: { type: 'array', items: { type: 'string' } },
-      media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+      media_urls: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          'Public HTTPS image URLs from upload_media.media_url (not /mnt/data paths)',
+      },
+      media_asset_ids: {
+        type: 'array',
+        items: { type: 'string', format: 'uuid' },
+        description: 'media_id values returned by upload_media',
+      },
       identity_type: {
         type: 'string',
         enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],

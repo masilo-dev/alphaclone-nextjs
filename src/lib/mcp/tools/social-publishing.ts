@@ -168,15 +168,61 @@ registerTool('social-publishing', {
 
 // ─── Media ──────────────────────────────────────────────────────────────────
 
+type MediaToolAsset = {
+  id: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  url: string;
+  status: string;
+  width?: number | null;
+  height?: number | null;
+};
+
+/** ChatGPT / Claude / connector-friendly media envelope. */
+function mediaToolResult(asset: MediaToolAsset) {
+  return {
+    success: true,
+    ok: true,
+    media_id: asset.id,
+    media_asset_id: asset.id,
+    media_url: asset.url,
+    public_url: asset.url,
+    asset,
+  };
+}
+
+function rejectLocalAiPaths(value: string | undefined, field: string) {
+  const v = String(value || '').trim();
+  if (!v) return;
+  // ChatGPT sandbox / desktop local paths are not fetchable by Alphaclone or Facebook.
+  if (
+    /^\/mnt\/data\//i.test(v) ||
+    /^\/tmp\//i.test(v) ||
+    /^file:/i.test(v) ||
+    /^[A-Za-z]:\\/.test(v)
+  ) {
+    throw new Error(
+      `${field} looks like a local AI sandbox path (${v}). ` +
+        'Read the image bytes in the session, pass them as content_base64 (or data_url), ' +
+        'then use the returned media_url with publish_post / publish_social_post.'
+    );
+  }
+}
+
 registerTool('social-publishing', {
   name: 'upload_media',
   description:
-    'Upload media into the tenant media library. Accepts content_base64 (+filename/mime_type), or url, or data_url. Returns asset id and a public https URL. Never returns storage credentials.',
+    'Upload AI images with content_base64 (+filename, mime_type). No /mnt/data paths. Returns media_url + media_id for publish_post.media_urls. ' +
+    'Also accepts data_url or public HTTPS url. Permanent public HTTPS; no storage credentials.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
     filename: z.string().optional(),
     mime_type: z.string().optional(),
+    content_type: z.string().optional(),
     content_base64: z.string().optional(),
+    file: z.string().optional(),
+    file_base64: z.string().optional(),
     url: z.string().optional(),
     data_url: z.string().optional(),
     purpose: z.string().optional(),
@@ -185,12 +231,40 @@ registerTool('social-publishing', {
   jsonSchema: {
     type: 'object',
     properties: {
-      filename: { type: 'string' },
-      mime_type: { type: 'string' },
-      content_base64: { type: 'string', description: 'Raw base64 or data URL' },
-      url: { type: 'string', description: 'Public HTTPS URL to ingest' },
-      data_url: { type: 'string', description: 'data:image/...;base64,...' },
-      purpose: { type: 'string' },
+      filename: {
+        type: 'string',
+        description: 'e.g. facebook-post.png (required with base64 uploads)',
+      },
+      mime_type: {
+        type: 'string',
+        description: 'image/png | image/jpeg | image/webp | image/gif | video/mp4 …',
+      },
+      content_type: {
+        type: 'string',
+        description: 'Alias for mime_type',
+      },
+      content_base64: {
+        type: 'string',
+        description:
+          'Raw base64 image/video bytes OR a data:image/...;base64,... URL. Use this for ChatGPT-generated images.',
+      },
+      file: {
+        type: 'string',
+        description: 'Alias for content_base64',
+      },
+      file_base64: {
+        type: 'string',
+        description: 'Alias for content_base64',
+      },
+      url: {
+        type: 'string',
+        description: 'Already-public HTTPS URL to ingest into the tenant library',
+      },
+      data_url: {
+        type: 'string',
+        description: 'data:image/...;base64,...',
+      },
+      purpose: { type: 'string', description: 'Defaults to social_post' },
       alt_text: { type: 'string' },
     },
     required: [],
@@ -199,30 +273,37 @@ registerTool('social-publishing', {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
 
-    if (args.data_url || (args.content_base64 && String(args.content_base64).startsWith('data:'))) {
+    const contentBase64 =
+      args.content_base64 || args.file_base64 || args.file || undefined;
+    const mimeType = args.mime_type || args.content_type || undefined;
+    const filename = args.filename || undefined;
+
+    rejectLocalAiPaths(args.url, 'url');
+    rejectLocalAiPaths(contentBase64, 'content_base64');
+    rejectLocalAiPaths(args.data_url, 'data_url');
+    rejectLocalAiPaths(filename, 'filename');
+
+    if (args.data_url || (contentBase64 && String(contentBase64).startsWith('data:'))) {
       const asset = await ingestMediaInput({
         tenantId,
         userId,
         purpose: args.purpose || 'social_post',
         media: {
           type: 'data_url',
-          dataUrl: args.data_url || String(args.content_base64),
-          filename: args.filename,
+          dataUrl: args.data_url || String(contentBase64),
+          filename,
         },
       });
-      return {
-        ok: true,
-        asset: {
-          id: asset.id,
-          filename: asset.filename,
-          mime_type: asset.mime_type,
-          size_bytes: asset.size_bytes,
-          url: asset.url,
-          status: asset.status,
-        },
-        media_asset_id: asset.id,
-        public_url: asset.url,
-      };
+      return mediaToolResult({
+        id: asset.id,
+        filename: asset.filename,
+        mime_type: asset.mime_type,
+        size_bytes: asset.size_bytes,
+        url: asset.url,
+        status: asset.status,
+        width: asset.width,
+        height: asset.height,
+      });
     }
 
     if (args.url) {
@@ -230,47 +311,147 @@ registerTool('social-publishing', {
         tenantId,
         userId,
         purpose: args.purpose || 'social_post',
-        media: { type: 'url', url: args.url, filename: args.filename },
+        media: { type: 'url', url: args.url, filename },
       });
-      return {
-        ok: true,
-        asset: {
-          id: asset.id,
-          filename: asset.filename,
-          mime_type: asset.mime_type,
-          size_bytes: asset.size_bytes,
-          url: asset.url,
-          status: asset.status,
-        },
-        media_asset_id: asset.id,
-        public_url: asset.url,
-      };
+      return mediaToolResult({
+        id: asset.id,
+        filename: asset.filename,
+        mime_type: asset.mime_type,
+        size_bytes: asset.size_bytes,
+        url: asset.url,
+        status: asset.status,
+        width: asset.width,
+        height: asset.height,
+      });
     }
 
-    if (!args.content_base64 || !args.filename || !args.mime_type) {
-      throw new Error('Provide content_base64+filename+mime_type, or url, or data_url');
+    if (!contentBase64 || !filename || !mimeType) {
+      throw new Error(
+        'Provide content_base64 (or file/file_base64) + filename + mime_type (or content_type), or url, or data_url. ' +
+          'For ChatGPT-generated images: pass the image bytes as content_base64 — never /mnt/data paths.'
+      );
     }
 
     const uploaded = await uploadSocialMedia({
       tenantId,
       userId,
-      filename: args.filename,
-      mimeType: args.mime_type,
-      contentBase64: args.content_base64,
+      filename,
+      mimeType,
+      contentBase64,
       altText: args.alt_text,
     });
+    return mediaToolResult({
+      id: uploaded.media_asset_id,
+      filename: uploaded.filename,
+      mime_type: uploaded.mime_type,
+      size_bytes: uploaded.size_bytes,
+      url: uploaded.public_url,
+      status: 'ready',
+      width: uploaded.width,
+      height: uploaded.height,
+    });
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'get_media',
+  description:
+    'Fetch a tenant-scoped media asset by media_id / media_asset_id. Returns the permanent public media_url (no storage credentials). Use after upload_media or list_media_assets.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    media_id: z.string().uuid().optional(),
+    media_asset_id: z.string().uuid().optional(),
+    asset_id: z.string().uuid().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      media_id: { type: 'string', format: 'uuid', description: 'Alias for media_asset_id' },
+      media_asset_id: { type: 'string', format: 'uuid' },
+      asset_id: { type: 'string', format: 'uuid', description: 'Alias for media_asset_id' },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
+    const assetId = args.media_id || args.media_asset_id || args.asset_id;
+    if (!assetId) throw new Error('media_id (or media_asset_id / asset_id) is required');
+    const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+    const asset = await ingestMediaInput({
+      tenantId,
+      userId,
+      media: { type: 'asset_id', assetId },
+    });
+    return mediaToolResult({
+      id: asset.id,
+      filename: asset.filename,
+      mime_type: asset.mime_type,
+      size_bytes: asset.size_bytes,
+      url: asset.url,
+      status: asset.status,
+      width: asset.width,
+      height: asset.height,
+    });
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'delete_media',
+  description:
+    'Delete a tenant-scoped media asset from Alphaclone storage and the media library. Cannot delete another tenant’s files.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    media_id: z.string().uuid().optional(),
+    media_asset_id: z.string().uuid().optional(),
+    asset_id: z.string().uuid().optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      media_id: { type: 'string', format: 'uuid' },
+      media_asset_id: { type: 'string', format: 'uuid' },
+      asset_id: { type: 'string', format: 'uuid' },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
+    void userId;
+    const assetId = args.media_id || args.media_asset_id || args.asset_id;
+    if (!assetId) throw new Error('media_id (or media_asset_id / asset_id) is required');
+
+    const supabase = createSupabaseAdminClient();
+    const { data: asset, error } = await supabase
+      .from('media_assets')
+      .select('id, storage_path, tenant_id, public_url')
+      .eq('tenant_id', tenantId)
+      .eq('id', assetId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!asset) throw new Error(`media_asset_id not found for tenant: ${assetId}`);
+    if (asset.tenant_id !== tenantId) throw new Error('Cross-tenant media access denied');
+
+    if (asset.storage_path) {
+      const { error: storageError } = await supabase.storage
+        .from('public-assets')
+        .remove([asset.storage_path]);
+      if (storageError) throw new Error(storageError.message);
+    }
+
+    const { error: deleteError } = await supabase
+      .from('media_assets')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('id', assetId);
+    if (deleteError) throw new Error(deleteError.message);
+
     return {
+      success: true,
       ok: true,
-      asset: {
-        id: uploaded.media_asset_id,
-        filename: uploaded.filename,
-        mime_type: uploaded.mime_type,
-        size_bytes: uploaded.size_bytes,
-        url: uploaded.public_url,
-        status: 'ready',
-      },
-      media_asset_id: uploaded.media_asset_id,
-      public_url: uploaded.public_url,
+      deleted: true,
+      media_id: assetId,
+      media_asset_id: assetId,
+      media_url: asset.public_url || null,
     };
   },
 });
