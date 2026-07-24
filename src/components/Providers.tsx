@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
 import { TenantProvider } from '@/contexts/TenantContext';
@@ -15,6 +16,7 @@ import { UserPreferencesBootstrap } from '@/components/UserPreferencesBootstrap'
 import ServiceWorkerBootstrap from '@/components/common/ServiceWorkerBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 import { registerPlatformQueryClient } from '@/lib/platformReset';
+import { alphacloneChakraTheme } from '@/theme/chakraTheme';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside component to avoid server/client hydration mismatch
@@ -44,23 +46,25 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <GlobalErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <SuccessFeedbackProvider>
-          <AuthProvider>
-            <ThemeProvider>
-              <LanguageProvider>
-                <UserPreferencesBootstrap />
-                <ServiceWorkerBootstrap />
-                <TenantProvider>
-                  <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
-                </TenantProvider>
-              </LanguageProvider>
-            </ThemeProvider>
-          </AuthProvider>
-          </SuccessFeedbackProvider>
-        </ToastProvider>
-      </QueryClientProvider>
+      <ChakraProvider theme={alphacloneChakraTheme} resetCSS={false}>
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <SuccessFeedbackProvider>
+              <AuthProvider>
+                <ThemeProvider>
+                  <LanguageProvider>
+                    <UserPreferencesBootstrap />
+                    <ServiceWorkerBootstrap />
+                    <TenantProvider>
+                      <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
+                    </TenantProvider>
+                  </LanguageProvider>
+                </ThemeProvider>
+              </AuthProvider>
+            </SuccessFeedbackProvider>
+          </ToastProvider>
+        </QueryClientProvider>
+      </ChakraProvider>
     </GlobalErrorBoundary>
   );
 }

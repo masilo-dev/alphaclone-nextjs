@@ -12,6 +12,7 @@ import {
   Calendar,
   Bell,
   Target,
+  Headphones,
 } from 'lucide-react';
 
 export interface EmptyStateQuickAction {
@@ -47,7 +48,8 @@ export type EmptyStateModuleId =
   | 'deals'
   | 'clients'
   | 'forms'
-  | 'documents';
+  | 'documents'
+  | 'tickets';
 
 export const EMPTY_STATE_PRESETS: Record<EmptyStateModuleId, EmptyStatePreset> = {
   crm: {
@@ -175,6 +177,17 @@ export const EMPTY_STATE_PRESETS: Record<EmptyStateModuleId, EmptyStatePreset> =
     description: 'Store contracts, proposals, and files linked to clients and projects.',
     actionLabel: 'Upload document',
     templateLinks: [{ label: 'Template library', href: '/dashboard/business/documents' }],
+  },
+  tickets: {
+    icon: Headphones,
+    title: 'No support tickets yet',
+    description: 'Create a ticket to track customer issues, SLAs, and agent replies in one place.',
+    actionLabel: 'Create ticket',
+    bonnieSuggestion: 'Ask Bonnie: "Draft a support reply for this customer issue."',
+    quickActions: [
+      { label: 'Channels inbox', href: '/dashboard/business/channels' },
+      { label: 'Messenger', href: '/dashboard/business/messages' },
+    ],
   },
 };
 

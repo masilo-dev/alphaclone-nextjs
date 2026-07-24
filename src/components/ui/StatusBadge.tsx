@@ -110,6 +110,16 @@ export function ticketStatusVariant(status: string): StatusBadgeVariant {
   }
 }
 
+export function ticketPriorityVariant(priority: string): StatusBadgeVariant {
+  switch (priority) {
+    case 'urgent':
+    case 'high': return 'error';
+    case 'medium': return 'warning';
+    case 'low': return 'neutral';
+    default: return 'neutral';
+  }
+}
+
 export function userStatusVariant(status: string): StatusBadgeVariant {
   switch (status) {
     case 'active': return 'success';

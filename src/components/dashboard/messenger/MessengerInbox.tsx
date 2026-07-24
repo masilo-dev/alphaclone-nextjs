@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     MessageSquare, Send, Inbox, Search, Loader2, 
-    ArrowLeft, Menu, X, Sparkles, User, RefreshCcw,
+    ArrowLeft, Menu, X, Bot, User, RefreshCcw,
     Circle, CheckCircle2, ShieldCheck, Link as LinkIcon,
     Instagram
 } from 'lucide-react';
@@ -281,7 +281,7 @@ export default function MessengerInbox() {
                 `}>
                     <div className="p-6 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-600/10 rounded-xl text-blue-400">
+                            <div className="p-2 bg-blue-600/10 rounded-xl text-teal-400">
                                 <MessageSquare size={20} />
                             </div>
                             <span className="font-bold text-gray-200 tracking-tight text-lg">Messenger Suite</span>
@@ -299,7 +299,7 @@ export default function MessengerInbox() {
                                 placeholder="Search conversations..." 
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/5 border border-white/5 rounded-2xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/30 focus:outline-none transition-all placeholder:text-gray-600 text-sm"
+                                className="w-full bg-white/5 border border-white/5 rounded-lg pl-12 pr-4 py-3 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/30 focus:outline-none transition-all placeholder:text-gray-600 text-sm"
                             />
                         </div>
                     </div>
@@ -308,7 +308,7 @@ export default function MessengerInbox() {
                         {loading ? (
                             <div className="space-y-2 p-2">
                                 {[1,2,3,4].map(i => (
-                                    <div key={i} className="w-full h-20 bg-white/5 rounded-2xl animate-pulse" />
+                                    <div key={i} className="w-full h-20 bg-white/5 rounded-lg animate-pulse" />
                                 ))}
                             </div>
                         ) : filteredConversations.length === 0 ? (
@@ -330,7 +330,7 @@ export default function MessengerInbox() {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div className="flex items-center gap-2">
-                                            <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-purple-600 to-pink-500' : 'from-gray-800 to-gray-900'} border border-white/5 font-bold text-white transition-all group-hover:border-blue-500/30`}>
+                                            <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br ${conv.metadata?.platform === 'instagram' ? 'from-teal-600 to-cyan-600' : 'from-slate-800 to-slate-900'} border border-white/5 font-bold text-white transition-all group-hover:border-teal-500/30`}>
                                                 {conv.metadata?.platform === 'instagram' ? <Instagram size={18} /> : (conv.contacts?.full_name?.charAt(0) || <User size={18} />)}
                                             </div>
                                             <div className="min-w-0">
@@ -339,11 +339,11 @@ export default function MessengerInbox() {
                                                 </h3>
                                                 <div className="flex items-center gap-1">
                                                     <div className={`w-1.5 h-1.5 ${conv.metadata?.platform === 'instagram' ? 'bg-pink-500' : 'bg-green-500'} rounded-full`} />
-                                                    <span className="text-xs font-black text-gray-600 uppercase tracking-widest">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
+                                                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{conv.metadata?.platform === 'instagram' ? 'Instagram' : 'Active'}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-black text-gray-600 uppercase">
+                                        <span className="text-xs font-semibold text-gray-600 uppercase">
                                             {new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
@@ -378,19 +378,19 @@ export default function MessengerInbox() {
                                         <ArrowLeft size={20} />
                                     </button>
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 bg-gradient-to-br ${activeConv?.metadata?.platform === 'instagram' ? 'from-purple-600 to-pink-500' : 'from-blue-600 to-indigo-700'} rounded-xl flex items-center justify-center text-white font-black shadow-lg`}>
+                                        <div className={`w-10 h-10 bg-gradient-to-br ${activeConv?.metadata?.platform === 'instagram' ? 'from-teal-600 to-cyan-600' : 'from-teal-600 to-teal-800'} rounded-xl flex items-center justify-center text-white font-semibold shadow-lg`}>
                                             {activeConv?.metadata?.platform === 'instagram' ? <Instagram size={20} /> : (activeConv?.contacts?.full_name?.charAt(0) || 'C')}
                                         </div>
                                         <div>
                                             <h2 className="font-bold text-white tracking-tight">{activeConv?.contacts?.full_name || `Customer ${activeConv?.sender_id}`}</h2>
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-xs ${activeConv?.metadata?.platform === 'instagram' ? 'text-pink-400' : 'text-blue-400'} font-black uppercase tracking-[0.1em]`}>
+                                                <span className={`text-xs ${activeConv?.metadata?.platform === 'instagram' ? 'text-teal-400' : 'text-teal-400'} font-semibold uppercase tracking-[0.1em]`}>
                                                     {activeConv?.metadata?.platform === 'instagram' ? 'Instagram Direct' : 'Facebook Messenger'}
                                                 </span>
                                                 {activeConv?.contact_id && (
                                                     <div className="flex items-center gap-1 px-1.5 py-0.5 bg-green-500/10 text-green-500 rounded-md border border-green-500/20">
                                                         <CheckCircle2 size={10} />
-                                                        <span className="text-xs font-black uppercase">CRM Linked</span>
+                                                        <span className="text-xs font-semibold uppercase">CRM Linked</span>
                                                     </div>
                                                 )}
                                             </div>
@@ -411,7 +411,7 @@ export default function MessengerInbox() {
                                 {msgLoading ? (
                                     <div className="flex flex-col items-center justify-center py-40 gap-3 opacity-20">
                                         <Loader2 className="animate-spin text-blue-500" size={32} />
-                                        <span className="text-xs font-black uppercase tracking-widest">Loading Analytics</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wide">Loading Analytics</span>
                                     </div>
                                 ) : (
                                     <>
@@ -424,13 +424,13 @@ export default function MessengerInbox() {
                                                     key={msg.id}
                                                     className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                                                 >
-                                                    <div className={`max-w-[70%] p-4 rounded-2xl text-sm ${
+                                                    <div className={`max-w-[70%] p-4 rounded-lg text-sm ${
                                                         isMe 
                                                         ? 'bg-teal-600 text-white rounded-br-none shadow-lg shadow-teal-600/20' 
                                                         : 'bg-white/5 text-gray-200 border border-white/5 rounded-bl-none'
                                                     }`}>
                                                         <p className="leading-relaxed">{msg.text}</p>
-                                                        <div className={`text-xs mt-2 font-black uppercase tracking-widest ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
+                                                        <div className={`text-xs mt-2 font-semibold uppercase tracking-wide ${isMe ? 'text-teal-200' : 'text-gray-500'}`}>
                                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
@@ -448,9 +448,9 @@ export default function MessengerInbox() {
                                         <button 
                                             onClick={handleAiSuggest}
                                             disabled={aiGenerating || msgLoading}
-                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-black uppercase tracking-widest text-xs disabled:opacity-50"
+                                            className="flex items-center gap-2 bg-teal-600/10 hover:bg-teal-600 text-teal-400 hover:text-white px-4 py-2 rounded-xl border border-teal-600/20 transition-all font-semibold uppercase tracking-wide text-xs disabled:opacity-50"
                                         >
-                                            {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                                            {aiGenerating ? <Loader2 size={12} className="animate-spin" /> : <Bot size={12} />}
                                             <span>Smart Reply</span>
                                         </button>
                                     </div>
@@ -461,11 +461,11 @@ export default function MessengerInbox() {
                                             placeholder="Write a message..."
                                             value={replyText}
                                             onChange={e => setReplyText(e.target.value)}
-                                            className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all text-sm pr-16"
+                                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-5 py-4 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-all text-sm pr-16"
                                         />
                                         <button 
                                             disabled={sending || !replyText.trim()}
-                                            className="bg-teal-600 hover:bg-teal-500 p-4 rounded-2xl text-white shadow-xl shadow-teal-600/20 disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center shrink-0"
+                                            className="bg-teal-600 hover:bg-teal-500 p-4 rounded-lg text-white shadow-md disabled:opacity-50 transition-all active:scale-95 flex items-center justify-center shrink-0"
                                         >
                                             {sending ? <Loader2 size={24} className="animate-spin" /> : <Send size={24} />}
                                         </button>
@@ -487,13 +487,13 @@ export default function MessengerInbox() {
                             <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/5 shadow-2xl">
                                 <MessageSquare size={40} className="text-gray-700" />
                             </div>
-                            <h3 className="text-xl font-black text-gray-400 uppercase tracking-widest mb-2">Messenger Command</h3>
+                            <h3 className="text-xl font-semibold text-gray-400 uppercase tracking-wide mb-2">Messenger Command</h3>
                             <p className="text-xs text-gray-600 max-w-xs leading-relaxed uppercase tracking-tighter">Choose a customer thread to engage at scale with AI-assisted messaging.</p>
                             
-                            <div className="mt-12 p-6 bg-teal-600/5 rounded-2xl border border-teal-500/10 max-w-sm">
+                            <div className="mt-12 p-6 bg-teal-600/5 rounded-lg border border-teal-500/10 max-w-sm">
                                 <div className="flex items-center gap-2 mb-3 text-teal-400">
                                     <ShieldCheck size={16} />
-                                    <span className="text-xs font-black uppercase tracking-widest">Enterprise Shield</span>
+                                    <span className="text-xs font-semibold uppercase tracking-wide">Enterprise Shield</span>
                                 </div>
                                 <p className="text-xs text-gray-500 text-left leading-relaxed font-bold uppercase tracking-wide">
                                     Communication is end-to-end reliable. 

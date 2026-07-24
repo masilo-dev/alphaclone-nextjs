@@ -28,8 +28,7 @@ import {
     FileSpreadsheet,
     Grid3X3,
     CheckCircle2,
-    Sparkles,
-    Clock,
+        Clock,
     Send,
     DollarSign,
     UserCheck,
@@ -662,10 +661,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 {/* Simplified Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                        <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">My Clients</h2>
+                        <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">My Clients</h2>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">CRM</p>
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">CRM</p>
                         </div>
                     </div>
                     <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -686,7 +685,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {filteredClients.map(client => (
                         <div key={client.id} className="p-3 bg-slate-900/60 border border-white/5 rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-xs">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-xs">
                                     {(client.name || '?').charAt(0)}
                                 </div>
                                 <div>
@@ -725,10 +724,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">Sales contacts</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">Sales contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Pipeline</p>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">Pipeline</p>
                     </div>
                 </div>
                 <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -823,7 +822,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <Button
                             variant="primary"
                             onClick={() => setShowOutreachModal(true)}
-                            icon={<Sparkles className="w-4 h-4" />}
+                            icon={<Users className="w-4 h-4" />}
                             className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20"
                         >
                             Outreach ({selectedClientIds.length})
@@ -868,7 +867,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             };
                             const stageGrad: Record<string, string> = {
                                 lead: 'from-cyan-500 to-teal-600',
-                                prospect: 'from-blue-500 to-violet-600',
+                                prospect: 'from-teal-500 to-cyan-600',
                                 customer: 'from-emerald-500 to-teal-600',
                                 lost: 'from-slate-500 to-slate-700'
                             };
@@ -892,7 +891,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     className="flex flex-col items-center gap-1.5 w-full hover:-translate-y-0.5 transition-transform cursor-pointer"
                                 >
                                     {/* Avatar */}
-                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-teal-500 to-violet-600'} flex items-center justify-center font-bold text-white text-xs relative`}>
+                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-teal-500 to-teal-700'} flex items-center justify-center font-bold text-white text-xs relative`}>
                                         {initials}
                                         <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${stageDot[client.salesStage] || 'bg-slate-500'}`} />
                                     </div>
@@ -959,7 +958,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             const initials = (client.name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
                             const stageColor = client.salesStage === 'customer' ? 'from-emerald-500 to-teal-600'
                                 : client.salesStage === 'lost' ? 'from-slate-600 to-slate-700'
-                                : client.salesStage === 'prospect' ? 'from-blue-500 to-violet-600'
+                                : client.salesStage === 'prospect' ? 'from-teal-500 to-cyan-600'
                                 : 'from-teal-500 to-cyan-600';
                             return (
                                     <ClientCard
@@ -1035,12 +1034,12 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         }
                                     }
                                 }}
-                                className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-teal-400 transition-colors"
+                                className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-teal-400 transition-colors"
                             >
                                 {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 500)`}
                             </button>
                             {selectedClientIds.length >= 500 && (
-                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
+                                <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
                             )}
                         </div>
 
@@ -1092,7 +1091,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         size="sm"
                                         onClick={handleLoadMore}
                                         isLoading={loading}
-                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-widest text-xs"
+                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wide text-xs"
                                     >
                                         Load More Contacts
                                     </Button>
@@ -1117,7 +1116,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
                                     <div className="flex justify-between items-start gap-4 mb-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-teal-500/10">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-teal-500/10">
                                                 {(selectedClient.name || '?').charAt(0)}
                                             </div>
                                             <div>
@@ -1605,7 +1604,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                             {isSelected ? <CheckSquare className="w-4 h-4 text-teal-400" /> : <Square className="w-4 h-4" />}
                         </button>
                     )}
-                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white">
+                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white">
                         {(client.name || '?').charAt(0)}
                     </div>
                     <div className="min-w-0">
@@ -1650,7 +1649,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                     </div>
                 )}
                 {client.metadata?.last_contacted_at && (
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-500/70 mt-3">
+                    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-teal-500/70 mt-3">
                         <MessageSquare className="w-3 h-3" />
                         <span>Last Contacted: {formatDistanceToNow(new Date(client.metadata.last_contacted_at), { addSuffix: true })}</span>
                     </div>

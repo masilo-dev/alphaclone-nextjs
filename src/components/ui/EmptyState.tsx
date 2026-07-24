@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
-import { Bot, Sparkles } from 'lucide-react';
+import { Bot } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 import {
@@ -108,8 +108,7 @@ export function EmptyState({
 
           {templateLinks && templateLinks.length > 0 ? (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)] flex items-center gap-1">
-                <Sparkles className="w-3 h-3" aria-hidden="true" />
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--ws-text-tertiary)]">
                 Templates
               </p>
               {templateLinks.map((t) => (
