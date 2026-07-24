@@ -132,7 +132,8 @@ export async function proxy(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
     const host = request.headers.get('host');
 
-    // Canonical redirect: www.alphaclonesystems.com -> alphaclonesystems.com
+    // Canonical redirect: www → apex (only runs after www DNS exists).
+    // If www is NXDOMAIN, OAuth returns fail before this code — see docs/auth/WWW_DNS_OAUTH_FIX.md
     if (host === 'www.alphaclonesystems.com') {
         const url = request.nextUrl.clone();
         url.hostname = 'alphaclonesystems.com';

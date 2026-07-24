@@ -80,6 +80,7 @@ export async function GET(req: NextRequest) {
 
   const body = {
     publicOriginConfigured: originCheck.ok && PUBLIC_APP_ORIGIN.startsWith('https://'),
+    publicOriginIsApex: !PUBLIC_APP_ORIGIN.includes('://www.'),
     mcpResourceConfigured:
       originCheck.ok &&
       PUBLIC_MCP_RESOURCE.startsWith('https://') &&

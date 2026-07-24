@@ -30,10 +30,47 @@ function isProductionRuntime(): boolean {
   );
 }
 
-/** Normalize to scheme://host[:port] with no trailing slash. */
+/**
+ * Force apex host for Alphaclone production.
+ * `www.alphaclonesystems.com` currently has no DNS (NXDOMAIN); OAuth must never
+ * redirect there or social sign-in fails after the IdP returns.
+ */
+export function stripWwwAlphacloneHost(hostname: string): string {
+  const host = hostname.toLowerCase().trim();
+  if (host === 'www.alphaclonesystems.com') return 'alphaclonesystems.com';
+  return host;
+}
+
+/** Normalize to scheme://host[:port] with no trailing slash (apex, never www). */
 export function normalizeOrigin(value: string): string {
   const url = new URL(value);
+  url.hostname = stripWwwAlphacloneHost(url.hostname);
   return url.origin.replace(/\/+$/, '');
+}
+
+/**
+ * Browser OAuth redirect origin. Prefer configured public URL; always strip www
+ * for alphaclonesystems.com so Supabase redirectTo cannot land on NXDOMAIN.
+ */
+export function getOAuthRedirectOrigin(fallbackOrigin?: string): string {
+  const candidates = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.PUBLIC_APP_ORIGIN,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    fallbackOrigin,
+  ];
+
+  for (const candidate of candidates) {
+    const trimmed = candidate?.trim();
+    if (!trimmed) continue;
+    try {
+      return normalizeOrigin(trimmed);
+    } catch {
+      // try next
+    }
+  }
+
+  return DEFAULT_PRODUCTION_ORIGIN;
 }
 
 /**
@@ -106,6 +143,12 @@ function assertSafePublicOrigin(origin: string): void {
   if (isProductionRuntime() && parsed.protocol !== 'https:') {
     throw new PublicOriginConfigurationError(
       `PUBLIC_APP_ORIGIN must use HTTPS in production: ${origin}`
+    );
+  }
+
+  if (parsed.hostname.toLowerCase() === 'www.alphaclonesystems.com') {
+    throw new PublicOriginConfigurationError(
+      'PUBLIC_APP_ORIGIN must use apex https://alphaclonesystems.com (www has no DNS / NXDOMAIN)'
     );
   }
 }
