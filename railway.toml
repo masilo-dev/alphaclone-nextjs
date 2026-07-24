@@ -1,12 +1,10 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "rm -rf app/ && (rm -rf .next/cache/* 2>/dev/null || true) && npm run build"
+buildCommand = "NODE_OPTIONS='--max-old-space-size=6144' npm run build"
 
 [deploy]
 startCommand = "npm run start"
-# Use liveness (/api/health), not readiness: missing CRON_SECRET/ENCRYPTION_SECRET
-# must not block Railway rollouts. Probe /api/readiness separately for config depth.
 healthcheckPath = "/api/health"
-healthcheckTimeout = 120
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
