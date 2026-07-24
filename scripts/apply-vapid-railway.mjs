@@ -13,32 +13,32 @@
  *   VAPID_PRIVATE_KEY=...
  *   VAPID_EMAIL=mailto:...
  */
-import { readFileSync, existsSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { readFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 
-const keysPath = process.argv[2] || '/opt/cursor/artifacts/vapid-keys.env';
+const keysPath = process.argv[2] || "/opt/cursor/artifacts/vapid-keys.env";
 if (!existsSync(keysPath)) {
   console.error(`Missing keys file: ${keysPath}`);
-  console.error('Generate with: npx web-push generate-vapid-keys --json');
+  console.error("Generate with: npx web-push generate-vapid-keys --json");
   process.exit(1);
 }
 
 const parsed = Object.fromEntries(
-  readFileSync(keysPath, 'utf8')
-    .split('\n')
+  readFileSync(keysPath, "utf8")
+    .split("\n")
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#') && line.includes('='))
+    .filter((line) => line && !line.startsWith("#") && line.includes("="))
     .map((line) => {
-      const i = line.indexOf('=');
+      const i = line.indexOf("=");
       return [line.slice(0, i).trim(), line.slice(i + 1).trim()];
     }),
 );
 
 const required = [
-  'NEXT_PUBLIC_VAPID_PUBLIC_KEY',
-  'VITE_VAPID_PUBLIC_KEY',
-  'VAPID_PRIVATE_KEY',
-  'VAPID_EMAIL',
+  "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+  "VITE_VAPID_PUBLIC_KEY",
+  "VAPID_PRIVATE_KEY",
+  "VAPID_EMAIL",
 ];
 for (const key of required) {
   if (!parsed[key]) {
@@ -48,19 +48,21 @@ for (const key of required) {
 }
 
 if (!process.env.RAILWAY_TOKEN) {
-  console.error('RAILWAY_TOKEN is not set — cannot write Railway variables.');
-  console.error('Paste these into Railway → alphaclone-web → Variables, then redeploy:');
+  console.error("RAILWAY_TOKEN is not set — cannot write Railway variables.");
+  console.error(
+    "Paste these into Railway → alphaclone-web → Variables, then redeploy:",
+  );
   for (const key of required) console.error(`  ${key}=${parsed[key]}`);
   process.exit(2);
 }
 
-const args = ['variables', 'set'];
+const args = ["variables", "set"];
 for (const key of required) {
   args.push(`${key}=${parsed[key]}`);
 }
 
-const result = spawnSync('npx', ['--yes', '@railway/cli', ...args], {
-  stdio: 'inherit',
+const result = spawnSync("npx", ["--yes", "@railway/cli", ...args], {
+  stdio: "inherit",
   env: process.env,
 });
 

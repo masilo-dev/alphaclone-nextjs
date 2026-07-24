@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,13 @@ export async function GET(request: NextRequest) {
 
       if (now - lastAttempt < delayMinutes * 60 * 1000) {
         continue; // Not yet time for retry
+      }
+
+      const guard = await guardCronTenantRow(run, 'automation_runs', {
+        workflow_type: run.workflow_type,
+      });
+      if (!guard.ok) {
+        continue;
       }
 
       try {

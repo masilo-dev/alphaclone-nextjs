@@ -1,9 +1,10 @@
 # MCP OAuth Error Fix - "ofid_39198e394feb99f2"
 
 ## Error Message
+
 ```
-Couldn't register with Alphaclone's sign-in service. 
-You can try again, or add an OAuth Client ID in the connector settings. 
+Couldn't register with Alphaclone's sign-in service.
+You can try again, or add an OAuth Client ID in the connector settings.
 If this persists, share this reference with support: "ofid_39198e394feb99f2"
 ```
 
@@ -12,6 +13,7 @@ If this persists, share this reference with support: "ofid_39198e394feb99f2"
 This error occurs when **Claude.ai** (Anthropic's AI assistant) tries to connect to AlphaClone via the **Model Context Protocol (MCP)** but cannot complete the OAuth authentication flow.
 
 ### Root Cause
+
 The `ofid_39198e394feb99f2` error reference indicates that Claude.ai's MCP connector cannot find or authenticate with AlphaClone's OAuth server. This typically happens because:
 
 1. **Missing OAuth Client Registration**: Claude.ai's OAuth client ID isn't registered in AlphaClone's database
@@ -80,17 +82,18 @@ ON CONFLICT (client_id) DO UPDATE SET
 
 The following clients must be registered in `mcp_oauth_clients`:
 
-| Client ID | Name | Type | Status |
-|-----------|------|------|--------|
-| `1778309945386-41bab8272f61` | Claude Desktop | Public (PKCE) | ✅ Required |
-| `CLAUDE` | Claude Legacy | Public (PKCE) | ✅ Recommended |
-| `claude-web` | Claude Web | Public (PKCE) | ✅ Recommended |
-| `chatgpt-connector` | ChatGPT | Public (PKCE) | ✅ Already registered |
-| `grok-connector` | Grok | Public (PKCE) | ✅ Already registered |
+| Client ID                    | Name           | Type          | Status                |
+| ---------------------------- | -------------- | ------------- | --------------------- |
+| `1778309945386-41bab8272f61` | Claude Desktop | Public (PKCE) | ✅ Required           |
+| `CLAUDE`                     | Claude Legacy  | Public (PKCE) | ✅ Recommended        |
+| `claude-web`                 | Claude Web     | Public (PKCE) | ✅ Recommended        |
+| `chatgpt-connector`          | ChatGPT        | Public (PKCE) | ✅ Already registered |
+| `grok-connector`             | Grok           | Public (PKCE) | ✅ Already registered |
 
 ### Database Schema
 
 **Table: `mcp_oauth_clients`**
+
 - `client_id` (TEXT, UNIQUE): OAuth client identifier
 - `client_name` (TEXT): Human-readable name
 - `redirect_uris` (TEXT[]): Allowed redirect URLs
@@ -131,21 +134,24 @@ WHERE client_name ILIKE '%claude%';
 ### If the error persists after fix:
 
 1. **Check Redirect URIs**: Ensure the redirect URI in the request matches exactly
+
    ```sql
-   SELECT client_id, redirect_uris 
-   FROM mcp_oauth_clients 
+   SELECT client_id, redirect_uris
+   FROM mcp_oauth_clients
    WHERE client_id = '1778309945386-41bab8272f61';
    ```
 
 2. **Verify Table Exists**:
+
    ```sql
    SELECT EXISTS (
-     SELECT FROM information_schema.tables 
+     SELECT FROM information_schema.tables
      WHERE table_name = 'mcp_oauth_clients'
    );
    ```
 
 3. **Check RLS Policies**: Ensure Row Level Security isn't blocking reads:
+
    ```sql
    SELECT * FROM pg_policies WHERE tablename = 'mcp_oauth_clients';
    ```
@@ -157,11 +163,11 @@ WHERE client_name ILIKE '%claude%';
 
 ### Related Error Codes
 
-| Error Reference | Likely Cause |
-|-----------------|--------------|
-| `ofid_39198e394feb99f2` | Missing OAuth client registration |
-| `ofid_*` (various) | Claude.ai MCP initialization failure |
-| "invalid_client" | Client ID not found in database |
+| Error Reference         | Likely Cause                               |
+| ----------------------- | ------------------------------------------ |
+| `ofid_39198e394feb99f2` | Missing OAuth client registration          |
+| `ofid_*` (various)      | Claude.ai MCP initialization failure       |
+| "invalid_client"        | Client ID not found in database            |
 | "redirect_uri mismatch" | Redirect URL doesn't match registered URIs |
 
 ## Support

@@ -16,21 +16,22 @@ This repair ships **Stage A (auth/context)** + **Stage B foundation (schema help
 
 ## Critical findings (pre-repair)
 
-| # | Finding | Location |
-|---|---------|----------|
-| 1 | MCP cookie fallback trusted `x-tenant-id` / `?tenantId=` **without membership check** | `src/app/api/mcp/route.ts` |
-| 2 | `set_tenant_context` SECURITY DEFINER + granted to `authenticated` with **no membership check** | `20260410120500_add_tenant_context_rpc.sql` |
-| 3 | MCPServer `requireTenant` fell back to **client `args.tenant_id`** when ctx missing | `MCPServer.ts` |
-| 4 | `defineConnectorTool` preferred `args.tenant_id` over missing session | `defineTool.ts` |
-| 5 | Child tables missing `tenant_id` | `project_milestones`, `ticket_comments`, `lead_activities`, `campaign_*`, `email_sequence_*`, `messenger_messages` |
-| 6 | Storage paths `userId/...` without tenant | `fileUploadService.ts` |
-| 7 | Cron scanned due work globally without quarantine for missing `tenant_id` | `process-campaigns`, MCP queue |
+| #   | Finding                                                                                         | Location                                                                                                           |
+| --- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | MCP cookie fallback trusted `x-tenant-id` / `?tenantId=` **without membership check**           | `src/app/api/mcp/route.ts`                                                                                         |
+| 2   | `set_tenant_context` SECURITY DEFINER + granted to `authenticated` with **no membership check** | `20260410120500_add_tenant_context_rpc.sql`                                                                        |
+| 3   | MCPServer `requireTenant` fell back to **client `args.tenant_id`** when ctx missing             | `MCPServer.ts`                                                                                                     |
+| 4   | `defineConnectorTool` preferred `args.tenant_id` over missing session                           | `defineTool.ts`                                                                                                    |
+| 5   | Child tables missing `tenant_id`                                                                | `project_milestones`, `ticket_comments`, `lead_activities`, `campaign_*`, `email_sequence_*`, `messenger_messages` |
+| 6   | Storage paths `userId/...` without tenant                                                       | `fileUploadService.ts`                                                                                             |
+| 7   | Cron scanned due work globally without quarantine for missing `tenant_id`                       | `process-campaigns`, MCP queue                                                                                     |
 
 ---
 
 ## Repairs shipped (this PR branch)
 
 ### Code
+
 - `src/lib/tenant/platformTenant.ts` — session bind, membership assert, cache/storage key helpers, cron quarantine persistence, storage path assert
 - MCP route: hint only after `resolveActiveTenantForUser`; **every request** re-checks active membership (sessions included)
 - MCP DELETE scopes session cleanup to `tenant_id` + `user_id`
@@ -46,6 +47,7 @@ This repair ships **Stage A (auth/context)** + **Stage B foundation (schema help
 - MCP event queue: always `createMCPServer({ tenantId, userId })`
 
 ### Migrations
+
 - `20260724140000_platform_multitenant_foundation.sql`
   - `get_user_tenant_ids`, `user_belongs_to_tenant`, `is_tenant_member`, `is_tenant_owner`, `current_tenant_id`
   - Hardened `set_tenant_context` (membership required; transaction-local)
@@ -59,15 +61,15 @@ Social-specific multi-tenant work remains on the social repair PR (`social_conne
 
 ## Staged follow-ups (not complete yet)
 
-| Stage | Work |
-|-------|------|
-| B2 | Backfill remaining child tables; composite FKs `(tenant_id, parent_id)` |
-| B3 | Replace JWT-claim RLS policies with `user_belongs_to_tenant` |
-| C2 | ~~Storage proxy: reject non-`tenant/{id}/` private paths~~ **done** |
-| C1 | Remaining cron workers: tenant-batch + quarantine missing tenant_id |
-| C3 | RAG/embedding tables with mandatory tenant filter before ship |
-| C4 | Tenant A/B penetration suite per module (CRM, finance, docs, email, Bonnie) |
-| C5 | Support-access grant flow (time-limited, audited) |
+| Stage | Work                                                                        |
+| ----- | --------------------------------------------------------------------------- |
+| B2    | Backfill remaining child tables; composite FKs `(tenant_id, parent_id)`     |
+| B3    | Replace JWT-claim RLS policies with `user_belongs_to_tenant`                |
+| C2    | ~~Storage proxy: reject non-`tenant/{id}/` private paths~~ **done**         |
+| C1    | Remaining cron workers: tenant-batch + quarantine missing tenant_id         |
+| C3    | RAG/embedding tables with mandatory tenant filter before ship               |
+| C4    | Tenant A/B penetration suite per module (CRM, finance, docs, email, Bonnie) |
+| C5    | Support-access grant flow (time-limited, audited)                           |
 
 ---
 

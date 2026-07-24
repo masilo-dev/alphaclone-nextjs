@@ -18,14 +18,14 @@ Additional hardening so Alphaclone Systems is **never** a global social default:
 
 ## Failure analysis for `1854057c-abea-4333-8a3a-9354be9217d0`
 
-| Question | Finding |
-|----------|---------|
-| Was Facebook Graph API called? | **No** — legacy `publish_post` only ran `INSERT INTO social_posts` |
-| Which Facebook page was selected? | **None** — `facebook_page_id` was not set by the connector path |
-| Did media upload occur? | **No** (or data URI was stored raw in `media_urls`) |
-| Did provider return an error? | **N/A** — provider was never contacted |
-| Why `ok=true`? | `defineConnectorTool` wraps any non-throwing handler return as `{ ok: true }` |
-| Why no Facebook post ID / live URL? | Never published to Graph; columns left null |
+| Question                            | Finding                                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------- |
+| Was Facebook Graph API called?      | **No** — legacy `publish_post` only ran `INSERT INTO social_posts`            |
+| Which Facebook page was selected?   | **None** — `facebook_page_id` was not set by the connector path               |
+| Did media upload occur?             | **No** (or data URI was stored raw in `media_urls`)                           |
+| Did provider return an error?       | **N/A** — provider was never contacted                                        |
+| Why `ok=true`?                      | `defineConnectorTool` wraps any non-throwing handler return as `{ ok: true }` |
+| Why no Facebook post ID / live URL? | Never published to Graph; columns left null                                   |
 
 **Repair action:** Migration marks the row `status=orphaned` without republishing (avoids duplicates). Use `retry_social_post` only after an operator confirms the content should go live.
 
@@ -65,9 +65,9 @@ Additional hardening so Alphaclone Systems is **never** a global social default:
 
 ## Env flags
 
-| Variable | Purpose |
-|----------|---------|
-| `SOCIAL_PUBLISH_ENABLED` | Kill switch (`false` disables publish) |
-| `SOCIAL_PUBLISH_TEST_MODE` | `[TEST]` prefix, test page/org, no personal LinkedIn |
-| `SOCIAL_PUBLISH_TEST_FACEBOOK_PAGE_ID` | Designated test Page |
-| `SOCIAL_PUBLISH_TEST_LINKEDIN_ORG_ID` | Designated test organization |
+| Variable                               | Purpose                                              |
+| -------------------------------------- | ---------------------------------------------------- |
+| `SOCIAL_PUBLISH_ENABLED`               | Kill switch (`false` disables publish)               |
+| `SOCIAL_PUBLISH_TEST_MODE`             | `[TEST]` prefix, test page/org, no personal LinkedIn |
+| `SOCIAL_PUBLISH_TEST_FACEBOOK_PAGE_ID` | Designated test Page                                 |
+| `SOCIAL_PUBLISH_TEST_LINKEDIN_ORG_ID`  | Designated test organization                         |

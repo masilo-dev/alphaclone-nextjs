@@ -25,7 +25,7 @@ import {
   invoiceStatusVariant,
   quoteStatusVariant,
   ENTERPRISE,
-} from '@/components/ui/enterprise';
+} from "@/components/ui/enterprise";
 ```
 
 ## New dashboard modules checklist
@@ -39,17 +39,17 @@ import {
 
 ## Migrated modules (v1)
 
-| Module | Table | Drawer | StatusBadge |
-|--------|-------|--------|-------------|
-| Tasks | list + infinite scroll | create + detail | — |
-| Deals | list + infinite scroll | create + detail | stage |
-| Quotes | EnterpriseDataTable | create + edit + detail | status |
-| Finance | EnterpriseDataTable (invoices) | expense + invoice detail | invoice/expense |
-| Contact Submissions | EnterpriseDataTable | detail | inbox |
-| CRM | responsive table | create + qualify | — |
-| DeepDesk | split pane | create ticket | — |
-| Admin Users | EnterpriseDataTable | — | user status |
-| Document Vault | table | upload | — |
+| Module              | Table                          | Drawer                   | StatusBadge     |
+| ------------------- | ------------------------------ | ------------------------ | --------------- |
+| Tasks               | list + infinite scroll         | create + detail          | —               |
+| Deals               | list + infinite scroll         | create + detail          | stage           |
+| Quotes              | EnterpriseDataTable            | create + edit + detail   | status          |
+| Finance             | EnterpriseDataTable (invoices) | expense + invoice detail | invoice/expense |
+| Contact Submissions | EnterpriseDataTable            | detail                   | inbox           |
+| CRM                 | responsive table               | create + qualify         | —               |
+| DeepDesk            | split pane                     | create ticket            | —               |
+| Admin Users         | EnterpriseDataTable            | —                        | user status     |
+| Document Vault      | table                          | upload                   | —               |
 
 ## Tokens
 

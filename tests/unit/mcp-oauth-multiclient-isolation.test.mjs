@@ -2,19 +2,21 @@
  * Multi-client OAuth isolation:
  * Authorizing Client B must not revoke/overwrite Client A's tokens.
  */
-import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-process.env.PUBLIC_APP_ORIGIN = process.env.PUBLIC_APP_ORIGIN || 'https://alphaclonesystems.com';
-process.env.NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+process.env.PUBLIC_APP_ORIGIN =
+  process.env.PUBLIC_APP_ORIGIN || "https://alphaclonesystems.com";
+process.env.NEXT_PUBLIC_APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://alphaclonesystems.com";
 process.env.PUBLIC_MCP_RESOURCE =
-  process.env.PUBLIC_MCP_RESOURCE || 'https://alphaclonesystems.com/api/mcp';
+  process.env.PUBLIC_MCP_RESOURCE || "https://alphaclonesystems.com/api/mcp";
 
 const {
   assertRefreshClientBinding,
   revokeActiveTokensForClient,
   tokensAreIsolatedAcrossClients,
-} = await import('../../src/lib/mcp/oauthTokenIsolation.ts');
+} = await import("../../src/lib/mcp/oauthTokenIsolation.ts");
 
 /**
  * In-memory stand-in for mcp_oauth_tokens used to prove authorize A → authorize B
@@ -34,13 +36,16 @@ function createTokenStore() {
   }
 
   function findActive(accessToken) {
-    return rows.find((r) => r.access_token === accessToken && r.revoked !== true) || null;
+    return (
+      rows.find((r) => r.access_token === accessToken && r.revoked !== true) ||
+      null
+    );
   }
 
   /** Mimics the Supabase chain used by revokeActiveTokensForClient */
   const supabase = {
     from(table) {
-      assert.equal(table, 'mcp_oauth_tokens');
+      assert.equal(table, "mcp_oauth_tokens");
       return {
         update(values) {
           /** @type {Record<string, unknown>} */
@@ -88,101 +93,113 @@ async function authorizeClient(store, params) {
     client_id: clientId,
     access_token: accessToken,
     refresh_token: refreshToken,
-    tenant_id: 'tenant-1',
+    tenant_id: "tenant-1",
     revoked: false,
   });
 }
 
-describe('MCP OAuth multi-client token isolation', () => {
-  it('keeps Client A token valid after Client B authorizes for the same user', async () => {
+describe("MCP OAuth multi-client token isolation", () => {
+  it("keeps Client A token valid after Client B authorizes for the same user", async () => {
     const store = createTokenStore();
-    const userId = 'user-shared-1';
+    const userId = "user-shared-1";
 
     const clientA = await authorizeClient(store, {
       userId,
-      clientId: '1778309945386-41bab8272f61', // Claude
-      accessToken: 'mcp_at_client_a',
-      refreshToken: 'mcp_rt_client_a',
+      clientId: "1778309945386-41bab8272f61", // Claude
+      accessToken: "mcp_at_client_a",
+      refreshToken: "mcp_rt_client_a",
     });
 
-    assert.equal(store.findActive('mcp_at_client_a')?.client_id, '1778309945386-41bab8272f61');
+    assert.equal(
+      store.findActive("mcp_at_client_a")?.client_id,
+      "1778309945386-41bab8272f61",
+    );
     assert.equal(clientA.revoked, false);
 
     await authorizeClient(store, {
       userId,
-      clientId: 'chatgpt-connector',
-      accessToken: 'mcp_at_client_b',
-      refreshToken: 'mcp_rt_client_b',
+      clientId: "chatgpt-connector",
+      accessToken: "mcp_at_client_b",
+      refreshToken: "mcp_rt_client_b",
     });
 
-    const stillA = store.findActive('mcp_at_client_a');
-    const stillB = store.findActive('mcp_at_client_b');
+    const stillA = store.findActive("mcp_at_client_a");
+    const stillB = store.findActive("mcp_at_client_b");
 
-    assert.ok(stillA, 'Client A access token must remain active after Client B authorizes');
-    assert.ok(stillB, 'Client B access token must be active');
+    assert.ok(
+      stillA,
+      "Client A access token must remain active after Client B authorizes",
+    );
+    assert.ok(stillB, "Client B access token must be active");
     assert.equal(stillA.revoked, false);
     assert.equal(stillB.revoked, false);
     assert.ok(
       tokensAreIsolatedAcrossClients(stillA, stillB),
-      'tokens must be independent rows with distinct client_ids'
+      "tokens must be independent rows with distinct client_ids",
     );
   });
 
-  it('re-authorizing the same client revokes only that client prior tokens', async () => {
+  it("re-authorizing the same client revokes only that client prior tokens", async () => {
     const store = createTokenStore();
-    const userId = 'user-shared-2';
+    const userId = "user-shared-2";
 
     await authorizeClient(store, {
       userId,
-      clientId: 'chatgpt-connector',
-      accessToken: 'mcp_at_chatgpt_v1',
-      refreshToken: 'mcp_rt_chatgpt_v1',
+      clientId: "chatgpt-connector",
+      accessToken: "mcp_at_chatgpt_v1",
+      refreshToken: "mcp_rt_chatgpt_v1",
     });
     await authorizeClient(store, {
       userId,
-      clientId: '1778309945386-41bab8272f61',
-      accessToken: 'mcp_at_claude_v1',
-      refreshToken: 'mcp_rt_claude_v1',
+      clientId: "1778309945386-41bab8272f61",
+      accessToken: "mcp_at_claude_v1",
+      refreshToken: "mcp_rt_claude_v1",
     });
 
     // ChatGPT reconnects — Claude must survive
     await authorizeClient(store, {
       userId,
-      clientId: 'chatgpt-connector',
-      accessToken: 'mcp_at_chatgpt_v2',
-      refreshToken: 'mcp_rt_chatgpt_v2',
+      clientId: "chatgpt-connector",
+      accessToken: "mcp_at_chatgpt_v2",
+      refreshToken: "mcp_rt_chatgpt_v2",
     });
 
-    assert.equal(store.findActive('mcp_at_chatgpt_v1'), null);
-    assert.ok(store.findActive('mcp_at_chatgpt_v2'));
+    assert.equal(store.findActive("mcp_at_chatgpt_v1"), null);
+    assert.ok(store.findActive("mcp_at_chatgpt_v2"));
     assert.ok(
-      store.findActive('mcp_at_claude_v1'),
-      'Claude token must remain valid when ChatGPT rotates'
+      store.findActive("mcp_at_claude_v1"),
+      "Claude token must remain valid when ChatGPT rotates",
     );
   });
 
-  it('refresh client binding rejects mismatched client_id', () => {
+  it("refresh client binding rejects mismatched client_id", () => {
     const ok = assertRefreshClientBinding({
-      requestClientId: 'chatgpt-connector',
-      tokenClientId: 'chatgpt-connector',
+      requestClientId: "chatgpt-connector",
+      tokenClientId: "chatgpt-connector",
     });
     assert.equal(ok.ok, true);
 
     const bad = assertRefreshClientBinding({
-      requestClientId: 'chatgpt-connector',
-      tokenClientId: '1778309945386-41bab8272f61',
+      requestClientId: "chatgpt-connector",
+      tokenClientId: "1778309945386-41bab8272f61",
     });
     assert.equal(bad.ok, false);
   });
 
-  it('refresh client binding allows legacy missing client_id', () => {
+  it("refresh client binding allows legacy missing client_id", () => {
     assert.equal(
-      assertRefreshClientBinding({ requestClientId: null, tokenClientId: 'chatgpt-connector' }).ok,
-      true
+      assertRefreshClientBinding({
+        requestClientId: null,
+        tokenClientId: "chatgpt-connector",
+      }).ok,
+      true,
     );
     assert.equal(
-      assertRefreshClientBinding({ requestClientId: 'chatgpt-connector', tokenClientId: null }).ok,
-      true
+      assertRefreshClientBinding({
+        requestClientId: "chatgpt-connector",
+        tokenClientId: null,
+      }).ok,
+      true,
     );
   });
 });

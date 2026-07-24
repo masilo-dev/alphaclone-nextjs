@@ -4,21 +4,21 @@ Generated from `recurring_tasks_schema.json` (production dump) + code inspection
 
 ## Decision summary
 
-| Logical name | Decision | Mapping / action |
-|---|---|---|
-| `leads.updated_at` | **ADD column** | Used widely; order/filter required |
-| `leads.status` | **ADD column** | Pipeline tools + create/update |
-| `leads.contact_name` | **ADD column** | Search + create |
-| `leads.linkedin_url` | **ADD column** | Create lead |
-| `invoices.total` | **ADD + map** | Prefer `business_invoices.total`; add compat cols on `invoices` |
-| `subscriptions` | **VIEW** | `CREATE VIEW subscriptions AS SELECT … FROM tenant_subscriptions` |
-| `campaigns` | **VIEW** | Maps to `email_campaigns` |
-| `appointments` | **VIEW** | Maps to `calendar_events` |
-| `documents` | **CREATE TABLE** | Tenant-scoped documents store |
-| `funnels` | **CREATE TABLE** | Empty-capable; tools fall back to lead stages |
-| `landing_pages` | **CREATE TABLE** | Empty-capable |
-| `social_posts.platform` | **ADD compat column** | Canonical remains `platforms[]` |
-| `social_posts.content` | **ADD compat column** | Canonical remains `caption` |
+| Logical name            | Decision              | Mapping / action                                                  |
+| ----------------------- | --------------------- | ----------------------------------------------------------------- |
+| `leads.updated_at`      | **ADD column**        | Used widely; order/filter required                                |
+| `leads.status`          | **ADD column**        | Pipeline tools + create/update                                    |
+| `leads.contact_name`    | **ADD column**        | Search + create                                                   |
+| `leads.linkedin_url`    | **ADD column**        | Create lead                                                       |
+| `invoices.total`        | **ADD + map**         | Prefer `business_invoices.total`; add compat cols on `invoices`   |
+| `subscriptions`         | **VIEW**              | `CREATE VIEW subscriptions AS SELECT … FROM tenant_subscriptions` |
+| `campaigns`             | **VIEW**              | Maps to `email_campaigns`                                         |
+| `appointments`          | **VIEW**              | Maps to `calendar_events`                                         |
+| `documents`             | **CREATE TABLE**      | Tenant-scoped documents store                                     |
+| `funnels`               | **CREATE TABLE**      | Empty-capable; tools fall back to lead stages                     |
+| `landing_pages`         | **CREATE TABLE**      | Empty-capable                                                     |
+| `social_posts.platform` | **ADD compat column** | Canonical remains `platforms[]`                                   |
+| `social_posts.content`  | **ADD compat column** | Canonical remains `caption`                                       |
 
 ## Broken queries repaired in code
 

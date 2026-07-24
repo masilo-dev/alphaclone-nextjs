@@ -13,20 +13,20 @@ Companion to the platform multi-tenant / social repair branch.
 
 ## Hardened this pass
 
-| Area | Change |
-|------|--------|
-| Build | Fixed TS errors in `mediaUpload` / `tenantGuard` |
-| Cron auth | Production requires Bearer secret |
-| Readiness | HTTP 503 when degraded (soft opt-out) |
-| Zernio | Secret required; no body.tenantId trust; status updates tenant-scoped |
-| Forms | Webhook secret required in production |
-| Social cron | Legacy `scheduled_posts` path off by default |
-| Invoices | `/api/invoices/lifecycle` — no MCP/AI required |
-| GDPR | Daily cron processes verified `data_deletion_requests` |
-| Privacy UI | Revoke routes to marketplace disconnect |
-| Email inbound | No full body HTML/text in activity logs |
-| Redis | Required in production by default |
-| Audit | `AUDIT_REQUIRED` + `critical` flag for fail-closed audits |
+| Area          | Change                                                                |
+| ------------- | --------------------------------------------------------------------- |
+| Build         | Fixed TS errors in `mediaUpload` / `tenantGuard`                      |
+| Cron auth     | Production requires Bearer secret                                     |
+| Readiness     | HTTP 503 when degraded (soft opt-out)                                 |
+| Zernio        | Secret required; no body.tenantId trust; status updates tenant-scoped |
+| Forms         | Webhook secret required in production                                 |
+| Social cron   | Legacy `scheduled_posts` path off by default                          |
+| Invoices      | `/api/invoices/lifecycle` — no MCP/AI required                        |
+| GDPR          | Daily cron processes verified `data_deletion_requests`                |
+| Privacy UI    | Revoke routes to marketplace disconnect                               |
+| Email inbound | No full body HTML/text in activity logs                               |
+| Redis         | Required in production by default                                     |
+| Audit         | `AUDIT_REQUIRED` + `critical` flag for fail-closed audits             |
 
 ## Still staged (not blockers for this ship)
 

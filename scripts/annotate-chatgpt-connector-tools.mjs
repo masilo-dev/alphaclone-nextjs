@@ -2,11 +2,11 @@
  * Merge ChatGPT Apps SDK annotations for Alphaclone MCP connector tools
  * into chatgpt-app-submission.json without wiping existing entries.
  */
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 const ROOT = process.cwd();
-const TARGET = path.join(ROOT, 'chatgpt-app-submission.json');
+const TARGET = path.join(ROOT, "chatgpt-app-submission.json");
 
 const READ_ONLY = {
   annotations: {
@@ -15,9 +15,12 @@ const READ_ONLY = {
     destructiveHint: false,
   },
   justifications: {
-    read_only_justification: 'Only reads or computes data and does not modify workspace or external state.',
-    open_world_justification: 'Does not write to public internet state or third-party systems.',
-    destructive_justification: 'Does not delete, cancel, overwrite, or revoke anything.',
+    read_only_justification:
+      "Only reads or computes data and does not modify workspace or external state.",
+    open_world_justification:
+      "Does not write to public internet state or third-party systems.",
+    destructive_justification:
+      "Does not delete, cancel, overwrite, or revoke anything.",
   },
 };
 
@@ -28,9 +31,12 @@ const MUTATING = {
     destructiveHint: false,
   },
   justifications: {
-    read_only_justification: 'Mutates private workspace data, so it is not read-only.',
-    open_world_justification: 'Operates only on private workspace data and does not publish externally.',
-    destructive_justification: 'Does not delete, cancel, overwrite, or revoke anything irreversibly.',
+    read_only_justification:
+      "Mutates private workspace data, so it is not read-only.",
+    open_world_justification:
+      "Operates only on private workspace data and does not publish externally.",
+    destructive_justification:
+      "Does not delete, cancel, overwrite, or revoke anything irreversibly.",
   },
 };
 
@@ -41,9 +47,11 @@ const DESTRUCTIVE = {
     destructiveHint: true,
   },
   justifications: {
-    read_only_justification: 'Mutates private workspace data, so it is not read-only.',
-    open_world_justification: 'Operates only on private workspace data and does not publish externally.',
-    destructive_justification: 'Can delete or archive records; use with care.',
+    read_only_justification:
+      "Mutates private workspace data, so it is not read-only.",
+    open_world_justification:
+      "Operates only on private workspace data and does not publish externally.",
+    destructive_justification: "Can delete or archive records; use with care.",
   },
 };
 
@@ -54,9 +62,12 @@ const OPEN_WORLD = {
     destructiveHint: false,
   },
   justifications: {
-    read_only_justification: 'Mutates private workspace data, so it is not read-only.',
-    open_world_justification: 'May publish content to connected social platforms.',
-    destructive_justification: 'Does not delete, cancel, overwrite, or revoke anything irreversibly.',
+    read_only_justification:
+      "Mutates private workspace data, so it is not read-only.",
+    open_world_justification:
+      "May publish content to connected social platforms.",
+    destructive_justification:
+      "Does not delete, cancel, overwrite, or revoke anything irreversibly.",
   },
 };
 
@@ -140,7 +151,7 @@ const TOOLS = {
   integrations_status: READ_ONLY,
 };
 
-const doc = JSON.parse(fs.readFileSync(TARGET, 'utf8'));
+const doc = JSON.parse(fs.readFileSync(TARGET, "utf8"));
 doc.tools = doc.tools || {};
 let added = 0;
 let updated = 0;
@@ -155,4 +166,6 @@ for (const [name, meta] of Object.entries(TOOLS)) {
 }
 
 fs.writeFileSync(TARGET, `${JSON.stringify(doc, null, 2)}\n`);
-console.log(`chatgpt-app-submission.json updated: added=${added} updated=${updated} total_tools=${Object.keys(doc.tools).length}`);
+console.log(
+  `chatgpt-app-submission.json updated: added=${added} updated=${updated} total_tools=${Object.keys(doc.tools).length}`,
+);

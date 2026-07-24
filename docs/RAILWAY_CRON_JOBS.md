@@ -20,9 +20,9 @@ Typical jobs include:
 
 Configure one cron on `alphaclone-scraper`:
 
-| Schedule | Method | Path |
-|----------|--------|------|
-| `*/10 * * * *` | POST | `/api/scraper/campaign/poll` |
+| Schedule       | Method | Path                         |
+| -------------- | ------ | ---------------------------- |
+| `*/10 * * * *` | POST   | `/api/scraper/campaign/poll` |
 
 ## Auth header
 
