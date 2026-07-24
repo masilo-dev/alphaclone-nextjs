@@ -247,6 +247,9 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/chatgpt-aliases'), './tools/chatgpt-aliases');
   loadToolModule(() => require('./tools/autonomous-ops'), './tools/autonomous-ops');
   loadToolModule(() => require('./tools/document-os'), './tools/document-os');
+  // Canonical social publishing — MUST load last so it overrides legacy stubs
+  // (publish_post wrappers, upload_media, get_*_identities, create_social_post).
+  loadToolModule(() => require('./tools/social-publishing'), './tools/social-publishing');
 
   console.info(`[mcp.registry] initialized with ${registry.size} tools`);
 }

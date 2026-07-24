@@ -26,6 +26,7 @@
     "guidance:compact": "node scripts/compact-guidance.mjs",
     "pentest": "node scripts/platform-pentest.mjs",
     "validate:mcp": "./node_modules/.bin/tsx scripts/validate-bonnie-mcp-tools.ts",
+    "validate:social-catalog": "./node_modules/.bin/tsx scripts/validate-social-tool-catalog.ts",
     "test:mcp-connector": "node --import tsx --test tests/unit/mcp-chatgpt-connector.test.mjs",
     "chatgpt:annotate-connector": "node scripts/annotate-chatgpt-connector-tools.mjs"
   },

@@ -344,26 +344,9 @@ export async function publishSocialPost(postId: string) {
 
 export async function publishDueSocialPosts(limit = 25) {
   if (!isSocialPublishEnabled()) return 0;
-
-  const adminClient = createSupabaseAdminClient();
-  const nowIso = new Date().toISOString();
-  const { data, error } = await adminClient
-    .from('social_posts')
-    .select('id')
-    .eq('status', 'scheduled')
-    .not('scheduled_at', 'is', null)
-    .lte('scheduled_at', nowIso)
-    .order('scheduled_at', { ascending: true })
-    .limit(limit);
-
-  if (error) throw error;
-
-  const duePosts = data || [];
-  for (const post of duePosts) {
-    await publishSocialPost(post.id);
-  }
-
-  return duePosts.length;
+  const { getSocialPublishingService } = await import('@/lib/social/SocialPublishingService');
+  const result = await getSocialPublishingService().processDueScheduledPosts(limit);
+  return result.processed;
 }
 
 /**
