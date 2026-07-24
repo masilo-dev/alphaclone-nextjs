@@ -55,7 +55,19 @@ export async function GET(
             }
         }
 
-        const { data, error } = await supabase.storage.from(bucket).download(filePath);
+        // Prefer service-role download after membership/path checks so missing
+        // Storage SELECT policies cannot block authorized workspace files.
+        let downloadClient = supabase;
+        if (privateBuckets.has(bucket) || filePath.startsWith('tenant/')) {
+            try {
+                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                downloadClient = createSupabaseAdminClient();
+            } catch {
+                downloadClient = supabase;
+            }
+        }
+
+        const { data, error } = await downloadClient.storage.from(bucket).download(filePath);
 
         if (error) {
             console.error(`Storage Proxy: Error fetching ${bucket}/${filePath}:`, error);
