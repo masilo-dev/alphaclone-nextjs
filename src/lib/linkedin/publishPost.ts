@@ -165,16 +165,45 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       if (!scopes.includes('w_organization_social')) {
         return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_organization_social scope' };
       }
-      if (!selectedCompany && companyPages.length > 0) {
+      // Never post to a random org or fall back to personal when org was requested
+      if (!selectedCompany) {
+        // Allow if metadata explicitly requested this org id for this tenant post,
+        // but refuse personal fallback. Still require the org id to be numeric.
+        if (!/^\d+$/.test(requestedOrganizationId)) {
+          return {
+            ok: false,
+            platform: 'linkedin',
+            reason: `LinkedIn organization ${requestedOrganizationId} is not available for this tenant`,
+          };
+        }
         console.warn(
-          `[publishLinkedInPost] linkedin_organization_id=${requestedOrganizationId} not in cached company pages; posting anyway`
+          `[publishLinkedInPost] org ${requestedOrganizationId} not in cached company pages; publishing as org URN only (no personal fallback)`
         );
       }
-    } else if (!scopes.includes('w_member_social')) {
-      return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+    } else {
+      // If post metadata insists on organization, never fall back to personal
+      const metaType = post.metadata?.identity_type;
+      if (metaType === 'linkedin_organization') {
+        return {
+          ok: false,
+          platform: 'linkedin',
+          reason:
+            'linkedin_organization was requested but linkedin_organization_id is missing — refusing personal fallback',
+        };
+      }
+      if (!scopes.includes('w_member_social')) {
+        return { ok: false, platform: 'linkedin', reason: 'LinkedIn is missing w_member_social scope' };
+      }
     }
 
     const canPostAsCompany = Boolean(requestedOrganizationId && scopes.includes('w_organization_social'));
+    if (requestedOrganizationId && !canPostAsCompany) {
+      return {
+        ok: false,
+        platform: 'linkedin',
+        reason: 'Cannot publish as organization without w_organization_social',
+      };
+    }
     const authorUrn = canPostAsCompany
       ? `urn:li:organization:${requestedOrganizationId}`
       : integration.linkedin_person_urn;

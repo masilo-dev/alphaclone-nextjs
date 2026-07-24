@@ -409,23 +409,87 @@ export async function publishScheduledPosts(limit = 25) {
 
   for (const post of duePosts) {
     try {
-      // Get media asset if asset_id is present
+      if (!post.tenant_id) {
+        console.error(`[publishScheduledPosts] scheduled post ${post.id} missing tenant_id — skipping`);
+        await adminClient.from('scheduled_posts').update({ status: 'failed' }).eq('id', post.id);
+        continue;
+      }
+
+      // Get media asset if asset_id is present — MUST be tenant-scoped
       let mediaUrls: string[] = [];
       let mediaTypes: string[] = [];
       if (post.asset_id) {
         const { data: asset } = await adminClient
           .from('media_assets')
-          .select('public_url, asset_type')
+          .select('public_url, asset_type, tenant_id')
           .eq('id', post.asset_id)
-          .single();
+          .eq('tenant_id', post.tenant_id)
+          .maybeSingle();
         if (asset) {
           mediaUrls = [asset.public_url];
           mediaTypes = [asset.asset_type];
+        } else {
+          console.error(
+            `[publishScheduledPosts] media_asset ${post.asset_id} not found for tenant ${post.tenant_id}`
+          );
         }
       }
 
-      // Explicitly set page_id='106807848991283' for Facebook posts
-      const fbPageId = post.platform === 'facebook' ? '106807848991283' : null;
+      // Resolve Facebook page from THIS tenant's connections — never hard-code a page ID
+      let fbPageId: string | null = null;
+      let linkedinOrgId: string | null = null;
+      let identityId: string | null = null;
+      let identityType: string | null = null;
+
+      if (post.platform === 'facebook') {
+        const { resolveTenantIdentityForPublish } = await import(
+          '@/lib/social/socialIdentityStore'
+        );
+        try {
+          const identity = await resolveTenantIdentityForPublish({
+            tenantId: post.tenant_id,
+            identityId: post.identity_id || post.facebook_page_id || null,
+            identityType: 'facebook_page',
+            provider: 'facebook',
+            allowDefault: true,
+          });
+          fbPageId = identity.provider_identity_id;
+          identityId = identity.identity_id;
+          identityType = identity.identity_type;
+        } catch (err: any) {
+          console.error(
+            `[publishScheduledPosts] No Facebook identity for tenant ${post.tenant_id}:`,
+            err?.message || err
+          );
+          await adminClient.from('scheduled_posts').update({ status: 'failed' }).eq('id', post.id);
+          continue;
+        }
+      } else if (post.platform === 'linkedin') {
+        const { resolveTenantIdentityForPublish } = await import(
+          '@/lib/social/socialIdentityStore'
+        );
+        try {
+          const identity = await resolveTenantIdentityForPublish({
+            tenantId: post.tenant_id,
+            identityId: post.identity_id || post.linkedin_organization_id || null,
+            identityType: post.identity_type || undefined,
+            provider: 'linkedin',
+            allowDefault: true,
+          });
+          identityId = identity.identity_id;
+          identityType = identity.identity_type;
+          if (identity.identity_type === 'linkedin_organization') {
+            linkedinOrgId = identity.provider_identity_id;
+          }
+        } catch (err: any) {
+          console.error(
+            `[publishScheduledPosts] No LinkedIn identity for tenant ${post.tenant_id}:`,
+            err?.message || err
+          );
+          await adminClient.from('scheduled_posts').update({ status: 'failed' }).eq('id', post.id);
+          continue;
+        }
+      }
 
       // Insert into social_posts to leverage the existing publishSocialPost function
       const { data: socialPost, error: insertError } = await adminClient
@@ -435,11 +499,23 @@ export async function publishScheduledPosts(limit = 25) {
           user_id: post.user_id,
           caption: post.content || '',
           platforms: [post.platform],
+          platform: post.platform,
           media_urls: mediaUrls,
           media_types: mediaTypes,
           status: 'scheduled',
           scheduled_at: nowIso,
           facebook_page_id: fbPageId,
+          linkedin_organization_id: linkedinOrgId,
+          identity_id: identityId,
+          identity_type: identityType,
+          provider: post.platform,
+          provider_identity_id: fbPageId || linkedinOrgId,
+          metadata: {
+            identity_id: identityId,
+            identity_type: identityType,
+            linkedin_organization_id: linkedinOrgId,
+            source: 'scheduled_posts',
+          },
         })
         .select()
         .single();

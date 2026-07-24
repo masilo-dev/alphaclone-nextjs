@@ -27,6 +27,51 @@ function requireTenantId(args: { tenant_id?: string }, ctx: { tenantId?: string 
 // ─── Identity tools ─────────────────────────────────────────────────────────
 
 registerTool('social-publishing', {
+  name: 'get_social_identities',
+  description:
+    'List tenant-scoped social identities available for publishing. Never returns tokens. Use identity_id from this list with publish_social_post. Alphaclone never injects a global default page/org.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    provider: z.enum(['facebook', 'linkedin', 'instagram', 'x', 'tiktok']).optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      provider: {
+        type: 'string',
+        enum: ['facebook', 'linkedin', 'instagram', 'x', 'tiktok'],
+      },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = requireTenantId(args, ctx);
+    const { listTenantSocialIdentities, syncTenantSocialIdentitiesFromLegacy } = await import(
+      '@/lib/social/socialIdentityStore'
+    );
+    // Best-effort sync so newly connected accounts appear
+    await syncTenantSocialIdentitiesFromLegacy(tenantId).catch(() => undefined);
+    const identities = await listTenantSocialIdentities({
+      tenantId,
+      provider: args.provider,
+      activeOnly: true,
+    });
+    return {
+      identities: identities.map((i) => ({
+        identity_id: i.identity_id,
+        identity_type: i.identity_type,
+        provider: i.provider,
+        display_name: i.display_name,
+        provider_identity_id: i.provider_identity_id,
+        can_publish: i.can_publish,
+        can_upload_media: i.can_upload_media,
+        is_default: i.is_default,
+      })),
+    };
+  },
+});
+
+registerTool('social-publishing', {
   name: 'get_facebook_identities',
   description:
     'List connected Facebook Pages with publish/media/insights capabilities for the tenant.',
@@ -144,12 +189,12 @@ registerTool('social-publishing', {
 registerTool('social-publishing', {
   name: 'publish_social_post',
   description:
-    'Publish (or schedule) a social post to Facebook Page or LinkedIn person/organization. Immediate publish returns provider post ID, live URL, and verification receipt — never ok on DB insert alone.',
+    'Publish (or schedule) a social post to a tenant-scoped identity. Prefer identity_id from get_social_identities. Immediate publish returns provider post ID, live URL, and verification receipt — never ok on DB insert alone. Never accepts access tokens.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
-    platform: z.enum(['facebook', 'linkedin']),
-    identity_type: z.enum(['facebook_page', 'linkedin_person', 'linkedin_organization']),
-    identity_id: z.string().min(1),
+    identity_id: z.string().min(1).optional(),
+    platform: z.enum(['facebook', 'linkedin']).optional(),
+    identity_type: z.enum(['facebook_page', 'linkedin_person', 'linkedin_organization']).optional(),
     caption: z.string().min(1),
     media_asset_ids: z.array(z.string().uuid()).optional(),
     media_urls: z.array(z.string()).optional(),
@@ -161,12 +206,15 @@ registerTool('social-publishing', {
   jsonSchema: {
     type: 'object',
     properties: {
+      identity_id: {
+        type: 'string',
+        description: 'Internal identity UUID from get_social_identities (preferred)',
+      },
       platform: { type: 'string', enum: ['facebook', 'linkedin'] },
       identity_type: {
         type: 'string',
         enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
       },
-      identity_id: { type: 'string', description: 'Page ID, member ID, or organization ID' },
       caption: { type: 'string' },
       media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
       media_urls: { type: 'array', items: { type: 'string' } },
@@ -175,18 +223,48 @@ registerTool('social-publishing', {
       scheduled_at: { type: 'string', format: 'date-time' },
       idempotency_key: { type: 'string' },
     },
-    required: ['platform', 'identity_type', 'identity_id', 'caption'],
+    required: ['caption'],
   },
   handler: async (args, ctx) => {
     if (!ctx.userId) throw new Error('user_id is required');
     const tenantId = requireTenantId(args, ctx);
+
+    const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
+    const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
+
+    let stored;
+    try {
+      stored = await resolveTenantIdentityForPublish({
+        tenantId,
+        identityId: args.identity_id,
+        identityType: args.identity_type,
+        provider: args.platform,
+        allowDefault: !args.identity_id && !args.identity_type,
+      });
+    } catch (err) {
+      if (err instanceof TenantIsolationError) {
+        return toMcpContent(
+          errorResult('publish_social_post', err.code, err.message)
+        );
+      }
+      throw err;
+    }
+
+    const platform = (stored.provider === 'linkedin' ? 'linkedin' : 'facebook') as
+      | 'facebook'
+      | 'linkedin';
+    const identityType = stored.identity_type as
+      | 'facebook_page'
+      | 'linkedin_person'
+      | 'linkedin_organization';
+
     const service = getSocialPublishingService();
     const result = await service.publish({
       tenantId,
       userId: ctx.userId,
-      platform: args.platform,
-      identityType: args.identity_type,
-      identityId: args.identity_id,
+      platform,
+      identityType,
+      identityId: stored.provider_identity_id,
       caption: args.caption,
       mediaAssetIds: args.media_asset_ids,
       mediaUrls: args.media_urls,
@@ -210,26 +288,34 @@ registerTool('social-publishing', {
     }
 
     return toMcpContent(
-      okResult('publish_social_post', result.data, {
-        receipt: result.receipt
-          ? {
-              action_id: result.receipt.action_id,
-              status: result.data?.status || 'published',
-              provider: result.receipt.provider,
-              provider_reference: result.receipt.provider_reference,
-              live_url: result.receipt.live_url,
-              timestamp: result.receipt.verified_at || new Date().toISOString(),
-              entity_id: result.data?.social_post_id,
-              entity_type: 'social_post',
-              verification: {
-                verified: result.receipt.verified,
-                verified_at: result.receipt.verified_at,
-                correlation_id: result.receipt.correlation_id,
-              },
-            }
-          : null,
-        meta: { tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
-      })
+      okResult(
+        'publish_social_post',
+        {
+          ...result.data,
+          identity_id: stored.identity_id,
+          identity_display_name: stored.display_name,
+        },
+        {
+          receipt: result.receipt
+            ? {
+                action_id: result.receipt.action_id,
+                status: result.data?.status || 'published',
+                provider: result.receipt.provider,
+                provider_reference: result.receipt.provider_reference,
+                live_url: result.receipt.live_url,
+                timestamp: result.receipt.verified_at || new Date().toISOString(),
+                entity_id: result.data?.social_post_id,
+                entity_type: 'social_post',
+                verification: {
+                  verified: result.receipt.verified,
+                  verified_at: result.receipt.verified_at,
+                  correlation_id: result.receipt.correlation_id,
+                },
+              }
+            : null,
+          meta: { tool_catalog_version: SOCIAL_PUBLISH_TOOL_CATALOG_VERSION },
+        }
+      )
     );
   },
 });
@@ -291,35 +377,36 @@ registerTool('social-publishing', {
     let identityType = args.identity_type;
     let identityId = args.identity_id || args.page_id || args.linkedin_organization_id;
 
-    if (!identityType) {
-      if (platform === 'facebook') {
-        identityType = 'facebook_page';
-        if (!identityId) {
-          const { pages } = await listFacebookIdentities(tenantId);
-          const page = pages.find((p) => p.can_publish) || pages[0];
-          if (!page) throw new Error('No Facebook Page connected');
-          identityId = page.page_id;
-        }
-      } else if (args.post_as === 'company' || args.post_as === 'organization' || args.linkedin_organization_id) {
-        identityType = 'linkedin_organization';
-        if (!identityId) {
-          throw new Error(
-            'linkedin_organization_id is required for company posts — call get_linkedin_identities'
-          );
-        }
-      } else {
-        identityType = 'linkedin_person';
-        if (!identityId) {
-          const { personal } = await listLinkedInIdentities(tenantId);
-          if (!personal?.member_id && !personal?.person_urn) {
-            throw new Error('LinkedIn personal identity not connected');
-          }
-          identityId = personal.member_id || personal.person_urn || 'me';
-        }
-      }
+    const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
+    const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
+    try {
+      const stored = await resolveTenantIdentityForPublish({
+        tenantId,
+        identityId,
+        identityType:
+          identityType ||
+          (platform === 'facebook'
+            ? 'facebook_page'
+            : args.post_as === 'company' ||
+                args.post_as === 'organization' ||
+                args.linkedin_organization_id
+              ? 'linkedin_organization'
+              : undefined),
+        provider: platform,
+        allowDefault: !identityId,
+      });
+      identityType = stored.identity_type as typeof identityType;
+      identityId = stored.provider_identity_id;
+    } catch (err) {
+      if (err instanceof TenantIsolationError) throw new Error(`${err.code}: ${err.message}`);
+      throw err;
     }
 
-    if (!identityId) throw new Error('identity_id is required');
+    if (!identityId || !identityType) {
+      throw new Error(
+        'identity_id is required — call get_social_identities and select a destination'
+      );
+    }
 
     const service = getSocialPublishingService();
     const result = await service.publish({

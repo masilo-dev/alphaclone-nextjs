@@ -702,15 +702,14 @@ function pickPreferredFacebookIdentity(identities: FacebookIntegrationIdentity[]
   const publishable = identities.filter(canPublishFacebookPage);
   if (!publishable.length) return null;
 
-  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary));
+  // Explicit tenant primary only — never silently switch pages when multiple exist
+  const explicitPrimary = publishable.find((item) => Boolean(item?.metadata?.is_primary || item?.metadata?.is_default));
   if (explicitPrimary) return explicitPrimary;
 
-  const sorted = [...publishable].sort((a, b) => {
-    const aTs = Date.parse(String(a.updated_at || '')) || 0;
-    const bTs = Date.parse(String(b.updated_at || '')) || 0;
-    return bTs - aTs;
-  });
-  return sorted[0] || null;
+  // Auto-select only when exactly one publishable page for this tenant
+  if (publishable.length === 1) return publishable[0];
+
+  return null;
 }
 
 /**
@@ -876,7 +875,8 @@ class AlphaCloneMCPServer {
     const selectCols =
       'id, page_id, page_name, is_active, metadata, updated_at, expires_at, page_access_token, user_access_token';
 
-    // 1. Try to query with tenant_id + user_id
+    // Tenant-scoped only. NEVER fall back to user_id across tenants.
+    // Co-members of the same tenant may share pages (tenant_id filter, optional user filter).
     let query = supabaseAdmin.from('facebook_integrations').select(selectCols);
     
     if (activeOnly) {
@@ -886,47 +886,23 @@ class AlphaCloneMCPServer {
       query = query.eq('page_id', pageId);
     }
     
-    const { data: tenantRows, error: tenantError } = await query
+    // Prefer tenant + user, then tenant-wide (same workspace). Never user-only.
+    const { data: tenantUserRows, error: tenantUserError } = await query
       .eq('tenant_id', tenantId)
       .eq('user_id', userId);
 
-    if (!tenantError && tenantRows && tenantRows.length > 0) {
-      return resolveTokens(tenantRows as Parameters<typeof resolveTokens>[0]);
+    if (!tenantUserError && tenantUserRows && tenantUserRows.length > 0) {
+      return resolveTokens(tenantUserRows as Parameters<typeof resolveTokens>[0]);
     }
 
-    // 2. Fallback: Query with user_id only (in case tenant_id mismatch/missing in connection flow)
-    let fallbackQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
-    
-    if (activeOnly) {
-      fallbackQuery = fallbackQuery.eq('is_active', true);
-    }
-    if (pageId) {
-      fallbackQuery = fallbackQuery.eq('page_id', pageId);
-    }
-
-    const { data: userRows, error: userError } = await fallbackQuery
-      .eq('user_id', userId);
-
-    if (!userError && userRows && userRows.length > 0) {
-      console.log(`[Facebook Fallback] Found ${userRows.length} integrations by user_id ${userId} (tenant_id mismatch)`);
-      return resolveTokens(userRows as Parameters<typeof resolveTokens>[0]);
-    }
-
-    // 3. Last fallback: Query by tenant_id only (no user_id filter)
     let tenantOnlyQuery = supabaseAdmin.from('facebook_integrations').select(selectCols);
-
-    if (activeOnly) {
-      tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
-    }
-    if (pageId) {
-      tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
-    }
+    if (activeOnly) tenantOnlyQuery = tenantOnlyQuery.eq('is_active', true);
+    if (pageId) tenantOnlyQuery = tenantOnlyQuery.eq('page_id', pageId);
 
     const { data: tenantOnlyRows, error: tenantOnlyError } = await tenantOnlyQuery
       .eq('tenant_id', tenantId);
 
     if (!tenantOnlyError && tenantOnlyRows && tenantOnlyRows.length > 0) {
-      console.log(`[Facebook Fallback] Found ${tenantOnlyRows.length} integrations by tenant_id ${tenantId} (user_id mismatch)`);
       return resolveTokens(tenantOnlyRows as Parameters<typeof resolveTokens>[0]);
     }
 
@@ -3722,7 +3698,9 @@ class AlphaCloneMCPServer {
           }
 
           if (hasFacebook && !resolvedPageId) {
-            throw new Error('No connected Facebook pages were found for this workspace.');
+            throw new Error(
+              'page_id is required when this tenant has multiple Facebook Pages. Call get_social_identities or get_facebook_identities and pass identity_id/page_id.'
+            );
           }
 
           const normalizedMediaUrls = Array.isArray(media_urls)

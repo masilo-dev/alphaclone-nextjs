@@ -1,5 +1,17 @@
 # Social Publishing Repair — Root Cause Report
 
+## Multi-tenant follow-up
+
+Additional hardening so Alphaclone Systems is **never** a global social default:
+
+- Removed hard-coded Facebook Page `106807848991283` from `publishScheduledPosts`
+- Removed MCPServer Facebook `user_id`-only cross-tenant fallback
+- Added `social_connections` / `social_identities` / `tenant_social_defaults` (+ RLS)
+- Identity resolution via `get_social_identities` + internal `identity_id`
+- Cron media assets filtered by `tenant_id`
+- LinkedIn org posts refuse personal fallback
+- `getFacebookIntegration` requires `tenantId`
+
 ## Summary
 
 `publish_post` (ChatGPT connector) returned `ok: true` after inserting a `social_posts` row and **never called Facebook or LinkedIn**. Saving a database record was treated as success. Record `1854057c-abea-4333-8a3a-9354be9217d0` is a concrete instance of this failure mode.

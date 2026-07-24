@@ -116,6 +116,7 @@ export const CHATGPT_CONNECTOR_TOOL_NAMES = [
   'engagement_report',
   // Canonical social publishing (must be callable from ChatGPT, not only inspect_tools)
   'get_social_accounts',
+  'get_social_identities',
   'get_facebook_identities',
   'get_facebook_page_capabilities',
   'get_linkedin_identities',

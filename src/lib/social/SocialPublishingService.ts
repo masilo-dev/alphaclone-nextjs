@@ -20,7 +20,6 @@ import {
   applyTestCaptionPrefix,
   getTestModeDestinations,
   isSocialPublishTestMode,
-  resolveIdentity,
 } from '@/lib/social/identityResolution';
 import { redactSecrets, resolveMediaUrls } from '@/lib/social/mediaUpload';
 import type {
@@ -119,12 +118,52 @@ export class SocialPublishingService {
         throw new Error('SOCIAL_PUBLISH_TEST_MODE forbids personal LinkedIn publishing');
       }
     }
-    return resolveIdentity({
+
+    // Prefer tenant-scoped identity store (internal UUID or provider id within tenant)
+    const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
+    const stored = await resolveTenantIdentityForPublish({
       tenantId: input.tenantId,
-      platform: input.platform,
-      identityType: input.identityType,
       identityId,
+      identityType: input.identityType,
+      provider: input.platform,
+      allowDefault: false,
     });
+
+    if (stored.identity_type === 'facebook_page') {
+      return {
+        platform: 'facebook',
+        identity_type: 'facebook_page',
+        identity_id: stored.provider_identity_id,
+        identity_name: stored.display_name,
+        page_id: stored.provider_identity_id,
+        can_publish: stored.can_publish,
+        missing_permissions: stored.can_publish ? [] : ['pages_manage_posts'],
+      };
+    }
+
+    if (stored.identity_type === 'linkedin_organization') {
+      return {
+        platform: 'linkedin',
+        identity_type: 'linkedin_organization',
+        identity_id: stored.provider_identity_id,
+        identity_name: stored.display_name,
+        author_urn: stored.provider_identity_urn,
+        organization_id: stored.provider_identity_id,
+        can_publish: stored.can_publish,
+        missing_permissions: [],
+        role: (stored.metadata?.role as string) || 'ADMINISTRATOR',
+      };
+    }
+
+    return {
+      platform: 'linkedin',
+      identity_type: 'linkedin_person',
+      identity_id: stored.provider_identity_id,
+      identity_name: stored.display_name,
+      author_urn: stored.provider_identity_urn,
+      can_publish: stored.can_publish,
+      missing_permissions: [],
+    };
   }
 
   async uploadMedia(input: {
@@ -799,6 +838,14 @@ export class SocialPublishingService {
         correlationId,
         aiClient: input.aiClient,
       });
+
+      // Stamp internal identity linkage when columns exist
+      await this.updatePostRecord(record.id, {
+        identity_type: identity.identity_type,
+        provider: identity.platform,
+        provider_identity_id: identity.identity_id,
+        connection_id: null,
+      }).catch(() => undefined);
 
       // Idempotent replay of already-published post
       if (input.idempotencyKey) {

@@ -241,34 +241,37 @@ defineConnectorTool({
     let identityId =
       args.identity_id || args.page_id || args.linkedin_organization_id || undefined;
 
-    if (!identityType) {
-      if (platform === 'facebook') {
-        identityType = 'facebook_page';
-        if (!identityId) {
-          const { listFacebookIdentities } = await import('@/lib/social/identityResolution');
-          const { pages } = await listFacebookIdentities(args.tenant_id);
-          const page = pages.find((p) => p.can_publish) || pages[0];
-          if (!page) throwConnectorError('MISSING_IDENTITY', 'No Facebook Page connected');
-          identityId = page.page_id;
-        }
-      } else if (args.linkedin_organization_id) {
-        identityType = 'linkedin_organization';
-        identityId = args.linkedin_organization_id;
-      } else {
-        identityType = 'linkedin_person';
-        if (!identityId) {
-          const { listLinkedInIdentities } = await import('@/lib/social/identityResolution');
-          const { personal } = await listLinkedInIdentities(args.tenant_id);
-          if (!personal?.member_id && !personal?.person_urn) {
-            throwConnectorError('MISSING_IDENTITY', 'LinkedIn personal identity not connected');
-          }
-          identityId = personal.member_id || personal.person_urn || 'me';
-        }
+    const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
+    const { TenantIsolationError } = await import('@/lib/social/tenantGuard');
+
+    try {
+      const stored = await resolveTenantIdentityForPublish({
+        tenantId: args.tenant_id,
+        identityId,
+        identityType:
+          identityType ||
+          (platform === 'facebook'
+            ? 'facebook_page'
+            : args.linkedin_organization_id
+              ? 'linkedin_organization'
+              : undefined),
+        provider: platform,
+        allowDefault: !identityId,
+      });
+      identityType = stored.identity_type as typeof identityType;
+      identityId = stored.provider_identity_id;
+    } catch (err) {
+      if (err instanceof TenantIsolationError) {
+        throwConnectorError(err.code, err.message);
       }
+      throw err;
     }
 
-    if (!identityId) {
-      throwConnectorError('MISSING_IDENTITY', 'identity_id is required');
+    if (!identityId || !identityType) {
+      throwConnectorError(
+        'MISSING_IDENTITY',
+        'identity_id is required — call get_social_identities and select a destination'
+      );
     }
 
     const publishNow =

@@ -110,8 +110,12 @@ export async function getFacebookIntegration(
   admin: SupabaseClient,
   query: FacebookQuery
 ): Promise<(FacebookIntegrationRow & { page_access_token?: string | null; user_access_token?: string | null }) | null> {
+  // Multi-tenant: tenantId is required — never look up pages without tenant scope
+  if (!query.tenantId) {
+    return null;
+  }
   let q = admin.from('facebook_integrations').select(`${SAFE_COLUMNS}, page_access_token, user_access_token`);
-  if (query.tenantId) q = q.eq('tenant_id', query.tenantId);
+  q = q.eq('tenant_id', query.tenantId);
   if (query.userId) q = q.eq('user_id', query.userId);
   if (query.pageId) q = q.eq('page_id', query.pageId);
   if (query.requireActive !== false) q = q.eq('is_active', true);

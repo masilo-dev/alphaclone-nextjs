@@ -151,6 +151,7 @@ export type PublishSocialPostResult = {
 /** Canonical MCP tool names that must appear in tools/list. */
 export const CANONICAL_SOCIAL_MCP_TOOLS = [
   'get_social_accounts',
+  'get_social_identities',
   'get_facebook_identities',
   'get_facebook_page_capabilities',
   'get_linkedin_identities',
