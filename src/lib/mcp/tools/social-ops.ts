@@ -292,7 +292,7 @@ defineConnectorTool({
       publishNow: publishNow && !args.scheduled_at,
       scheduledAt: args.scheduled_at || (args.status === 'scheduled' ? new Date().toISOString() : null),
       idempotencyKey: args.idempotency_key,
-      aiClient: ctx.clientLabel || 'mcp-client',
+      aiClient: 'mcp-client',
     });
 
     if (!result.ok) {

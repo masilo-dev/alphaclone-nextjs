@@ -648,7 +648,9 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         return {
           response,
           success: true,
-          toolsExecuted: [],
+          provider: process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback',
+          model: 'deepseek-chat',
+          toolResults: [],
           logs: allLogs,
           rounds: 1,
           executionStatus: 'executed',

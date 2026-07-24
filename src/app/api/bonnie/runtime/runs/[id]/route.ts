@@ -15,10 +15,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
     const tenantId = String(request.nextUrl.searchParams.get('tenantId') || '').trim();
     if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     await requireTenantAccess(tenantId);
@@ -83,10 +83,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await Promise.resolve(context.params);
+    const { id } = await context.params;
     const body = await request.json().catch(() => ({}));
     const tenantId = String(body.tenantId || '').trim();
     if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
