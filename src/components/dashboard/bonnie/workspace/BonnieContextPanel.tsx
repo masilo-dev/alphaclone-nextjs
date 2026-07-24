@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Link2, Shield, X } from 'lucide-react';
+import BonnieGoalsPanel from './BonnieGoalsPanel';
+import type { BonnieGoalSummary } from '@/hooks/useBonnieGoals';
 
 export type BonnieContextItem = {
   id: string;
@@ -15,7 +17,8 @@ export type BonnieContextItem = {
     | 'app'
     | 'permission'
     | 'memory'
-    | 'approval';
+    | 'approval'
+    | 'goal';
   label: string;
   detail?: string;
 };
@@ -27,6 +30,13 @@ type Props = {
   onRemove: (id: string) => void;
   pendingApprovals?: number;
   connectionStatus?: 'connected' | 'degraded' | 'offline';
+  goals?: BonnieGoalSummary[];
+  goalsLoading?: boolean;
+  goalsChasing?: boolean;
+  onChaseGoals?: () => void;
+  onCancelGoal?: (id: string) => void;
+  onResumeGoal?: (id: string) => void;
+  onSelectGoal?: (id: string) => void;
 };
 
 export default function BonnieContextPanel({
@@ -36,6 +46,13 @@ export default function BonnieContextPanel({
   onRemove,
   pendingApprovals = 0,
   connectionStatus = 'connected',
+  goals = [],
+  goalsLoading,
+  goalsChasing,
+  onChaseGoals,
+  onCancelGoal,
+  onResumeGoal,
+  onSelectGoal,
 }: Props) {
   if (!open) return null;
 
@@ -46,8 +63,8 @@ export default function BonnieContextPanel({
     >
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Context</h2>
-          <p className="text-[11px] text-slate-500">What Bonnie is working with</p>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Operations</h2>
+          <p className="text-[11px] text-slate-500">Goals, context, and approvals</p>
         </div>
         <button
           type="button"
@@ -73,6 +90,16 @@ export default function BonnieContextPanel({
             </p>
           )}
         </div>
+
+        <BonnieGoalsPanel
+          goals={goals}
+          loading={goalsLoading}
+          chasing={goalsChasing}
+          onChase={onChaseGoals}
+          onCancel={onCancelGoal}
+          onResume={onResumeGoal}
+          onSelect={onSelectGoal}
+        />
 
         <div>
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">

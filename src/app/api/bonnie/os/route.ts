@@ -5,6 +5,8 @@ import {
   DEPARTMENT_AGENTS,
   getKnowledgeGraphSummary,
   getLatestDigitalTwin,
+  listAgentRuntimeStatuses,
+  listGoals,
   listRegisteredAgents,
   runCognitiveLoop,
 } from '@/lib/bonnie/os';
@@ -13,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Bonnie Agentic OS status + optional cognitive run.
- * GET  ?tenantId= — OS status (agents, twin, knowledge graph)
+ * GET  ?tenantId= — OS status (agents, twin, knowledge graph, open goals)
  * POST { tenantId, goal, executeActions? } — run cognitive loop
  */
 export async function GET(request: NextRequest) {
@@ -24,21 +26,37 @@ export async function GET(request: NextRequest) {
     }
 
     await requireTenantAccess(tenantId);
-    const [twin, graph] = await Promise.all([
+    const [twin, graph, openGoals] = await Promise.all([
       getLatestDigitalTwin(tenantId),
       getKnowledgeGraphSummary(tenantId, 20),
+      listGoals({ tenantId, status: 'open', limit: 12 }),
     ]);
 
     return NextResponse.json({
       success: true,
       os: 'Bonnie Agentic Business Operating System',
-      agents: listRegisteredAgents().map((a) => ({
+      agents: listAgentRuntimeStatuses(),
+      agentRoster: listRegisteredAgents().map((a) => ({
         id: a.id,
         name: a.name,
         department: a.department,
         role: a.role,
+        capabilities: a.capabilities,
+        supportedModes: a.supportedModes,
+        confidencePrior: a.confidencePrior,
+        healthStatus: a.healthStatus,
       })),
       departmentCount: new Set(DEPARTMENT_AGENTS.map((a) => a.department)).size,
+      openGoals: openGoals.map((g) => ({
+        id: g.id,
+        title: g.title,
+        status: g.status,
+        progressPct: g.progress_pct,
+        waitingFor: g.waiting_for,
+        ownerAgentId: g.owner_agent_id,
+        executionMode: g.execution_mode,
+        updatedAt: g.updated_at,
+      })),
       twin,
       knowledgeGraph: {
         nodeCount: (graph.nodes || []).length,
@@ -50,6 +68,13 @@ export async function GET(request: NextRequest) {
         'observe', 'understand', 'reason', 'plan', 'simulate', 'evaluate_risk',
         'choose_strategy', 'choose_agents', 'choose_tools', 'execute', 'verify',
         'reflect', 'learn', 'update_memory', 'improve', 'continue_monitoring',
+      ],
+      executionModes: [
+        'ask_only',
+        'plan_only',
+        'approval_required',
+        'semi_autonomous',
+        'fully_autonomous',
       ],
     });
   } catch (err: unknown) {
@@ -85,6 +110,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: result.status !== 'failed',
       runId: result.runId,
+      goalId: result.goalId,
       status: result.status,
       confidence: result.confidence,
       strategy: result.strategy,

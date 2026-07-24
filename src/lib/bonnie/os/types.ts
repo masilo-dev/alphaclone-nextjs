@@ -47,6 +47,7 @@ export type DepartmentId =
   | 'communications'
   | 'calendar'
   | 'documents'
+  | 'contracts'
   | 'customer_success'
   | 'support'
   | 'compliance'
@@ -58,7 +59,19 @@ export type DepartmentId =
   | 'supervision'
   | 'audit'
   | 'memory'
-  | 'evaluation';
+  | 'evaluation'
+  | 'integration'
+  | 'notification'
+  | 'monitoring';
+
+export type ExecutionMode =
+  | 'ask_only'
+  | 'plan_only'
+  | 'approval_required'
+  | 'semi_autonomous'
+  | 'fully_autonomous';
+
+export type AgentHealthStatus = 'healthy' | 'degraded' | 'offline' | 'unknown';
 
 export type BonnieAgentDefinition = {
   id: string;
@@ -70,6 +83,18 @@ export type BonnieAgentDefinition = {
   keywords: string[];
   writeAllowed?: boolean;
   priority?: number;
+  /** Declared capabilities for Executive routing */
+  capabilities?: string[];
+  /** Supported execution modes for this agent's write actions */
+  supportedModes?: ExecutionMode[];
+  /** Relative confidence prior for routing (0-1) */
+  confidencePrior?: number;
+  /** Supported actions surfaced to the Executive / UI */
+  supportedActions?: string[];
+  /** Required platform tools beyond `tools` (integrations, queues, etc.) */
+  requiredTools?: string[];
+  /** Live health for registry status APIs */
+  healthStatus?: AgentHealthStatus;
 };
 
 export type SupervisorDecision = {
@@ -107,6 +132,9 @@ export type CognitiveRunInput = {
   eventPayload?: Record<string, unknown>;
   executeActions?: boolean;
   workflowId?: string;
+  /** Persist/attach to an existing goal when chasing */
+  goalId?: string;
+  conversationId?: string;
 };
 
 export type CognitiveRunResult = {
@@ -123,6 +151,7 @@ export type CognitiveRunResult = {
   outcome: Record<string, unknown>;
   reflectionId?: string | null;
   twinSnapshotId?: string | null;
+  goalId?: string | null;
 };
 
 export type KnowledgeNodeInput = {

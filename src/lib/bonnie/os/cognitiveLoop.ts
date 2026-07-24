@@ -18,6 +18,7 @@ import {
   decideSupervision,
   selectAgentsForGoal,
 } from './supervisor';
+import { createGoalFromPlan, syncGoalWithCognitiveResult } from './goalEngine';
 import type {
   CognitiveRunInput,
   CognitiveRunResult,
@@ -377,6 +378,74 @@ export async function runCognitiveLoop(input: CognitiveRunInput): Promise<Cognit
       orchestration_run_id: orchestrationRunId,
     });
 
+    let goalId = input.goalId || null;
+    try {
+      if (goalId) {
+        await syncGoalWithCognitiveResult({
+          goalId,
+          result: {
+            runId,
+            status,
+            stages,
+            selectedAgents: agents,
+            selectedTools: plannedTools,
+            supervisor,
+            strategy: { name: supervisor.strategy },
+            riskAssessment: { level: supervisor.riskLevel, requiresApproval: supervisor.requiresApproval },
+            confidence: supervisor.confidence,
+            evidence,
+            outcome: { ...outcome, reflectionId },
+            reflectionId,
+            twinSnapshotId: twin.id,
+            goalId,
+          },
+        });
+      } else {
+        const created = await createGoalFromPlan({
+          tenantId: input.tenantId,
+          userId: input.userId,
+          goal: input.goal,
+          agents,
+          tools: plannedTools,
+          riskLevel: supervisor.riskLevel,
+          requiresApproval: awaitingApproval || supervisor.requiresApproval,
+          triggerType: input.triggerType,
+          eventType: input.eventType,
+          eventId: input.triggerRef,
+          conversationId: input.conversationId,
+          workflowId: input.workflowId,
+          cognitiveRunId: runId,
+        });
+        goalId = created?.id || null;
+        if (goalId) {
+          await syncGoalWithCognitiveResult({
+            goalId,
+            result: {
+              runId,
+              status,
+              stages,
+              selectedAgents: agents,
+              selectedTools: plannedTools,
+              supervisor,
+              strategy: { name: supervisor.strategy },
+              riskAssessment: {
+                level: supervisor.riskLevel,
+                requiresApproval: supervisor.requiresApproval,
+              },
+              confidence: supervisor.confidence,
+              evidence,
+              outcome: { ...outcome, reflectionId },
+              reflectionId,
+              twinSnapshotId: twin.id,
+              goalId,
+            },
+          });
+        }
+      }
+    } catch (goalErr) {
+      console.warn('[cognitiveLoop] goal persistence failed:', goalErr);
+    }
+
     return {
       runId,
       status,
@@ -388,9 +457,10 @@ export async function runCognitiveLoop(input: CognitiveRunInput): Promise<Cognit
       riskAssessment: { level: supervisor.riskLevel, requiresApproval: supervisor.requiresApproval },
       confidence: supervisor.confidence,
       evidence,
-      outcome: { ...outcome, reflectionId },
+      outcome: { ...outcome, reflectionId, goalId },
       reflectionId,
       twinSnapshotId: twin.id,
+      goalId,
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

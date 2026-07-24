@@ -4,6 +4,7 @@
  */
 
 import { runCognitiveLoop } from './cognitiveLoop';
+import { wakeGoalsForEvent } from './goalEngine';
 import type { CognitiveRunResult } from './types';
 
 export const BONNIE_EVENT_GOALS: Record<string, (payload?: Record<string, unknown>) => string> = {
@@ -35,6 +36,22 @@ export const BONNIE_EVENT_GOALS: Record<string, (payload?: Record<string, unknow
     `Employee/HR change detected. Check permissions, workload, and compliance implications.`,
   approval_requested: () =>
     `Approval requested. Audit evidence, risk class, and recommend approve/edit/reject with clear rationale.`,
+  document_uploaded: (p) =>
+    `Document uploaded${p?.documentId ? ` (${p.documentId})` : ''}. Classify, extract knowledge, link related CRM/finance records, and recommend next actions.`,
+  social_post_published: () =>
+    `Social post published. Measure early engagement signals and recommend follow-up content or CRM outreach.`,
+  campaign_finished: () =>
+    `Marketing campaign finished. Analyse performance, capture lessons, and propose the next nurture or retargeting step.`,
+  oauth_expiring: () =>
+    `Integration OAuth token is expiring. Alert owners, prepare reconnect steps, and protect dependent automations.`,
+  support_ticket_closed: (p) =>
+    `Support ticket closed${p?.ticketId ? ` (${p.ticketId})` : ''}. Confirm resolution quality, update customer health, and capture lessons for future triage.`,
+  calendar_changed: () =>
+    `Calendar changed. Reconcile related follow-ups, meeting prep, and any goals waiting on the event.`,
+  lead_updated: (p) =>
+    `Lead updated${p?.leadId ? ` (${p.leadId})` : ''}. Re-score qualification, adjust outreach plan, and continue any chasing goals.`,
+  customer_created: (p) =>
+    `Customer created${p?.customerId ? ` (${p.customerId})` : ''}. Kick off onboarding checklist, link CRM records, and notify customer success.`,
 };
 
 export function isBonnieReasoningEvent(eventType: string): boolean {
@@ -49,6 +66,18 @@ export async function reasonAboutBusinessEvent(params: {
   payload?: Record<string, unknown>;
   executeActions?: boolean;
 }): Promise<CognitiveRunResult | null> {
+  // Wake any goals waiting on this class of outcome before starting a new cognitive run.
+  try {
+    await wakeGoalsForEvent({
+      tenantId: params.tenantId,
+      eventType: params.eventType,
+      eventId: params.eventId,
+      payload: params.payload,
+    });
+  } catch (err) {
+    console.warn('[eventReasoning] wakeGoalsForEvent failed:', err);
+  }
+
   const goalBuilder = BONNIE_EVENT_GOALS[params.eventType];
   if (!goalBuilder) return null;
 

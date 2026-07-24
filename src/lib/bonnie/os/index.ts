@@ -11,3 +11,4 @@ export * from './digitalTwin';
 export * from './reflectionEngine';
 export * from './cognitiveLoop';
 export * from './eventReasoning';
+export * from './goalEngine';

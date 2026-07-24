@@ -632,16 +632,20 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
         triggerType: 'instruction',
         executeActions: true,
         workflowId: workflowId || undefined,
+        conversationId: conversationId || undefined,
       });
       allLogs.push(
-        `Cognitive OS loop: status=${cognitive.status} agents=${cognitive.selectedAgents.map((a) => a.id).join(',')}`
+        `Cognitive OS loop: status=${cognitive.status} agents=${cognitive.selectedAgents.map((a) => a.id).join(',')}${cognitive.goalId ? ` goal=${cognitive.goalId}` : ''}`
       );
+      const goalSuffix = cognitive.goalId
+        ? ` Persistent goal ${cognitive.goalId.slice(0, 8)}… will keep chasing until complete.`
+        : '';
       const response =
         cognitive.status === 'awaiting_approval'
-          ? `Bonnie planned and started this mission with strategy ${String(cognitive.strategy.name || cognitive.supervisor.strategy)}. High-risk actions are waiting for your approval. Confidence: ${Math.round(cognitive.confidence * 100)}%.`
+          ? `Bonnie planned and started this mission with strategy ${String(cognitive.strategy.name || cognitive.supervisor.strategy)}. High-risk actions are waiting for your approval. Confidence: ${Math.round(cognitive.confidence * 100)}%.${goalSuffix}`
           : cognitive.status === 'completed'
-            ? `Bonnie completed the mission via the Agentic OS loop (Observe→Learn). Strategy: ${String(cognitive.strategy.name || cognitive.supervisor.strategy)}. Agents: ${cognitive.selectedAgents.map((a) => a.name).join(', ')}. Confidence: ${Math.round(cognitive.confidence * 100)}%.`
-            : `Bonnie ran the cognitive loop but needs follow-up (${cognitive.status}). ${cognitive.supervisor.reasoning}`;
+            ? `Bonnie completed the mission via the Agentic OS loop (Observe→Learn). Strategy: ${String(cognitive.strategy.name || cognitive.supervisor.strategy)}. Agents: ${cognitive.selectedAgents.map((a) => a.name).join(', ')}. Confidence: ${Math.round(cognitive.confidence * 100)}%.${goalSuffix}`
+            : `Bonnie ran the cognitive loop but needs follow-up (${cognitive.status}). ${cognitive.supervisor.reasoning}${goalSuffix}`;
 
       const es =
         cognitive.status === 'awaiting_approval'
