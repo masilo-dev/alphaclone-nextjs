@@ -235,6 +235,15 @@ export function buildPublicCallbackUrl(path: string): string {
   return new URL(path, `${PUBLIC_APP_ORIGIN}/`).toString();
 }
 
+/**
+ * Absolute public URL for dashboard redirects after OAuth.
+ * Never use request.url / Host — Railway binds 0.0.0.0:PORT internally.
+ */
+export function publicAppUrl(pathAndQuery = '/'): string {
+  const path = pathAndQuery.startsWith('/') ? pathAndQuery : `/${pathAndQuery}`;
+  return buildPublicCallbackUrl(path);
+}
+
 /** True when two resource URLs are equivalent after normalization (+ /api/mcp/sse alias). */
 export function resourcesMatch(tokenResource: string | null | undefined, expected: string): boolean {
   if (!tokenResource) return true;

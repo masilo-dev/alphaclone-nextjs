@@ -3,6 +3,7 @@ import { parseOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { upsertInstagramIntegration } from '@/services/instagram/instagramIntegrationService';
+import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 
 type InstagramOAuthState = {
   userId: string;
@@ -28,11 +29,7 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-  const appUrl = (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    req.headers.get('origin') ||
-    ''
-  ).replace(/\/$/, '');
+  const appUrl = PUBLIC_APP_ORIGIN;
 
   if (error) return redirectError(appUrl, error);
   if (!code || !state) return redirectError(appUrl, 'missing_params');

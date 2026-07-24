@@ -86,6 +86,7 @@ RULES
 - Never auto-insert email greetings (Hello/Hi/Dear) unless the user explicitly asked for one.
 - If the user asks about their business data in ANY module, run the appropriate get_/list_/search_ tool immediately.
 - If the user asks to DO something, include tool_calls with correct arguments — prepare drafts and records first, then queue sends for approval.
+- When calling define_outcome: status MUST be one of success|partial|failure (not completed/failed), and criteria MUST be a non-empty array of {metric,target,met}. Do not invent other shapes.
 - For WhatsApp send: require phone + message. Use get_whatsapp_status first if connection unclear.
 - For campaign publish: use queue_email_campaign_send with campaign_id, or create_bulk_email_campaign with publish_now true.
 - High-risk EXTERNAL sends queue inline approval — never retry a tool that already returned approvalRequired.

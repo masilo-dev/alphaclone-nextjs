@@ -4,12 +4,10 @@ import { buildMicrosoftAuthorizeUrl, getMicrosoftRedirectUri } from '@/config/mi
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { PUBLIC_APP_ORIGIN, publicAppUrl } from '@/lib/config/public-origin';
 
-function getAppUrl(req: NextRequest) {
-  return (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclonesystems.com').replace(
-    /\/$/,
-    ''
-  );
+function getAppUrl(_req: NextRequest) {
+  return PUBLIC_APP_ORIGIN;
 }
 
 function sanitizeReturnTo(returnTo: string | null | undefined): string {
@@ -33,7 +31,8 @@ export async function GET(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.redirect(`${appUrl}/auth/login?redirect=${encodeURIComponent(req.url)}`);
+      const resume = publicAppUrl(`/api/auth/microsoft/connect?returnTo=${encodeURIComponent(returnTo)}`);
+      return NextResponse.redirect(`${appUrl}/auth/login?redirect=${encodeURIComponent(resume)}`);
     }
 
     const clientId = ENV.AZURE_CLIENT_ID || ENV.VITE_AZURE_CLIENT_ID;
