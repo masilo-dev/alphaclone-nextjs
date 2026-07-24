@@ -18,7 +18,7 @@ const PLATFORM_CLIENT_SEEDS: Record<
     client_name: string;
     redirect_uris: string[];
     scopes: string[];
-    /** curated = smaller tool list for size-limited Apps connectors */
+    /** full = entire platform (default). curated = optional Apps-sized subset only. */
     toolCatalog?: ToolCatalogMode;
   }
 > = {
@@ -26,11 +26,10 @@ const PLATFORM_CLIENT_SEEDS: Record<
     client_name: 'OpenAI Apps MCP Connector',
     redirect_uris: [...OPENAI_APPS_OAUTH_REDIRECT_URIS],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    // OpenAI Apps / Claude.ai custom connectors silently drop oversized tools/list payloads.
-    toolCatalog: 'curated',
+    // Full platform — size handled by schema compaction in tools/list, not by cutting tools.
+    toolCatalog: 'full',
   },
-  // Generic public client — NOT an alias of chatgpt-connector.
-  // Keep full only for first-party/internal callers that can digest the whole registry.
+  // Generic public client — NOT an alias of chatgpt-connector
   'alphaclone-mcp-client': {
     client_name: 'Alphaclone MCP Client',
     redirect_uris: [],
@@ -44,7 +43,7 @@ const PLATFORM_CLIENT_SEEDS: Record<
       'https://manus.ai/api/mcp/auth_callback',
     ],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    toolCatalog: 'curated',
+    toolCatalog: 'full',
   },
   '1778309945386-41bab8272f61': {
     client_name: 'Claude (Anthropic)',
@@ -54,25 +53,24 @@ const PLATFORM_CLIENT_SEEDS: Record<
       'https://api.claude.ai/v1/oauth/callback',
     ],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    // Same size-limited connector surface as ChatGPT — full catalog registers as "connected" with 0 tools.
-    toolCatalog: 'curated',
+    toolCatalog: 'full',
   },
   'grok-connector': {
     client_name: 'Grok',
     redirect_uris: [],
     scopes: ['read', 'write', 'mcp:tools', 'mcp:resources'],
-    toolCatalog: 'curated',
+    toolCatalog: 'full',
   },
 };
 
 /**
  * Registered-client catalog policy (no User-Agent sniffing).
- * Default is curated: Claude.ai / Desktop / DCR remote clients silently show zero tools
- * when tools/list schemas exceed their undocumented payload limit. Opt into full via seed.
+ * Default is the FULL platform catalog. Payload size is solved by compacting
+ * schemas in tools/list — never by hiding AlphaClone tools from Claude/ChatGPT.
  */
 export function getToolCatalogModeForClient(clientId: string | null | undefined): ToolCatalogMode {
-  if (!clientId) return 'curated';
-  return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || 'curated';
+  if (!clientId) return 'full';
+  return PLATFORM_CLIENT_SEEDS[clientId]?.toolCatalog || 'full';
 }
 
 function isMissingColumnError(error: { message?: string; code?: string } | null | undefined): boolean {

@@ -1,5 +1,9 @@
 import { initializeRegistry, listTools } from '@/lib/mcp/tool-registry';
 import { sanitizeToolSchemaForClient } from '@/lib/mcp/sanitizeToolSchema';
+import {
+  compactMcpToolForDiscovery,
+  estimateToolsListBytes,
+} from '@/lib/mcp/compactToolSchema';
 import { SUPPLEMENTAL_MCP_TOOLS, type McpDiscoveryTool } from '@/lib/mcp/supplementalToolDefinitions';
 import {
   CHATGPT_CONNECTOR_TOOL_NAMES,
@@ -63,10 +67,25 @@ function withAnnotations(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
   }));
 }
 
+function prepareDiscoveryTools(
+  tools: UnifiedMcpTool[],
+  sanitizeForClient: boolean
+): UnifiedMcpTool[] {
+  if (!sanitizeForClient) return tools;
+  // Compact schemas so Claude/ChatGPT can ingest the FULL platform list.
+  return tools.map((tool) =>
+    compactMcpToolForDiscovery({
+      ...tool,
+      inputSchema: sanitizeToolSchemaForClient(tool.inputSchema),
+    })
+  );
+}
+
 /**
  * Single source of truth for MCP tool discovery.
- * Default = CURATED catalog for remote/size-limited connectors (Claude.ai, ChatGPT Apps, DCR clients).
- * Full catalog only when the registered client seed opts in (e.g. alphaclone-mcp-client / internal).
+ * Default = FULL platform catalog for every client (Claude, ChatGPT, Cursor, DCR, API key).
+ * Schemas are compacted for discovery so clients do not silently drop tools.
+ * Optional curated subset remains only when a client seed / forChatGPT explicitly requests it.
  * Never sniff User-Agent to decide capabilities.
  */
 export async function getUnifiedMcpTools(options?: {
@@ -79,8 +98,8 @@ export async function getUnifiedMcpTools(options?: {
   userAgent?: string | null;
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  // Explicit forChatGPT true/false still wins (SDK ListTools forces full via false).
-  // Otherwise use registered-client policy; null/unknown clients default to curated.
+  // Explicit forChatGPT true still requests curated (legacy Apps path).
+  // Explicit false forces full. Otherwise use registered-client policy (default full).
   const curated =
     options?.forChatGPT === true
       ? true
@@ -98,7 +117,7 @@ export async function getUnifiedMcpTools(options?: {
   ) {
     const cached = curated ? cachedCuratedTools! : cachedFullTools;
     console.info(
-      `[mcp.tools/list] cache hit catalog=${curated ? 'curated' : 'full'} count=${cached.length}`
+      `[mcp.tools/list] cache hit catalog=${curated ? 'curated' : 'full'} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
     );
     return cached;
   }
@@ -150,22 +169,14 @@ export async function getUnifiedMcpTools(options?: {
     );
   }
 
-  cachedFullTools = sanitizeForClient
-    ? annotated.map((tool) => ({
-        ...tool,
-        inputSchema: sanitizeToolSchemaForClient(tool.inputSchema),
-      }))
-    : annotated;
+  cachedFullTools = prepareDiscoveryTools(annotated, sanitizeForClient);
 
   cachedCuratedTools = cachedFullTools.filter((tool) => CURATED_TOOL_SET.has(tool.name));
   for (const alias of withAnnotations(DISCOVERY_ALIAS_TOOLS)) {
     if (!cachedCuratedTools.some((t) => t.name === alias.name)) {
-      cachedCuratedTools.push({
-        ...alias,
-        inputSchema: sanitizeForClient
-          ? sanitizeToolSchemaForClient(alias.inputSchema)
-          : alias.inputSchema,
-      });
+      cachedCuratedTools.push(
+        ...prepareDiscoveryTools([alias], sanitizeForClient)
+      );
     }
   }
   cachedCuratedTools.sort((a, b) => a.name.localeCompare(b.name));
@@ -180,7 +191,9 @@ export async function getUnifiedMcpTools(options?: {
 
   cacheTime = now;
   const result = curated ? cachedCuratedTools : cachedFullTools;
-  console.info(`[mcp.tools/list] returning catalog=${curated ? 'curated' : 'full'} count=${result.length}`);
+  console.info(
+    `[mcp.tools/list] returning catalog=${curated ? 'curated' : 'full'} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
+  );
   return result;
 }
 

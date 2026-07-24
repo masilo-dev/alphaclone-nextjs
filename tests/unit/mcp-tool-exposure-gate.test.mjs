@@ -56,7 +56,6 @@ test("unified tools/list returns non-empty full catalog for internal alphaclone 
   });
   assert.ok(tools.length > 50, `expected full catalog, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
-  // Core tools that must remain exposed (do not delete/rename)
   for (const required of [
     "create_lead",
     "create_post",
@@ -67,7 +66,7 @@ test("unified tools/list returns non-empty full catalog for internal alphaclone 
   }
 });
 
-test("Claude OAuth client gets curated non-empty catalog (not silent zero tools)", async () => {
+test("Claude OAuth client gets FULL compacted platform catalog", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
@@ -76,27 +75,29 @@ test("Claude OAuth client gets curated non-empty catalog (not silent zero tools)
     clientLabel: "claude.ai",
     userAgent: "Claude-User",
   });
-  assert.ok(tools.length > 20, `expected curated catalog, got ${tools.length}`);
+  assert.ok(tools.length > 50, `expected full platform catalog, got ${tools.length}`);
   assert.ok(
-    tools.length <= CHATGPT_CONNECTOR_TOOL_NAMES.length + 5,
-    `Claude catalog should stay near curated size, got ${tools.length}`,
+    tools.length > CHATGPT_CONNECTOR_TOOL_NAMES.length,
+    `Claude must not be limited to curated subset (${tools.length} vs curated ${CHATGPT_CONNECTOR_TOOL_NAMES.length})`,
   );
   const names = new Set(tools.map((t) => t.name));
   for (const required of ["create_lead", "search_leads", "list_leads", "inspect_tools"]) {
-    assert.ok(names.has(required), `missing curated tool ${required}`);
+    assert.ok(names.has(required), `missing platform tool ${required}`);
+  }
+  // Compaction: property descriptions should be stripped on discovery schemas
+  const sample = tools.find((t) => t.name === "create_lead") || tools[0];
+  const props = (sample?.inputSchema?.properties || {}) as Record<string, { description?: string }>;
+  for (const prop of Object.values(props)) {
+    assert.equal(prop?.description, undefined);
   }
 });
 
-test("API-key path (null clientId) defaults to curated for Claude Desktop safety", async () => {
+test("API-key path (null clientId) also gets full platform catalog", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
     forceRefresh: true,
     clientId: null,
   });
-  assert.ok(tools.length > 20, `expected curated default, got ${tools.length}`);
-  assert.ok(
-    tools.length <= CHATGPT_CONNECTOR_TOOL_NAMES.length + 5,
-    `null clientId must not dump full registry (${tools.length})`,
-  );
+  assert.ok(tools.length > 50, `expected full platform default, got ${tools.length}`);
 });
