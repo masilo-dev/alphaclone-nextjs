@@ -276,7 +276,7 @@ async function passJSDOM(url: string): Promise<Partial<EnrichmentResult>> {
 // ---------------------------------------------------------------------------
 
 async function passPuppeteer(url: string): Promise<Partial<EnrichmentResult>> {
-  if (!BrowserManager.hasRemoteConfigured()) return {};
+  if (!BrowserManager.canLaunchBrowser()) return {};
   let closeSession: (() => Promise<void>) | null = null;
   try {
     const { page, close } = await BrowserManager.createPuppeteerPage();
@@ -303,7 +303,7 @@ async function passPuppeteer(url: string): Promise<Partial<EnrichmentResult>> {
 // ---------------------------------------------------------------------------
 
 async function passPlaywright(url: string): Promise<Partial<EnrichmentResult>> {
-  if (!BrowserManager.hasRemoteConfigured()) return {};
+  if (!BrowserManager.canLaunchBrowser()) return {};
   let closeSession: (() => Promise<void>) | null = null;
   try {
     const { page, close } = await BrowserManager.createPage();

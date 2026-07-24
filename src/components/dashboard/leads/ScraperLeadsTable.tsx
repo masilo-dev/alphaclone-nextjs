@@ -46,6 +46,7 @@ interface Props {
   onActionComplete?: () => void;
   onLeadsChange?: (leads: ScraperLead[]) => void;
   refreshToken?: number;
+  onFocusLead?: (leadId: string) => void;
 }
 
 const GRADE_COLORS: Record<string, string> = {
@@ -79,6 +80,7 @@ export default function ScraperLeadsTable({
   onActionComplete,
   onLeadsChange,
   refreshToken = 0,
+  onFocusLead,
 }: Props) {
   const tenant = useCurrentTenantSafe();
   const [leads, setLeads] = useState<ScraperLead[]>([]);
@@ -336,7 +338,18 @@ export default function ScraperLeadsTable({
                       )}
                     </button>
                   </td>
-                  <td className="py-2 px-2 text-white">{lead.name || '—'}</td>
+                  <td className="py-2 px-2">
+                    <button
+                      type="button"
+                      className="text-left text-white hover:text-teal-300"
+                      onClick={() => onFocusLead?.(lead.id)}
+                    >
+                      <div className="font-medium">{lead.name || '—'}</div>
+                      {lead.title && (
+                        <div className="text-[11px] text-teal-400/90">{lead.title}</div>
+                      )}
+                    </button>
+                  </td>
                   <td className="py-2 px-2 text-slate-300">{lead.email || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.phone || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.company || '—'}</td>

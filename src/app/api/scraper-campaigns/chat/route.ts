@@ -278,8 +278,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         reply:
           count > 0
-            ? `Found ${count} reach-ranked ${nicheLabel} leads within ~${radius} km (free OSM / Wikidata / directories). Select rows → Save to CRM.`
-            : `Search running for SMB ${nicheLabel} within ~${radius} km. Free sources: OpenStreetMap, Wikidata, DuckDuckGo, Foursquare.`,
+            ? `Found ${count} contactable ${nicheLabel} leads within ~${radius} km — phone/email required, auto-enriched with decision makers where possible. Select → Save to CRM.`
+            : `Searching ${nicheLabel} within ~${radius} km, then auto-enriching websites for emails, phones, and decision makers (Railway Playwright). Vague website-only rows are dropped.`,
         campaignId: campaign.id,
         intent,
         status: campaign.searchStatus || (count > 0 ? 'completed' : 'running'),

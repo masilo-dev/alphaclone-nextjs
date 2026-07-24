@@ -504,15 +504,33 @@ export default function LeadMapView({
                   </a>
                 )}
                 {lead.lat != null && lead.lng != null && (
-                  <a
-                    href={getBuildingViewUrl(lead.lat, lead.lng)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Building view
-                  </a>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <a
+                      href={`https://www.mapillary.com/app/?lat=${lead.lat}&lng=${lead.lng}&z=17`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-teal-700 hover:text-teal-900 underline"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      Street (Mapillary)
+                    </a>
+                    <a
+                      href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lead.lat},${lead.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                    >
+                      Pano
+                    </a>
+                    <a
+                      href={getBuildingViewUrl(lead.lat, lead.lng)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                    >
+                      3D building
+                    </a>
+                  </div>
                 )}
                 <button
                   type="button"

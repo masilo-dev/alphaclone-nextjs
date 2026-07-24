@@ -1,6 +1,23 @@
 'use client';
 
 import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Badge,
+  Box,
+  Button,
+  Checkbox,
+  Flex,
+  FormControl,
+  FormLabel,
+  Grid,
+  HStack,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Select,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
 import { Loader2, MapPin, Radar, Search, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
@@ -12,6 +29,7 @@ import LeadFinderSmartBar from './LeadFinderSmartBar';
 import LeadFinderBeginnerGuide from './LeadFinderBeginnerGuide';
 import LeadFinderLiveProgress from './LeadFinderLiveProgress';
 import LeadFinderMapPanel from './LeadFinderMapPanel';
+import LeadFinderStreetViews from './LeadFinderStreetViews';
 
 type Props = {
   onActivity?: () => void;
@@ -30,6 +48,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [mapLeads, setMapLeads] = useState<ScraperLead[]>([]);
+  const [focusedLeadId, setFocusedLeadId] = useState<string | null>(null);
 
   const mapPins = useMemo(
     () =>
@@ -46,10 +65,20 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
     [mapLeads]
   );
 
+  const focusedLead = useMemo(() => {
+    const hit = mapLeads.find((l) => l.id === focusedLeadId) || mapLeads.find((l) => l.lat != null);
+    if (!hit) return null;
+    return {
+      business_name: hit.company || hit.name || 'Lead',
+      lat: hit.lat ?? undefined,
+      lng: hit.lng ?? undefined,
+      address: hit.address,
+    };
+  }, [mapLeads, focusedLeadId]);
+
   const previewCenter = useMemo((): [number, number] | null => {
     const withGeo = mapLeads.find((l) => l.lat != null && l.lng != null);
     if (!withGeo || withGeo.lat == null || withGeo.lng == null) return null;
-    // Prefer search center from first lead metadata if present via lat avg later — use first pin
     return [withGeo.lat, withGeo.lng];
   }, [mapLeads]);
 
@@ -153,13 +182,13 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
       const locLabel = [loc?.city, loc?.country].filter(Boolean).join(', ') || loc?.city || '';
       if (locLabel) setLocation(locLabel);
       if (loc?.radius_km) setRadiusKm(loc.radius_km);
-      void runWithIntent(intent, 'Smart search running from your saved profile…');
+      void runWithIntent(intent, 'Smart search from your profile');
     },
     [runWithIntent]
   );
 
   return (
-    <div className="space-y-4 min-h-0">
+    <VStack align="stretch" spacing={4} minH={0} flex={1}>
       <LeadFinderBeginnerGuide />
 
       <LeadFinderSmartBar
@@ -168,94 +197,139 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
         searching={searching}
       />
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 md:p-5 shadow-lg">
-        <div className="flex flex-col xl:flex-row gap-3">
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <label className="block sm:col-span-1">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
-                Business type / niche
-              </span>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
+      <Box
+        borderWidth="1px"
+        borderColor="whiteAlpha.200"
+        borderRadius="xl"
+        bg="blackAlpha.400"
+        p={{ base: 4, md: 5 }}
+        boxShadow="lg"
+        position="relative"
+        overflow="hidden"
+      >
+        <Box
+          position="absolute"
+          inset={0}
+          bg="radial-gradient(circle at top right, rgba(20,184,166,0.14), transparent 55%)"
+          pointerEvents="none"
+        />
+        <VStack align="stretch" spacing={4} position="relative">
+          <HStack justify="space-between" wrap="wrap" gap={2}>
+            <Text fontSize="sm" fontWeight="semibold" color="white">
+              Search command
+            </Text>
+            <Badge colorScheme="purple" variant="subtle">
+              Auto-enrich · Decision makers · Phone/email required
+            </Badge>
+          </HStack>
+
+          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr', xl: '1.2fr 1.2fr 0.8fr auto' }} gap={3}>
+            <FormControl>
+              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+                Niche
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <Search size={16} color="#64748B" />
+                </InputLeftElement>
+                <Input
                   value={niche}
                   onChange={(e) => setNiche(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void runSearch()}
-                  placeholder="e.g. dental clinics, HVAC contractors"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  placeholder="dental clinics, HVAC, agencies…"
+                  bg="gray.950"
+                  borderColor="whiteAlpha.300"
+                  color="white"
+                  _placeholder={{ color: 'gray.600' }}
+                  _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px var(--chakra-colors-teal-400)' }}
                 />
-              </div>
-            </label>
-            <label className="block">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
+              </InputGroup>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
                 Location
-              </span>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <MapPin size={16} color="#64748B" />
+                </InputLeftElement>
+                <Input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void runSearch()}
-                  placeholder="e.g. Austin, TX"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  placeholder="Austin, TX"
+                  bg="gray.950"
+                  borderColor="whiteAlpha.300"
+                  color="white"
+                  _placeholder={{ color: 'gray.600' }}
+                  _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px var(--chakra-colors-teal-400)' }}
                 />
-              </div>
-            </label>
-            <label className="block">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
-                Reach radius
-              </span>
-              <div className="relative">
-                <Radar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <select
+              </InputGroup>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+                Reach
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <Radar size={16} color="#64748B" />
+                </InputLeftElement>
+                <Select
                   value={radiusKm}
                   onChange={(e) => setRadiusKm(Number(e.target.value))}
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  bg="gray.950"
+                  borderColor="whiteAlpha.300"
+                  color="white"
+                  pl={10}
                 >
                   {RADIUS_OPTIONS.map((km) => (
-                    <option key={km} value={km}>
+                    <option key={km} value={km} style={{ background: '#0f172a' }}>
                       {km} km
                     </option>
                   ))}
-                </select>
-              </div>
-            </label>
-          </div>
-          <div className="flex flex-col sm:flex-row xl:flex-col justify-end gap-2 shrink-0">
-            <label className="flex items-center gap-2 text-sm text-slate-400 px-1">
-              <input
-                type="checkbox"
-                checked={hasEmail}
-                onChange={(e) => setHasEmail(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
-              />
-              Has email
-            </label>
-            <button
-              type="button"
-              onClick={() => void runSearch()}
-              disabled={searching}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-white text-sm font-medium transition-colors"
-            >
-              {searching ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              {searching ? 'Scraping…' : 'Search prospects'}
-            </button>
-          </div>
-        </div>
-        <p className="text-xs text-slate-500 mt-3">
-          Free open data only — OpenStreetMap, Wikidata, Photon, DuckDuckGo, Foursquare free tier. No paid lead databases.
-          Select rows → Save to CRM when results land.
-        </p>
-      </div>
+                </Select>
+              </InputGroup>
+            </FormControl>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)] gap-4 md:gap-6 min-h-0">
-        <div className="space-y-4 min-h-0">
+            <Flex direction="column" justify="flex-end" gap={2}>
+              <Checkbox
+                isChecked={hasEmail}
+                onChange={(e) => setHasEmail(e.target.checked)}
+                colorScheme="teal"
+                color="gray.400"
+                size="sm"
+              >
+                Email only
+              </Checkbox>
+              <Button
+                onClick={() => void runSearch()}
+                isLoading={searching}
+                loadingText="Scraping…"
+                colorScheme="teal"
+                leftIcon={searching ? <Loader2 size={16} /> : <Sparkles size={16} />}
+                px={6}
+              >
+                Find leads
+              </Button>
+            </Flex>
+          </Grid>
+
+          <Text fontSize="xs" color="gray.500">
+            Free stack: OpenStreetMap · Wikidata · Photon · DuckDuckGo · Railway Playwright enrichment.
+            Vague website-only rows are dropped — every result has phone or email.
+          </Text>
+        </VStack>
+      </Box>
+
+      <Grid
+        templateColumns={{ base: '1fr', xl: 'minmax(0,1.15fr) minmax(320px,0.85fr)' }}
+        gap={4}
+        minH={0}
+        flex={1}
+      >
+        <Box minH={0}>
           <ScraperLeadsTable
             key={refreshKey}
             campaignId={activeCampaignId}
@@ -263,11 +337,16 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             locationFilter={location.trim() || undefined}
             showAllWhenNoCampaign
             onActionComplete={onActivity}
-            onLeadsChange={setMapLeads}
+            onLeadsChange={(leads) => {
+              setMapLeads(leads);
+              if (!focusedLeadId && leads[0]) setFocusedLeadId(leads[0].id);
+            }}
             refreshToken={refreshKey}
+            onFocusLead={setFocusedLeadId}
           />
-        </div>
-        <div className="space-y-4 xl:sticky xl:top-4 xl:self-start">
+        </Box>
+
+        <VStack align="stretch" spacing={4} position={{ xl: 'sticky' }} top={4} alignSelf="start">
           <LeadFinderLiveProgress
             campaignId={activeCampaignId}
             searching={searching}
@@ -280,13 +359,14 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             leads={mapPins}
             previewCenter={previewCenter}
             previewRadiusKm={radiusKm}
-            emptyHint="Search to watch free geo leads appear on the map."
+            emptyHint="Search to plot contactable leads on the free map."
           />
-          <div className="max-h-[min(40vh,360px)] overflow-y-auto ac-scroll-full">
+          <LeadFinderStreetViews lead={focusedLead} allLeads={mapPins} />
+          <Box maxH="min(36vh,320px)" overflowY="auto" className="ac-scroll-full">
             <LeadFinderSystemPanel compact />
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </VStack>
+      </Grid>
+    </VStack>
   );
 }

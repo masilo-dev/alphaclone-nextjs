@@ -204,6 +204,20 @@ export class BrowserManager {
     );
   }
 
+  /**
+   * True when we can launch a browser on this host:
+   * remote Browserbase/CDP, Railway local Chromium, or local development.
+   */
+  static canLaunchBrowser(): boolean {
+    if (BrowserManager.hasRemoteConfigured()) return true;
+    if (isRailwayHost()) return true;
+    if (process.env.NODE_ENV !== 'production') return true;
+    if (process.env.CHROME_EXECUTABLE_PATH?.trim() || process.env.PUPPETEER_EXECUTABLE_PATH?.trim()) {
+      return true;
+    }
+    return false;
+  }
+
   // ---------------------------------------------------------------------------
   // Puppeteer variant — second engine, different fingerprint vs Playwright
   // ---------------------------------------------------------------------------

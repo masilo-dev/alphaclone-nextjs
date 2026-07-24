@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 const { resolveOsmNiche, buildOverpassClauses } = await import('../../src/lib/scraper/osmNicheTags.ts');
 const { haversineKm, geocodeFree } = await import('../../src/lib/scraper/freeGeoSources.ts');
+const { hasPhoneOrEmail } = await import('../../src/lib/scraper/decisionMakerScrape.ts');
 
 describe('osm niche tags', () => {
   it('maps dentist niche to amenity tags', () => {
@@ -28,6 +29,14 @@ describe('reach helpers', () => {
   it('computes haversine distance roughly', () => {
     const km = haversineKm(40.7128, -74.006, 40.758, -73.9855);
     assert.ok(km > 4 && km < 8);
+  });
+});
+
+describe('contact gate', () => {
+  it('rejects website-only leads', () => {
+    assert.equal(hasPhoneOrEmail({ phone: '', email: '' }), false);
+    assert.equal(hasPhoneOrEmail({ phone: '512-555-0100', email: '' }), true);
+    assert.equal(hasPhoneOrEmail({ phone: '', email: 'owner@clinic.com' }), true);
   });
 });
 

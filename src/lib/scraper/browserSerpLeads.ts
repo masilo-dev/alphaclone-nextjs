@@ -42,6 +42,11 @@ export function hasRemoteBrowserConfigured(): boolean {
   return BrowserManager.hasRemoteConfigured();
 }
 
+/** Remote Browserbase/CDP or Railway/local Chromium. */
+export function canUseBrowserScraper(): boolean {
+  return BrowserManager.canLaunchBrowser();
+}
+
 /**
  * Supplemental lead discovery using a headless browser (Browserbase or CDP).
  * Parses organic web results for visible phone numbers or emails.

@@ -1,6 +1,6 @@
 import {
+  canUseBrowserScraper,
   fetchSerpLeadsViaBrowser,
-  hasRemoteBrowserConfigured,
 } from '@/lib/scraper/browserSerpLeads';
 import { freePlacesService } from '@/services/freePlacesService';
 import { buildOverpassClauses, resolveOsmNiche } from '@/lib/scraper/osmNicheTags';
@@ -27,6 +27,8 @@ export interface LeadResult {
   lng?: number;
   hasContact: boolean;
   reach_km?: number;
+  decision_maker_name?: string;
+  decision_maker_title?: string;
 }
 
 export type LeadStep = 'init' | 'fallbacks' | 'browser' | 'finalize';
@@ -46,12 +48,23 @@ class OverpassRequestError extends Error {
   }
 }
 
-function hasContactInfo(r: Partial<LeadResult>): boolean {
+/** Hard product rule: phone OR email required for returned leads. */
+export function hasPhoneOrEmailContact(r: Partial<LeadResult>): boolean {
   const phone = (r.phone || '').trim();
   const email = (r.email || '').trim();
+  const phoneOk = phone.replace(/\D/g, '').length >= 7;
+  const emailOk = email.includes('@') && email.includes('.') && !email.includes('example.com');
+  return phoneOk || emailOk;
+}
+
+function hasContactInfo(r: Partial<LeadResult>): boolean {
+  return hasPhoneOrEmailContact(r);
+}
+
+function isEnrichableCandidate(r: Partial<LeadResult>): boolean {
+  if (hasPhoneOrEmailContact(r)) return true;
   const website = (r.website || '').trim();
-  const hasWebsite = website.length > 0 && /^https?:\/\//i.test(website);
-  return phone.length > 0 || email.length > 0 || hasWebsite;
+  return website.length > 0 && /^https?:\/\//i.test(website);
 }
 
 function enrichWithContactFlag(
@@ -479,7 +492,7 @@ export async function runLeadStep(input: {
             )
           )
           .catch(() => []),
-        input.usePlaywright && hasRemoteBrowserConfigured()
+        input.usePlaywright && canUseBrowserScraper()
           ? fetchSerpLeadsViaBrowser(input.niche, input.location, LEADS_PER_SEARCH)
           : Promise.resolve([]),
       ]);
@@ -522,9 +535,15 @@ export async function runLeadStep(input: {
       console.warn('[Scraper:Job] Primary free sources failed');
     }
 
-    partial = attachReach(dedupeAndSort(partial, input.sortBy || 'reach_asc'), searchCenter, input.radiusKm * 1.5);
-    const finalMaybe = partial.slice(0, LEADS_PER_SEARCH);
-    if (finalMaybe.length >= LEADS_PER_SEARCH) {
+    partial = attachReach(
+      dedupeAndSort(partial.filter(isEnrichableCandidate), input.sortBy || 'reach_asc'),
+      searchCenter,
+      input.radiusKm * 1.5
+    );
+    const withHardContact = partial.filter(hasPhoneOrEmailContact);
+    // Only short-circuit when we already have enough phone/email leads
+    if (withHardContact.length >= LEADS_PER_SEARCH) {
+      const finalMaybe = withHardContact.slice(0, LEADS_PER_SEARCH);
       return {
         nextStep: 'completed',
         progress: 100,
@@ -594,7 +613,7 @@ export async function runLeadStep(input: {
   }
 
   if (input.step === 'browser') {
-    if (input.usePlaywright && hasRemoteBrowserConfigured() && partial.length < LEADS_PER_SEARCH) {
+    if (input.usePlaywright && canUseBrowserScraper() && partial.length < LEADS_PER_SEARCH) {
       try {
         const want = LEADS_PER_SEARCH - partial.length + 5;
         const rows = await fetchSerpLeadsViaBrowser(input.niche, input.location, want);
@@ -618,10 +637,11 @@ export async function runLeadStep(input: {
     };
   }
 
+  // Keep enrichable candidates (website and/or contact) for the auto-enrich stage.
   const final = dedupeAndSort(
-    attachReach(partial, searchCenter, input.radiusKm * 1.5),
+    attachReach(partial.filter(isEnrichableCandidate), searchCenter, input.radiusKm * 1.5),
     input.sortBy || 'reach_asc'
-  ).slice(0, LEADS_PER_SEARCH);
+  ).slice(0, Math.max(LEADS_PER_SEARCH, 40));
 
   return {
     nextStep: 'completed',
@@ -632,6 +652,6 @@ export async function runLeadStep(input: {
     sourceErrors,
     fallbackUsed: true,
     searchCenter,
-    stepLabel: 'Reach-ranked leads ready',
+    stepLabel: 'Reach-ranked candidates ready for contact enrichment',
   };
 }
