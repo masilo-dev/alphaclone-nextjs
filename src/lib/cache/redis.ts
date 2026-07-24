@@ -55,11 +55,22 @@ export const CacheKeys = {
     // Rate limiting (already used in rate limiter)
     rateLimit: (identifier: string) => `ratelimit:${identifier}`,
 
-    // Feature flags
+    // Feature flags (platform-global by design)
     featureFlag: (flag: string) => `feature:${flag}`,
 
-    // API responses
+    // API responses — MUST include tenant for business data
     apiResponse: (endpoint: string, params: string) => `api:${endpoint}:${params}`,
+    /** Prefer this for any tenant-scoped cached API payload */
+    tenantApiResponse: (tenantId: string, endpoint: string, params: string) =>
+      `tenant:${tenantId}:api:${endpoint}:${params}`,
+
+    /** Tenant-scoped user permissions (permissions differ per workspace) */
+    tenantUserPermissions: (tenantId: string, userId: string) =>
+      `tenant:${tenantId}:user:${userId}:permissions`,
+
+    /** Generic tenant key builder */
+    tenantScoped: (tenantId: string, ...parts: string[]) =>
+      `tenant:${tenantId}:${parts.map((p) => String(p).replace(/:/g, '_')).join(':')}`,
 };
 
 /**

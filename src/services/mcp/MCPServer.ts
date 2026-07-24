@@ -796,25 +796,16 @@ class AlphaCloneMCPServer {
     this.setupToolHandlers();
   }
 
-  /** Workspace scope for this HTTP connection (from MCP API key). */
+  /** Workspace scope for this HTTP connection (from MCP API key / OAuth). */
   private requireTenant(args: Record<string, any>): string {
     if (this.ctx?.tenantId) {
       // Session-scoped MCP: always use connection tenant; ignore echoed tenant_id from agents.
       return this.ctx.tenantId;
     }
-    const t = args.tenant_id;
-    if (!t || typeof t !== 'string') {
-      throw new Error(
-        'tenant_id is required unless you use the MCP connection URL from the dashboard (API-key scoped workspace). Pass your workspace UUID as tenant_id.'
-      );
-    }
-    const tid = t.trim();
-    if (!isUuidString(tid)) {
-      throw new Error(
-        'tenant_id must be a valid workspace UUID from your MCP dashboard URL, not a name or slug.'
-      );
-    }
-    return tid;
+    // Fail closed: never trust AI/client-supplied tenant_id without a bound session.
+    throw new Error(
+      'Active workspace required. Connect via the MCP dashboard URL or OAuth session — tenant_id from the model is not authoritative.'
+    );
   }
 
   private requireProfileUser(args: Record<string, any>): string {
@@ -826,13 +817,9 @@ class AlphaCloneMCPServer {
       }
       return this.ctx.userId;
     }
-    const u = args.user_id;
-    if (!u || typeof u !== 'string') throw new Error('user_id is required');
-    const uid = u.trim();
-    if (!isUuidString(uid)) {
-      throw new Error('user_id must be a valid UUID from your MCP connection URL.');
-    }
-    return uid;
+    throw new Error(
+      'Authenticated user required. Connect via the MCP dashboard URL or OAuth session — user_id from the model is not authoritative.'
+    );
   }
 
   private async getFacebookIntegrations(

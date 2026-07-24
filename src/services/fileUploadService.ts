@@ -235,11 +235,17 @@ class FileUploadService {
                 };
             }
 
-            // 3. Generate storage path
+            // 3. Generate storage path — tenant-prefixed (never global / user-only)
             const timestamp = Date.now();
             const randomString = crypto.randomUUID();
-            const extension = filename.split('.').pop();
-            const storagePath = `${userId}/${timestamp}-${randomString}.${extension}`;
+            const extension = filename.split('.').pop() || 'bin';
+            const { tenantStoragePath } = await import('@/lib/tenant/platformTenant');
+            const storagePath = tenantStoragePath(
+                tenantId,
+                'uploads',
+                userId,
+                `${timestamp}-${randomString}.${extension}`
+            );
 
             // 4. Upload to Storage
             const { data: uploadData, error: uploadError } = await supabase.storage

@@ -83,26 +83,24 @@ async function resolveAuth(req: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (!userError && user) {
-      const tenantIdHeader = req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId');
-      let resolvedTenantId = tenantIdHeader || '';
+      // Hint is NEVER authoritative — must verify membership first.
+      const hinted =
+        req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId') || '';
 
-      if (!resolvedTenantId) {
-        const { data: userTenant } = await supabase
-          .from('tenant_users')
-          .select('tenant_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        resolvedTenantId = userTenant?.tenant_id || '';
-      }
-
-      if (resolvedTenantId) {
+      try {
+        const { resolveActiveTenantForUser } = await import('@/lib/tenant/platformTenant');
+        const resolved = await resolveActiveTenantForUser({
+          userId: user.id,
+          hintedTenantId: hinted || null,
+        });
         return {
-          tenant_id: resolvedTenantId,
+          tenant_id: resolved.tenantId,
           user_id: user.id,
           client_id: undefined as string | undefined,
         };
+      } catch (membershipErr) {
+        console.warn('[MCP Route Auth Fallback] tenant membership rejected:', membershipErr);
+        // Fall through to unauthorized
       }
     }
   } catch (fallbackErr) {

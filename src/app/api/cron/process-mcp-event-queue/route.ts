@@ -25,7 +25,10 @@ async function processBatchOutreachEvent(
   const { createMCPServer } = await import('@/services/mcp/MCPServer');
   const leadIds = Array.isArray(payload.lead_ids) ? (payload.lead_ids as string[]) : [];
   const clientIds = Array.isArray(payload.client_ids) ? (payload.client_ids as string[]) : [];
-  const server = userId ? createMCPServer({ tenantId, userId }) : createMCPServer();
+  if (!userId) {
+    throw new Error('mcp_event_queue row missing user_id — cannot execute tenant-scoped MCP tools');
+  }
+  const server = createMCPServer({ tenantId, userId });
 
   let sent = 0;
   let failed = 0;

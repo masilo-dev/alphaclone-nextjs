@@ -41,17 +41,26 @@ export function defineConnectorTool<T extends z.ZodObject<any>>(
     inputSchema: options.inputSchema,
     jsonSchema: options.jsonSchema,
     handler: async (args, context) => {
-      const tenantId = context.tenantId || (args as any).tenant_id;
-      const userId = context.userId || (args as any).user_id;
+      // Session context is authoritative — never prefer model/client-supplied IDs.
+      const tenantId = context.tenantId;
+      const userId = context.userId;
 
       if (!tenantId) {
         return toMcpContent(
-          errorResult(options.name, 'TENANT_REQUIRED', 'tenant_id is required')
+          errorResult(
+            options.name,
+            'TENANT_REQUIRED',
+            'Active workspace required. tenant_id from the model is not authoritative.'
+          )
         );
       }
       if (!userId) {
         return toMcpContent(
-          errorResult(options.name, 'AUTH_REQUIRED', 'Authenticated user_id is required')
+          errorResult(
+            options.name,
+            'AUTH_REQUIRED',
+            'Authenticated user required. user_id from the model is not authoritative.'
+          )
         );
       }
 
