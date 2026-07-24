@@ -1,11 +1,20 @@
-import { createHash } from 'node:crypto';
-
 /**
  * Have I Been Pwned — k-anonymity password check (range API).
  * Never sends the full password; only the first 5 chars of SHA-1.
+ * Uses Web Crypto so this module is safe in both browser and Node bundles.
  */
+
+async function sha1HexUpper(password: string): Promise<string> {
+  const data = new TextEncoder().encode(password);
+  const digest = await globalThis.crypto.subtle.digest('SHA-1', data);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+}
+
 export async function isPasswordCompromised(password: string): Promise<boolean> {
-  const sha1 = createHash('sha1').update(password, 'utf8').digest('hex').toUpperCase();
+  const sha1 = await sha1HexUpper(password);
   const prefix = sha1.slice(0, 5);
   const suffix = sha1.slice(5);
 
