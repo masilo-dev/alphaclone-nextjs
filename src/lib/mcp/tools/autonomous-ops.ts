@@ -411,8 +411,7 @@ defineConnectorTool({
     body_text: z.string().optional(),
     provider: z
       .enum(['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid', 'dry_run'])
-      .optional()
-      .default('dry_run'),
+      .optional(),
     contact_id: z.string().uuid().optional(),
     from_email: z.string().email().optional(),
     idempotency_key: z.string().min(1),
@@ -470,22 +469,76 @@ defineConnectorTool({
     if (approval) return approval;
 
     assertTestSafeRecipient(args.to);
-    const provider = isDryRun() ? 'dry_run' : args.provider || 'dry_run';
+    const preferred = isDryRun() ? 'dry_run' : args.provider;
     const acceptedAt = new Date().toISOString();
-    const messageId = `${provider}_${crypto.randomUUID()}`;
-    const threadId = `thread_${crypto.randomUUID()}`;
 
-    // Normalized interface — dry-run / sandbox always succeeds with evidence
+    if (preferred === 'dry_run' || isDryRun()) {
+      const messageId = `dry_run_${crypto.randomUUID()}`;
+      const delivery = {
+        provider: 'dry_run',
+        message_id: messageId,
+        recipient: args.to,
+        accepted_at: acceptedAt,
+        delivery_status: 'dry_run_accepted',
+        verification_evidence: { mode: 'dry_run' },
+      };
+      const receipt = {
+        action_id: newActionId(),
+        status: 'completed',
+        provider: 'dry_run',
+        provider_reference: messageId,
+        entity_id: messageId,
+        entity_type: 'email',
+        timestamp: acceptedAt,
+        verification: delivery.verification_evidence,
+        retry_available: true,
+      };
+      await persistActionReceipt({
+        tenantId: args.tenant_id,
+        userId: ctx.userId,
+        tool: 'send_transactional_email',
+        idempotencyKey: args.idempotency_key,
+        receipt,
+        success: true,
+        sanitizedInput: { ...args, body_html: '[redacted]', body_text: '[redacted]' },
+        sanitizedOutput: delivery,
+      });
+      return okResult('send_transactional_email', delivery, {
+        receipt,
+        meta: { idempotency_key: args.idempotency_key, tenant_id: args.tenant_id },
+      });
+    }
+
+    const { sendEmailServer } = await import('@/lib/email/sendEmailServer');
+    const sendResult = await sendEmailServer({
+      tenantId: args.tenant_id,
+      userId: ctx.userId,
+      to: args.to,
+      subject: args.subject,
+      html: args.body_html,
+      text: args.body_text,
+      preferredProvider: preferred === 'outlook' ? undefined : preferred,
+    });
+
+    if (!sendResult.success) {
+      throwConnectorError(
+        sendResult.code || 'PROVIDER_REJECTED',
+        sendResult.error || 'Email provider rejected the send',
+        sendResult.errorDetails
+      );
+    }
+
+    const messageId = sendResult.emailId || `${sendResult.provider}_${crypto.randomUUID()}`;
     const delivery = {
-      provider,
+      provider: sendResult.provider,
       message_id: messageId,
       recipient: args.to,
       accepted_at: acceptedAt,
-      delivery_status: provider === 'dry_run' ? 'dry_run_accepted' : 'accepted',
-      thread_id: threadId,
+      delivery_status: 'provider_accepted',
+      thread_id: null as string | null,
       error: null as string | null,
       verification_evidence: {
-        mode: provider === 'dry_run' ? 'dry_run' : 'sandbox_or_live',
+        mode: 'live',
         from_email_validated: Boolean(args.from_email),
         contact_id: args.contact_id || null,
         cc_count: args.cc?.length || 0,
@@ -505,7 +558,7 @@ defineConnectorTool({
         body_html: args.body_html || args.body_text || '',
         tracking_id: messageId,
         status: delivery.delivery_status,
-        provider,
+        provider: sendResult.provider,
         sent_at: acceptedAt,
         pitch_angle: 'transactional_email',
         industry: '',
@@ -518,7 +571,7 @@ defineConnectorTool({
     const receipt = {
       action_id: newActionId(),
       status: 'completed',
-      provider,
+      provider: sendResult.provider || preferred,
       provider_reference: messageId,
       entity_id: messageId,
       entity_type: 'email',
