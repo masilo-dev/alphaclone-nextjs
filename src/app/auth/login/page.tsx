@@ -640,9 +640,9 @@ function LoginContent() {
 
                     {isRegistering && (
                         <div className="flex flex-wrap gap-x-2 gap-y-0.5 py-0.5">
-                            <div className={`flex items-center gap-1 text-[10px] ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
-                                <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
-                                8+ chars
+                            <div className={`flex items-center gap-1 text-[10px] ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                12+ chars
                             </div>
                             <div className={`flex items-center gap-1 text-[10px] ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                 <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />

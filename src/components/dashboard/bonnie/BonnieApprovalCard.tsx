@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Check, Pencil, ShieldAlert, X } from 'lucide-react';
 
 export type BonnieApprovalCardProps = {
@@ -8,11 +8,32 @@ export type BonnieApprovalCardProps = {
   tool: string;
   riskClass?: string;
   summary?: string;
-  preview?: { target?: string; draft?: string };
+  preview?: { target?: string; draft?: string; previousDraft?: string };
+  payloadDiff?: Record<string, { before?: unknown; after?: unknown }>;
   onApprove: (editedArgs?: Record<string, unknown>) => Promise<{ success: boolean; message?: string }>;
   onReject: () => Promise<{ success: boolean }>;
   disabled?: boolean;
 };
+
+function DiffLine({ label, before, after }: { label: string; before?: string; after?: string }) {
+  if (!before && !after) return null;
+  const changed = before !== after;
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2 text-xs">
+      <p className="mb-1 font-semibold uppercase tracking-wide text-[10px] text-slate-500">{label}</p>
+      {changed && before ? (
+        <p className="mb-1 whitespace-pre-wrap text-rose-300/90 line-through decoration-rose-500/50">
+          {before}
+        </p>
+      ) : null}
+      {after ? (
+        <p className={`whitespace-pre-wrap ${changed ? 'text-emerald-300' : 'text-slate-300'}`}>
+          {after}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export default function BonnieApprovalCard({
   approvalId,
@@ -20,6 +41,7 @@ export default function BonnieApprovalCard({
   riskClass,
   summary,
   preview,
+  payloadDiff,
   onApprove,
   onReject,
   disabled = false,
@@ -28,13 +50,17 @@ export default function BonnieApprovalCard({
   const [draftText, setDraftText] = useState(preview?.draft || '');
   const [busy, setBusy] = useState(false);
 
+  const draftChanged = useMemo(
+    () => editing && draftText !== (preview?.draft || ''),
+    [editing, draftText, preview?.draft]
+  );
+
   const handleApprove = async () => {
     setBusy(true);
     try {
-      const editedArgs =
-        editing && draftText !== (preview?.draft || '')
-          ? { body: draftText, message: draftText, content: draftText, text: draftText }
-          : undefined;
+      const editedArgs = draftChanged
+        ? { body: draftText, message: draftText, content: draftText, text: draftText }
+        : undefined;
       const result = await onApprove(editedArgs);
       if (result.success) setEditing(false);
     } finally {
@@ -50,6 +76,8 @@ export default function BonnieApprovalCard({
       setBusy(false);
     }
   };
+
+  const diffEntries = Object.entries(payloadDiff || {}).slice(0, 8);
 
   return (
     <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
@@ -75,22 +103,35 @@ export default function BonnieApprovalCard({
         </p>
       )}
 
-      {(preview?.draft || editing) && (
-        <div className="mt-2">
-          {editing ? (
-            <textarea
-              value={draftText}
-              onChange={(e) => setDraftText(e.target.value)}
-              rows={4}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
-            />
-          ) : preview?.draft ? (
-            <p className="rounded-lg border border-slate-800 bg-slate-950/60 p-2 text-xs leading-relaxed text-slate-300 whitespace-pre-wrap">
-              {preview.draft}
-            </p>
-          ) : null}
-        </div>
-      )}
+      <div className="mt-2 space-y-2">
+        {editing ? (
+          <textarea
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            rows={5}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-slate-100 focus:border-teal-500 focus:outline-none"
+          />
+        ) : (
+          <DiffLine
+            label="Proposed content"
+            before={preview?.previousDraft}
+            after={preview?.draft}
+          />
+        )}
+
+        {draftChanged && (
+          <DiffLine label="Your edit vs original" before={preview?.draft} after={draftText} />
+        )}
+
+        {diffEntries.map(([key, value]) => (
+          <DiffLine
+            key={key}
+            label={key}
+            before={value.before != null ? String(value.before) : undefined}
+            after={value.after != null ? String(value.after) : undefined}
+          />
+        ))}
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <button
@@ -102,7 +143,7 @@ export default function BonnieApprovalCard({
           <Check className="h-3.5 w-3.5" />
           Approve
         </button>
-        {preview?.draft && (
+        {(preview?.draft || preview?.previousDraft) && (
           <button
             type="button"
             disabled={disabled || busy}

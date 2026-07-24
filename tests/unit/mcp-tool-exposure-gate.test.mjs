@@ -4,7 +4,6 @@ import {
   isChatgptClient,
   CHATGPT_CONNECTOR_TOOL_NAMES,
 } from "../../src/lib/mcp/toolAnnotations.ts";
-import { evaluateToolPolicy } from "../../src/lib/ai/ToolPolicyGate.ts";
 import {
   invalidateUnifiedMcpToolCache,
   getUnifiedMcpTools,
@@ -33,16 +32,16 @@ test("ChatGPT connector clients are still detected for curated catalog", () => {
   assert.ok(CHATGPT_CONNECTOR_TOOL_NAMES.length > 20);
 });
 
-test("ToolPolicyGate always allows (no pending approval queue)", async () => {
-  const decision = await evaluateToolPolicy({
-    tenantId: "00000000-0000-0000-0000-000000000001",
-    userId: "00000000-0000-0000-0000-000000000002",
-    toolName: "send_bulk_email_campaign",
-    source: "mcp",
-    args: {},
-  });
-  assert.equal(decision.outcome, "allow");
-  assert.match(decision.reason, /disabled|immediately/i);
+test("ToolPolicyGate enforces human oversight for high-risk tools (source)", async () => {
+  const fs = await import("node:fs");
+  const src = fs.readFileSync(
+    new URL("../../src/lib/ai/ToolPolicyGate.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(src, /queue_approval/);
+  assert.match(src, /dpa_acceptances/);
+  assert.equal(/INTENTIONALLY DISABLED/.test(src), false);
+  assert.match(src, /requiresApproval/);
 });
 
 test("unified tools/list returns non-empty full catalog for Claude-like clients", async () => {

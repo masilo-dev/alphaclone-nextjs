@@ -178,6 +178,11 @@ export const authService = {
         try {
             // Validate input
             const validated = signUpSchema.parse({ email: email.toLowerCase(), password, name });
+            const { assertPasswordAllowed } = await import('@/lib/security/passwordPolicy');
+            const passwordCheck = await assertPasswordAllowed(validated.password);
+            if (!passwordCheck.ok) {
+                return { user: null, error: passwordCheck.error };
+            }
 
             try {
                 const eligibilityResponse = await fetch('/api/auth/signup-eligibility', {
@@ -313,13 +318,18 @@ export const authService = {
         try {
             // Use the same validation as sign up for consistency
             const passwordSchema = z.string()
-                .min(8, 'Password must be at least 8 characters')
+                .min(12, 'Password must be at least 12 characters')
                 .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
                 .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
                 .regex(/[0-9]/, 'Password must contain at least one number')
                 .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
 
             passwordSchema.parse(password);
+            const { assertPasswordAllowed } = await import('@/lib/security/passwordPolicy');
+            const passwordCheck = await assertPasswordAllowed(password);
+            if (!passwordCheck.ok) {
+                return { error: passwordCheck.error };
+            }
 
             const { error } = await withAuthTimeout(supabase.auth.updateUser({ password }));
 

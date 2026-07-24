@@ -33,12 +33,12 @@ export const authSecurityService = {
             const encryptedSecret = await encryptIntegrationToken(secret);
             const encryptedBackupCodes = await encryptIntegrationToken(JSON.stringify(backupCodes));
 
-            // Store secret in database (encrypted at rest)
+            // Store secret pending verification — do not enable until TOTP proves possession
             const { error } = await supabase
                 .from('user_security')
                 .upsert({
                     user_id: userId,
-                    two_factor_enabled: true,
+                    two_factor_enabled: false,
                     two_factor_secret: encryptedSecret,
                     backup_codes: encryptedBackupCodes,
                     updated_at: new Date().toISOString(),
@@ -94,9 +94,20 @@ export const authSecurityService = {
                 const updatedCodes = backupCodes.filter((c: string) => c !== code);
                 await supabase
                     .from('user_security')
-                    .update({ backup_codes: await encryptIntegrationToken(JSON.stringify(updatedCodes)) })
+                    .update({
+                      backup_codes: await encryptIntegrationToken(JSON.stringify(updatedCodes)),
+                      two_factor_enabled: true,
+                    })
                     .eq('user_id', userId);
                 return { valid: true, error: null };
+            }
+
+            if (isValid) {
+                // First successful verify completes enrollment
+                await supabase
+                    .from('user_security')
+                    .update({ two_factor_enabled: true, updated_at: new Date().toISOString() })
+                    .eq('user_id', userId);
             }
 
             return { valid: isValid, error: null };

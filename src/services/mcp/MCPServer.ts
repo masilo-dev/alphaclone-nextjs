@@ -1037,17 +1037,48 @@ class AlphaCloneMCPServer {
     const tenantIdForPolicy = (args?.tenant_id && String(args.tenant_id).trim()) || this.ctx?.tenantId || '';
     const userIdForPolicy = this.ctx?.userId || (args?.user_id ? String(args.user_id).trim() : '');
     if (tenantIdForPolicy && userIdForPolicy) {
-      // ToolPolicyGate approval queue intentionally removed — actions execute immediately.
-      // evaluateToolPolicy is a no-op allow; kept for telemetry/type compatibility only.
       const { evaluateToolPolicy } = await import('@/lib/ai/ToolPolicyGate');
-      await evaluateToolPolicy({
+      const policy = await evaluateToolPolicy({
         tenantId: tenantIdForPolicy,
         userId: userIdForPolicy,
         toolName: name,
         source: 'mcp',
         args: args || {},
       });
-      // Do NOT deny or queue_approval — gate was a dead end with no dashboard release surface.
+      if (policy.outcome === 'deny') {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: true,
+                code: 'POLICY_DENIED',
+                message: policy.reason,
+                risk_class: policy.riskClass,
+              }),
+            },
+          ],
+          isError: true,
+        };
+      }
+      if (policy.outcome === 'queue_approval') {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                queued_for_approval: true,
+                approval_id: policy.approvalId,
+                risk_class: policy.riskClass,
+                message: policy.reason,
+                next_step:
+                  'Call list_pending_approvals then approve_pending_action with approval_id to execute.',
+              }),
+            },
+          ],
+        };
+      }
     }
 
     // Check new registry first

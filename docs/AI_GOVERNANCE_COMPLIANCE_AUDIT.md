@@ -89,8 +89,8 @@ ISO/IEC 42001 specifies requirements for establishing, implementing, maintaining
 
 | Clause / Control | Requirement Summary    | Status      | Identified Gaps                                                                                          | Remediation Plan                                                                                 |
 | :--------------- | :--------------------- | :---------- | :------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- |
-| **Clause 5.2**   | AI Policy Statement    | **Gap**     | No formal, executive-approved AI Policy Statement exists.                                                | Draft and publish an internal AI Policy Statement outlining ethical boundaries and safety goals. |
-| **Clause 6.1**   | AI Risk Assessment     | **Gap**     | Lacks a structured AI Risk Register.                                                                     | Build a database-backed or document-based Risk Register mapped to the NIST AI RMF.               |
+| **Clause 5.2**   | AI Policy Statement    | **Aligned** | Formal AI Policy Statement in `docs/AI_POLICY_STATEMENT.md`.                                             | Keep under annual review.                                                                        |
+| **Clause 6.1**   | AI Risk Assessment     | **Aligned** | Structured AI Risk Register in `docs/AI_RISK_REGISTER.md` (NIST AI RMF mapped).                          | Expose summary in admin panel when ready.                                                        |
 | **Clause 8.3**   | AI System Life Cycle   | **Aligned** | System prompts, constitutions, and sanitizers are tracked via git (`docs/BONNIE_MASTER_TRAINING_v3.md`). | Maintain version-controlled constitutional guidelines.                                           |
 | **Control A.2**  | Data Governance        | **Aligned** | Multi-tenant isolation enforced via PostgreSQL Row-Level Security (RLS) on all agent-facing tables.      | Run weekly audit checks on RLS policies.                                                         |
 | **Control A.3**  | Transparency & Logging | **Aligned** | Every tool invocation and response is logged in `mcp_sessions` and `autonomous_runner_approvals`.        | Expose execution traces to Tenant Admins via the dashboard.                                      |
@@ -102,35 +102,30 @@ ISO/IEC 42001 specifies requirements for establishing, implementing, maintaining
 
 The audit identified five remaining high-risk gaps that must be resolved to meet strict cybersecurity, data privacy, and legal enforceability requirements:
 
-### Gap 1: Multi-Factor Authentication (MFA/2FA)
+### Gap 1: Multi-Factor Authentication (MFA/2FA) — **REMEDIATED**
 
-- **Current State:** Placeholder logic in `src/services/authSecurityService.ts` accepts any 6-digit number as a valid TOTP code.
-- **Risk:** High. Allows bypass of MFA settings.
-- **Remediation:** Install `otplib` and `qrcode`, refactoring `verifyTOTP` to use actual cryptographic validation against the stored user secret.
+- **Current State:** `otplib` TOTP verification; enrollment stores secret with `two_factor_enabled=false` until first successful verify.
+- **Evidence:** `src/services/authSecurityService.ts`
 
-### Gap 2: Advanced Password Security
+### Gap 2: Advanced Password Security — **REMEDIATED**
 
-- **Current State:** Basic password length rules; no check for compromised passwords.
-- **Risk:** Medium. Compromised passwords can lead to tenant data leaks.
-- **Remediation:** Integrate a check against the Have I Been Pwned (HIBP) API during registration and enforce a 12-character minimum with mixed-case and special characters.
+- **Current State:** 12-character minimum + mixed case/digit/special; HIBP k-anonymity check on signup/password update.
+- **Evidence:** `src/lib/security/passwordPolicy.ts`, `signUpSchema`
 
-### Gap 3: Global API Rate Limiting
+### Gap 3: Global API Rate Limiting — **REMEDIATED**
 
-- **Current State:** Rate limiting is handled client-side or locally on failed logins.
-- **Risk:** High. Susceptible to brute-force and denial-of-service attacks on `/api/mcp` and other endpoints.
-- **Remediation:** Implement global sliding-window rate limiting in the Next.js middleware using Upstash Redis or Cloudflare.
+- **Current State:** Sliding-window rate limit in `proxy.ts` for `/api/*` including MCP (Upstash Redis with in-memory fallback).
+- **Evidence:** `proxy.ts` `applyGlobalApiRateLimit`, `src/lib/rateLimit.ts`
 
-### Gap 4: E-Signature Legality (eIDAS & ESIGN compliance)
+### Gap 4: E-Signature Legality (eIDAS & ESIGN compliance) — **REMEDIATED**
 
-- **Current State:** Contracts are signed digitally, but lacks legal audit trails.
-- **Risk:** Medium. Signed contracts may be contested in court.
-- **Remediation:** Generate a PDF Audit Trail upon contract completion, detailing IP addresses, email verifications, and cryptographic hashes of the contract text, stored immutably in Supabase Storage.
+- **Current State:** On `fully_signed`, generate PDF audit trail (IP, UA, content hash) stored under tenant-prefixed private storage.
+- **Evidence:** `src/lib/contracts/generateContractAuditTrailPdf.ts`, `contracts/sign` route
 
-### Gap 5: Human Oversight Gating (EU AI Act Article 14)
+### Gap 5: Human Oversight Gating (EU AI Act Article 14) — **REMEDIATED**
 
-- **Current State:** ToolPolicyGate queues high-risk operations, but lacks a clean user-facing approval interface for certain integrations.
-- **Risk:** Medium. Users may accidentally approve malicious or incorrect payloads.
-- **Remediation:** Implement rich rendering in `BonnieApprovalCard.tsx` that exposes exact diffs of proposed changes (e.g., changes to draft contracts or bulk email lists) before the user clicks "Approve".
+- **Current State:** ToolPolicyGate restored; send/bulk/financial queue for approval; BonnieApprovalCard shows diffs; autonomous requires DPA.
+- **Evidence:** `src/lib/ai/ToolPolicyGate.ts`, `BonnieApprovalCard.tsx`
 
 ---
 
@@ -144,6 +139,6 @@ Alphaclone Systems exhibits a strong architecture with a robust safety infrastru
 
 **Recommended Immediate Operations:**
 
-- Implement real TOTP verification to close the MFA gap.
-- Expose the AI Risk Register in the administration panel to satisfy ISO/IEC 42001 requirements.
-- Enforce mandatory DPA acceptance checks (`EnterpriseDPA.tsx`) before activating Bonnie's autonomous capabilities.
+- Keep ToolPolicyGate + Approval Center as the default for send/bulk/financial actions.
+- Surface the AI Risk Register summary in the admin panel (doc exists at `docs/AI_RISK_REGISTER.md`).
+- Confirm production Redis so global API rate limits are multi-instance.

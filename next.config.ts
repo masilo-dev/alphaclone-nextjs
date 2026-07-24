@@ -233,10 +233,8 @@ const nextConfig: NextConfig = {
 // Apply plugins sequentially to resolve type mismatches between various HOC signatures
 const baseConfig = withSerwist(nextConfig);
 const workflowConfig = withWorkflow(baseConfig as any, {
-  workflows: {
-    lazyDiscovery: true,
-  },
-});
+  workflows: {},
+} as any);
 const botIdConfig = withBotId(workflowConfig as any);
 
 export default withSentryConfig(botIdConfig as any, {

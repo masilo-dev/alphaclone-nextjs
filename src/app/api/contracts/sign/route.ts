@@ -185,6 +185,20 @@ export async function POST(req: NextRequest) {
                     projectId: updatedContract.project_id,
                     actorUserId: updatedContract.created_by,
                 }).catch(err => console.error('Failed to emit contract_signed event:', err));
+
+                const contentHash =
+                    String(updatedContract.metadata?.content_hash || '') ||
+                    String(updatedContract.content || updatedContract.title || '');
+                const { generateContractAuditTrailPdf } = await import(
+                    '@/lib/contracts/generateContractAuditTrailPdf'
+                );
+                await generateContractAuditTrailPdf({
+                    tenantId: updatedContract.tenant_id,
+                    contractId: updatedContract.id,
+                    title: updatedContract.title,
+                    contentHash,
+                    status: updatedContract.status,
+                }).catch((err) => console.error('Contract audit trail PDF failed:', err));
             }
         }
 
