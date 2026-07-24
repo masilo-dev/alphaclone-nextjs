@@ -1,6 +1,15 @@
 'use client';
 
 import React from 'react';
+import {
+  Box,
+  Button,
+  Flex,
+  Heading,
+  IconButton,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Brain, ChevronLeft, ChevronRight } from 'lucide-react';
 import BonnieChatPanel from './BonnieChatPanel';
@@ -9,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '@/lib/bonnie/bonnieToolCatalog';
 import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
+import { BC } from './bonnieChakra';
 
 export default function BonnieModuleDock() {
   const { currentTenant } = useTenant();
@@ -97,47 +107,101 @@ export default function BonnieModuleDock() {
   };
 
   return (
-    <div className="flex h-full min-h-[360px] max-h-[calc(100dvh-12rem)] flex-col overflow-hidden rounded-xl border border-slate-800 bg-[#090d16]">
-      <div className="flex items-center gap-2 border-b border-slate-800 px-3 py-2.5">
-        <Brain className="h-4 w-4 text-teal-400" />
+    <Flex
+      h="full"
+      minH="360px"
+      maxH="calc(100dvh - 12rem)"
+      direction="column"
+      overflow="hidden"
+      borderWidth="1px"
+      borderColor={BC.border}
+      borderRadius={BC.radius}
+      bg={BC.bg}
+    >
+      <Flex align="center" gap={2} borderBottomWidth="1px" borderColor={BC.border} px={3} py={2.5}>
+        <Brain size={16} color="#2DD4BF" />
         {!isCollapsed && (
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-teal-300">Bonnie AI</p>
-            <p className="truncate text-[10px] text-slate-500">{moduleHint.label}</p>
-          </div>
+          <Box minW={0} flex={1}>
+            <Text fontSize="xs" fontWeight="bold" color="teal.300">
+              Bonnie AI
+            </Text>
+            <Text fontSize="10px" color={BC.subtle} noOfLines={1}>
+              {moduleHint.label}
+            </Text>
+          </Box>
         )}
         {pendingCount > 0 && !isCollapsed && (
-          <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-slate-950">
+          <Box
+            as="span"
+            borderRadius="md"
+            bg="amber.500"
+            px={2}
+            py={0.5}
+            fontSize="10px"
+            fontWeight="bold"
+            color="gray.950"
+          >
             {pendingCount}
-          </span>
+          </Box>
         )}
-        <button
+        <IconButton
           type="button"
-          onClick={() => setIsCollapsed((prev) => !prev)}
-          className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 transition-colors hover:border-teal-500/30 hover:text-white"
           aria-label={isCollapsed ? 'Open Bonnie drawer' : 'Collapse Bonnie drawer'}
-        >
-          {isCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-      </div>
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          ml="auto"
+          size="sm"
+          variant="outline"
+          borderColor="gray.700"
+          bg="gray.900"
+          color="gray.300"
+          borderRadius={BC.controlRadius}
+          icon={isCollapsed ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          _hover={{ borderColor: 'teal.500', color: 'white' }}
+        />
+      </Flex>
+
       {isCollapsed ? (
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setIsCollapsed(false)}
-          className="flex flex-1 items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-slate-950/50"
+          flex={1}
+          h="auto"
+          borderRadius={0}
+          justifyContent="space-between"
+          alignItems="flex-start"
+          textAlign="left"
+          whiteSpace="normal"
+          px={4}
+          py={4}
+          _hover={{ bg: 'whiteAlpha.50' }}
         >
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-white">Bonnie drawer collapsed</p>
-            <p className="text-xs text-slate-500">Open it when you want help, without giving up as much workspace width.</p>
-          </div>
+          <VStack align="start" spacing={1} minW={0}>
+            <Heading size="xs" color="white" fontWeight="semibold">
+              Bonnie drawer collapsed
+            </Heading>
+            <Text fontSize="xs" color={BC.subtle} fontWeight="normal">
+              Open it when you want help, without giving up as much workspace width.
+            </Text>
+          </VStack>
           {pendingCount > 0 && (
-            <span className="rounded-full bg-amber-500 px-2.5 py-1 text-[10px] font-bold text-slate-950">
+            <Box
+              as="span"
+              borderRadius="md"
+              bg="amber.500"
+              px={2.5}
+              py={1}
+              fontSize="10px"
+              fontWeight="bold"
+              color="gray.950"
+              flexShrink={0}
+            >
               {pendingCount} pending
-            </span>
+            </Box>
           )}
-        </button>
+        </Button>
       ) : (
-        <div className="flex-1 min-h-0 p-2">
+        <Box flex={1} minH={0} p={2}>
           <BonnieChatPanel
             streaming
             storageKey={`bonnie_dock_${tenantId}_${activeModule}`}
@@ -150,8 +214,8 @@ export default function BonnieModuleDock() {
             pathname={pathname || undefined}
             userRole={user?.role}
           />
-        </div>
+        </Box>
       )}
-    </div>
+    </Flex>
   );
 }

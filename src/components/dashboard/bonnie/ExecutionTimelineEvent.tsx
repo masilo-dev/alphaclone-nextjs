@@ -106,7 +106,7 @@ const STATUS_CONFIG: Record<
 };
 
 const KIND_COLOR: Record<TimelineEventKind, string> = {
-  tool_call: 'text-violet-400 bg-violet-500/10',
+  tool_call: 'text-teal-400 bg-teal-500/10',
   planning: 'text-teal-400 bg-teal-500/10',
   synthesis: 'text-sky-400 bg-sky-500/10',
   approval: 'text-amber-400 bg-amber-500/10',

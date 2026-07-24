@@ -513,12 +513,12 @@ export default function BonnieChatPanel({
 
   return (
     <div
-      className={`flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-950/80 backdrop-blur-md ${
+      className={`flex flex-col overflow-hidden rounded-lg border border-white/10 bg-slate-950 ${
         compact ? 'h-full min-h-[200px]' : 'h-full min-h-[360px]'
       }`}
     >
       {!compact && messages.length > 1 && (
-        <div className="flex items-center justify-between border-b border-slate-800/60 px-3 py-1.5">
+        <div className="flex items-center justify-between border-b border-slate-800 px-3 py-1.5">
           {timelineEvents.length > 0 && (
             <span className="text-[10px] text-teal-400/70 font-semibold">
               {timelineEvents.filter(e => e.status === 'done').length}/{timelineEvents.length} steps
@@ -693,11 +693,11 @@ export default function BonnieChatPanel({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-slate-800 bg-slate-950/80 p-3">
+      <div className="shrink-0 border-t border-slate-800 bg-slate-950 p-3">
         {tenantId && aiQuota && (
-          <div className="mb-2 rounded-xl border border-white/5 bg-slate-900 px-2.5 py-2 shadow-sm">
+          <div className="mb-2 rounded-lg border border-white/10 bg-slate-900 px-2.5 py-2">
             <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px]">
-              <span className="flex items-center gap-1 font-black uppercase tracking-widest text-slate-500">
+              <span className="flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-500">
                 <Zap className="h-3 w-3 text-teal-400" />
                 AI Priority Layer
               </span>
@@ -739,7 +739,7 @@ export default function BonnieChatPanel({
             type="button"
             disabled
             title="Attachments coming next"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-500 opacity-60"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-900 text-slate-500 opacity-60"
             aria-label="Attach file (coming soon)"
           >
             <Paperclip className="h-4 w-4" />
@@ -762,7 +762,7 @@ export default function BonnieChatPanel({
                 : placeholder
             }
             aria-label="Message Bonnie"
-            className={`min-h-[40px] flex-1 resize-none rounded-xl border px-3 py-2 text-xs sm:text-[13px] focus:outline-none focus:ring-1 disabled:opacity-50 ${
+            className={`min-h-[40px] flex-1 resize-none rounded-md border px-3 py-2 text-xs sm:text-[13px] focus:outline-none focus:ring-1 disabled:opacity-50 ${
               workspaceMode
                 ? 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white'
                 : 'border-slate-700 bg-slate-900 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-teal-500'
@@ -774,7 +774,7 @@ export default function BonnieChatPanel({
             disabled={disabled || sending || !tenantId}
             aria-label={listening ? 'Stop voice input' : 'Voice command'}
             title={listening ? 'Listening… tap to stop' : 'Speak a command'}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               listening
                 ? 'border-rose-500/50 bg-rose-500/20 text-rose-300'
                 : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-teal-500/50 hover:text-teal-300'
@@ -787,7 +787,7 @@ export default function BonnieChatPanel({
               type="button"
               onClick={stopGeneration}
               aria-label="Stop generation"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-600 text-white transition-colors hover:bg-rose-500"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-rose-600 text-white transition-colors hover:bg-rose-500"
             >
               <Square className="h-4 w-4" />
             </button>
@@ -797,7 +797,7 @@ export default function BonnieChatPanel({
               onClick={() => void handleSend()}
               disabled={disabled || !input.trim()}
               aria-label="Send to Bonnie"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Send className="h-4 w-4" />
             </button>
