@@ -78,102 +78,58 @@ ON CONFLICT (id) DO UPDATE SET
   public = false,
   file_size_limit = COALESCE(storage.buckets.file_size_limit, EXCLUDED.file_size_limit);
 
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- storage.objects is owned by supabase_storage_admin.
+-- CREATE/DROP POLICY fails with 42501; ALTER POLICY on existing policies works.
+-- See also 20260724230001_uploads_storage_policies_dashboard.sql
 
--- Drop prior uploads policies (names used in older drafts / dashboards)
-DROP POLICY IF EXISTS "uploads_select_tenant" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_insert_tenant" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_update_tenant" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_delete_tenant" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_select_own" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_delete_own" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_insert_authenticated" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_select_authenticated" ON storage.objects;
-DROP POLICY IF EXISTS "uploads_select_public" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can upload files" ON storage.objects;
-DROP POLICY IF EXISTS "Authenticated users can view own uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Users can upload to uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Users can read uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Users can update uploads" ON storage.objects;
-DROP POLICY IF EXISTS "Users can delete uploads" ON storage.objects;
-
--- Tenant-prefixed path: tenant/{tenantId}/...
--- Legacy path (pre multi-tenant): {userId}/...
-CREATE POLICY "uploads_select_tenant" ON storage.objects
-  FOR SELECT TO authenticated
-  USING (
-    bucket_id = 'uploads'
-    AND (
-      (
-        (storage.foldername(name))[1] = 'tenant'
-        AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
-      )
-      OR (storage.foldername(name))[1] = auth.uid()::text
-      OR owner = auth.uid()
-    )
-  );
-
-CREATE POLICY "uploads_insert_tenant" ON storage.objects
-  FOR INSERT TO authenticated
-  WITH CHECK (
-    bucket_id = 'uploads'
-    AND (
-      (
-        (storage.foldername(name))[1] = 'tenant'
-        AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
-        AND (
-          -- Preferred: tenant/{tid}/uploads/{userId}/file
-          (storage.foldername(name))[4] = auth.uid()::text
-          -- Or any path under the member's tenant folder
-          OR (storage.foldername(name))[4] IS NULL
-        )
-      )
-      OR (storage.foldername(name))[1] = auth.uid()::text
-    )
-  );
-
-CREATE POLICY "uploads_update_tenant" ON storage.objects
-  FOR UPDATE TO authenticated
-  USING (
-    bucket_id = 'uploads'
-    AND (
-      (
-        (storage.foldername(name))[1] = 'tenant'
-        AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
-      )
-      OR (storage.foldername(name))[1] = auth.uid()::text
-      OR owner = auth.uid()
+ALTER POLICY uploads_insert_authenticated ON storage.objects
+WITH CHECK (
+  bucket_id = 'uploads'
+  AND auth.role() = 'authenticated'
+  AND (
+    (storage.foldername(name))[1] = auth.uid()::text
+    OR (
+      (storage.foldername(name))[1] = 'tenant'
+      AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
     )
   )
-  WITH CHECK (
-    bucket_id = 'uploads'
-    AND (
-      (
-        (storage.foldername(name))[1] = 'tenant'
-        AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
-      )
-      OR (storage.foldername(name))[1] = auth.uid()::text
-    )
-  );
+);
 
-CREATE POLICY "uploads_delete_tenant" ON storage.objects
-  FOR DELETE TO authenticated
-  USING (
-    bucket_id = 'uploads'
-    AND (
-      (
-        (storage.foldername(name))[1] = 'tenant'
-        AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
-        AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
-      )
-      OR (storage.foldername(name))[1] = auth.uid()::text
-      OR owner = auth.uid()
+ALTER POLICY uploads_select_authenticated ON storage.objects
+USING (
+  bucket_id = 'uploads'
+  AND auth.role() = 'authenticated'
+  AND (
+    (storage.foldername(name))[1] = auth.uid()::text
+    OR owner = auth.uid()
+    OR (
+      (storage.foldername(name))[1] = 'tenant'
+      AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
     )
-  );
+  )
+);
+
+ALTER POLICY uploads_select_public ON storage.objects
+USING (
+  bucket_id = 'uploads'
+  AND false
+);
+
+ALTER POLICY uploads_delete_own ON storage.objects
+USING (
+  bucket_id = 'uploads'
+  AND (
+    (storage.foldername(name))[1] = auth.uid()::text
+    OR owner = auth.uid()
+    OR (
+      (storage.foldername(name))[1] = 'tenant'
+      AND (storage.foldername(name))[2] ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      AND public.user_belongs_to_tenant(((storage.foldername(name))[2])::uuid)
+    )
+  )
+);
 
 -- file_uploads metadata: allow tenant members to read workspace files; insert own rows
 ALTER TABLE public.file_uploads ENABLE ROW LEVEL SECURITY;
