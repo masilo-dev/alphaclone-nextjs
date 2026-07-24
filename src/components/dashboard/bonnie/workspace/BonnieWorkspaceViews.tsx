@@ -97,7 +97,8 @@ export default function BonnieWorkspaceViews({
         setLoading(false);
       }
     })();
-  }, [view, tenantId]); // eslint-disable-line react-hooks/exhaustive-deps -- refresh on view change
+    // Refresh when switching operational views for this tenant.
+  }, [view, tenantId, loadRuns, loadDetail, selectedRunId]);
 
   const tasks = detail?.graph?.tasks || [];
   const timeline = detail?.timeline || [];
