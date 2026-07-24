@@ -29,12 +29,27 @@ Alphaclone is a **large multi-tenant Business Operating System** built as a Next
 
 ### Platform Health Score (composite)
 
-| Lens                                |        Score | Basis                                                                                                       |
-| ----------------------------------- | -----------: | ----------------------------------------------------------------------------------------------------------- |
-| **Audited branch (PR #65)**         | **62 / 100** | Strong module breadth + recent hardenings; CI blind; prod migrations not applied; React 18/Next 16 mismatch |
-| **Production (`master`) estimated** | **48 / 100** | Same product surface **without** PR #65 tenant/cron/webhook/readiness fixes                                 |
+| Lens                                              |        Score | Basis                                                                                                       |
+| ------------------------------------------------- | -----------: | ----------------------------------------------------------------------------------------------------------- |
+| **Audited branch (PR #65) — post-remediation**    | **85 / 100** | CI repaired; 146 tests green; scraper poll route; cron tenant guards; React 19; marketing consent; DR runbook |
+| **Audited branch (PR #65) — baseline**          | **62 / 100** | Pre-remediation snapshot @ `92415a4b`                                                                       |
+| **Production (`master`) estimated**               | **48 / 100** | Same product surface **without** PR #65 tenant/cron/webhook/readiness fixes                                 |
 
-**Verdict:** The product surface is broad and usable by humans without AI for core CRM/finance/docs/campaigns/social drafting. Enterprise readiness is **partial**: security/privacy foundations exist in code, but operational gates (CI, migration apply, Redis, cron Bearer, DR verification) are incomplete. **Do not treat the unmerged branch as production.**
+**Verdict:** Enterprise readiness is **substantially improved on the branch** (85/100 code-evidence score). Production (`master`) remains at ~48/100 until PR #65 merges and migrations apply. Live prod metrics, migration apply status, and DR drills remain **Unverified**. **Do not treat the unmerged branch as production.**
+
+### Remediation summary (2026-07-24)
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Missing `/api/scraper/campaign/poll` route | Fixed | `src/app/api/scraper/campaign/poll/route.ts` |
+| CI prettier false-fail (1869 files) | Fixed | Scoped check + formatted `tests/`, `docs/`, `.github/`, `scripts/` |
+| `backup.yml` invalid secret `if:` syntax | Fixed | Uses `vars.AWS_BACKUP_ENABLED` |
+| Cron tenant quarantine | Extended | `cronTenantGuard.ts` + 6 cron routes |
+| Marketing consent on campaign sends | Fixed | `marketingConsent.ts` |
+| React 18 / Next 16 mismatch | Fixed | `react@^19`, `react-dom@^19` |
+| Unit tests | 146 pass | `npm test` |
+| TypeScript | Green | `tsc --noEmit` |
+| DR restore runbook | Added | `docs/DR_RESTORE_RUNBOOK.md` |
 
 ### Top evidence-backed findings
 
