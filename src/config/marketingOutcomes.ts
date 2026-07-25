@@ -130,7 +130,7 @@ export const WHO_WE_SERVE_HERO = {
   headline: 'Built for teams that sell',
   headlineAccent: 'and deliver client work.',
   subhead:
-    'If you outgrew spreadsheets and tab-switching between CRM, projects, and billing — Alphaclone is your operating layer, not another point tool.',
+    'If you outgrew spreadsheets and tab-switching between CRM, projects, and billing — AlphaClone is your operating layer, not another point tool.',
 } as const;
 
 export type WhoWeServeSegment = {

@@ -235,7 +235,7 @@ const EcosystemPage: React.FC = () => {
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                                     <Link
-                                        href="/register"
+                                        href="/auth/login?register=true&type=business&plan=starter"
                                         className="inline-flex items-center gap-2 px-8 py-4 bg-slate-950 text-white font-bold rounded-xl hover:bg-slate-900 transition-all shadow-2xl"
                                     >
                                         Start Free Trial

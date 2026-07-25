@@ -224,7 +224,7 @@ const ServicesPage: React.FC = () => {
                                 {blufSummary}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                                <Link href="/register">
+                                <Link href="/auth/login?register=true&type=business&plan=starter">
                                     <Button className="bg-teal-500 text-slate-950 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
                                         <span className="relative z-10">Start Free Trial</span>
                                     </Button>
@@ -291,7 +291,7 @@ const ServicesPage: React.FC = () => {
                                                 ))}
                                             </div>
                                             <div className="mt-8 flex flex-col gap-3">
-                                                <Link href="/register">
+                                                <Link href="/auth/login?register=true&type=business&plan=starter">
                                                     <Button className="w-full bg-teal-600 font-bold py-4 rounded-xl button-fill-hover">
                                                         <span className="relative z-10 text-slate-950">Try This Free</span>
                                                     </Button>
@@ -391,7 +391,7 @@ const ServicesPage: React.FC = () => {
                                 Start your free trial today. No credit card required for the first 14 days. Cancel anytime from your account.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <Link href="/register">
+                                <Link href="/auth/login?register=true&type=business&plan=starter">
                                     <Button className="text-lg px-10 py-5 h-auto bg-teal-500 text-slate-950 font-black shadow-xl shadow-teal-500/20 rounded-2xl button-fill-hover">
                                         <span className="relative z-10">Start 14-Day Free Trial</span>
                                     </Button>

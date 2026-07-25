@@ -6,17 +6,17 @@ export type FaqItem = {
 /** Buyer-focused: outcomes, fit, trust, and workflow change */
 export const FAQ_BUYER_ITEMS: FaqItem[] = [
   {
-    question: 'What business problem does Alphaclone solve?',
+    question: 'What business problem does AlphaClone solve?',
     answer:
-      'Most service teams lose time and revenue in the gaps between CRM, email, projects, contracts, and billing. Alphaclone connects those workflows on one client record so follow-ups, delivery, and invoices stay aligned.',
+      'Most service teams lose time and revenue in the gaps between CRM, email, projects, contracts, and billing. AlphaClone connects those workflows on one client record so follow-ups, delivery, and invoices stay aligned.',
   },
   {
-    question: 'Who is Alphaclone built for?',
+    question: 'Who is AlphaClone built for?',
     answer:
       'Consultants, agencies, and solo founders who sell and deliver client work — and who are tired of copying the same details across five different apps.',
   },
   {
-    question: 'Is Alphaclone a good fit for a one-person business?',
+    question: 'Is AlphaClone a good fit for a one-person business?',
     answer:
       'Yes. Solo operators get pipeline, contracts, invoicing, scheduling, and follow-up in one login — without paying for separate CRM, billing, and meeting tools.',
   },
@@ -28,7 +28,7 @@ export const FAQ_BUYER_ITEMS: FaqItem[] = [
   {
     question: 'Do I need to be technical or know AI to use it?',
     answer:
-      'No. If you can use email and a dashboard, you can run Alphaclone. AI assists with drafts and repetitive steps — you review and approve before anything client-facing goes out.',
+      'No. If you can use email and a dashboard, you can run AlphaClone. AI assists with drafts and repetitive steps — you review and approve before anything client-facing goes out.',
   },
   {
     question: 'Can I try it before paying?',
@@ -43,7 +43,7 @@ export const FAQ_BUYER_ITEMS: FaqItem[] = [
   {
     question: 'Will my data be secure?',
     answer:
-      'Alphaclone uses tenant isolation between workspaces, encryption in transit and at rest, role-based access, and audit logging. Public privacy and security policies explain data handling and deletion.',
+      'AlphaClone uses tenant isolation between workspaces, encryption in transit and at rest, role-based access, and audit logging. Public privacy and security policies explain data handling and deletion.',
   },
   {
     question: 'What happens to my data if I cancel?',
@@ -65,37 +65,37 @@ export const FAQ_BUYER_ITEMS: FaqItem[] = [
 /** Product-focused: features, integrations, and competitor comparisons (SEO + evaluators) */
 export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
   {
-    question: 'What tools does Alphaclone replace?',
+    question: 'What tools does AlphaClone replace?',
     answer:
       'Common stacks include CRM (HubSpot/Salesforce), invoicing (QuickBooks/FreshBooks), contracts (DocuSign), scheduling (Calendly), and email marketing tools — consolidated into one workspace from $15/month.',
   },
   {
-    question: 'How is Alphaclone different from HubSpot or QuickBooks?',
+    question: 'How is AlphaClone different from HubSpot or QuickBooks?',
     answer:
-      'HubSpot and QuickBooks each cover one job. Alphaclone connects CRM, finance, contracts, meetings, and outreach so those jobs share the same client data.',
+      'HubSpot and QuickBooks each cover one job. AlphaClone connects CRM, finance, contracts, meetings, and outreach so those jobs share the same client data.',
   },
   {
-    question: 'How does Alphaclone compare with HubSpot for small businesses?',
+    question: 'How does AlphaClone compare with HubSpot for small businesses?',
     answer:
-      'Alphaclone includes CRM, pipeline, campaigns, forms, and workflows without Marketing Hub add-ons — alongside invoicing, contracts, and meetings in the same product.',
+      'AlphaClone includes CRM, pipeline, campaigns, forms, and workflows without Marketing Hub add-ons — alongside invoicing, contracts, and meetings in the same product.',
   },
   {
-    question: 'Does Alphaclone replace QuickBooks?',
+    question: 'Does AlphaClone replace QuickBooks?',
     answer:
-      'Alphaclone includes invoicing, expenses, chart of accounts, journal entries, P&L, balance sheet, bank reconciliation UI, and bills payable. Confirm tax and accounting requirements with your advisor before replacing dedicated accounting software.',
+      'AlphaClone includes invoicing, expenses, chart of accounts, journal entries, P&L, balance sheet, bank reconciliation UI, and bills payable. Confirm tax and accounting requirements with your advisor before replacing dedicated accounting software.',
   },
   {
     question: 'How does pricing compare to Salesforce?',
     answer:
-      'Salesforce often costs $25+ per user per month. Alphaclone starts at $15/month for the full workspace — flat pricing, not per-seat enterprise tiers.',
+      'Salesforce often costs $25+ per user per month. AlphaClone starts at $15/month for the full workspace — flat pricing, not per-seat enterprise tiers.',
   },
   {
-    question: 'Can I sync HubSpot contacts into Alphaclone?',
+    question: 'Can I sync HubSpot contacts into AlphaClone?',
     answer:
       'Yes. Connect HubSpot via OAuth to sync contacts and deals. Native campaigns, forms, and workflows can replace Marketing Hub for many teams.',
   },
   {
-    question: 'Does Alphaclone include email marketing?',
+    question: 'Does AlphaClone include email marketing?',
     answer:
       'Yes. Build campaigns, segments, and sequences with open/click tracking. Advanced automation limits vary by plan — see pricing for Pro and Enterprise.',
   },
@@ -109,7 +109,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
       'Yes. Kanban boards for leads and deals, forecast views, tasks, quotes, and a unified sales console are built in.',
   },
   {
-    question: 'Does Alphaclone support double-entry accounting?',
+    question: 'Does AlphaClone support double-entry accounting?',
     answer:
       'Yes. Chart of accounts, journal entries, trial balance, P&L, balance sheet, and cash flow statement views are included.',
   },
@@ -123,7 +123,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
     answer: 'LinkedIn, Facebook, Instagram, and X (Twitter) from a unified social command center.',
   },
   {
-    question: 'Does Alphaclone have video meetings?',
+    question: 'Does AlphaClone have video meetings?',
     answer: 'Yes. Built-in video meetings, booking links, calendar, and Microsoft Teams integration are included.',
   },
   {
@@ -155,7 +155,7 @@ export const FAQ_PRODUCT_ITEMS: FaqItem[] = [
     answer: 'P&L and balance sheet PDF export from the accounting hub. Revenue reports export to PDF and CSV.',
   },
   {
-    question: 'Does Alphaclone work on mobile?',
+    question: 'Does AlphaClone work on mobile?',
     answer: 'Yes. The dashboard is PWA-ready with mobile navigation and responsive layouts.',
   },
   {

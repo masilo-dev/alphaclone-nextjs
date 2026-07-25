@@ -63,17 +63,9 @@
   --surface-1: rgba(30, 41, 59, 0.65);
 }
 
-/* Marketing Theme Definitions */
+/* Marketing theme tokens live in src/styles/marketing-system.css */
 .marketing-theme {
-  --background: #020D1A;
-  --foreground: #f8fafc;
-  --marketing-primary: #06b6d4;
-  --marketing-accent: #14b8a6;
-  --marketing-radius: 0.75rem;
-  --shadow-luxury-sm: 0 0 30px -18px rgba(34, 211, 238, 0.15);
-  --shadow-luxury-md: 0 0 60px -24px rgba(34, 211, 238, 0.22);
-  --shadow-luxury-lg: 0 0 80px -20px rgba(6, 182, 212, 0.25);
-  color: var(--foreground);
+  color: var(--marketing-text-primary, #f8fafc);
 }
 
 .marketing-shadow-sm {

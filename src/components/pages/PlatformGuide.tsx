@@ -521,7 +521,7 @@ The invited person receives an email with a secure invitation link. When they cl
                             Create your free account now. The setup wizard inside the platform mirrors this guide step by step so first-time users can onboard without founder involvement.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link href="/register">
+                            <Link href="/auth/login?register=true&type=business&plan=starter">
                                 <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
                                     Start Free Trial
                                     <ArrowRight className="w-5 h-5 ml-2" />

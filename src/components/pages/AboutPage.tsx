@@ -303,7 +303,7 @@ const AboutPage: React.FC = () => {
                                 Start a 14-day trial and build your Unified Business OS before you pay.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
-                                <Link href="/register">
+                                <Link href="/auth/login?register=true&type=business&plan=starter">
                                     <Button className="bg-teal-500 text-slate-950 text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
                                         <span className="relative z-10">Start Your OS</span>
                                     </Button>

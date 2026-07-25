@@ -4,6 +4,7 @@ import Script from "next/script";
 import "@fontsource-variable/inter";
 import "@fontsource/space-grotesk";
 import "./globals.css";
+import "@/styles/marketing-system.css";
 import { Providers } from "@/components/Providers";
 
 import { PWAProvider } from "@/contexts/PWAContext";
@@ -22,14 +23,14 @@ import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Alphaclone — AI Business OS for Founders | $15/month",
+    default: "AlphaClone — AI Business OS for Founders | $15/month",
     template: "%s | AlphaClone Systems",
   },
   description:
     "Run CRM, invoicing, contracts, social media workflows, and meetings from one AI-assisted business workspace. Starter plans begin at $15 per month.",
   keywords: [
     "AI business operating system",
-    "Alphaclone",
+    "AlphaClone",
     "AlphaClone Systems",
     "AI CRM for founders",
     "small business CRM automated",
@@ -68,7 +69,7 @@ export const metadata: Metadata = {
       : {},
   },
   openGraph: {
-    title: "Alphaclone — AI Business OS for Founders",
+    title: "AlphaClone — AI Business OS for Founders",
     description:
       "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
     type: "website",
@@ -79,7 +80,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Alphaclone — AI Business OS for Founders",
+    title: "AlphaClone — AI Business OS for Founders",
     description:
       "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
     creator: "@AlphaCloneSys",

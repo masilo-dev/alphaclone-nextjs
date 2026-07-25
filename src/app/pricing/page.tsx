@@ -1,33 +1,43 @@
 import type { Metadata } from 'next';
-import PricingPageContent from './PricingPageContent';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
+import PricingPage from '@/components/marketing/system/PricingPage';
+import { PRICING_FROM } from '@/config/pricingPlans';
+import { absoluteUrl } from '@/lib/siteUrl';
 
 export const metadata: Metadata = {
-    title: 'Pricing | AlphaClone Business OS from $15/month',
-    description: 'AlphaClone\'s Unified Business OS starts at $15/month with CRM, finance, contracts, meetings, social workflows, and AI-assisted operations in one workspace.',
-    keywords: [
-        'AlphaClone pricing',
-        'Business OS pricing',
-        'reduce SaaS tool sprawl',
-        'affordable AI business platform',
-        'unified business software pricing',
-        'HubSpot QuickBooks Zoom alternative',
-        'AI growth agent pricing',
-    ],
-    alternates: { canonical: 'https://alphaclonesystems.com/pricing' },
-    openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
-        title: 'Pricing | AlphaClone Business OS — From $15/month',
-        description: 'One unified AI Business OS starting at $15/month. 14-day free trial, no credit card required.',
-        url: 'https://alphaclonesystems.com/pricing',
-        type: 'website',
-    },
-    twitter: { images: ['/twitter-image'],
-        card: 'summary_large_image',
-        title: 'Pricing | AlphaClone Business OS — From $15/month',
-        description: 'One unified AI Business OS from $15/month. CRM, finance, contracts, meetings, and AI-assisted workflows with a 14-day free trial.',
-    },
-    robots: { index: true, follow: true },
+  title: `Pricing | AlphaClone Plans from $${PRICING_FROM}/month`,
+  description:
+    'AlphaClone pricing for connected CRM, projects, contracts, billing context, meetings, and workflow automation in one business workspace.',
+  keywords: [
+    'AlphaClone pricing',
+    'business workspace pricing',
+    'CRM pricing',
+    'project management pricing',
+    'AI business automation pricing',
+  ],
+  alternates: { canonical: absoluteUrl('/pricing') },
+  openGraph: {
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+    title: `Pricing | AlphaClone Plans from $${PRICING_FROM}/month`,
+    description:
+      'Compare AlphaClone Starter, Pro, and Enterprise plans for a connected business workspace.',
+    url: absoluteUrl('/pricing'),
+    type: 'website',
+  },
+  twitter: {
+    images: ['/twitter-image'],
+    card: 'summary_large_image',
+    title: `Pricing | AlphaClone Plans from $${PRICING_FROM}/month`,
+    description:
+      'Compare AlphaClone plans for CRM, projects, contracts, meetings, and workflow automation.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function Page() {
-    return <PricingPageContent />;
+  return (
+    <MarketingLandingShell>
+      <PricingPage />
+    </MarketingLandingShell>
+  );
 }
