@@ -40,7 +40,7 @@ const MODULES: Module[] = [
   { label: 'Invoicing',      icon: FileText,      href: '/dashboard/finance',          accent: 'text-green-400',  bg: 'bg-green-500/15' },
   { label: 'Quotes',         icon: Receipt,       href: '/dashboard/quotes',           accent: 'text-teal-400',   bg: 'bg-teal-500/15' },
   { label: 'Contracts',      icon: FileText,      href: '/dashboard/contracts',        accent: 'text-indigo-400', bg: 'bg-indigo-500/15' },
-  { label: 'Expenses',       icon: ShoppingBag,   href: '/dashboard/finance',          accent: 'text-rose-400',   bg: 'bg-rose-500/15' },
+  { label: 'Expenses',       icon: ShoppingBag,   href: '/dashboard/business/expenses', accent: 'text-rose-400',   bg: 'bg-rose-500/15' },
   { label: 'Accounting',     icon: BarChart3,     href: '/dashboard/accounting',       accent: 'text-cyan-400',   bg: 'bg-cyan-500/15' },
   { label: 'Messages',       icon: MessageCircle, href: '/dashboard/messages',         accent: 'text-sky-400',    bg: 'bg-sky-500/15' },
   { label: 'WhatsApp',       icon: Phone,         href: '/dashboard/business/whatsapp', accent: 'text-green-400',  bg: 'bg-green-500/15' },

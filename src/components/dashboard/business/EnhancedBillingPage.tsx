@@ -3,11 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBonnieDeepLinkFocus } from '@/hooks/useBonnieDeepLinkFocus';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-    DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
-    AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
-    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square
-} from 'lucide-react';
+import { FileText, Download, Eye, Send, Mail, CheckCircle, Clock, Edit, Trash2, User, X, CheckSquare, Square } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
 import { businessInvoiceService, BusinessInvoice } from '../../../services/businessInvoiceService';
@@ -15,7 +11,7 @@ import { businessClientService } from '../../../services/businessClientService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
-import { Button, Card } from '../../ui/UIComponents';
+import { Card } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CommunicationModal } from '../crm/CommunicationModal';
@@ -23,6 +19,15 @@ import type { EmailRecipient } from '../crm/emailRecipient';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
+import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
+import {
+    MobileDataCard,
+    ResponsiveTableDesktop,
+    ResponsiveTableMobile,
+} from '@/components/ui/ResponsiveTable';
+import { EmptyState, EmptyStateFromPreset } from '@/components/ui/EmptyState';
+import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -32,7 +37,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
-    const { isMobile, isTablet, isDesktop } = useBreakpoint();
+    const { isMobile } = useBreakpoint();
     
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -244,208 +249,312 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
     if (loading) {
         return (
-            <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
-                <div className="ac-workspace-panel rounded-lg p-8 text-center text-slate-400">
-                    Loading billing workspace...
-                </div>
+            <div className="space-y-5 p-4 md:p-6">
+                <StatePanel kind="loading" title="Loading billing workspace…" compact />
             </div>
         );
     }
 
     const ServicesCatalog = React.lazy(() => import('./ServicesCatalog').then(m => ({ default: m.ServicesCatalog })));
 
-    return (
-        <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
-            <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                        <DollarSign className="text-teal-500" /> Revenue Workspace
-                    </h1>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoices, recurring revenue, and follow-ups</p>
-                </div>
-                <div className="flex gap-2 w-full sm:w-auto rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                  <button 
-                    onClick={() => setActiveTab('invoices')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Billing
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('recurring')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Recurring
-                  </button>
-                  <button 
-                    onClick={() => setActiveTab('services')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
-                  >
-                    Catalog
-                  </button>
-                </div>
-            </div>
+    const openCreateInvoice = () => setShowCreateModal(true);
 
+    return (
+        <ModulePageLayout
+            className="p-0 md:p-0"
+            header={(
+                <>
+                    <div className="px-3 pt-3 md:px-6 md:pt-4">
+                        <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
+                    </div>
+                    <PageHeader
+                        moduleLabel="Money"
+                        title="Invoices"
+                        description="Create, send, and follow up on invoices"
+                        primaryAction={
+                            activeTab === 'invoices'
+                                ? { label: 'Create Invoice', onClick: openCreateInvoice, variant: 'primary' }
+                                : undefined
+                        }
+                        secondaryActions={[
+                            { label: 'Refresh', onClick: () => { void loadInvoices(); } },
+                        ]}
+                    >
+                        <div className="flex gap-1 w-full sm:w-auto rounded-lg border border-white/5 bg-slate-900/60 p-1">
+                            {(
+                                [
+                                    { id: 'invoices' as const, label: 'Billing' },
+                                    { id: 'recurring' as const, label: 'Recurring' },
+                                    { id: 'services' as const, label: 'Catalog' },
+                                ]
+                            ).map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex-1 sm:flex-none min-h-11 px-3 rounded-md text-xs font-semibold border transition-all ${
+                                        activeTab === tab.id
+                                            ? 'bg-teal-600 border-teal-500 text-white'
+                                            : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                    </PageHeader>
+                </>
+            )}
+            toolbar={
+                activeTab === 'invoices' ? (
+                    <div className="space-y-2 px-3 md:px-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                            <div className="flex gap-1 overflow-x-auto no-scrollbar rounded-lg border border-white/5 bg-slate-900/60 p-1">
+                                {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map((s) => (
+                                    <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => setFilter(s)}
+                                        className={`min-h-11 shrink-0 px-3 rounded-md text-xs font-semibold capitalize border transition-all ${
+                                            filter === s
+                                                ? 'bg-teal-600 border-teal-500 text-white'
+                                                : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                            {selectedInvoiceIds.size > 0 && (
+                                <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-white/5 bg-slate-900/60 p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedInvoiceIds(new Set())}
+                                        className="min-h-11 px-3 rounded-md text-xs font-semibold border border-white/10 text-slate-400 hover:text-slate-200"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleBulkEmailInvoices}
+                                        className="min-h-11 px-3 rounded-md text-xs font-semibold border border-indigo-500/30 text-indigo-300 inline-flex items-center gap-1.5"
+                                    >
+                                        <Mail size={14} />
+                                        Follow-up ({selectedInvoiceIds.size})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={bulkDeletingInvoices}
+                                        onClick={handleBulkDeleteInvoices}
+                                        className="min-h-11 px-3 rounded-md text-xs font-semibold border border-rose-500/30 text-rose-300 inline-flex items-center gap-1.5 disabled:opacity-50"
+                                    >
+                                        <Trash2 size={14} />
+                                        {bulkDeletingInvoices ? 'Deleting…' : `Delete (${selectedInvoiceIds.size})`}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                            Select invoices to follow up with many clients at once. Only drafts can be bulk deleted.
+                        </p>
+                    </div>
+                ) : undefined
+            }
+            stats={
+                activeTab === 'invoices' ? (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-3 md:px-6">
+                        {[
+                            { label: 'Collected', value: stats.totalRevenue, color: 'text-teal-400' },
+                            { label: 'Awaiting Payment', value: stats.pendingAmount, color: 'text-teal-400' },
+                            { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
+                            { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' },
+                        ].map((s) => (
+                            <div key={s.label} className="p-4 rounded-xl border border-white/5 bg-slate-900/40">
+                                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">{s.label}</p>
+                                <p className={`text-lg font-semibold ${s.color}`}>${s.value.toLocaleString()}</p>
+                            </div>
+                        ))}
+                    </div>
+                ) : undefined
+            }
+        >
             {activeTab === 'services' ? (
                 <React.Suspense fallback={<div className="p-12 text-center text-slate-500">Loading Catalog...</div>}>
-                    <ServicesCatalog />
+                    <div className="px-3 md:px-6 pb-6">
+                        <ServicesCatalog />
+                    </div>
                 </React.Suspense>
             ) : activeTab === 'recurring' ? (
                 currentTenant?.id ? (
-                    <RecurringInvoicesPanel
-                        tenantId={currentTenant.id}
-                        clients={Object.entries(clientMap).map(([id, c]) => ({ id, name: c.name, email: c.email }))}
-                    />
+                    <div className="px-3 md:px-6 pb-6">
+                        <RecurringInvoicesPanel
+                            tenantId={currentTenant.id}
+                            clients={Object.entries(clientMap).map(([id, c]) => ({ id, name: c.name, email: c.email }))}
+                        />
+                    </div>
                 ) : null
             ) : (
-                <>
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { label: 'Collected', value: stats.totalRevenue, color: 'text-teal-400' },
-                    { label: 'Awaiting Payment', value: stats.pendingAmount, color: 'text-teal-400' },
-                    { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
-                    { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
-                ].map(s => (
-                    <Card key={s.label} className="p-4 bg-slate-900/40 border-white/5">
-                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
-                        <p className={`text-lg font-black ${s.color}`}>${s.value.toLocaleString()}</p>
-                    </Card>
-                ))}
-            </div>
-
-            {/* Chart */}
-            {!isMobile && (
-                <Card className="p-6 bg-slate-900/40 border-white/5 h-80">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
-                        <LineChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
-                            <XAxis 
-                                dataKey="date" 
-                                stroke="#4b5563" 
-                                fontSize={10} 
-                                tickLine={false}
-                                axisLine={false}
-                            />
-                            <YAxis 
-                                stroke="#4b5563" 
-                                fontSize={10} 
-                                tickLine={false}
-                                axisLine={false}
-                                tickFormatter={(val: number) => `$${val}`}
-                            />
-                            <Tooltip 
-                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '8px' }}
-                                itemStyle={{ color: '#14b8a6' }}
-                            />
-                            <Line 
-                                type="monotone" 
-                                dataKey="revenue" 
-                                stroke="#14b8a6" 
-                                strokeWidth={2} 
-                                dot={false} 
-                                activeDot={{ r: 4, strokeWidth: 0 }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </Card>
-            )}
-
-            {/* Invoices List */}
-            <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                        {(['all', 'draft', 'sent', 'paid', 'overdue'] as const).map(s => (
-                            <button key={s} onClick={() => setFilter(s)} className={`h-8 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border transition-all ${filter === s ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}>{s}</button>
-                        ))}
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                        {selectedInvoiceIds.size > 0 && (
-                            <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedInvoiceIds(new Set())}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-white/10 text-slate-500 transition-colors hover:text-slate-300"
-                                >
-                                    Clear
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleBulkEmailInvoices}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
-                                >
-                                    <Mail size={12} />
-                                    {`Send Follow-up (${selectedInvoiceIds.size})`}
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={bulkDeletingInvoices}
-                                    onClick={handleBulkDeleteInvoices}
-                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-rose-500/30 text-rose-300 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
-                                >
-                                    <Trash2 size={12} />
-                                    {bulkDeletingInvoices ? 'Deleting…' : `Delete (${selectedInvoiceIds.size})`}
-                                </button>
-                            </div>
-                        )}
-                        <button onClick={() => setShowCreateModal(true)} className="flex-shrink-0 inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-teal-900/20 transition-all hover:bg-teal-500">
-                            <Plus size={12} /> Create Invoice
-                        </button>
-                    </div>
-                </div>
-                <p className="text-xs text-slate-500 -mt-2">
-                    Tip: select invoices to send one follow-up to many clients at once. Only drafts can be bulk deleted.
-                </p>
-
-                <div className="space-y-3">
-                    {filteredInvoices.map(inv => (
-                        <Card 
-                            key={inv.id} 
-                            onClick={() => { setSelectedInvoiceForOptions(inv); setIsOptionsOpen(true); }} 
-                            className={`p-4 sm:p-5 bg-slate-900/40 border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer ${
-                                selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-teal-500/40' : ''
-                            }`}
-                        >
-                            <div className="flex justify-between items-start mb-3 gap-3">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleInvoiceSelection(inv);
-                                        }}
-                                        className="text-slate-500 hover:text-teal-400 shrink-0 transition-colors"
-                                        aria-label={`Select ${inv.invoiceNumber}`}
-                                    >
-                                        {selectedInvoiceIds.has(inv.id)
-                                            ? <CheckSquare size={14} className="text-teal-400" />
-                                            : <Square size={14} />}
-                                    </button>
-                                    <div className={`p-2 rounded-full bg-white/5 ${getStatusStyles(inv.status)}`}><FileText size={14} /></div>
-                                    <div>
-                                        <p className="text-[12px] font-black text-white">{inv.invoiceNumber}</p>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.22em]">{inv.clientId && clientMap[inv.clientId]?.name ? clientMap[inv.clientId].name : 'Walk-in Client'}</p>
-                                    </div>
-                                </div>
-                                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${getStatusStyles(inv.status)}`}>{inv.status}</span>
-                            </div>
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.22em]">Due Date</p>
-                                    <p className="text-[11px] font-bold text-gray-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
-                                    {Number(inv.amountPaid || 0) > 0 && (
-                                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-300">
-                                            Paid {Number(inv.amountPaid || 0).toLocaleString()} · Balance {Number(inv.balanceDue || 0).toLocaleString()}
-                                        </p>
-                                    )}
-                                </div>
-                                <p className="text-[20px] font-black text-white font-mono tracking-tight leading-none">${inv.total.toLocaleString()}</p>
-                            </div>
+                <div className="space-y-4 px-3 md:px-6 pb-6">
+                    {/* Chart — laptop/desktop */}
+                    {!isMobile && (
+                        <Card className="p-6 bg-slate-900/40 border-white/5 h-80 hidden md:block">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+                                <LineChart data={revenueData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+                                    <XAxis dataKey="date" stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#4b5563" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val: number) => `$${val}`} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '8px' }}
+                                        itemStyle={{ color: '#14b8a6' }}
+                                    />
+                                    <Line type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                                </LineChart>
+                            </ResponsiveContainer>
                         </Card>
-                    ))}
+                    )}
+
+                    {filteredInvoices.length === 0 ? (
+                        invoices.length === 0 ? (
+                            <EmptyStateFromPreset
+                                moduleId="invoices"
+                                onAction={openCreateInvoice}
+                            />
+                        ) : (
+                            <EmptyState
+                                icon={FileText}
+                                title="No invoices match this filter"
+                                description="Try another status, or create a new invoice."
+                                actionLabel="Create Invoice"
+                                onAction={openCreateInvoice}
+                            />
+                        )
+                    ) : (
+                        <>
+                            <ResponsiveTableMobile>
+                                {filteredInvoices.map((inv) => (
+                                    <MobileDataCard
+                                        key={inv.id}
+                                        className={`border-white/5 bg-slate-900/40 ${
+                                            selectedInvoiceIds.has(inv.id) ? 'ring-1 ring-teal-500/40' : ''
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleInvoiceSelection(inv)}
+                                                    className="text-slate-500 hover:text-teal-400 shrink-0 min-h-11 min-w-11 inline-flex items-center justify-center"
+                                                    aria-label={`Select ${inv.invoiceNumber}`}
+                                                >
+                                                    {selectedInvoiceIds.has(inv.id)
+                                                        ? <CheckSquare size={16} className="text-teal-400" />
+                                                        : <Square size={16} />}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="min-w-0 text-left flex-1"
+                                                    onClick={() => {
+                                                        setSelectedInvoiceForOptions(inv);
+                                                        setIsOptionsOpen(true);
+                                                    }}
+                                                >
+                                                    <p className="text-sm font-semibold text-white truncate">{inv.invoiceNumber}</p>
+                                                    <p className="text-xs text-slate-500 truncate">
+                                                        {inv.clientId && clientMap[inv.clientId]?.name
+                                                            ? clientMap[inv.clientId].name
+                                                            : 'Walk-in Client'}
+                                                    </p>
+                                                </button>
+                                            </div>
+                                            <span className={`shrink-0 text-[10px] font-semibold uppercase px-2 py-1 rounded-md border ${getStatusStyles(inv.status)}`}>
+                                                {inv.status}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="w-full flex justify-between items-end gap-3 text-left"
+                                            onClick={() => {
+                                                setSelectedInvoiceForOptions(inv);
+                                                setIsOptionsOpen(true);
+                                            }}
+                                        >
+                                            <div>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Due</p>
+                                                <p className="text-xs font-medium text-slate-300">{new Date(inv.dueDate).toLocaleDateString()}</p>
+                                                {Number(inv.amountPaid || 0) > 0 && (
+                                                    <p className="mt-1 text-[10px] text-blue-300">
+                                                        Paid {Number(inv.amountPaid || 0).toLocaleString()} · Balance {Number(inv.balanceDue || 0).toLocaleString()}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <p className="text-lg font-semibold text-white font-mono">${inv.total.toLocaleString()}</p>
+                                        </button>
+                                    </MobileDataCard>
+                                ))}
+                            </ResponsiveTableMobile>
+
+                            <ResponsiveTableDesktop className="rounded-xl border border-white/5 bg-slate-900/40 overflow-hidden">
+                                <table className="w-full min-w-[720px] text-sm">
+                                    <thead>
+                                        <tr className="border-b border-white/5 bg-slate-900/60">
+                                            <th className="w-10 px-3 py-3" />
+                                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Invoice</th>
+                                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Client</th>
+                                            <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Due</th>
+                                            <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                                            <th className="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {filteredInvoices.map((inv) => (
+                                            <tr
+                                                key={inv.id}
+                                                className={`hover:bg-white/[0.03] cursor-pointer transition-colors ${
+                                                    selectedInvoiceIds.has(inv.id) ? 'bg-teal-500/5' : ''
+                                                }`}
+                                                onClick={() => {
+                                                    setSelectedInvoiceForOptions(inv);
+                                                    setIsOptionsOpen(true);
+                                                }}
+                                            >
+                                                <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleInvoiceSelection(inv)}
+                                                        className="text-slate-500 hover:text-teal-400"
+                                                        aria-label={`Select ${inv.invoiceNumber}`}
+                                                    >
+                                                        {selectedInvoiceIds.has(inv.id)
+                                                            ? <CheckSquare size={14} className="text-teal-400" />
+                                                            : <Square size={14} />}
+                                                    </button>
+                                                </td>
+                                                <td className="px-4 py-3 font-medium text-white">{inv.invoiceNumber}</td>
+                                                <td className="px-4 py-3 text-slate-400">
+                                                    {inv.clientId && clientMap[inv.clientId]?.name
+                                                        ? clientMap[inv.clientId].name
+                                                        : 'Walk-in Client'}
+                                                </td>
+                                                <td className="px-4 py-3 text-slate-400 whitespace-nowrap">
+                                                    {new Date(inv.dueDate).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-semibold text-white font-mono">
+                                                    ${inv.total.toLocaleString()}
+                                                </td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <span className={`inline-flex text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md border ${getStatusStyles(inv.status)}`}>
+                                                        {inv.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </ResponsiveTableDesktop>
+                        </>
+                    )}
                 </div>
-            </div>
+            )}
 
             {/* Invoice Options Bottom Sheet */}
             <AnimatePresence>
@@ -811,9 +920,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     onSent={() => setEmailCompose(null)}
                 />
             )}
-                </>
-            )}
-        </div>
+        </ModulePageLayout>
     );
 };
 
