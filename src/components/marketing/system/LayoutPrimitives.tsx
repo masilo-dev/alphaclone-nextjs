@@ -17,11 +17,21 @@ export function MarketingSection({
   children,
   className = '',
   tone = 'default',
+  atmosphere,
 }: {
   id?: string;
   children: ReactNode;
   className?: string;
   tone?: 'default' | 'muted' | 'accent';
+  atmosphere?:
+    | 'trust'
+    | 'platform'
+    | 'how'
+    | 'outcomes'
+    | 'testimonials'
+    | 'cta'
+    | 'pricing'
+    | 'faq';
 }) {
   const toneClass =
     tone === 'muted'
@@ -31,7 +41,11 @@ export function MarketingSection({
         : '';
 
   return (
-    <section id={id} className={`mkt-section ${toneClass} ${className}`.trim()}>
+    <section
+      id={id}
+      data-atmosphere={atmosphere || undefined}
+      className={`mkt-section ${toneClass} ${className}`.trim()}
+    >
       {children}
     </section>
   );

@@ -3,6 +3,8 @@
  * Keeps the preview readable without dominating laptop viewports.
  */
 
+import { ProductPreviewGlow } from './atmosphere';
+
 const METRICS = [
   { label: 'Revenue', value: '$48.2k' },
   { label: 'Invoices', value: '128' },
@@ -13,6 +15,7 @@ const METRICS = [
 export default function ProductPreview() {
   return (
     <figure className="mkt-preview-wrap">
+      <ProductPreviewGlow />
       <div
         className="mkt-preview mkt-preview-compact"
         role="img"

@@ -18,6 +18,12 @@ import {
 import { MarketingContainer, MarketingSection } from './LayoutPrimitives';
 import MarketingShell from './MarketingShell';
 import ProductPreview from './ProductPreview';
+import {
+  CurvedDotField,
+  HeroDataWaves,
+  SectionAmbientLight,
+  SectionConnector,
+} from './atmosphere';
 
 const TRUST_ICONS = [CreditCard, Clock3, XCircle, ShieldCheck] as const;
 
@@ -29,7 +35,9 @@ export default function MarketingHomePage() {
     <MarketingShell>
       {/* Hero */}
       <section className="mkt-hero">
-        <div className="mkt-hero-atmosphere" aria-hidden="true" />
+        <SectionAmbientLight variant="hero" />
+        <HeroDataWaves />
+        <CurvedDotField />
         <MarketingContainer>
           <div className="mkt-hero-copy mkt-reveal">
             <p className="mkt-eyebrow">The all-in-one operating system for service businesses</p>
@@ -62,8 +70,10 @@ export default function MarketingHomePage() {
         </MarketingContainer>
       </section>
 
+      <SectionConnector variant="fade" />
+
       {/* Trusted-by */}
-      <MarketingSection className="py-10" tone="muted">
+      <MarketingSection className="py-10" atmosphere="trust">
         <MarketingContainer>
           <div className="mkt-trust-strip">
             <p className="mkt-trust-strip-title">Trusted by service businesses</p>
@@ -80,8 +90,10 @@ export default function MarketingHomePage() {
         </MarketingContainer>
       </MarketingSection>
 
+      <SectionConnector />
+
       {/* Platform overview */}
-      <MarketingSection id="platform">
+      <MarketingSection id="platform" atmosphere="platform">
         <MarketingContainer>
           <div className="mkt-platform-grid">
             <div>
@@ -108,8 +120,11 @@ export default function MarketingHomePage() {
         </MarketingContainer>
       </MarketingSection>
 
+      <SectionConnector />
+
       {/* How it works */}
-      <MarketingSection id="how-it-works" tone="muted">
+      <MarketingSection id="how-it-works" atmosphere="how">
+        <SectionAmbientLight variant="how" />
         <MarketingContainer>
           <div className="mb-12 max-w-3xl mx-auto text-center">
             <h2 className="font-marketing-heading">How AlphaClone works</h2>
@@ -135,7 +150,7 @@ export default function MarketingHomePage() {
       </MarketingSection>
 
       {/* Outcome band — verified product outcomes only */}
-      <MarketingSection>
+      <MarketingSection atmosphere="outcomes">
         <MarketingContainer>
           <div className="mkt-outcome-band">
             <div>
@@ -157,39 +172,44 @@ export default function MarketingHomePage() {
 
       {/* Testimonials — only when approved named quotes exist */}
       {showTestimonials ? (
-        <MarketingSection id="testimonials" tone="muted">
-          <MarketingContainer>
-            <div className="mb-10 text-center max-w-3xl mx-auto">
-              <h2 className="font-marketing-heading">Loved by service businesses</h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {APPROVED_TESTIMONIALS.map((item) => (
-                <blockquote key={`${item.name}-${item.company}`} className="mkt-surface p-6">
-                  <p className="text-[var(--text-secondary)]">&ldquo;{item.quote}&rdquo;</p>
-                  <footer className="mt-5">
-                    <cite className="not-italic font-semibold text-[var(--text-primary)]">
-                      {item.name}
-                    </cite>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      {item.role}, {item.company}
-                    </p>
-                  </footer>
-                </blockquote>
-              ))}
-            </div>
-          </MarketingContainer>
-        </MarketingSection>
+        <>
+          <SectionConnector variant="fade" />
+          <MarketingSection id="testimonials" atmosphere="testimonials">
+            <MarketingContainer>
+              <div className="mb-10 text-center max-w-3xl mx-auto">
+                <h2 className="font-marketing-heading">Loved by service businesses</h2>
+              </div>
+              <div className="grid gap-4 md:grid-cols-3">
+                {APPROVED_TESTIMONIALS.map((item) => (
+                  <blockquote key={`${item.name}-${item.company}`} className="mkt-surface p-6">
+                    <p className="text-[var(--text-secondary)]">&ldquo;{item.quote}&rdquo;</p>
+                    <footer className="mt-5">
+                      <cite className="not-italic font-semibold text-[var(--text-primary)]">
+                        {item.name}
+                      </cite>
+                      <p className="text-sm text-[var(--text-muted)]">
+                        {item.role}, {item.company}
+                      </p>
+                    </footer>
+                  </blockquote>
+                ))}
+              </div>
+            </MarketingContainer>
+          </MarketingSection>
+        </>
       ) : null}
 
       {/* Mid-page CTA */}
-      <MarketingSection>
+      <MarketingSection atmosphere="cta">
         <MarketingContainer>
           <MidPageCTA />
         </MarketingContainer>
       </MarketingSection>
 
+      <SectionConnector variant="fade" />
+
       {/* Pricing */}
-      <MarketingSection id="pricing" tone="muted">
+      <MarketingSection id="pricing" atmosphere="pricing">
         <MarketingContainer>
           <div className="mb-10 max-w-3xl mx-auto text-center">
             <h2 className="font-marketing-heading">Simple pricing. No surprises.</h2>
@@ -236,8 +256,10 @@ export default function MarketingHomePage() {
         </MarketingContainer>
       </MarketingSection>
 
+      <SectionConnector />
+
       {/* FAQ */}
-      <MarketingSection id="faq">
+      <MarketingSection id="faq" atmosphere="faq">
         <MarketingContainer>
           <div className="mb-10 max-w-3xl mx-auto text-center">
             <h2 className="font-marketing-heading">Frequently asked questions</h2>
