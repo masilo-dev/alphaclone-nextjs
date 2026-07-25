@@ -4,6 +4,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
+import { SkipToMainContent } from '@/components/accessibility/SkipToMainContent';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
@@ -56,7 +57,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <UserPreferencesBootstrap />
                     <ServiceWorkerBootstrap />
                     <TenantProvider>
-                      <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
+                      <BackgroundTaskProvider>
+                        <SkipToMainContent />
+                        {children}
+                      </BackgroundTaskProvider>
                     </TenantProvider>
                   </LanguageProvider>
                 </ThemeProvider>

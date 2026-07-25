@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { FilePlus, Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText, Mail } from 'lucide-react';
+import { Send, CheckCircle, Trash2, ArrowLeft, ArrowRight, X, Edit3, Plus, Minus, DollarSign, Trophy, Clock, FileText, Mail } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { ModuleStatCards, type ModuleStat } from './common/ModuleStatCards';
 import { supabase } from '../../lib/supabase';
@@ -16,6 +16,8 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import { DetailDrawer } from '../ui/DetailDrawer';
 import { QuoteVersionPanel } from '@/components/documents/QuoteVersionPanel';
 import { ModulePageLayout } from '../ui/ModulePageLayout';
+import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
+import { EmptyState, EmptyStateFromPreset } from '../ui/EmptyState';
 import { Input } from '../ui/UIComponents';
 import { StatusBadge, quoteStatusVariant } from '../ui/StatusBadge';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseDataTable';
@@ -846,32 +848,40 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       <ModulePageLayout
         header={(
-          <div className="px-4 pt-3">
-            <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
-          </div>
+          <>
+            <div className="px-4 pt-3">
+              <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
+            </div>
+            <PageHeader
+              moduleLabel="Money"
+              title="Quotes"
+              description="Create proposals and convert accepted quotes to invoices"
+              primaryAction={{ label: 'New Quote', onClick: () => setShowCreate(true), variant: 'primary' }}
+            />
+          </>
         )}
         toolbar={(
           <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5 items-center">
         {selectedQuoteIds.size > 0 && (
-          <div className="flex items-center gap-1.5 mr-1 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+          <div className="flex items-center gap-1.5 mr-1 rounded-lg border border-white/5 bg-slate-900/60 p-1">
             <button
               type="button"
               onClick={() => setSelectedQuoteIds(new Set())}
-              className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
+              className="min-h-11 px-3 rounded-md text-xs font-semibold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={handleBulkEmailQuotes}
-              className="h-7 px-3 rounded-full text-[11px] font-bold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
+              className="min-h-11 px-3 rounded-md text-xs font-semibold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
             >
               Follow-up ({selectedQuoteIds.size})
             </button>
           </div>
         )}
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 min-h-11 px-3.5 rounded-md text-xs font-semibold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
         ))}
           </div>
         )}
@@ -884,6 +894,19 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950 px-2">
         {loading ? (
           <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
+        ) : quotes.length === 0 ? (
+          <EmptyStateFromPreset
+            moduleId="quotes"
+            onAction={() => setShowCreate(true)}
+          />
+        ) : visibleQuotes.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="No quotes match this filter"
+            description="Try another status, or create a new quote."
+            actionLabel="New Quote"
+            onAction={() => setShowCreate(true)}
+          />
         ) : (
           <EnterpriseDataTable
             columns={quoteColumns}
@@ -895,13 +918,6 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
         )}
       </div>
       </ModulePageLayout>
-      <button
-        type="button"
-        onClick={() => setShowCreate(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-600 rounded-full flex items-center justify-center shadow-lg shadow-teal-600/30 z-30"
-      >
-        <FilePlus className="w-6 h-6 text-white" />
-      </button>
       {currentTenant?.id && <CreateQuoteModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={load} tenantId={currentTenant.id} />}
       {currentTenant?.id && <QuoteEditModal open={Boolean(editing)} quote={editing} onClose={() => setEditing(null)} onSaved={load} tenantId={currentTenant.id} userId={user.id} />}
 

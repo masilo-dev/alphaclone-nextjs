@@ -26,7 +26,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variants = {
     primary: `${WORKSPACE.action.primary} border-0`,
-    secondary: "bg-blue-600 text-white hover:bg-blue-500/90 shadow-sm shadow-blue-900/20",
+    secondary: "bg-teal-700 text-white hover:bg-teal-600/90 shadow-sm shadow-teal-900/20",
     outline: "border border-[var(--ws-border)] bg-[var(--ws-toolbar)] text-white hover:bg-[var(--ws-surface-2)]",
     ghost: "text-teal-400 hover:text-teal-300 hover:bg-[var(--ws-surface-2)]",
     danger: "bg-red-600 text-white hover:bg-red-500/90",
@@ -117,6 +117,7 @@ export const Input: React.FC<InputProps> = ({
   onChange,
   ...props
 }) => {
+  const inputId = React.useId();
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = useState(String(defaultValue ?? ''));
   const fieldValue = isControlled ? String(value) : internalValue;
@@ -146,7 +147,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+        <label htmlFor={inputId} className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
       )}
       <div className="relative group">
         {icon && (
@@ -156,23 +157,29 @@ export const Input: React.FC<InputProps> = ({
         )}
         {textarea ? (
           <textarea
+            id={inputId}
             className={`${sharedClass} min-h-[80px] resize-y`}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
+            id={inputId}
             className={sharedClass}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
       </div>
-      {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
+      {error && <p id={`${inputId}-error`} className="mt-1 text-xs text-red-400" role="alert">{error}</p>}
       {!error && hint && (
-        <p className="mt-1 text-xs text-slate-500 italic">{hint}</p>
+        <p id={`${inputId}-hint`} className="mt-1 text-xs text-slate-500 italic">{hint}</p>
       )}
     </div>
   );
@@ -198,19 +205,74 @@ export const Modal: React.FC<ModalProps> = ({
   containerClassName = '',
   className = ''
 }) => {
+  const titleId = React.useId();
+  const panelRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const panel = panelRef.current;
+    const focusable = panel?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    focusable?.[0]?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !panel) return;
+      const nodes = panel.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+      previouslyFocused?.focus?.();
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 z-[1100] flex items-center justify-center px-4 pt-safe pb-safe ${containerClassName}`}>
-      <div className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm`} onClick={onClose} />
-      <div className={`relative ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius} w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[85vh] flex flex-col ${className}`}>
+    <div className={`fixed inset-0 z-[1100] flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
+      >
         <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-          <button onClick={onClose} className={`text-slate-400 hover:text-white transition-colors p-2 hover:bg-[var(--ws-surface-2)] ${WORKSPACE.panel.radius}`}>
+          <h3 id={titleId} className="text-lg font-semibold text-white">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className={`text-slate-400 hover:text-white transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--ws-surface-2)] ${WORKSPACE.panel.radius}`}
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4 overflow-y-auto">
+        <div className="p-4 overflow-y-auto overscroll-contain">
           {children}
         </div>
       </div>

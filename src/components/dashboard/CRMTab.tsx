@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   UserPlus, Search, X, Phone, Mail, Building,
   MessageCircle, Clock,
-  UserCheck, Users, ArrowLeft, Star, AlertCircle,
+  UserCheck, Users, Star, AlertCircle,
   ShieldCheck, DollarSign, Activity, Loader2, Video, Calendar,
   ChevronRight, TrendingUp, Sparkles, AlertTriangle, RefreshCw, Target,
   Trash2, CheckSquare, Square
@@ -49,10 +49,27 @@ import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { PageHeader } from './responsive/PageHeader';
+import { StatePanel } from './responsive/StatePanel';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
 type SubView = 'leads' | 'clients' | 'contacts';
+
+function nextActionForCrmEntity(entity: { type: string; status: string }): string {
+  if (entity.type === 'lead') {
+    if (entity.status === 'new') return 'Contact lead';
+    if (entity.status === 'contacted') return 'Qualify lead';
+    if (entity.status === 'qualified') return 'Convert to customer';
+    if (entity.status === 'disqualified') return 'Review archive';
+    return 'Open lead';
+  }
+  if (entity.status === 'customer') return 'Log activity';
+  if (entity.status === 'prospect') return 'Advance deal';
+  if (entity.status === 'lost') return 'Re-engage';
+  if (entity.status === 'lead') return 'Qualify or contact';
+  return 'Open record';
+}
 
 interface Lead {
   id: string;
@@ -416,12 +433,21 @@ const LeadDetail: React.FC<{
   return (
     <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-slate-950 text-slate-100'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
-          <ArrowLeft className="w-4 h-4 text-slate-300" />
-        </button>
-        <span className="text-sm font-bold text-white">Lead Details</span>
-      </div>
+        <PageHeader
+          moduleLabel="CRM"
+          title={name || lead.name || 'Lead Details'}
+          onBack={onBack}
+          status={<StandardStatusBadge variant={resolveStatusVariant(lead.status)}>{lead.status}</StandardStatusBadge>}
+          primaryAction={
+            lead.status !== 'qualified'
+              ? { label: 'Qualify', onClick: () => onQualify(lead), variant: 'primary' }
+              : undefined
+          }
+          secondaryActions={[
+            { label: 'Mark contacted', onClick: () => onUpdate(lead.id, 'contacted') },
+            { label: 'Disqualify', onClick: () => onUpdate(lead.id, 'disqualified'), variant: 'danger' },
+          ]}
+        />
       )}
 
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-5 space-y-6 pb-28'}>
@@ -440,6 +466,9 @@ const LeadDetail: React.FC<{
               </span>
             )}
           </div>
+          <p className="text-[11px] text-teal-400/90 font-medium">
+            {nextActionForCrmEntity({ type: 'lead', status: lead.status })}
+          </p>
         </div>
 
         {/* Editable contact fields */}
@@ -731,12 +760,16 @@ const Client360Detail: React.FC<{
   return (
     <div className={inDrawer ? 'space-y-4 pb-2' : 'flex flex-col h-full bg-slate-950 text-slate-100'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-slate-900/60 sticky top-0 z-20 backdrop-blur-md">
-        <button onClick={onBack} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
-          <ArrowLeft className="w-4 h-4 text-slate-300" />
-        </button>
-        <span className="text-sm font-bold text-white">Client 360 Workspace</span>
-      </div>
+        <PageHeader
+          moduleLabel="CRM"
+          title={name || client.name || 'Client 360'}
+          onBack={onBack}
+          status={<StandardStatusBadge variant={resolveStatusVariant(salesStage)}>{salesStage}</StandardStatusBadge>}
+          primaryAction={{ label: 'Add Deal', onClick: () => onNewDeal(client), variant: 'primary' }}
+          secondaryActions={[
+            { label: 'Draft contract', onClick: () => onDraftContract(client) },
+          ]}
+        />
       )}
 
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-5 space-y-6 pb-28'}>
@@ -764,6 +797,9 @@ const Client360Detail: React.FC<{
               </span>
             )}
           </div>
+          <p className="text-[11px] text-teal-400/90 font-medium">
+            {nextActionForCrmEntity({ type: 'client', status: salesStage })}
+          </p>
         </div>
 
         {/* Editable client profile */}
@@ -2360,17 +2396,22 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             ))}
           </div>
         ) : filteredEntities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-slate-500 px-4 text-center">
-            <Users className="w-12 h-12 mb-3 opacity-30 text-teal-400" />
-            <p className="text-sm font-bold text-slate-300">{t('No matching records')}</p>
-            <p className="text-xs text-slate-500 max-w-xs mt-1 leading-normal">
-              {subView === 'leads' ? t('Swipe right to qualify/contact accounts, swipe left to archive.') : t('Add accounts or qualify leads to view them here.')}
-            </p>
-          </div>
+          <StatePanel
+            kind="empty"
+            title={t('No matching records')}
+            description={
+              subView === 'leads'
+                ? t('Swipe right to qualify/contact accounts, swipe left to archive.')
+                : t('Add accounts or qualify leads to view them here.')
+            }
+            actions={[{ label: 'Quick Add', onClick: () => setIsCreateOpen(true), primary: true }]}
+            className="m-4"
+            compact
+          />
         ) : (
           <>
             {/* Mobile View - Card List */}
-            <ResponsiveTableMobile className="md:hidden">
+            <ResponsiveTableMobile>
               {visibleEntities.map(entity => (
                 <MobileDataCard
                   key={entity.id}
@@ -2378,9 +2419,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   className={[
                     selectedKeys.has(entityKey(entity)) ? 'ring-1 ring-teal-500/50' : '',
                     flashIds.has(entity.id) ? 'animate-pulse bg-teal-500/10' : '',
+                    '!space-y-2',
                   ].filter(Boolean).join(' ') || undefined}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-start justify-between gap-2">
                     <span
                       role="button"
                       tabIndex={0}
@@ -2392,7 +2434,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                           toggleEntitySelection(entity);
                         }
                       }}
-                      className="flex-shrink-0 text-slate-500 hover:text-teal-400 cursor-pointer"
+                      className="flex-shrink-0 text-slate-500 hover:text-teal-400 cursor-pointer pt-0.5"
                       aria-label={selectedKeys.has(entityKey(entity)) ? 'Deselect' : 'Select'}
                     >
                       {selectedKeys.has(entityKey(entity)) ? (
@@ -2402,19 +2444,24 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       )}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white">{entity.name}</p>
-                      <p className="text-sm text-slate-400">{entity.email || entity.phone || '-'}</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-white truncate">{entity.name}</p>
+                        <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' || entity.status === 'customer' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-500/20 text-slate-400'}`}>
+                          {t(entity.status)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-400 truncate">{entity.email || entity.phone || '-'}</p>
+                      <p className="text-[11px] text-teal-400/90 font-medium mt-1">
+                        {nextActionForCrmEntity(entity)}
+                      </p>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-500/20 text-slate-400'}`}>
-                      {t(entity.status)}
-                    </span>
                   </div>
                 </MobileDataCard>
               ))}
             </ResponsiveTableMobile>
 
             {/* Desktop View - Table List */}
-            <ResponsiveTableDesktop className="hidden md:block">
+            <ResponsiveTableDesktop>
               <div className="divide-y divide-white/5">
                 {visibleEntities.map(entity => (
                   <div key={entity.id} className={flashIds.has(entity.id) ? 'bg-teal-500/10 transition-colors duration-1000' : 'transition-colors duration-1000'}>

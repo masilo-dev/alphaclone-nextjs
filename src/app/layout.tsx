@@ -5,6 +5,7 @@ import "@fontsource-variable/inter";
 import "@fontsource/space-grotesk";
 import "./globals.css";
 import "@/styles/marketing-system.css";
+import "@/styles/accessibility.css";
 import { Providers } from "@/components/Providers";
 
 import { PWAProvider } from "@/contexts/PWAContext";

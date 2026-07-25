@@ -27,7 +27,7 @@ export default function MoneyHub({ children }: MoneyHubProps) {
       description="Money coming in, bills to pay, and invoices waiting"
       tabs={MONEY_TABS}
       dataTour="money-hub"
-      accent="amber"
+      accent="teal"
     >
       {children}
     </HubShell>

@@ -983,7 +983,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     if (!hasBootstrappedRef.current && tenantLoading && !currentTenant) {
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
-                <div id="main-content" className="text-center">
+                <div className="text-center">
                     <div className="text-slate-400 text-lg animate-pulse">{t('Loading Workspace...')}</div>
                 </div>
             </div>
@@ -1012,7 +1012,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
-                <div id="main-content" className="text-center max-w-md p-8">
+                <div className="text-center max-w-md p-8">
                     <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
                     <div className="text-slate-400 mb-6">
                         {tenantError
@@ -1068,7 +1068,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main">
+            <main id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main" tabIndex={-1}>
 
                 <TrialBanner />
 

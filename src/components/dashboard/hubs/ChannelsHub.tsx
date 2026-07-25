@@ -10,9 +10,10 @@ import {
 import HubShell from './HubShell';
 
 const CHANNELS_TABS = [
-  { label: 'Tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
-  { label: 'Team chat', href: '/dashboard/business/messages', icon: MessageSquare },
-  { label: 'Mail', href: '/dashboard/mail', icon: Mail },
+  { label: 'Unified Inbox', href: '/dashboard/comms', icon: Mail },
+  { label: 'Support tickets', href: '/dashboard/business/tickets', icon: CheckSquare },
+  { label: 'Team messages', href: '/dashboard/business/messages', icon: MessageSquare },
+  { label: 'Email', href: '/dashboard/mail', icon: Mail },
   { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
 ];
 
@@ -23,8 +24,8 @@ interface ChannelsHubProps {
 export default function ChannelsHub({ children }: ChannelsHubProps) {
   return (
     <HubShell
-      title="Channels"
-      description="Tickets, team messages, email, and messaging"
+      title="Inbox"
+      description="One place for email, tickets, team chat, and WhatsApp"
       tabs={CHANNELS_TABS}
       accent="blue"
     >

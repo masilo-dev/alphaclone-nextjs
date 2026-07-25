@@ -28,12 +28,12 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
 
 const sheetSideClasses = {
-  top: 'inset-x-0 top-0 max-h-[85vh] rounded-b-xl border-b data-[state=closed]:-translate-y-full data-[state=open]:translate-y-0',
+  top: 'inset-x-0 top-0 max-h-[92dvh] rounded-b-xl border-b data-[state=closed]:-translate-y-full data-[state=open]:translate-y-0',
   bottom:
-    'inset-x-0 bottom-0 max-h-[85vh] rounded-t-xl border-t data-[state=closed]:translate-y-full data-[state=open]:translate-y-0',
-  left: 'inset-y-0 left-0 h-full w-[min(100vw,28rem)] border-r data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0',
+    'inset-x-0 bottom-0 max-h-[92dvh] rounded-t-xl border-t data-[state=closed]:translate-y-full data-[state=open]:translate-y-0 max-md:max-h-[100dvh] max-md:rounded-none',
+  left: 'inset-y-0 left-0 h-full w-full sm:w-[min(100vw,28rem)] border-r data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0',
   right:
-    'inset-y-0 right-0 h-full w-[min(100vw,28rem)] border-l data-[state=closed]:translate-x-full data-[state=open]:translate-x-0',
+    'inset-y-0 right-0 h-full w-full sm:w-[min(100vw,28rem)] md:w-[min(100vw,32rem)] border-l data-[state=closed]:translate-x-full data-[state=open]:translate-x-0 max-md:max-w-none',
 } as const;
 
 interface SheetContentProps extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> {

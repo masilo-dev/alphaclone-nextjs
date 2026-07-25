@@ -36,10 +36,42 @@ import Microsoft365Integration from './business/Microsoft365Integration';
 import MFAEnrollment from './business/MFAEnrollment';
 import DeletedRecordsSection from './settings/DeletedRecordsSection';
 import EmailProviderSettings from './settings/EmailProviderSettings';
+import { PageHeader } from './responsive/PageHeader';
+import { useBreakpoint } from '@/hooks/useBreakpoint';
+import { SHELL } from '@/constants/responsive';
 
 interface SettingsPageProps {
     user: UserType;
 }
+
+type SettingsCategoryId =
+    | 'account'
+    | 'workspace'
+    | 'integrations'
+    | 'notifications'
+    | 'appearance'
+    | 'billing'
+    | 'data'
+    | 'developer'
+    | 'danger';
+
+const SETTINGS_CATEGORIES: {
+    id: SettingsCategoryId;
+    label: string;
+    description: string;
+    icon: React.ElementType;
+    danger?: boolean;
+}[] = [
+    { id: 'account', label: 'Account Preferences', description: 'Profile, password, and 2FA', icon: UserIcon },
+    { id: 'workspace', label: 'Workspace Settings', description: 'Business profile, tax, and sectors', icon: Building },
+    { id: 'integrations', label: 'System Integrations', description: 'Email, CRM, payments, and scheduling', icon: Globe },
+    { id: 'notifications', label: 'Notification alerts', description: 'Email and inbound message alerts', icon: Eye },
+    { id: 'appearance', label: 'Appearance Theme', description: 'Theme, language, and brand accent', icon: Briefcase },
+    { id: 'billing', label: 'Plans & billing', description: 'Subscription, portal, and AI quotas', icon: CreditCard },
+    { id: 'data', label: 'Data Management', description: 'Restore or purge deleted records', icon: Archive },
+    { id: 'developer', label: 'Developer MCP & API', description: 'MCP API keys for assistants', icon: Copy },
+    { id: 'danger', label: 'Danger Zone', description: 'Delete account permanently', icon: AlertCircle, danger: true },
+];
 
 const statusColors: Record<string, string> = {
     active: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
@@ -52,13 +84,24 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     const { currentTenant } = useTenant();
     const { backgroundColor, setBackgroundColor, themeMode, setThemeMode } = useTheme();
     const { language, setLanguage, t: translate } = useLanguage();
+    const { isMobile } = useBreakpoint();
 
     // Accordion visibility mapping
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+    /** Phone: category list → one section. Desktop: all sections visible. */
+    const [mobileCategory, setMobileCategory] = useState<SettingsCategoryId | null>(null);
 
     const toggleRow = (id: string) => {
-        setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+        if (isMobile) {
+            // One accordion panel at a time on phone
+            setExpandedRows((prev) => (prev[id] ? {} : { [id]: true }));
+            return;
+        }
+        setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
     };
+
+    const showSection = (id: SettingsCategoryId) => !isMobile || mobileCategory === id;
+    const activeCategoryMeta = SETTINGS_CATEGORIES.find((c) => c.id === mobileCategory);
 
     // States
     const [isSaving, setIsSaving] = useState(false);
@@ -340,9 +383,28 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 pb-32 px-4 sm:px-6">
-            
-            {/* Header Profile Summary */}
+        <div className={`max-w-4xl mx-auto space-y-8 sm:space-y-10 ${SHELL.stickyBottomPad} ${SHELL.gutter}`}>
+            <PageHeader
+                moduleLabel="Workspace"
+                title={isMobile && activeCategoryMeta ? activeCategoryMeta.label : 'Settings'}
+                description={
+                    isMobile && activeCategoryMeta
+                        ? activeCategoryMeta.description
+                        : 'Manage account, workspace, integrations, and billing'
+                }
+                onBack={
+                    isMobile && mobileCategory
+                        ? () => {
+                              setMobileCategory(null);
+                              setExpandedRows({});
+                          }
+                        : undefined
+                }
+            />
+
+            {/* Profile summary — desktop always; phone only on category root */}
+            {(!isMobile || !mobileCategory) && (
+            <>
             <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-slate-900 border border-white/5 rounded-3xl relative overflow-hidden">
                 <div className="relative group cursor-pointer">
                     <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-teal-500 overflow-hidden flex items-center justify-center">
@@ -386,10 +448,58 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 </div>
                 <ChevronRight className="w-5 h-5 text-teal-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </Link>
+            </>
+            )}
+
+            {/* Phone: category list (drill into one section) */}
+            {isMobile && !mobileCategory && (
+                <nav aria-label="Settings categories" className="space-y-6">
+                    <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
+                        {SETTINGS_CATEGORIES.filter((c) => !c.danger).map((cat) => {
+                            const Icon = cat.icon;
+                            return (
+                                <button
+                                    key={cat.id}
+                                    type="button"
+                                    onClick={() => setMobileCategory(cat.id)}
+                                    className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors min-h-11"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+                                            <Icon className="w-4 h-4 text-teal-400" aria-hidden />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="block text-[13px] font-bold text-slate-200">{cat.label}</span>
+                                            <span className="block text-[11px] text-slate-500 truncate">{cat.description}</span>
+                                        </div>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" aria-hidden />
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="space-y-3">
+                        <span className="text-[11px] font-black uppercase tracking-widest text-rose-500 px-2 block">Danger Zone</span>
+                        <button
+                            type="button"
+                            onClick={() => setMobileCategory('danger')}
+                            className="w-full flex items-center justify-between gap-3 p-4 rounded-2xl border border-rose-900/30 bg-slate-900/40 text-left hover:bg-rose-950/20 transition-colors min-h-11"
+                        >
+                            <div className="min-w-0">
+                                <span className="block text-[13px] font-bold text-rose-400">Danger Zone</span>
+                                <span className="block text-[11px] text-slate-500">Delete account permanently</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-rose-500/70 shrink-0" aria-hidden />
+                        </button>
+                    </div>
+                </nav>
+            )}
 
             {/* 1. ACCOUNT GROUP */}
+            {showSection('account') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Account Preferences</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Account Preferences</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Profile Details */}
@@ -499,10 +609,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* 2. WORKSPACE & BUSINESS GROUP */}
+            {showSection('workspace') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Workspace Settings</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Workspace Settings</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Brand Info */}
@@ -675,10 +787,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
                 </div>
             </div>
+            )}
 
             {/* 3. INTEGRATIONS GROUP */}
+            {showSection('integrations') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">System Integrations</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">System Integrations</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Email delivery provider (transactional) */}
@@ -783,10 +897,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
                 </div>
             </div>
+            )}
 
             {/* 4. NOTIFICATIONS GROUP */}
+            {showSection('notifications') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Notification alerts</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Notification alerts</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     {[
                         { key: 'emailNotifications', label: 'Email Outreach Logs', desc: 'Get updates on active campaign statuses' },
@@ -818,10 +934,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     ))}
                 </div>
             </div>
+            )}
 
             {/* 5. APPEARANCE GROUP */}
+            {showSection('appearance') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Appearance Theme</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Appearance Theme</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden p-4 space-y-4">
                     
                     {/* Theme Mode Segment switcher */}
@@ -892,10 +1010,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
                 </div>
             </div>
+            )}
 
             {/* 6. BILLING GROUP */}
+            {showSection('billing') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Plans & billing</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Plans & billing</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Subscription tier summary */}
@@ -956,10 +1076,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
                 </div>
             </div>
+            )}
 
             {/* 7. DATA MANAGEMENT */}
+            {showSection('data') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Data Management</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Data Management</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     <div>
                         <div
@@ -985,10 +1107,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* 8. DEVELOPER MCP & API KEYS */}
+            {showSection('developer') && (
             <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Developer MCP & API</span>
+                <span className="hidden md:block text-[11px] font-black uppercase tracking-widest text-slate-500 px-2">Developer MCP & API</span>
                 <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <span className="text-[10px] text-slate-500 uppercase font-black block">MCP API Key</span>
@@ -1037,8 +1161,10 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     )}
                 </div>
             </div>
+            )}
 
-            {/* 8. DANGER ZONE */}
+            {/* DANGER ZONE — visually separated; phone drills in from rose-styled list entry */}
+            {showSection('danger') && (
             <div className="space-y-3">
                 <span className="text-[11px] font-black uppercase tracking-widest text-rose-500 px-2 block">Danger Zone</span>
                 <div className="bg-slate-900/40 border border-rose-900/20 rounded-2xl divide-y divide-rose-900/10 overflow-hidden">
@@ -1056,6 +1182,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Deletion Dialog Modal */}
             <AnimatePresence>

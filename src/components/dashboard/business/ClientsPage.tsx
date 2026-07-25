@@ -24,7 +24,6 @@ import {
     History,
     MessageSquare,
     Receipt,
-    ChevronLeft,
     FileSpreadsheet,
     Grid3X3,
     CheckCircle2,
@@ -57,12 +56,30 @@ import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
 import { CRMNav } from '../crm/CRMNav';
+import { PageHeader } from '../responsive/PageHeader';
+import { StatePanel } from '../responsive/StatePanel';
+import { MobileDataCard } from '@/components/ui/ResponsiveTable';
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
 const ContactsList = lazy(() => import('../crm/ContactsList'));
 
 type ContactDirectoryView = 'sales' | 'email';
+
+function nextActionForClient(stage?: string): string {
+    switch (stage) {
+        case 'lead':
+            return 'Qualify or contact';
+        case 'prospect':
+            return 'Follow up / advance';
+        case 'customer':
+            return 'Log activity';
+        case 'lost':
+            return 'Re-engage';
+        default:
+            return 'Open contact';
+    }
+}
 
 interface ClientsPageProps {
     user: User;
@@ -658,46 +675,55 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 <CRMNav pathname={pathname} />
                 {isContactsRoute && directorySwitcher}
                 <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
-                {/* Simplified Header */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                        <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">My Clients</h2>
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">CRM</p>
-                        </div>
-                    </div>
-                    <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
-                        <Button
-                            onClick={() => setShowAddModal(true)}
-                            icon={<Plus className="w-4 h-4" />}
-                        >
-                            Add Client
-                        </Button>
-                    </div>
-                </div>
+                <PageHeader
+                    moduleLabel="CRM"
+                    title="My Clients"
+                    description={`${totalCount || clients.length} total contacts`}
+                    primaryAction={{
+                        label: 'Add Client',
+                        onClick: () => setShowAddModal(true),
+                        variant: 'primary',
+                    }}
+                />
 
                 {/* Quick Stats for Solo Owner */}
                 <ModuleStatCards stats={contactStats} />
 
                 {/* Simple Client List */}
                 <div className="space-y-2">
-                    {filteredClients.map(client => (
-                        <div key={client.id} className="p-3 bg-slate-900/60 border border-white/5 rounded-xl flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-xs">
-                                    {(client.name || '?').charAt(0)}
+                    {filteredClients.length === 0 ? (
+                        <StatePanel
+                            kind="empty"
+                            title="No clients yet"
+                            description="Add your first client to start tracking relationships."
+                            actions={[{ label: 'Add Client', onClick: () => setShowAddModal(true), primary: true }]}
+                            compact
+                        />
+                    ) : (
+                        filteredClients.map((client) => (
+                            <MobileDataCard
+                                key={client.id}
+                                onClick={() => setSelectedClient(client)}
+                                className="!space-y-2"
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-xs shrink-0">
+                                            {(client.name || '?').charAt(0)}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
+                                            <p className="text-xs text-slate-400 truncate">{client.email || client.phone || 'No contact'}</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant={client.salesStage === 'customer' ? 'success' : 'blue'}>
+                                        {client.salesStage}
+                                    </Badge>
                                 </div>
-                                <div>
-                                    <h3 className="font-bold text-white text-sm">{client.name}</h3>
-                                    <p className="text-xs text-slate-400">{client.email || client.phone || 'No contact'}</p>
-                                </div>
-                            </div>
-                            <Badge variant={client.salesStage === 'customer' ? 'success' : 'blue'}>
-                                {client.salesStage}
-                            </Badge>
-                        </div>
-                    ))}
+                                <p className="text-[11px] text-teal-400/90 font-medium">{nextActionForClient(client.salesStage)}</p>
+                            </MobileDataCard>
+                        ))
+                    )}
                 </div>
             </div>
         );
@@ -721,48 +747,65 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             {directorySwitcher}
             <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
             <ModuleStatCards stats={contactStats} />
-            {/* Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">Sales contacts</h2>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <Badge variant="blue">{totalCount || clients.length} total</Badge>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">Pipeline</p>
-                    </div>
-                </div>
-                <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
-                    <Button
-                        variant="outline"
-                        onClick={handleExportExcel}
-                        icon={<FileSpreadsheet className="w-4 h-4" />}
-                        title="Export contacts to CSV"
-                    >
-                        Export
-                    </Button>
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowImportModal(true)}
-                        icon={<Upload className="w-4 h-4" />}
-                    >
-                        Import
-                    </Button>
-                    <Button
-                        variant={showArchived ? 'primary' : 'outline'}
-                        onClick={() => setShowArchived(!showArchived)}
-                        icon={<History className="w-4 h-4" />}
-                        className={showArchived ? 'bg-amber-600 hover:bg-amber-500' : ''}
-                    >
-                        {showArchived ? 'Viewing Archived' : 'Show Archived'}
-                    </Button>
-                    <Button
-                        onClick={() => setShowAddModal(true)}
-                        icon={<Plus className="w-4 h-4" />}
-                    >
-                        Add
-                    </Button>
-                    {/* View mode toggle */}
+            <PageHeader
+                moduleLabel="Pipeline"
+                title="Sales contacts"
+                description={`${totalCount || clients.length} total contacts`}
+                primaryAction={{
+                    label: 'Add',
+                    onClick: () => setShowAddModal(true),
+                    variant: 'primary',
+                }}
+                secondaryActions={[
+                    { label: 'Export', onClick: handleExportExcel },
+                    { label: 'Import', onClick: () => setShowImportModal(true) },
+                    {
+                        label: showArchived ? 'Viewing Archived' : 'Show Archived',
+                        onClick: () => setShowArchived(!showArchived),
+                    },
+                    ...(selectedClientIds.length > 0
+                        ? [
+                              {
+                                  label: `Archive (${selectedClientIds.length})`,
+                                  onClick: async () => {
+                                      if (!confirm(`Archive ${selectedClientIds.length} contact(s)?`)) return;
+                                      const { error } = await businessClientService.bulkArchiveClients(selectedClientIds);
+                                      if (error) {
+                                          toast.error(error);
+                                          return;
+                                      }
+                                      setClients(clients.filter((c) => !selectedClientIds.includes(c.id)));
+                                      setSelectedClientIds([]);
+                                      toast.success('Selected contacts archived');
+                                  },
+                                  variant: 'danger' as const,
+                              },
+                              {
+                                  label: `Email (${selectedClientIds.length})`,
+                                  onClick: () => {
+                                      const first = clients.find((c) => selectedClientIds.includes(c.id) && c.email);
+                                      if (!first?.email) {
+                                          toast.error('Selected contacts need email addresses');
+                                          return;
+                                      }
+                                      setSelectedClientForCommunication(first);
+                                      setShowCommunicationModal(true);
+                                      toast(`Composing for ${first.name}. Use Outreach for bulk sends.`, { icon: '✉️' });
+                                  },
+                              },
+                              {
+                                  label: `Outreach (${selectedClientIds.length})`,
+                                  onClick: () => setShowOutreachModal(true),
+                                  variant: 'primary' as const,
+                              },
+                          ]
+                        : []),
+                ]}
+            >
+                <div className="flex flex-wrap items-center gap-2">
                     <div className="flex bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-1">
                         <button
+                            type="button"
                             onClick={() => setViewMode('list')}
                             title="List view"
                             className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
@@ -770,6 +813,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <List className="w-4 h-4" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => setViewMode('board')}
                             title="Card view"
                             className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
@@ -777,6 +821,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <LayoutGrid className="w-4 h-4" />
                         </button>
                         <button
+                            type="button"
                             onClick={() => setViewMode('micro')}
                             title="Micro grid view"
                             className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
@@ -784,53 +829,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <Grid3X3 className="w-4 h-4" />
                         </button>
                     </div>
-                    {selectedClientIds.length > 0 && (
-                        <>
-                        <Button
-                            variant="outline"
-                            onClick={async () => {
-                                if (!confirm(`Archive ${selectedClientIds.length} contact(s)?`)) return;
-                                const { error } = await businessClientService.bulkArchiveClients(selectedClientIds);
-                                if (error) {
-                                    toast.error(error);
-                                    return;
-                                }
-                                setClients(clients.filter(c => !selectedClientIds.includes(c.id)));
-                                setSelectedClientIds([]);
-                                toast.success('Selected contacts archived');
-                            }}
-                            icon={<Trash2 className="w-4 h-4" />}
-                        >
-                            Archive ({selectedClientIds.length})
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                const first = clients.find(c => selectedClientIds.includes(c.id) && c.email);
-                                if (!first?.email) {
-                                    toast.error('Selected contacts need email addresses');
-                                    return;
-                                }
-                                setSelectedClientForCommunication(first);
-                                setShowCommunicationModal(true);
-                                toast(`Composing for ${first.name}. Use Outreach for bulk sends.`, { icon: '✉️' });
-                            }}
-                            icon={<Mail className="w-4 h-4" />}
-                        >
-                            Email ({selectedClientIds.length})
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={() => setShowOutreachModal(true)}
-                            icon={<Users className="w-4 h-4" />}
-                            className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20"
-                        >
-                            Outreach ({selectedClientIds.length})
-                        </Button>
-                        </>
-                    )}
                 </div>
-            </div>
+            </PageHeader>
 
             {viewMode === 'micro' ? (
                 /* ── MICRO VIEW: tiny pill chips with full contact slide-in ── */
@@ -1047,11 +1047,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             {filteredClients.map(client => (
                                 <div
                                     key={client.id}
-                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-start gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                     onClick={() => setSelectedClient(client)}
                                 >
-                                    {/* ... checkbox and avatar ... */}
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 pt-0.5">
                                         <input
                                             type="checkbox"
                                             checked={selectedClientIds.includes(client.id)}
@@ -1074,12 +1073,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-teal-400 uppercase">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-teal-400 uppercase shrink-0">
                                                 {client.salesStage}
                                             </span>
                                         </div>
+                                        <p className="text-xs text-slate-400 truncate mt-0.5">
+                                            {client.email || client.phone || 'No contact'}
+                                        </p>
+                                        <p className="text-[11px] text-teal-400/90 font-medium mt-1">
+                                            {nextActionForClient(client.salesStage)}
+                                        </p>
                                     </div>
                                 </div>
                             ))}
@@ -1104,17 +1109,35 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
                         {selectedClient ? (
                             <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
-                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
-                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-teal-400 text-sm font-medium">
-                                        <ChevronLeft className="w-5 h-5" /> Back
-                                    </button>
-                                    <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
-                                        {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
-                                    </Badge>
+                                <div className="lg:hidden sticky top-0 z-10">
+                                    <PageHeader
+                                        title={selectedClient.name}
+                                        moduleLabel="Contact"
+                                        onBack={() => setSelectedClient(null)}
+                                        status={
+                                            <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
+                                                {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
+                                            </Badge>
+                                        }
+                                        secondaryActions={[
+                                            {
+                                                label: 'Edit',
+                                                onClick: () => {
+                                                    setEditingClient(selectedClient);
+                                                    setShowEditModal(true);
+                                                },
+                                            },
+                                            {
+                                                label: showArchived ? 'Unarchive' : 'Archive',
+                                                onClick: () => handleArchiveClient(selectedClient.id),
+                                                variant: showArchived ? 'secondary' : 'danger',
+                                            },
+                                        ]}
+                                    />
                                 </div>
 
                                 <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                                    <div className="flex justify-between items-start gap-4 mb-4">
+                                    <div className="hidden lg:flex justify-between items-start gap-4 mb-4">
                                         <div className="flex items-center gap-4">
                                             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-teal-500/10">
                                                 {(selectedClient.name || '?').charAt(0)}
@@ -1145,6 +1168,32 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
                                                 ]}
                                             />
+                                        </div>
+                                    </div>
+
+                                    {/* Phone profile strip under PageHeader */}
+                                    <div className="lg:hidden flex items-center gap-3 mb-4">
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-lg shrink-0">
+                                            {(selectedClient.name || '?').charAt(0)}
+                                        </div>
+                                        <div className="min-w-0">
+                                            {selectedClient.industry && <p className="text-slate-400 text-sm">{selectedClient.industry}</p>}
+                                            {selectedClient.email && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedClientForCommunication(selectedClient);
+                                                        setShowCommunicationModal(true);
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors truncate"
+                                                >
+                                                    <Mail className="w-3.5 h-3.5 shrink-0" />
+                                                    <span className="truncate">{selectedClient.email}</span>
+                                                </button>
+                                            )}
+                                            <p className="text-[11px] text-teal-400/90 font-medium mt-1">
+                                                {nextActionForClient(selectedClient.salesStage)}
+                                            </p>
                                         </div>
                                     </div>
 
