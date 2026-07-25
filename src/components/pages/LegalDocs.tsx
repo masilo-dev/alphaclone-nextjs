@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle, Clock, Users } from 'lucide-react';
-import PublicNavigation from '@/components/PublicNavigation';
+import MarketingShell from '@/components/marketing/system/MarketingShell';
+import LegalNav from '@/components/legal/LegalNav';
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 // ---------------------------------------------------------------------------
@@ -15,49 +16,46 @@ function LegalLayout({
    lastUpdated,
    children,
    icon: Icon,
-   color,
 }: {
    title: string;
    subtitle: string;
    lastUpdated: string;
    children: React.ReactNode;
    icon: React.ElementType;
-   color: string;
+   color?: string;
 }) {
-   const [, setIsLoginOpen] = useState(false);
    return (
-      <div className="min-h-screen bg-transparent text-slate-200 font-sans selection:bg-teal-500/30">
-         <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-         <div className="pt-20 max-w-4xl mx-auto px-4 py-16">
-            {/* Header */}
-            <div className={`flex items-center gap-3 mb-4`}>
-               <div className={`w-10 h-10 rounded-xl bg-${color}-500/10 border border-${color}-500/20 flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 text-${color}-400`} />
+      <MarketingShell>
+         <LegalNav />
+         <div className="max-w-4xl mx-auto px-4 py-16">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="mkt-icon-wrap">
+                  <Icon className="w-5 h-5" aria-hidden="true" />
                </div>
-               <span className={`text-${color}-400 text-sm font-semibold uppercase tracking-widest`}>Legal</span>
+               <span className="text-[var(--marketing-accent-hover)] text-sm font-semibold tracking-wide">Legal</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{title}</h1>
-            <p className="text-slate-400 mb-2">{subtitle}</p>
-            <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-slate-800">
-               <span className="text-xs text-slate-500">Last updated: {lastUpdated}</span>
-               <span className="text-xs text-slate-500">•</span>
-               <span className="text-xs text-slate-500">Alphaclone Systems, LLC</span>
-               <span className="text-xs text-slate-500">•</span>
-               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> legal@alphaclonesystems.com
+            <h1 className="text-3xl md:text-4xl font-bold text-[var(--marketing-text-primary)] mb-3">{title}</h1>
+            <p className="text-[var(--marketing-text-secondary)] mb-2">{subtitle}</p>
+            <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-[var(--marketing-border)]">
+               <span className="text-xs text-[var(--marketing-text-muted)]">Last updated: {lastUpdated}</span>
+               <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
+               <span className="text-xs text-[var(--marketing-text-muted)]">{COMPANY_LEGAL.legalName}</span>
+               <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
+               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-[var(--marketing-accent-hover)] hover:underline flex items-center gap-1">
+                  <Mail className="w-3 h-3" aria-hidden="true" /> legal@alphaclonesystems.com
                </a>
             </div>
             <div className="prose-legal space-y-12">
                {children}
             </div>
-            <div className="mt-16 pt-8 border-t border-slate-800 flex flex-wrap gap-4 text-xs text-slate-500">
-               <Link href="/privacy-policy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
-               <Link href="/terms-of-service" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
-               <Link href="/cookie-policy" className="hover:text-teal-400 transition-colors">Cookie Policy</Link>
-               <a href="mailto:legal@alphaclonesystems.com" className="hover:text-teal-400 transition-colors">Contact Legal</a>
+            <div className="mt-16 pt-8 border-t border-[var(--marketing-border)] flex flex-wrap gap-4 text-xs text-[var(--marketing-text-muted)]">
+               <Link href="/privacy-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Privacy Policy</Link>
+               <Link href="/terms-of-service" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Terms of Service</Link>
+               <Link href="/cookie-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Cookie Policy</Link>
+               <a href="mailto:legal@alphaclonesystems.com" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Contact Legal</a>
             </div>
          </div>
-      </div>
+      </MarketingShell>
    );
 }
 
