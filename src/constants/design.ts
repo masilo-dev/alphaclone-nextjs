@@ -136,10 +136,14 @@ export const ENTERPRISE = {
         xl: '2rem',     // 32px
     },
     breakpoints: {
-        mobile: '575px',
-        tablet: '767px',
-        desktop: '1023px',
-        wide: '1439px',
+      /** Phone max (below tablet) */
+      mobile: '767px',
+      /** Tablet max (below laptop) */
+      tablet: '1023px',
+      /** Laptop max (below desktop shell) */
+      desktop: '1279px',
+      /** Wide desktop */
+      wide: '1599px',
     },
     metricCard: {
         valueSize: 'text-[32px]',

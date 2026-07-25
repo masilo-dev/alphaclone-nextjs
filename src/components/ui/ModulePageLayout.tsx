@@ -12,11 +12,14 @@ interface ModulePageLayoutProps {
   header?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  /** Extra bottom padding so sticky phone CTAs clear the bottom nav */
+  phoneNavSafe?: boolean;
 }
 
 /**
  * Standard list-module layout: optional header → toolbar → stats → scrollable data.
  * Use inside tabs that already receive a page title from the dashboard shell.
+ * Phone-safe padding keeps content above the five-slot bottom nav.
  */
 export function ModulePageLayout({
   toolbar,
@@ -24,9 +27,16 @@ export function ModulePageLayout({
   header,
   children,
   className,
+  phoneNavSafe = true,
 }: ModulePageLayoutProps) {
   return (
-    <div className={cn('flex flex-col ac-scroll-full min-h-0', className)}>
+    <div
+      className={cn(
+        'flex flex-col ac-scroll-full min-h-0',
+        phoneNavSafe && 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0',
+        className,
+      )}
+    >
       {header ? <div className="flex-shrink-0">{header}</div> : null}
       {toolbar ? (
         <div className="flex-shrink-0 px-1 py-2 mb-2">{toolbar}</div>

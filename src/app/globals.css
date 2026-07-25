@@ -1545,6 +1545,24 @@ html.pwa-standalone .pwa-page-title {
   --ws-text-tertiary: #8c8c8c;
   --ws-radius: 6px;
   --ws-radius-lg: 8px;
+
+  /* Global app colour roles — one system across modules */
+  --app-bg: var(--ws-canvas);
+  --app-surface: var(--ws-toolbar);
+  --app-surface-raised: var(--ws-panel);
+  --app-sidebar: var(--ws-sidebar);
+  --app-border: var(--ws-border);
+  --app-border-strong: var(--ws-border-strong);
+  --app-text: #ffffff;
+  --app-text-secondary: var(--ws-text-secondary);
+  --app-text-muted: var(--ws-text-tertiary);
+  --app-primary: #14b8a6;
+  --app-primary-hover: #2dd4bf;
+  --app-focus: #2dd4bf;
+  --app-success: #22c55e;
+  --app-warning: #f59e0b;
+  --app-danger: #ef4444;
+  --app-info: #06b6d4;
 }
 
 html.light .ac-dashboard-root,
@@ -1560,6 +1578,23 @@ html.light .ac-business-root {
   --ws-active: rgba(20, 184, 166, 0.12);
   --ws-text-secondary: #5c5c5c;
   --ws-text-tertiary: #8c8c8c;
+
+  --app-bg: var(--ws-canvas);
+  --app-surface: var(--ws-toolbar);
+  --app-surface-raised: var(--ws-panel);
+  --app-sidebar: var(--ws-sidebar);
+  --app-border: var(--ws-border);
+  --app-border-strong: var(--ws-border-strong);
+  --app-text: #0f172a;
+  --app-text-secondary: var(--ws-text-secondary);
+  --app-text-muted: var(--ws-text-tertiary);
+  --app-primary: #0d9488;
+  --app-primary-hover: #14b8a6;
+  --app-focus: #0d9488;
+  --app-success: #16a34a;
+  --app-warning: #d97706;
+  --app-danger: #dc2626;
+  --app-info: #0891b2;
 }
 
 .ac-workspace-sidebar {
@@ -1792,7 +1827,33 @@ html.light .ac-workspace-tab--active {
 
 @media (prefers-reduced-motion: reduce) {
   .ac-skeleton-pulse,
-  .animate-pulse {
+  .animate-pulse,
+  .ac-metric-enter,
+  .ac-chart-enter,
+  .animate-fade-in {
     animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Phone: prevent accidental page-wide horizontal scroll in dashboard shells */
+.ac-dashboard-root,
+.ac-business-root {
+  overflow-x: clip;
+  max-width: 100vw;
+}
+
+/* Sticky primary actions clear the phone bottom nav */
+@media (max-width: 767px) {
+  .ac-sticky-primary-action {
+    bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
   }
 }

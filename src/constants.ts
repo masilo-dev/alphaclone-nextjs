@@ -182,7 +182,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
       { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: DollarSign },
       { label: 'Billing overview', href: '/dashboard/business/billing', icon: DollarSign },
       { label: 'Accounting', href: '/dashboard/accounting', icon: BarChart3 },
-      { label: 'Expenses', href: '/dashboard/finance/manage', icon: Receipt },
+      { label: 'Expenses', href: '/dashboard/business/expenses', icon: Receipt },
       { label: 'Cash flow', href: '/dashboard/business/cash-flow', icon: TrendingUp },
       { label: 'Banking', href: '/dashboard/accounting/banking', icon: DollarSign },
     ],
@@ -207,7 +207,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     href: '#',
     icon: MessageSquare,
     subItems: [
-      { label: 'Inbox', href: '/dashboard/comms', icon: Mail },
+      { label: 'Unified Inbox', href: '/dashboard/comms', icon: Mail },
       { label: 'WhatsApp', href: '/dashboard/business/whatsapp', icon: MessageCircle },
       { label: 'Team messages', href: '/dashboard/business/messages', icon: MessageSquare },
       { label: 'Notifications', href: '/dashboard/notifications', icon: Bell },
