@@ -69,24 +69,29 @@ export async function POST(req: Request) {
         // ── Resolve tenant (active membership only; bootstrap if missing) ─
         let tenant_id: string | undefined;
 
-        let membershipQuery = await supabaseAdmin
+        type MembershipRow = { tenant_id: string; role?: string | null; status?: string | null };
+
+        const membershipWithStatus = await supabaseAdmin
             .from('tenant_users')
             .select('tenant_id, role, status')
             .eq('user_id', user_id)
             .limit(20);
 
-        if (isMissingColumnError(membershipQuery.error)) {
-            membershipQuery = await supabaseAdmin
+        let membershipError = membershipWithStatus.error;
+        let membershipData = membershipWithStatus.data as MembershipRow[] | null;
+
+        if (isMissingColumnError(membershipError)) {
+            const membershipWithoutStatus = await supabaseAdmin
                 .from('tenant_users')
                 .select('tenant_id, role')
                 .eq('user_id', user_id)
                 .limit(20);
+            membershipError = membershipWithoutStatus.error;
+            membershipData = membershipWithoutStatus.data as MembershipRow[] | null;
         }
 
-        if (!membershipQuery.error && Array.isArray(membershipQuery.data) && membershipQuery.data.length) {
-            const active = membershipQuery.data.find((m) =>
-                isActiveStatus((m as { status?: string }).status)
-            );
+        if (!membershipError && Array.isArray(membershipData) && membershipData.length) {
+            const active = membershipData.find((m) => isActiveStatus(m.status));
             tenant_id = active?.tenant_id;
             if (!tenant_id) {
                 return NextResponse.json(
