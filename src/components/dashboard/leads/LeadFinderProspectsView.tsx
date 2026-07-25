@@ -18,7 +18,7 @@ import {
   Text,
   VStack,
 } from '@chakra-ui/react';
-import { Loader2, MapPin, Radar, Search, Sparkles } from 'lucide-react';
+import { Loader2, MapPin, Radar, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import type { LeadFinderProfile } from '@/lib/scraper/leadFinderLearning';
@@ -201,49 +201,37 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
   );
 
   return (
-    <VStack align="stretch" spacing={4} minH={0} flex={1}>
-      <LeadFinderBeginnerGuide />
-
-      <LeadFinderSmartBar
-        onProfileLoaded={handleProfileLoaded}
-        onSmartSearch={handleSmartSearch}
-        searching={searching}
-      />
-
+    <VStack align="stretch" spacing={3} minH={0}>
+      {/* Search first — always above the fold */}
       <Box
         borderWidth="1px"
         borderColor="whiteAlpha.200"
-        borderRadius="xl"
-        bg="blackAlpha.400"
-        p={{ base: 4, md: 5 }}
-        boxShadow="lg"
-        position="relative"
-        overflow="hidden"
+        borderRadius="lg"
+        bg="gray.900"
+        p={{ base: 3, md: 4 }}
+        position="sticky"
+        top={0}
+        zIndex={5}
+        boxShadow="sm"
       >
-        <Box
-          position="absolute"
-          inset={0}
-          bg="radial-gradient(circle at top right, rgba(20,184,166,0.14), transparent 55%)"
-          pointerEvents="none"
-        />
-        <VStack align="stretch" spacing={4} position="relative">
+        <VStack align="stretch" spacing={3}>
           <HStack justify="space-between" wrap="wrap" gap={2}>
             <Text fontSize="sm" fontWeight="semibold" color="white">
               Search command
             </Text>
-            <Badge colorScheme="purple" variant="subtle">
-              Auto-enrich · Decision makers · Phone/email required
+            <Badge colorScheme="teal" variant="subtle" fontSize="10px">
+              Phone or email required
             </Badge>
           </HStack>
 
-          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr', xl: '1.2fr 1.2fr 0.8fr auto' }} gap={3}>
+          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr', xl: '1.2fr 1.2fr 0.8fr auto' }} gap={2.5}>
             <FormControl>
-              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="gray.500" mb={1}>
                 Niche
               </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <Search size={16} color="#64748B" />
+              <InputGroup size="sm">
+                <InputLeftElement pointerEvents="none" h="32px">
+                  <Search size={14} color="#64748B" />
                 </InputLeftElement>
                 <Input
                   value={niche}
@@ -253,6 +241,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
                   bg="gray.950"
                   borderColor="whiteAlpha.300"
                   color="white"
+                  borderRadius="md"
                   _placeholder={{ color: 'gray.600' }}
                   _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px var(--chakra-colors-teal-400)' }}
                 />
@@ -260,12 +249,12 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             </FormControl>
 
             <FormControl>
-              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="gray.500" mb={1}>
                 Location
               </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <MapPin size={16} color="#64748B" />
+              <InputGroup size="sm">
+                <InputLeftElement pointerEvents="none" h="32px">
+                  <MapPin size={14} color="#64748B" />
                 </InputLeftElement>
                 <Input
                   value={location}
@@ -275,6 +264,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
                   bg="gray.950"
                   borderColor="whiteAlpha.300"
                   color="white"
+                  borderRadius="md"
                   _placeholder={{ color: 'gray.600' }}
                   _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px var(--chakra-colors-teal-400)' }}
                 />
@@ -282,12 +272,12 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
             </FormControl>
 
             <FormControl>
-              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+              <FormLabel fontSize="10px" textTransform="uppercase" letterSpacing="wide" color="gray.500" mb={1}>
                 Reach
               </FormLabel>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <Radar size={16} color="#64748B" />
+              <InputGroup size="sm">
+                <InputLeftElement pointerEvents="none" h="32px">
+                  <Radar size={14} color="#64748B" />
                 </InputLeftElement>
                 <Select
                   value={radiusKm}
@@ -295,7 +285,9 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
                   bg="gray.950"
                   borderColor="whiteAlpha.300"
                   color="white"
+                  borderRadius="md"
                   pl={10}
+                  h="32px"
                 >
                   {RADIUS_OPTIONS.map((km) => (
                     <option key={km} value={km} style={{ background: '#0f172a' }}>
@@ -306,7 +298,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
               </InputGroup>
             </FormControl>
 
-            <Flex direction="column" justify="flex-end" gap={2}>
+            <Flex direction="column" justify="flex-end" gap={1.5}>
               <Checkbox
                 isChecked={hasEmail}
                 onChange={(e) => setHasEmail(e.target.checked)}
@@ -317,30 +309,34 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
                 Email only
               </Checkbox>
               <Button
+                size="sm"
                 onClick={() => void runSearch()}
                 isLoading={searching}
                 loadingText="Scraping…"
                 colorScheme="teal"
-                leftIcon={searching ? <Loader2 size={16} /> : <Sparkles size={16} />}
-                px={6}
+                leftIcon={searching ? <Loader2 size={14} /> : <Search size={14} />}
+                px={5}
+                borderRadius="md"
               >
                 Find leads
               </Button>
             </Flex>
           </Grid>
-
-          <Text fontSize="xs" color="gray.500">
-            Free stack: OpenStreetMap · Wikidata · Photon · DuckDuckGo · Railway Playwright enrichment.
-            Vague website-only rows are dropped — every result has phone or email.
-          </Text>
         </VStack>
       </Box>
 
+      <LeadFinderSmartBar
+        onProfileLoaded={handleProfileLoaded}
+        onSmartSearch={handleSmartSearch}
+        searching={searching}
+      />
+
+      <LeadFinderBeginnerGuide />
+
       <Grid
-        templateColumns={{ base: '1fr', xl: 'minmax(0,1.15fr) minmax(320px,0.85fr)' }}
-        gap={4}
+        templateColumns={{ base: '1fr', xl: 'minmax(0,1.15fr) minmax(300px,0.85fr)' }}
+        gap={3}
         minH={0}
-        flex={1}
       >
         <Box minH={0}>
           <ScraperLeadsTable
@@ -359,7 +355,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
           />
         </Box>
 
-        <VStack align="stretch" spacing={4} position={{ xl: 'sticky' }} top={4} alignSelf="start">
+        <VStack align="stretch" spacing={3} position={{ xl: 'sticky' }} top={2} alignSelf="start">
           <LeadFinderLiveProgress
             campaignId={activeCampaignId}
             searching={searching}
@@ -382,7 +378,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
               if (lead.id) setFocusedLeadId(lead.id);
             }}
           />
-          <Box maxH="min(36vh,320px)" overflowY="auto" className="ac-scroll-full">
+          <Box maxH="min(36vh,320px)" overflowY="auto">
             <LeadFinderSystemPanel compact />
           </Box>
         </VStack>

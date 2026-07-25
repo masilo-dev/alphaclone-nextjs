@@ -8,7 +8,6 @@ import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
 import { SessionTimeoutWarning, useSessionTimeoutWarning } from '@/components/SessionTimeoutWarning';
 import { useTenant } from '@/contexts/TenantContext';
 import { SubscriptionGuard } from '@/components/SubscriptionGuard';
-import AppLegalFooter from '@/components/legal/AppLegalFooter';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import dynamic from 'next/dynamic';
 
@@ -131,7 +130,6 @@ export default function DashboardClientPage() {
                     onExtendSession={extendSession}
                     onLogout={handleLogout}
                 />
-                <AppLegalFooter compact />
             </SubscriptionGuard>
         </BuildErrorLogger>
     );

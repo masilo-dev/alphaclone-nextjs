@@ -1175,7 +1175,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 <div
                     className={`flex-1 min-h-0 ac-workspace-canvas ac-business-scroll ${
                         DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
-                            ? 'overflow-hidden p-0'
+                            ? // Lead Finder & similar tall modules must scroll; mail/messages keep clipped shells.
+                              route === '/dashboard/leads/campaigns' ||
+                              route === '/dashboard/business/projects' ||
+                              route === '/dashboard/sales-agent'
+                                ? 'overflow-y-auto overflow-x-hidden p-0'
+                                : 'overflow-hidden p-0'
                             : `overflow-y-auto overflow-x-hidden ${WORKSPACE.canvas.padding} dashboard-content-padding`
                     }`}
                 >

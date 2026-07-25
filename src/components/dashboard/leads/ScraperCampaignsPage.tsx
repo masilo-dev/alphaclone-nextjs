@@ -39,27 +39,20 @@ function StatCard({
     <Box
       borderWidth="1px"
       borderColor="whiteAlpha.200"
-      borderRadius="xl"
+      borderRadius="lg"
       bg="gray.900"
-      px={4}
-      py={3}
+      px={3}
+      py={2}
       position="relative"
       overflow="hidden"
-      _before={{
-        content: '""',
-        position: 'absolute',
-        inset: 0,
-        bg: 'rgba(20,184,166,0.08)',
-        pointerEvents: 'none',
-      }}
     >
-      <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider" fontWeight="semibold">
+      <Text fontSize="10px" color="gray.500" textTransform="uppercase" letterSpacing="wide" fontWeight="semibold">
         {label}
       </Text>
-      <Text mt={1} fontSize="2xl" fontWeight="bold" color="white" style={{ fontVariantNumeric: 'tabular-nums' }}>
+      <Text mt={0.5} fontSize="xl" fontWeight="bold" color="white" style={{ fontVariantNumeric: 'tabular-nums' }}>
         {value}
       </Text>
-      <Text mt={0.5} fontSize="xs" color="gray.400" noOfLines={1}>
+      <Text fontSize="10px" color="gray.500" noOfLines={1}>
         {sub}
       </Text>
     </Box>
@@ -94,33 +87,31 @@ export default function ScraperCampaignsPage() {
 
   return (
     <Box
-      className="ac-scroll-full ac-enterprise-module"
-      h="full"
+      className="ac-enterprise-module"
       minH={0}
       w="full"
-      pb={{ base: 20, md: 6 }}
+      pb={{ base: 24, md: 10 }}
       bgGradient="linear(to-b, gray.950, gray.900)"
     >
-      <VStack align="stretch" spacing={5} px={{ base: 4, md: 6 }} pt={{ base: 4, md: 6 }} h="full" minH={0}>
-        <Flex align="start" justify="space-between" gap={4} wrap="wrap" flexShrink={0}>
-          <VStack align="start" spacing={1} maxW="3xl">
-            <HStack spacing={2}>
-              <Heading size="lg" color="white" letterSpacing="-0.02em">
+      <VStack align="stretch" spacing={3} px={{ base: 3, md: 5 }} pt={{ base: 3, md: 4 }} minH={0}>
+        <Flex align="center" justify="space-between" gap={3} wrap="wrap" flexShrink={0}>
+          <VStack align="start" spacing={0} maxW="2xl" minW={0}>
+            <HStack spacing={2} flexWrap="wrap">
+              <Heading size="md" color="white" letterSpacing="-0.02em">
                 Lead Finder
               </Heading>
-              <Badge colorScheme="teal" variant="subtle" borderRadius="md">
-                Apollo-grade · Free data
+              <Badge colorScheme="teal" variant="subtle" borderRadius="md" fontSize="10px">
+                Free data · contact required
               </Badge>
             </HStack>
-            <Text color="gray.400" fontSize="sm">
-              Reach-based prospecting with live scrape, auto enrichment, decision makers, plus free aerial / building 3D / birds-eye views.
-              Only contactable leads are returned.
+            <Text color="gray.500" fontSize="xs" noOfLines={1}>
+              Reach-based scrape · auto enrich · aerial map — phone or email on every lead
             </Text>
           </VStack>
 
           <ButtonGroup size="sm" isAttached variant="outline">
             <Button
-              leftIcon={<LayoutGrid size={16} />}
+              leftIcon={<LayoutGrid size={15} />}
               onClick={() => setTab('prospects')}
               colorScheme={tab === 'prospects' ? 'teal' : 'gray'}
               variant={tab === 'prospects' ? 'solid' : 'outline'}
@@ -129,7 +120,7 @@ export default function ScraperCampaignsPage() {
               Prospects
             </Button>
             <Button
-              leftIcon={<MessageSquare size={16} />}
+              leftIcon={<MessageSquare size={15} />}
               onClick={() => setTab('chat')}
               colorScheme={tab === 'chat' ? 'teal' : 'gray'}
               variant={tab === 'chat' ? 'solid' : 'outline'}
@@ -138,9 +129,8 @@ export default function ScraperCampaignsPage() {
               AI Assist
             </Button>
             <Button
-              leftIcon={<Settings2 size={16} />}
+              leftIcon={<Settings2 size={15} />}
               onClick={() => setTab('campaigns')}
-              colorScheme={tab === 'campaigns' ? 'gray' : 'gray'}
               variant={tab === 'campaigns' ? 'solid' : 'outline'}
               borderColor="whiteAlpha.300"
               bg={tab === 'campaigns' ? 'whiteAlpha.200' : undefined}
@@ -152,7 +142,7 @@ export default function ScraperCampaignsPage() {
         </Flex>
 
         {stats && (
-          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3} flexShrink={0}>
+          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={2} flexShrink={0}>
             <StatCard
               label="Discovered"
               value={stats.leads.total}
