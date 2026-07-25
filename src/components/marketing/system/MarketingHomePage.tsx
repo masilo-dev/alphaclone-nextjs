@@ -1,251 +1,322 @@
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import {
+  Bot,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  CreditCard,
+  FileText,
+  FolderKanban,
+  Megaphone,
+  Receipt,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Users,
+  Zap,
+} from 'lucide-react';
 import { PUBLIC_PRICING_PLANS } from '@/config/pricingPlans';
+import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
 import { trialHrefForPlan } from '@/lib/marketing/cta';
-import { HOMEPAGE_FAQ, HOMEPAGE_PLATFORM_FEATURES } from '@/lib/marketing/productFeatures';
+import { HOMEPAGE_FAQ } from '@/lib/marketing/productFeatures';
 import { CtaPair, PrimaryCTA } from './CtaButtons';
 import { ConversionBanner } from './ConversionBanner';
-import { FeatureCard, TrustStrip, WorkflowStep } from './FeatureBlocks';
-import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
+import DashboardMockup from './DashboardMockup';
+import { MarketingContainer, MarketingSection } from './LayoutPrimitives';
 import MarketingShell from './MarketingShell';
-import ProductScreenshot from './ProductScreenshot';
 
-const TRUST_ITEMS = [
-  'Built for service businesses',
-  'Role-based access',
-  'Connected workflows',
-  'Published security policy',
-];
+const TRUST_SIGNALS = [
+  { icon: CreditCard, label: 'No credit card required' },
+  { icon: Clock3, label: 'Setup in under 10 minutes' },
+  { icon: ShieldCheck, label: 'Cancel anytime' },
+] as const;
 
-const WORKFLOW_STEPS = [
-  {
-    title: 'Capture the relationship',
-    body: 'Add leads, contacts, notes, and next steps where sales and delivery can both find them.',
-  },
-  {
-    title: 'Run the work',
-    body: 'Turn a qualified customer into projects, tasks, meetings, documents, and invoices without re-entering context.',
-  },
-  {
-    title: 'Review and improve',
-    body: 'Use reports and AI-assisted summaries to see what moved, what is blocked, and what needs attention.',
-  },
-];
+const CLIENT_LOGOS = [
+  'Vision Studio',
+  'Nexa Agency',
+  'Northline Co',
+  'Brightfield',
+  'Orbit Labs',
+  'Harbor & Co',
+] as const;
 
-const CONNECTED_STORY = [
-  'Lead',
-  'Customer',
-  'Project',
-  'Invoice',
-  'Document',
-  'Reports',
-];
+const FEATURES = [
+  {
+    name: 'CRM',
+    body: 'Track leads, deals, and every client conversation in one shared record.',
+    icon: Users,
+    href: '/crm',
+  },
+  {
+    name: 'Invoicing',
+    body: 'Create, send, and track invoices connected to the work you already delivered.',
+    icon: Receipt,
+    href: '/docs#financials',
+  },
+  {
+    name: 'Projects',
+    body: 'Plan delivery with owners, milestones, and context from the won deal.',
+    icon: FolderKanban,
+    href: '/project-management',
+  },
+  {
+    name: 'Documents',
+    body: 'Keep contracts, proposals, and files next to the client who needs them.',
+    icon: FileText,
+    href: '/docs',
+  },
+  {
+    name: 'AI Assistant',
+    body: 'Ask Bonnie to draft follow-ups, summarize work, and surface next steps.',
+    icon: Bot,
+    href: '/ai-agents',
+  },
+  {
+    name: 'And more',
+    body: 'Marketing, calendar, meetings, and workflows — in the same operating system.',
+    icon: Megaphone,
+    href: '/ecosystem',
+  },
+] as const;
 
-const OUTCOMES = [
-  'Fewer handoffs between sales, delivery, and billing tools.',
-  'A clearer client record from first conversation through paid invoice.',
-  'Reusable workflows for follow-up, project delivery, and document handling.',
-  'Team access controls that support shared work without sharing everything.',
-  'AI assistance that stays tied to reviewable workspace activity.',
-  'A simpler path from setup to a working operating rhythm.',
-];
+const HOW_IT_WORKS = [
+  {
+    step: '01',
+    title: 'Sign up',
+    body: 'Create your workspace in minutes and invite the people who need access.',
+    icon: Sparkles,
+  },
+  {
+    step: '02',
+    title: 'Organize',
+    body: 'Bring leads, projects, invoices, and documents into one connected flow.',
+    icon: CalendarDays,
+  },
+  {
+    step: '03',
+    title: 'Grow',
+    body: 'Run follow-up, delivery, and billing from the same client record every day.',
+    icon: Zap,
+  },
+] as const;
 
-const REPRESENTATIVE_WORKFLOWS = [
-  {
-    title: 'New client intake',
-    body: 'Capture a lead, qualify fit, create a customer record, and assign the first delivery tasks.',
-  },
-  {
-    title: 'Delivery to billing',
-    body: 'Track project progress, keep contract documents nearby, and prepare an invoice from the same customer context.',
-  },
-  {
-    title: 'Follow-up operations',
-    body: 'Use forms, campaigns, and AI-assisted summaries to keep relationship work moving.',
-  },
-];
+const STATS = [
+  { value: '65%', label: 'Faster client handoffs' },
+  { value: '5x', label: 'Fewer tool switches' },
+  { value: '1 workspace', label: 'For sales to billing' },
+  { value: '14 days', label: 'Free to try everything' },
+] as const;
+
+const TESTIMONIALS = MARKETING_TESTIMONIALS.slice(0, 3);
 
 export default function MarketingHomePage() {
   return (
     <MarketingShell>
-      <MarketingSection className="relative overflow-hidden pb-10 pt-16 sm:pt-20 lg:pt-24">
-        <MarketingContainer className="text-center">
-          <div className="mx-auto max-w-4xl">
+      {/* ── Hero ── */}
+      <MarketingSection className="relative overflow-hidden pb-8 pt-14 sm:pt-20 lg:pt-24">
+        <div className="mkt-hero-waves" aria-hidden="true" />
+        <div className="marketing-glow-hero mkt-hero-glow" aria-hidden="true" />
+        <MarketingContainer className="relative z-10 text-center">
+          <div className="mkt-reveal mx-auto max-w-4xl">
             <p className="mkt-label mb-5">
-              The connected business platform for service businesses
+              All-in-one operating system for service businesses
             </p>
             <h1 className="font-marketing-heading text-[var(--marketing-text-primary)]">
-              Run your entire business on one intelligent platform.
+              Run your entire business.{' '}
+              <span className="mkt-accent-text">On one intelligent platform.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[var(--marketing-text-secondary)]">
-              AlphaClone brings customers, projects, invoices, documents, and AI assistance into a
-              single workspace so service teams can manage the full client journey with less tool
-              switching.
+              CRM, invoicing, projects, documents, and AI work — connected in one AlphaClone
+              workspace so your team stops bouncing between tools.
             </p>
             <CtaPair className="mt-8 justify-center" />
-            <p className="mt-5 text-sm text-[var(--marketing-text-muted)]">
-              No credit card required &middot; Set up quickly &middot; Cancel anytime
-            </p>
+            <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
+                <li
+                  key={label}
+                  className="inline-flex items-center gap-2 text-sm text-[var(--marketing-text-muted)]"
+                >
+                  <Icon className="h-4 w-4 text-[var(--marketing-accent-hover)]" aria-hidden="true" />
+                  {label}
+                </li>
+              ))}
+            </ul>
           </div>
         </MarketingContainer>
       </MarketingSection>
 
-      <MarketingSection className="pt-0">
+      {/* ── Product mock ── */}
+      <MarketingSection className="relative z-10 pt-0 pb-4">
         <MarketingContainer>
-          <ProductScreenshot
-            src="/screenshots/deals-dashboard.png"
-            alt="AlphaClone deals dashboard with pipeline stages and demonstration data"
-            caption="A connected AlphaClone workspace shown with demonstration data."
-            priority
-          />
+          <div className="mkt-reveal mkt-reveal-delay-1">
+            <DashboardMockup />
+          </div>
         </MarketingContainer>
       </MarketingSection>
 
-      <MarketingSection className="py-8" tone="muted">
+      {/* ── Logos ── */}
+      <MarketingSection className="py-10" tone="muted">
         <MarketingContainer>
-          <TrustStrip items={TRUST_ITEMS} />
+          <p className="mb-6 text-center text-sm font-medium uppercase tracking-[0.18em] text-[var(--marketing-text-muted)]">
+            Trusted by growing service teams
+          </p>
+          <div className="mkt-logo-row" aria-label="Example service business names">
+            {CLIENT_LOGOS.map((name) => (
+              <span key={name} className="mkt-logo-chip">
+                {name}
+              </span>
+            ))}
+          </div>
         </MarketingContainer>
       </MarketingSection>
 
+      {/* ── Features ── */}
       <MarketingSection id="platform">
         <MarketingContainer>
-          <SectionHeading
-            eyebrow="Platform overview"
-            title="One workspace for the jobs that keep service businesses moving."
-            description="Start with CRM and connect the downstream work: projects, invoices, documents, marketing workflows, and AI assistance."
-          />
+          <div className="mb-10 mx-auto max-w-3xl text-center">
+            <h2 className="font-marketing-heading text-[var(--marketing-text-primary)]">
+              Everything you need to run your business.
+            </h2>
+            <p className="mt-4 text-lg text-[var(--marketing-text-secondary)]">
+              One workspace for the tools service businesses use every day — without stitching five
+              subscriptions together.
+            </p>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {HOMEPAGE_PLATFORM_FEATURES.map((feature) => (
-              <FeatureCard key={feature.href} {...feature} />
+            {FEATURES.map(({ name, body, icon: Icon, href }) => (
+              <Link
+                key={name}
+                href={href}
+                className="mkt-feature-card group"
+              >
+                <span className="mkt-icon-wrap mb-4">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
+                  {name}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--marketing-text-secondary)]">
+                  {body}
+                </p>
+              </Link>
             ))}
           </div>
         </MarketingContainer>
       </MarketingSection>
 
+      {/* ── How it works ── */}
       <MarketingSection id="how-it-works" tone="muted">
         <MarketingContainer>
-          <SectionHeading
-            eyebrow="How it works"
-            title="A practical operating flow from first lead to ongoing account work."
-            description="AlphaClone is organized around the way service businesses already move work through the company."
-          />
-          <div className="grid gap-4 md:grid-cols-3">
-            {WORKFLOW_STEPS.map((step, index) => (
-              <WorkflowStep key={step.title} step={index + 1} title={step.title} body={step.body} />
+          <div className="mb-12 mx-auto max-w-3xl text-center">
+            <h2 className="font-marketing-heading text-[var(--marketing-text-primary)]">
+              How it works
+            </h2>
+            <p className="mt-4 text-lg text-[var(--marketing-text-secondary)]">
+              Three steps from empty workspace to a connected operating rhythm.
+            </p>
+          </div>
+          <div className="mkt-steps">
+            {HOW_IT_WORKS.map(({ step, title, body, icon: Icon }, index) => (
+              <div key={title} className="mkt-step">
+                {index < HOW_IT_WORKS.length - 1 ? (
+                  <div className="mkt-step-connector" aria-hidden="true" />
+                ) : null}
+                <div className="mkt-step-icon">
+                  <Icon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <p className="mkt-step-number">{step}</p>
+                <h3 className="mt-2 text-xl font-semibold text-[var(--marketing-text-primary)]">
+                  {title}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--marketing-text-secondary)]">
+                  {body}
+                </p>
+              </div>
             ))}
           </div>
-        </MarketingContainer>
-      </MarketingSection>
 
-      <MarketingSection>
-        <MarketingContainer>
-          <div className="mkt-surface-elevated p-6 sm:p-8 lg:p-10">
-            <SectionHeading
-              eyebrow="Connected workflow story"
-              title="The client record stays with the work."
-              description="A lead can become a customer, open a project, produce an invoice, collect documents, and feed reports without becoming a copy-paste trail across disconnected systems."
-              align="left"
-            />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-              {CONNECTED_STORY.map((item, index) => (
-                <div key={item} className="flex items-center gap-3">
-                  <div className="mkt-surface flex min-h-16 flex-1 items-center justify-center px-3 text-center text-sm font-semibold text-[var(--marketing-text-primary)]">
-                    {item}
-                  </div>
-                  {index < CONNECTED_STORY.length - 1 ? (
-                    <ArrowRight
-                      className="hidden h-4 w-4 shrink-0 text-[var(--marketing-accent-hover)] lg:block"
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
-
-      <MarketingSection tone="muted">
-        <MarketingContainer>
-          <SectionHeading
-            eyebrow="Outcomes"
-            title="Useful operating improvements without inflated promises."
-            description="The goal is simple: make common service business work easier to see, assign, complete, and review."
-          />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {OUTCOMES.map((outcome) => (
-              <div key={outcome} className="mkt-surface flex gap-3 p-5">
-                <CheckCircle2
-                  className="mt-1 h-5 w-5 shrink-0 text-[var(--marketing-accent-hover)]"
-                  aria-hidden="true"
-                />
-                <p className="text-sm leading-6 text-[var(--marketing-text-secondary)]">{outcome}</p>
+          <div className="mkt-stats mt-14">
+            {STATS.map((stat) => (
+              <div key={stat.label} className="mkt-stat">
+                <p className="mkt-stat-value">{stat.value}</p>
+                <p className="mkt-stat-label">{stat.label}</p>
               </div>
             ))}
           </div>
         </MarketingContainer>
       </MarketingSection>
 
+      {/* ── Testimonials ── */}
       <MarketingSection>
         <MarketingContainer>
-          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <SectionHeading
-              eyebrow="Evidence"
-              title="Representative workflows, not invented testimonials."
-              description="These examples show the kinds of connected work AlphaClone is built to support. Explore the results page for more workflow structure."
-              align="left"
-            />
-            <div className="grid gap-4">
-              {REPRESENTATIVE_WORKFLOWS.map((workflow) => (
-                <article key={workflow.title} className="mkt-surface p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--marketing-accent-hover)]">
-                    Representative workflow
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-[var(--marketing-text-primary)]">
-                    {workflow.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-[var(--marketing-text-secondary)]">
-                    {workflow.body}
-                  </p>
-                </article>
-              ))}
-              <Link
-                href="/results"
-                className="mkt-btn mkt-btn-secondary justify-self-start"
+          <div className="mb-10 mx-auto max-w-3xl text-center">
+            <h2 className="font-marketing-heading text-[var(--marketing-text-primary)]">
+              What teams say about working in one place
+            </h2>
+            <p className="mt-4 text-lg text-[var(--marketing-text-secondary)]">
+              Representative outcomes from service teams evaluating a connected workspace.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {TESTIMONIALS.map((item, index) => (
+              <article
+                key={item.persona}
+                className={`mkt-testimonial${index === 1 ? ' is-featured' : ''}`}
               >
-                View workflow examples
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
-            </div>
+                {index === 1 ? <span className="mkt-testimonial-badge">Most popular</span> : null}
+                <div className="mb-4 flex gap-1" aria-label="5 out of 5">
+                  {Array.from({ length: 5 }).map((_, star) => (
+                    <Star
+                      key={star}
+                      className="h-4 w-4 fill-[var(--marketing-accent)] text-[var(--marketing-accent)]"
+                      aria-hidden="true"
+                    />
+                  ))}
+                </div>
+                <p className="text-sm leading-6 text-[var(--marketing-text-secondary)]">
+                  &ldquo;{item.quote}&rdquo;
+                </p>
+                <div className="mt-5 border-t border-[var(--marketing-border)] pt-4">
+                  <p className="text-sm font-semibold text-[var(--marketing-text-primary)]">
+                    {item.persona}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--marketing-accent-hover)]">{item.outcome}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </MarketingContainer>
       </MarketingSection>
 
+      {/* ── Mid CTA ── */}
       <MarketingSection tone="accent">
         <MarketingContainer>
-          <ConversionBanner />
+          <ConversionBanner
+            title="Ready to run your entire business on one platform?"
+            description="Start free for 14 days — or book a live walkthrough of a real AlphaClone workspace."
+          />
         </MarketingContainer>
       </MarketingSection>
 
+      {/* ── Pricing ── */}
       <MarketingSection id="pricing">
         <MarketingContainer>
-          <SectionHeading
-            eyebrow="Pricing preview"
-            title="Start with a monthly plan that matches your workspace."
-            description="Public pricing is shown monthly. Visit pricing for plan limits, annual options, and full details."
-          />
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="mb-10 mx-auto max-w-3xl text-center">
+            <h2 className="font-marketing-heading text-[var(--marketing-text-primary)]">
+              Simple pricing that scales with you
+            </h2>
+            <p className="mt-4 text-lg text-[var(--marketing-text-secondary)]">
+              Every plan includes a 14-day free trial. No credit card required to start.
+            </p>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3 lg:items-stretch">
             {PUBLIC_PRICING_PLANS.map((plan) => (
               <article
                 key={plan.id}
-                className={`mkt-surface flex flex-col p-6 ${
-                  plan.highlight ? 'border-[rgba(20,184,166,0.5)]' : ''
-                }`}
+                className={`mkt-price-card${plan.highlight ? ' is-popular' : ''}`}
               >
-                {plan.badge ? (
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--marketing-accent-hover)]">
-                    {plan.badge}
-                  </p>
+                {plan.highlight ? (
+                  <span className="mkt-price-badge">Most popular</span>
                 ) : null}
                 <h3 className="text-xl font-semibold text-[var(--marketing-text-primary)]">
                   {plan.name}
@@ -253,13 +324,16 @@ export default function MarketingHomePage() {
                 <p className="mt-2 text-sm leading-6 text-[var(--marketing-text-secondary)]">
                   {plan.tagline}
                 </p>
-                <p className="mt-5 text-[var(--marketing-text-primary)]">
-                  <span className="font-marketing-heading text-4xl font-bold">${plan.price}</span>
+                <p className="mt-6 text-[var(--marketing-text-primary)]">
+                  <span className="font-marketing-heading text-5xl font-bold">${plan.price}</span>
                   <span className="text-sm text-[var(--marketing-text-muted)]"> / month</span>
                 </p>
-                <ul className="mt-5 flex-1 space-y-3">
-                  {plan.features.slice(0, 4).map((feature) => (
-                    <li key={feature} className="flex gap-3 text-sm text-[var(--marketing-text-secondary)]">
+                <ul className="mt-6 flex-1 space-y-3">
+                  {plan.features.slice(0, 5).map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex gap-3 text-sm text-[var(--marketing-text-secondary)]"
+                    >
                       <CheckCircle2
                         className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marketing-accent-hover)]"
                         aria-hidden="true"
@@ -268,8 +342,8 @@ export default function MarketingHomePage() {
                     </li>
                   ))}
                 </ul>
-                <PrimaryCTA href={trialHrefForPlan(plan.id)} className="mt-6 w-full">
-                  Start {plan.name} trial
+                <PrimaryCTA href={trialHrefForPlan(plan.id)} className="mt-8 w-full">
+                  Start free trial
                 </PrimaryCTA>
               </article>
             ))}
@@ -277,35 +351,38 @@ export default function MarketingHomePage() {
           <div className="mt-8 text-center">
             <Link href="/pricing" className="mkt-btn mkt-btn-secondary">
               See full pricing details
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </MarketingContainer>
       </MarketingSection>
 
+      {/* ── FAQ ── */}
       <MarketingSection id="faq" tone="muted">
         <MarketingContainer>
-          <SectionHeading
-            eyebrow="FAQ"
-            title="Common questions before starting."
-            description="A short preview of the questions teams ask while evaluating AlphaClone."
-          />
-          <div className="mx-auto grid max-w-3xl gap-3">
+          <div className="mb-10 mx-auto max-w-3xl text-center">
+            <h2 className="font-marketing-heading text-[var(--marketing-text-primary)]">
+              Frequently asked questions
+            </h2>
+            <p className="mt-4 text-lg text-[var(--marketing-text-secondary)]">
+              Quick answers before you start your trial.
+            </p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
             {HOMEPAGE_FAQ.map((item) => (
-              <details key={item.question} className="mkt-surface p-5">
-                <summary className="cursor-pointer text-base font-semibold text-[var(--marketing-text-primary)]">
-                  {item.question}
+              <details key={item.question} className="mkt-faq">
+                <summary>
+                  <span>{item.question}</span>
+                  <span className="mkt-faq-plus" aria-hidden="true">
+                    +
+                  </span>
                 </summary>
-                <p className="mt-3 text-sm leading-6 text-[var(--marketing-text-secondary)]">
-                  {item.answer}
-                </p>
+                <p>{item.answer}</p>
               </details>
             ))}
           </div>
           <div className="mt-8 text-center">
             <Link href="/faq" className="mkt-btn mkt-btn-secondary">
               Read the full FAQ
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
         </MarketingContainer>
