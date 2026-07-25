@@ -141,31 +141,41 @@ export async function executeSingleBonnieTool(params: {
       toolResult = await executeCustomTool(tool, tenantId, userId, args);
     } else {
       if (hasTool(tool)) {
+        const { businessToolActivity, humanizeTechnicalFailure } = await import(
+          '@/lib/copy/businessFriendlyErrors'
+        );
         const result = await executeTool(tenantId, userId, tool, args);
         const text = extractToolText(result);
         toolResult = {
           tool,
           success: !result.isError,
-          summary: result.isError ? `Failed: ${text.slice(0, 200)}` : `${tool} completed`,
+          summary: result.isError
+            ? humanizeTechnicalFailure(text, { tool })
+            : `${businessToolActivity(tool)}.`,
           details: text,
         };
       } else {
         const { mcpServerTools } = await resolveBonnieToolSets();
         if (mcpServerTools.includes(tool)) {
           const { executeBonnieMcpTool } = await import('@/lib/bonnie/bonnieMcpBridge');
+          const { businessToolActivity, humanizeTechnicalFailure } = await import(
+            '@/lib/copy/businessFriendlyErrors'
+          );
           const result = await executeBonnieMcpTool(tool, args, tenantId, userId);
           const text = extractToolText(result);
           toolResult = {
             tool,
             success: !result.isError,
-            summary: result.isError ? `Failed: ${text.slice(0, 200)}` : `${tool} completed`,
+            summary: result.isError
+              ? humanizeTechnicalFailure(text, { tool })
+              : `${businessToolActivity(tool)}.`,
             details: text,
           };
         } else {
           toolResult = {
             tool,
             success: false,
-            summary: `Tool "${tool}" is not available to Bonnie.`,
+            summary: 'Bonnie doesn’t have that capability enabled in this workspace yet.',
           };
         }
       }
@@ -186,7 +196,10 @@ export async function executeSingleBonnieTool(params: {
 
     return toolResult;
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Tool execution failed';
+    const { humanizeTechnicalFailure } = await import('@/lib/copy/businessFriendlyErrors');
+    const message = humanizeTechnicalFailure(err instanceof Error ? err : 'Tool execution failed', {
+      tool,
+    });
     if (!skipPolicy) {
       await recordDecision({
         tenantId,

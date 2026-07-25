@@ -43,7 +43,7 @@ export const HUMAN_LABELS = {
 
   // Dashboard sections
   needsAttention: 'Needs your attention',
-  whatBonnieDid: 'What Bonnie handled',
+  whatBonnieDid: "Bonnie's recent work",
   todaysWork: "Today's work",
   moneySnapshot: 'Money overview',
   businessHealth: 'Business health',

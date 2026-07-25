@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { normalizeDefineOutcomeArgs } from '@/lib/bonnie/outcomeArgs';
+import { businessOutcomeSummary } from '@/lib/copy/businessFriendlyErrors';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -36,8 +37,12 @@ export async function GET(req: NextRequest) {
       error_message: string | null;
     }) => ({
       id: row.id,
-      label: row.tool_name,
-      summary: row.success ? 'Outcome recorded successfully' : row.error_message || 'Outcome recorded',
+      label: 'Checked results',
+      summary: businessOutcomeSummary({
+        tool: row.tool_name || 'define_outcome',
+        success: row.success,
+        errorMessage: row.error_message,
+      }),
       created_at: row.created_at,
       success: row.success,
     }));
