@@ -2031,33 +2031,92 @@
   position: absolute;
   inset: 0;
   z-index: var(--mkt-z-ambient);
-  background:
-    radial-gradient(
-      ellipse 58% 36% at 50% 10%,
-      rgba(20, 95, 190, 0.22) 0%,
-      rgba(11, 53, 119, 0.1) 42%,
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 46% 30% at 88% 34%,
-      rgba(24, 199, 200, 0.12) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 40% 28% at 8% 48%,
-      rgba(115, 87, 232, 0.1) 0%,
-      transparent 68%
-    ),
-    radial-gradient(
-      ellipse 50% 26% at 70% 78%,
-      rgba(22, 136, 216, 0.09) 0%,
-      transparent 72%
-    ),
-    radial-gradient(
-      ellipse 36% 22% at 22% 86%,
-      rgba(24, 199, 200, 0.07) 0%,
-      transparent 70%
-    );
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.mkt-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.mkt-bg-orb--a {
+  width: min(72vw, 58rem);
+  height: min(42vw, 34rem);
+  top: -8%;
+  left: 12%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(20, 95, 190, 0.34) 0%,
+    rgba(11, 53, 119, 0.14) 45%,
+    transparent 72%
+  );
+  animation: mkt-orb-drift-a 18s ease-in-out alternate infinite;
+}
+
+.mkt-bg-orb--b {
+  width: min(48vw, 38rem);
+  height: min(40vw, 32rem);
+  top: 22%;
+  right: -8%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(24, 199, 200, 0.22) 0%,
+    rgba(24, 199, 200, 0.06) 48%,
+    transparent 72%
+  );
+  animation: mkt-orb-drift-b 22s ease-in-out alternate infinite;
+}
+
+.mkt-bg-orb--c {
+  width: min(44vw, 34rem);
+  height: min(38vw, 30rem);
+  top: 40%;
+  left: -10%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(115, 87, 232, 0.18) 0%,
+    rgba(115, 87, 232, 0.05) 50%,
+    transparent 72%
+  );
+  animation: mkt-orb-drift-c 26s ease-in-out alternate infinite;
+}
+
+.mkt-bg-orb--d {
+  width: min(56vw, 44rem);
+  height: min(34vw, 28rem);
+  bottom: 4%;
+  left: 38%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(22, 136, 216, 0.2) 0%,
+    rgba(24, 199, 200, 0.08) 42%,
+    transparent 72%
+  );
+  animation: mkt-orb-drift-d 20s ease-in-out alternate infinite;
+}
+
+@keyframes mkt-orb-drift-a {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
+  to { transform: translate3d(7%, 10%, 0) scale(1.12); opacity: 1; }
+}
+
+@keyframes mkt-orb-drift-b {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.75; }
+  to { transform: translate3d(-10%, 8%, 0) scale(1.16); opacity: 1; }
+}
+
+@keyframes mkt-orb-drift-c {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
+  to { transform: translate3d(12%, -9%, 0) scale(1.14); opacity: 0.95; }
+}
+
+@keyframes mkt-orb-drift-d {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.8; }
+  to { transform: translate3d(-8%, -11%, 0) scale(1.1); opacity: 1; }
 }
 
 .mkt-bg-noise {
@@ -2111,6 +2170,8 @@
       rgba(24, 199, 200, 0.04) 45%,
       transparent 72%
     );
+  animation: mkt-hero-ambient-breathe 16s ease-in-out alternate infinite;
+  will-change: transform, opacity;
 }
 
 .mkt-section-ambient--how {
@@ -2125,6 +2186,7 @@
       rgba(22, 136, 216, 0.08) 0%,
       transparent 68%
     );
+  animation: mkt-section-ambient-drift 20s ease-in-out alternate infinite;
 }
 
 .mkt-section-ambient--subtle {
@@ -2139,6 +2201,17 @@
       rgba(24, 199, 200, 0.05) 0%,
       transparent 70%
     );
+  animation: mkt-section-ambient-drift 24s ease-in-out alternate-reverse infinite;
+}
+
+@keyframes mkt-hero-ambient-breathe {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.88; }
+  to { transform: translate3d(0, 4%, 0) scale(1.08); opacity: 1; }
+}
+
+@keyframes mkt-section-ambient-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); opacity: 0.85; }
+  to { transform: translate3d(3%, -2%, 0) scale(1.06); opacity: 1; }
 }
 
 /* Data waves */
@@ -2163,29 +2236,31 @@
 
 .wave-path {
   fill: none;
-  stroke-width: 0.7;
+  stroke-width: 0.85;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
 .hero-data-wave-drift--left {
-  animation: mkt-wave-drift-x 24s ease-in-out alternate infinite;
+  animation: mkt-wave-drift-x 14s ease-in-out alternate infinite;
   transform-origin: left center;
+  will-change: transform;
 }
 
 .hero-data-wave-drift--right {
-  animation: mkt-wave-drift-x-rev 28s ease-in-out alternate infinite;
+  animation: mkt-wave-drift-x-rev 17s ease-in-out alternate infinite;
   transform-origin: right center;
+  will-change: transform;
 }
 
 @keyframes mkt-wave-drift-x {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(12px, 0, 0); }
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(48px, 18px, 0) scale(1.04); }
 }
 
 @keyframes mkt-wave-drift-x-rev {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-10px, 0, 0); }
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-44px, 14px, 0) scale(1.035); }
 }
 
 /* Curved dot field */
@@ -2205,17 +2280,26 @@
 }
 
 .curved-dot-field-pulse {
-  animation: mkt-dot-pulse 22s ease-in-out alternate infinite;
+  animation: mkt-dot-pulse 12s ease-in-out alternate infinite;
+  transform-origin: 82% 18%;
+  will-change: transform, opacity;
 }
 
 .curved-dot-field-pulse--alt {
-  animation-duration: 26s;
-  animation-direction: alternate-reverse;
+  animation-name: mkt-dot-pulse-alt;
+  animation-duration: 15s;
+  animation-direction: alternate;
+  transform-origin: 18% 78%;
 }
 
 @keyframes mkt-dot-pulse {
-  from { opacity: 0.55; }
-  to { opacity: 1; }
+  from { opacity: 0.45; transform: translate3d(0, 0, 0) scale(0.96); }
+  to { opacity: 1; transform: translate3d(-18px, 14px, 0) scale(1.08); }
+}
+
+@keyframes mkt-dot-pulse-alt {
+  from { opacity: 0.4; transform: translate3d(0, 0, 0) scale(0.97); }
+  to { opacity: 1; transform: translate3d(16px, -12px, 0) scale(1.07); }
 }
 
 /* Product preview glow */
@@ -2307,9 +2391,13 @@
 .ambient-background.is-paused .hero-data-wave-drift--left,
 .ambient-background.is-paused .hero-data-wave-drift--right,
 .ambient-background.is-paused .curved-dot-field-pulse,
+.ambient-background.is-paused .mkt-bg-orb,
+.ambient-background.is-paused .mkt-section-ambient,
 .mkt-shell:has(.ambient-background.is-paused) .hero-data-wave-drift--left,
 .mkt-shell:has(.ambient-background.is-paused) .hero-data-wave-drift--right,
-.mkt-shell:has(.ambient-background.is-paused) .curved-dot-field-pulse {
+.mkt-shell:has(.ambient-background.is-paused) .curved-dot-field-pulse,
+.mkt-shell:has(.ambient-background.is-paused) .mkt-bg-orb,
+.mkt-shell:has(.ambient-background.is-paused) .mkt-section-ambient {
   animation-play-state: paused !important;
 }
 
@@ -2370,7 +2458,11 @@
   .ambient-background,
   .hero-data-wave-drift--left,
   .hero-data-wave-drift--right,
-  .curved-dot-field-pulse {
+  .curved-dot-field-pulse,
+  .mkt-bg-orb,
+  .mkt-section-ambient--hero,
+  .mkt-section-ambient--how,
+  .mkt-section-ambient--subtle {
     animation: none !important;
     transform: none !important;
   }

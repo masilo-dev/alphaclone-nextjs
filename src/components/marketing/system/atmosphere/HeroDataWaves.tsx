@@ -173,7 +173,7 @@ function WaveGroup({
           className="wave-path"
           d={stroke.d}
           stroke={stroke.stroke}
-          opacity={Math.min(stroke.opacity, 0.42)}
+          opacity={Math.min(stroke.opacity, 0.58)}
         />
       ))}
     </g>
@@ -182,7 +182,7 @@ function WaveGroup({
 
 /**
  * Side data-wave fields framing the hero — custom SVG paths, not stock art.
- * Fades before the central headline; curves toward the product preview.
+ * Fades before the central headline; slow drift keeps the atmosphere alive.
  */
 export default function HeroDataWaves() {
   return (
