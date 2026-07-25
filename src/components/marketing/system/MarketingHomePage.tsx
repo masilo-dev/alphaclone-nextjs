@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { PUBLIC_PRICING_PLANS, PRICING_FROM } from '@/config/pricingPlans';
-import { VERIFIED_PARTNERS } from '@/config/verifiedPartners';
 import { trialHrefForPlan } from '@/lib/marketing/cta';
 import { AlphaIcon, IconFrame, ICON_ACCENT } from '@/components/marketing/icons';
 import { CtaPair, PrimaryCTA } from './CtaButtons';
@@ -17,6 +16,7 @@ import {
 } from './homeContent';
 import { MarketingContainer, MarketingSection } from './LayoutPrimitives';
 import MarketingShell from './MarketingShell';
+import VerifiedIntegrationsStrip from './VerifiedIntegrationsStrip';
 import {
   CurvedDotField,
   HeroDataWaves,
@@ -26,7 +26,6 @@ import {
 
 export default function MarketingHomePage() {
   const showTestimonials = APPROVED_TESTIMONIALS.length > 0;
-  const partnerLabels = VERIFIED_PARTNERS.slice(0, 8).map((partner) => partner.name);
 
   return (
     <MarketingShell>
@@ -63,20 +62,16 @@ export default function MarketingHomePage() {
 
       <SectionConnector variant="fade" />
 
-      {/* Trusted-by */}
+      {/* Trusted integrations — proper brand marks, not plain name lists */}
       <MarketingSection className="py-8" atmosphere="trust">
         <MarketingContainer>
           <div className="mkt-trust-strip">
-            <p className="mkt-trust-strip-title">Built for service businesses</p>
-            <p className="mb-4 text-sm text-[var(--text-secondary)]">
-              Agencies, consultants, and founders connect the tools they already rely on — without
-              rebuilding their whole stack.
+            <p className="mkt-trust-strip-title">Connects with the tools you already use</p>
+            <p className="mkt-trust-strip-lead">
+              Verified integrations for social, payments, productivity, and team chat — so AlphaClone
+              fits into your stack instead of replacing everything overnight.
             </p>
-            <ul className="mkt-trust-labels" aria-label="Verified integrations">
-              {partnerLabels.map((name) => (
-                <li key={name}>{name}</li>
-              ))}
-            </ul>
+            <VerifiedIntegrationsStrip />
           </div>
         </MarketingContainer>
       </MarketingSection>

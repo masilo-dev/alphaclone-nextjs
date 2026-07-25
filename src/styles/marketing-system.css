@@ -981,12 +981,20 @@
 }
 
 .mkt-trust-strip-title {
-  margin: 0 0 1.1rem;
+  margin: 0 0 0.65rem;
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 650;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.mkt-trust-strip-lead {
+  margin: 0 auto 1.35rem;
+  max-width: 40rem;
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+  line-height: 1.6;
 }
 
 .mkt-trust-labels {
@@ -1004,6 +1012,76 @@
   font-size: 0.92rem;
   font-weight: 650;
   letter-spacing: 0.02em;
+}
+
+/* Proper branded integration chips — 2-row wrap, not a tall name list */
+.mkt-partner-grid {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  max-width: 52rem;
+}
+
+@media (min-width: 640px) {
+  .mkt-partner-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.mkt-partner-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--partner-color, #18c7c8) 28%, var(--border-subtle));
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--partner-color, #18c7c8) 12%, transparent),
+      transparent 58%
+    ),
+    var(--partner-chip-bg, rgba(8, 20, 46, 0.72));
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+
+.mkt-partner-chip:hover {
+  border-color: color-mix(in srgb, var(--partner-color, #18c7c8) 48%, var(--border-subtle));
+  transform: translateY(-1px);
+}
+
+.mkt-partner-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--partner-color, #18c7c8) 18%, transparent);
+  color: var(--partner-color, #18c7c8);
+}
+
+.mkt-partner-brand-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  display: block;
+}
+
+.mkt-partner-chip-name {
+  color: color-mix(in srgb, var(--text-primary) 92%, white);
+  font-size: 0.84rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 /* ── Platform overview ── */

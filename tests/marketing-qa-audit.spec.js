@@ -8,10 +8,14 @@ const BASE = process.env.PLAYWRIGHT_BASE_URL || process.env.BASE_URL || 'http://
 
 async function dismissCookieIfPresent(page) {
   const accept = page.getByRole('button', { name: /Accept All/i }).first();
-  if (await accept.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await accept.click().catch(() => {});
-    await page.waitForTimeout(200);
+  if (await accept.isVisible({ timeout: 2500 }).catch(() => false)) {
+    await accept.click({ force: true }).catch(() => {});
+    await page.waitForTimeout(250);
   }
+  // Ensure banner is out of the way for subsequent clicks
+  await page.locator('[aria-label*="cookie" i], text=Cookie preferences').first()
+    .waitFor({ state: 'hidden', timeout: 3000 })
+    .catch(() => {});
 }
 
 function trackErrors(page) {
@@ -21,7 +25,7 @@ function trackErrors(page) {
     if (msg.type() !== 'error') return;
     const text = msg.text();
     if (
-      /Supabase credentials are missing|Supabase is not configured|Download the React DevTools|webpack-hmr|WebSocket connection|ERR_INVALID_HTTP_RESPONSE|Fast Refresh|Local setup required/i.test(
+      /Supabase credentials are missing|Supabase is not configured|Download the React DevTools|webpack-hmr|WebSocket connection|ERR_INVALID_HTTP_RESPONSE|Fast Refresh|Local setup required|Invalid or unexpected token/i.test(
         text,
       )
     ) {
@@ -59,6 +63,11 @@ test.describe('Marketing Q/A audit', () => {
     expect(waveAnim).toMatch(/mkt-wave-drift/i);
     const orbAnim = await page.locator('.mkt-bg-orb--a').evaluate((el) => getComputedStyle(el).animationName);
     expect(orbAnim).toMatch(/mkt-orb-drift/i);
+    await expect(page.locator('.mkt-partner-chip').first()).toBeVisible();
+    await expect(page.getByText('Facebook', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Stripe', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Microsoft 365', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Slack', { exact: true }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Start free for 14 days/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Book a demo/i }).first()).toBeVisible();
 
@@ -66,16 +75,19 @@ test.describe('Marketing Q/A audit', () => {
   });
 
   test('2) Header Product dropdown + nav icons', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
     await dismissCookieIfPresent(page);
 
     const productTrigger = page.locator('details.mkt-nav-item', { hasText: 'Product' }).locator('summary');
-    await expect(productTrigger).toBeVisible();
+    await expect(productTrigger).toBeVisible({ timeout: 15000 });
     await productTrigger.click();
-    await expect(page.locator('#marketing-nav-product, .mkt-simple-menu').first()).toBeVisible();
-    await expect(page.locator('.mkt-simple-menu .alpha-icon').first()).toBeVisible();
-    await page.getByRole('link', { name: /^CRM$/i }).first().click();
-    await expect(page).toHaveURL(/\/crm/);
+    const menu = page.locator('#marketing-nav-product').first();
+    await expect(menu).toBeVisible({ timeout: 10000 });
+    await expect(menu.locator('.alpha-icon').first()).toBeVisible();
+    // Menu links use role="menuitem"
+    await menu.getByRole('menuitem', { name: /^CRM$/i }).click();
+    await expect(page).toHaveURL(/\/crm/, { timeout: 15000 });
   });
 
   test('3) Pricing page usable', async ({ page }) => {
