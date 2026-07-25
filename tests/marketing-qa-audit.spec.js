@@ -45,9 +45,20 @@ test.describe('Marketing Q/A audit', () => {
     await expect(page.locator('.mkt-shell, .mkt-marketing-background').first()).toBeAttached();
     await expect(page.locator('.hero-data-wave').first()).toBeAttached();
     await expect(page.locator('.mkt-hero--compact').first()).toBeVisible();
+    await expect(page.locator('.mkt-bg-orb').first()).toBeAttached();
+    await expect(page.locator('.hero-data-wave-drift--left').first()).toBeAttached();
     await expect(page.locator('.mkt-feature-card .alpha-icon').first()).toBeVisible();
     await expect(page.locator('.mkt-feature-card').first()).toBeVisible();
     await expect(page.locator('.mkt-preview')).toHaveCount(0);
+
+    // Atmosphere motion should be active (not reduced-motion in CI chromium)
+    const waveAnim = await page.locator('.hero-data-wave-drift--left').first().evaluate((el) => {
+      const style = getComputedStyle(el);
+      return style.animationName;
+    });
+    expect(waveAnim).toMatch(/mkt-wave-drift/i);
+    const orbAnim = await page.locator('.mkt-bg-orb--a').evaluate((el) => getComputedStyle(el).animationName);
+    expect(orbAnim).toMatch(/mkt-orb-drift/i);
     await expect(page.getByRole('link', { name: /Start free for 14 days/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Book a demo/i }).first()).toBeVisible();
 

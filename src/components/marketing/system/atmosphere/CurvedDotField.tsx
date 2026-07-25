@@ -25,7 +25,7 @@ function buildCurvedField(
         cx: x,
         cy: y,
         r: size / 2,
-        opacity: Math.max(0.04, 0.22 * fade - row * 0.008),
+        opacity: Math.max(0.08, 0.34 * fade - row * 0.008),
       });
     }
   }
