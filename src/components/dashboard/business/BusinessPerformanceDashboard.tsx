@@ -247,36 +247,51 @@ const BusinessPerformanceDashboard: React.FC = () => {
             <div className="space-y-4">
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex gap-3">
-                  <div className="mt-1 p-1.5 rounded-full bg-[#00f0ff]/10 text-[#00f0ff]">
+                  <div className="mt-1 p-1.5 rounded-full bg-teal-500/10 text-teal-400">
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#f5f5f5]">Revenue Momentum +12%</p>
-                    <p className="text-xs text-[#94a3b8] mt-1">Growth is outpacing project volume, suggesting higher average deal value.</p>
+                    <p className="text-sm font-bold text-[#f5f5f5]">
+                      Revenue momentum{' '}
+                      {data?.revenue?.trend == null
+                        ? 'unavailable'
+                        : `${data.revenue.trend >= 0 ? '+' : ''}${Number(data.revenue.trend).toFixed(1)}%`}
+                    </p>
+                    <p className="text-xs text-[#94a3b8] mt-1">
+                      Based on paid revenue for the selected analytics period versus the prior period.
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex gap-3">
-                  <div className="mt-1 p-1.5 rounded-full bg-[#ffb347]/10 text-[#facc15]">
+                  <div className="mt-1 p-1.5 rounded-full bg-amber-500/10 text-amber-400">
                     <AlertCircle className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#f5f5f5]">7 Stagnant Leads</p>
-                    <p className="text-xs text-[#94a3b8] mt-1">Leads identified with zero activity for 7+ days. Automated follow-up recommended.</p>
+                    <p className="text-sm font-bold text-[#f5f5f5]">Pipeline health</p>
+                    <p className="text-xs text-[#94a3b8] mt-1">
+                      Review deals and follow-ups in Sales for stagnant opportunities. Counts are not estimated on this panel.
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                 <div className="flex gap-3">
-                  <div className="mt-1 p-1.5 rounded-full bg-[#adebb3]/10 text-[#adebb3]">
+                  <div className="mt-1 p-1.5 rounded-full bg-emerald-500/10 text-emerald-400">
                     <Zap className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#f5f5f5]">Automation Scaling</p>
-                    <p className="text-xs text-[#94a3b8] mt-1">System handled 240+ runs today with 98% success. Throughput is healthy.</p>
+                    <p className="text-sm font-bold text-[#f5f5f5]">
+                      Automation runs:{' '}
+                      {Number(data?.businessOS?.automation?.totalRuns ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-[#94a3b8] mt-1">
+                      Success rate:{' '}
+                      {Number(data?.businessOS?.automation?.successRate ?? 0).toFixed(0)}% from recorded workflow runs.
+                    </p>
                   </div>
                 </div>
               </div>

@@ -136,10 +136,11 @@ export const ENTERPRISE = {
         xl: '2rem',     // 32px
     },
     breakpoints: {
-        mobile: '575px',
-        tablet: '767px',
-        desktop: '1023px',
-        wide: '1439px',
+        /** Align with Tailwind `sm` / `md` / `lg` / `xl` — single responsive strategy */
+        mobile: '640px',
+        tablet: '768px',
+        desktop: '1024px',
+        wide: '1280px',
     },
     metricCard: {
         valueSize: 'text-[32px]',

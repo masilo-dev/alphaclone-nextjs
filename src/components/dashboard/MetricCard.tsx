@@ -4,6 +4,7 @@ import type { CSSProperties } from 'react';
 import type { DeltaColor, DeltaDir } from '@/types/dashboardStats';
 import { ENTERPRISE, WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 const DELTA_STYLES: Record<DeltaColor, string> = {
   green: 'text-dashboard-green',
@@ -13,13 +14,18 @@ const DELTA_STYLES: Record<DeltaColor, string> = {
   teal: 'text-teal-400',
 };
 
-interface MetricCardProps {
+export interface MetricCardProps {
   label: string;
-  value: string | number;
+  value: string | number | null;
   delta?: string;
   deltaDir?: DeltaDir;
   deltaColor?: DeltaColor;
   comparisonText?: string;
+  period?: string;
+  loading?: boolean;
+  error?: string;
+  unavailableReason?: string;
+  href?: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -31,24 +37,33 @@ export function MetricCard({
   deltaDir,
   deltaColor = 'green',
   comparisonText,
+  period,
+  loading,
+  error,
+  unavailableReason,
+  href,
   className,
   style,
 }: MetricCardProps) {
-  const arrow = deltaDir === 'down' ? '↓' : deltaDir === 'up' ? '↑' : '';
-  const period =
-    comparisonText ?? (delta ? ENTERPRISE.metricCard.defaultComparison : undefined);
+  if (loading) {
+    return <MetricCardSkeleton className={className} style={style} />;
+  }
 
-  return (
-    <div
-      className={cn(
-        WORKSPACE.panel.base,
-        ENTERPRISE.metricCard.minHeight,
-        'p-4 flex flex-col justify-between shadow-none',
-        className
-      )}
-      style={style}
-    >
-      <span className={cn('text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ws-text-tertiary)] truncate')}>
+  const arrow = deltaDir === 'down' ? '↓' : deltaDir === 'up' ? '↑' : '';
+  const periodLabel =
+    period ?? comparisonText ?? (delta ? ENTERPRISE.metricCard.defaultComparison : undefined);
+  const isUnavailable = value == null || Boolean(unavailableReason) || Boolean(error);
+  const displayValue = error
+    ? 'Unavailable'
+    : unavailableReason
+      ? 'Not tracked'
+      : value == null
+        ? '—'
+        : value;
+
+  const body = (
+    <>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--ws-text-tertiary)] truncate">
         {label}
       </span>
 
@@ -56,13 +71,20 @@ export function MetricCard({
         <span
           className={cn(
             ENTERPRISE.metricCard.valueSize,
-            'font-semibold text-white leading-none tabular-nums tracking-tight block',
+            'font-semibold leading-none tabular-nums tracking-tight block',
+            isUnavailable ? 'text-slate-500 text-[1.25rem]' : 'text-white'
           )}
         >
-          {value}
+          {displayValue}
         </span>
 
-        {(delta || period) && (
+        {(error || unavailableReason) && (
+          <p className="text-[11px] text-slate-500 mt-2 leading-snug">
+            {error || unavailableReason}
+          </p>
+        )}
+
+        {!isUnavailable && (delta || periodLabel) && (
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-2">
             {delta ? (
               <span
@@ -75,14 +97,36 @@ export function MetricCard({
                 {arrow} {delta}
               </span>
             ) : null}
-            {period ? (
+            {periodLabel ? (
               <span className={cn(ENTERPRISE.metricCard.comparisonSize, 'text-slate-500')}>
-                {period}
+                {periodLabel}
               </span>
             ) : null}
           </div>
         )}
       </div>
+    </>
+  );
+
+  const shellClass = cn(
+    WORKSPACE.panel.base,
+    ENTERPRISE.metricCard.minHeight,
+    'p-4 flex flex-col justify-between shadow-none',
+    href && 'hover:border-teal-500/30 transition-colors',
+    className
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={shellClass} style={style}>
+        {body}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={shellClass} style={style}>
+      {body}
     </div>
   );
 }
@@ -103,6 +147,9 @@ export function MetricCardSkeleton({
         className
       )}
       style={style}
+      role="status"
+      aria-busy="true"
+      aria-label="Loading metric"
     >
       <div className="h-3.5 w-24 bg-slate-800 rounded" />
       <div className="h-8 w-32 bg-slate-800 rounded mt-3" />

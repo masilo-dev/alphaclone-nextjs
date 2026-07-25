@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@import "../styles/accessibility.css";
 
 .ios-scroll {
   -webkit-overflow-scrolling: touch;
@@ -1792,7 +1793,20 @@ html.light .ac-workspace-tab--active {
 
 @media (prefers-reduced-motion: reduce) {
   .ac-skeleton-pulse,
-  .animate-pulse {
+  .animate-pulse,
+  .animate-fade-in,
+  .animate-accordion-down,
+  .animate-accordion-up {
     animation: none !important;
+    transition: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
