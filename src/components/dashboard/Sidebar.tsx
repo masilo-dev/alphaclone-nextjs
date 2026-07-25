@@ -16,6 +16,7 @@ import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { applyAcThemeClass, persistAcTheme, readStoredAcTheme } from '@/lib/applyAcTheme';
 import { preferencesService } from '@/services/dashboardService';
 import { WORKSPACE } from '@/constants/design';
+import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface SidebarProps {
@@ -188,13 +189,16 @@ const Sidebar = React.memo<SidebarProps>(({
                 </div>
 
                 {sidebarOpen && (
-                    <div className="md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
-                        <label htmlFor="ac-sidebar-jump" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                    <div className="md:hidden px-3 pb-3 border-b border-[var(--ws-border)] shrink-0">
+                        <label
+                            htmlFor="ac-sidebar-jump"
+                            className={cn(WORKSPACE.typography.sectionLabel, 'block mb-1.5')}
+                        >
                             {t('Jump to page')}
                         </label>
                         <select
                             id="ac-sidebar-jump"
-                            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            className="w-full min-h-11 px-3 py-2 rounded-[var(--ws-radius-lg)] bg-[var(--ws-panel)] border border-[var(--ws-border)] text-[13px] text-[var(--ws-text-primary,#fff)] focus:outline-none focus:ring-2 focus:ring-teal-500/50"
                             defaultValue=""
                             onChange={(e) => {
                                 const href = e.target.value;
@@ -328,19 +332,19 @@ const Sidebar = React.memo<SidebarProps>(({
 
                     {/* Operations HUD (Integrated) */}
                     {tasks.length > 0 && sidebarOpen && (
-                        <div className="mb-4 border border-teal-500/20 bg-teal-500/5 rounded-xl overflow-hidden">
-                            <div className="px-3 py-2 bg-teal-500/10 border-b border-teal-500/20 flex items-center justify-between">
+                        <div className="mb-3 border border-[var(--ws-border)] bg-[var(--ws-panel)] rounded-[var(--ws-radius-lg)] overflow-hidden">
+                            <div className="px-3 py-2 border-b border-[var(--ws-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Activity className="w-3.5 h-3.5 text-teal-400" />
-                                    <span className="text-xs font-black uppercase tracking-widest text-teal-400">{t('Operations')}</span>
+                                    <span className={WORKSPACE.typography.sectionLabel}>{t('Operations')}</span>
                                 </div>
-                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-xs font-bold text-teal-300">
+                                <span className="text-[11px] font-medium text-teal-300 tabular-nums">
                                     {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
                             </div>
                             <div className="max-h-40 overflow-y-auto custom-scrollbar p-1.5 space-y-1">
                                 {tasks.map((task) => (
-                                    <div key={task.id} className="p-2 rounded-lg bg-slate-900/50 border border-slate-800 flex flex-col gap-1.5">
+                                    <div key={task.id} className="p-2 rounded-[var(--ws-radius)] bg-[var(--ws-hover)] border border-[var(--ws-border)] flex flex-col gap-1.5">
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 {task.status === 'running' ? (
@@ -350,17 +354,17 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 ) : (
                                                     <Activity className="w-3 h-3 text-rose-400" />
                                                 )}
-                                                <span className="text-xs font-bold text-slate-300 truncate">{task.name}</span>
+                                                <span className="text-[12px] font-medium text-[var(--ws-text-secondary)] truncate">{task.name}</span>
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
-                                                <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
-                                                    <X className="w-2.5 h-2.5 text-slate-500" />
+                                                <button type="button" onClick={() => dismissTask(task.id)} className="p-1 hover:bg-[var(--ws-hover)] rounded-[var(--ws-radius)]" aria-label="Dismiss">
+                                                    <X className="w-3 h-3 text-[var(--ws-text-tertiary)]" />
                                                 </button>
                                             )}
                                         </div>
                                         {task.status === 'running' && (
-                                            <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                                                <motion.div 
+                                            <div className="w-full bg-[var(--ws-canvas)] h-1 rounded-full overflow-hidden">
+                                                <motion.div
                                                     className="h-full bg-teal-500"
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${task.progress || 50}%` }}
@@ -386,41 +390,46 @@ const Sidebar = React.memo<SidebarProps>(({
                     {/* Theme quick-toggle (collapsed only shows icon cycle; expanded shows nothing — use Settings) */}
                     {!sidebarOpen && (
                         <button
+                            type="button"
                             onClick={() => handleTheme(theme === 'dark' ? 'light' : 'dark')}
                             title={theme === 'dark' ? t('Switch to Light mode') : t('Switch to Dark mode')}
-                            className="w-full flex items-center justify-center py-2 mb-2 text-slate-500 hover:text-amber-300 transition-colors rounded-lg hover:bg-slate-800"
+                            className="w-full flex items-center justify-center min-h-11 mb-1 text-[var(--ws-text-tertiary)] hover:text-amber-300 transition-colors rounded-[var(--ws-radius)] hover:bg-[var(--ws-hover)]"
                         >
                             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                         </button>
                     )}
 
                     {/* User row — identity only; account actions live in header menu */}
-                    <div className={`flex ${sidebarOpen ? 'items-center gap-3' : 'flex-col items-center gap-2'}`}>
+                    <div className={`flex ${sidebarOpen ? 'items-center gap-2' : 'flex-col items-center gap-1'}`}>
                         <button
+                            type="button"
                             onClick={() => navigate(settingsPath)}
                             title={t('Settings')}
-                            className={`flex items-center min-w-0 rounded-lg hover:bg-slate-800/60 transition-colors active:scale-[0.98] ${
-                                sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
+                            className={`flex items-center min-w-0 rounded-[var(--ws-radius-lg)] hover:bg-[var(--ws-hover)] transition-colors active:scale-[0.98] ${
+                                sidebarOpen ? 'flex-1 gap-2.5 px-1.5 py-1.5' : 'justify-center p-1.5 min-h-11 min-w-11'
                             }`}
                         >
-                            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                            <span className="w-8 h-8 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center font-semibold text-teal-300 text-[12px] flex-shrink-0">
                                 {initials}
                             </span>
                             {sidebarOpen && (
                                 <span className="flex-1 min-w-0 text-left">
-                                    <span className="block text-sm font-semibold text-white truncate leading-tight">
+                                    <span className="block text-[13px] font-semibold text-[var(--ws-text-primary,#fff)] truncate leading-tight">
                                         {user.name || user.email?.split('@')[0] || t('User')}
                                     </span>
-                                    <span className="block text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</span>
+                                    <span className="block text-[11px] text-[var(--ws-text-tertiary)] truncate capitalize">
+                                        {user.role || t('member')}
+                                    </span>
                                 </span>
                             )}
                         </button>
 
                         <button
+                            type="button"
                             onClick={onLogout}
                             title={t('Log Out')}
                             aria-label={t('Log Out')}
-                            className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
+                            className="p-2 min-h-11 min-w-11 rounded-[var(--ws-radius)] text-[var(--ws-text-tertiary)] hover:text-red-400 hover:bg-red-500/10 transition-colors active:scale-95 touch-manipulation shrink-0"
                         >
                             <LogOut className="w-4 h-4" />
                         </button>

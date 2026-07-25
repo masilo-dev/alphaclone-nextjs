@@ -25,6 +25,8 @@ import { Input } from '../ui/UIComponents';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
+import { PageHeader } from './responsive/PageHeader';
+import { cn } from '@/lib/utils';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -645,107 +647,160 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
       <ModulePageLayout
         header={(
-          <div className="px-4 pt-3">
-            <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+          <div>
+            <PageHeader
+              moduleLabel="Work"
+              title="Tasks"
+              description="What needs doing today — list or board."
+              primaryAction={{
+                label: 'New task',
+                onClick: () => setCreateOpen(true),
+              }}
+              secondaryActions={[
+                {
+                  label: viewMode === 'list' ? 'Board view' : 'List view',
+                  onClick: () => setViewMode(viewMode === 'list' ? 'board' : 'list'),
+                },
+              ]}
+            />
+            <div className="px-3 sm:px-4 pt-2">
+              <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+            </div>
           </div>
         )}
         toolbar={(
-          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setBulkMode((v) => !v);
-              setSelectedIds(new Set());
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${bulkMode ? 'bg-teal-600 text-white' : 'text-slate-400 border border-white/10'}`}
-          >
-            {bulkMode ? 'Cancel' : 'Select'}
-          </button>
-          {bulkMode && (
-            <>
-              <button type="button" onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))} className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 border border-white/10">
-                All
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1 py-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkMode((v) => !v);
+                  setSelectedIds(new Set());
+                }}
+                className={cn(
+                  'min-h-11 px-3 rounded-[var(--ws-radius-lg)] text-[12px] font-medium border',
+                  bulkMode
+                    ? 'bg-teal-600 border-teal-500 text-white'
+                    : 'border-[var(--ws-border)] text-[var(--ws-text-secondary)] hover:border-teal-500/30',
+                )}
+              >
+                {bulkMode ? 'Cancel' : 'Select'}
               </button>
-              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkComplete} className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-300 border border-emerald-500/30 disabled:opacity-40">
-                Complete ({selectedIds.size})
+              {bulkMode && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds(new Set(tasks.map((t) => t.id)))}
+                    className="min-h-11 px-3 rounded-[var(--ws-radius-lg)] text-[12px] font-medium text-[var(--ws-text-secondary)] border border-[var(--ws-border)]"
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedIds.size === 0}
+                    onClick={handleBulkComplete}
+                    className="min-h-11 px-3 rounded-[var(--ws-radius-lg)] text-[12px] font-medium text-emerald-300 border border-emerald-500/30 disabled:opacity-40"
+                  >
+                    Complete ({selectedIds.size})
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedIds.size === 0}
+                    onClick={handleBulkDelete}
+                    className="min-h-11 px-3 rounded-[var(--ws-radius-lg)] text-[12px] font-medium text-rose-300 border border-rose-500/30 disabled:opacity-40"
+                  >
+                    Delete ({selectedIds.size})
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="flex items-center gap-1 p-0.5 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)]">
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 min-h-10 px-3 rounded-[var(--ws-radius)] text-[12px] font-medium',
+                  viewMode === 'list'
+                    ? 'bg-[var(--ws-active)] text-[var(--ws-text-primary,#fff)]'
+                    : 'text-[var(--ws-text-tertiary)]',
+                )}
+              >
+                <List className="w-3.5 h-3.5" /> List
               </button>
-              <button type="button" disabled={selectedIds.size === 0} onClick={handleBulkDelete} className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-300 border border-rose-500/30 disabled:opacity-40">
-                Delete ({selectedIds.size})
+              <button
+                type="button"
+                onClick={() => setViewMode('board')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 min-h-10 px-3 rounded-[var(--ws-radius)] text-[12px] font-medium',
+                  viewMode === 'board'
+                    ? 'bg-[var(--ws-active)] text-[var(--ws-text-primary,#fff)]'
+                    : 'text-[var(--ws-text-tertiary)]',
+                )}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" /> Board
               </button>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setViewMode('list')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'list' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
-        >
-          <List className="w-3.5 h-3.5" /> List
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewMode('board')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${viewMode === 'board' ? 'bg-slate-700 text-white' : 'text-slate-400'}`}
-        >
-          <LayoutGrid className="w-3.5 h-3.5" /> Board
-        </button>
-        </div>
-      </div>
+            </div>
+          </div>
         )}
         stats={!loading ? (
-          <div className="p-4 border-b border-white/5 bg-slate-900/20">
+          <div className="px-1">
             <ModuleStatCards stats={taskStats} />
           </div>
         ) : null}
       >
-      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950">
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20">
         {microsoftConnected && (
-          <div className="p-4 border-b border-white/5 bg-slate-900/40">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-sm font-bold text-white">Microsoft To Do</h3>
-                <p className="text-xs text-slate-400">Connected task lists appear alongside native Alphaclone tasks.</p>
+          <div className="p-4 border-b border-[var(--ws-border)]">
+            <div className="flex items-center justify-between mb-3 gap-3">
+              <div className="min-w-0">
+                <h3 className="text-[13px] font-semibold text-[var(--ws-text-primary,#fff)]">Microsoft To Do</h3>
+                <p className="text-[12px] text-[var(--ws-text-tertiary)]">
+                  Connected lists appear alongside AlphaClone tasks.
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => refreshMicrosoftTasks()}
-                className="rounded-lg border border-white/5 bg-slate-950/50 p-2 text-slate-300 hover:text-white"
+                className="min-h-11 min-w-11 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] p-2 text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary,#fff)]"
+                aria-label="Refresh Microsoft tasks"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
             {microsoftLoading ? (
-              <div className="text-xs text-slate-500">Loading Microsoft To Do lists...</div>
+              <div className="text-[12px] text-[var(--ws-text-tertiary)]">Loading Microsoft To Do lists…</div>
             ) : (
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {microsoftLists.map((list) => (
-                  <div key={list.id} className="rounded-xl border border-blue-500/10 bg-slate-950/50 p-3">
-                    <p className="text-sm font-semibold text-white truncate">{list.displayName}</p>
-                    <p className="text-[11px] text-blue-300 mt-1">{list.tasks.length} Microsoft tasks</p>
+                  <div key={list.id} className="ac-workspace-panel p-3">
+                    <p className="text-[13px] font-semibold text-[var(--ws-text-primary,#fff)] truncate">{list.displayName}</p>
+                    <p className="text-[11px] text-teal-300/90 mt-1">{list.tasks.length} Microsoft tasks</p>
                     <div className="mt-3 space-y-2">
                       {list.tasks.slice(0, 3).map((task: any) => (
-                        <div key={task.id} className="rounded-lg bg-slate-900/70 px-2.5 py-2">
-                          <p className="text-xs font-medium text-slate-200 truncate">{task.title}</p>
-                          <p className="text-[11px] text-slate-500">
+                        <div key={task.id} className="rounded-[var(--ws-radius)] bg-[var(--ws-hover)] px-2.5 py-2">
+                          <p className="text-[12px] font-medium text-[var(--ws-text-secondary)] truncate">{task.title}</p>
+                          <p className="text-[11px] text-[var(--ws-text-tertiary)]">
                             {task.status === 'completed' ? 'Completed' : 'Open in Microsoft To Do'}
                           </p>
                         </div>
                       ))}
                       {list.tasks.length === 0 && (
-                        <p className="text-[11px] text-slate-500">No Microsoft tasks in this list.</p>
+                        <p className="text-[11px] text-[var(--ws-text-tertiary)]">No Microsoft tasks in this list.</p>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
             )}
-            {microsoftError && <p className="text-xs text-rose-400 mt-3">{microsoftError}</p>}
+            {microsoftError && <p className="text-[12px] text-rose-400 mt-3">{microsoftError}</p>}
           </div>
         )}
         {loading ? (
-          <div className="space-y-px">{[...Array(8)].map((_, i) => <div key={i} className="h-11 bg-slate-900/40 animate-pulse" />)}</div>
+          <div className="space-y-2 p-3" role="status" aria-busy="true" aria-label="Loading tasks">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-12 ac-workspace-panel ac-skeleton-pulse" />
+            ))}
+          </div>
         ) : tasks.length === 0 ? (
           <div className="p-6">
             <EmptyStateFromPreset moduleId="tasks" />
@@ -792,13 +847,14 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </div>
       </ModulePageLayout>
 
-      {/* FAB */}
+      {/* Phone FAB — desktop uses PageHeader primary */}
       <button
         type="button"
         onClick={() => setCreateOpen(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/30 z-30"
+        className="md:hidden fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] right-4 w-12 h-12 bg-teal-600 hover:bg-teal-500 rounded-full flex items-center justify-center z-30 border border-teal-400/30 ac-fab-above-nav"
+        aria-label="New task"
       >
-        <Plus className="w-6 h-6 text-white" />
+        <Plus className="w-5 h-5 text-white" />
       </button>
 
       <DetailDrawer open={createOpen} onOpenChange={setCreateOpen} title="New task">
