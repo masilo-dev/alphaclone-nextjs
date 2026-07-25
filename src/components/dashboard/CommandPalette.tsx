@@ -213,12 +213,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [isOpen, search]);
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            setIsOpen(false);
+            return;
+        }
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            setSelectedIndex(prev => (prev + 1) % filteredCommands.length);
+            setSelectedIndex(prev => (prev + 1) % Math.max(filteredCommands.length, 1));
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+            setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % Math.max(filteredCommands.length, 1));
         } else if (e.key === 'Enter' && filteredCommands[selectedIndex]) {
             handleAction(filteredCommands[selectedIndex]);
         }
@@ -234,18 +239,30 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         exit={{ opacity: 0 }}
                         onClick={() => setIsOpen(false)}
                         className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
+                        aria-hidden="true"
                     />
 
                     <motion.div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Command palette"
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative"
+                        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-lg shadow-2xl overflow-hidden relative"
                     >
                         <div className="p-4 border-b border-slate-800 flex items-center gap-4">
-                            <Search className="w-5 h-5 text-teal-400" />
+                            <Search className="w-5 h-5 text-teal-400" aria-hidden="true" />
                             <input
                                 autoFocus
+                                role="combobox"
+                                aria-expanded={true}
+                                aria-controls="command-palette-list"
+                                aria-activedescendant={
+                                  filteredCommands[selectedIndex]
+                                    ? `command-option-${filteredCommands[selectedIndex].id}`
+                                    : undefined
+                                }
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyDown={handleKeyDown}
@@ -257,7 +274,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             </div>
                         </div>
 
-                        <div className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
+                        <div id="command-palette-list" role="listbox" className="max-h-[60vh] overflow-y-auto custom-scrollbar p-2">
                             {filteredCommands.length === 0 ? (
                                 <div className="p-8 text-center">
                                     <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
@@ -332,9 +349,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                                     return (
                                                         <button
                                                             key={cmd.id}
+                                                            id={`command-option-${cmd.id}`}
+                                                            role="option"
+                                                            aria-selected={isSelected}
+                                                            type="button"
                                                             onClick={() => handleAction(cmd)}
                                                             onMouseEnter={() => setSelectedIndex(globalIndex)}
-                                                            className={`w-full text-left p-3 rounded-2xl transition-all flex items-center gap-4 group ${isSelected
+                                                            className={`w-full text-left p-3 rounded-lg transition-all flex items-center gap-4 group ${isSelected
                                                                 ? 'bg-teal-500/10 border-teal-500/20'
                                                                 : 'hover:bg-slate-800/50 border-transparent'
                                                                 } border`}

@@ -26,7 +26,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variants = {
     primary: `${WORKSPACE.action.primary} border-0`,
-    secondary: "bg-teal-700 text-white hover:bg-teal-600/90 shadow-sm shadow-teal-900/20",
+    secondary: "bg-blue-600 text-white hover:bg-blue-500/90 shadow-sm shadow-blue-900/20",
     outline: "border border-[var(--ws-border)] bg-[var(--ws-toolbar)] text-white hover:bg-[var(--ws-surface-2)]",
     ghost: "text-teal-400 hover:text-teal-300 hover:bg-[var(--ws-surface-2)]",
     danger: "bg-red-600 text-white hover:bg-red-500/90",
@@ -115,9 +115,13 @@ export const Input: React.FC<InputProps> = ({
   defaultValue,
   onBlur,
   onChange,
+  id: idProp,
   ...props
 }) => {
-  const inputId = React.useId();
+  const generatedId = React.useId();
+  const fieldId = idProp || generatedId;
+  const errorId = `${fieldId}-error`;
+  const hintId = `${fieldId}-hint`;
   const isControlled = value !== undefined;
   const [internalValue, setInternalValue] = useState(String(defaultValue ?? ''));
   const fieldValue = isControlled ? String(value) : internalValue;
@@ -142,44 +146,49 @@ export const Input: React.FC<InputProps> = ({
     ? { value: fieldValue, onChange: handleChange, onBlur: handleBlur }
     : { defaultValue, onBlur, onChange, ...props };
 
+  const describedBy = [
+    error ? errorId : null,
+    !error && hint ? hintId : null,
+  ].filter(Boolean).join(' ') || undefined;
+
   const sharedClass = `w-full bg-[var(--ws-toolbar)] border ${error ? 'border-red-500' : 'border-[var(--ws-border)]'} ${WORKSPACE.panel.radius} px-3 py-2 text-sm leading-normal text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`;
 
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+        <label htmlFor={fieldId} className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" aria-hidden="true">
             {icon}
           </div>
         )}
         {textarea ? (
           <textarea
-            id={inputId}
+            id={fieldId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
             className={`${sharedClass} min-h-[80px] resize-y`}
-            aria-invalid={Boolean(error) || undefined}
-            aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
           />
         ) : (
           <input
-            id={inputId}
+            id={fieldId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={describedBy}
             className={sharedClass}
-            aria-invalid={Boolean(error) || undefined}
-            aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
             {...(validate || isControlled
               ? { ...props, ...fieldProps }
               : fieldProps as React.InputHTMLAttributes<HTMLInputElement>)}
           />
         )}
       </div>
-      {error && <p id={`${inputId}-error`} className="mt-1 text-xs text-red-400" role="alert">{error}</p>}
+      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-red-400">{error}</p>}
       {!error && hint && (
-        <p id={`${inputId}-hint`} className="mt-1 text-xs text-slate-500 italic">{hint}</p>
+        <p id={hintId} className="mt-1 text-xs text-slate-500 italic">{hint}</p>
       )}
     </div>
   );
@@ -206,18 +215,18 @@ export const Modal: React.FC<ModalProps> = ({
   className = ''
 }) => {
   const titleId = React.useId();
-  const panelRef = React.useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const previouslyFocused = document.activeElement as HTMLElement | null;
+    previouslyFocused.current = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
     const focusable = panel?.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
-    focusable?.[0]?.focus();
+    const first = focusable?.[0];
+    first?.focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -225,27 +234,26 @@ export const Modal: React.FC<ModalProps> = ({
         onClose();
         return;
       }
-      if (e.key !== 'Tab' || !panel) return;
-      const nodes = panel.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!nodes.length) return;
-      const first = nodes[0];
-      const last = nodes[nodes.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
+      if (e.key !== 'Tab' || !panel || !focusable?.length) return;
+      const items = Array.from(focusable);
+      const firstEl = items[0];
+      const lastEl = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === firstEl) {
         e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
         e.preventDefault();
-        first.focus();
+        firstEl.focus();
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
+      document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = prevOverflow;
-      window.removeEventListener('keydown', onKeyDown);
-      previouslyFocused?.focus?.();
+      previouslyFocused.current?.focus?.();
     };
   }, [isOpen, onClose]);
 
@@ -253,7 +261,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className={`fixed inset-0 z-[1100] flex items-end sm:items-center justify-center px-0 sm:px-4 pt-safe pb-safe ${containerClassName}`}>
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div
         ref={panelRef}
         role="dialog"
@@ -269,10 +277,10 @@ export const Modal: React.FC<ModalProps> = ({
             aria-label="Close dialog"
             className={`text-slate-400 hover:text-white transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--ws-surface-2)] ${WORKSPACE.panel.radius}`}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
-        <div className="p-4 overflow-y-auto overscroll-contain">
+        <div className="p-4 overflow-y-auto">
           {children}
         </div>
       </div>

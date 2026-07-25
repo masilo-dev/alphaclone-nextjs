@@ -9,7 +9,7 @@ import { Loader2 } from 'lucide-react';
 export function CashFlowStatement() {
   const { currentTenant } = useTenant();
   const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<{ label: string; amount: number }[]>([]);
+  const [rows, setRows] = useState<{ label: string; amount: number | null; tracked: boolean }[]>([]);
 
   useEffect(() => {
     if (!currentTenant?.id) return;
@@ -25,15 +25,13 @@ export function CashFlowStatement() {
 
       const netIncome = plRes.statement?.netIncome ?? ops.paidRevenue - ops.receiptExpenses;
       const operating = netIncome;
-      const investing = 0;
-      const financing = 0;
-      const netChange = operating + investing + financing;
-
+      // Investing / financing cash-flow lines are not tracked in the ledger yet.
+      // Never present 0 as a real figure — mark explicitly as not tracked.
       setRows([
-        { label: 'Net income (operating)', amount: operating },
-        { label: 'Investing activities', amount: investing },
-        { label: 'Financing activities', amount: financing },
-        { label: 'Net change in cash', amount: netChange },
+        { label: 'Net income (operating)', amount: operating, tracked: true },
+        { label: 'Investing activities', amount: null, tracked: false },
+        { label: 'Financing activities', amount: null, tracked: false },
+        { label: 'Net change in cash (operating only)', amount: operating, tracked: true },
       ]);
       setLoading(false);
     })();
@@ -52,16 +50,21 @@ export function CashFlowStatement() {
       <h3 className="text-lg font-semibold text-white mb-4">Cash Flow Statement</h3>
       <div className="dashboard-panel-soft overflow-hidden">
         {rows.map((r) => (
-          <div key={r.label} className="flex justify-between px-4 py-3 border-b border-white/5 last:border-0 text-sm">
+          <div key={r.label} className="flex justify-between px-4 py-3 border-b border-white/5 last:border-0 text-sm gap-3">
             <span className="text-slate-200">{r.label}</span>
-            <span className={`font-bold ${r.amount >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              ${r.amount.toLocaleString()}
-            </span>
+            {!r.tracked || r.amount == null ? (
+              <span className="font-medium text-slate-500 text-right">Not tracked yet</span>
+            ) : (
+              <span className={`font-bold tabular-nums ${r.amount >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                ${r.amount.toLocaleString()}
+              </span>
+            )}
           </div>
         ))}
       </div>
       <p className="text-xs text-slate-300 mt-2">
-        Derived from the workspace P&amp;L plus operational invoice and receipt activity.
+        Operating cash flow is derived from the workspace P&amp;L plus invoice and receipt activity.
+        Investing and financing activities are not tracked in the ledger yet, so they are shown as unavailable rather than zero.
       </p>
     </div>
   );

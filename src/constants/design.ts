@@ -136,7 +136,7 @@ export const ENTERPRISE = {
         xl: '2rem',     // 32px
     },
     breakpoints: {
-      /** Phone max (below tablet) */
+      /** Phone max (below tablet) — aligned with responsive dashboard shell */
       mobile: '767px',
       /** Tablet max (below laptop) */
       tablet: '1023px',

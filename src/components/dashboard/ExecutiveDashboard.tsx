@@ -12,12 +12,20 @@ export default function ExecutiveDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [goals, setGoals] = useState({ revenue: 50000, clients: 100, deals: 25 });
+  const [goals, setGoals] = useState({ revenue: 50000, clients: 100, projects: 25 });
 
   useEffect(() => {
     try {
       const g = localStorage.getItem(GOAL_KEY);
-      if (g) setGoals(JSON.parse(g));
+      if (g) {
+        const parsed = JSON.parse(g) as { revenue?: number; clients?: number; projects?: number; deals?: number };
+        setGoals({
+          revenue: parsed.revenue ?? 50000,
+          clients: parsed.clients ?? 100,
+          // Migrate legacy "deals" goal key → projects (label mismatch fix)
+          projects: parsed.projects ?? parsed.deals ?? 25,
+        });
+      }
     } catch { /* ignore */ }
   }, []);
 
@@ -48,60 +56,59 @@ export default function ExecutiveDashboard() {
     );
   }
 
+  const revenueGoalPct = Math.min(100, Math.round((stats.revenue.total / Math.max(goals.revenue, 1)) * 100));
+  const clientGoalPct = Math.min(100, Math.round((stats.users.clients / Math.max(goals.clients, 1)) * 100));
+  const projectGoalPct = Math.min(100, Math.round((stats.projects.active / Math.max(goals.projects, 1)) * 100));
+  const trendValue = Number.isFinite(stats.revenue.trend) ? stats.revenue.trend : null;
+
   const kpis = [
     {
       label: 'Revenue vs Goal',
       value: `$${stats.revenue.total.toLocaleString()}`,
-      delta: `${Math.round((stats.revenue.total / goals.revenue) * 100)}%`,
-      deltaDir: stats.revenue.total >= goals.revenue ? 'up' : 'down' as any,
-      comparisonText: `Goal: $${goals.revenue.toLocaleString()}`,
+      delta: `${revenueGoalPct}% of goal`,
+      deltaDir: (stats.revenue.total >= goals.revenue ? 'up' : 'down') as 'up' | 'down',
+      comparisonText: `Goal: $${goals.revenue.toLocaleString()} · last 30 days`,
       icon: DollarSign,
-      href: '/dashboard/finance',
-      color: 'bg-violet-600'
+      href: '/dashboard/business/billing',
     },
     {
       label: 'Client Target',
       value: stats.users.clients,
-      delta: `${Math.round((stats.users.clients / goals.clients) * 100)}%`,
-      deltaDir: stats.users.clients >= goals.clients ? 'up' : 'down' as any,
+      delta: `${clientGoalPct}% of goal`,
+      deltaDir: (stats.users.clients >= goals.clients ? 'up' : 'down') as 'up' | 'down',
       comparisonText: `Target: ${goals.clients}`,
       icon: Users,
-      href: '/dashboard/crm',
-      color: 'bg-blue-600'
+      href: '/dashboard/contacts',
     },
     {
       label: 'Active Projects',
       value: stats.projects.active,
-      delta: `${Math.round((stats.projects.active / goals.deals) * 100)}%`,
-      deltaDir: stats.projects.active >= goals.deals ? 'up' : 'down' as any,
-      comparisonText: `Quota: ${goals.deals}`,
+      delta: `${projectGoalPct}% of goal`,
+      deltaDir: (stats.projects.active >= goals.projects ? 'up' : 'down') as 'up' | 'down',
+      comparisonText: `Target: ${goals.projects} active projects`,
       icon: Target,
-      href: '/dashboard/projects',
-      color: 'bg-emerald-600'
+      href: '/dashboard/business/projects',
     },
     {
       label: 'Revenue Trend',
-      value: `${stats.revenue.trend >= 0 ? '+' : ''}${stats.revenue.trend.toFixed(1)}%`,
-      delta: stats.revenue.trend >= 0 ? '+12%' : '-5%',
-      deltaDir: stats.revenue.trend >= 0 ? 'up' : 'down' as any,
-      comparisonText: 'vs Last Month',
+      value:
+        trendValue == null
+          ? 'Not tracked'
+          : `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}%`,
+      delta: trendValue == null ? 'Unavailable' : `${trendValue >= 0 ? '+' : ''}${trendValue.toFixed(1)}%`,
+      deltaDir: (trendValue == null || trendValue >= 0 ? 'up' : 'down') as 'up' | 'down',
+      comparisonText: 'vs prior period (analytics service)',
       icon: TrendingUp,
-      href: '/dashboard/finance',
-      color: 'bg-amber-600'
-    }
+      href: '/dashboard/business/billing',
+    },
   ];
 
-  // Compute progress percentages (capped at 100%) for the first 3 goal-based KPIs
-  const kpiProgress = [
-    Math.min(100, Math.round((stats.revenue.total / Math.max(goals.revenue, 1)) * 100)),
-    Math.min(100, Math.round((stats.users.clients / Math.max(goals.clients, 1)) * 100)),
-    Math.min(100, Math.round((stats.projects.active / Math.max(goals.deals, 1)) * 100)),
-    null, // Revenue Trend has no progress bar
-  ];
+  // Progress only for goal-based KPIs — never invent a secondary fake delta for trend
+  const kpiProgress = [revenueGoalPct, clientGoalPct, projectGoalPct, null];
 
-  const kpiColors = ['violet', 'blue', 'emerald', 'amber'] as const;
+  const kpiColors = ['teal', 'blue', 'emerald', 'amber'] as const;
   const colorMap: Record<string, { bar: string; text: string; bg: string }> = {
-    violet:  { bar: 'bg-violet-500',  text: 'text-violet-400',  bg: 'bg-violet-500/10' },
+    teal:    { bar: 'bg-teal-500',    text: 'text-teal-400',    bg: 'bg-teal-500/10' },
     blue:    { bar: 'bg-blue-500',    text: 'text-blue-400',    bg: 'bg-blue-500/10' },
     emerald: { bar: 'bg-emerald-500', text: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     amber:   { bar: 'bg-amber-500',   text: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -181,7 +188,7 @@ export default function ExecutiveDashboard() {
         <div className="xl:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6 space-y-4">
           <h3 className="text-sm font-bold text-white">Performance Goals Configuration</h3>
           <div className="space-y-4">
-            {(['revenue', 'clients', 'deals'] as const).map((key) => (
+            {(['revenue', 'clients', 'projects'] as const).map((key) => (
               <div key={key} className="space-y-1.5">
                 <div className="flex justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <span>Target {key}</span>
@@ -195,6 +202,7 @@ export default function ExecutiveDashboard() {
                   value={goals[key]}
                   onChange={(e) => saveGoals({ ...goals, [key]: Number(e.target.value) })}
                   className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500"
+                  aria-label={`Target ${key}`}
                 />
               </div>
             ))}

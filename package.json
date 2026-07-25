@@ -13,6 +13,8 @@
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/unit/*.test.mjs",
+    "guard:design-system": "node --import tsx scripts/design-system-guard.mjs",
+    "validate:prod-guards": "npm run guard:design-system && node --import tsx --test tests/unit/metrics-and-canonical-routes.test.mjs",
     "test:e2e": "playwright test",
     "bonnie:worker": "tsx src/bonnie/worker.ts",
     "bonnie:test": "node --import tsx --test tests/unit/bonnie-*.test.mjs",

@@ -24,6 +24,7 @@ import {
   isTechnicalJargonText,
 } from '@/lib/copy/businessFriendlyErrors';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/format/currency';
 
 interface AttentionItem {
   id: string;
@@ -47,12 +48,16 @@ export function AttentionFirstDashboard() {
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [bonnieActions, setBonnieActions] = useState<BonnieAction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!currentTenant?.id || !user?.id) return;
-    void getDashboardStats(currentTenant.id, user.id).then((r) => {
-      setStats((r.stats as Record<string, unknown>) ?? null);
-    });
+    setLoading(true);
+    void getDashboardStats(currentTenant.id, user.id)
+      .then((r) => {
+        setStats((r.stats as Record<string, unknown>) ?? null);
+      })
+      .finally(() => setLoading(false));
   }, [currentTenant?.id, user?.id, getDashboardStats]);
 
   useEffect(() => {
@@ -140,6 +145,19 @@ export function AttentionFirstDashboard() {
 
   const revenue = Number(stats?.revenue ?? stats?.totalRevenue ?? 0);
   const outstanding = Number(stats?.outstanding ?? stats?.outstandingInvoices ?? 0);
+
+  if (loading && !stats) {
+    return (
+      <div className="space-y-4 ac-module-section" role="status" aria-busy="true" aria-label="Loading home">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="ac-workspace-panel p-4 ac-skeleton-pulse min-h-[96px]">
+            <div className="h-3.5 w-32 bg-slate-800 rounded" />
+            <div className="h-8 w-48 bg-slate-800 rounded mt-3" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 ac-module-section">
@@ -242,13 +260,13 @@ export function AttentionFirstDashboard() {
           <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
             <p className="text-[10px] uppercase tracking-wide text-[var(--ws-text-tertiary)]">Money coming in</p>
             <p className="text-lg font-semibold text-emerald-400 mt-1">
-              ${revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {formatCurrency(revenue)}
             </p>
           </div>
           <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/15">
             <p className="text-[10px] uppercase tracking-wide text-[var(--ws-text-tertiary)]">Waiting to collect</p>
             <p className="text-lg font-semibold text-amber-400 mt-1">
-              ${outstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {formatCurrency(outstanding)}
             </p>
           </div>
         </div>
@@ -279,14 +297,14 @@ export function AttentionFirstDashboard() {
         ))}
       </section>
 
-      {/* Recent wins placeholder */}
+      {/* Recent wins — only when we have real outcomes; otherwise educational empty */}
       <section className="ac-workspace-panel p-4">
         <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-2 flex items-center gap-2">
           <Trophy className="w-4 h-4 text-amber-400" aria-hidden="true" />
           {HUMAN_LABELS.recentWins}
         </h2>
         <p className="text-[12px] text-[var(--ws-text-secondary)]">
-          Wins like paid invoices, signed contracts, and booked meetings will appear here as your business grows.
+          Paid invoices, signed contracts, and booked meetings will appear here once those events occur in your workspace. Nothing to show yet.
         </p>
       </section>
     </div>

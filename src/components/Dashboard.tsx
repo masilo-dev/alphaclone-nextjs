@@ -42,6 +42,7 @@ import Sidebar from './dashboard/Sidebar';
 import BottomNav from './dashboard/BottomNav';
 import CommandPalette from './dashboard/CommandPalette';
 import { DashboardAccountMenu } from './dashboard/DashboardAccountMenu';
+import { SkipToMainContent } from './accessibility/SkipToMainContent';
 import {
   OverviewDashboard,
   CrmDashboard,
@@ -97,7 +98,7 @@ const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
 import CRMTab from './dashboard/CRMTab';
 import MessagesTab from './dashboard/MessagesTab';
-const FinanceTab = React.lazy(() => import('./dashboard/FinanceTab'));
+const EnhancedBillingPage = React.lazy(() => import('./dashboard/business/EnhancedBillingPage'));
 const ArticleEditor = React.lazy(() => import('./dashboard/ArticleEditor'));
 const CalendarComponent = React.lazy(() => import('./dashboard/CalendarComponent'));
 const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdminTenantsTab'));
@@ -675,7 +676,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const preloadTabs = async () => {
       const tabs = [
         () => import('./dashboard/CRMTab'),
-        () => import('./dashboard/FinanceTab'),
+        () => import('./dashboard/business/EnhancedBillingPage'),
         () => import('./dashboard/TasksTab'),
         () => import('./dashboard/QuotesTab'),
         () => import('./dashboard/DealsTab'),
@@ -1615,9 +1616,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         return <InvoicingDashboard />;
 
       case '/dashboard/finance/manage':
+      case '/dashboard/business/billing/manage':
+      case '/dashboard/business/invoices':
+      case '/dashboard/billing/manage':
+        // Canonical invoice management — same EnhancedBillingPage as tenant_admin shell
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
-            <FinanceTab user={user} />
+            <EnhancedBillingPage user={user} />
           </React.Suspense>
         );
 
@@ -1721,6 +1726,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root [height:100dvh]">
+      <SkipToMainContent />
       <ConnectionStatus />
 
       <WelcomeModal

@@ -6,13 +6,19 @@ import { Loader2, Download, Users, TrendingUp, BarChart3 } from 'lucide-react';
 import { dealService } from '@/services/dealService';
 import { leadService } from '@/services/leadService';
 import { StandardStatCard } from '@/components/ui/design-system';
+import { isLeadConverted, leadConversionRate } from '@/domain/metrics';
 
 const COLORS = ['#14b8a6', '#06b6d4', '#8b5cf6', '#f87171', '#64748b'];
 
 export default function CRMReportsTab() {
   const [loading, setLoading] = useState(true);
   const [pipeline, setPipeline] = useState<{ stage: string; count: number; totalValue: number }[]>([]);
-  const [leadStats, setLeadStats] = useState({ total: 0, qualified: 0, conversion: 0 });
+  const [leadStats, setLeadStats] = useState<{
+    total: number;
+    qualified: number;
+    conversion: number | null;
+    conversionUnavailable?: string;
+  }>({ total: 0, qualified: 0, conversion: null });
 
   useEffect(() => {
     (async () => {
@@ -28,12 +34,19 @@ export default function CRMReportsTab() {
           totalValue: s.totalValue,
         }))
       );
-      const qualified = leads.filter((l) => l.status === 'qualified').length;
-      const won = leads.filter((l) => l.status === 'qualified' || l.client_id).length;
+      const qualified = leads.filter((l) => String(l.status).toLowerCase() === 'qualified').length;
+      const converted = leads.filter((l) =>
+        isLeadConverted(l.status, (l as { client_id?: string }).client_id)
+      ).length;
+      const { rate, unavailableReason } = leadConversionRate({
+        total: leads.length,
+        converted,
+      });
       setLeadStats({
         total: leads.length,
         qualified,
-        conversion: leads.length ? Math.round((won / leads.length) * 100) : 0,
+        conversion: rate,
+        conversionUnavailable: unavailableReason,
       });
       setLoading(false);
     })();
@@ -41,13 +54,16 @@ export default function CRMReportsTab() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+      <div className="flex justify-center py-20" role="status" aria-live="polite">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-400" aria-hidden="true" />
+        <span className="sr-only">Loading CRM reports</span>
       </div>
     );
   }
 
   const winLoss = pipeline.filter((p) => p.stage.includes('closed'));
+  const conversionDisplay =
+    leadStats.conversion == null ? 'Not tracked' : `${leadStats.conversion}%`;
 
   return (
     <div className="p-4 space-y-6 overflow-y-auto pb-24">
@@ -55,7 +71,15 @@ export default function CRMReportsTab() {
         {[
           { label: 'Total Leads', value: leadStats.total, icon: Users, theme: 'teal' as const },
           { label: 'Qualified', value: leadStats.qualified, icon: TrendingUp, theme: 'emerald' as const },
-          { label: 'Conversion %', value: `${leadStats.conversion}%`, icon: BarChart3, theme: 'blue' as const },
+          {
+            label: 'Conversion %',
+            value: conversionDisplay,
+            icon: BarChart3,
+            theme: 'blue' as const,
+            comparisonText:
+              leadStats.conversionUnavailable ||
+              'Converted status ÷ total leads (excludes qualified-only)',
+          },
         ].map((s) => (
           <StandardStatCard
             key={s.label}
@@ -64,11 +88,12 @@ export default function CRMReportsTab() {
             themeColor={s.theme}
             icon={s.icon}
             interactive={false}
+            comparisonText={'comparisonText' in s ? s.comparisonText : undefined}
           />
         ))}
       </div>
 
-      <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+      <div className="bg-slate-900 border border-white/5 rounded-lg p-4">
         <h3 className="text-sm font-bold text-white mb-4">Pipeline by Stage</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={pipeline}>
@@ -81,8 +106,8 @@ export default function CRMReportsTab() {
       </div>
 
       {winLoss.length > 0 && (
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-          <h3 className="text-sm font-bold text-white mb-4">Win / Loss</h3>
+        <div className="bg-slate-900 border border-white/5 rounded-lg p-4">
+          <h3 className="text-sm font-bold text-white mb-4">Win / Loss (closed deals)</h3>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie data={winLoss} dataKey="count" nameKey="stage" cx="50%" cy="50%" outerRadius={70}>
@@ -97,10 +122,11 @@ export default function CRMReportsTab() {
       )}
 
       <button
+        type="button"
         onClick={() => window.open('/dashboard/business/reports', '_self')}
-        className="w-full flex items-center justify-center gap-2 h-10 rounded-xl border border-teal-500/30 text-teal-400 text-sm font-bold hover:bg-teal-500/10"
+        className="w-full flex items-center justify-center gap-2 min-h-11 rounded-lg border border-teal-500/30 text-teal-400 text-sm font-bold hover:bg-teal-500/10"
       >
-        <Download className="w-4 h-4" /> Export full revenue report
+        <Download className="w-4 h-4" aria-hidden="true" /> Export full revenue report
       </button>
     </div>
   );

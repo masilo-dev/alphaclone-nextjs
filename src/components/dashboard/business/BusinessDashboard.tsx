@@ -133,6 +133,7 @@ import BonnieWidget from '../bonnie/BonnieWidget';
 import BonnieFullView from '../bonnie/BonnieFullView';
 
 import Sidebar from '@/components/dashboard/Sidebar';
+import { SkipToMainContent } from '@/components/accessibility/SkipToMainContent';
 import BottomNav from '../BottomNav';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TabSkeleton } from '@/components/ui/TabSkeleton';
@@ -983,7 +984,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     if (!hasBootstrappedRef.current && tenantLoading && !currentTenant) {
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
-                <div className="text-center">
+                <div role="status" aria-live="polite" className="text-center">
                     <div className="text-slate-400 text-lg animate-pulse">{t('Loading Workspace...')}</div>
                 </div>
             </div>
@@ -1012,7 +1013,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
         return (
             <div className="flex items-center justify-center h-screen ac-business-root ac-workspace-canvas">
-                <div className="text-center max-w-md p-8">
+                <div role="alert" className="text-center max-w-md p-8">
                     <div className="text-slate-300 text-xl mb-4">{t('No Organization Found')}</div>
                     <div className="text-slate-400 mb-6">
                         {tenantError
@@ -1053,6 +1054,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     return (
         <div className="flex min-w-0 ac-workspace-canvas text-white overflow-hidden font-sans selection:bg-teal-500/30 w-full max-w-full ac-business-root [height:100dvh]">
+            <SkipToMainContent />
             <div data-tour="navigation" className="flex-shrink-0">
             <Sidebar
                 sidebarOpen={sidebarOpen}
@@ -1067,8 +1069,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             </div>
 
             {/* Main Content */}
-            {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main" tabIndex={-1}>
+            <main id="main-content" role="main" className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main" tabIndex={-1}>
 
                 <TrialBanner />
 
