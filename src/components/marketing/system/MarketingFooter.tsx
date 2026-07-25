@@ -36,8 +36,16 @@ const FOOTER_COLUMNS: FooterColumn[] = [
   },
   {
     title: 'Company',
-    links: COMPANY_NAV_GROUP.items,
+    links: [...COMPANY_NAV_GROUP.items, ...FOOTER_LEGAL_LINKS.slice(0, 4)],
   },
+];
+
+const BOTTOM_LEGAL = [
+  { label: 'Privacy', path: '/privacy-policy' },
+  { label: 'Terms', path: '/terms-of-service' },
+  { label: 'Cookies', path: '/cookie-policy' },
+  { label: 'Security', path: '/security-policy' },
+  { label: 'Legal hub', path: '/legal' },
 ];
 
 const SOCIAL_LINKS = [
@@ -159,7 +167,7 @@ export default function MarketingFooter() {
         <div className="mkt-footer-bottom">
           <p>{formatCopyrightLine()}</p>
           <div className="mkt-footer-legal">
-            {FOOTER_LEGAL_LINKS.map((item) => (
+            {BOTTOM_LEGAL.map((item) => (
               <Link key={item.path} href={item.path} className="mkt-footer-link">
                 {item.label}
               </Link>
