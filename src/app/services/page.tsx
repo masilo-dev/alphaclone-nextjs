@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import ServicesPage from '@/components/pages/ServicesPage';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
     title: 'Operating System | Unified AI Business OS for Service Teams',
@@ -107,7 +108,9 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <ServicesPage />
+            <MarketingLandingShell>
+                <ServicesPage />
+            </MarketingLandingShell>
         </>
     );
 }

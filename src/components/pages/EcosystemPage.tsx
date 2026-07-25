@@ -2,14 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare } from 'lucide-react';
-import PublicNavigation from '../PublicNavigation';
+import { ArrowLeft, Rocket, Shield, Zap, HeartHandshake, Target, TrendingUp, Check, Database, Code, Globe, Layers, Lock, BarChart, Users, MessageSquare } from 'lucide-react';
 import AnimateIn from '../common/AnimateIn';
-import MarketingFooter from '../landing/MarketingFooter';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const EcosystemPage: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
-
     const advantages = [
         {
             name: 'Lightning-Fast Delivery',
@@ -64,7 +61,6 @@ const EcosystemPage: React.FC = () => {
 
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
             <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
                 <AnimateIn type="fadeIn">
                     <Link href="/" className="inline-flex items-center text-teal-400 hover:text-teal-300 mb-8">
@@ -234,26 +230,14 @@ const EcosystemPage: React.FC = () => {
                                     Start a 14-day trial and test the CRM, billing, contracts, project, and meeting workflows in one workspace. No credit card required.
                                 </p>
                                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                    <Link
-                                        href="/auth/login?register=true&type=business&plan=starter"
-                                        className="inline-flex items-center gap-2 px-8 py-4 bg-slate-950 text-white font-bold rounded-xl hover:bg-slate-900 transition-all shadow-2xl"
-                                    >
-                                        Start Free Trial
-                                        <ArrowRight className="w-5 h-5" />
-                                    </Link>
-                                    <Link
-                                        href="/docs"
-                                        className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl hover:bg-white/20 transition-all border border-white/20"
-                                    >
-                                        View Documentation
-                                    </Link>
+                                    <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
+                                    <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                                 </div>
                             </div>
                         </div>
                     </AnimateIn>
                 </section>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

@@ -168,7 +168,7 @@ const organizationSchema = {
   publisher: {
     "@type": "Organization",
     name: "AlphaClone Systems",
-    legalName: "Alphaclone Systems, LLC",
+    legalName: "AlphaClone Systems, LLC",
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     sameAs: [

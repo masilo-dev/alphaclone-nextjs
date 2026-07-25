@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import {
     LayoutDashboard, Users, TrendingUp, Zap, CheckSquare,
@@ -10,10 +9,8 @@ import {
     ShieldCheck, Database, Bot, BookOpen, ExternalLink,
     Lock, Star, ChevronRight
 } from 'lucide-react';
-import { Button } from '@/components/ui/UIComponents';
-import PublicNavigation from '@/components/PublicNavigation';
-import MarketingFooter from '@/components/landing/MarketingFooter';
 import LoomVideo from '@/components/ui/LoomVideo';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const sections = [
     'onboarding', 'home', 'crm', 'growth-agent', 'integrations',
@@ -21,13 +18,9 @@ const sections = [
 ];
 
 export default function DocsPageContent() {
-    const [, setIsLoginOpen] = React.useState(false);
-
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30">
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20 flex">
+        <div className="marketing-theme min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-teal-500/30">
+            <div className="flex">
                 {/* Sticky Sidebar Nav — Desktop */}
                 <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-20 self-start h-[calc(100vh-5rem)] overflow-y-auto border-r border-slate-800/50 py-8 px-4">
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 px-2">On This Page</p>
@@ -64,7 +57,7 @@ export default function DocsPageContent() {
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 min-w-0 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-x-hidden">
+                <article className="flex-1 min-w-0 max-w-4xl mx-auto px-4 py-8 lg:py-16 w-full overflow-x-hidden">
                     {/* Sticky Mobile Nav */}
                     <div className="lg:hidden sticky top-20 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 pt-4 border-b border-slate-800/50 mb-8 mx-[-1rem] px-4 -mt-8">
                         <div className="relative">
@@ -596,25 +589,14 @@ export default function DocsPageContent() {
                                 The AlphaClone engineering team can assist with custom AI integration flows, private database clusters, security compliance audits, and enterprise onboarding for large teams.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                <Button
-                                    onClick={() => window.location.href = 'mailto:support@alphaclonesystems.com'}
-                                    className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-bold px-10 py-4 h-auto text-base rounded-2xl shadow-xl shadow-teal-500/20"
-                                >
-                                    Contact Engineering Team
-                                </Button>
-                                <Link href="/guide">
-                                    <Button variant="outline" className="border-slate-700 hover:bg-slate-800 px-10 py-4 h-auto text-base rounded-2xl">
-                                        Read Full Guide
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start free trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </div>
 
                     </section>
-                </main>
+                </article>
             </div>
-
-            <MarketingFooter />
         </div>
     );
 }
