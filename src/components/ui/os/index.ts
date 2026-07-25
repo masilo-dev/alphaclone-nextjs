@@ -11,3 +11,4 @@ export { OverviewChartCard } from './OverviewChartCard';
 export { BonnieDrawer } from './BonnieDrawer';
 export { CommunicationComposer, ComposerCloseButton } from './CommunicationComposer';
 export { RecordHeader } from './RecordHeader';
+export { ModuleOverviewChrome } from './ModuleOverviewChrome';

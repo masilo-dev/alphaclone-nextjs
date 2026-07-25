@@ -22,6 +22,8 @@ import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseData
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { SubNavigation } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
 import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
@@ -843,45 +845,52 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
   ], [allVisibleSelected, selectedQuoteIds, toggleQuoteSelection, visibleQuotes]);
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="quotations">
+      <div className="px-4 pt-3 shrink-0">
+        <SubNavigation
+          moduleId="quotations"
+          items={getModuleSubnav('quotations')}
+          activeHref="/dashboard/business/quotes"
+        />
+      </div>
       <ModulePageLayout
         header={(
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-2">
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user.role} />
           </div>
         )}
         toolbar={(
-          <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-white/5 items-center">
+          <div className="flex flex-wrap gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-b border-[var(--ws-border)] items-center">
         {selectedQuoteIds.size > 0 && (
-          <div className="flex items-center gap-1.5 mr-1 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
+          <div className="flex items-center gap-1.5 mr-1 rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-1">
             <button
               type="button"
               onClick={() => setSelectedQuoteIds(new Set())}
-              className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
+              className="h-7 px-3 rounded-[8px] text-[11px] font-semibold text-[var(--ws-text-muted)] border border-[var(--ws-border)] transition-colors hover:text-[var(--ws-text-secondary)]"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={handleBulkEmailQuotes}
-              className="h-7 px-3 rounded-full text-[11px] font-bold text-indigo-300 border border-indigo-500/30 transition-colors hover:text-indigo-200"
+              className="h-7 px-3 rounded-[8px] text-[11px] font-semibold text-[var(--brand-blue-500)] border border-[var(--ws-border)] transition-colors"
             >
               Follow-up ({selectedQuoteIds.size})
             </button>
           </div>
         )}
         {(['all', ...FILTERS] as (QuoteStatus | 'all')[]).map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${filter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} className={`flex-shrink-0 min-h-[34px] px-3.5 rounded-[8px] text-[12px] font-semibold capitalize transition-all ${filter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-[var(--ws-surface-secondary)] text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}>{f}</button>
         ))}
           </div>
         )}
         stats={!loading && quotes.length > 0 ? (
-          <div className="p-4 border-b border-white/5 bg-slate-900/20">
+          <div className="p-4 border-b border-[var(--ws-border)]">
             <ModuleStatCards stats={quoteStats} />
           </div>
         ) : null}
       >
-      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950 px-2">
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 px-2">
         {loading ? (
           <div className="divide-y divide-white/5">{[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-slate-900/40 animate-pulse" />)}</div>
         ) : (
@@ -898,7 +907,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
       <button
         type="button"
         onClick={() => setShowCreate(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-600 rounded-full flex items-center justify-center shadow-lg shadow-teal-600/30 z-30"
+        className="fixed bottom-20 right-4 w-14 h-14 bg-[var(--brand-blue-500)] rounded-full flex items-center justify-center shadow-md z-30"
       >
         <FilePlus className="w-6 h-6 text-white" />
       </button>

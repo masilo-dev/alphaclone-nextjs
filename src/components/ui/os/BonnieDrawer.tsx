@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -12,6 +12,10 @@ import {
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
+import {
+  modeRequiresConfirmation,
+  resolveBonnieContextsFromPath,
+} from '@/lib/dashboard/bonnieRouteContext';
 import { WORKSPACE, ENTERPRISE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 
@@ -37,25 +41,75 @@ const MODE_HINT: Record<BonnieMode, string> = {
   explain: 'Explain a metric, status, or next recommended action.',
 };
 
+type Step = 'compose' | 'confirm';
+
 /**
  * Global Bonnie assistant drawer — does not permanently occupy screen space.
- * Full workspace remains available for deep work; destructive actions stay confirmation-gated there.
+ * Shows a confirmation plan before continuing into the full workspace for
+ * send/post/delete/money/permission/bulk/automation intents.
  */
 export function BonnieDrawer() {
-  const { open, mode, contexts, closeDrawer, setMode, clearContexts } = useBonnieDrawer();
+  const { open, mode, contexts, closeDrawer, setMode, setContexts, clearContexts } = useBonnieDrawer();
   const { user } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
   const { currentTenant } = useTenant();
   const [prompt, setPrompt] = useState('');
+  const [step, setStep] = useState<Step>('compose');
   const bonnieRoute = resolveBonnieDashboardRoute(pathname, user?.role);
+
+  // Enrich empty context from the current route when the drawer opens
+  useEffect(() => {
+    if (!open) {
+      setStep('compose');
+      return;
+    }
+    if (contexts.length === 0) {
+      const inferred = resolveBonnieContextsFromPath(pathname);
+      if (inferred.length) setContexts(inferred);
+    }
+  }, [open, pathname]); // eslint-disable-line react-hooks/exhaustive-deps -- only seed on open/path
+
+  const needsConfirm = useMemo(
+    () => modeRequiresConfirmation(mode, prompt),
+    [mode, prompt]
+  );
+
+  const planItems = useMemo(() => {
+    const items = [
+      `Mode: ${mode}`,
+      `Request: ${prompt.trim() || '(open workspace to refine)'}`,
+    ];
+    if (contexts.length) {
+      items.push(`Records: ${contexts.map((c) => c.label).join(', ')}`);
+    }
+    items.push('Tools: Bonnie workspace tools for this tenant');
+    if (needsConfirm) {
+      items.push('Requires confirmation before send/post/delete/money/permission changes');
+    }
+    items.push('Result and audit trail are recorded in Bonnie outcomes');
+    return items;
+  }, [mode, prompt, contexts, needsConfirm]);
 
   if (!open) return null;
 
-  const openFullWorkspace = () => {
+  const continueToWorkspace = () => {
     closeDrawer();
-    const q = prompt.trim() ? `?q=${encodeURIComponent(prompt.trim())}` : '';
-    router.push(`${bonnieRoute}${q}`);
+    setStep('compose');
+    const params = new URLSearchParams();
+    if (prompt.trim()) params.set('q', prompt.trim());
+    params.set('mode', mode);
+    if (contexts[0]?.label) params.set('context', contexts[0].label);
+    const qs = params.toString();
+    router.push(`${bonnieRoute}${qs ? `?${qs}` : ''}`);
+  };
+
+  const handlePrimary = () => {
+    if (needsConfirm && step === 'compose') {
+      setStep('confirm');
+      return;
+    }
+    continueToWorkspace();
   };
 
   return (
@@ -64,7 +118,10 @@ export function BonnieDrawer() {
         type="button"
         className="absolute inset-0 bg-[var(--dark-overlay,rgba(0,0,0,0.68))] md:bg-[rgba(0,0,0,0.45)]"
         aria-label="Close Bonnie"
-        onClick={closeDrawer}
+        onClick={() => {
+          setStep('compose');
+          closeDrawer();
+        }}
       />
       <aside
         className={cn(
@@ -89,7 +146,10 @@ export function BonnieDrawer() {
           </div>
           <button
             type="button"
-            onClick={closeDrawer}
+            onClick={() => {
+              setStep('compose');
+              closeDrawer();
+            }}
             className="p-2 rounded-[8px] text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-primary)]"
             aria-label="Close"
           >
@@ -134,60 +194,109 @@ export function BonnieDrawer() {
           </div>
         ) : null}
 
-        <div
-          className="px-3 py-3 border-b border-[var(--ws-border)] overflow-x-auto"
-          role="tablist"
-          aria-label="Bonnie modes"
-        >
-          <div className="inline-flex gap-1 min-w-min">
-            {MODES.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={mode === item.id}
-                onClick={() => setMode(item.id)}
-                className={cn(
-                  'px-2.5 min-h-8 rounded-[8px] text-xs font-semibold whitespace-nowrap transition-colors',
-                  mode === item.id
-                    ? 'bg-[var(--brand-violet-500)] text-white'
-                    : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-secondary)]'
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {step === 'compose' ? (
+          <>
+            <div
+              className="px-3 py-3 border-b border-[var(--ws-border)] overflow-x-auto"
+              role="tablist"
+              aria-label="Bonnie modes"
+            >
+              <div className="inline-flex gap-1 min-w-min">
+                {MODES.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === item.id}
+                    onClick={() => setMode(item.id)}
+                    className={cn(
+                      'px-2.5 min-h-8 rounded-[8px] text-xs font-semibold whitespace-nowrap transition-colors',
+                      mode === item.id
+                        ? 'bg-[var(--brand-violet-500)] text-white'
+                        : 'text-[var(--ws-text-muted)] hover:bg-[var(--ws-hover)] hover:text-[var(--ws-text-secondary)]'
+                    )}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
-          <p className="text-sm text-[var(--ws-text-secondary)]">{MODE_HINT[mode]}</p>
-          <label className="block">
-            <span className="text-xs font-medium text-[var(--ws-text-muted)]">Your request</span>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={5}
-              placeholder={
-                mode === 'draft'
-                  ? 'e.g. Draft a follow-up email for this customer…'
-                  : 'Describe what you need Bonnie to do…'
-              }
-              className="mt-1.5 w-full rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-disabled)] focus:outline-none focus:border-[var(--brand-violet-500)]"
-            />
-          </label>
-          <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3 text-xs text-[var(--ws-text-muted)] space-y-1.5">
-            <p className="font-semibold text-[var(--ws-text-secondary)]">Before Bonnie acts</p>
-            <p>Sending, posting, deleting, money moves, permission changes, and bulk updates require confirmation.</p>
-            <p>Continue in the full workspace to execute tools with an audit trail.</p>
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+              <p className="text-sm text-[var(--ws-text-secondary)]">{MODE_HINT[mode]}</p>
+              <label className="block">
+                <span className="text-xs font-medium text-[var(--ws-text-muted)]">Your request</span>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  rows={5}
+                  placeholder={
+                    mode === 'draft'
+                      ? 'e.g. Draft a follow-up email for this customer…'
+                      : 'Describe what you need Bonnie to do…'
+                  }
+                  className="mt-1.5 w-full rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)] placeholder:text-[var(--ws-text-disabled)] focus:outline-none focus:border-[var(--brand-violet-500)]"
+                />
+              </label>
+              <div className="rounded-[12px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] p-3 text-xs text-[var(--ws-text-muted)] space-y-1.5">
+                <p className="font-semibold text-[var(--ws-text-secondary)]">Before Bonnie acts</p>
+                <p>
+                  Sending, posting, deleting, money moves, permission changes, and bulk updates require
+                  confirmation.
+                </p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-[var(--ws-text-primary)]">Confirm Bonnie&apos;s plan</h3>
+              <p className="mt-1 text-sm text-[var(--ws-text-secondary)]">
+                Review what will happen. Nothing external runs until you continue in the workspace and
+                approve.
+              </p>
+            </div>
+            <ol className="space-y-2">
+              {planItems.map((item) => (
+                <li
+                  key={item}
+                  className="rounded-[10px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] px-3 py-2.5 text-sm text-[var(--ws-text-primary)]"
+                >
+                  {item}
+                </li>
+              ))}
+            </ol>
+            <div
+              className="rounded-[12px] border border-[var(--warning-border)] bg-[var(--warning-surface)] p-3 text-xs text-[var(--warning-text)]"
+              role="status"
+            >
+              Confirmation required for communications, public posts, deletions, money movement,
+              permission changes, bulk updates, and automations with external consequences.
+            </div>
           </div>
-        </div>
+        )}
 
         <footer className="p-4 border-t border-[var(--ws-border)] flex flex-wrap gap-2">
-          <button type="button" onClick={openFullWorkspace} className={WORKSPACE.action.bonnie}>
-            Continue in Bonnie
+          {step === 'confirm' ? (
+            <button type="button" onClick={() => setStep('compose')} className={WORKSPACE.action.secondary}>
+              Back
+            </button>
+          ) : null}
+          <button type="button" onClick={handlePrimary} className={WORKSPACE.action.bonnie}>
+            {step === 'confirm'
+              ? 'Confirm & open workspace'
+              : needsConfirm
+                ? 'Review plan'
+                : 'Continue in Bonnie'}
           </button>
-          <button type="button" onClick={closeDrawer} className={WORKSPACE.action.secondary}>
+          <button
+            type="button"
+            onClick={() => {
+              setStep('compose');
+              closeDrawer();
+            }}
+            className={WORKSPACE.action.secondary}
+          >
             Close
           </button>
         </footer>

@@ -15,8 +15,8 @@ import { metricLabel } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
 import { CrmSyncToolbar } from '../crm/CrmSyncToolbar';
-import { SubNavigation } from '@/components/ui/os';
-import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
+import { CHART_COLORS } from '@/constants/brand';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -291,88 +291,93 @@ export function CrmDashboard() {
   }, [router, quickAdd]);
 
   return (
-    <div className="space-y-4 ac-scroll-full ac-module-section" data-module="crm">
-      <SubNavigation
-        moduleId="crm"
-        items={getModuleSubnav('crm')}
-        activeHref="/dashboard/crm"
-      />
+    <ModuleOverviewChrome moduleId="crm" activeHref="/dashboard/crm">
       <CrmSyncToolbar />
       <ModuleDashboardView
         moduleId="crm"
         endpoint="/api/crm/stats"
         chartType="line"
-        chartColor={DASHBOARD_COLORS.blue}
+        chartColor={CHART_COLORS.pipeline.won}
         chartTitle="Deals closed"
         chartSubtitle="Won by month"
       />
-    </div>
+    </ModuleOverviewChrome>
   );
 }
 
 export function OutreachDashboard() {
   return (
-    <ModuleDashboardView
-      moduleId="outreach"
-      endpoint="/api/outreach/stats"
-      chartType="line"
-      chartColor={DASHBOARD_COLORS.amber}
-      chartTitle="Emails sent"
-      chartSubtitle="Last 14 days"
-    />
+    <ModuleOverviewChrome moduleId="outreach" activeHref="/dashboard/outreach">
+      <ModuleDashboardView
+        moduleId="outreach"
+        endpoint="/api/outreach/stats"
+        chartType="line"
+        chartColor={CHART_COLORS.revenue.primary}
+        chartTitle="Emails sent"
+        chartSubtitle="Last 14 days"
+      />
+    </ModuleOverviewChrome>
   );
 }
 
 export function InvoicingDashboard() {
   return (
-    <ModuleDashboardView
-      moduleId="invoicing"
-      endpoint="/api/invoices/stats"
-      chartType="bar"
-      chartColor={DASHBOARD_COLORS.blue}
-      dualBar
-      valuePrefix="$"
-      chartTitle="Invoiced vs collected"
-      chartSubtitle="Monthly"
-    />
+    <ModuleOverviewChrome moduleId="invoicing" activeHref="/dashboard/business/billing">
+      <ModuleDashboardView
+        moduleId="invoicing"
+        endpoint="/api/invoices/stats"
+        chartType="bar"
+        chartColor={CHART_COLORS.invoice.paid}
+        dualBar
+        valuePrefix="£"
+        chartTitle="Invoiced vs collected"
+        chartSubtitle="Monthly"
+      />
+    </ModuleOverviewChrome>
   );
 }
 
 export function ContractsDashboard() {
   return (
-    <ModuleDashboardView
-      moduleId="contracts"
-      endpoint="/api/contracts/stats"
-      chartType="line"
-      chartColor={DASHBOARD_COLORS.blue}
-      chartTitle="Contracts signed"
-      chartSubtitle="Per month"
-    />
+    <ModuleOverviewChrome moduleId="documents" activeHref="/dashboard/business/contracts" hideSubnav>
+      <ModuleDashboardView
+        moduleId="contracts"
+        endpoint="/api/contracts/stats"
+        chartType="line"
+        chartColor={CHART_COLORS.revenue.primary}
+        chartTitle="Contracts signed"
+        chartSubtitle="Per month"
+      />
+    </ModuleOverviewChrome>
   );
 }
 
 export function ProjectsDashboard() {
   return (
-    <ModuleDashboardView
-      moduleId="projects"
-      endpoint="/api/projects/stats"
-      chartType="bar"
-      chartColor={DASHBOARD_COLORS.amber}
-      chartTitle="Tasks completed"
-      chartSubtitle="Weekly"
-    />
+    <ModuleOverviewChrome moduleId="projects" activeHref="/dashboard/business/projects">
+      <ModuleDashboardView
+        moduleId="projects"
+        endpoint="/api/projects/stats"
+        chartType="bar"
+        chartColor={CHART_COLORS.projectHealth.onTrack}
+        chartTitle="Tasks completed"
+        chartSubtitle="Weekly"
+      />
+    </ModuleOverviewChrome>
   );
 }
 
 export function SocialDashboard() {
   return (
-    <ModuleDashboardView
-      moduleId="social"
-      endpoint="/api/social/stats"
-      chartType="line"
-      chartColor={DASHBOARD_COLORS.red}
-      chartTitle="Posts published"
-      chartSubtitle="Last 14 days"
-    />
+    <ModuleOverviewChrome moduleId="social" activeHref="/dashboard/business/social">
+      <ModuleDashboardView
+        moduleId="social"
+        endpoint="/api/social/stats"
+        chartType="line"
+        chartColor="#D74673"
+        chartTitle="Posts published"
+        chartSubtitle="Last 14 days"
+      />
+    </ModuleOverviewChrome>
   );
 }

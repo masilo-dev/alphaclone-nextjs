@@ -25,6 +25,8 @@ import { Input } from '../ui/UIComponents';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
+import { SubNavigation } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -642,15 +644,22 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
   useInfiniteScroll(listRef, loadMore, { enabled: hasMore && !loading && viewMode === 'list' });
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="tasks">
+      <div className="px-4 pt-3 shrink-0">
+        <SubNavigation
+          moduleId="tasks"
+          items={getModuleSubnav('tasks')}
+          activeHref="/dashboard/tasks"
+        />
+      </div>
       <ModulePageLayout
         header={(
-          <div className="px-4 pt-3">
+          <div className="px-4 pt-2">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
           </div>
         )}
         toolbar={(
-          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-white/5 bg-slate-950/80">
+          <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -658,7 +667,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
               setBulkMode((v) => !v);
               setSelectedIds(new Set());
             }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold ${bulkMode ? 'bg-teal-600 text-white' : 'text-slate-400 border border-white/10'}`}
+            className={`px-3 py-1.5 rounded-[8px] text-xs font-semibold ${bulkMode ? 'bg-[var(--brand-blue-500)] text-white' : 'text-[var(--ws-text-muted)] border border-[var(--ws-border)]'}`}
           >
             {bulkMode ? 'Cancel' : 'Select'}
           </button>
@@ -700,7 +709,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           </div>
         ) : null}
       >
-      <div ref={listRef} className="flex-1 ac-scroll-full pb-20 bg-slate-950">
+      <div ref={listRef} className="flex-1 ac-scroll-full pb-20">
         {microsoftConnected && (
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">
