@@ -4,11 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   TrendingUp, TrendingDown, FileText, ChevronRight,
-  BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw,
+  BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Loader2,
 } from 'lucide-react';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { format, parseISO } from 'date-fns';
 import { StandardStatCard, StandardLineChart, type CardTheme } from '@/components/ui/design-system';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 type DateRange = '7d' | '30d' | '90d';
 type ChartMetric = 'revenue' | 'projects';
@@ -121,27 +122,26 @@ const AnalyticsTab: React.FC = () => {
 
   return (
     <div className="ac-scroll-full ac-enterprise-module pb-24 space-y-5 px-4 pt-4">
-      <div className="flex items-center justify-between gap-3">
+      <EnterprisePageHeader
+        moduleKey="analytics"
+        secondaryActions={[{
+          label: refreshing ? 'Refreshing…' : 'Refresh',
+          onClick: () => loadData(true),
+          disabled: refreshing,
+        }]}
+      >
         <div className="flex gap-2">
           {(['7d', '30d', '90d'] as DateRange[]).map((r) => (
             <button
               key={r}
               onClick={() => setDateRange(r)}
-              className={`h-[34px] px-4 rounded-full text-[12px] font-bold transition-all ${dateRange === r ? 'bg-[#adebb3] text-[#0f172a]' : 'bg-white/5 text-[#c0c0c0] border border-white/5'}`}
+              className={`h-[34px] px-4 rounded-lg text-[12px] font-semibold transition-all ${dateRange === r ? 'bg-teal-500/20 text-teal-300 border border-teal-500/40' : 'bg-white/5 text-[var(--ws-text-secondary)] border border-white/5'}`}
             >
               {r.toUpperCase()}
             </button>
           ))}
         </div>
-        <button
-          onClick={() => loadData(true)}
-          disabled={refreshing}
-          className="p-2 rounded-xl bg-white/5 border border-white/5 text-[#c0c0c0] hover:text-[#adebb3] transition-colors"
-          aria-label="Refresh analytics"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
+      </EnterprisePageHeader>
 
       <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
         {kpiChips.map((kpi) => (

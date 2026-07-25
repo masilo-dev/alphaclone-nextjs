@@ -15,7 +15,6 @@ import {
 } from '@chakra-ui/react';
 import {
   Loader2,
-  Plus,
   MessageSquare,
   Clock,
   AlertCircle,
@@ -24,8 +23,6 @@ import {
   Send,
   ArrowLeft,
   Bot,
-  Activity,
-  RefreshCw,
 } from 'lucide-react';
 import {
   ticketService,
@@ -50,6 +47,7 @@ import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { useTenant } from '@/contexts/TenantContext';
 import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 import { AC } from '@/theme/chakraTheme';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 const formatSla = (ticket: Ticket) => {
   if (!ticket.sla_due_at || ['resolved', 'closed'].includes(ticket.status)) return null;
@@ -429,66 +427,14 @@ export default function DeepDeskView() {
         borderRadius={AC.radius}
         overflow="hidden"
       >
-        <Flex
-          direction={{ base: 'column', md: 'row' }}
-          align={{ md: 'center' }}
-          justify="space-between"
-          p={4}
-          borderBottomWidth="1px"
-          borderColor={AC.border}
-          bg="gray.900"
-          gap={4}
-          flexShrink={0}
-        >
-          <HStack spacing={3} minW={0}>
-            <Flex
-              align="center"
-              justify="center"
-              w={9}
-              h={9}
-              borderRadius={AC.control}
-              bg="teal.900"
-              color="teal.300"
-              borderWidth="1px"
-              borderColor="teal.700"
-              flexShrink={0}
-            >
-              <Activity size={18} />
-            </Flex>
-            <Box minW={0}>
-              <Heading size="sm" color="white" fontWeight="semibold" letterSpacing="-0.02em">
-                Support desk
-              </Heading>
-              <Text fontSize="xs" color={AC.subtle}>
-                Tickets, SLAs, and customer replies
-              </Text>
-            </Box>
-          </HStack>
-
-          <HStack spacing={2} flexWrap="wrap">
-            <Button
-              size="sm"
-              bg={AC.tealSolid}
-              color="white"
-              borderRadius={AC.control}
-              leftIcon={<Plus size={16} />}
-              _hover={{ bg: 'teal.500' }}
-              onClick={() => setShowCreateModal(true)}
-            >
-              Create ticket
-            </Button>
-            <IconButton
-              aria-label="Reload tickets"
-              size="sm"
-              variant="outline"
-              borderColor={AC.border}
-              color={AC.muted}
-              borderRadius={AC.control}
-              icon={<RefreshCw size={16} />}
-              onClick={loadAllTickets}
-            />
-          </HStack>
-        </Flex>
+        <EnterprisePageHeader
+          moduleKey="tickets"
+          primaryAction={{
+            label: 'Create ticket',
+            onClick: () => setShowCreateModal(true),
+          }}
+          secondaryActions={[{ label: 'Reload', onClick: loadAllTickets }]}
+        />
 
         {!loading && tickets.length > 0 && (
           <Box p={4} borderBottomWidth="1px" borderColor={AC.border} flexShrink={0}>

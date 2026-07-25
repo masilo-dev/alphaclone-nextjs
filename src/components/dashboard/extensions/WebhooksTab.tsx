@@ -5,6 +5,7 @@ import { Plus, Webhook as WebhookIcon, Trash2 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 const EVENT_OPTIONS = ['deal.stage_changed', 'invoice.created', 'lead.created', 'contact.created'];
 type WebhookRecord = { id: string; tenantId: string; url: string; events: string[]; isActive: boolean; createdAt: string; updatedAt: string };
@@ -65,12 +66,7 @@ export default function WebhooksTab() {
 
   return (
     <ModulePageLayout
-      header={
-        <div className="px-1 pb-2">
-          <h1 className="text-lg font-semibold text-white">Extensions & Webhooks</h1>
-          <p className="text-sm text-slate-400">Outbound event hooks for integrations</p>
-        </div>
-      }
+      header={<EnterprisePageHeader moduleKey="webhooks" />}
     >
       <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 mb-4 flex flex-wrap gap-2">
         <input

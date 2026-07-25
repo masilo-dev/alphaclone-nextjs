@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -12,6 +12,7 @@ import {
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 type QueueRow = {
   id: string;
@@ -134,15 +135,10 @@ export default function JobsQueueTab() {
   return (
     <ModulePageLayout
       header={
-        <div className="px-1 pb-2 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-white">Jobs & Queue</h1>
-            <p className="text-sm text-slate-400">Automation events, workflows, and scraper jobs</p>
-          </div>
-          <button type="button" onClick={() => void load()} className="p-2 rounded-lg border border-[var(--ws-border)] text-slate-400 hover:text-white">
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
+        <EnterprisePageHeader
+          moduleKey="jobs"
+          secondaryActions={[{ label: 'Refresh', onClick: () => void load() }]}
+        />
       }
     >
       <div className="ac-scroll-full pb-24">

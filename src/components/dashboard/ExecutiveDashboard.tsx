@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { analyticsService, type AnalyticsData } from '@/services/analyticsService';
 import { Loader2, DollarSign, Users, Target, TrendingUp, ChevronRight } from 'lucide-react';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 
 const GOAL_KEY = 'executive-kpi-goals';
@@ -115,19 +116,11 @@ export default function ExecutiveDashboard() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 pb-24 ac-enterprise-module">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-black text-white">Executive Oversight</h1>
-          <p className="text-sm text-slate-400 mt-0.5">High-level strategic performance indicators.</p>
-        </div>
-        <button 
-          onClick={load} 
-          className="text-xs text-teal-400 font-bold bg-teal-500/10 px-3 py-1.5 rounded-lg border border-teal-500/20 hover:bg-teal-500/20 transition-all"
-        >
-          Refresh Data
-        </button>
-      </div>
+    <div className="p-4 md:p-6 space-y-4 pb-24 ac-scroll-full ac-enterprise-module">
+      <EnterprisePageHeader
+        moduleKey="executive"
+        secondaryActions={[{ label: 'Refresh Data', onClick: load }]}
+      />
 
       {/* Enhanced KPI Cards with Progress Bars */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

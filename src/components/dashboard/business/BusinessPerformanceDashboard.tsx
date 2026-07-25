@@ -10,7 +10,6 @@ import {
   DollarSign, 
   Users, 
   Share2, 
-  RefreshCcw, 
   ShieldCheck, 
   AlertCircle,
   Clock,
@@ -23,6 +22,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ChartContainer } from '../../ui/ChartContainer';
 import { StandardStatCard } from '@/components/ui/design-system';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 const BusinessPerformanceDashboard: React.FC = () => {
   const { currentTenant: tenant } = useTenant();
@@ -120,21 +120,16 @@ const BusinessPerformanceDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-12">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="text-3xl font-bold text-white tracking-tight">Business OS</h2>
-          <p className="text-[#c0c0c0] mt-1">Real-time performance metrics across your entire ecosystem.</p>
-        </div>
-        <button 
-          onClick={fetchData}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-[#f5f5f5] rounded-xl border border-white/5 transition-all disabled:opacity-50"
-        >
-          <RefreshCcw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          <span className="text-sm font-medium">Sync Engine</span>
-        </button>
-      </div>
+    <div className="space-y-8 pb-12 ac-scroll-full ac-enterprise-module">
+      <EnterprisePageHeader
+        moduleKey="analytics"
+        meta={{ title: 'Performance', description: 'Real-time performance metrics across your workspace.' }}
+        secondaryActions={[{
+          label: refreshing ? 'Syncing…' : 'Sync Engine',
+          onClick: fetchData,
+          disabled: refreshing,
+        }]}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StandardStatCard

@@ -5,12 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Star, CheckCircle, Zap, Globe, Mail, Calendar, FileText,
   MessageSquare, TrendingUp, Users, Briefcase, DollarSign,
-  Sparkles, Rocket, Bot, Shield, ChevronLeft, Phone, BarChart2,
+  Sparkles, Bot, Shield, ChevronLeft, Phone, BarChart2,
   ArrowRight, Package, Link2, Bell, CreditCard, Layers, Cpu,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import MCPSetupGuide from './integrations/MCPSetupGuide';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -469,19 +470,8 @@ const MarketplacePage: React.FC = () => {
 
   // ── Marketplace grid ───────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-950 p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-teal-900/30">
-            <Rocket className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">Marketplace</h1>
-            <p className="text-slate-400 text-sm">Connect your tools, power your workflow</p>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-0 ac-scroll-full ac-enterprise-module space-y-6 px-3 sm:px-4 py-4">
+      <EnterprisePageHeader moduleKey="marketplace" />
 
       {/* AI Agents hero banner */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

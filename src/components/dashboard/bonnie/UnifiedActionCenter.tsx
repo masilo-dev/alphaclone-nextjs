@@ -15,6 +15,7 @@ import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
 import { useTenant } from '@/contexts/TenantContext';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import ApprovalCenter from './ApprovalCenter';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 interface ActionQueueItem {
   id: string;
@@ -77,7 +78,8 @@ export function UnifiedActionCenter() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 ac-scroll-full ac-enterprise-module">
+      <EnterprisePageHeader moduleKey="approvals" />
       {allItems.length > 0 ? (
         <section className="ac-workspace-panel p-4">
           <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3">
