@@ -16,24 +16,29 @@ function PartnerChip({ partner }: { partner: VerifiedPartner }) {
   const { Icon } = partner;
 
   return (
-    <li
-      className="mkt-partner-chip"
-      style={
-        {
-          '--partner-color': partner.brandColor,
-          '--partner-chip-bg': partner.chipBg,
-        } as CSSProperties
-      }
-    >
-      <span className="mkt-partner-chip-icon" aria-hidden="true">
-        <Icon className="mkt-partner-brand-icon" />
-      </span>
-      <span className="mkt-partner-chip-name">{partner.name}</span>
+    <li>
+      <a
+        href="/ecosystem"
+        className="mkt-partner-chip"
+        style={
+          {
+            '--partner-color': partner.brandColor,
+            '--partner-chip-bg': partner.chipBg,
+          } as CSSProperties
+        }
+        aria-label={`${partner.name} integration — view ecosystem`}
+      >
+        <span className="mkt-partner-chip-icon" aria-hidden="true">
+          <Icon className="mkt-partner-brand-icon" />
+        </span>
+        <span className="mkt-partner-chip-name">{partner.name}</span>
+        <span className="mkt-partner-chip-burst" aria-hidden="true" />
+      </a>
     </li>
   );
 }
 
-/** Featured verified integrations — branded icon + name, not plain text. */
+/** Featured verified integrations — branded icon + name with CSS click motion. */
 export default function VerifiedIntegrationsStrip() {
   const partners = FEATURED_PARTNER_IDS.map((id) =>
     VERIFIED_PARTNERS.find((partner) => partner.id === id),

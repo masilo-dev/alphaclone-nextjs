@@ -1,4 +1,9 @@
-type Dot = { cx: number; cy: number; r: number; opacity: number };
+type Dot = { cx: string; cy: string; r: string; opacity: string; key: string };
+
+function round(value: number, digits = 2): string {
+  const factor = 10 ** digits;
+  return String(Math.round(value * factor) / factor);
+}
 
 /** Sparse curved-grid dots — not random polka dots. */
 function buildCurvedField(
@@ -7,7 +12,8 @@ function buildCurvedField(
   cols: number,
   rows: number,
   bend: number,
-  side: 'left' | 'right'
+  side: 'left' | 'right',
+  prefix: string,
 ): Dot[] {
   const dots: Dot[] = [];
   for (let row = 0; row < rows; row += 1) {
@@ -22,18 +28,19 @@ function buildCurvedField(
       const fade = 1 - t * 0.85;
       const size = 1 + (row % 3 === 0 ? 0.4 : 0);
       dots.push({
-        cx: x,
-        cy: y,
-        r: size / 2,
-        opacity: Math.max(0.08, 0.34 * fade - row * 0.008),
+        key: `${prefix}-${row}-${col}`,
+        cx: round(x),
+        cy: round(y),
+        r: round(size / 2, 2),
+        opacity: round(Math.max(0.08, 0.34 * fade - row * 0.008), 3),
       });
     }
   }
   return dots;
 }
 
-const UPPER_RIGHT = buildCurvedField(1180, 70, 10, 8, 22, 'right');
-const LOWER_LEFT = buildCurvedField(260, 470, 9, 7, 18, 'left');
+const UPPER_RIGHT = buildCurvedField(1180, 70, 10, 8, 22, 'right', 'tr');
+const LOWER_LEFT = buildCurvedField(260, 470, 9, 7, 18, 'left', 'bl');
 
 export default function CurvedDotField() {
   return (
@@ -65,7 +72,7 @@ export default function CurvedDotField() {
         <g mask="url(#mkt-dot-mask-tr)" className="curved-dot-field-pulse">
           {UPPER_RIGHT.map((dot) => (
             <circle
-              key={`tr-${dot.cx}-${dot.cy}`}
+              key={dot.key}
               cx={dot.cx}
               cy={dot.cy}
               r={dot.r}
@@ -76,7 +83,7 @@ export default function CurvedDotField() {
         <g mask="url(#mkt-dot-mask-bl)" className="curved-dot-field-pulse curved-dot-field-pulse--alt">
           {LOWER_LEFT.map((dot) => (
             <circle
-              key={`bl-${dot.cx}-${dot.cy}`}
+              key={dot.key}
               cx={dot.cx}
               cy={dot.cy}
               r={dot.r}

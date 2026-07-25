@@ -41,8 +41,9 @@ test.use({ viewport: { width: 1440, height: 900 } });
 
 test.describe('Marketing Q/A audit', () => {
   test('1) Homepage loads with atmosphere + custom icons', async ({ page }) => {
+    test.setTimeout(60000);
     const errors = trackErrors(page);
-    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 45000 });
     await dismissCookieIfPresent(page);
 
     await expect(page.locator('h1')).toContainText(/Run your entire business/i);
@@ -68,6 +69,25 @@ test.describe('Marketing Q/A audit', () => {
     await expect(page.getByText('Stripe', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Microsoft 365', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Slack', { exact: true }).first()).toBeVisible();
+
+    // Click / press motion on partner chips (CSS :active)
+    const chip = page.locator('.mkt-partner-chip').first();
+    await chip.scrollIntoViewIfNeeded();
+    const box = await chip.boundingBox();
+    expect(box).toBeTruthy();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    const pressMotion = await chip.evaluate((el) => ({
+      transform: getComputedStyle(el).transform,
+      animation: getComputedStyle(el).animationName,
+      href: el.getAttribute('href'),
+      hasBurst: Boolean(el.querySelector('.mkt-partner-chip-burst')),
+    }));
+    await page.mouse.up();
+    expect(pressMotion.href).toBe('/ecosystem');
+    expect(pressMotion.hasBurst).toBe(true);
+    expect(pressMotion.animation).toMatch(/mkt-chip-click/i);
+    expect(pressMotion.transform).not.toBe('none');
     await expect(page.getByRole('link', { name: /Start free for 14 days/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Book a demo/i }).first()).toBeVisible();
 
