@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
 import {
   Sheet,
   SheetClose,
@@ -32,6 +32,7 @@ type DesktopDropdown = {
   description: string;
   groups: MarketingNavGroup[];
   align?: 'left' | 'right';
+  featured?: { title: string; body: string; href: string; cta: string };
 };
 
 const DESKTOP_DROPDOWNS: DesktopDropdown[] = [
@@ -40,6 +41,12 @@ const DESKTOP_DROPDOWNS: DesktopDropdown[] = [
     label: 'Product',
     description: 'CRM, delivery, billing, documents, marketing, and AI.',
     groups: PRODUCT_NAV_GROUPS,
+    featured: {
+      title: 'See the full platform',
+      body: 'One workspace from lead to paid invoice — with Bonnie AI in the loop.',
+      href: '/ecosystem',
+      cta: 'Explore platform',
+    },
   },
   {
     key: 'solutions',
@@ -76,24 +83,11 @@ function normalizePath(path: string): string {
 
 function Logo() {
   return (
-    <Link
-      href="/"
-      className="inline-flex items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--marketing-focus)]"
-      aria-label="AlphaClone home"
-    >
-      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center">
-        <Image
-          src="/logo.png"
-          alt=""
-          width={36}
-          height={36}
-          priority
-          className="h-9 w-9 object-contain"
-        />
+    <Link href="/" className="mkt-brand" aria-label="AlphaClone home">
+      <span className="mkt-brand-mark" aria-hidden="true">
+        <Image src="/logo.png" alt="" width={28} height={28} priority className="h-7 w-7 object-contain" />
       </span>
-      <span className="font-marketing-heading text-xl font-bold tracking-tight text-[var(--marketing-text-primary)]">
-        AlphaClone
-      </span>
+      <span className="mkt-brand-word">AlphaClone</span>
     </Link>
   );
 }
@@ -105,34 +99,43 @@ function DropdownPanel({
   dropdown: DesktopDropdown;
   onNavigate: () => void;
 }) {
+  const columns = Math.min(Math.max(dropdown.groups.length, 1), 3);
+
   return (
     <div
       id={`marketing-nav-${dropdown.key}`}
-      className={`absolute top-[calc(100%+0.75rem)] z-50 w-[min(42rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--marketing-radius-lg)] border border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)] shadow-[var(--marketing-shadow-md)] ${
-        dropdown.align === 'right' ? 'right-0' : 'left-0'
-      }`}
+      className={`mkt-mega ${dropdown.align === 'right' ? 'is-right' : ''}`}
     >
-      <div className="border-b border-[var(--marketing-border)] bg-[var(--marketing-accent-soft)] px-5 py-4">
-        <p className="text-sm font-semibold text-[var(--marketing-accent-hover)]">
-          {dropdown.label}
-        </p>
-        <p className="mt-1 text-sm text-[var(--marketing-text-secondary)]">
-          {dropdown.description}
-        </p>
-      </div>
-      <div className="grid gap-1 p-3 sm:grid-cols-2">
-        {dropdown.groups.map((group) => (
-          <div key={group.label} className="rounded-[var(--marketing-radius-md)] p-2">
-            <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--marketing-text-muted)]">
-              {group.label}
-            </p>
-            <div className="space-y-1">
-              {group.items.map((item) => (
-                <NavItemLink key={item.path} item={item} onNavigate={onNavigate} />
-              ))}
+      <div className="mkt-mega-inner">
+        <div className="mkt-mega-copy">
+          <p className="mkt-mega-eyebrow">{dropdown.label}</p>
+          <p className="mkt-mega-desc">{dropdown.description}</p>
+        </div>
+        <div
+          className="mkt-mega-grid"
+          style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+        >
+          {dropdown.groups.map((group) => (
+            <div key={group.label} className="mkt-mega-col">
+              <p className="mkt-mega-col-label">{group.label}</p>
+              <div className="mkt-mega-links">
+                {group.items.map((item) => (
+                  <NavItemLink key={item.path} item={item} onNavigate={onNavigate} />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        {dropdown.featured ? (
+          <Link href={dropdown.featured.href} onClick={onNavigate} className="mkt-mega-featured">
+            <span className="mkt-mega-featured-title">{dropdown.featured.title}</span>
+            <span className="mkt-mega-featured-body">{dropdown.featured.body}</span>
+            <span className="mkt-mega-featured-cta">
+              {dropdown.featured.cta}
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </span>
+          </Link>
+        ) : null}
       </div>
     </div>
   );
@@ -148,22 +151,16 @@ function NavItemLink({
   const Icon = item.icon;
 
   return (
-    <Link
-      href={item.path}
-      onClick={onNavigate}
-      className="group flex items-start gap-3 rounded-[var(--marketing-radius-md)] px-2 py-2.5 text-[var(--marketing-text-secondary)] transition-colors hover:bg-[var(--marketing-surface)] hover:text-[var(--marketing-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
-    >
+    <Link href={item.path} onClick={onNavigate} className="mkt-mega-link">
       {Icon ? (
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--marketing-radius-sm)] bg-[var(--marketing-accent-soft)] text-[var(--marketing-accent-hover)]">
+        <span className="mkt-mega-link-icon">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       ) : null}
       <span className="min-w-0">
-        <span className="block text-sm font-semibold leading-5">{item.label}</span>
+        <span className="mkt-mega-link-label">{item.label}</span>
         {item.description ? (
-          <span className="mt-0.5 block text-xs leading-5 text-[var(--marketing-text-muted)]">
-            {item.description}
-          </span>
+          <span className="mkt-mega-link-desc">{item.description}</span>
         ) : null}
       </span>
     </Link>
@@ -204,21 +201,15 @@ export default function MarketingHeader() {
   }, []);
 
   useEffect(() => {
-    if (!activeDropdown) {
-      return;
-    }
+    if (!activeDropdown) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (desktopNavRef.current?.contains(event.target as Node)) {
-        return;
-      }
+      if (desktopNavRef.current?.contains(event.target as Node)) return;
       setActiveDropdown(null);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setActiveDropdown(null);
-      }
+      if (event.key === 'Escape') setActiveDropdown(null);
     };
 
     document.addEventListener('pointerdown', handlePointerDown);
@@ -237,39 +228,31 @@ export default function MarketingHeader() {
   const closeDropdowns = () => setActiveDropdown(null);
   const closeMobile = () => setMobileOpen(false);
 
-  const navButtonClass = (isActive: boolean) =>
-    `inline-flex h-10 items-center gap-1.5 rounded-[var(--marketing-radius-sm)] px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)] ${
-      isActive
-        ? 'bg-[var(--marketing-accent-soft)] text-[var(--marketing-accent-hover)]'
-        : 'text-[var(--marketing-text-secondary)] hover:bg-[var(--marketing-surface)] hover:text-[var(--marketing-text-primary)]'
-    }`;
-
   return (
     <>
       <a href="#main-content" className="mkt-skip-link">
         Skip to main content
       </a>
-      <header
-        className={`fixed inset-x-0 top-0 z-[1000] border-b transition-colors ${
-          isScrolled
-            ? 'border-[var(--marketing-border)] bg-[var(--marketing-bg-primary)]/95 backdrop-blur-xl'
-            : 'border-transparent bg-[var(--marketing-bg-primary)]/90 backdrop-blur-lg'
-        }`}
-      >
+      <header className={`mkt-header${isScrolled ? ' is-scrolled' : ''}${activeDropdown ? ' is-open' : ''}`}>
         <div className="mkt-container">
-          <div className="flex h-20 items-center justify-between gap-4">
+          <div className="mkt-header-bar">
             <Logo />
 
-            <div ref={desktopNavRef} className="hidden items-center gap-1 lg:flex">
+            <nav ref={desktopNavRef} className="mkt-nav-desktop" aria-label="Primary">
               {DESKTOP_DROPDOWNS.map((dropdown) => {
                 const isOpen = activeDropdown === dropdown.key;
                 const isActive = isOpen || activeSections[dropdown.key];
 
                 return (
-                  <div key={dropdown.key} className="relative">
+                  <div
+                    key={dropdown.key}
+                    className="mkt-nav-item"
+                    onMouseEnter={() => setActiveDropdown(dropdown.key)}
+                    onFocusCapture={() => setActiveDropdown(dropdown.key)}
+                  >
                     <button
                       type="button"
-                      className={navButtonClass(isActive)}
+                      className={`mkt-nav-trigger${isActive ? ' is-active' : ''}`}
                       aria-expanded={isOpen}
                       aria-controls={`marketing-nav-${dropdown.key}`}
                       onClick={() =>
@@ -280,7 +263,7 @@ export default function MarketingHeader() {
                     >
                       {dropdown.label}
                       <ChevronDown
-                        className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                         aria-hidden="true"
                       />
                     </button>
@@ -291,29 +274,32 @@ export default function MarketingHeader() {
                 );
               })}
 
-              <Link href="/pricing" className={navButtonClass(activeSections.pricing)}>
+              <Link
+                href="/pricing"
+                className={`mkt-nav-trigger${activeSections.pricing ? ' is-active' : ''}`}
+              >
                 Pricing
               </Link>
-            </div>
+            </nav>
 
-            <div className="hidden items-center gap-2 lg:flex">
-              <Link href={LOGIN_HREF} data-login-trigger className="mkt-btn mkt-btn-ghost">
+            <div className="mkt-header-actions">
+              <Link href={LOGIN_HREF} data-login-trigger className="mkt-nav-login">
                 {CTA_LABELS.tertiaryLogin}
               </Link>
-              <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary">
+              <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {CTA_LABELS.primary}
               </Link>
-              <Link href={DEMO_HREF} className="mkt-btn mkt-btn-secondary">
+              <Link href={DEMO_HREF} className="mkt-btn mkt-btn-secondary mkt-btn-compact">
                 {CTA_LABELS.secondary}
               </Link>
             </div>
 
-            <div className="lg:hidden">
+            <div className="mkt-header-mobile">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] text-[var(--marketing-text-primary)] transition-colors hover:border-[var(--marketing-accent)] hover:text-[var(--marketing-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
+                    className="mkt-mobile-toggle"
                     aria-label="Open navigation menu"
                     aria-expanded={mobileOpen}
                   >
@@ -323,11 +309,11 @@ export default function MarketingHeader() {
                 <SheetContent
                   side="right"
                   showCloseButton={false}
-                  className="w-[min(100vw,26rem)] overflow-y-auto border-[var(--marketing-border)] bg-[var(--marketing-bg-primary)] shadow-[0_24px_80px_-32px_rgba(20,184,166,0.35)]"
+                  className="mkt-mobile-sheet w-[min(100vw,26rem)] overflow-y-auto border-[var(--marketing-border)] bg-[var(--marketing-bg-primary)]"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <Logo />
-                    <SheetClose className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] text-[var(--marketing-text-secondary)] transition-colors hover:border-[var(--marketing-accent)] hover:text-[var(--marketing-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]">
+                    <SheetClose className="mkt-mobile-toggle">
                       <X className="h-5 w-5" aria-hidden="true" />
                       <span className="sr-only">Close navigation menu</span>
                     </SheetClose>
@@ -335,26 +321,18 @@ export default function MarketingHeader() {
 
                   <SheetHeader>
                     <SheetTitle className="text-[var(--marketing-text-primary)]">
-                      AlphaClone navigation
+                      Navigate AlphaClone
                     </SheetTitle>
                     <SheetDescription className="text-[var(--marketing-text-secondary)]">
-                      Explore the connected platform for service businesses.
+                      Product, solutions, resources, and company pages.
                     </SheetDescription>
                   </SheetHeader>
 
                   <div className="grid gap-3">
-                    <Link
-                      href={TRIAL_HREF}
-                      onClick={closeMobile}
-                      className="mkt-btn mkt-btn-primary w-full"
-                    >
+                    <Link href={TRIAL_HREF} onClick={closeMobile} className="mkt-btn mkt-btn-primary w-full">
                       {CTA_LABELS.primary}
                     </Link>
-                    <Link
-                      href={DEMO_HREF}
-                      onClick={closeMobile}
-                      className="mkt-btn mkt-btn-secondary w-full"
-                    >
+                    <Link href={DEMO_HREF} onClick={closeMobile} className="mkt-btn mkt-btn-secondary w-full">
                       {CTA_LABELS.secondary}
                     </Link>
                     <Link
@@ -369,29 +347,19 @@ export default function MarketingHeader() {
 
                   <nav className="grid gap-6 pt-2" aria-label="Mobile navigation">
                     <div>
-                      <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--marketing-text-muted)]">
-                        Pricing
-                      </p>
-                      <Link
-                        href="/pricing"
-                        onClick={closeMobile}
-                        className="mt-2 flex min-h-12 items-center rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] px-4 py-3 text-base font-semibold text-[var(--marketing-text-primary)] transition-colors hover:border-[var(--marketing-accent)] hover:text-[var(--marketing-accent-hover)]"
-                      >
+                      <p className="mkt-mobile-section-label">Pricing</p>
+                      <Link href="/pricing" onClick={closeMobile} className="mkt-mobile-pricing">
                         See plans and pricing
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </Link>
                     </div>
 
                     {MOBILE_SECTIONS.map((section) => (
                       <div key={section.label}>
-                        <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--marketing-text-muted)]">
-                          {section.label}
-                        </p>
+                        <p className="mkt-mobile-section-label">{section.label}</p>
                         <div className="mt-2 grid gap-3">
                           {section.groups.map((group) => (
-                            <div
-                              key={group.label}
-                              className="rounded-[var(--marketing-radius-md)] border border-[var(--marketing-border)] p-2"
-                            >
+                            <div key={group.label} className="mkt-mobile-group">
                               {section.groups.length > 1 ? (
                                 <p className="px-2 py-2 text-xs font-semibold text-[var(--marketing-accent-hover)]">
                                   {group.label}

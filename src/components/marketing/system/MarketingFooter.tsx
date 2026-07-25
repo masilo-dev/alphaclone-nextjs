@@ -1,6 +1,9 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
-import { Facebook, Linkedin, Twitter } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { ArrowRight, Facebook, Linkedin, Mail, Twitter } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import {
   COMPANY_NAV_GROUP,
@@ -11,6 +14,7 @@ import {
   type MarketingNavLink,
 } from '@/lib/marketing/siteNavigation';
 import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
+import { DEMO_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 
 type FooterColumn = {
   title: string;
@@ -20,7 +24,7 @@ type FooterColumn = {
 const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: 'Product',
-    links: [...PRODUCT_NAV_GROUP.items, { label: 'Pricing', path: '/pricing' }],
+    links: [...PRODUCT_NAV_GROUP.items.slice(0, 6), { label: 'Pricing', path: '/pricing' }],
   },
   {
     title: 'Solutions',
@@ -34,62 +38,49 @@ const FOOTER_COLUMNS: FooterColumn[] = [
     title: 'Company',
     links: COMPANY_NAV_GROUP.items,
   },
-  {
-    title: 'Legal',
-    links: FOOTER_LEGAL_LINKS,
-  },
 ];
 
 const SOCIAL_LINKS = [
-  {
-    label: 'AlphaClone on LinkedIn',
-    href: SOCIAL_PROFILES.linkedin,
-    Icon: Linkedin,
-  },
-  {
-    label: 'AlphaClone on Facebook',
-    href: SOCIAL_PROFILES.facebook,
-    Icon: Facebook,
-  },
-  {
-    label: 'AlphaClone on X',
-    href: SOCIAL_PROFILES.x,
-    Icon: Twitter,
-  },
+  { label: 'AlphaClone on LinkedIn', href: SOCIAL_PROFILES.linkedin, Icon: Linkedin },
+  { label: 'AlphaClone on Facebook', href: SOCIAL_PROFILES.facebook, Icon: Facebook },
+  { label: 'AlphaClone on X', href: SOCIAL_PROFILES.x, Icon: Twitter },
 ];
 
 function FooterLink({ item }: { item: MarketingNavLink }) {
   return (
-    <Link
-      href={item.path}
-      className="text-sm text-[var(--marketing-text-muted)] transition-colors hover:text-[var(--marketing-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
-    >
+    <Link href={item.path} className="mkt-footer-link">
       {item.label}
     </Link>
   );
 }
 
 export default function MarketingFooter() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'done'>('idle');
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!email.trim()) return;
+    setStatus('done');
+    setEmail('');
+  };
+
   return (
-    <footer className="border-t border-[var(--marketing-border)] bg-[var(--marketing-bg-secondary)]">
+    <footer className="mkt-footer">
       <MarketingContainer className="py-14 sm:py-16">
-        <div className="grid gap-10 lg:grid-cols-[1.2fr_2fr]">
-          <div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--marketing-focus)]"
-              aria-label="AlphaClone home"
-            >
-              <Image src="/logo.png" alt="" width={36} height={36} className="h-9 w-9 object-contain" />
-              <span className="font-marketing-heading text-xl font-bold tracking-tight text-[var(--marketing-text-primary)]">
-                AlphaClone
+        <div className="mkt-footer-top">
+          <div className="mkt-footer-brand-block">
+            <Link href="/" className="mkt-brand" aria-label="AlphaClone home">
+              <span className="mkt-brand-mark" aria-hidden="true">
+                <Image src="/logo.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
               </span>
+              <span className="mkt-brand-word">AlphaClone</span>
             </Link>
-            <p className="mt-5 max-w-sm text-sm leading-6 text-[var(--marketing-text-secondary)]">
-              AlphaClone connects customers, projects, invoices, documents, and AI assistance in one
-              workspace for service businesses.
+            <p className="mkt-footer-blurb">
+              The all-in-one operating system for service businesses — CRM, projects, invoices,
+              documents, and AI in one connected workspace.
             </p>
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mkt-footer-social">
               {SOCIAL_LINKS.map(({ label, href, Icon }) => (
                 <a
                   key={href}
@@ -97,21 +88,27 @@ export default function MarketingFooter() {
                   target="_blank"
                   rel="me noopener noreferrer"
                   aria-label={label}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-[var(--marketing-radius-sm)] border border-[var(--marketing-border)] text-[var(--marketing-text-muted)] transition-colors hover:border-[var(--marketing-accent)] hover:text-[var(--marketing-accent-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
+                  className="mkt-footer-social-btn"
                 >
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </a>
               ))}
             </div>
+            <div className="mkt-footer-cta-row">
+              <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
+                Start free for 14 days
+              </Link>
+              <Link href={DEMO_HREF} className="mkt-btn mkt-btn-secondary mkt-btn-compact">
+                Book a demo
+              </Link>
+            </div>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mkt-footer-columns">
             {FOOTER_COLUMNS.map((column) => (
               <div key={column.title}>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--marketing-text-primary)]">
-                  {column.title}
-                </p>
-                <ul className="mt-4 space-y-3">
+                <p className="mkt-footer-col-title">{column.title}</p>
+                <ul className="mkt-footer-col-list">
                   {column.links.map((item) => (
                     <li key={`${column.title}-${item.path}-${item.label}`}>
                       <FooterLink item={item} />
@@ -121,20 +118,52 @@ export default function MarketingFooter() {
               </div>
             ))}
           </div>
+
+          <div className="mkt-footer-newsletter">
+            <p className="mkt-footer-col-title">Stay in the loop</p>
+            <p className="mkt-footer-newsletter-copy">
+              Product updates and workflow tips for service teams. No spam.
+            </p>
+            {status === 'done' ? (
+              <p className="mkt-footer-newsletter-done" role="status">
+                Thanks — you&apos;re on the list.
+              </p>
+            ) : (
+              <form className="mkt-footer-form" onSubmit={onSubmit}>
+                <label className="sr-only" htmlFor="mkt-footer-email">
+                  Email address
+                </label>
+                <div className="mkt-footer-input-wrap">
+                  <Mail className="mkt-footer-input-icon" aria-hidden="true" />
+                  <input
+                    id="mkt-footer-email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="you@company.com"
+                    className="mkt-footer-input"
+                  />
+                </div>
+                <button type="submit" className="mkt-btn mkt-btn-primary mkt-btn-compact w-full">
+                  Subscribe
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </form>
+            )}
+          </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-[var(--marketing-border)] pt-6 text-sm text-[var(--marketing-text-muted)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mkt-footer-bottom">
           <p>{formatCopyrightLine()}</p>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            <Link href="/security-policy" className="hover:text-[var(--marketing-accent-hover)]">
-              Security policy
-            </Link>
-            <Link href="/privacy-policy" className="hover:text-[var(--marketing-accent-hover)]">
-              Privacy policy
-            </Link>
-            <Link href="/terms-of-service" className="hover:text-[var(--marketing-accent-hover)]">
-              Terms
-            </Link>
+          <div className="mkt-footer-legal">
+            {FOOTER_LEGAL_LINKS.map((item) => (
+              <Link key={item.path} href={item.path} className="mkt-footer-link">
+                {item.label}
+              </Link>
+            ))}
           </div>
         </div>
       </MarketingContainer>
