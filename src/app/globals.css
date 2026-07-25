@@ -127,32 +127,18 @@
   font-feature-settings: "tnum";
 }
 
-/* Marketing Grid and Glows */
+/* Marketing surfaces — solid color only, no photo backgrounds */
 .marketing-bg-grid {
-  background-color: #020D1A;
-  background-image:
-    radial-gradient(circle at center, rgba(2, 6, 23, 1) 0%, rgba(0, 0, 0, 1) 100%);
-  background-size: cover;
+  background-color: #041027;
 }
 
-/* Page-wide deep-space network background for all marketing pages */
 .page-network-bg {
-  background: linear-gradient(135deg, #020D1A 0%, #041525 50%, #020D1A 100%);
+  background: #041027;
   position: relative;
 }
 
 .marketing-glow-hero {
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(0, 255, 255, 0.15) 0%, rgba(0, 255, 255, 0) 70%);
-  /* Teal glow */
-  filter: blur(100px);
-  z-index: -1;
-  pointer-events: none;
+  display: none;
 }
 
 :root {
@@ -166,18 +152,15 @@ html {
 }
 
 body {
-  background-color: #020D1A;
-  background-image:
-    linear-gradient(180deg, rgba(2, 6, 23, 0.80) 0%, rgba(2, 6, 23, 0.88) 45%, rgba(2, 6, 23, 0.94) 100%),
-    url("/marketing-bg-v2.jpg");
-  background-size: cover;
-  background-position: center;
+  background-color: #041027;
+  background-image: none;
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-attachment: scroll;
   color: var(--foreground);
   scroll-behavior: smooth;
   @apply text-base antialiased;
   overflow-x: clip;
+  font-family: "Inter Variable", "Inter", system-ui, sans-serif;
 }
 
 /* Dashboard light theme: main shell surfaces (inner widgets keep their own styles) */
@@ -892,27 +875,24 @@ body {
   animation: moving-border 3s linear infinite;
 }
 
-/* Hero accent text — teal brand gradient (2 stops) */
+/* Hero accent text — solid brand teal */
 .hero-metallic-text {
-  background: linear-gradient(135deg, var(--ac-accent-deep) 0%, var(--ac-accent-hover) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: #2dd4bf;
+  background: none;
+  -webkit-text-fill-color: unset;
 }
 
 /* Primary CTA — teal brand */
 .cta-primary {
-  background: linear-gradient(135deg, var(--ac-accent) 0%, var(--ac-accent-deep) 100%);
+  background: #14b8a6;
   color: #020617;
   font-weight: 700;
-  box-shadow: 0 0 20px rgba(20, 184, 166, 0.25);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .cta-primary:hover {
+  background: #2dd4bf;
   transform: translateY(-1px);
-  box-shadow: 0 0 28px rgba(45, 212, 191, 0.35);
 }
 
 /* Activation & Founder Utilities */
@@ -924,18 +904,15 @@ body {
 }
 
 .bg-activation-gradient {
-  background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 50%, #8b5cf6 100%);
+  background: #0d9488;
 }
 
 .activation-card-premium {
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(20, 184, 166, 0.3);
-  box-shadow: 0 0 40px rgba(20, 184, 166, 0.1);
-  backdrop-filter: blur(20px);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(20, 184, 166, 0.25);
 }
 
 .onboarding-step-active {
-  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
   border-color: #14b8a6;
 }
 
@@ -947,9 +924,8 @@ body {
 .cta-secondary {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
   color: #fff;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .cta-secondary:hover {
@@ -957,11 +933,11 @@ body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* AI Engine Badge */
+/* Brand eyebrow badge */
 .ai-badge {
-  background: linear-gradient(90deg, rgba(0, 210, 160, 0.1), rgba(0, 119, 255, 0.1));
-  border: 1px solid rgba(0, 210, 160, 0.2);
-  color: #00D2A0;
+  background: rgba(20, 184, 166, 0.1);
+  border: 1px solid rgba(20, 184, 166, 0.25);
+  color: #2dd4bf;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.7rem;
@@ -981,11 +957,11 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Scroll-progress gradient line */
+/* Scroll-progress line */
 .nav-glow-line {
-  background: linear-gradient(90deg, transparent, #0077FF 30%, #00D2A0 70%, transparent);
+  background: rgba(45, 212, 191, 0.45);
   height: 1px;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 /* Native App Fonts on Mobile */

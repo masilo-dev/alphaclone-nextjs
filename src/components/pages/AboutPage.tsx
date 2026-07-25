@@ -4,14 +4,8 @@ import React from 'react';
 import {
     Globe, Clock, CircuitBoard, Sparkles
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
 
 const AboutPage: React.FC = () => {
     const stats = [
@@ -98,11 +92,6 @@ const AboutPage: React.FC = () => {
 
     return (
         <div className="marketing-theme min-h-screen page-network-bg text-white">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
             <div className="relative overflow-hidden">
                 <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-20">
                     

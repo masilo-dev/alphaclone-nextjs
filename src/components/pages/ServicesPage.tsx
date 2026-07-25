@@ -7,16 +7,10 @@ import {
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
     Award, Lock, RefreshCw
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
 import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
 
 const ServicesPage: React.FC = () => {
     const blufSummary = `AlphaClone Systems is a unified AI-powered Business Operating Platform for service companies. It centralizes CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational system designed for daily use by founders and teams.`;
@@ -188,11 +182,6 @@ const ServicesPage: React.FC = () => {
 
     return (
         <div className="marketing-theme min-h-screen page-network-bg text-white">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
             {/* BLUF Summary — SSR rendered above the fold */}
             <div className="relative overflow-hidden">
                 <section className="relative min-h-[60vh] flex flex-col items-center justify-center py-16">

@@ -35,10 +35,10 @@
   --danger: #f06b73;
   --info: #4faaf5;
 
-  /* Illumination */
-  --glow-primary: rgba(24, 199, 200, 0.22);
-  --glow-blue: rgba(22, 136, 216, 0.2);
-  --glow-violet: rgba(115, 87, 232, 0.18);
+  /* Illumination — soft, no glow orbs */
+  --glow-primary: transparent;
+  --glow-blue: transparent;
+  --glow-violet: transparent;
 
   /* Product preview (light UI) */
   --preview-bg: #f7f9fc;
@@ -51,17 +51,16 @@
   --container-wide: 1440px;
   --container-main: 1240px;
   --container-reading: 760px;
-  --radius-small: 12px;
-  --radius-card: 16px;
-  --radius-large: 22px;
-  --radius-preview: 26px;
+  --radius-small: 10px;
+  --radius-card: 12px;
+  --radius-large: 16px;
+  --radius-preview: 16px;
   --shadow-card:
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
-    0 18px 48px rgba(0, 4, 18, 0.2);
+    0 12px 32px rgba(0, 4, 18, 0.18);
   --shadow-preview:
-    0 0 0 1px rgba(109, 232, 226, 0.22),
-    0 34px 90px rgba(0, 5, 24, 0.52),
-    0 0 80px rgba(24, 199, 200, 0.08);
+    0 0 0 1px rgba(148, 170, 207, 0.22),
+    0 24px 48px rgba(0, 5, 24, 0.4);
 
   --space-section-y: clamp(2.5rem, 4.5vw, 4rem);
   --space-section-x: clamp(1.125rem, 3vw, 3rem);
@@ -209,9 +208,8 @@
 }
 
 .mkt-btn-primary {
-  background: linear-gradient(90deg, #18c7c8 0%, #21d5cf 100%);
+  background: var(--brand-primary);
   color: var(--text-inverse);
-  box-shadow: 0 10px 30px -16px rgba(24, 199, 200, 0.7);
 }
 
 .mkt-btn-primary:hover {
@@ -286,29 +284,17 @@
 }
 
 .page-network-bg {
-  /* Stable canvas for auth + shared shells — do not couple to homepage token experiments */
-  background: #020d1a;
+  /* Stable canvas for auth + shared shells — no photo backgrounds */
+  background: #041027;
   position: relative;
 }
 
 .marketing-glow-hero {
-  position: absolute;
-  top: 8%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(42rem, 90vw);
-  height: 22rem;
-  background: radial-gradient(circle, var(--glow-primary) 0%, transparent 70%);
-  filter: blur(64px);
-  z-index: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .mkt-accent-text {
-  background: linear-gradient(135deg, #1688d8 0%, #18c7c8 52%, #7357e8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--brand-cyan-soft);
 }
 
 .mkt-reveal {
@@ -345,13 +331,8 @@
 
 .mkt-hero-atmosphere {
   position: absolute;
-  inset: -10% -8% auto;
-  height: min(28rem, 55vh);
-  background:
-    radial-gradient(ellipse 42% 48% at 8% 42%, var(--glow-primary), transparent 70%),
-    radial-gradient(ellipse 38% 42% at 92% 28%, var(--glow-blue), transparent 72%),
-    radial-gradient(ellipse 50% 35% at 50% 0%, rgba(115, 87, 232, 0.1), transparent 70%);
-  animation: mkt-wave-drift 18s ease-in-out infinite alternate;
+  inset: 0;
+  background: linear-gradient(180deg, #061833 0%, #041027 55%, #041027 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -912,7 +893,7 @@
   gap: 1.5rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-large);
-  background: linear-gradient(120deg, rgba(24, 199, 200, 0.08), rgba(22, 136, 216, 0.08));
+  background: var(--background-section);
   padding: 1.5rem;
 }
 
@@ -957,22 +938,11 @@
   display: grid;
   gap: 1.25rem;
   border-radius: var(--radius-large);
-  background: linear-gradient(110deg, #10398d 0%, #172c70 48%, #6e2b91 100%);
-  border: 1px solid rgba(148, 170, 207, 0.18);
+  background: var(--background-elevated);
+  border: 1px solid var(--border-default);
   padding: 1.75rem;
   position: relative;
   overflow: hidden;
-}
-
-.mkt-mid-cta::before {
-  content: "";
-  position: absolute;
-  inset: auto -10% -40% auto;
-  width: 18rem;
-  height: 18rem;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(109, 232, 226, 0.18), transparent 70%);
-  pointer-events: none;
 }
 
 @media (min-width: 900px) {
@@ -1130,10 +1100,9 @@
   width: 2.25rem;
   align-items: center;
   justify-content: center;
-  border-radius: 0.65rem;
-  background: linear-gradient(145deg, rgba(24, 199, 200, 0.22), rgba(24, 199, 200, 0.05));
-  border: 1px solid rgba(24, 199, 200, 0.35);
-  box-shadow: 0 0 24px rgba(24, 199, 200, 0.12);
+  border-radius: 0.55rem;
+  background: rgba(24, 199, 200, 0.12);
+  border: 1px solid rgba(24, 199, 200, 0.28);
 }
 
 .mkt-brand-word {
@@ -1437,9 +1406,9 @@
   display: grid;
   gap: 0.35rem;
   margin: 0 0.75rem 0.75rem;
-  border-radius: 0.85rem;
-  border: 1px solid rgba(24, 199, 200, 0.28);
-  background: linear-gradient(135deg, rgba(24, 199, 200, 0.14), rgba(115, 87, 232, 0.08));
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-default);
+  background: var(--background-muted);
   padding: 1rem 1.1rem;
   text-decoration: none;
 }
@@ -1469,9 +1438,7 @@
 /* ── Footer ── */
 .mkt-footer {
   border-top: 1px solid var(--border-subtle);
-  background:
-    radial-gradient(ellipse 60% 40% at 10% 0%, rgba(24, 199, 200, 0.08), transparent 60%),
-    linear-gradient(180deg, #06142d 0%, #041027 100%);
+  background: var(--background-deep);
 }
 
 .mkt-footer-top {

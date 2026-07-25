@@ -12,16 +12,10 @@ import {
     Workflow,
     type LucideIcon,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import AnimateIn from '@/components/common/AnimateIn';
 import { WHO_WE_SERVE_HERO, WHO_WE_SERVE_SEGMENTS, type WhoWeServeSegment } from '@/config/marketingOutcomes';
 import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
 
 const SEGMENT_ICONS: Record<WhoWeServeSegment['icon'], LucideIcon> = {
     target: Target,
@@ -35,10 +29,6 @@ const SEGMENT_ICONS: Record<WhoWeServeSegment['icon'], LucideIcon> = {
 export default function WhoWeServePage() {
     return (
         <div className="marketing-theme min-h-screen page-network-bg text-slate-200">
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
             <div className="relative overflow-hidden">
                 <section className="relative min-h-[55vh] flex flex-col items-center justify-center pt-24 pb-16 px-4">
                     <div className="relative z-10 max-w-4xl mx-auto text-center">

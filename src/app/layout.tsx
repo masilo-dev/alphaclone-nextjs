@@ -16,7 +16,6 @@ import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
-import PrismBackground from "@/components/common/PrismBackground";
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/seo/siteEntity";
 
@@ -240,7 +239,6 @@ export default function RootLayout({
         />
         <WebVitals />
         <Providers>
-          <PrismBackground />
           <PWAProvider>
             <PwaPushBootstrap />
             <NativeInteractions />

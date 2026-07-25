@@ -6,16 +6,10 @@ import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 
 import { Button, Input } from '../ui/UIComponents';
 import { formatLegalAddress } from '@/lib/seo/siteEntity';
 import { contactSchema } from '../../schemas/validation';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
 
 const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -74,11 +68,6 @@ const ContactPage: React.FC = () => {
 
     return (
         <div className="marketing-theme min-h-screen page-network-bg text-white relative overflow-hidden">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
             {/* Contact Hero Area */}
             <section className="relative min-h-[40vh] flex flex-col items-center justify-center pt-32">
                 
