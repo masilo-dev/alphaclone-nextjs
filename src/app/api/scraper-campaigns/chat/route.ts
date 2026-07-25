@@ -9,9 +9,7 @@ import {
   getNicheSearchAdvice,
 } from '@/lib/scraper/nicheSearchAdvisor';
 import {
-  fallbackLocalSearch,
   logLeadRun,
-  scraperRunAccepted,
   saveLeadsToCrm,
   startLeadOutreachAutomation,
   triggerNexusAutomation,
@@ -20,6 +18,7 @@ import {
   formatSearchLocation,
   formatSearchNiche,
 } from '@/lib/scraper/leadFinderAutomation';
+import { runCampaignOnPlatform } from '@/lib/scraper/scraperPlatform';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
@@ -36,14 +35,17 @@ async function createAndRunCampaign(
       tenant_id: tenantId,
       name: intent.name,
       status: 'active',
-      source: intent.sources[0],
-      sources: intent.sources,
-      location: intent.location,
+      source: intent.sources[0] || 'osm',
+      sources: intent.sources?.length ? intent.sources : ['osm', 'wikidata', 'directory'],
+      location: {
+        ...intent.location,
+        radius_km: intent.location?.radius_km || 25,
+      },
       industry: intent.industry,
       title_keywords: intent.title_keywords,
       company_size_range: intent.company_size_range,
       exclude_domains: intent.exclude_domains,
-      daily_limit: intent.daily_limit,
+      daily_limit: intent.daily_limit || 40,
       min_score_threshold: intent.min_score_threshold,
       enrichment_level: intent.enrichment_level,
       scoring_rules: {
@@ -51,6 +53,8 @@ async function createAndRunCampaign(
         exclude_keywords: intent.exclude_keywords,
         smb_only: intent.smb_only,
         niche: intent.niche,
+        free_only: true,
+        reach_based: true,
       },
       created_by: userId,
     })
@@ -72,53 +76,39 @@ async function createAndRunCampaign(
     createdCount: 0,
   });
 
-  let scraperStarted = false;
+  // Prefer full in-process free search (OSM / Wikidata / DuckDuckGo / Foursquare).
+  // External scraper is optional — never block product UX on it.
+  let leadCount = 0;
+  let mode: 'in-process' | 'external' = 'in-process';
   try {
-    const scraperRes = await callScraperService('/api/scraper/campaign/run', {
-      method: 'POST',
-      body: {
-        campaign_id: campaign.id,
-        tenant_id: tenantId,
-        user_id: userId,
-      },
-    });
-    scraperStarted = await scraperRunAccepted(scraperRes);
-    if (!scraperStarted) {
-      console.warn('[chat] Scraper service unavailable or invalid response');
+    const platform = await runCampaignOnPlatform(tenantId, userId, campaign.id);
+    leadCount = platform.leadCount;
+    mode = platform.mode;
+  } catch (err) {
+    console.warn('[chat] In-process lead search failed:', err);
+    try {
+      const scraperRes = await callScraperService('/api/scraper/campaign/run', {
+        method: 'POST',
+        body: {
+          campaign_id: campaign.id,
+          tenant_id: tenantId,
+          user_id: userId,
+        },
+      });
+      if (scraperRes.ok) {
+        mode = 'external';
+      }
+    } catch (externalErr) {
+      console.warn('[chat] External scraper also failed:', externalErr);
     }
-  } catch (err) {
-    console.warn('[chat] Scraper service call failed:', err);
   }
 
-  let fallbackCount = 0;
-  try {
-    fallbackCount = await fallbackLocalSearch(tenantId, campaign.id, intent);
-  } catch (err) {
-    console.warn('[chat] Local fallback search failed:', err);
-  }
-
-  const completed = fallbackCount > 0 && !scraperStarted;
-  await logLeadRun({
-    tenantId,
-    campaignId: campaign.id,
-    market: formatSearchLocation(intent),
-    category: formatSearchNiche(intent),
-    status: completed ? 'completed' : 'running',
-    sourceCount: fallbackCount,
-    enrichedCount: fallbackCount,
-    createdCount: fallbackCount,
-  });
-  await supabase.from('lead_campaign_runs').insert({
-    campaign_id: campaign.id,
-    tenant_id: tenantId,
-    status: completed ? 'completed' : scraperStarted ? 'running' : fallbackCount > 0 ? 'completed' : 'running',
-    current_step: fallbackCount > 0 ? (scraperStarted ? 'scraping' : 'done') : 'scraping',
-    progress: fallbackCount > 0 ? (scraperStarted ? 40 : 100) : scraperStarted ? 15 : 10,
-    source_count: fallbackCount,
-    enriched_count: fallbackCount,
-  });
-
-  return campaign;
+  return {
+    ...campaign,
+    leadCount,
+    mode,
+    searchStatus: leadCount > 0 ? 'completed' : 'running',
+  };
 }
 
 async function fetchCampaignLeads(tenantId: string, campaignId: string, minScore?: number) {
@@ -282,11 +272,20 @@ export async function POST(req: NextRequest) {
       const intent = providedIntent;
       if (!intent) return NextResponse.json({ error: 'Missing intent' }, { status: 400 });
       const campaign = await createAndRunCampaign(tenantId, user.id, intent);
+      const nicheLabel = intent.niche || intent.industry?.[0] || 'businesses';
+      const radius = intent.location?.radius_km || 25;
+      const count = campaign.leadCount || 0;
       return NextResponse.json({
-        reply: `Searching SMB ${intent.niche || intent.industry?.[0] || 'businesses'} — skipping big corporations. Sources: ${intent.sources.join(', ')}.`,
+        reply:
+          count > 0
+            ? `Found ${count} contactable ${nicheLabel} leads within ~${radius} km — phone/email required, auto-enriched with decision makers where possible. Select → Save to CRM.`
+            : `Searching ${nicheLabel} within ~${radius} km, then auto-enriching websites for emails, phones, and decision makers (Railway Playwright). Vague website-only rows are dropped.`,
         campaignId: campaign.id,
         intent,
-        status: 'running',
+        status: campaign.searchStatus || (count > 0 ? 'completed' : 'running'),
+        leadCount: count,
+        mode: campaign.mode,
+        sourceStats: undefined,
       });
     }
 

@@ -74,14 +74,16 @@ export async function runCampaignOnPlatform(
     }
   }
 
+  // Final status row (step progress is already streamed by runInProcessLeadCampaign)
   const runPayload = {
     campaign_id: campaignId,
     tenant_id: tenantId,
-    status: leadCount > 0 ? 'completed' : 'running',
-    current_step: leadCount > 0 ? 'done' : 'scraping',
-    progress: leadCount > 0 ? 100 : 15,
+    status: leadCount > 0 ? 'completed' : 'failed',
+    current_step: leadCount > 0 ? 'done' : 'failed',
+    progress: leadCount > 0 ? 100 : 0,
     source_count: leadCount,
     enriched_count: leadCount,
+    created_count: leadCount,
     run_at: new Date().toISOString(),
   };
   await supabase.from('lead_campaign_runs').insert(runPayload);

@@ -1,49 +1,131 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
-import { Loader2, MapPin, Search, Sparkles } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Badge,
+  Box,
+  Button,
+  Checkbox,
+  Flex,
+  FormControl,
+  FormLabel,
+  Grid,
+  HStack,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Select,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
+import { Loader2, MapPin, Radar, Search, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import type { LeadFinderProfile } from '@/lib/scraper/leadFinderLearning';
 import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
-import ScraperLeadsTable from './ScraperLeadsTable';
+import ScraperLeadsTable, { type ScraperLead } from './ScraperLeadsTable';
 import LeadFinderSystemPanel from './LeadFinderSystemPanel';
 import LeadFinderSmartBar from './LeadFinderSmartBar';
+import LeadFinderBeginnerGuide from './LeadFinderBeginnerGuide';
+import LeadFinderLiveProgress from './LeadFinderLiveProgress';
+import LeadFinderMapPanel from './LeadFinderMapPanel';
+import LeadFinderAerialStudio, { type AerialLead } from './LeadFinderAerialStudio';
 
 type Props = {
   onActivity?: () => void;
 };
 
+const RADIUS_OPTIONS = [5, 10, 15, 25, 40, 60];
+
 export default function LeadFinderProspectsView({ onActivity }: Props) {
   const tenant = useCurrentTenantSafe();
   const [niche, setNiche] = useState('');
   const [location, setLocation] = useState('');
+  const [radiusKm, setRadiusKm] = useState(25);
   const [hasEmail, setHasEmail] = useState(false);
   const [searching, setSearching] = useState(false);
   const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [mapLeads, setMapLeads] = useState<ScraperLead[]>([]);
+  const [focusedLeadId, setFocusedLeadId] = useState<string | null>(null);
+
+  const mapPins = useMemo(
+    () =>
+      mapLeads.map((l) => ({
+        business_name: l.company || l.name || 'Lead',
+        address: l.address,
+        phone: l.phone,
+        website: l.company_website || l.source_url,
+        category: l.industry,
+        source: l.source,
+        lat: l.lat ?? undefined,
+        lng: l.lng ?? undefined,
+      })),
+    [mapLeads]
+  );
+
+  const aerialLeads: AerialLead[] = useMemo(
+    () =>
+      mapLeads
+        .filter((l) => l.lat != null && l.lng != null)
+        .map((l) => ({
+          id: l.id,
+          business_name: l.company || l.name || 'Lead',
+          lat: l.lat ?? undefined,
+          lng: l.lng ?? undefined,
+          address: l.address,
+          phone: l.phone,
+          website: l.company_website || l.source_url,
+        })),
+    [mapLeads]
+  );
+
+  const focusedLead = useMemo(() => {
+    const hit =
+      aerialLeads.find((l) => l.id === focusedLeadId) ||
+      aerialLeads[0] ||
+      null;
+    return hit;
+  }, [aerialLeads, focusedLeadId]);
+
+  const previewCenter = useMemo((): [number, number] | null => {
+    const withGeo = mapLeads.find((l) => l.lat != null && l.lng != null);
+    if (!withGeo || withGeo.lat == null || withGeo.lng == null) return null;
+    return [withGeo.lat, withGeo.lng];
+  }, [mapLeads]);
+
+  const bumpResults = useCallback(() => {
+    setRefreshKey((k) => k + 1);
+    onActivity?.();
+  }, [onActivity]);
 
   const runWithIntent = useCallback(
     async (intent: ParsedLeadIntent, label?: string) => {
       if (!tenant?.id) return;
       setSearching(true);
       try {
+        const withRadius: ParsedLeadIntent = {
+          ...intent,
+          location: {
+            ...(intent.location || {}),
+            radius_km: intent.location?.radius_km || radiusKm,
+          },
+        };
         const runRes = await fetch('/api/scraper-campaigns/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             tenantId: tenant.id,
             action: 'run',
-            intent,
+            intent: withRadius,
           }),
         });
         const runData = await runRes.json();
         if (!runRes.ok) throw new Error(runData.error || 'Search failed');
 
         setActiveCampaignId(runData.campaignId ?? null);
-        setRefreshKey((k) => k + 1);
-        onActivity?.();
+        bumpResults();
         toast.success(label || runData.reply || 'Search complete');
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Search failed');
@@ -51,7 +133,7 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
         setSearching(false);
       }
     },
-    [tenant?.id, onActivity]
+    [tenant?.id, radiusKm, bumpResults]
   );
 
   const runSearch = useCallback(async () => {
@@ -64,8 +146,8 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
     }
 
     const query = locationTrim
-      ? `Find ${nicheTrim} businesses in ${locationTrim}`
-      : `Find ${nicheTrim} businesses`;
+      ? `Find ${nicheTrim} businesses in ${locationTrim} within ${radiusKm} km`
+      : `Find ${nicheTrim} businesses within ${radiusKm} km`;
 
     setSearching(true);
     try {
@@ -80,24 +162,31 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
       const parsed = await parseRes.json();
       if (!parseRes.ok) throw new Error(parsed.error || 'Failed to parse search');
 
-      const intent = parsed.intent;
+      const intent = parsed.intent as ParsedLeadIntent | undefined;
       if (!intent) throw new Error('Could not build search intent');
+
+      intent.location = {
+        ...(intent.location || {}),
+        radius_km: radiusKm,
+      };
 
       await runWithIntent(intent);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Search failed');
-    } finally {
       setSearching(false);
     }
-  }, [tenant?.id, niche, location, runWithIntent]);
+  }, [tenant?.id, niche, location, radiusKm, runWithIntent]);
 
-  const handleProfileLoaded = useCallback((profile: LeadFinderProfile) => {
-    if (!profileLoaded) {
-      if (profile.niche) setNiche(profile.niche);
-      if (profile.location) setLocation(profile.location);
-      setProfileLoaded(true);
-    }
-  }, [profileLoaded]);
+  const handleProfileLoaded = useCallback(
+    (profile: LeadFinderProfile) => {
+      if (!profileLoaded) {
+        if (profile.niche) setNiche(profile.niche);
+        if (profile.location) setLocation(profile.location);
+        setProfileLoaded(true);
+      }
+    },
+    [profileLoaded]
+  );
 
   const handleSmartSearch = useCallback(
     (intent: ParsedLeadIntent) => {
@@ -105,98 +194,199 @@ export default function LeadFinderProspectsView({ onActivity }: Props) {
       const loc = intent.location;
       const locLabel = [loc?.city, loc?.country].filter(Boolean).join(', ') || loc?.city || '';
       if (locLabel) setLocation(locLabel);
-      void runWithIntent(intent, 'Smart search running from your saved profile…');
+      if (loc?.radius_km) setRadiusKm(loc.radius_km);
+      void runWithIntent(intent, 'Smart search from your profile');
     },
     [runWithIntent]
   );
 
   return (
-    <div className="space-y-4 min-h-0">
+    <VStack align="stretch" spacing={4} minH={0} flex={1}>
+      <LeadFinderBeginnerGuide />
+
       <LeadFinderSmartBar
         onProfileLoaded={handleProfileLoaded}
         onSmartSearch={handleSmartSearch}
         searching={searching}
       />
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 md:p-5 shadow-lg">
-        <div className="flex flex-col lg:flex-row gap-3">
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="block">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
-                Business type / niche
-              </span>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
+      <Box
+        borderWidth="1px"
+        borderColor="whiteAlpha.200"
+        borderRadius="xl"
+        bg="blackAlpha.400"
+        p={{ base: 4, md: 5 }}
+        boxShadow="lg"
+        position="relative"
+        overflow="hidden"
+      >
+        <Box
+          position="absolute"
+          inset={0}
+          bg="radial-gradient(circle at top right, rgba(20,184,166,0.14), transparent 55%)"
+          pointerEvents="none"
+        />
+        <VStack align="stretch" spacing={4} position="relative">
+          <HStack justify="space-between" wrap="wrap" gap={2}>
+            <Text fontSize="sm" fontWeight="semibold" color="white">
+              Search command
+            </Text>
+            <Badge colorScheme="purple" variant="subtle">
+              Auto-enrich · Decision makers · Phone/email required
+            </Badge>
+          </HStack>
+
+          <Grid templateColumns={{ base: '1fr', md: '1fr 1fr', xl: '1.2fr 1.2fr 0.8fr auto' }} gap={3}>
+            <FormControl>
+              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+                Niche
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <Search size={16} color="#64748B" />
+                </InputLeftElement>
+                <Input
                   value={niche}
                   onChange={(e) => setNiche(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void runSearch()}
-                  placeholder="e.g. dental clinics, HVAC contractors"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  placeholder="dental clinics, HVAC, agencies…"
+                  bg="gray.950"
+                  borderColor="whiteAlpha.300"
+                  color="white"
+                  _placeholder={{ color: 'gray.600' }}
+                  _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px var(--chakra-colors-teal-400)' }}
                 />
-              </div>
-            </label>
-            <label className="block">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1 block">
+              </InputGroup>
+            </FormControl>
+
+            <FormControl>
+              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
                 Location
-              </span>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <MapPin size={16} color="#64748B" />
+                </InputLeftElement>
+                <Input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && void runSearch()}
-                  placeholder="e.g. Austin, TX"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50"
+                  placeholder="Austin, TX"
+                  bg="gray.950"
+                  borderColor="whiteAlpha.300"
+                  color="white"
+                  _placeholder={{ color: 'gray.600' }}
+                  _focus={{ borderColor: 'teal.400', boxShadow: '0 0 0 1px var(--chakra-colors-teal-400)' }}
                 />
-              </div>
-            </label>
-          </div>
-          <div className="flex flex-col sm:flex-row lg:flex-col justify-end gap-2 shrink-0">
-            <label className="flex items-center gap-2 text-sm text-slate-400 px-1">
-              <input
-                type="checkbox"
-                checked={hasEmail}
-                onChange={(e) => setHasEmail(e.target.checked)}
-                className="rounded border-slate-600 bg-slate-900 text-teal-500 focus:ring-teal-500"
-              />
-              Has email
-            </label>
-            <button
-              type="button"
-              onClick={() => void runSearch()}
-              disabled={searching}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-white text-sm font-medium transition-colors"
-            >
-              {searching ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              {searching ? 'Searching…' : 'Search prospects'}
-            </button>
-          </div>
-        </div>
-        <p className="text-xs text-slate-500 mt-3">
-          Learns your niche and location — next time use &quot;Find leads for me&quot; without retyping. Hosted in-process on Railway.
-        </p>
-      </div>
+              </InputGroup>
+            </FormControl>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] gap-4 md:gap-6 min-h-0">
-        <ScraperLeadsTable
-          key={refreshKey}
-          campaignId={activeCampaignId}
-          hasEmailOnly={hasEmail}
-          locationFilter={location.trim() || undefined}
-          showAllWhenNoCampaign
-          onActionComplete={onActivity}
-        />
-        <div className="xl:sticky xl:top-4 xl:self-start max-h-[min(70vh,640px)] overflow-y-auto ac-scroll-full">
-          <LeadFinderSystemPanel compact />
-        </div>
-      </div>
-    </div>
+            <FormControl>
+              <FormLabel fontSize="11px" textTransform="uppercase" letterSpacing="wider" color="gray.500">
+                Reach
+              </FormLabel>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <Radar size={16} color="#64748B" />
+                </InputLeftElement>
+                <Select
+                  value={radiusKm}
+                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  bg="gray.950"
+                  borderColor="whiteAlpha.300"
+                  color="white"
+                  pl={10}
+                >
+                  {RADIUS_OPTIONS.map((km) => (
+                    <option key={km} value={km} style={{ background: '#0f172a' }}>
+                      {km} km
+                    </option>
+                  ))}
+                </Select>
+              </InputGroup>
+            </FormControl>
+
+            <Flex direction="column" justify="flex-end" gap={2}>
+              <Checkbox
+                isChecked={hasEmail}
+                onChange={(e) => setHasEmail(e.target.checked)}
+                colorScheme="teal"
+                color="gray.400"
+                size="sm"
+              >
+                Email only
+              </Checkbox>
+              <Button
+                onClick={() => void runSearch()}
+                isLoading={searching}
+                loadingText="Scraping…"
+                colorScheme="teal"
+                leftIcon={searching ? <Loader2 size={16} /> : <Sparkles size={16} />}
+                px={6}
+              >
+                Find leads
+              </Button>
+            </Flex>
+          </Grid>
+
+          <Text fontSize="xs" color="gray.500">
+            Free stack: OpenStreetMap · Wikidata · Photon · DuckDuckGo · Railway Playwright enrichment.
+            Vague website-only rows are dropped — every result has phone or email.
+          </Text>
+        </VStack>
+      </Box>
+
+      <Grid
+        templateColumns={{ base: '1fr', xl: 'minmax(0,1.15fr) minmax(320px,0.85fr)' }}
+        gap={4}
+        minH={0}
+        flex={1}
+      >
+        <Box minH={0}>
+          <ScraperLeadsTable
+            key={refreshKey}
+            campaignId={activeCampaignId}
+            hasEmailOnly={hasEmail}
+            locationFilter={location.trim() || undefined}
+            showAllWhenNoCampaign
+            onActionComplete={onActivity}
+            onLeadsChange={(leads) => {
+              setMapLeads(leads);
+              if (!focusedLeadId && leads[0]) setFocusedLeadId(leads[0].id);
+            }}
+            refreshToken={refreshKey}
+            onFocusLead={setFocusedLeadId}
+          />
+        </Box>
+
+        <VStack align="stretch" spacing={4} position={{ xl: 'sticky' }} top={4} alignSelf="start">
+          <LeadFinderLiveProgress
+            campaignId={activeCampaignId}
+            searching={searching}
+            niche={niche}
+            location={location}
+            radiusKm={radiusKm}
+            onCompleted={bumpResults}
+          />
+          <LeadFinderMapPanel
+            leads={mapPins}
+            previewCenter={previewCenter}
+            previewRadiusKm={radiusKm}
+            emptyHint="Search to plot contactable leads on the free map."
+            defaultStyle="satellite"
+          />
+          <LeadFinderAerialStudio
+            lead={focusedLead}
+            allLeads={aerialLeads}
+            onSelectLead={(lead) => {
+              if (lead.id) setFocusedLeadId(lead.id);
+            }}
+          />
+          <Box maxH="min(36vh,320px)" overflowY="auto" className="ac-scroll-full">
+            <LeadFinderSystemPanel compact />
+          </Box>
+        </VStack>
+      </Grid>
+    </VStack>
   );
 }

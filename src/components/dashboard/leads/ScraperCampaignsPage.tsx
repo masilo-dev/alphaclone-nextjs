@@ -1,18 +1,70 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { LayoutGrid, MessageSquare, Settings2, Target, Mail, Phone, Users } from 'lucide-react';
+import {
+  Badge,
+  Box,
+  Button,
+  ButtonGroup,
+  Flex,
+  Grid,
+  Heading,
+  HStack,
+  SimpleGrid,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
+import { LayoutGrid, MessageSquare, Settings2 } from 'lucide-react';
 import LeadFinderProspectsView from './LeadFinderProspectsView';
 import LeadFinderChat from './LeadFinderChat';
 import ScraperCampaignBuilder from './ScraperCampaignBuilder';
 import CampaignRunDashboard from './CampaignRunDashboard';
 import ScraperLeadsTable from './ScraperLeadsTable';
 import LeadFinderSystemPanel from './LeadFinderSystemPanel';
-import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import type { LeadFinderStats } from '@/lib/scraper/leadFinderStatsServer';
 
 type Tab = 'prospects' | 'chat' | 'campaigns';
+
+function StatCard({
+  label,
+  value,
+  sub,
+}: {
+  label: string;
+  value: number | string;
+  sub: string;
+}) {
+  return (
+    <Box
+      borderWidth="1px"
+      borderColor="whiteAlpha.200"
+      borderRadius="xl"
+      bg="gray.900"
+      px={4}
+      py={3}
+      position="relative"
+      overflow="hidden"
+      _before={{
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        bg: 'rgba(20,184,166,0.08)',
+        pointerEvents: 'none',
+      }}
+    >
+      <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider" fontWeight="semibold">
+        {label}
+      </Text>
+      <Text mt={1} fontSize="2xl" fontWeight="bold" color="white" style={{ fontVariantNumeric: 'tabular-nums' }}>
+        {value}
+      </Text>
+      <Text mt={0.5} fontSize="xs" color="gray.400" noOfLines={1}>
+        {sub}
+      </Text>
+    </Box>
+  );
+}
 
 export default function ScraperCampaignsPage() {
   const tenant = useCurrentTenantSafe();
@@ -28,7 +80,7 @@ export default function ScraperCampaignsPage() {
       const data = await res.json();
       if (res.ok) setStats(data.stats);
     } catch {
-      // Stats row is optional — panel handles its own errors
+      // optional
     }
   }, [tenant?.id]);
 
@@ -40,118 +92,127 @@ export default function ScraperCampaignsPage() {
     setRefreshKey((k) => k + 1);
   }, []);
 
-  const statCards: ModuleStat[] = stats
-    ? [
-        {
-          label: 'Discovered leads',
-          value: stats.leads.total,
-          sub: `${stats.campaigns.active} active campaigns`,
-          Icon: Users,
-          accent: 'teal',
-        },
-        {
-          label: 'With email',
-          value: stats.leads.withEmail,
-          sub: stats.leads.total
-            ? `${Math.round((stats.leads.withEmail / stats.leads.total) * 100)}% contactable`
-            : 'Run a search to populate',
-          Icon: Mail,
-          accent: 'blue',
-        },
-        {
-          label: 'In CRM',
-          value: stats.pipeline.crmSynced,
-          sub: `${stats.pipeline.contacted} contacted`,
-          Icon: Target,
-          accent: 'emerald',
-        },
-        {
-          label: 'With phone',
-          value: stats.leads.withPhone,
-          sub:
-            stats.system.leadSearch === 'in-process'
-              ? 'In-process search on Railway'
-              : 'External scraper service',
-          Icon: Phone,
-          accent: 'purple',
-        },
-      ]
-    : [];
-
   return (
-    <div className="relative flex flex-col h-full min-h-0 w-full ac-scroll-full ac-enterprise-module pb-20 md:pb-6">
-      <div className="px-4 md:px-6 pt-4 md:pt-6 space-y-5 flex flex-col flex-1 min-h-0">
-      <div className="flex items-start justify-between gap-4 flex-wrap shrink-0">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Lead Finder</h1>
-          <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-            Apollo-style SMB prospecting with live pipeline analytics. Search by niche and location, qualify leads, sync to CRM, and run outreach.
-          </p>
-        </div>
-        <div className="flex rounded-lg border border-slate-800 overflow-hidden shrink-0">
-          <button
-            type="button"
-            onClick={() => setTab('prospects')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-              tab === 'prospects' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-            Prospects
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('chat')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-              tab === 'chat' ? 'bg-teal-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <MessageSquare className="w-4 h-4" />
-            AI Assist
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('campaigns')}
-            className={`flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
-              tab === 'campaigns' ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'
-            }`}
-          >
-            <Settings2 className="w-4 h-4" />
-            Campaigns
-          </button>
-        </div>
-      </div>
+    <Box
+      className="ac-scroll-full ac-enterprise-module"
+      h="full"
+      minH={0}
+      w="full"
+      pb={{ base: 20, md: 6 }}
+      bgGradient="linear(to-b, gray.950, gray.900)"
+    >
+      <VStack align="stretch" spacing={5} px={{ base: 4, md: 6 }} pt={{ base: 4, md: 6 }} h="full" minH={0}>
+        <Flex align="start" justify="space-between" gap={4} wrap="wrap" flexShrink={0}>
+          <VStack align="start" spacing={1} maxW="3xl">
+            <HStack spacing={2}>
+              <Heading size="lg" color="white" letterSpacing="-0.02em">
+                Lead Finder
+              </Heading>
+              <Badge colorScheme="teal" variant="subtle" borderRadius="md">
+                Apollo-grade · Free data
+              </Badge>
+            </HStack>
+            <Text color="gray.400" fontSize="sm">
+              Reach-based prospecting with live scrape, auto enrichment, decision makers, plus free aerial / building 3D / birds-eye views.
+              Only contactable leads are returned.
+            </Text>
+          </VStack>
 
-      {statCards.length > 0 && <ModuleStatCards stats={statCards} />}
+          <ButtonGroup size="sm" isAttached variant="outline">
+            <Button
+              leftIcon={<LayoutGrid size={16} />}
+              onClick={() => setTab('prospects')}
+              colorScheme={tab === 'prospects' ? 'teal' : 'gray'}
+              variant={tab === 'prospects' ? 'solid' : 'outline'}
+              borderColor="whiteAlpha.300"
+            >
+              Prospects
+            </Button>
+            <Button
+              leftIcon={<MessageSquare size={16} />}
+              onClick={() => setTab('chat')}
+              colorScheme={tab === 'chat' ? 'teal' : 'gray'}
+              variant={tab === 'chat' ? 'solid' : 'outline'}
+              borderColor="whiteAlpha.300"
+            >
+              AI Assist
+            </Button>
+            <Button
+              leftIcon={<Settings2 size={16} />}
+              onClick={() => setTab('campaigns')}
+              colorScheme={tab === 'campaigns' ? 'gray' : 'gray'}
+              variant={tab === 'campaigns' ? 'solid' : 'outline'}
+              borderColor="whiteAlpha.300"
+              bg={tab === 'campaigns' ? 'whiteAlpha.200' : undefined}
+              color="white"
+            >
+              Campaigns
+            </Button>
+          </ButtonGroup>
+        </Flex>
 
-      {tab === 'prospects' && <LeadFinderProspectsView onActivity={onActivity} />}
-
-      {tab === 'chat' && (
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] gap-4 md:gap-6 flex-1 min-h-0">
-          <LeadFinderChat onActivity={onActivity} />
-          <div className="hidden xl:flex xl:flex-col min-h-0">
-            <LeadFinderSystemPanel />
-          </div>
-        </div>
-      )}
-
-      {tab === 'campaigns' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ScraperCampaignBuilder onCreated={onActivity} />
-            <CampaignRunDashboard
-              key={refreshKey}
-              selectedCampaignId={selectedCampaignId}
-              onSelectCampaign={setSelectedCampaignId}
+        {stats && (
+          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={3} flexShrink={0}>
+            <StatCard
+              label="Discovered"
+              value={stats.leads.total}
+              sub={`${stats.campaigns.active} active campaigns`}
             />
-          </div>
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
-            <ScraperLeadsTable campaignId={selectedCampaignId} showAllWhenNoCampaign />
-            <LeadFinderSystemPanel compact />
-          </div>
-        </div>
-      )}
-      </div>
-    </div>
+            <StatCard
+              label="With email"
+              value={stats.leads.withEmail}
+              sub={
+                stats.leads.total
+                  ? `${Math.round((stats.leads.withEmail / stats.leads.total) * 100)}% contactable`
+                  : 'Run a search'
+              }
+            />
+            <StatCard
+              label="In CRM"
+              value={stats.pipeline.crmSynced}
+              sub={`${stats.pipeline.contacted} contacted`}
+            />
+            <StatCard
+              label="With phone"
+              value={stats.leads.withPhone}
+              sub={
+                stats.system.leadSearch === 'in-process'
+                  ? 'Railway Playwright + OSM'
+                  : 'External scraper'
+              }
+            />
+          </SimpleGrid>
+        )}
+
+        {tab === 'prospects' && <LeadFinderProspectsView onActivity={onActivity} />}
+
+        {tab === 'chat' && (
+          <Grid templateColumns={{ base: '1fr', xl: 'minmax(0,1fr) minmax(280px,320px)' }} gap={4} flex={1} minH={0}>
+            <LeadFinderChat onActivity={onActivity} />
+            <Box display={{ base: 'none', xl: 'block' }} minH={0}>
+              <LeadFinderSystemPanel />
+            </Box>
+          </Grid>
+        )}
+
+        {tab === 'campaigns' && (
+          <VStack align="stretch" spacing={6}>
+            <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6}>
+              <ScraperCampaignBuilder onCreated={onActivity} />
+              <CampaignRunDashboard
+                key={refreshKey}
+                selectedCampaignId={selectedCampaignId}
+                onSelectCampaign={setSelectedCampaignId}
+              />
+            </Grid>
+            <Grid templateColumns={{ base: '1fr', xl: '1fr 340px' }} gap={6}>
+              <ScraperLeadsTable campaignId={selectedCampaignId} showAllWhenNoCampaign />
+              <LeadFinderSystemPanel compact />
+            </Grid>
+          </VStack>
+        )}
+
+      </VStack>
+    </Box>
   );
 }

@@ -46,38 +46,17 @@ async function geocodeLocation(
   if (!location?.trim()) return null;
   const cleaned = cleanLocationString(location);
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleaned)}&format=json&limit=1`;
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0 (support@alphaclonesystems.com)' },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.[0]) {
-      // Try one more time with just the last part of the string if it's a long address
-      if (cleaned.includes(',')) {
-        const parts = cleaned.split(',');
-        const fallback = parts[parts.length - 1].trim();
-        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fallback)}&format=json&limit=1`, {
-          headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
-          signal: AbortSignal.timeout(8000),
-        });
-        const data2 = await res2.json();
-        if (data2?.[0]) {
-          return {
-            lat: parseFloat(data2[0].lat),
-            lng: parseFloat(data2[0].lon),
-            displayName: data2[0].display_name || fallback,
-          };
-        }
-      }
-      return null;
+    const { geocodeFree } = await import('@/lib/scraper/freeGeoSources');
+    const geo = await geocodeFree(cleaned);
+    if (geo) return geo;
+
+    // Last-part Nominatim retry for long addresses
+    if (cleaned.includes(',')) {
+      const parts = cleaned.split(',');
+      const fallback = parts[parts.length - 1].trim();
+      return geocodeFree(fallback);
     }
-    return {
-      lat: parseFloat(data[0].lat),
-      lng: parseFloat(data[0].lon),
-      displayName: data[0].display_name || cleaned,
-    };
+    return null;
   } catch {
     return null;
   }

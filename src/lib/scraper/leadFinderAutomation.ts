@@ -5,6 +5,12 @@ import { freePlacesService } from '@/services/freePlacesService';
 import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
 import { runLeadStep, type LeadResult } from '@/lib/scraper/freeLeadSearch';
 import type { ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
+import type { GeoPoint } from '@/lib/scraper/freeGeoSources';
+import {
+  enrichBusinessWithDecisionMakers,
+  hasPhoneOrEmail,
+} from '@/lib/scraper/decisionMakerScrape';
+import { canUseBrowserScraper } from '@/lib/scraper/browserSerpLeads';
 
 export function formatSearchNiche(intent: ParsedLeadIntent): string {
   return (
@@ -95,25 +101,60 @@ export async function fallbackLocalSearch(
 
   if (!smbPlaces.length) return 0;
 
-  const rows = smbPlaces.slice(0, intent.daily_limit).map((p) => {
+  // Enrich directory hits then keep only phone/email leads
+  const enrichedRows: Array<Record<string, unknown>> = [];
+  for (const p of smbPlaces.slice(0, Math.min(intent.daily_limit || 40, 25))) {
     const place = places.find((pl) => pl.businessName === p.company) || places[0];
-    return {
+    let phone = place?.phone || '';
+    let email = '';
+    let dmName = '';
+    let dmTitle = '';
+    if (place?.website) {
+      try {
+        const data = await enrichBusinessWithDecisionMakers(place.website, 16000);
+        phone = data.phone || phone;
+        email = data.email || '';
+        dmName = data.primaryDecisionMaker?.name || '';
+        dmTitle = data.primaryDecisionMaker?.title || '';
+      } catch {
+        /* keep directory phone */
+      }
+    }
+    if (!hasPhoneOrEmail({ phone, email })) continue;
+    const sourceId = normalizeTraceValue(
+      place?.placeId || `${place?.source || 'directory'}:${place?.businessName}`
+    );
+    enrichedRows.push({
       campaign_id: campaignId,
       tenant_id: tenantId,
-      name: place?.businessName || p.company,
+      name: dmName || place?.businessName || p.company,
+      title: dmTitle || null,
       company: place?.businessName || p.company,
-      phone: place?.phone,
+      phone: phone || null,
+      email: email || null,
       company_website: place?.website,
       industry: niche,
-      source_id: normalizeTraceValue(place?.placeId || `${place?.source || 'directory'}:${place?.businessName}`),
+      source_id: sourceId,
       source_url: normalizeTraceValue(place?.website),
+      source_label: place?.source || 'directory',
       source: 'directory',
-      score: place?.phone || place?.website ? 55 : 40,
-      grade: 'C',
+      address: place?.formattedAddress || '',
+      lat: place?.lat ?? null,
+      lng: place?.lng ?? null,
+      score: email && phone ? 72 : 58,
+      grade: email && phone ? 'B' : 'C',
       status: 'new',
-      quality_reason: 'SMB local directory search (Railway fallback)',
-    };
-  });
+      quality_reason: 'SMB directory + auto contact enrichment',
+      metadata: {
+        free_source: place?.source || 'directory',
+        decision_maker_name: dmName || null,
+        auto_enriched: true,
+      },
+    });
+  }
+
+  const rows = enrichedRows;
+  if (!rows.length) return 0;
 
   const { error } = await supabase.from('scraper_leads').insert(rows);
   if (error) throw error;
@@ -130,22 +171,134 @@ export async function fallbackLocalSearch(
   return rows.length;
 }
 
-function scoreFromLeadResult(lead: LeadResult): { score: number; grade: string } {
-  let score = 40;
-  if (lead.phone) score += 15;
-  if (lead.email) score += 20;
-  if (lead.website) score += 10;
-  if (lead.rating && lead.rating >= 4) score += 10;
+function scoreFromLeadResult(lead: LeadResult, radiusKm: number): { score: number; grade: string } {
+  let score = 35;
+  if (lead.phone) score += 18;
+  if (lead.email) score += 22;
+  if (lead.website) score += 8;
+  if (lead.decision_maker_name) score += 12;
+  if (lead.decision_maker_title) score += 6;
+  if (lead.rating && lead.rating >= 4) score += 8;
+  if (lead.address) score += 4;
+  if (lead.lat != null && lead.lng != null) score += 6;
+
+  // Reach-based prediction: closer businesses inside the search radius score higher
+  if (typeof lead.reach_km === 'number' && Number.isFinite(lead.reach_km)) {
+    const ratio = Math.min(Math.max(lead.reach_km / Math.max(radiusKm, 1), 0), 1.5);
+    if (ratio <= 0.25) score += 18;
+    else if (ratio <= 0.5) score += 14;
+    else if (ratio <= 0.85) score += 8;
+    else if (ratio <= 1.1) score += 3;
+    else score -= 4;
+  }
+
+  score = Math.max(0, Math.min(99, Math.round(score)));
   const grade = score >= 75 ? 'A' : score >= 60 ? 'B' : score >= 45 ? 'C' : 'D';
   return { score, grade };
 }
 
-/** Full in-app lead search — no external scraper URL required (Railway monolith). */
+/** Auto-enrich websites: emails, phones, decision makers. Drop leads without phone/email. */
+async function autoEnrichLeadBatch(
+  leads: LeadResult[],
+  limit: number,
+  onProgress?: (done: number, total: number) => Promise<void>
+): Promise<LeadResult[]> {
+  const enrichable = leads
+    .filter((l) => hasPhoneOrEmail(l) || (l.website && /^https?:\/\//i.test(l.website)))
+    .slice(0, Math.max(limit * 2, 30));
+
+  const enriched: LeadResult[] = [];
+  const concurrency = 3;
+
+  for (let i = 0; i < enrichable.length && enriched.length < limit; i += concurrency) {
+    const chunk = enrichable.slice(i, i + concurrency);
+    const results = await Promise.all(
+      chunk.map(async (lead) => {
+        if (hasPhoneOrEmail(lead) && lead.decision_maker_name) return lead;
+        if (!lead.website) {
+          return hasPhoneOrEmail(lead) ? lead : null;
+        }
+        try {
+          const data = await enrichBusinessWithDecisionMakers(lead.website, 22000);
+          const next: LeadResult = {
+            ...lead,
+            email: data.email || lead.email || '',
+            phone: data.phone || lead.phone || '',
+            decision_maker_name: data.primaryDecisionMaker?.name,
+            decision_maker_title: data.primaryDecisionMaker?.title,
+            hasContact: false,
+            snippet:
+              data.primaryDecisionMaker
+                ? `${data.primaryDecisionMaker.title}: ${data.primaryDecisionMaker.name}`
+                : lead.snippet,
+          };
+          next.hasContact = hasPhoneOrEmail(next);
+          return next.hasContact ? next : null;
+        } catch {
+          return hasPhoneOrEmail(lead) ? lead : null;
+        }
+      })
+    );
+
+    for (const row of results) {
+      if (row && hasPhoneOrEmail(row)) enriched.push(row);
+      if (enriched.length >= limit) break;
+    }
+    await onProgress?.(Math.min(i + concurrency, enrichable.length), enrichable.length);
+  }
+
+  // Prefer decision-maker + email leads first
+  return enriched.sort((a, b) => {
+    const aDm = a.decision_maker_name ? 1 : 0;
+    const bDm = b.decision_maker_name ? 1 : 0;
+    if (bDm !== aDm) return bDm - aDm;
+    const aEmail = a.email ? 1 : 0;
+    const bEmail = b.email ? 1 : 0;
+    if (bEmail !== aEmail) return bEmail - aEmail;
+    return (a.reach_km ?? 999) - (b.reach_km ?? 999);
+  });
+}
+
+async function updateCampaignRunProgress(
+  tenantId: string,
+  campaignId: string,
+  patch: {
+    status?: 'running' | 'completed' | 'failed';
+    current_step?: string;
+    progress?: number;
+    source_count?: number;
+    enriched_count?: number;
+    created_count?: number;
+    errors?: Array<{ stage: string; message: string }>;
+  }
+) {
+  const supabase = createSupabaseAdminClient();
+  const payload = {
+    campaign_id: campaignId,
+    tenant_id: tenantId,
+    status: patch.status || 'running',
+    current_step: patch.current_step || 'scraping',
+    progress: patch.progress ?? 10,
+    source_count: patch.source_count ?? 0,
+    enriched_count: patch.enriched_count ?? 0,
+    created_count: patch.created_count ?? 0,
+    errors: patch.errors || [],
+    run_at: new Date().toISOString(),
+  };
+  await supabase.from('lead_campaign_runs').insert(payload);
+}
+
+/** Full in-app lead search — free sources only by default (OSM / Wikidata / DuckDuckGo). */
 export async function runInProcessLeadCampaign(
   tenantId: string,
   campaignId: string,
   intent: ParsedLeadIntent
-): Promise<{ count: number; sourceStats: Record<string, number> }> {
+): Promise<{
+  count: number;
+  sourceStats: Record<string, number>;
+  sourceErrors: Record<string, string>;
+  searchCenter: GeoPoint | null;
+}> {
   const supabase = createSupabaseAdminClient();
   const niche = formatSearchNiche(intent);
   const location = formatSearchLocation(intent);
@@ -156,6 +309,13 @@ export async function runInProcessLeadCampaign(
   let sourceStats: Record<string, number> = {};
   let sourceErrors: Record<string, string> = {};
   let finalResults: LeadResult[] = [];
+  let searchCenter: GeoPoint | null = null;
+
+  await updateCampaignRunProgress(tenantId, campaignId, {
+    status: 'running',
+    current_step: 'init',
+    progress: 8,
+  });
 
   while (true) {
     const result = await runLeadStep({
@@ -163,15 +323,25 @@ export async function runInProcessLeadCampaign(
       niche,
       location,
       radiusKm,
-      sortBy: 'default',
-      usePlaywright: Boolean(process.env.BROWSERBASE_API_KEY),
+      sortBy: 'reach_asc',
+      usePlaywright: canUseBrowserScraper(),
       partialResults: partial,
       sourceStats,
       sourceErrors,
+      searchCenter,
     });
     partial = result.partialResults;
     sourceStats = result.sourceStats;
     sourceErrors = result.sourceErrors;
+    searchCenter = result.searchCenter;
+    await updateCampaignRunProgress(tenantId, campaignId, {
+      status: 'running',
+      current_step: result.stepLabel || result.nextStep,
+      progress: Math.min(72, result.progress),
+      source_count: partial.length,
+      enriched_count: partial.filter((l) => hasPhoneOrEmail(l)).length,
+      errors: Object.entries(sourceErrors).map(([stage, message]) => ({ stage, message })),
+    });
     if (result.nextStep === 'completed') {
       finalResults = result.finalResults.length ? result.finalResults : result.partialResults;
       break;
@@ -181,12 +351,47 @@ export async function runInProcessLeadCampaign(
 
   if (!finalResults.length) {
     const placesCount = await fallbackLocalSearch(tenantId, campaignId, intent);
-    return { count: placesCount, sourceStats: { ...sourceStats, directory: placesCount } };
+    await updateCampaignRunProgress(tenantId, campaignId, {
+      status: placesCount > 0 ? 'completed' : 'failed',
+      current_step: placesCount > 0 ? 'done' : 'failed',
+      progress: placesCount > 0 ? 100 : 0,
+      source_count: placesCount,
+      created_count: placesCount,
+    });
+    return {
+      count: placesCount,
+      sourceStats: { ...sourceStats, directory: placesCount },
+      sourceErrors,
+      searchCenter,
+    };
   }
 
-  const candidates = finalResults.map((lead) => ({
+  await updateCampaignRunProgress(tenantId, campaignId, {
+    status: 'running',
+    current_step: 'Enriching emails, phones & decision makers',
+    progress: 78,
+    source_count: finalResults.length,
+  });
+
+  const limit = intent.daily_limit || 40;
+  const contactReady = await autoEnrichLeadBatch(finalResults, limit, async (done, total) => {
+    await updateCampaignRunProgress(tenantId, campaignId, {
+      status: 'running',
+      current_step: `Enriching contacts ${done}/${total}`,
+      progress: 78 + Math.round((done / Math.max(total, 1)) * 18),
+      source_count: finalResults.length,
+      enriched_count: done,
+    });
+  });
+
+  // Hard filter: never persist leads without phone or email
+  const withContact = contactReady.filter((l) => hasPhoneOrEmail(l));
+  sourceStats.enriched = withContact.length;
+  sourceStats.dropped_no_contact = Math.max(0, finalResults.length - withContact.length);
+
+  const candidates = withContact.map((lead) => ({
     lead,
-    name: lead.business_name,
+    name: lead.decision_maker_name || lead.business_name,
     company: lead.business_name,
     company_website: lead.website,
     email: lead.email,
@@ -194,31 +399,99 @@ export async function runInProcessLeadCampaign(
   }));
   const smb = filterSmbLeads(candidates);
 
-  const rows = smb.slice(0, intent.daily_limit).map((entry) => {
+  const rows = smb.slice(0, limit).map((entry) => {
     const lead = entry.lead;
-    const { score, grade } = scoreFromLeadResult(lead);
+    const { score, grade } = scoreFromLeadResult(lead, radiusKm);
+    const sourceId =
+      normalizeTraceValue(lead.source_id) ||
+      normalizeTraceValue(`${lead.source}:${lead.business_name}:${lead.lat},${lead.lng}`);
+    const dmName = lead.decision_maker_name || null;
+    const dmTitle = lead.decision_maker_title || null;
+    const nameParts = (dmName || '').trim().split(/\s+/).filter(Boolean);
     return {
       campaign_id: campaignId,
       tenant_id: tenantId,
-      name: lead.business_name,
+      name: dmName || lead.business_name,
+      first_name: nameParts[0] || null,
+      last_name: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
+      title: dmTitle,
       company: lead.business_name,
-      phone: lead.phone,
-      email: lead.email,
-      company_website: lead.website,
+      phone: lead.phone || null,
+      email: lead.email || null,
+      company_website: lead.website || null,
       industry: niche,
-      source: lead.source || 'directory',
+      source: lead.source || 'osm',
+      source_id: sourceId,
+      source_url: normalizeTraceValue(lead.source_url || lead.website) || null,
+      source_label: [
+        lead.source || 'osm',
+        typeof lead.reach_km === 'number' ? `${lead.reach_km} km` : null,
+        dmTitle ? 'DM' : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+      address: lead.address || null,
+      lat: lead.lat ?? null,
+      lng: lead.lng ?? null,
+      reach_km: typeof lead.reach_km === 'number' ? lead.reach_km : null,
+      search_center_lat: searchCenter?.lat ?? null,
+      search_center_lng: searchCenter?.lng ?? null,
       score,
       grade,
       status: 'new',
-      quality_reason: 'In-app lead search (Railway)',
+      quality_reason: dmName
+        ? `Auto-enriched · ${dmTitle || 'decision maker'}: ${dmName} · ${lead.source || 'osm'}`
+        : `Auto-enriched contact · ${lead.source || 'osm'} · radius ${radiusKm} km`,
+      metadata: {
+        has_contact: true,
+        category: lead.category || null,
+        rating: lead.rating ?? null,
+        free_sources: true,
+        decision_maker_name: dmName,
+        decision_maker_title: dmTitle,
+        auto_enriched: true,
+        playwright: canUseBrowserScraper(),
+      },
     };
   });
 
-  if (!rows.length) return { count: 0, sourceStats };
+  if (!rows.length) {
+    await updateCampaignRunProgress(tenantId, campaignId, {
+      status: 'failed',
+      current_step: 'no_contactable_leads',
+      progress: 100,
+      source_count: finalResults.length,
+      created_count: 0,
+      errors: [{ stage: 'enrich', message: 'No leads with phone or email after enrichment' }],
+    });
+    return { count: 0, sourceStats, sourceErrors, searchCenter };
+  }
 
   const { error } = await supabase.from('scraper_leads').insert(rows);
   if (error) throw error;
-  return { count: rows.length, sourceStats };
+
+  await updateCampaignRunProgress(tenantId, campaignId, {
+    status: 'completed',
+    current_step: 'done',
+    progress: 100,
+    source_count: finalResults.length,
+    enriched_count: rows.length,
+    created_count: rows.length,
+  });
+
+  await logLeadRun({
+    tenantId,
+    campaignId,
+    market: location,
+    category: niche,
+    status: 'completed',
+    sourceCount: finalResults.length,
+    enrichedCount: rows.length,
+    createdCount: rows.length,
+    errors: Object.entries(sourceErrors).map(([stage, message]) => ({ stage, message })),
+  });
+
+  return { count: rows.length, sourceStats, sourceErrors, searchCenter };
 }
 
 export async function saveLeadsToCrm(
@@ -230,10 +503,17 @@ export async function saveLeadsToCrm(
 
   for (const lead of leads) {
     const leadData = lead as Record<string, any>;
-    const sourceId = normalizeTraceValue(leadData.source_id || leadData.sourceId);
+    const sourceId =
+      normalizeTraceValue(leadData.source_id || leadData.sourceId) ||
+      normalizeTraceValue(
+        `${leadData.source || 'lead_finder'}:${leadData.id || leadData.name || leadData.company}`
+      );
     if (!sourceId) {
       throw new Error(`Lead "${String(leadData.name || leadData.company || 'unknown')}" is missing source_id`);
     }
+    const address = normalizeTraceValue(leadData.address);
+    const reachNote =
+      leadData.reach_km != null ? `Reach: ${leadData.reach_km} km from search center` : '';
     const result = await executeSingleBonnieTool({
       tenantId,
       userId,
@@ -247,7 +527,18 @@ export async function saveLeadsToCrm(
         source: leadData.source || 'lead_finder_chat',
         source_id: sourceId,
         source_url: normalizeTraceValue(leadData.source_url || leadData.website || leadData.company_website),
-        notes: `Score: ${leadData.score ?? 'N/A'}, Grade: ${leadData.grade ?? 'N/A'}\nSource ID: ${sourceId}\nSource URL: ${normalizeTraceValue(leadData.source_url || leadData.website || leadData.company_website)}`,
+        notes: [
+          `Score: ${leadData.score ?? 'N/A'}, Grade: ${leadData.grade ?? 'N/A'}`,
+          reachNote,
+          address ? `Address: ${address}` : '',
+          `Source ID: ${sourceId}`,
+          `Source URL: ${normalizeTraceValue(leadData.source_url || leadData.website || leadData.company_website)}`,
+          leadData.lat != null && leadData.lng != null
+            ? `Geo: ${leadData.lat}, ${leadData.lng}`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
       },
       skipPolicy: true,
       policySource: 'mcp',

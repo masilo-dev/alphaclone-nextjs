@@ -232,7 +232,12 @@ export default function LeadFinderSystemPanel({ compact = false }: { compact?: b
           <li className="flex items-center gap-2 text-slate-300">
             <StatusDot ok={stats.system.osm === 'available'} />
             <CheckCircle2 className="w-3 h-3 text-slate-500" />
-            OpenStreetMap: available
+            OpenStreetMap / Overpass: available
+          </li>
+          <li className="flex items-center gap-2 text-slate-300">
+            <StatusDot ok />
+            <Globe className="w-3 h-3 text-slate-500" />
+            Free stack: Wikidata · Photon · DuckDuckGo
           </li>
           <li className="flex items-center gap-2 text-slate-300">
             <StatusDot ok={stats.system.deepseek === 'configured'} />
