@@ -44,7 +44,10 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     !dismissed && (isNewWorkspaceStats(stats) || stats === null);
 
   return (
-    <div className="space-y-3 sm:space-y-4 ac-scroll-full pb-24 md:pb-8 ac-safe-bottom" data-tour="business-home">
+    <div
+      className="space-y-4 ac-scroll-full pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6"
+      data-tour="business-home"
+    >
       {showSetup ? (
         <NewUserSetupPanel
           user={user}
@@ -55,14 +58,13 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
         />
       ) : null}
 
-      {/* Priority 1–3: attention, next actions, upcoming — always first viewport */}
       <AttentionFirstDashboard />
 
-      <div className="flex justify-center pt-1">
+      <div className="flex justify-center">
         <button
           type="button"
           onClick={() => setShowMoreContext((v) => !v)}
-          className="min-h-11 px-3 text-xs font-medium text-slate-400 hover:text-teal-300 transition-colors underline-offset-2 hover:underline"
+          className="min-h-11 px-3 text-[12px] font-medium text-[var(--ws-text-tertiary)] hover:text-teal-300 transition-colors"
           aria-expanded={showMoreContext}
         >
           {showMoreContext ? 'Hide extra workspace context' : 'Show platform insights & overview'}
@@ -76,9 +78,9 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
           <div className="hidden md:block">
             <OverviewDashboard />
           </div>
-          <div className="md:hidden rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
-            <p className="text-sm text-slate-300 font-medium">Business overview</p>
-            <p className="text-xs text-slate-500 mt-1">
+          <div className="md:hidden rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] p-4">
+            <p className="text-[13px] text-[var(--ws-text-primary,#fff)] font-medium">Business overview</p>
+            <p className="text-[12px] text-[var(--ws-text-tertiary)] mt-1">
               Full charts stay on larger screens. Use Customers, Work, or Inbox below to continue.
             </p>
           </div>

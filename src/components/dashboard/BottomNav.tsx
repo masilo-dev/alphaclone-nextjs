@@ -62,7 +62,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
         className="md:hidden fixed inset-x-0 bottom-0 z-50 ac-workspace-toolbar border-t border-[var(--ws-border)] native-bottom-bar"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 6px)' }}
       >
-        <div className="flex justify-around items-end h-[54px] px-1 pb-0.5">
+        <div className="flex justify-around items-stretch h-[56px] px-1">
           {destinations.map((item) => {
             const isMore = item.id === 'more';
             const isActive = isMore
@@ -80,29 +80,29 @@ const BottomNav: React.FC<BottomNavProps> = ({
                 aria-current={!isMore && isActive ? 'page' : undefined}
                 aria-expanded={isMore ? moreOpen : undefined}
                 aria-haspopup={isMore ? 'dialog' : undefined}
-                className="native-tap flex flex-col items-center justify-end w-full h-full gap-0.5 transition-colors min-w-0"
+                className="native-tap relative flex flex-col items-center justify-center w-full min-h-11 gap-0.5 transition-colors min-w-0"
               >
+                {isActive ? (
+                  <span
+                    className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-teal-400"
+                    aria-hidden
+                  />
+                ) : null}
                 <div className="relative">
-                  <div
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                      isActive
-                        ? 'bg-teal-500 scale-105 shadow-sm'
-                        : 'bg-teal-500/15'
+                  <Icon
+                    className={`w-[1.125rem] h-[1.125rem] transition-colors ${
+                      isActive ? 'text-teal-300' : 'text-[var(--ws-text-tertiary)]'
                     }`}
-                  >
-                    <Icon
-                      className={`w-4 h-4 ${isActive ? 'text-white' : 'text-white/80'}`}
-                      strokeWidth={isActive ? 2.25 : 1.75}
-                      aria-hidden
-                    />
-                  </div>
+                    strokeWidth={isActive ? 2.25 : 1.75}
+                    aria-hidden
+                  />
                   {showBadge ? (
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-slate-900" />
+                    <span className="absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-[var(--ws-toolbar)]" />
                   ) : null}
                 </div>
                 <span
                   className={`pwa-tab-label max-w-[4.75rem] truncate leading-tight ${
-                    isActive ? 'text-teal-300' : 'text-slate-500'
+                    isActive ? 'text-teal-300' : 'text-[var(--ws-text-tertiary)]'
                   }`}
                 >
                   {item.label}

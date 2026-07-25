@@ -55,19 +55,18 @@ export default function HubShell({
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className={cn('w-1 h-4 rounded-full shrink-0', ACCENT_BAR[accent])} aria-hidden />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className={cn('w-1 h-5 rounded-full shrink-0', ACCENT_BAR[accent])} aria-hidden />
           <div className="min-w-0">
             <h1 className={cn(WORKSPACE.typography.pageTitle, 'truncate')}>{title}</h1>
             {description ? (
-              <p className="text-[12px] text-[var(--ws-text-tertiary)] mt-0.5 line-clamp-1 md:line-clamp-none">
+              <p className={cn(WORKSPACE.typography.panelSubtitle, 'mt-0.5 line-clamp-1 md:line-clamp-none')}>
                 {description}
               </p>
             ) : null}
           </div>
         </div>
 
-        {/* Phone / small tablet: one predictable section switcher */}
         <ModuleJumpSelect
           options={tabs.map((t) => ({ label: t.label, href: t.href }))}
           currentHref={pathname || undefined}
@@ -76,9 +75,8 @@ export default function HubShell({
           className="mt-3 lg:hidden"
         />
 
-        {/* Laptop+: horizontal tab strip (not shown with jump select on phone) */}
         <div
-          className="hidden lg:flex gap-0 overflow-x-auto ios-scroll mt-3 -mx-1 px-1 border-b border-[var(--ws-border)]"
+          className="hidden lg:flex gap-0 overflow-x-auto ios-scroll mt-3 -mx-1 px-1"
           role="tablist"
           aria-label={`${title} sections`}
         >
@@ -106,7 +104,7 @@ export default function HubShell({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 ac-scroll-full px-3 sm:px-4 py-4 md:py-5 ac-safe-bottom pb-[calc(1rem+env(safe-area-inset-bottom,0px))] md:pb-5">
+      <div className="flex-1 min-h-0 ac-scroll-full px-3 sm:px-4 py-4 md:py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
         <BonnieModulePageShell>{children}</BonnieModulePageShell>
       </div>
     </div>

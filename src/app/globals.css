@@ -1511,6 +1511,7 @@ html.pwa-standalone .pwa-page-title {
   --ws-border-strong: rgba(255, 255, 255, 0.12);
   --ws-hover: rgba(255, 255, 255, 0.06);
   --ws-active: rgba(20, 184, 166, 0.14);
+  --ws-text-primary: #f5f5f5;
   --ws-text-secondary: #b3b3b3;
   --ws-text-tertiary: #8c8c8c;
   --ws-radius: 6px;
@@ -1546,6 +1547,7 @@ html.light .ac-business-root {
   --ws-border-strong: rgba(0, 0, 0, 0.12);
   --ws-hover: rgba(0, 0, 0, 0.04);
   --ws-active: rgba(20, 184, 166, 0.12);
+  --ws-text-primary: #0f172a;
   --ws-text-secondary: #5c5c5c;
   --ws-text-tertiary: #8c8c8c;
 
@@ -1592,8 +1594,14 @@ html.light .ac-business-root {
   border-radius: var(--ws-radius-lg);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 24px rgba(0, 0, 0, 0.22);
-  transition: border-color 140ms ease, box-shadow 180ms ease, transform 180ms ease;
+    0 6px 18px rgba(0, 0, 0, 0.18);
+  transition: border-color 140ms ease, box-shadow 180ms ease;
+}
+
+.ac-home-feed .ac-workspace-panel {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.025),
+    0 4px 14px rgba(0, 0, 0, 0.14);
 }
 
 .ac-metric-card:hover {

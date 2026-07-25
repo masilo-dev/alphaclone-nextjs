@@ -1113,14 +1113,16 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 )}
                             </div>
                             {!isHubRoute(route) && (
-                                <h1 className="pwa-page-title text-white/90 whitespace-nowrap truncate max-w-[150px] sm:max-w-none">{getPageTitle()}</h1>
+                                <h1 className={`${WORKSPACE.typography.pageTitle} pwa-page-title whitespace-nowrap truncate max-w-[150px] sm:max-w-none`}>
+                                    {getPageTitle()}
+                                </h1>
                             )}
                         </div>
 
-                        {/* Breadcrumb or Title for Desktop — hidden inside hubs (HubShell shows title) */}
+                        {/* Title for desktop — hubs own their own HubShell title */}
                         {!isHubRoute(route) && (
-                        <div className="hidden md:block">
-                            <h1 className="text-lg font-bold text-white/90 tracking-tight">
+                        <div className="hidden md:block min-w-0">
+                            <h1 className={`${WORKSPACE.typography.pageTitle} truncate`}>
                                 {getPageTitle()}
                             </h1>
                         </div>

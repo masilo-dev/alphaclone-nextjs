@@ -212,9 +212,9 @@ export const WORKSPACE = {
         active: 'ac-workspace-tab--active',
     },
     typography: {
-        pageTitle: 'text-[15px] font-semibold text-white tracking-tight',
-        sectionLabel: 'text-[11px] font-semibold uppercase tracking-[0.06em] text-slate-500',
-        panelTitle: 'text-[13px] font-semibold text-slate-100',
-        panelSubtitle: 'text-[11px] text-slate-500',
+        pageTitle: 'text-[15px] font-semibold text-[var(--ws-text-primary,#fff)] tracking-tight',
+        sectionLabel: 'text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)]',
+        panelTitle: 'text-[13px] font-semibold text-[var(--ws-text-primary,#fff)]',
+        panelSubtitle: 'text-[12px] text-[var(--ws-text-tertiary)]',
     },
 } as const;
