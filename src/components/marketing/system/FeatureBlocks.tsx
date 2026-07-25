@@ -1,29 +1,17 @@
 import Link from 'next/link';
-import {
-  Bot,
-  CheckSquare,
-  FileText,
-  Mail,
-  Megaphone,
-  Receipt,
-  Target,
-  Users,
-  Video,
-  Workflow,
-  type LucideIcon,
-} from 'lucide-react';
+import { AlphaIcon, IconFrame, type AlphaIconName } from '@/components/marketing/icons';
 
-const ICONS: Record<string, LucideIcon> = {
-  users: Users,
-  target: Target,
-  check: CheckSquare,
-  file: FileText,
-  video: Video,
-  receipt: Receipt,
-  bot: Bot,
-  mail: Mail,
-  workflow: Workflow,
-  megaphone: Megaphone,
+const ICON_ALIASES: Record<string, AlphaIconName> = {
+  users: 'crm',
+  target: 'leads',
+  check: 'projects',
+  file: 'documents',
+  video: 'calendar',
+  receipt: 'invoicing',
+  bot: 'bonnie',
+  mail: 'marketing',
+  workflow: 'workflow',
+  megaphone: 'marketing',
 };
 
 export function FeatureCard({
@@ -37,15 +25,15 @@ export function FeatureCard({
   href: string;
   icon: string;
 }) {
-  const Icon = ICONS[icon] ?? Users;
+  const iconName = ICON_ALIASES[icon] ?? 'connected';
   return (
     <Link
       href={href}
       className="mkt-surface group block p-5 transition-colors hover:border-[rgba(20,184,166,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
     >
-      <span className="mkt-icon-wrap mb-4">
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
+      <IconFrame size="md" className="mb-4">
+        <AlphaIcon name={iconName} variant="feature" size="lg" />
+      </IconFrame>
       <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
         {name}
       </h3>

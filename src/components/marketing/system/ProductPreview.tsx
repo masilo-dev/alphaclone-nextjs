@@ -3,6 +3,7 @@
  * Keeps the preview readable without dominating laptop viewports.
  */
 
+import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
 import { ProductPreviewGlow } from './atmosphere';
 
 const METRICS = [
@@ -11,6 +12,14 @@ const METRICS = [
   { label: 'Leads', value: '64' },
   { label: 'Projects', value: '23' },
 ] as const;
+
+const NAV: Array<{ label: string; icon: AlphaIconName; active?: boolean }> = [
+  { label: 'Dashboard', icon: 'connected', active: true },
+  { label: 'CRM', icon: 'crm' },
+  { label: 'Projects', icon: 'projects' },
+  { label: 'Invoices', icon: 'invoicing' },
+  { label: 'Bonnie AI', icon: 'bonnie' },
+];
 
 export default function ProductPreview() {
   return (
@@ -27,10 +36,10 @@ export default function ProductPreview() {
             <span>AlphaClone</span>
           </div>
           <nav className="mkt-preview-nav">
-            {['Dashboard', 'CRM', 'Projects', 'Invoices', 'Bonnie AI'].map((item, index) => (
-              <div key={item} className={`mkt-preview-nav-item${index === 0 ? ' is-active' : ''}`}>
-                <span className="mkt-preview-nav-dot" />
-                {item}
+            {NAV.map((item) => (
+              <div key={item.label} className={`mkt-preview-nav-item${item.active ? ' is-active' : ''}`}>
+                <AlphaIcon name={item.icon} variant="nav" size="xs" className="mkt-preview-nav-icon" />
+                {item.label}
               </div>
             ))}
           </nav>

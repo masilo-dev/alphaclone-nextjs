@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { AlphaIcon } from '@/components/marketing/icons';
 import { ConversionBanner } from './ConversionBanner';
 import { MarketingContainer, MarketingSection, SectionHeading } from './LayoutPrimitives';
 import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
@@ -111,7 +112,7 @@ export default function SolutionPageTemplate({ content }: SolutionPageTemplatePr
               <ul className="space-y-3">
                 {content.outcomes.map((outcome) => (
                   <li key={outcome} className="flex gap-3 text-[var(--marketing-text-secondary)]">
-                    <CheckCircle2 className="mt-1 h-5 w-5 flex-shrink-0 text-[var(--marketing-accent-hover)]" aria-hidden="true" />
+                    <AlphaIcon name="check" variant="trust" size="md" className="mt-1 shrink-0" />
                     <span>{outcome}</span>
                   </li>
                 ))}

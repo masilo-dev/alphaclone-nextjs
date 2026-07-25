@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2 } from 'lucide-react';
+import { AlphaIcon } from '@/components/marketing/icons';
 import MarketingFaqAccordion from '@/components/marketing/MarketingFaqAccordion';
 import MarketingPricingToggle, { type BillingPeriod } from '@/components/marketing/MarketingPricingToggle';
 import { PUBLIC_PRICING_PLANS, PRICING_FROM } from '@/config/pricingPlans';
@@ -49,7 +49,7 @@ const comparisonRows = [
 
 function CheckMark({ enabled }: { enabled: boolean }) {
   return enabled ? (
-    <CheckCircle2 className="mx-auto h-5 w-5 text-[var(--marketing-accent-hover)]" aria-label="Included" />
+    <AlphaIcon name="check" variant="trust" size="md" title="Included" decorative={false} className="mx-auto" />
   ) : (
     <span className="text-[var(--marketing-text-muted)]" aria-label="Not included">
       -
@@ -135,7 +135,7 @@ export default function PricingPage() {
                           }`}
                         >
                           {isGroupLabel ? null : (
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--marketing-accent-hover)]" aria-hidden="true" />
+                            <AlphaIcon name="check" variant="trust" size="sm" className="mt-0.5 shrink-0" />
                           )}
                           <span>{feature}</span>
                         </li>

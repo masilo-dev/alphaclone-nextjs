@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { CheckCircle2, Clock3, CreditCard, ShieldCheck, XCircle } from 'lucide-react';
 import { PUBLIC_PRICING_PLANS, PRICING_FROM } from '@/config/pricingPlans';
 import { VERIFIED_PARTNERS } from '@/config/verifiedPartners';
 import { trialHrefForPlan } from '@/lib/marketing/cta';
+import { AlphaIcon, IconFrame, ICON_ACCENT } from '@/components/marketing/icons';
 import { CtaPair, PrimaryCTA } from './CtaButtons';
 import FAQAccordion from './FAQAccordion';
 import {
@@ -24,8 +24,6 @@ import {
   SectionAmbientLight,
   SectionConnector,
 } from './atmosphere';
-
-const TRUST_ICONS = [CreditCard, Clock3, XCircle, ShieldCheck] as const;
 
 export default function MarketingHomePage() {
   const showTestimonials = APPROVED_TESTIMONIALS.length > 0;
@@ -52,15 +50,12 @@ export default function MarketingHomePage() {
             </p>
             <CtaPair className="mkt-cta-row justify-center" />
             <ul className="mkt-trust-notes">
-              {HOME_TRUST_NOTES.map((note, index) => {
-                const Icon = TRUST_ICONS[index] ?? ShieldCheck;
-                return (
-                  <li key={note}>
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {note}
-                  </li>
-                );
-              })}
+              {HOME_TRUST_NOTES.map((note) => (
+                <li key={note.label}>
+                  <AlphaIcon name={note.icon} variant="trust" size="sm" className="mkt-trust-icon" />
+                  {note.label}
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -106,11 +101,11 @@ export default function MarketingHomePage() {
               <ExploreFeaturesLink />
             </div>
             <div className="mkt-feature-grid">
-              {HOME_PLATFORM_FEATURES.map(({ name, body, href, icon: Icon }) => (
+              {HOME_PLATFORM_FEATURES.map(({ name, body, href, icon }) => (
                 <Link key={name} href={href} className="mkt-feature-card">
-                  <span className="mkt-icon-wrap">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
+                  <IconFrame size="md" accent={ICON_ACCENT[icon] ?? 'default'}>
+                    <AlphaIcon name={icon} variant="feature" size="lg" />
+                  </IconFrame>
                   <h3>{name}</h3>
                   <p>{body}</p>
                 </Link>
@@ -133,14 +128,14 @@ export default function MarketingHomePage() {
             </p>
           </div>
           <div className="mkt-steps">
-            {HOME_HOW_IT_WORKS.map(({ step, title, body, icon: Icon }) => (
+            {HOME_HOW_IT_WORKS.map(({ step, title, body, icon }) => (
               <div key={title} className="mkt-step">
                 <span className="mkt-step-num" aria-hidden="true">
                   {step}
                 </span>
-                <span className="mkt-icon-wrap mt-4 mx-auto lg:flex hidden">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
+                <IconFrame size="display" className="mkt-step-symbol mx-auto mt-4 hidden lg:flex">
+                  <AlphaIcon name={icon} variant="display" size="display" />
+                </IconFrame>
                 <h3>{title}</h3>
                 <p>{body}</p>
               </div>
@@ -161,6 +156,9 @@ export default function MarketingHomePage() {
             <div className="mkt-outcome-cards">
               {HOME_OUTCOMES.map((item) => (
                 <div key={item.title} className="mkt-outcome-card">
+                  <IconFrame size="sm" className="mb-2">
+                    <AlphaIcon name={item.icon} variant="metric" size="md" />
+                  </IconFrame>
                   <strong>{item.title}</strong>
                   <span>{item.detail}</span>
                 </div>
@@ -234,10 +232,7 @@ export default function MarketingHomePage() {
                 <ul className="mt-6 flex-1 space-y-3">
                   {plan.features.slice(0, 5).map((feature) => (
                     <li key={feature} className="flex gap-3 text-sm text-[var(--text-secondary)]">
-                      <CheckCircle2
-                        className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-cyan-soft)]"
-                        aria-hidden="true"
-                      />
+                      <AlphaIcon name="check" variant="trust" size="sm" className="mt-0.5 shrink-0" />
                       <span>{feature}</span>
                     </li>
                   ))}

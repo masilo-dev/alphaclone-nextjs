@@ -1,20 +1,12 @@
-import {
-  Bot,
-  CalendarDays,
-  FileText,
-  FolderKanban,
-  Layers,
-  Receipt,
-  Users,
-} from 'lucide-react';
 import Link from 'next/link';
+import type { AlphaIconName } from '@/components/marketing/icons';
 import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 
 export const HOME_TRUST_NOTES = [
-  'No credit card required',
-  'Set up in under 10 minutes',
-  'Cancel anytime',
-  'Secure by design',
+  { label: 'No credit card required', icon: 'trust-card' as AlphaIconName },
+  { label: 'Set up in under 10 minutes', icon: 'trust-clock' as AlphaIconName },
+  { label: 'Cancel anytime', icon: 'trust-cancel' as AlphaIconName },
+  { label: 'Secure by design', icon: 'trust-secure' as AlphaIconName },
 ] as const;
 
 export const HOME_PLATFORM_FEATURES = [
@@ -22,37 +14,37 @@ export const HOME_PLATFORM_FEATURES = [
     name: 'CRM',
     body: 'Manage leads, clients, conversations and relationships.',
     href: '/crm',
-    icon: Users,
+    icon: 'crm' as AlphaIconName,
   },
   {
     name: 'Invoicing',
     body: 'Create, send and track professional invoices.',
     href: '/docs#financials',
-    icon: Receipt,
+    icon: 'invoicing' as AlphaIconName,
   },
   {
     name: 'Projects',
     body: 'Plan work, assign tasks and keep delivery moving.',
     href: '/project-management',
-    icon: FolderKanban,
+    icon: 'projects' as AlphaIconName,
   },
   {
     name: 'Documents',
     body: 'Store, organise, share and approve important files.',
     href: '/docs',
-    icon: FileText,
+    icon: 'documents' as AlphaIconName,
   },
   {
     name: 'Bonnie AI',
     body: 'Get context-aware assistance across your work.',
     href: '/ai-agents',
-    icon: Bot,
+    icon: 'bonnie' as AlphaIconName,
   },
   {
     name: 'Connected operations',
     body: 'Bring calendar, reports, marketing and workflows together.',
     href: '/ecosystem',
-    icon: Layers,
+    icon: 'connected' as AlphaIconName,
   },
 ] as const;
 
@@ -61,27 +53,27 @@ export const HOME_HOW_IT_WORKS = [
     step: '1',
     title: 'Set up your workspace',
     body: 'Create your account and configure the way your business operates.',
-    icon: CalendarDays,
+    icon: 'setup' as AlphaIconName,
   },
   {
     step: '2',
     title: 'Bring your work together',
     body: 'Add clients, projects, invoices, documents and communication.',
-    icon: FolderKanban,
+    icon: 'organisation' as AlphaIconName,
   },
   {
     step: '3',
     title: 'Run and grow',
     body: 'Use connected insights and AI assistance to move work forward.',
-    icon: Bot,
+    icon: 'growth' as AlphaIconName,
   },
 ] as const;
 
 export const HOME_OUTCOMES = [
-  { title: 'One connected workspace', detail: 'Clients, projects and invoices on one record' },
-  { title: 'Faster daily operations', detail: 'Fewer handoffs between tools and teams' },
-  { title: 'Fewer disconnected tools', detail: 'Replace a patchwork CRM + billing stack' },
-  { title: 'Clearer business visibility', detail: 'See what needs attention without tab-switching' },
+  { title: 'One connected workspace', detail: 'Clients, projects and invoices on one record', icon: 'connected' as AlphaIconName },
+  { title: 'Faster daily operations', detail: 'Fewer handoffs between tools and teams', icon: 'workflow' as AlphaIconName },
+  { title: 'Fewer disconnected tools', detail: 'Replace a patchwork CRM + billing stack', icon: 'integrations' as AlphaIconName },
+  { title: 'Clearer business visibility', detail: 'See what needs attention without tab-switching', icon: 'reports' as AlphaIconName },
 ] as const;
 
 export const HOME_FAQ = [

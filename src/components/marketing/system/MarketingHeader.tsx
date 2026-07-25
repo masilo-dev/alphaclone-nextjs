@@ -14,41 +14,42 @@ import {
   SheetTrigger,
 } from '@/components/marketing/ui/sheet';
 import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
 
 type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
 
-type SimpleLink = { label: string; path: string };
+type SimpleLink = { label: string; path: string; icon?: AlphaIconName };
 
 const PRODUCT_LINKS: SimpleLink[] = [
-  { label: 'CRM', path: '/crm' },
-  { label: 'Leads', path: '/lead-management' },
-  { label: 'Projects', path: '/project-management' },
-  { label: 'Invoicing', path: '/docs#financials' },
-  { label: 'Documents', path: '/docs' },
-  { label: 'Bonnie AI', path: '/ai-agents' },
-  { label: 'Integrations', path: '/ecosystem' },
+  { label: 'CRM', path: '/crm', icon: 'crm' },
+  { label: 'Leads', path: '/lead-management', icon: 'leads' },
+  { label: 'Projects', path: '/project-management', icon: 'projects' },
+  { label: 'Invoicing', path: '/docs#financials', icon: 'invoicing' },
+  { label: 'Documents', path: '/docs', icon: 'documents' },
+  { label: 'Bonnie AI', path: '/ai-agents', icon: 'bonnie' },
+  { label: 'Integrations', path: '/ecosystem', icon: 'integrations' },
 ];
 
 const SOLUTIONS_LINKS: SimpleLink[] = [
-  { label: 'Agencies', path: '/solutions/agencies' },
-  { label: 'Consultants', path: '/solutions/consultants' },
-  { label: 'Sole founders', path: '/solutions/solo-founders' },
-  { label: 'Who we serve', path: '/who-we-serve' },
+  { label: 'Agencies', path: '/solutions/agencies', icon: 'organisation' },
+  { label: 'Consultants', path: '/solutions/consultants', icon: 'workflow' },
+  { label: 'Sole founders', path: '/solutions/solo-founders', icon: 'growth' },
+  { label: 'Who we serve', path: '/who-we-serve', icon: 'connected' },
 ];
 
 const RESOURCES_LINKS: SimpleLink[] = [
-  { label: 'Docs', path: '/docs' },
-  { label: 'Guide', path: '/guide' },
-  { label: 'FAQ', path: '/faq' },
-  { label: 'Blog', path: '/blog' },
-  { label: 'Results', path: '/results' },
+  { label: 'Docs', path: '/docs', icon: 'documents' },
+  { label: 'Guide', path: '/guide', icon: 'setup' },
+  { label: 'FAQ', path: '/faq', icon: 'reports' },
+  { label: 'Blog', path: '/blog', icon: 'marketing' },
+  { label: 'Results', path: '/results', icon: 'growth' },
 ];
 
 const COMPANY_LINKS: SimpleLink[] = [
-  { label: 'About', path: '/about' },
-  { label: 'Contact', path: '/contact' },
-  { label: 'Security', path: '/security-policy' },
-  { label: 'Status', path: '/platform-status' },
+  { label: 'About', path: '/about', icon: 'connected' },
+  { label: 'Contact', path: '/contact', icon: 'leads' },
+  { label: 'Security', path: '/security-policy', icon: 'security' },
+  { label: 'Status', path: '/platform-status', icon: 'automation' },
 ];
 
 const DROPDOWNS: Array<{ key: DropdownKey; label: string; links: SimpleLink[] }> = [
@@ -171,9 +172,13 @@ export default function MarketingHeader() {
                             className="mkt-simple-menu-link"
                             onClick={() => setActiveDropdown(null)}
                           >
+                            {item.icon ? (
+                              <AlphaIcon name={item.icon} variant="nav" size="sm" className="mkt-nav-icon" />
+                            ) : null}
                             {item.label}
                           </Link>
                         ))}
+
                       </div>
                     ) : null}
                   </div>
@@ -271,9 +276,13 @@ export default function MarketingHeader() {
                               onClick={() => setMobileOpen(false)}
                               className="mkt-simple-menu-link"
                             >
+                              {item.icon ? (
+                                <AlphaIcon name={item.icon} variant="nav" size="sm" className="mkt-nav-icon" />
+                              ) : null}
                               {item.label}
                             </Link>
                           ))}
+
                         </div>
                       </div>
                     ))}
