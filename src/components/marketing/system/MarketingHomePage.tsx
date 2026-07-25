@@ -42,7 +42,7 @@ export default function MarketingHomePage() {
               Manage clients, leads, projects, invoices, documents, communication and AI-powered
               work from one connected workspace.
             </p>
-            <CtaPair className="mt-8 justify-center" />
+            <CtaPair className="mkt-cta-row justify-center" />
             <ul className="mkt-trust-notes">
               {HOME_TRUST_NOTES.map((note, index) => {
                 const Icon = TRUST_ICONS[index] ?? ShieldCheck;

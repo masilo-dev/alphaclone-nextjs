@@ -13,7 +13,7 @@ export default function MarketingShell({ children, className = '' }: MarketingSh
       className={`marketing-theme min-h-screen bg-[var(--marketing-bg-primary)] text-[var(--marketing-text-primary)] ${className}`.trim()}
     >
       <MarketingHeader />
-      <main id="main-content" className="pt-20">
+      <main id="main-content" className="pt-14">
         {children}
       </main>
       <MarketingFooter />
