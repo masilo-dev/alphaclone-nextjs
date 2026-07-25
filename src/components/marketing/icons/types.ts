@@ -44,12 +44,12 @@ export type AlphaSvgProps = SVGProps<SVGSVGElement> & {
 };
 
 export const ICON_SIZE_MAP: Record<AlphaIconSize, number> = {
-  xs: 16,
-  sm: 20,
-  md: 24,
-  lg: 32,
-  xl: 40,
-  display: 64,
+  xs: 14,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 28,
+  display: 40,
 };
 
 export const VARIANT_VIEWBOX: Record<AlphaIconVariant, string> = {

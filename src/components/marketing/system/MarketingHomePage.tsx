@@ -95,8 +95,8 @@ export default function MarketingHomePage() {
               {HOME_PLATFORM_FEATURES.map(({ name, body, href, icon }) => (
                 <Link key={name} href={href} className="mkt-feature-card">
                   <div className="mkt-feature-card-head">
-                    <IconFrame size="md" accent={ICON_ACCENT[icon] ?? 'default'}>
-                      <AlphaIcon name={icon} variant="feature" size="lg" />
+                    <IconFrame size="sm" accent={ICON_ACCENT[icon] ?? 'default'}>
+                      <AlphaIcon name={icon} variant="feature" size="md" />
                     </IconFrame>
                     <h3>{name}</h3>
                   </div>
@@ -129,7 +129,7 @@ export default function MarketingHomePage() {
                     {step}
                   </span>
                   <IconFrame size="sm" className="mkt-step-symbol-sm">
-                    <AlphaIcon name={icon} variant="feature" size="md" />
+                    <AlphaIcon name={icon} variant="feature" size="sm" />
                   </IconFrame>
                 </div>
                 <h3>{title}</h3>
@@ -151,7 +151,7 @@ export default function MarketingHomePage() {
               {HOME_OUTCOMES.map((item) => (
                 <div key={item.title} className="mkt-outcome-card">
                   <IconFrame size="sm" className="mb-2">
-                    <AlphaIcon name={item.icon} variant="metric" size="md" />
+                    <AlphaIcon name={item.icon} variant="metric" size="sm" />
                   </IconFrame>
                   <strong>{item.title}</strong>
                   <span>{item.detail}</span>

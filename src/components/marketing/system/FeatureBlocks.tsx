@@ -31,8 +31,8 @@ export function FeatureCard({
       href={href}
       className="mkt-surface group block p-5 transition-colors hover:border-[rgba(20,184,166,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--marketing-focus)]"
     >
-      <IconFrame size="md" className="mb-4">
-        <AlphaIcon name={iconName} variant="feature" size="lg" />
+      <IconFrame size="sm" className="mb-4">
+        <AlphaIcon name={iconName} variant="feature" size="md" />
       </IconFrame>
       <h3 className="text-lg font-semibold text-[var(--marketing-text-primary)] group-hover:text-[var(--marketing-accent-hover)]">
         {name}

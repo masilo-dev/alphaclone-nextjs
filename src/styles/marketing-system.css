@@ -73,20 +73,20 @@
   --mkt-z-header: 20;
   --mkt-z-overlay: 30;
 
-  /* Icon system tokens */
-  --icon-xs: 16px;
-  --icon-sm: 20px;
-  --icon-md: 24px;
-  --icon-lg: 32px;
-  --icon-xl: 40px;
-  --icon-display: 64px;
+  /* Icon system tokens — compact for marketing surfaces */
+  --icon-xs: 14px;
+  --icon-sm: 16px;
+  --icon-md: 20px;
+  --icon-lg: 24px;
+  --icon-xl: 28px;
+  --icon-display: 40px;
   --icon-stroke-compact: 1.8;
   --icon-stroke-standard: 2;
   --icon-stroke-display: 1.6;
-  --icon-container-sm: 36px;
-  --icon-container-md: 48px;
-  --icon-container-lg: 64px;
-  --icon-container-display: 88px;
+  --icon-container-sm: 28px;
+  --icon-container-md: 36px;
+  --icon-container-lg: 44px;
+  --icon-container-display: 56px;
   --icon-muted: rgba(184, 196, 216, 0.76);
   --icon-primary: #18c7c8;
   --icon-secondary: #1688d8;
@@ -508,14 +508,14 @@
 
 @media (max-width: 767px) {
   .alpha-icon-frame--md {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
   }
 
   .alpha-icon-frame--display {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
   }
 }
 
@@ -1126,9 +1126,9 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.55rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.45rem;
   background: color-mix(in srgb, var(--partner-color, #18c7c8) 18%, transparent);
   color: var(--partner-color, #18c7c8);
   transition: transform 180ms ease, background-color 180ms ease;
@@ -1140,8 +1140,8 @@
 }
 
 .mkt-partner-brand-icon {
-  width: 1.05rem;
-  height: 1.05rem;
+  width: 0.9rem;
+  height: 0.9rem;
   display: block;
 }
 
