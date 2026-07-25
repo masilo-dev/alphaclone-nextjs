@@ -194,7 +194,7 @@ export default function MarketingHeader() {
   }, [pathname]);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 8);
+    const handleScroll = () => setIsScrolled(window.scrollY > 32);
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);

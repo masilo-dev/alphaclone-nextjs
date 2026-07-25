@@ -66,9 +66,9 @@ export default function PricingPage() {
         <div className="marketing-glow-hero" aria-hidden="true" />
         <MarketingContainer className="relative z-10">
           <div className="mx-auto max-w-4xl text-center">
-            <p className="mkt-label mb-5">Transparent pricing</p>
-            <h1>Run your client business from one workspace</h1>
-            <p className="mx-auto mt-5 max-w-3xl text-lg sm:text-xl text-[var(--marketing-text-secondary)]">
+            <p className="mkt-eyebrow mb-5">Transparent pricing</p>
+            <h1>Simple pricing. No surprises.</h1>
+            <p className="mx-auto mt-5 max-w-3xl text-lg sm:text-xl text-[var(--text-secondary)]">
               Plans start at ${PRICING_FROM}/month. Try AlphaClone for 14 days, then choose the
               workspace tier that matches your team and storage needs.
             </p>

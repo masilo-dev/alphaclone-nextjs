@@ -25,9 +25,9 @@ export function MarketingSection({
 }) {
   const toneClass =
     tone === 'muted'
-      ? 'bg-[var(--marketing-bg-secondary)]'
+      ? 'bg-[var(--background-section)]'
       : tone === 'accent'
-        ? 'bg-[var(--marketing-surface)]'
+        ? 'bg-[var(--background-elevated)]'
         : '';
 
   return (

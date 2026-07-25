@@ -22,3 +22,33 @@ export const CTA_LABELS = {
 export function trialHrefForPlan(plan: 'starter' | 'pro' | 'enterprise'): string {
   return `/auth/login?register=true&type=business&plan=${plan}`;
 }
+
+const PRESERVE_KEYS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+  'gclid',
+  'fbclid',
+  'ref',
+] as const;
+
+/** Merge marketing attribution query params into a destination URL. */
+export function withPreservedQuery(href: string, currentSearch = ''): string {
+  if (!currentSearch || currentSearch === '?') return href;
+
+  const incoming = new URLSearchParams(
+    currentSearch.startsWith('?') ? currentSearch.slice(1) : currentSearch
+  );
+  const url = new URL(href, 'https://alphaclonesystems.com');
+
+  for (const key of PRESERVE_KEYS) {
+    const value = incoming.get(key);
+    if (value && !url.searchParams.has(key)) {
+      url.searchParams.set(key, value);
+    }
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
+}

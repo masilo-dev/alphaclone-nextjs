@@ -7,7 +7,6 @@ import { ArrowRight, Facebook, Linkedin, Mail, Twitter } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import {
   COMPANY_NAV_GROUP,
-  FOOTER_LEGAL_LINKS,
   PRODUCT_NAV_GROUP,
   RESOURCES_NAV_GROUP,
   SOLUTIONS_NAV_GROUP,
@@ -24,7 +23,14 @@ type FooterColumn = {
 const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: 'Product',
-    links: [...PRODUCT_NAV_GROUP.items.slice(0, 6), { label: 'Pricing', path: '/pricing' }],
+    links: [
+      ...PRODUCT_NAV_GROUP.items.filter((item) =>
+        ['/crm', '/docs', '/project-management', '/ai-agents', '/ecosystem'].some((path) =>
+          item.path.startsWith(path)
+        )
+      ),
+      { label: 'Pricing', path: '/pricing' },
+    ].slice(0, 7),
   },
   {
     title: 'Solutions',
@@ -32,20 +38,20 @@ const FOOTER_COLUMNS: FooterColumn[] = [
   },
   {
     title: 'Resources',
-    links: RESOURCES_NAV_GROUP.items,
+    links: RESOURCES_NAV_GROUP.items.slice(0, 6),
   },
   {
     title: 'Company',
-    links: [...COMPANY_NAV_GROUP.items, ...FOOTER_LEGAL_LINKS.slice(0, 4)],
+    links: COMPANY_NAV_GROUP.items,
   },
 ];
 
 const BOTTOM_LEGAL = [
-  { label: 'Privacy', path: '/privacy-policy' },
-  { label: 'Terms', path: '/terms-of-service' },
-  { label: 'Cookies', path: '/cookie-policy' },
+  { label: 'Privacy Policy', path: '/privacy-policy' },
+  { label: 'Terms of Service', path: '/terms-of-service' },
+  { label: 'Cookie Policy', path: '/cookie-policy' },
   { label: 'Security', path: '/security-policy' },
-  { label: 'Legal hub', path: '/legal' },
+  { label: 'Status', path: '/platform-status' },
 ];
 
 const SOCIAL_LINKS = [
@@ -64,13 +70,26 @@ function FooterLink({ item }: { item: MarketingNavLink }) {
 
 export default function MarketingFooter() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'done'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [error, setError] = useState('');
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email.trim()) return;
-    setStatus('done');
-    setEmail('');
+    if (status === 'loading') return;
+
+    const value = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setStatus('error');
+      setError('Enter a valid email address.');
+      return;
+    }
+
+    setStatus('loading');
+    setError('');
+
+    // No newsletter backend is wired on the marketing site yet — do not fake success.
+    setStatus('error');
+    setError('Newsletter signup is not available yet. Email hello@alphaclonesystems.com instead.');
   };
 
   return (
@@ -85,8 +104,7 @@ export default function MarketingFooter() {
               <span className="mkt-brand-word">AlphaClone</span>
             </Link>
             <p className="mkt-footer-blurb">
-              The all-in-one operating system for service businesses — CRM, projects, invoices,
-              documents, and AI in one connected workspace.
+              The connected business platform for service businesses.
             </p>
             <div className="mkt-footer-social">
               {SOCIAL_LINKS.map(({ label, href, Icon }) => (
@@ -130,37 +148,52 @@ export default function MarketingFooter() {
           <div className="mkt-footer-newsletter">
             <p className="mkt-footer-col-title">Stay in the loop</p>
             <p className="mkt-footer-newsletter-copy">
-              Product updates and workflow tips for service teams. No spam.
+              Get product updates delivered to your inbox.
             </p>
-            {status === 'done' ? (
-              <p className="mkt-footer-newsletter-done" role="status">
-                Thanks — you&apos;re on the list.
+            <form className="mkt-footer-form" onSubmit={onSubmit} noValidate>
+              <label className="sr-only" htmlFor="mkt-footer-email">
+                Email address
+              </label>
+              <div className="mkt-footer-input-wrap">
+                <Mail className="mkt-footer-input-icon" aria-hidden="true" />
+                <input
+                  id="mkt-footer-email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  aria-invalid={status === 'error'}
+                  aria-describedby={status === 'error' ? 'mkt-footer-email-error' : 'mkt-footer-email-note'}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    if (status === 'error') setStatus('idle');
+                  }}
+                  placeholder="you@company.com"
+                  className="mkt-footer-input"
+                />
+              </div>
+              <button
+                type="submit"
+                className="mkt-btn mkt-btn-primary mkt-btn-compact w-full"
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' ? 'Sending…' : 'Subscribe'}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <p id="mkt-footer-email-note" className="mkt-footer-privacy-note">
+                By subscribing you agree to our{' '}
+                <Link href="/privacy-policy" className="mkt-footer-link">
+                  Privacy Policy
+                </Link>
+                .
               </p>
-            ) : (
-              <form className="mkt-footer-form" onSubmit={onSubmit}>
-                <label className="sr-only" htmlFor="mkt-footer-email">
-                  Email address
-                </label>
-                <div className="mkt-footer-input-wrap">
-                  <Mail className="mkt-footer-input-icon" aria-hidden="true" />
-                  <input
-                    id="mkt-footer-email"
-                    type="email"
-                    name="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="you@company.com"
-                    className="mkt-footer-input"
-                  />
-                </div>
-                <button type="submit" className="mkt-btn mkt-btn-primary mkt-btn-compact w-full">
-                  Subscribe
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </form>
-            )}
+              {status === 'error' ? (
+                <p id="mkt-footer-email-error" className="mkt-footer-newsletter-error" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </form>
           </div>
         </div>
 
