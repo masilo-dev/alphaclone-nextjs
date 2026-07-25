@@ -41,7 +41,6 @@ Do not scatter raw hex values in components. Prefer CSS variables.
 | Header | `MarketingHeader.tsx` |
 | Footer | `MarketingFooter.tsx` |
 | Homepage | `MarketingHomePage.tsx` |
-| Product preview | `ProductPreview.tsx` |
 | FAQ accordion | `FAQAccordion.tsx` |
 | Pricing | `PricingPage.tsx` |
 | Product template | `ProductPageTemplate.tsx` |

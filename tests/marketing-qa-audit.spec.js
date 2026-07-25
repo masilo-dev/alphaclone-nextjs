@@ -44,9 +44,10 @@ test.describe('Marketing Q/A audit', () => {
     await expect(page.locator('h1')).toContainText(/Run your entire business/i);
     await expect(page.locator('.mkt-shell, .mkt-marketing-background').first()).toBeAttached();
     await expect(page.locator('.hero-data-wave').first()).toBeAttached();
+    await expect(page.locator('.mkt-hero--compact').first()).toBeVisible();
     await expect(page.locator('.mkt-feature-card .alpha-icon').first()).toBeVisible();
     await expect(page.locator('.mkt-feature-card').first()).toBeVisible();
-    await expect(page.locator('.mkt-preview').first()).toBeVisible();
+    await expect(page.locator('.mkt-preview')).toHaveCount(0);
     await expect(page.getByRole('link', { name: /Start free for 14 days/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Book a demo/i }).first()).toBeVisible();
 
