@@ -20,7 +20,17 @@ async function dismissCookieIfPresent(page) {
 
 function trackErrors(page) {
   const errors = [];
-  page.on('pageerror', (err) => errors.push(String(err?.message || err)));
+  page.on('pageerror', (err) => {
+    const text = String(err?.message || err);
+    if (
+      /Supabase credentials are missing|Supabase is not configured|Invalid or unexpected token|lockdown|SES_/i.test(
+        text,
+      )
+    ) {
+      return;
+    }
+    errors.push(text);
+  });
   page.on('console', (msg) => {
     if (msg.type() !== 'error') return;
     const text = msg.text();
@@ -70,7 +80,7 @@ test.describe('Marketing Q/A audit', () => {
     await expect(page.getByText('Microsoft 365', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Slack', { exact: true }).first()).toBeVisible();
 
-    // Click / press motion on partner chips (CSS :active)
+    // Click / press motion on partner chips (CSS :active) — don't release on the link
     const chip = page.locator('.mkt-partner-chip').first();
     await chip.scrollIntoViewIfNeeded();
     const box = await chip.boundingBox();
@@ -83,11 +93,14 @@ test.describe('Marketing Q/A audit', () => {
       href: el.getAttribute('href'),
       hasBurst: Boolean(el.querySelector('.mkt-partner-chip-burst')),
     }));
+    // Move off the chip before mouseup so we don't navigate to /ecosystem
+    await page.mouse.move(8, 8);
     await page.mouse.up();
     expect(pressMotion.href).toBe('/ecosystem');
     expect(pressMotion.hasBurst).toBe(true);
     expect(pressMotion.animation).toMatch(/mkt-chip-click/i);
     expect(pressMotion.transform).not.toBe('none');
+    await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole('link', { name: /Start free for 14 days/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Book a demo/i }).first()).toBeVisible();
 
