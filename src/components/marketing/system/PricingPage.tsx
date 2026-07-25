@@ -68,7 +68,7 @@ export default function PricingPage() {
           <div className="mx-auto max-w-4xl text-center">
             <p className="mkt-eyebrow mb-5">Transparent pricing</p>
             <h1>Simple pricing. No surprises.</h1>
-            <p className="mx-auto mt-5 max-w-3xl text-lg sm:text-xl text-[var(--text-secondary)]">
+            <p className="mx-auto mt-5 max-w-3xl text-sm sm:text-base text-[var(--text-secondary)]">
               Plans start at ${PRICING_FROM}/month. Try AlphaClone for 14 days, then choose the
               workspace tier that matches your team and storage needs.
             </p>
@@ -105,7 +105,7 @@ export default function PricingPage() {
                   </p>
 
                   <div className="mt-6">
-                    <span className="text-4xl font-bold text-[var(--marketing-text-primary)]">
+                    <span className="text-3xl font-bold text-[var(--marketing-text-primary)]">
                       ${displayPrice}
                     </span>
                     <span className="ml-2 text-sm font-medium text-[var(--marketing-text-muted)]">

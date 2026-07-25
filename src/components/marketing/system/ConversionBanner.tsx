@@ -10,7 +10,7 @@ export function ConversionBanner({
   return (
     <div className="mkt-mid-cta">
       <div>
-        <h2 className="font-marketing-heading text-2xl sm:text-3xl text-white">{title}</h2>
+        <h2 className="font-marketing-heading text-xl sm:text-2xl text-white">{title}</h2>
         <p className="mt-3 text-[var(--text-secondary)]">{description}</p>
       </div>
       <div className="mkt-mid-cta-actions">

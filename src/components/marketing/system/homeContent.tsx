@@ -146,7 +146,7 @@ export function MidPageCTA() {
   return (
     <div className="mkt-mid-cta">
       <div>
-        <h2 className="font-marketing-heading text-2xl sm:text-3xl text-white">
+        <h2 className="font-marketing-heading text-xl sm:text-2xl text-white">
           Ready to run your business from one workspace?
         </h2>
         <p className="mt-3 text-[var(--text-secondary)]">

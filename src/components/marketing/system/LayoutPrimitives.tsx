@@ -57,7 +57,7 @@ export function SectionHeading({
         {title}
       </Tag>
       {description ? (
-        <p className="mt-4 text-base sm:text-lg text-[var(--marketing-text-secondary)] leading-relaxed">
+        <p className="mt-4 text-sm sm:text-base text-[var(--marketing-text-secondary)] leading-relaxed">
           {description}
         </p>
       ) : null}

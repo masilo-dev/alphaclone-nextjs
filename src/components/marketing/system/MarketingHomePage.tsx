@@ -87,7 +87,7 @@ export default function MarketingHomePage() {
             <div>
               <p className="mkt-eyebrow mb-4">All your work, connected</p>
               <h2 className="font-marketing-heading">Everything you need to run your business.</h2>
-              <p className="mt-4 max-w-md text-lg text-[var(--text-secondary)]">
+              <p className="mt-4 max-w-md text-sm sm:text-base text-[var(--text-secondary)]">
                 Powerful tools that work together across your clients, money, projects, documents,
                 marketing and everyday operations.
               </p>
@@ -113,7 +113,7 @@ export default function MarketingHomePage() {
         <MarketingContainer>
           <div className="mb-12 max-w-3xl mx-auto text-center">
             <h2 className="font-marketing-heading">How AlphaClone works</h2>
-            <p className="mt-4 text-lg text-[var(--text-secondary)]">
+            <p className="mt-4 text-sm sm:text-base text-[var(--text-secondary)]">
               Three steps from empty workspace to a connected operating rhythm.
             </p>
           </div>
@@ -139,7 +139,7 @@ export default function MarketingHomePage() {
         <MarketingContainer>
           <div className="mkt-outcome-band">
             <div>
-              <h2 className="font-marketing-heading text-2xl sm:text-3xl">
+              <h2 className="font-marketing-heading text-xl sm:text-2xl">
                 Built to help you save time and run your business with less friction.
               </h2>
             </div>
@@ -193,7 +193,7 @@ export default function MarketingHomePage() {
         <MarketingContainer>
           <div className="mb-10 max-w-3xl mx-auto text-center">
             <h2 className="font-marketing-heading">Simple pricing. No surprises.</h2>
-            <p className="mt-4 text-lg text-[var(--text-secondary)]">
+            <p className="mt-4 text-sm sm:text-base text-[var(--text-secondary)]">
               Plans start at ${PRICING_FROM}/month. Every plan includes a 14-day free trial — no card
               required.
             </p>
@@ -205,10 +205,10 @@ export default function MarketingHomePage() {
                 className={`mkt-price-card${plan.highlight ? ' is-popular' : ''}`}
               >
                 {plan.highlight ? <span className="mkt-price-badge">Recommended</span> : null}
-                <h3 className="text-xl font-semibold text-[var(--text-primary)]">{plan.name}</h3>
+                <h3 className="text-lg font-semibold text-[var(--text-primary)]">{plan.name}</h3>
                 <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{plan.tagline}</p>
                 <p className="mt-6 text-[var(--text-primary)]">
-                  <span className="font-marketing-heading text-5xl font-bold">${plan.price}</span>
+                  <span className="font-marketing-heading text-3xl sm:text-4xl font-bold">${plan.price}</span>
                   <span className="text-sm text-[var(--text-muted)]"> / month</span>
                 </p>
                 <ul className="mt-6 flex-1 space-y-3">
@@ -241,7 +241,7 @@ export default function MarketingHomePage() {
         <MarketingContainer>
           <div className="mb-10 max-w-3xl mx-auto text-center">
             <h2 className="font-marketing-heading">Frequently asked questions</h2>
-            <p className="mt-4 text-lg text-[var(--text-secondary)]">
+            <p className="mt-4 text-sm sm:text-base text-[var(--text-secondary)]">
               Straight answers before you start a trial.
             </p>
           </div>
