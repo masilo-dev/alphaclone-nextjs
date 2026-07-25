@@ -659,8 +659,20 @@
     font-size: 1.4rem;
   }
 
+  /* Keep trust notes readable on short laptops — compact single row */
   .mkt-trust-notes {
-    display: none;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 0.65rem;
+    overflow-x: auto;
+    max-width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .mkt-trust-notes li {
+    font-size: 0.68rem;
+    white-space: nowrap;
   }
 
   .mkt-preview-compact {
@@ -1387,6 +1399,14 @@
 
 .mkt-nav-item {
   position: relative;
+}
+
+.mkt-nav-item > summary {
+  list-style: none;
+}
+
+.mkt-nav-item > summary::-webkit-details-marker {
+  display: none;
 }
 
 .mkt-nav-trigger {

@@ -31,7 +31,7 @@ export default function MarketingShell({ children }: { children: React.ReactNode
   }
 
   return (
-    <div className="marketing-theme min-h-screen font-marketing-body text-slate-300 bg-[#020617]">
+    <div className="marketing-theme min-h-screen">
       {children}
     </div>
   );

@@ -103,10 +103,24 @@ export default function MarketingHeader() {
   useEffect(() => {
     if (!activeDropdown) return;
     const onPointer = (event: PointerEvent) => {
-      if (!desktopNavRef.current?.contains(event.target as Node)) setActiveDropdown(null);
+      if (!desktopNavRef.current?.contains(event.target as Node)) {
+        setActiveDropdown(null);
+        desktopNavRef.current
+          ?.querySelectorAll('details.mkt-nav-item[open]')
+          .forEach((node) => {
+            (node as HTMLDetailsElement).open = false;
+          });
+      }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setActiveDropdown(null);
+      if (event.key === 'Escape') {
+        setActiveDropdown(null);
+        desktopNavRef.current
+          ?.querySelectorAll('details.mkt-nav-item[open]')
+          .forEach((node) => {
+            (node as HTMLDetailsElement).open = false;
+          });
+      }
     };
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -119,6 +133,11 @@ export default function MarketingHeader() {
   useEffect(() => {
     setActiveDropdown(null);
     setMobileOpen(false);
+    desktopNavRef.current
+      ?.querySelectorAll('details.mkt-nav-item[open]')
+      .forEach((node) => {
+        (node as HTMLDetailsElement).open = false;
+      });
   }, [pathname]);
 
   useEffect(() => {
@@ -142,46 +161,53 @@ export default function MarketingHeader() {
 
             <nav ref={desktopNavRef} className="mkt-nav-desktop" aria-label="Primary">
               {DROPDOWNS.map((dropdown) => {
-                const isOpen = activeDropdown === dropdown.key;
-                const isActive = isOpen || activeSections[dropdown.key];
+                const isActive = activeSections[dropdown.key];
                 return (
-                  <div key={dropdown.key} className="mkt-nav-item">
-                    <button
-                      type="button"
-                      className={`mkt-nav-trigger${isActive ? ' is-active' : ''}`}
-                      aria-expanded={isOpen}
-                      aria-controls={`marketing-nav-${dropdown.key}`}
-                      onClick={() =>
-                        setActiveDropdown((current) =>
-                          current === dropdown.key ? null : dropdown.key
-                        )
+                  <details
+                    key={dropdown.key}
+                    className="mkt-nav-item"
+                    open={activeDropdown === dropdown.key ? true : undefined}
+                    onToggle={(event) => {
+                      const open = (event.currentTarget as HTMLDetailsElement).open;
+                      setActiveDropdown(open ? dropdown.key : null);
+                      if (open) {
+                        desktopNavRef.current
+                          ?.querySelectorAll('details.mkt-nav-item[open]')
+                          .forEach((node) => {
+                            if (node !== event.currentTarget) {
+                              (node as HTMLDetailsElement).open = false;
+                            }
+                          });
                       }
+                    }}
+                  >
+                    <summary
+                      className={`mkt-nav-trigger${isActive || activeDropdown === dropdown.key ? ' is-active' : ''}`}
+                      aria-controls={`marketing-nav-${dropdown.key}`}
                     >
                       {dropdown.label}
                       <ChevronDown
-                        className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        className={`h-3.5 w-3.5 transition-transform ${activeDropdown === dropdown.key ? 'rotate-180' : ''}`}
                         aria-hidden="true"
                       />
-                    </button>
-                    {isOpen ? (
-                      <div id={`marketing-nav-${dropdown.key}`} className="mkt-simple-menu">
-                        {dropdown.links.map((item) => (
-                          <Link
-                            key={item.path}
-                            href={item.path}
-                            className="mkt-simple-menu-link"
-                            onClick={() => setActiveDropdown(null)}
-                          >
-                            {item.icon ? (
-                              <AlphaIcon name={item.icon} variant="nav" size="sm" className="mkt-nav-icon" />
-                            ) : null}
-                            {item.label}
-                          </Link>
-                        ))}
-
-                      </div>
-                    ) : null}
-                  </div>
+                    </summary>
+                    <div id={`marketing-nav-${dropdown.key}`} className="mkt-simple-menu" role="menu">
+                      {dropdown.links.map((item) => (
+                        <Link
+                          key={item.path}
+                          href={item.path}
+                          className="mkt-simple-menu-link"
+                          role="menuitem"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          {item.icon ? (
+                            <AlphaIcon name={item.icon} variant="nav" size="sm" className="mkt-nav-icon" />
+                          ) : null}
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </details>
                 );
               })}
               <Link
