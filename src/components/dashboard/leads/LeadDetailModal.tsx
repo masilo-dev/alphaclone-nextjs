@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Modal, Button, Input, Card, Badge, Dropdown } from '../../ui/UIComponents';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { CRMActionChips } from '../crm/CRMActionChips';
 import { Lead, leadService } from '../../../services/leadService';
 import { taskService, Task } from '../../../services/taskService';
@@ -758,48 +759,70 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             size="wide"
         >
             <div className="flex flex-col min-h-0">
-                {/* Header */}
+                <div className="px-4 sm:px-6 pt-4 bg-slate-900">
+                    <RecordHeader
+                        moduleId="leads"
+                        title={lead.businessName}
+                        subtitle={lead.industry || undefined}
+                        status={
+                            <>
+                                <StatusBadge status={lead.status || 'New'} />
+                                {getStageBadge(lead.stage || 'lead')}
+                                {verificationBadge ? (
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${verificationBadge.className}`}>
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        {verificationBadge.label}
+                                        {lead.metadata?.verification?.score != null && (
+                                            <span className="opacity-80">· {lead.metadata.verification.score}</span>
+                                        )}
+                                    </span>
+                                ) : null}
+                                {lead.isVerified && !verificationBadge ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        VERIFIED
+                                    </span>
+                                ) : null}
+                            </>
+                        }
+                        meta={
+                            <>
+                                {lead.location ? (
+                                    <span className="inline-flex items-center gap-1" title={lead.location}>
+                                        <MapPin className="w-3 h-3 text-amber-500" />
+                                        {lead.location}
+                                    </span>
+                                ) : null}
+                                {lead.website ? (
+                                    <a
+                                        href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 hover:text-[var(--brand-blue-400)] transition-colors"
+                                    >
+                                        <Globe className="w-3 h-3" /> Website
+                                    </a>
+                                ) : null}
+                                {lead.email ? <span>{lead.email}</span> : null}
+                            </>
+                        }
+                        actions={
+                            <AskBonnieButton
+                                compact
+                                mode="summarise"
+                                contexts={[
+                                    { type: 'Lead', id: lead.id, label: lead.businessName },
+                                    ...(lead.industry ? [{ type: 'Industry', label: lead.industry }] : []),
+                                ]}
+                            />
+                        }
+                    />
+                </div>
+
+                {/* Header actions */}
                 <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start gap-4 bg-slate-900">
-                    <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-3 mb-1">
-                            <h2 className="text-xl sm:text-2xl font-bold text-white truncate">{lead.businessName}</h2>
-                            <StatusBadge status={lead.status || 'New'} />
-                            {getStageBadge(lead.stage || 'lead')}
-                            {verificationBadge && (
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${verificationBadge.className}`}>
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    {verificationBadge.label}
-                                    {lead.metadata?.verification?.score != null && (
-                                        <span className="opacity-80">· {lead.metadata.verification.score}</span>
-                                    )}
-                                </span>
-                            )}
-                            {lead.isVerified && !verificationBadge && (
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    VERIFIED
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-slate-400">
-                            {lead.industry && (
-                                <span className="flex items-center gap-1 bg-slate-800/50 px-2 py-1 rounded-md border border-white/5">
-                                    <Bot className="w-3 h-3 text-teal-400" />
-                                    {lead.industry}
-                                </span>
-                            )}
-                            {lead.location && (
-                                <span className="flex items-center gap-1 max-w-[300px] truncate" title={lead.location}>
-                                    <MapPin className="w-3 h-3 text-amber-500" />
-                                    {lead.location}
-                                </span>
-                            )}
-                            {lead.website && (
-                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-teal-400 transition-colors">
-                                    <Globe className="w-3 h-3" /> Website
-                                </a>
-                            )}
-                        </div>
+                    <div className="flex-1 min-w-0 text-xs text-slate-500">
+                        Quick actions for this lead
                     </div>
 
                     {/* Actions */}
@@ -846,7 +869,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             size="sm"
                             onClick={handleEnrich}
                             isLoading={isEnriching}
-                            className="border-teal-500/30 text-teal-400 hover:bg-teal-500/10"
+                            className="border-[var(--brand-blue-500)]/30 text-[var(--brand-blue-400)] hover:bg-[var(--brand-blue-500)]/10"
                         >
                             <Bot className="w-4 h-4 mr-2" />
                             Research
@@ -889,7 +912,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 },
                                 {
                                     label: 'Convert to Project',
-                                    icon: <Layout className="w-4 h-4 text-teal-500" />,
+                                    icon: <Layout className="w-4 h-4 text-[var(--brand-blue-500)]" />,
                                     onClick: handleCreateProject
                                 },
                                 {
@@ -970,7 +993,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                             key={tab}
                             onClick={() => setActiveTab(tab as any)}
                             className={`py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab
-                                ? 'border-teal-500 text-white'
+                                ? 'border-[var(--brand-blue-500)] text-white'
                                 : 'border-transparent text-slate-400 hover:text-slate-300'
                                 }`}
                         >
@@ -982,7 +1005,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-slate-950">
                     {showEditForm && (
-                        <Card className="p-4 mb-5 border-teal-500/30 bg-teal-900/10">
+                        <Card className="p-4 mb-5 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
                             <h3 className="text-sm font-semibold text-white mb-3">Edit lead details</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <Input
@@ -1020,7 +1043,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                     <select
                                         value={editForm.stage}
                                         onChange={(e) => setEditForm((f) => ({ ...f, stage: e.target.value }))}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
                                     >
                                         <option value="lead">Lead</option>
                                         <option value="qualified">Qualified</option>
@@ -1034,7 +1057,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         value={stageChangeReason}
                                         onChange={(e) => setStageChangeReason(e.target.value)}
                                         placeholder="Optional, but helpful when moving the lead backward for re-qualification."
-                                        className="w-full min-h-[92px] bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all resize-y"
+                                        className="w-full min-h-[92px] bg-slate-900 border border-slate-700 rounded-2xl px-4 py-3 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all resize-y"
                                     />
                                 </div>
                             </div>
@@ -1072,7 +1095,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 </div>
                                 <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 transition-all duration-500"
+                                        className="h-full bg-gradient-to-r from-[var(--brand-blue-500)] to-[var(--brand-blue-300)] transition-all duration-500"
                                         style={{ width: `${leadScore}%` }}
                                     />
                                 </div>
@@ -1129,7 +1152,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         </div>
                                         <div className="flex-1 overflow-hidden truncate">
                                             {lead.website ? (
-                                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-teal-400 hover:text-teal-300 transition-colors">
+                                                <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`} target="_blank" rel="noreferrer" className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)] transition-colors">
                                                     {lead.website}
                                                 </a>
                                             ) : (
@@ -1186,9 +1209,9 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                             </div>
 
                                             {lead.sdrInsight && (
-                                                <div className="p-3 bg-teal-500/5 rounded-lg border border-teal-500/10">
+                                                <div className="p-3 bg-[var(--brand-blue-500)]/5 rounded-lg border border-[var(--brand-blue-500)]/10">
                                                     <p className="text-sm text-slate-200 leading-relaxed">
-                                                        <span className="text-teal-400 font-bold font-mono mr-2 uppercase tracking-tighter">SDR Strategy:</span>
+                                                        <span className="text-[var(--brand-blue-400)] font-bold font-mono mr-2 uppercase tracking-tighter">SDR Strategy:</span>
                                                         {lead.sdrInsight}
                                                     </p>
                                                 </div>
@@ -1237,7 +1260,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
 
                                 <Card className="p-6">
                                     <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                        <Bot className="w-5 h-5 text-teal-400" />
+                                        <Bot className="w-5 h-5 text-[var(--brand-blue-400)]" />
                                         AI Deep Research
                                     </h3>
                                     <div className="p-4 bg-slate-900 border border-white/5 rounded-lg">
@@ -1315,7 +1338,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 {lead.outreachMessage && (
                                     <Card className="p-6 bg-slate-900/40 border-slate-800">
                                         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                            <Send className="w-5 h-5 text-teal-400" />
+                                            <Send className="w-5 h-5 text-[var(--brand-blue-400)]" />
                                             Outreach Draft
                                         </h3>
                                         <div className="p-4 bg-slate-950 border border-slate-700/50 rounded-lg">
@@ -1380,14 +1403,14 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <h3 className="text-lg font-semibold text-white">Tasks</h3>
-                                <Button size="sm" onClick={() => setShowTaskForm(true)} className="bg-teal-600 w-full sm:w-auto">
+                                <Button size="sm" onClick={() => setShowTaskForm(true)} className="bg-[var(--brand-blue-600)] w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" /> Add Task
                                 </Button>
                             </div>
 
                             {/* Task Form */}
                             {showTaskForm && (
-                                <Card className="p-4 mb-4 border-teal-500/30 bg-teal-900/10">
+                                <Card className="p-4 mb-4 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
                                     <div className="space-y-3">
                                         <Input
                                             placeholder="What needs to be done?"
@@ -1423,7 +1446,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                         <div key={task.id} className="flex items-center gap-3 p-3 bg-slate-900/50 hover:bg-slate-900 rounded-lg border border-slate-800 group transition-colors">
                                             <button
                                                 onClick={() => handleToggleTask(task.id, task.status)}
-                                                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.status === 'completed' ? 'bg-teal-500 border-teal-500' : 'border-slate-600 hover:border-teal-500'}`}
+                                                className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${task.status === 'completed' ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-600 hover:border-[var(--brand-blue-500)]'}`}
                                             >
                                                 {task.status === 'completed' && <CheckSquare className="w-3 h-3 text-white" />}
                                             </button>
@@ -1447,13 +1470,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <h3 className="text-lg font-semibold text-white">Meetings</h3>
-                                <Button size="sm" onClick={() => setShowMeetingForm(true)} className="bg-teal-600 w-full sm:w-auto">
+                                <Button size="sm" onClick={() => setShowMeetingForm(true)} className="bg-[var(--brand-blue-600)] w-full sm:w-auto">
                                     <Plus className="w-4 h-4 mr-2" /> Schedule Meeting
                                 </Button>
                             </div>
 
                             {showMeetingForm && (
-                                <Card className="p-4 mb-4 border-teal-500/30 bg-teal-900/10">
+                                <Card className="p-4 mb-4 border-[var(--brand-blue-500)]/30 bg-[var(--brand-blue-900)]/10">
                                     <div className="space-y-3">
                                         <Input
                                             placeholder="Meeting Title"
@@ -1495,18 +1518,18 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                         <div className="space-y-4">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                                 <h3 className="text-base sm:text-lg font-semibold text-white">Lead Intelligence & Notes</h3>
-                                <Button size="sm" onClick={handleSaveNotes} isLoading={isSavingNotes} className="bg-teal-600 w-full sm:w-auto">
+                                <Button size="sm" onClick={handleSaveNotes} isLoading={isSavingNotes} className="bg-[var(--brand-blue-600)] w-full sm:w-auto">
                                     Save Changes
                                 </Button>
                             </div>
                             <textarea
-                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-mono text-sm leading-relaxed"
+                                className="w-full h-[300px] bg-slate-900 border border-slate-800 rounded-2xl p-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-mono text-sm leading-relaxed"
                                 placeholder="Record meeting outcomes, strategic observations, or lead requirements here..."
                                 value={leadNotes}
                                 onChange={(e) => setLeadNotes(e.target.value)}
                             />
                             <div className="flex items-center gap-2 text-xs text-slate-500 italic mt-2">
-                                <Bot className="w-4 h-4 text-teal-400" />
+                                <Bot className="w-4 h-4 text-[var(--brand-blue-400)]" />
                                 <span>These notes are visible to all members of your team with access to this lead.</span>
                             </div>
                         </div>
@@ -1519,7 +1542,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 {activities.map((activity) => (
                                     <div key={activity.id} className="relative">
                                         <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-slate-900 border-2 border-slate-800 flex items-center justify-center">
-                                            <div className={`w-2 h-2 rounded-full ${activity.type === 'stage_change' ? 'bg-teal-500' : 'bg-blue-500'}`} />
+                                            <div className={`w-2 h-2 rounded-full ${activity.type === 'stage_change' ? 'bg-[var(--brand-blue-500)]' : 'bg-blue-500'}`} />
                                         </div>
                                         <div className="glass-panel p-4 rounded-2xl border border-white/5">
                                             <div className="flex justify-between items-start mb-1">
@@ -1531,7 +1554,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                                     <div className="flex items-center gap-2">
                                                         <Badge variant="neutral" className="text-xs opacity-60">{activity.metadata.old_stage.toUpperCase()}</Badge>
                                                         <ArrowRight className="w-3 h-3 text-slate-600" />
-                                                        <Badge variant="blue" className="text-xs text-teal-400 border-teal-500/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
+                                                        <Badge variant="blue" className="text-xs text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20">{activity.metadata.new_stage.toUpperCase()}</Badge>
                                                     </div>
                                                     {activity.metadata.reason && (
                                                         <p className="text-slate-400 leading-relaxed">

@@ -25,8 +25,9 @@ import { Input } from '../ui/UIComponents';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
-import { SubNavigation } from '@/components/ui/os';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -145,8 +146,8 @@ const SwipeableTaskRow: React.FC<{
             onClick={() => onToggleSelect?.(task.id)}
             className="w-11 h-11 flex items-center justify-center flex-shrink-0"
           >
-            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selected ? 'border-teal-500 bg-teal-500/20' : 'border-slate-600'}`}>
-              {selected && <CheckCircle2 className="w-3.5 h-3.5 text-teal-400" />}
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${selected ? 'border-[var(--brand-blue-500)] bg-[var(--brand-blue-500)]/20' : 'border-slate-600'}`}>
+              {selected && <CheckCircle2 className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />}
             </div>
           </button>
         ) : (
@@ -154,7 +155,7 @@ const SwipeableTaskRow: React.FC<{
           onClick={() => !done && onComplete(task.id)}
           className="w-11 h-11 flex items-center justify-center flex-shrink-0"
         >
-          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'border-teal-500 bg-teal-500' : 'border-slate-600'}`}>
+          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${done ? 'border-[var(--brand-blue-500)] bg-[var(--brand-blue-500)]' : 'border-slate-600'}`}>
             {done && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
           </div>
         </button>
@@ -205,6 +206,30 @@ const TaskDetailContent: React.FC<{
 
   return (
     <div className="space-y-5 pb-6">
+      <RecordHeader
+        moduleId="tasks"
+        title={title || task.title}
+        subtitle={task.project_name || undefined}
+        status={<StandardStatusBadge variant={resolveStatusVariant(task.status)}>{task.status.replace(/_/g, ' ')}</StandardStatusBadge>}
+        meta={
+          <>
+            <span className="capitalize">Priority: {priority}</span>
+            {task.due_date ? <span>Due {new Date(task.due_date).toLocaleDateString()}</span> : null}
+            {task.deal_name ? <span>Deal: {task.deal_name}</span> : null}
+            {task.contact_name ? <span>{task.contact_name}</span> : null}
+          </>
+        }
+        actions={
+          <AskBonnieButton
+            compact
+            mode="summarise"
+            contexts={[
+              { type: 'Task', id: task.id, label: title || task.title },
+              ...(task.project_name ? [{ type: 'Project', label: task.project_name }] : []),
+            ]}
+          />
+        }
+      />
       <Input
         label="Task title"
         value={title}
@@ -259,7 +284,7 @@ const TaskDetailContent: React.FC<{
           className="w-full text-sm text-slate-300 bg-slate-800 rounded-xl p-3 resize-none outline-none placeholder:text-slate-600 border border-white/5"
         />
       </div>
-      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-teal-600 text-white font-semibold rounded-xl text-sm">Save Changes</button>
+      <button type="button" onClick={save} className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl text-sm">Save Changes</button>
       <button
         type="button"
         onClick={() => { if (confirm('Delete this task?')) { onDelete(task.id); onClose(); } }}
@@ -392,7 +417,7 @@ const TaskCreateContent: React.FC<{
               key={p}
               type="button"
               onClick={() => setPriority(p)}
-              className={`flex-1 min-h-11 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-900 text-slate-500 border-white/5'}`}
+              className={`flex-1 min-h-11 py-2 rounded-xl text-xs font-bold border capitalize ${priority === p ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-500)]' : 'bg-slate-900 text-slate-500 border-white/5'}`}
             >
               {p}
             </button>
@@ -426,7 +451,7 @@ const TaskCreateContent: React.FC<{
         type="button"
         onClick={submit}
         disabled={creating}
-        className="w-full min-h-11 py-3 bg-teal-600 text-white font-semibold rounded-xl text-sm disabled:opacity-50"
+        className="w-full min-h-11 py-3 bg-[var(--brand-blue-600)] text-white font-semibold rounded-xl text-sm disabled:opacity-50"
       >
         {creating ? 'Saving…' : 'Create task'}
       </button>

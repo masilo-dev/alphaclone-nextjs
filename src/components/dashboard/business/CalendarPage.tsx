@@ -24,7 +24,7 @@ import {
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { EmptyStatePlaceholder } from '../../ui/EmptyStatePlaceholder';
-import { SubNavigation } from '@/components/ui/os';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 
 interface CalendarPageProps {
@@ -60,10 +60,10 @@ const SOURCE_CONFIG = {
     },
     task: {
         label: 'Task',
-        bg: 'bg-teal-500/15',
-        text: 'text-teal-300',
-        dot: 'bg-teal-500',
-        border: 'border-teal-500/30',
+        bg: 'bg-[var(--brand-blue-500)]/15',
+        text: 'text-[var(--brand-blue-300)]',
+        dot: 'bg-[var(--brand-blue-500)]',
+        border: 'border-[var(--brand-blue-500)]/30',
     },
     project: {
         label: 'Project',
@@ -436,7 +436,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg transition-colors font-semibold text-slate-950"
                     >
                         <Plus className="w-4 h-4" />
                         Add Event
@@ -507,7 +507,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ user }) => {
                                     setShowAddModal(true);
                                 }}
                             >
-                                <div className={`text-sm font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-teal-500 text-slate-950' : 'text-slate-300'
+                                <div className={`text-sm font-medium mb-1 w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950' : 'text-slate-300'
                                     }`}>
                                     {day}
                                 </div>
@@ -614,7 +614,7 @@ const UpcomingEvents = ({ events, onSelectEvent }: { events: CalendarEvent[]; on
     return (
         <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
             <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-teal-400" />
+                <Clock className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 Upcoming
             </h3>
             <div className="space-y-2">
@@ -664,17 +664,40 @@ const EventDetailModal = ({ event, onClose, onDelete, onEdit }: {
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${cfg.bg} ${cfg.text} font-medium`}>
-                            {cfg.label}
-                        </span>
+                    <div className="min-w-0 flex-1 pr-2">
+                        <RecordHeader
+                            moduleId="calendar"
+                            title={event.title}
+                            status={
+                                <span className={`text-xs px-2 py-1 rounded-full ${cfg.bg} ${cfg.text} font-medium`}>
+                                    {cfg.label}
+                                </span>
+                            }
+                            meta={
+                                <>
+                                    <span>
+                                        {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                                    </span>
+                                    {event.clientName ? <span>{event.clientName}</span> : null}
+                                    {event.status ? <span className="capitalize">{event.status.replace(/_/g, ' ')}</span> : null}
+                                </>
+                            }
+                            actions={
+                                <AskBonnieButton
+                                    compact
+                                    mode="summarise"
+                                    contexts={[
+                                        { type: 'CalendarEvent', id: event.id, label: event.title },
+                                        ...(event.clientName ? [{ type: 'Client', label: event.clientName }] : []),
+                                    ]}
+                                />
+                            }
+                        />
                     </div>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg transition-colors">
+                    <button onClick={onClose} className="p-1 hover:bg-slate-800 rounded-lg transition-colors shrink-0">
                         <X className="w-5 h-5 text-slate-400" />
                     </button>
                 </div>
-
-                <h3 className="text-lg font-bold text-white mb-4">{event.title}</h3>
 
                 <div className="space-y-3">
                     <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -813,17 +836,17 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                 if (!isToday && dayEvents.length === 0) return null;
 
                 return (
-                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-teal-500/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
-                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-teal-500/5' : ''}`}>
+                    <div key={day} className={`bg-slate-900/40 border ${isToday ? 'border-[var(--brand-blue-500)]/30' : 'border-white/5'} rounded-2xl backdrop-blur-sm`}>
+                        <div className={`p-4 flex items-center justify-between ${isToday ? 'bg-[var(--brand-blue-500)]/5' : ''}`}>
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-teal-500 text-slate-950 border-teal-400' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                <div className={`w-12 h-12 flex flex-col items-center justify-center rounded-xl border ${isToday ? 'bg-[var(--brand-blue-500)] text-slate-950 border-[var(--brand-blue-400)]' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                                     <span className="text-lg font-black leading-none">{day}</span>
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                                         {date.toLocaleDateString('en-US', { weekday: 'long' })}
                                     </span>
-                                    {isToday && <span className="text-xs font-black text-teal-400 uppercase tracking-widest">Today</span>}
+                                    {isToday && <span className="text-xs font-black text-[var(--brand-blue-400)] uppercase tracking-widest">Today</span>}
                                 </div>
                             </div>
                             <button
@@ -922,7 +945,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.title}
                             onChange={e => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -932,7 +955,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
                             rows={3}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -943,7 +966,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.startTime}
                             onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -954,7 +977,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                             required
                             value={formData.endTime}
                             onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         />
                     </div>
 
@@ -963,7 +986,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                         <select
                             value={formData.eventType}
                             onChange={e => setFormData({ ...formData, eventType: e.target.value })}
-                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-teal-500"
+                            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-[var(--brand-blue-500)]"
                         >
                             <option value="meeting">Meeting</option>
                             <option value="deadline">Deadline</option>
@@ -982,7 +1005,7 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors font-semibold text-slate-950"
+                            className="flex-1 px-4 py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg transition-colors font-semibold text-slate-950"
                         >
                             {initialData ? 'Update Event' : 'Add Event'}
                         </button>

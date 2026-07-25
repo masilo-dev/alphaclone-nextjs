@@ -155,17 +155,17 @@ function DashboardContent({
               key={`${label}-${href}`}
               type="button"
               onClick={() => router.push(href)}
-              className="ac-workspace-panel rounded-lg p-4 text-left transition-all hover:border-teal-500/20 hover:bg-slate-900/70"
+              className="ac-workspace-panel rounded-lg p-4 text-left transition-all hover:border-[var(--brand-blue-500)]/20 hover:bg-slate-900/70"
             >
               <div className="mb-3 flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/10 text-teal-400">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)]">
                   <Icon className="h-4 w-4" />
                 </span>
-                <span className="text-[11px] font-black uppercase tracking-widest text-teal-400">{label}</span>
+                <span className="text-[11px] font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{label}</span>
               </div>
               <h3 className="text-sm font-semibold text-white">{title}</h3>
               <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{description}</p>
-              <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-bold text-teal-400">
+              <span className="mt-4 inline-flex items-center gap-1 text-[12px] font-bold text-[var(--brand-blue-400)]">
                 {cta}
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden />
               </span>
@@ -230,7 +230,7 @@ function DashboardContent({
             <button
               type="button"
               onClick={() => router.push('/dashboard/settings')}
-              className="text-[11px] text-teal-400 font-bold"
+              className="text-[11px] text-[var(--brand-blue-400)] font-bold"
             >
               Manage
             </button>
@@ -246,7 +246,7 @@ function DashboardContent({
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 aria-label={label}
               >
-                <Icon className="w-4 h-4 shrink-0 text-teal-400" />
+                <Icon className="w-4 h-4 shrink-0 text-[var(--brand-blue-400)]" />
                 <span className="text-[10px] font-bold text-slate-300 truncate">{label}</span>
               </button>
             ))}

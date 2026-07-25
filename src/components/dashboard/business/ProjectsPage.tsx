@@ -43,6 +43,8 @@ import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 
 interface ProjectsPageProps {
     user: User;
@@ -206,7 +208,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
         return (
             <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
                 <div className="flex flex-1 flex-col items-center justify-center gap-4 min-h-[320px]">
-                    <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin" />
+                    <div className="w-12 h-12 border-4 border-[var(--brand-blue-500)]/20 border-t-[var(--brand-blue-500)] rounded-full animate-spin" />
                     <div className="text-slate-500 text-sm animate-pulse">Loading projects...</div>
                 </div>
             </div>
@@ -237,21 +239,21 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     <div className="flex p-1 bg-slate-900 shadow-inner rounded-full border border-white/5">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'list' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'list' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <LayoutList className="w-3.5 h-3.5" />
                             <span>List</span>
                         </button>
                         <button
                             onClick={() => setViewMode('timeline')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'timeline' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <BarChart3 className="w-3.5 h-3.5" />
                             <span>Timeline</span>
                         </button>
                         <button
                             onClick={() => setViewMode('health')}
-                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'health' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`h-8 px-3 rounded-full transition-all flex items-center gap-1.5 text-[11px] font-bold ${viewMode === 'health' ? 'bg-gradient-to-r from-[var(--brand-blue-600)] to-[var(--brand-blue-500)] text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                         >
                             <Activity className="w-3.5 h-3.5" />
                             <span>Health</span>
@@ -267,7 +269,7 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     </button>
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-bold text-slate-900 transition-all hover:bg-teal-50 active:scale-95 shadow-xl hover:shadow-white/10"
+                        className="flex-1 lg:flex-none inline-flex h-8 items-center justify-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-bold text-slate-900 transition-all hover:bg-[var(--brand-blue-50)] active:scale-95 shadow-xl hover:shadow-white/10"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         New Project
@@ -364,7 +366,7 @@ const ProjectListRow = ({
     return (
         <div 
             onClick={() => onViewDetails(project)}
-            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-teal-500/30 rounded-lg transition-all duration-300 relative overflow-hidden cursor-pointer"
+            className="group grid grid-cols-1 lg:grid-cols-12 gap-4 items-center px-6 py-4 bg-slate-900/40 hover:bg-slate-800/60 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-lg transition-all duration-300 relative overflow-hidden cursor-pointer"
         >
             {/* Status Indicator Line */}
             <div className={`absolute left-0 top-0 bottom-0 w-1 ${project.health === 'At Risk' ? 'bg-red-500 animate-pulse' :
@@ -393,7 +395,7 @@ const ProjectListRow = ({
                         )}
                         <div className="w-24 h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
-                                className="h-full bg-gradient-to-r from-teal-500 to-cyan-600 rounded-full transition-all duration-1000"
+                                className="h-full bg-gradient-to-r from-[var(--brand-blue-500)] to-[var(--brand-blue-500)] rounded-full transition-all duration-1000"
                                 style={{ width: `${project.progress}%` }}
                             />
                         </div>
@@ -410,7 +412,7 @@ const ProjectListRow = ({
                                 return (
                                     <div
                                         key={stage}
-                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${isActive ? 'bg-teal-500' : 'bg-slate-700/50'} ${isCurrent ? 'shadow-[0_0_8px_rgba(20,184,166,0.5)]' : ''}`}
+                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${isActive ? 'bg-[var(--brand-blue-500)]' : 'bg-slate-700/50'} ${isCurrent ? 'shadow-[0_0_8px_rgba(20,184,166,0.5)]' : ''}`}
                                         title={stage}
                                     />
                                 );
@@ -420,7 +422,7 @@ const ProjectListRow = ({
                             <select
                                 value={getNormalizedStage(project.currentStage)}
                                 onChange={(e) => onStageChange(project.id, e.target.value as ProjectStage)}
-                                className={`bg-transparent ${project.currentStage ? 'text-teal-400' : ''} font-medium hover:text-white cursor-pointer outline-none appearance-none`}
+                                className={`bg-transparent ${project.currentStage ? 'text-[var(--brand-blue-400)]' : ''} font-medium hover:text-white cursor-pointer outline-none appearance-none`}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
@@ -443,7 +445,7 @@ const ProjectListRow = ({
                 <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Status</span>
                     <span className={`inline-block px-2 py-1 rounded-lg text-xs font-medium border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                        project.status === 'in_progress' ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' :
+                        project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                             'bg-slate-800 text-slate-400 border-white/5'
                         }`}>
                         {project.status.replace('_', ' ')}
@@ -469,7 +471,7 @@ const ProjectListRow = ({
                 <div className="flex items-end justify-end gap-1">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                        className="h-8 w-8 p-0.5 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-full transition-all"
+                        className="h-8 w-8 p-0.5 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-full transition-all"
                         title="Edit project"
                     >
                         <Activity className="w-3.5 h-3.5" />
@@ -487,7 +489,7 @@ const ProjectListRow = ({
             {/* Status */}
             <div className="hidden lg:flex col-span-1 lg:col-span-2 justify-center">
                 <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${project.status === 'done' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                    project.status === 'in_progress' ? 'bg-teal-500/10 text-teal-400 border-teal-500/20' :
+                    project.status === 'in_progress' ? 'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border-[var(--brand-blue-500)]/20' :
                         'bg-slate-800 text-slate-400 border-white/5'
                     }`}>
                     {project.status.replace('_', ' ')}
@@ -520,7 +522,7 @@ const ProjectListRow = ({
             <div className="hidden lg:flex col-span-1 lg:col-span-1 justify-end gap-1">
                 <button
                     onClick={(e) => { e.stopPropagation(); onEdit(project); }}
-                    className="p-2 hover:bg-teal-500/10 text-slate-500 hover:text-teal-400 rounded-lg transition-all"
+                    className="p-2 hover:bg-[var(--brand-blue-500)]/10 text-slate-500 hover:text-[var(--brand-blue-400)] rounded-lg transition-all"
                     title="Edit project"
                 >
                     <Activity className="w-4 h-4" />
@@ -555,8 +557,8 @@ const ProjectHealthDashboard = ({ projects }: { projects: BusinessProject[] }) =
                     label="Total Projects"
                     value={stats.total}
                     icon={Briefcase}
-                    color="text-teal-400"
-                    bg="bg-teal-500/10"
+                    color="text-[var(--brand-blue-400)]"
+                    bg="bg-[var(--brand-blue-500)]/10"
                 />
                 <HealthStatCard
                     label="Portfolio Value"
@@ -656,7 +658,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
 
     return (
         <div className="fixed inset-0 bg-slate-950/80  flex items-end sm:items-center justify-center z-[1100] p-0 sm:p-4 overflow-y-auto">
-            <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-teal-900/20 animate-in zoom-in-95 duration-200 my-auto">
+            <div className="bg-slate-900 border border-white/10 rounded-t-2xl sm:rounded-lg p-5 sm:p-8 max-w-md w-full max-h-[95dvh] sm:max-h-none overflow-y-auto shadow-2xl shadow-[var(--brand-blue-900)]/20 animate-in zoom-in-95 duration-200 my-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h3 className="text-xl font-bold text-white">{initialData ? 'Edit Project' : 'New Project'}</h3>
                     <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
@@ -665,24 +667,24 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                     <div className="space-y-1.5">
                         <label className="text-sm font-semibold text-slate-300 ml-1">Project Name *</label>
                         <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-medium focus:border-teal-500 outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-medium focus:border-[var(--brand-blue-500)] outline-none transition-all shadow-inner" placeholder="Website Redesign..." />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-sm font-semibold text-slate-300 ml-1">Briefing</label>
                         <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3}
-                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-normal focus:border-teal-500 outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
+                            className="w-full px-5 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-normal focus:border-[var(--brand-blue-500)] outline-none transition-all resize-none shadow-inner" placeholder="Project details..." />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-300 ml-1">Due Date</label>
                             <input type="date" value={formData.dueDate} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none" />
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-300 ml-1">Client</label>
                             <select value={formData.clientId} onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none appearance-none">
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none">
                                 <option value="">Internal</option>
                                 {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
@@ -695,7 +697,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             <select
                                 value={formData.currentStage}
                                 onChange={(e) => setFormData({ ...formData, currentStage: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none appearance-none"
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
                             >
                                 {PROJECT_STAGES_ORDER.map((stage, idx) => {
                                     const currentIdx = initialData ? PROJECT_STAGES_ORDER.indexOf(getNormalizedStage(initialData.currentStage)) : 0;
@@ -710,7 +712,7 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             <select
                                 value={formData.health}
                                 onChange={(e) => setFormData({ ...formData, health: e.target.value as any })}
-                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none appearance-none"
+                                className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none appearance-none"
                             >
                                 <option value="On Track">On Track</option>
                                 <option value="At Risk">At Risk</option>
@@ -725,14 +727,14 @@ const ProjectModal = ({ clients, onClose, onSave, initialData }: any) => {
                             type="number"
                             value={formData.budget}
                             onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
-                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-teal-500 outline-none shadow-inner"
+                            className="w-full px-4 py-3 bg-slate-950 border border-white/5 rounded-lg text-white font-bold focus:border-[var(--brand-blue-500)] outline-none shadow-inner"
                             placeholder="0.00"
                         />
                     </div>
 
                     <div className="flex gap-4 pt-6">
                         <button type="button" onClick={onClose} className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 rounded-lg font-bold text-sm text-slate-300 transition-all">Cancel</button>
-                        <button type="submit" className="flex-1 px-6 py-4 bg-teal-600 hover:bg-teal-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-teal-900/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
+                        <button type="submit" className="flex-1 px-6 py-4 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-[var(--brand-blue-900)]/20 active:scale-95">{initialData ? 'Save Changes' : 'Create Project'}</button>
                     </div>
                 </form>
             </div>
@@ -784,19 +786,19 @@ const ProjectTimeline = ({ projects }: { projects: BusinessProject[] }) => {
                     const width = Math.max(2, endPos - startPos);
 
                     return (
-                        <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-teal-500/30">
+                        <div key={proj.id} className="flex hover:bg-white/[0.02] group transition-all duration-300 border-l-2 border-transparent hover:border-[var(--brand-blue-500)]/30">
                             <div className="w-64 min-w-[16rem] p-4 flex flex-col gap-1 border-r border-white/5 bg-slate-900/20 backdrop-blur-sm">
-                                <h4 className="text-xs font-bold text-slate-200 group-hover:text-teal-400 transition-colors truncate">{proj.name}</h4>
+                                <h4 className="text-xs font-bold text-slate-200 group-hover:text-[var(--brand-blue-400)] transition-colors truncate">{proj.name}</h4>
                             </div>
                             <div className="flex-1 relative h-14 flex items-center px-2">
                                 <div className="absolute inset-0 flex divide-x divide-white/5 pointer-events-none">
                                     {months.map((_, i) => <div key={i} className="flex-1 h-full"></div>)}
                                 </div>
                                 <div
-                                    className="absolute h-6 rounded-lg group-hover:h-7 transition-all duration-300 flex items-center shadow-lg hover:shadow-teal-900/20 overflow-hidden cursor-pointer bg-gradient-to-r from-teal-500/20 to-cyan-500/20 border border-teal-500/30"
+                                    className="absolute h-6 rounded-lg group-hover:h-7 transition-all duration-300 flex items-center shadow-lg hover:shadow-[var(--brand-blue-900)]/20 overflow-hidden cursor-pointer bg-gradient-to-r from-[var(--brand-blue-500)]/20 to-cyan-500/20 border border-[var(--brand-blue-500)]/30"
                                     style={{ left: `${startPos}%`, width: `${width}%` }}
                                 >
-                                    <div className="absolute top-0 bottom-0 left-0 bg-teal-500/20" style={{ width: `${proj.progress}%` }}></div>
+                                    <div className="absolute top-0 bottom-0 left-0 bg-[var(--brand-blue-500)]/20" style={{ width: `${proj.progress}%` }}></div>
                                     <span className="relative px-3 text-xs text-white truncate drop-shadow-md">{proj.name}</span>
                                 </div>
                             </div>
@@ -1046,16 +1048,41 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 pb-24">
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-2">{project.name}</h3>
-                        <p className="text-slate-400 text-sm leading-relaxed">{project.description || 'No description provided.'}</p>
-                    </div>
+                    <RecordHeader
+                        moduleId="projects"
+                        title={project.name}
+                        subtitle={project.description || 'No description provided.'}
+                        status={
+                            <StandardStatusBadge variant={resolveStatusVariant(project.health || 'On Track')}>
+                                {project.health || 'On Track'}
+                            </StandardStatusBadge>
+                        }
+                        meta={
+                            <>
+                                <span>{progress || 0}% complete</span>
+                                {project.dueDate ? (
+                                    <span>Due {new Date(project.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                ) : null}
+                                {clientName ? <span>{clientName}</span> : null}
+                            </>
+                        }
+                        actions={
+                            <AskBonnieButton
+                                compact
+                                mode="summarise"
+                                contexts={[
+                                    { type: 'Project', id: project.id, label: project.name },
+                                    ...(clientName ? [{ type: 'Client', label: clientName }] : []),
+                                ]}
+                            />
+                        }
+                    />
 
                     <div className="bg-slate-900/40 border border-white/5 rounded-lg p-4 flex items-center justify-between gap-6">
                         <div className="relative w-24 h-24 flex-shrink-0">
                             <svg className="w-full h-full transform -rotate-90">
                                 <circle cx="48" cy="48" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                                <circle cx="48" cy="48" r={radius} className="stroke-teal-500 transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
+                                <circle cx="48" cy="48" r={radius} className="stroke-[var(--brand-blue-500)] transition-all duration-500" strokeWidth="8" fill="transparent" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center text-lg font-bold text-white font-mono">
                                 {progress || 0}%
@@ -1067,7 +1094,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             {project.budget && (
                                 <div>
                                     <div className="text-xs text-slate-500 uppercase tracking-wider">Budget</div>
-                                    <div className="text-lg font-bold text-teal-400">${project.budget.toLocaleString()}</div>
+                                    <div className="text-lg font-bold text-[var(--brand-blue-400)]">${project.budget.toLocaleString()}</div>
                                 </div>
                             )}
                             <div>
@@ -1086,7 +1113,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                         </div>
                         <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5">
                             <div
-                                className="h-full bg-gradient-to-r from-teal-500 to-cyan-600 rounded-full transition-all duration-1000"
+                                className="h-full bg-gradient-to-r from-[var(--brand-blue-500)] to-[var(--brand-blue-500)] rounded-full transition-all duration-1000"
                                 style={{ width: `${progress || 0}%` }}
                             />
                         </div>
@@ -1098,7 +1125,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             <div className="flex items-center gap-3">
                                 <div className="flex -space-x-2 overflow-hidden">
                                     {teamList.map((name, i) => (
-                                        <div key={i} className="inline-block rounded-full ring-2 ring-slate-950 bg-teal-600 text-[10px] font-bold flex items-center justify-center text-white select-none" style={{ width: '28px', height: '28px' }}>
+                                        <div key={i} className="inline-block rounded-full ring-2 ring-slate-950 bg-[var(--brand-blue-600)] text-[10px] font-bold flex items-center justify-center text-white select-none" style={{ width: '28px', height: '28px' }}>
                                             {name.split(' ').map(n => n[0]).join('').toUpperCase()}
                                         </div>
                                     ))}
@@ -1114,7 +1141,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Milestones Checklist</span>
                             {milestones.length > 0 && (
-                                <span className="text-xs font-bold text-teal-400">
+                                <span className="text-xs font-bold text-[var(--brand-blue-400)]">
                                     {milestones.filter(m => m.checked).length}/{milestones.length} done
                                 </span>
                             )}
@@ -1131,7 +1158,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                             type="checkbox"
                                             checked={m.checked}
                                             onChange={() => {}}
-                                            className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-teal-500 focus:ring-teal-500 focus:ring-offset-0 shrink-0"
+                                            className="mt-1 w-4 h-4 rounded border-slate-600 bg-slate-800 text-[var(--brand-blue-500)] focus:ring-[var(--brand-blue-500)] focus:ring-offset-0 shrink-0"
                                         />
                                         <span className={`text-sm ${m.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
                                             {m.label}
@@ -1146,9 +1173,9 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Documents</span>
                         <a
                             href="/dashboard/business/documents"
-                            className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl hover:border-teal-500/30 transition-all cursor-pointer"
+                            className="flex items-center gap-2 p-3 bg-slate-950/40 border border-white/5 rounded-xl hover:border-[var(--brand-blue-500)]/30 transition-all cursor-pointer"
                         >
-                            <FileText className="w-4 h-4 text-teal-400 flex-shrink-0" />
+                            <FileText className="w-4 h-4 text-[var(--brand-blue-400)] flex-shrink-0" />
                             <span className="text-xs text-slate-300 font-medium">Open Document Hub to manage project files</span>
                         </a>
                     </div>
@@ -1161,7 +1188,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                 <button
                                     type="button"
                                     onClick={() => router.push(buildMailComposeUrl(clientEmail, `Re: ${clientName || 'project update'}`))}
-                                    className="text-xs text-teal-300 hover:text-teal-200 break-all text-left"
+                                    className="text-xs text-[var(--brand-blue-300)] hover:text-[var(--brand-blue-200)] break-all text-left"
                                 >
                                     {clientEmail}
                                 </button>
@@ -1186,7 +1213,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                 <p className="text-xs text-slate-500 py-2 text-center">No notes yet. Add the first project update below.</p>
                             ) : (
                                 comments.map((comment) => (
-                                    <div key={comment.id} className={`rounded-xl border p-3 ${comment.is_client ? 'border-teal-500/20 bg-teal-500/5' : 'border-white/5 bg-slate-900/60'}`}>
+                                    <div key={comment.id} className={`rounded-xl border p-3 ${comment.is_client ? 'border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/5' : 'border-white/5 bg-slate-900/60'}`}>
                                         <div className="flex items-start justify-between gap-3 mb-2">
                                             <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-white truncate">
@@ -1197,7 +1224,7 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                                     <button
                                                         type="button"
                                                         onClick={() => router.push(buildMailComposeUrl(comment.author_email || '', 'Re: project comment'))}
-                                                        className="text-[11px] text-slate-500 hover:text-teal-300 break-all text-left"
+                                                        className="text-[11px] text-slate-500 hover:text-[var(--brand-blue-300)] break-all text-left"
                                                     >
                                                         {comment.author_email}
                                                     </button>
@@ -1217,13 +1244,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                                 <input
                                     value={commentAuthorName}
                                     onChange={(e) => setCommentAuthorName(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-teal-500"
+                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)]"
                                     placeholder="Your name"
                                 />
                                 <input
                                     value={commentAuthorEmail}
                                     onChange={(e) => setCommentAuthorEmail(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-teal-500"
+                                    className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)]"
                                     placeholder="Your email"
                                     type="email"
                                 />
@@ -1231,13 +1258,13 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                             <textarea
                                 value={commentDraft}
                                 onChange={(e) => setCommentDraft(e.target.value)}
-                                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-teal-500 resize-none min-h-[96px]"
+                                className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-white text-sm outline-none focus:border-[var(--brand-blue-500)] resize-none min-h-[96px]"
                                 placeholder="Leave a note, ask a question, or record a client update..."
                             />
                             <button
                                 type="submit"
                                 disabled={postingComment || !commentDraft.trim() || !commentAuthorName.trim()}
-                                className="w-full px-4 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all"
+                                className="w-full px-4 py-2.5 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] disabled:opacity-50 text-white rounded-xl font-bold text-sm transition-all"
                             >
                                 {postingComment ? 'Saving...' : 'Add Note'}
                             </button>
@@ -1250,14 +1277,14 @@ const ProjectDetailsDrawer: React.FC<ProjectDetailsDrawerProps> = ({ project, te
                     <button
                         onClick={handleShareWithClient}
                         title="Copy a public link to share this project's progress and milestones with the client"
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-teal-600/20 hover:bg-teal-600/30 text-teal-300 border border-teal-500/30 rounded-md font-semibold text-xs transition-all"
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 bg-[var(--brand-blue-600)]/20 hover:bg-[var(--brand-blue-600)]/30 text-[var(--brand-blue-300)] border border-[var(--brand-blue-500)]/30 rounded-md font-semibold text-xs transition-all"
                     >
                         <Share2 className="w-3.5 h-3.5" />
                         Share with Client
                     </button>
                     <button
                         onClick={() => { onEdit(project); onClose(); }}
-                        className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl font-bold text-xs transition-all text-center"
+                        className="flex-1 px-4 py-2 bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] text-white rounded-xl font-bold text-xs transition-all text-center"
                     >
                         Edit Properties
                     </button>
