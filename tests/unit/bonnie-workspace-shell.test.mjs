@@ -58,7 +58,7 @@ test("BonnieFullView mounts workspace shell pieces", () => {
   assert.match(src, /workspaceMode/);
   assert.match(src, /useBonnieConversations/);
   assert.match(src, /useBonnieGoals/);
-  assert.match(src, /Bonnie AI workspace/);
+  assert.match(src, /Bonnie workspace/);
   assert.match(src, /BonnieWorkspaceViews/);
 });
 

@@ -4,14 +4,12 @@
 import assert from "node:assert/strict";
 import { describe, it, before } from "node:test";
 
-// Ensure production-like public origin for module import
-process.env.PUBLIC_APP_ORIGIN =
-  process.env.PUBLIC_APP_ORIGIN || "https://alphaclonesystems.com";
-process.env.NEXT_PUBLIC_APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://alphaclonesystems.com";
-process.env.PUBLIC_MCP_RESOURCE =
-  process.env.PUBLIC_MCP_RESOURCE || "https://alphaclonesystems.com/api/mcp";
-process.env.NODE_ENV = process.env.NODE_ENV || "test";
+// Force production-like public origin for this suite (ignore local .env.local).
+process.env.PUBLIC_APP_ORIGIN = "https://alphaclonesystems.com";
+process.env.NEXT_PUBLIC_APP_URL = "https://alphaclonesystems.com";
+process.env.NEXT_PUBLIC_SITE_URL = "https://alphaclonesystems.com";
+process.env.PUBLIC_MCP_RESOURCE = "https://alphaclonesystems.com/api/mcp";
+process.env.NODE_ENV = "test";
 
 const {
   PUBLIC_APP_ORIGIN,
