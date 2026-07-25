@@ -152,6 +152,7 @@ html {
 }
 
 body {
+  /* Solid marketing canvas — no background photo */
   background-color: #041027;
   background-image: none;
   background-repeat: no-repeat;
