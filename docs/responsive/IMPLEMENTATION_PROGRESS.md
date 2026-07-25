@@ -1,10 +1,11 @@
 # Responsive implementation progress
 
-Branch: `bonnie/responsive-dashboard-shell-bd76`
+Branch: `bonnie/responsive-dashboard-shell-bd76`  
+PR: https://github.com/masilo-dev/alphaclone-nextjs/pull/99
 
 Baseline: platform UX audit + `ROUTE_IMPLEMENTATION_MATRIX.md`.
 
-## Shipped in this pass
+## Shipped
 
 ### Foundations
 - Responsive tokens: `src/constants/responsive.ts`
@@ -17,35 +18,45 @@ Baseline: platform UX audit + `ROUTE_IMPLEMENTATION_MATRIX.md`.
 ### Shell & navigation
 - Phone bottom nav: **Home · Customers · Work · Inbox · More** (`mobileNav.ts` + `BottomNav.tsx`)
 - More opens job-grouped catalogue (Sell / Deliver / Get paid / Grow / Operate)
-- HubShell: jump select on phone/tablet; tab strip from laptop up (avoids triple nav)
-- Channels hub → **Inbox** with Unified Inbox first; Marketing “Inbox” renamed to Email
-- Sidebar Expenses → `/dashboard/business/expenses` (audit P0)
-- Tenant Communication nav labels clarified
+- HubShell: jump select on phone/tablet; tab strip from laptop up
+- Channels hub → **Inbox** with Unified Inbox first; Marketing “Inbox” → Email
+- **Expenses** sidebar → `/dashboard/business/expenses`
 - BusinessDashboard `<main id="main-content">` landmark fixed
 - ModulePageLayout phone bottom-nav safe padding
 - Sheets: full-width on phone for detail drawers
 
 ### Workflows / a11y / productivity
-- Deal → Invoice: resolves `clientId` via `crm_contact_id`, navigates to billing, next-step toasts
+- Deal → Invoice: `clientId` via `crm_contact_id`, navigate to billing, next-step toasts
 - Deal detail: Open customer / Create quote / Schedule follow-up
-- `UIComponents.Modal`: dialog semantics, Escape, focus trap, phone bottom sheet behaviour
-- `UIComponents.Input`: label `htmlFor` / `id` association
-- Keyboard shortcuts help lists only real shortcuts
-- Command palette expanded (accounting, expenses, campaigns, Bonnie, etc.; duplicate mail entries removed)
-- Tables: card layout through tablet (`lg` breakpoint); improved empty presentation
-- Business home: phone-first priority feed; overview charts optional / desktop-preferred
+- Modal dialog a11y + phone sheet behaviour; Input label association
+- Keyboard shortcuts help = real shortcuts only
+- Command palette expanded; duplicate mail entries removed
 
-## Still required (matrix remaining)
+### Module screens (intentional reflow)
+- **Home** — attention-first phone feed; overview charts optional/desktop
+- **Invoices (EnhancedBillingPage)** — PageHeader, mobile cards, Create always visible
+- **Expenses** — PageHeader, Add Expense primary, receipt secondary
+- **Quotes** — PageHeader + New Quote primary
+- **CRM / Clients** — PageHeader, phone cards, primary Add
+- **CRMTab** — detail PageHeader; ResponsiveTable split at `lg`
+- **Settings** — phone category list → drill-in; Danger Zone separated
+- **HomeTab** expenses shortcut fixed
 
-Per-module intentional layouts still need progressive adoption of `PageHeader` + card lists + full-screen sheets across:
-- Invoice create progressive sections
-- Accounting expandable rows on phone
-- Campaign builder stepper on phone
-- Calendar agenda default on phone
-- Settings category list → screen on phone
-- Bonnie full-screen conversation on phone
-- PermissionGate UI across modules
-- VirtualList adoption on largest CRM/invoice lists
-- Full viewport matrix QA (1920 → 320 + intermediates)
+## Remaining (continue implementation order 12–24)
 
-Continue from implementation order items 10–24 in the prompt.
+| Area | Status |
+|---|---|
+| Accounting tables / banking / vendors phone rows | Pending |
+| Campaign builder phone stepper | Pending |
+| Social composer unify + phone flow | Pending |
+| Calendar agenda default on phone | Pending |
+| Documents / contracts phone list | Pending |
+| Tasks / projects unify + phone list | Pending |
+| Reports stacked charts on phone | Pending |
+| Bonnie full-screen on phone | Pending |
+| Inbox three-pane → list/thread on phone | Pending |
+| PermissionGate shared UI | Pending |
+| VirtualList on largest lists | Pending |
+| Full viewport matrix QA (1920→320 + intermediates) | Pending |
+
+No marketing or database changes in this branch.
