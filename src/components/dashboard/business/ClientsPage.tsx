@@ -39,6 +39,7 @@ import {
 import AIOutreachModal from './AIOutreachModal';
 import { Button, Input, Badge, Dropdown, Card } from '../../ui/UIComponents';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 import { useDropzone } from 'react-dropzone';
@@ -247,7 +248,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('sales')}
                     className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                        directoryView === 'sales' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
+                        directoryView === 'sales' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
                     }`}
                 >
                     Sales pipeline
@@ -256,7 +257,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     type="button"
                     onClick={() => setDirectoryViewAndUrl('email')}
                     className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
-                        directoryView === 'email' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
+                        directoryView === 'email' ? 'bg-[var(--brand-blue-600)] text-white' : 'text-slate-400 hover:text-white'
                     }`}
                 >
                     Email list
@@ -526,7 +527,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white"
             >
                 {allFilteredClientsSelected ? (
-                    <CheckSquare className="w-4 h-4 text-teal-400" />
+                    <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
                 ) : (
                     <Square className="w-4 h-4" />
                 )}
@@ -685,7 +686,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     {filteredClients.map(client => (
                         <div key={client.id} className="p-3 bg-slate-900/60 border border-white/5 rounded-xl flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-xs">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white text-xs">
                                     {(client.name || '?').charAt(0)}
                                 </div>
                                 <div>
@@ -765,21 +766,21 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <button
                             onClick={() => setViewMode('list')}
                             title="List view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <List className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('board')}
                             title="Card view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'board' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <LayoutGrid className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => setViewMode('micro')}
                             title="Micro grid view"
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20' : 'text-slate-500 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'micro' ? 'bg-[var(--brand-blue-500)] text-white shadow-lg shadow-[var(--brand-blue-500)]/20' : 'text-slate-500 hover:text-white'}`}
                         >
                             <Grid3X3 className="w-4 h-4" />
                         </button>
@@ -823,7 +824,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             variant="primary"
                             onClick={() => setShowOutreachModal(true)}
                             icon={<Users className="w-4 h-4" />}
-                            className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20"
+                            className="bg-[var(--brand-blue-600)] hover:bg-[var(--brand-blue-500)] shadow-lg shadow-[var(--brand-blue-500)]/20"
                         >
                             Outreach ({selectedClientIds.length})
                         </Button>
@@ -841,11 +842,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input type="text" placeholder="Search contacts..."
                                 value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm"
+                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-sm"
                             />
                         </div>
                         <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-md focus:outline-none focus:border-teal-500">
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-md focus:outline-none focus:border-[var(--brand-blue-500)]">
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -866,23 +867,23 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 customer: 'bg-emerald-400', lost: 'bg-rose-400'
                             };
                             const stageGrad: Record<string, string> = {
-                                lead: 'from-cyan-500 to-teal-600',
-                                prospect: 'from-teal-500 to-cyan-600',
-                                customer: 'from-emerald-500 to-teal-600',
+                                lead: 'from-cyan-500 to-[var(--brand-blue-600)]',
+                                prospect: 'from-[var(--brand-blue-500)] to-cyan-600',
+                                customer: 'from-emerald-500 to-[var(--brand-blue-600)]',
                                 lost: 'from-slate-500 to-slate-700'
                             };
                             return (
                                 <div
                                     key={client.id}
-                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border transition-all text-center ${isSelected ? 'border-teal-500/60 bg-teal-500/10' : 'border-slate-800 hover:border-teal-500/50 hover:bg-slate-800/80'}`}
+                                    className={`group relative flex flex-col items-center gap-1.5 p-2 rounded-xl bg-slate-900/70 border transition-all text-center ${isSelected ? 'border-[var(--brand-blue-500)]/60 bg-[var(--brand-blue-500)]/10' : 'border-slate-800 hover:border-[var(--brand-blue-500)]/50 hover:bg-slate-800/80'}`}
                                 >
                                     <button
                                         type="button"
                                         onClick={() => toggleClientSelection(client.id)}
-                                        className="absolute top-1 left-1 text-slate-500 hover:text-teal-400"
+                                        className="absolute top-1 left-1 text-slate-500 hover:text-[var(--brand-blue-400)]"
                                         aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
                                     >
-                                        {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
+                                        {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
                                     </button>
                                     <button
                                         type="button"
@@ -891,7 +892,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     className="flex flex-col items-center gap-1.5 w-full hover:-translate-y-0.5 transition-transform cursor-pointer"
                                 >
                                     {/* Avatar */}
-                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-teal-500 to-teal-700'} flex items-center justify-center font-bold text-white text-xs relative`}>
+                                    <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${stageGrad[client.salesStage] || 'from-[var(--brand-blue-500)] to-[var(--brand-blue-700)]'} flex items-center justify-center font-bold text-white text-xs relative`}>
                                         {initials}
                                         <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${stageDot[client.salesStage] || 'bg-slate-500'}`} />
                                     </div>
@@ -937,13 +938,13 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 placeholder="Search contacts..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm"
+                                className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-sm"
                             />
                         </div>
                         <select
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value)}
-                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-md"
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-md"
                         >
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
@@ -956,10 +957,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                         {filteredClients.map(client => {
                             const initials = (client.name || '?').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-                            const stageColor = client.salesStage === 'customer' ? 'from-emerald-500 to-teal-600'
+                            const stageColor = client.salesStage === 'customer' ? 'from-emerald-500 to-[var(--brand-blue-600)]'
                                 : client.salesStage === 'lost' ? 'from-slate-600 to-slate-700'
-                                : client.salesStage === 'prospect' ? 'from-teal-500 to-cyan-600'
-                                : 'from-teal-500 to-cyan-600';
+                                : client.salesStage === 'prospect' ? 'from-[var(--brand-blue-500)] to-cyan-600'
+                                : 'from-[var(--brand-blue-500)] to-cyan-600';
                             return (
                                     <ClientCard
                                         key={client.id}
@@ -995,7 +996,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     placeholder="Search clients..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-sm font-medium"
+                                    className="w-full pl-10 pr-4 py-2 sm:py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-sm font-medium"
                                 />
                             </div>
                             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none h-8 shrink-0">
@@ -1011,7 +1012,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         onClick={() => setSelectedStage(stage.value)}
                                         className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
                                             selectedStage === stage.value
-                                                ? 'bg-teal-600 text-white border-teal-600 shadow-sm shadow-teal-600/10'
+                                                ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-600)]/10'
                                                 : 'bg-slate-900 text-slate-400 border-slate-850 hover:text-white hover:bg-slate-800'
                                         }`}
                                     >
@@ -1034,7 +1035,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         }
                                     }
                                 }}
-                                className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-teal-400 transition-colors"
+                                className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
                             >
                                 {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 500)`}
                             </button>
@@ -1047,7 +1048,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             {filteredClients.map(client => (
                                 <div
                                     key={client.id}
-                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)] shadow-sm shadow-[var(--brand-blue-500)]/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
                                     onClick={() => setSelectedClient(client)}
                                 >
                                     {/* ... checkbox and avatar ... */}
@@ -1067,7 +1068,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     setSelectedClientIds(selectedClientIds.filter(id => id !== client.id));
                                                 }
                                             }}
-                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-600 focus:ring-teal-500/20"
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-[var(--brand-blue-600)] focus:ring-[var(--brand-blue-500)]/20"
                                         />
                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center font-semibold text-slate-350 text-xs shrink-0">
                                             {(client.name || '?').charAt(0)}
@@ -1076,7 +1077,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-teal-400 uppercase">
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-[var(--brand-blue-400)] uppercase">
                                                 {client.salesStage}
                                             </span>
                                         </div>
@@ -1091,7 +1092,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         size="sm"
                                         onClick={handleLoadMore}
                                         isLoading={loading}
-                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-wide text-xs"
+                                        className="text-[var(--brand-blue-500)] hover:text-[var(--brand-blue-400)] font-bold uppercase tracking-wide text-xs"
                                     >
                                         Load More Contacts
                                     </Button>
@@ -1105,7 +1106,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         {selectedClient ? (
                             <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
                                 <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
-                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-teal-400 text-sm font-medium">
+                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] text-sm font-medium">
                                         <ChevronLeft className="w-5 h-5" /> Back
                                     </button>
                                     <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
@@ -1114,39 +1115,54 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
-                                    <div className="flex justify-between items-start gap-4 mb-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-teal-500/10">
-                                                {(selectedClient.name || '?').charAt(0)}
-                                            </div>
-                                            <div>
-                                                <h2 className="text-2xl font-bold text-white leading-tight">{selectedClient.name}</h2>
-                                                {selectedClient.industry && <p className="text-slate-400 text-sm mt-0.5">{selectedClient.industry}</p>}
-                                                {selectedClient.email && (
+                                    <RecordHeader
+                                        moduleId="crm"
+                                        className="mb-4"
+                                        title={selectedClient.name}
+                                        subtitle={selectedClient.industry || undefined}
+                                        status={
+                                            <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
+                                                {selectedClient.salesStage.charAt(0).toUpperCase() + selectedClient.salesStage.slice(1)}
+                                            </Badge>
+                                        }
+                                        meta={
+                                            <>
+                                                {selectedClient.email ? (
                                                     <button
                                                         type="button"
                                                         onClick={() => {
                                                             setSelectedClientForCommunication(selectedClient);
                                                             setShowCommunicationModal(true);
                                                         }}
-                                                        className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                                                        className="inline-flex items-center gap-1.5 text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)] transition-colors"
                                                     >
                                                         <Mail className="w-3.5 h-3.5" />
                                                         {selectedClient.email}
                                                     </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Dropdown
-                                                trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
-                                                items={[
-                                                    { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
-                                                    { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
-                                                ]}
-                                            />
-                                        </div>
-                                    </div>
+                                                ) : null}
+                                                {selectedClient.phone ? <span>{selectedClient.phone}</span> : null}
+                                            </>
+                                        }
+                                        actions={
+                                            <>
+                                                <AskBonnieButton
+                                                    compact
+                                                    mode="summarise"
+                                                    contexts={[
+                                                        { type: 'Client', id: selectedClient.id, label: selectedClient.name },
+                                                        ...(selectedClient.industry ? [{ type: 'Industry', label: selectedClient.industry }] : []),
+                                                    ]}
+                                                />
+                                                <Dropdown
+                                                    trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
+                                                    items={[
+                                                        { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
+                                                        { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
+                                                    ]}
+                                                />
+                                            </>
+                                        }
+                                    />
 
                                     {/* Tabs Header */}
                                     <div className="flex border-b border-slate-800 mb-4 overflow-x-auto [scrollbar-width:none]">
@@ -1154,7 +1170,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('timeline')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'timeline'
-                                                    ? 'border-teal-500 text-teal-400'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1164,7 +1180,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('notes')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'notes'
-                                                    ? 'border-teal-500 text-teal-400'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1174,7 +1190,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('invoices')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'invoices'
-                                                    ? 'border-teal-500 text-teal-400'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1184,7 +1200,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('properties')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'properties'
-                                                    ? 'border-teal-500 text-teal-400'
+                                                    ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1221,7 +1237,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
-                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 text-sm focus:outline-none focus:border-teal-500 min-h-[80px]"
+                                                            className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
                                                             required
                                                         />
                                                     </div>
@@ -1251,7 +1267,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').map((note: any) => (
                                                             <div key={note.id} className="ac-workspace-panel rounded-lg p-3">
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
-                                                                    <h4 className="text-xs font-bold text-teal-400">{note.title}</h4>
+                                                                    <h4 className="text-xs font-bold text-[var(--brand-blue-400)]">{note.title}</h4>
                                                                     <span className="text-[10px] text-slate-500 font-mono">
                                                                         {new Date(note.created_at).toLocaleDateString()}
                                                                     </span>
@@ -1297,7 +1313,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="sm"
-                                                                            className="text-teal-400 hover:text-teal-300"
+                                                                            className="text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)]"
                                                                             onClick={() => {
                                                                                 window.open(`/api/invoices/${inv.metadata.invoice_id}/pdf?tenantId=${currentTenant?.id}`, '_blank');
                                                                             }}
@@ -1329,7 +1345,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-1">Email</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
-                                                            <Mail className="w-4 h-4 text-teal-500" />
+                                                            <Mail className="w-4 h-4 text-[var(--brand-blue-500)]" />
                                                             {selectedClient.email ? (
                                                                 <button
                                                                     type="button"
@@ -1337,7 +1353,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                         setSelectedClientForCommunication(selectedClient);
                                                                         setShowCommunicationModal(true);
                                                                     }}
-                                                                    className="truncate text-teal-400 hover:text-teal-300 text-left"
+                                                                    className="truncate text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)] text-left"
                                                                 >
                                                                     {selectedClient.email}
                                                                 </button>
@@ -1349,7 +1365,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-1">Phone</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
-                                                            <Phone className="w-4 h-4 text-teal-500" />
+                                                            <Phone className="w-4 h-4 text-[var(--brand-blue-500)]" />
                                                             <span className="truncate">{selectedClient.phone || 'N/A'}</span>
                                                         </div>
                                                     </div>
@@ -1591,20 +1607,20 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     ];
 
     return (
-        <Card hoverEffect className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-teal-500/50' : ''}`}>
+        <Card hoverEffect className={`flex flex-col h-full !p-3 relative z-10 hover:z-[60] focus-within:z-[60] transition-all ${isSelected ? 'ring-1 ring-[var(--brand-blue-500)]/50' : ''}`}>
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0 mr-2">
                     {onToggleSelect && (
                         <button
                             type="button"
                             onClick={() => onToggleSelect(client.id)}
-                            className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+                            className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)]"
                             aria-label={isSelected ? 'Deselect contact' : 'Select contact'}
                         >
-                            {isSelected ? <CheckSquare className="w-4 h-4 text-teal-400" /> : <Square className="w-4 h-4" />}
+                            {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
                         </button>
                     )}
-                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-bold text-white">
+                    <div className="w-10 h-10 rounded-full shrink-0 bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-blue-700)] flex items-center justify-center font-bold text-white">
                         {(client.name || '?').charAt(0)}
                     </div>
                     <div className="min-w-0">
@@ -1618,7 +1634,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                         size="sm"
                         variant="ghost"
                         onClick={() => onCall(client)}
-                        className="!p-2 hover:bg-teal-500/10 hover:text-teal-400"
+                        className="!p-2 hover:bg-[var(--brand-blue-500)]/10 hover:text-[var(--brand-blue-400)]"
                         icon={<Phone className="w-4 h-4" />}
                     />
                     <Dropdown
@@ -1649,7 +1665,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                     </div>
                 )}
                 {client.metadata?.last_contacted_at && (
-                    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-teal-500/70 mt-3">
+                    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-blue-500)]/70 mt-3">
                         <MessageSquare className="w-3 h-3" />
                         <span>Last Contacted: {formatDistanceToNow(new Date(client.metadata.last_contacted_at), { addSuffix: true })}</span>
                     </div>
@@ -1662,7 +1678,7 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                         {client.salesStage.charAt(0).toUpperCase() + client.salesStage.slice(1)}
                     </Badge>
                     {client.value > 0 && (
-                        <span className="text-sm font-semibold text-teal-400">
+                        <span className="text-sm font-semibold text-[var(--brand-blue-400)]">
                             ${client.value.toLocaleString()}
                         </span>
                     )}
@@ -1735,7 +1751,7 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-medium"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-medium"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1831,7 +1847,7 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1923,7 +1939,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                     <div
                         {...getRootProps()}
                         className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-colors ${isDragActive
-                            ? 'border-teal-500 bg-teal-500/10'
+                            ? 'border-[var(--brand-blue-500)] bg-[var(--brand-blue-500)]/10'
                             : 'border-slate-700 hover:border-slate-600'
                             }`}
                     >
@@ -1938,7 +1954,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                         <p className="text-xs text-slate-500">
                             Supports: Excel (.xlsx, .xls), CSV, PDF, Word (.doc, .docx)
                         </p>
-                        {importing && <p className="mt-4 text-teal-400">Importing...</p>}
+                        {importing && <p className="mt-4 text-[var(--brand-blue-400)]">Importing...</p>}
                     </div>
                 ) : (
                     <div>
@@ -1963,7 +1979,7 @@ const ImportClientsModal = ({ onClose, onImport }: any) => {
                             </button>
                             <button
                                 onClick={handleConfirmImport}
-                                className="flex-1 px-4 py-2 bg-teal-500 hover:bg-teal-600 rounded-lg transition-colors"
+                                className="flex-1 px-4 py-2 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] rounded-lg transition-colors"
                             >
                                 Import {importedClients.length} Clients
                             </button>
@@ -2029,8 +2045,8 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
     return (
         <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Initialize Project Proposal" size="wide">
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl mb-4">
-                    <p className="text-sm text-teal-200">
+                <div className="p-4 bg-[var(--brand-blue-500)]/10 border border-[var(--brand-blue-500)]/20 rounded-xl mb-4">
+                    <p className="text-sm text-[var(--brand-blue-200)]">
                         Initializing a formal proposal for <strong>{client.name}</strong>. This creates a pending project in your pipeline.
                     </p>
                 </div>
@@ -2048,7 +2064,7 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
                         >
                             <option value="Web">Web Development</option>
                             <option value="Mobile">Mobile App</option>
@@ -2147,10 +2163,10 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
     return (
         <DetailDrawer open onOpenChange={(open) => { if (!open) onClose(); }} title="Create Invoice" size="wide">
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="p-3 bg-teal-500/10 border border-teal-500/20 rounded-xl">
-                    <p className="text-sm text-teal-200">
+                <div className="p-3 bg-[var(--brand-blue-500)]/10 border border-[var(--brand-blue-500)]/20 rounded-xl">
+                    <p className="text-sm text-[var(--brand-blue-200)]">
                         Creating invoice for <strong>{client.name}</strong>
-                        {client.email && <span className="text-teal-400"> · {client.email}</span>}
+                        {client.email && <span className="text-[var(--brand-blue-400)]"> · {client.email}</span>}
                     </p>
                 </div>
 

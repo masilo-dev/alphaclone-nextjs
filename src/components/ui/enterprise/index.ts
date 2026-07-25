@@ -28,6 +28,8 @@ export {
   BonnieDrawer,
   CommunicationComposer,
   RecordHeader,
+  AskBonnieButton,
+  ModuleOverviewChrome,
 } from '@/components/ui/os';
 export { MODULE_ICONS, getModuleIcon } from '@/components/icons/alphaclone';
 export { useBonnieDrawer, useBonnieDrawerOptional } from '@/contexts/BonnieDrawerContext';

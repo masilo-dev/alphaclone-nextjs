@@ -75,14 +75,14 @@ function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={`relative flex gap-1.5 p-2 sm:p-3 bg-slate-900 border ${
-        isDragging ? 'border-teal-500 shadow-xl z-50' : 'border-slate-800'
+        isDragging ? 'border-[var(--brand-blue-500)] shadow-xl z-50' : 'border-slate-800'
       } rounded-xl shadow-sm hover:shadow-md transition-shadow group
-      ${isOverlay ? 'scale-105 shadow-2xl rotate-2 z-50 border-teal-500' : ''}`}
+      ${isOverlay ? 'scale-105 shadow-2xl rotate-2 z-50 border-[var(--brand-blue-500)]' : ''}`}
     >
       <div className="flex flex-col gap-2 shrink-0 pt-0.5">
         <button
           type="button"
-          className="p-1 rounded-md text-slate-400 hover:text-teal-400 hover:bg-slate-800 cursor-grab active:cursor-grabbing"
+          className="p-1 rounded-md text-slate-400 hover:text-[var(--brand-blue-400)] hover:bg-slate-800 cursor-grab active:cursor-grabbing"
           aria-label="Drag to move lead"
           {...listeners}
           {...attributes}
@@ -96,7 +96,7 @@ function KanbanCard({
               e.stopPropagation();
               onToggleSelect?.(lead.id);
             }}
-            className={`p-1 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-teal-500 border-teal-500' : 'border-slate-700 hover:border-teal-500'}`}
+            className={`p-1 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-[var(--brand-blue-500)] border-[var(--brand-blue-500)]' : 'border-slate-700 hover:border-[var(--brand-blue-500)]'}`}
           >
             {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
           </button>
@@ -119,7 +119,7 @@ function KanbanCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {/* 36px Circular Initials */}
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-indigo-600 flex items-center justify-center font-bold text-white text-[13px] shrink-0 shadow-sm">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--brand-blue-500)] to-[var(--brand-violet-600)] flex items-center justify-center font-bold text-white text-[13px] shrink-0 shadow-sm">
               {(lead.businessName || '?').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -134,7 +134,7 @@ function KanbanCard({
                 
                 {/* Leads source/status badge */}
                 {lead.source && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/20 uppercase">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border border-[var(--brand-blue-500)]/20 uppercase">
                     {lead.source}
                   </span>
                 )}
@@ -295,7 +295,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-12 space-y-6">
               {/* Header: Circle Initials & Name */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-400 to-indigo-600 flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-teal-500/10 shrink-0">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-blue-400)] to-[var(--brand-violet-600)] flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-[var(--brand-blue-500)]/10 shrink-0">
                   {(lead.businessName || '?').charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -306,8 +306,8 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     {lead.businessName}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                    <span className="text-xs text-slate-400">Trust Score: <span className="text-teal-400 font-bold">{lead.trustScore || 'N/A'}</span></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand-blue-500)] animate-pulse" />
+                    <span className="text-xs text-slate-400">Trust Score: <span className="text-[var(--brand-blue-400)] font-bold">{lead.trustScore || 'N/A'}</span></span>
                   </div>
                 </div>
                 <button onClick={onClose} className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white">
@@ -338,7 +338,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                       >
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                           isActive 
-                            ? 'scale-110 ring-2 ring-teal-500 ring-offset-2 ring-offset-slate-950 bg-white/10' 
+                            ? 'scale-110 ring-2 ring-[var(--brand-blue-500)] ring-offset-2 ring-offset-slate-950 bg-white/10' 
                             : 'hover:bg-white/5'
                         }`}>
                           <span className={`w-3.5 h-3.5 rounded-full ${dotColor} ${isActive ? 'scale-110 shadow-lg shadow-current' : 'opacity-60'}`} />
@@ -373,10 +373,10 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                 {lead.phone ? (
                   <a
                     href={`tel:${lead.phone}`}
-                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
+                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
                   >
-                    <div className="p-2 bg-teal-500/10 rounded-xl">
-                      <Phone className="w-5 h-5 text-teal-400" />
+                    <div className="p-2 bg-[var(--brand-blue-500)]/10 rounded-xl">
+                      <Phone className="w-5 h-5 text-[var(--brand-blue-400)]" />
                     </div>
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono">Call</span>
                   </a>
@@ -391,7 +391,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                   <button
                     type="button"
                     onClick={() => router.push(buildMailComposeUrl(lead.email, `Re: ${lead.businessName || 'your inquiry'}`))}
-                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
+                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
                   >
                     <div className="p-2 bg-indigo-500/10 rounded-xl">
                       <Mail className="w-5 h-5 text-indigo-400" />
@@ -410,7 +410,7 @@ const MobileLeadContactDrawer = ({ isOpen, onClose, lead, onStageSelect, onOpenF
                     href={`https://maps.google.com/?q=${encodeURIComponent(lead.location)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-teal-500/30 rounded-2xl transition-all"
+                    className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-white/5 hover:border-[var(--brand-blue-500)]/30 rounded-2xl transition-all"
                   >
                     <div className="p-2 bg-amber-500/10 rounded-xl">
                       <MapPin className="w-5 h-5 text-amber-400" />
@@ -742,7 +742,7 @@ export default function KanbanBoard() {
   if (loading) {
       return (
           <div className="w-full min-h-[240px] flex items-center justify-center p-12">
-              <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full" />
+              <div className="animate-spin w-8 h-8 border-4 border-[var(--brand-blue-500)] border-t-transparent rounded-full" />
           </div>
       );
   }
@@ -768,7 +768,7 @@ export default function KanbanBoard() {
                   onClick={() => setSourceFilter(filter.value as any)}
                   className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
                     sourceFilter === filter.value
-                      ? 'bg-teal-600 text-white border-teal-600 shadow-sm shadow-teal-600/10'
+                      ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-500)]/10'
                       : 'bg-slate-900 text-slate-400 border-slate-750 hover:text-white hover:bg-slate-800'
                   }`}
                   style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
@@ -788,7 +788,7 @@ export default function KanbanBoard() {
                     }
                   }
                 }}
-                className="h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-slate-900 text-slate-400 border-slate-750 hover:text-teal-400 hover:bg-slate-800"
+                className="h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border bg-slate-900 text-slate-400 border-slate-750 hover:text-[var(--brand-blue-400)] hover:bg-slate-800"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 {selectedLeadIds.length > 0 ? 'Deselect All' : 'Select All (Max 20)'}
@@ -797,7 +797,7 @@ export default function KanbanBoard() {
             {selectedLeadIds.length > 0 && (
               <button
                 onClick={() => setShowOutreachModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold rounded-lg transition-all shadow-lg shadow-teal-500/20 h-8 self-start sm:self-auto"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white text-[11px] font-bold rounded-lg transition-all shadow-lg shadow-[var(--brand-blue-500)]/20 h-8 self-start sm:self-auto"
                 style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
               >
                 <Sparkles className="w-3.5 h-3.5" /> Bulk Outreach ({selectedLeadIds.length})
@@ -887,7 +887,7 @@ export default function KanbanBoard() {
           onClick={() => {
             router.push(window.location.pathname + '?add=true');
           }}
-          className="fixed bottom-20 right-4 z-50 md:hidden w-14 h-14 rounded-full bg-teal-600 hover:bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-600/35 cursor-pointer active:scale-95 transition-transform"
+          className="fixed bottom-20 right-4 z-50 md:hidden w-14 h-14 rounded-full bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white flex items-center justify-center shadow-lg shadow-[var(--brand-blue-500)]/30 cursor-pointer active:scale-95 transition-transform"
           style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
         >
           <Plus className="w-6 h-6" />

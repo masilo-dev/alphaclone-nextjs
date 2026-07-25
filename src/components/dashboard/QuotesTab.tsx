@@ -22,7 +22,7 @@ import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseData
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { EmailRecipient } from './crm/emailRecipient';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
-import { SubNavigation } from '@/components/ui/os';
+import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
 import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
@@ -78,7 +78,7 @@ const STATUS_COLORS: Record<QuoteStatus, string> = {
   accepted: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
   rejected: 'bg-red-500/15 text-red-400 border-red-500/20',
   expired:  'bg-slate-500/15 text-slate-300 border-slate-500/20',
-  converted: 'bg-teal-500/15 text-teal-300 border-teal-500/20',
+  converted: 'bg-[var(--brand-blue-500)]/15 text-[var(--brand-blue-300)] border-[var(--brand-blue-500)]/20',
 };
 
 const FILTERS: QuoteStatus[] = ['draft', 'sent', 'accepted', 'rejected', 'expired', 'converted'];
@@ -138,7 +138,7 @@ const QuoteDetail: React.FC<{
         <span className="text-[11px] font-bold">Send</span>
       </button>
       <button onClick={() => onConvert(quote)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
-        <CheckCircle className="w-4 h-4 text-teal-400" />
+        <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
         <span className="text-[11px] font-bold">Convert</span>
       </button>
       <button onClick={() => onDelete(quote.id)} className="min-h-11 flex flex-col items-center justify-center gap-1 rounded-xl border border-red-500/20 hover:bg-red-500/10 text-red-400">
@@ -151,42 +151,59 @@ const QuoteDetail: React.FC<{
   return (
     <div className={inDrawer ? 'space-y-4 pb-2' : 'relative flex flex-col min-h-0 ac-scroll-full overflow-hidden'}>
       {!inDrawer && (
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5">
-        <button onClick={onBack} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-slate-300" /></button>
-        <span className="text-[15px] font-bold text-white">Quote Detail</span>
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--ws-border)]">
+        <button onClick={onBack} className="w-8 h-8 rounded-full bg-[var(--ws-surface-tertiary)] flex items-center justify-center"><ArrowLeft className="w-4 h-4 text-[var(--ws-text-secondary)]" /></button>
+        <span className="text-[15px] font-semibold text-[var(--ws-text-primary)]">Quotation</span>
       </div>
       )}
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-4 pb-28 space-y-4'}>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-5 text-center space-y-2">
-          <div className="text-[13px] text-slate-500">Quote #{quote.number || quote.id.slice(0,8)}</div>
-          <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
-          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
-        </div>
-        <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
-          <div className="text-[15px] font-bold text-white">{clientName}</div>
-          {quote.client_email && (
-            <div className="flex items-center justify-between gap-2 mt-1">
-              <div className="text-[13px] text-slate-400">{quote.client_email}</div>
-              {onComposeEmail && (
+        <RecordHeader
+          moduleId="quotations"
+          title={`Quote #${quote.number || quote.id.slice(0, 8)}`}
+          subtitle={clientName}
+          status={<StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>}
+          meta={
+            <>
+              <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">{amountDisplay.replace('$', '£')}</span>
+              {quote.valid_until ? (
+                <span>Valid until {new Date(quote.valid_until).toLocaleDateString('en-GB')}</span>
+              ) : null}
+            </>
+          }
+          actions={
+            <>
+              {onComposeEmail && quote.client_email ? (
                 <button
                   type="button"
                   onClick={() => onComposeEmail(
                     { name: clientName, email: quote.client_email! },
                     `Quote ${quote.number || quote.id.slice(0, 8)} — ${clientName}`
                   )}
-                  className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1"
+                  className="inline-flex items-center gap-1.5 min-h-8 px-2.5 rounded-[8px] text-xs font-semibold text-[var(--brand-blue-500)] border border-[var(--ws-border)] hover:bg-[var(--ws-hover)]"
                 >
                   <Mail className="w-3.5 h-3.5" /> Compose
                 </button>
-              )}
-            </div>
-          )}
-          {quote.valid_until && <div className="text-[13px] text-slate-400 opacity-55 mt-0.5">Valid until {new Date(quote.valid_until).toLocaleDateString()}</div>}
+              ) : null}
+              <AskBonnieButton
+                compact
+                mode="draft"
+                contexts={[
+                  { type: 'Quotation', id: quote.id, label: `Quote #${quote.number || quote.id.slice(0, 8)}` },
+                  { type: 'Customer', label: clientName },
+                ]}
+              />
+            </>
+          }
+        />
+        <div className="ac-workspace-panel p-5 text-center space-y-2">
+          <div className="text-[13px] text-[var(--ws-text-muted)]">Quote value</div>
+          <div className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">{amountDisplay.replace('$', '£')}</div>
+          <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
         </div>
         <QuoteDocumentPreview quoteId={quote.id} />
         {quote.status === 'accepted' && (
-          <button onClick={() => onConvert(quote)} className="w-full h-[52px] bg-teal-600 hover:bg-teal-500 text-white font-black uppercase tracking-wider rounded-2xl text-[13px] transition-colors flex items-center justify-center gap-2">
-            <ArrowRight className="w-5 h-5" /> Convert to Invoice
+          <button onClick={() => onConvert(quote)} className="w-full min-h-[52px] bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-semibold rounded-[14px] text-[13px] transition-colors flex items-center justify-center gap-2">
+            <ArrowRight className="w-5 h-5" /> Convert to invoice
           </button>
         )}
       </div>
@@ -312,7 +329,7 @@ const CreateQuoteModal: React.FC<{
         <button
           type="submit"
           disabled={saving}
-          className="w-full min-h-11 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold disabled:opacity-50"
+          className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] hover:bg-[var(--brand-blue-600)] text-white font-bold disabled:opacity-50"
         >
           {saving ? 'Creating...' : 'Create Quote'}
         </button>
@@ -614,7 +631,7 @@ const QuoteEditModal: React.FC<{
               type="button"
               onClick={handleSave}
               disabled={saving || loading}
-              className="w-full min-h-11 rounded-2xl bg-teal-500 px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
+              className="w-full min-h-11 rounded-2xl bg-[var(--brand-blue-500)] px-4 py-3 text-sm font-semibold text-black disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Quote'}
             </button>
@@ -786,7 +803,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
           aria-label={allVisibleSelected ? 'Deselect all visible quotes' : 'Select all visible quotes'}
         >
           {allVisibleSelected ? (
-            <CheckCircle className="w-4 h-4 text-teal-400" />
+            <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
           ) : (
             <Plus className="w-4 h-4" />
           )}
@@ -803,7 +820,7 @@ const QuotesTab: React.FC<QuotesTabProps> = ({ user }) => {
           aria-label={selectedQuoteIds.has(q.id) ? 'Deselect quote' : 'Select quote'}
         >
           {selectedQuoteIds.has(q.id) ? (
-            <CheckCircle className="w-4 h-4 text-teal-400" />
+            <CheckCircle className="w-4 h-4 text-[var(--brand-blue-400)]" />
           ) : (
             <Plus className="w-4 h-4" />
           )}

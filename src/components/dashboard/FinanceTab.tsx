@@ -18,6 +18,7 @@ import { EnterpriseDataTable, type EnterpriseColumn } from '../ui/EnterpriseData
 import { Input } from '../ui/UIComponents';
 import EmptyState from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
 type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 type ExpenseStatus = 'pending' | 'approved' | 'rejected';
@@ -42,14 +43,32 @@ const InvoiceDetailContent: React.FC<{
 
   return (
     <div className="space-y-4 pb-6">
+      <RecordHeader
+        moduleId="invoicing"
+        title={`Invoice #${invoice.number || invoice.id.slice(0, 8)}`}
+        subtitle={clientName}
+        status={<StatusBadge variant={invoiceStatusVariant(invoice.status)}>{invoice.status}</StatusBadge>}
+        meta={
+          <>
+            <span className="font-mono text-[var(--brand-blue-400)]">{amountDisplay}</span>
+            {invoice.due_date ? <span>Due {new Date(invoice.due_date).toLocaleDateString()}</span> : null}
+            {invoice.client_email ? <span>{invoice.client_email}</span> : null}
+          </>
+        }
+        actions={
+          <AskBonnieButton
+            compact
+            mode="summarise"
+            contexts={[
+              { type: 'Invoice', id: invoice.id, label: `Invoice #${invoice.number || invoice.id.slice(0, 8)}` },
+              { type: 'Client', label: clientName },
+            ]}
+          />
+        }
+      />
       <div className={`space-y-2 p-5 text-center ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-        <div className="text-[13px] text-slate-500">Invoice #{invoice.number || invoice.id.slice(0,8)}</div>
-        <div className="text-[32px] font-bold text-teal-400">{amountDisplay}</div>
-        <StatusBadge variant={invoiceStatusVariant(invoice.status)}>{invoice.status}</StatusBadge>
-      </div>
-      <div className={`space-y-1 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-        <div className="text-[15px] font-bold text-white">{clientName}</div>
-        {invoice.client_email && <div className="text-[13px] text-slate-400 opacity-55">{invoice.client_email}</div>}
+        <div className="text-[13px] text-slate-500">Amount due</div>
+        <div className="text-[32px] font-bold text-[var(--brand-blue-400)]">{amountDisplay}</div>
       </div>
       <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
         <div className="flex justify-between py-1.5 border-b border-white/5">
@@ -58,7 +77,7 @@ const InvoiceDetailContent: React.FC<{
         </div>
         <div className="flex justify-between pt-2">
           <span className="text-[17px] font-bold text-white">Total</span>
-          <span className="text-[20px] font-bold text-teal-400 font-mono">{amountDisplay}</span>
+          <span className="text-[20px] font-bold text-[var(--brand-blue-400)] font-mono">{amountDisplay}</span>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -316,7 +335,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
       {/* Main tabs */}
       <div className="flex border-b border-white/5 bg-slate-950">
         {(['invoices', 'expenses'] as MainTab[]).map(t => (
-          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}>{t}</button>
+          <button key={t} onClick={() => setMainTab(t)} className={`flex-1 py-3 text-[13px] font-bold capitalize ${mainTab === t ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}>{t}</button>
         ))}
       </div>
 
@@ -326,7 +345,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Filter pills */}
             <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
               {(['all', ...INV_FILTERS] as (InvoiceStatus | 'all')[]).map(f => (
-                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
+                <button key={f} onClick={() => setInvFilter(f)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold capitalize transition-all ${invFilter === f ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{f}</button>
               ))}
             </div>
             {loading ? (
@@ -376,7 +395,7 @@ const FinanceTab: React.FC<FinanceTabProps> = ({ user }) => {
             {/* Category filter */}
             <div className="flex gap-2 px-4 pb-3 overflow-x-auto scrollbar-hide">
               {EXP_CATS.map(c => (
-                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-teal-500 text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
+                <button key={c} onClick={() => setExpCat(c)} className={`flex-shrink-0 h-[34px] px-3.5 rounded-full text-[12px] font-bold transition-all ${expCat === c ? 'bg-[var(--brand-blue-500)] text-white' : 'bg-slate-900 text-slate-400 border border-white/5'}`}>{c}</button>
               ))}
             </div>
             <div className="px-2">

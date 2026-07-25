@@ -49,6 +49,7 @@ import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -121,7 +122,7 @@ const hashColor = (name?: string) => {
     'bg-violet-600/80',
     'bg-orange-600/80',
     'bg-pink-600/80',
-    'bg-teal-600/80',
+    'bg-[var(--brand-blue-500)]/80',
     'bg-indigo-600/80'
   ];
   let h = 0;
@@ -134,7 +135,7 @@ const sourceColors: Record<string, string> = {
   manual:   'bg-slate-500/10 text-slate-400 border border-slate-500/20',
   whatsapp: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   referral: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
-  website:  'bg-teal-500/10 text-teal-400 border border-teal-500/20',
+  website:  'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border border-[var(--brand-blue-500)]/20',
 };
 
 const statusColors: Record<string, string> = {
@@ -144,7 +145,7 @@ const statusColors: Record<string, string> = {
   disqualified:  'bg-rose-500/10 text-rose-400 border border-rose-500/20',
   lead:          'bg-slate-500/10 text-slate-400 border border-slate-500/20',
   prospect:      'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20',
-  customer:      'bg-teal-500/10 text-teal-400 border border-teal-500/20',
+  customer:      'bg-[var(--brand-blue-500)]/10 text-[var(--brand-blue-400)] border border-[var(--brand-blue-500)]/20',
   lost:          'bg-red-500/10 text-red-400 border border-red-500/20',
 };
 
@@ -176,7 +177,7 @@ const SwipeableRow: React.FC<{
   };
 
   return (
-    <div className="relative overflow-hidden group rounded-2xl border border-white/5 bg-slate-900/70 shadow-sm transition-colors hover:border-teal-500/20 hover:bg-slate-900/90">
+    <div className="relative overflow-hidden group rounded-2xl border border-white/5 bg-slate-900/70 shadow-sm transition-colors hover:border-[var(--brand-blue-500)]/20 hover:bg-slate-900/90">
       {entity.type === 'lead' && (
         <>
           {/* Left action (green) */}
@@ -196,17 +197,17 @@ const SwipeableRow: React.FC<{
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         style={{ x }}
-        className={`relative z-10 flex items-start gap-3 px-3.5 py-3 cursor-pointer transition-colors ${isSelected ? 'bg-teal-500/10' : ''}`}
+        className={`relative z-10 flex items-start gap-3 px-3.5 py-3 cursor-pointer transition-colors ${isSelected ? 'bg-[var(--brand-blue-500)]/10' : ''}`}
         onClick={() => onTap(entity)}
       >
         {onToggleSelect && (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onToggleSelect(entity); }}
-            className="flex-shrink-0 rounded-lg border border-white/5 bg-slate-950/70 p-1 text-slate-500 transition-colors hover:border-teal-500/30 hover:text-teal-400"
+            className="flex-shrink-0 rounded-lg border border-white/5 bg-slate-950/70 p-1 text-slate-500 transition-colors hover:border-[var(--brand-blue-500)]/30 hover:text-[var(--brand-blue-400)]"
             aria-label={isSelected ? 'Deselect' : 'Select'}
           >
-            {isSelected ? <CheckSquare className="w-4 h-4 text-teal-400" /> : <Square className="w-4 h-4" />}
+            {isSelected ? <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" /> : <Square className="w-4 h-4" />}
           </button>
         )}
         {/* Avatar */}
@@ -231,7 +232,7 @@ const SwipeableRow: React.FC<{
               </span>
             </div>
             <div className="flex flex-col items-end gap-1 shrink-0">
-              <span className="text-xs font-bold text-teal-400">
+              <span className="text-xs font-bold text-[var(--brand-blue-400)]">
                 {entity.value ? `$${entity.value.toLocaleString()}` : ' '}
               </span>
               <StandardStatusBadge variant={resolveStatusVariant(entity.status)}>{entity.status}</StandardStatusBadge>
@@ -286,7 +287,7 @@ const SwipeableRow: React.FC<{
                 type="button"
                 title="Qualify & convert to client"
                 onClick={() => onQualify(entity)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-300 hover:bg-teal-500/20 active:scale-95 transition-all"
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[var(--brand-blue-500)]/10 border border-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)] hover:bg-[var(--brand-blue-600)]/20 active:scale-95 transition-all"
               >
                 <Sparkles className="w-3.5 h-3.5" />
               </button>
@@ -398,10 +399,10 @@ const LeadDetail: React.FC<{
       </button>
       <button
         onClick={() => onQualify(lead)}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-teal-500/5 ${inDrawer ? 'min-h-11 rounded-xl border border-teal-500/20 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
       >
-        <Sparkles className="w-5 h-5 text-teal-400 animate-pulse" />
-        <span className="text-[10px] text-teal-300 font-bold">Qualify & Convert</span>
+        <Sparkles className="w-5 h-5 text-[var(--brand-blue-400)] animate-pulse" />
+        <span className="text-[10px] text-[var(--brand-blue-300)] font-bold">Qualify & Convert</span>
       </button>
       <button
         onClick={() => onUpdate(lead.id, 'disqualified')}
@@ -425,26 +426,44 @@ const LeadDetail: React.FC<{
       )}
 
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-5 space-y-6 pb-28'}>
-        {/* Header Profile */}
-        <div className="flex flex-col items-center gap-2 py-4">
-          <div className={`w-20 h-20 rounded-2xl ${hashColor(lead.name)} flex items-center justify-center shadow-lg shadow-black/30`}>
-            <span className="text-2xl font-black text-white">{getInitials(lead.name)}</span>
+        <RecordHeader
+          moduleId="leads"
+          title={name || lead.name}
+          subtitle={company || lead.company || lead.business_name || undefined}
+          status={<StandardStatusBadge variant={resolveStatusVariant(lead.status)}>{lead.status}</StandardStatusBadge>}
+          meta={
+            <>
+              {lead.source ? <span>Source: {lead.source}</span> : null}
+              {email ? <span>{email}</span> : null}
+            </>
+          }
+          actions={
+            <AskBonnieButton
+              compact
+              mode="summarise"
+              contexts={[
+                { type: 'Lead', id: lead.id, label: name || lead.name },
+                ...(company ? [{ type: 'Company', label: company }] : []),
+              ]}
+            />
+          }
+        />
+
+        <div className="flex flex-col items-center gap-2 py-2">
+          <div className={`w-16 h-16 rounded-[14px] ${hashColor(lead.name)} flex items-center justify-center`}>
+            <span className="text-xl font-bold text-white">{getInitials(lead.name)}</span>
           </div>
-          <h2 className="text-xl font-bold text-white text-center mt-2">{name || lead.name}</h2>
-          <div className="flex items-center gap-2">
-            <StandardStatusBadge variant={resolveStatusVariant(lead.status)}>{lead.status}</StandardStatusBadge>
-            {lead.source && (
-              <span className="flex items-center gap-1">
-                <SocialPlatformIcon platform={lead.source} size="sm" />
-                <StandardStatusBadge variant="neutral">{lead.source}</StandardStatusBadge>
-              </span>
-            )}
-          </div>
+          {lead.source ? (
+            <span className="flex items-center gap-1">
+              <SocialPlatformIcon platform={lead.source} size="sm" />
+              <StandardStatusBadge variant="neutral">{lead.source}</StandardStatusBadge>
+            </span>
+          ) : null}
         </div>
 
         {/* Editable contact fields */}
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 space-y-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Contact details</span>
+        <div className="ac-workspace-panel p-4 space-y-3">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Contact details</span>
           <Input
             label="Full name"
             value={name}
@@ -474,7 +493,7 @@ const LeadDetail: React.FC<{
               type="button"
               onClick={() => void handleSaveLead()}
               disabled={saving || !name.trim()}
-              className="w-full min-h-11 rounded-xl bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
+              className="w-full min-h-11 rounded-[10px] bg-[var(--brand-blue-500)] text-white text-sm font-semibold disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save changes'}
             </button>
@@ -516,7 +535,7 @@ const LeadDetail: React.FC<{
         {/* Activity / Email History */}
         <div>
           <div className="flex items-center gap-2 mb-3 px-1">
-            <Activity className="w-4 h-4 text-teal-400" />
+            <Activity className="w-4 h-4 text-[var(--brand-blue-400)]" />
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity History</span>
           </div>
           <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4">
@@ -537,7 +556,7 @@ const LeadDetail: React.FC<{
                     {i !== activities.length - 1 && (
                       <span className="absolute left-[7px] top-4 bottom-0 w-px bg-slate-800" />
                     )}
-                    <span className="mt-1 w-3.5 h-3.5 rounded-full bg-teal-500/20 border border-teal-500/40 flex-shrink-0 z-10" />
+                    <span className="mt-1 w-3.5 h-3.5 rounded-full bg-[var(--brand-blue-500)]/20 border border-[var(--brand-blue-500)]/40 flex-shrink-0 z-10" />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-slate-300 leading-relaxed">{act.description || act.type}</p>
                       <p className="text-[10px] text-slate-600 mt-0.5">{new Date(act.created_at).toLocaleString()}</p>
@@ -713,10 +732,10 @@ const Client360Detail: React.FC<{
       </button>
       <button
         onClick={() => onDraftContract(client)}
-        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-teal-500/5 ${inDrawer ? 'min-h-11 rounded-xl border border-teal-500/20 py-2' : 'py-3.5'}`}
+        className={`flex flex-col items-center justify-center gap-1 hover:bg-slate-900 transition-colors bg-[var(--brand-blue-500)]/5 ${inDrawer ? 'min-h-11 rounded-xl border border-[var(--brand-blue-500)]/20 py-2' : 'py-3.5'}`}
       >
-        <ShieldCheck className="w-5 h-5 text-teal-400" />
-        <span className="text-[10px] text-teal-300 font-bold">Draft Contract</span>
+        <ShieldCheck className="w-5 h-5 text-[var(--brand-blue-400)]" />
+        <span className="text-[10px] text-[var(--brand-blue-300)] font-bold">Draft Contract</span>
       </button>
       <button
         onClick={() => router.push(user.role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance')}
@@ -740,35 +759,42 @@ const Client360Detail: React.FC<{
       )}
 
       <div className={inDrawer ? 'space-y-4' : 'flex-1 overflow-y-auto p-5 space-y-6 pb-28'}>
-        {/* Profile Card */}
-        <div className="flex flex-col items-center gap-2 py-4">
-          <div className={`w-20 h-20 rounded-2xl ${hashColor(client.name)} flex items-center justify-center shadow-lg shadow-black/30 relative`}>
-            <span className="text-2xl font-black text-white">{getInitials(client.name)}</span>
+        <RecordHeader
+          moduleId="crm"
+          title={name || client.name}
+          subtitle={industry || client.industry || undefined}
+          status={<StandardStatusBadge variant={resolveStatusVariant(salesStage)}>{salesStage}</StandardStatusBadge>}
+          meta={
+            <>
+              {email ? <span>{email}</span> : null}
+              {isTeamsConnected ? <span>Teams synced</span> : null}
+            </>
+          }
+          actions={
+            <AskBonnieButton
+              compact
+              mode="summarise"
+              contexts={[
+                { type: 'Customer', id: client.id, label: name || client.name },
+              ]}
+            />
+          }
+        />
+
+        <div className="flex flex-col items-center gap-2 py-2">
+          <div className={`w-16 h-16 rounded-[14px] ${hashColor(client.name)} flex items-center justify-center relative`}>
+            <span className="text-xl font-bold text-white">{getInitials(client.name)}</span>
             <OnlineStatusBadge
               status={status}
               size="lg"
-              className="absolute -bottom-1 -right-1 border-4 border-slate-950 rounded-full bg-slate-950"
+              className="absolute -bottom-1 -right-1 border-4 border-[var(--ws-surface-primary)] rounded-full bg-[var(--ws-surface-primary)]"
             />
-          </div>
-          <h2 className="text-xl font-bold text-white text-center mt-2">{name || client.name}</h2>
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            <StandardStatusBadge variant={resolveStatusVariant(salesStage)}>{salesStage}</StandardStatusBadge>
-            {(industry || client.industry) && (
-              <span className="text-[11px] font-bold px-3 py-1 rounded-full border border-slate-700 bg-slate-900/60 text-slate-400 capitalize">
-                {industry || client.industry}
-              </span>
-            )}
-            {isTeamsConnected && (
-              <span className="text-[11px] font-bold px-3 py-1 rounded-full border border-purple-500/30 bg-purple-950/40 text-purple-300 flex items-center gap-1.5 shadow-sm shadow-purple-500/10 animate-pulse">
-                Teams Synced
-              </span>
-            )}
           </div>
         </div>
 
         {/* Editable client profile */}
-        <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4 space-y-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Client details</span>
+        <div className="ac-workspace-panel p-4 space-y-3">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ws-text-muted)]">Customer details</span>
           <Input
             label="Full name"
             value={name}
@@ -812,7 +838,7 @@ const Client360Detail: React.FC<{
             <select
               value={salesStage}
               onChange={(e) => setSalesStage(e.target.value as BusinessClient['sales_stage'])}
-              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-teal-500/50 capitalize"
+              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50 capitalize"
             >
               {(['lead', 'prospect', 'customer', 'lost'] as const).map((stage) => (
                 <option key={stage} value={stage}>{stage}</option>
@@ -826,14 +852,14 @@ const Client360Detail: React.FC<{
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder="Account notes…"
-              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-teal-500/50 resize-none"
+              className="w-full px-3 py-2 bg-slate-950 border border-white/5 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-[var(--brand-blue-500)]/50 resize-none"
             />
           </div>
           <button
             type="button"
             onClick={() => void handleSaveClient()}
             disabled={savingClient || !name.trim()}
-            className="w-full min-h-11 rounded-xl bg-teal-600 text-white text-sm font-semibold disabled:opacity-50"
+            className="w-full min-h-11 rounded-xl bg-[var(--brand-blue-500)] text-white text-sm font-semibold disabled:opacity-50"
           >
             {savingClient ? 'Saving…' : 'Save changes'}
           </button>
@@ -958,7 +984,7 @@ const Client360Detail: React.FC<{
             </div>
             <div className="bg-slate-900/40 p-4 border border-white/5 rounded-2xl">
               <span className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Deals</span>
-              <span className="text-lg font-black text-teal-400 mt-1 block">
+              <span className="text-lg font-black text-[var(--brand-blue-400)] mt-1 block">
                 {profile360.active_deals_count} (${profile360.active_deals_value.toLocaleString()})
               </span>
             </div>
@@ -969,13 +995,13 @@ const Client360Detail: React.FC<{
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-teal-400" />
+              <Activity className="w-4 h-4 text-[var(--brand-blue-400)]" />
               <h3 className="text-sm font-bold text-white">Customer workspace</h3>
             </div>
             <button
               type="button"
               onClick={() => router.push('/dashboard/comms')}
-              className="text-[11px] text-teal-400 hover:text-teal-300"
+              className="text-[11px] text-[var(--brand-blue-400)] hover:text-[var(--brand-blue-300)]"
             >
               Open in Communication hub →
             </button>
@@ -994,7 +1020,7 @@ const Client360Detail: React.FC<{
             <div className="relative border-l border-white/5 pl-4 ml-2 space-y-5 py-2">
               {profile360.timeline.map((event) => (
                 <div key={event.id} className="relative">
-                  <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-teal-500 ring-4 ring-slate-950" />
+                  <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[var(--brand-blue-500)] ring-4 ring-slate-950" />
                   <div className="flex flex-col gap-0.5">
                     <span className="text-xs font-bold text-white">{event.title}</span>
                     <span className="text-[11px] text-slate-400">{event.description}</span>
@@ -1056,7 +1082,7 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
               value={industry}
               onChange={e => setIndustry(e.target.value)}
               placeholder="e.g. Technology, Finance, E-commerce"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             />
           </div>
 
@@ -1067,7 +1093,7 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
               value={value}
               onChange={e => setValue(e.target.value)}
               placeholder="Target contract value"
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             />
           </div>
 
@@ -1080,7 +1106,7 @@ const QualifyModal: React.FC<QualifyModalProps> = ({ isOpen, onClose, lead, onCo
             </button>
             <button
               onClick={() => onConfirm(lead.id, { industry, value: parseFloat(value) || 0 })}
-              className="flex-1 py-2.5 text-xs font-bold text-white bg-teal-500 rounded-xl hover:bg-teal-400 transition-colors"
+              className="flex-1 py-2.5 text-xs font-bold text-white bg-[var(--brand-blue-500)] rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors"
             >
               Qualify Account
             </button>
@@ -1145,7 +1171,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
             <button
               key={t}
               onClick={() => setType(t)}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-teal-500 text-white' : 'text-slate-500'}`}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg capitalize transition-colors ${type === t ? 'bg-[var(--brand-blue-500)] text-white' : 'text-slate-500'}`}
             >
               {t}
             </button>
@@ -1198,7 +1224,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
             <select
               value={source}
               onChange={e => setSource(e.target.value)}
-              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-teal-500/50"
+              className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-[var(--brand-blue-500)]/50"
             >
               {['LinkedIn', 'WhatsApp', 'Referral', 'Website', 'Manual'].map(src => (
                 <option key={src} value={src}>{src}</option>
@@ -1213,7 +1239,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
                 value={industry}
                 onChange={e => setIndustry(e.target.value)}
                 placeholder="e.g. Real Estate"
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
               />
             </div>
 
@@ -1224,7 +1250,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
                 value={value}
                 onChange={e => setValue(e.target.value)}
                 placeholder="e.g. 5000"
-                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500/50"
+                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[var(--brand-blue-500)]/50"
               />
             </div>
           </>
@@ -1239,7 +1265,7 @@ const CreateDrawer: React.FC<CreateDrawerProps> = ({ isOpen, onClose, onSave }) 
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 py-2.5 text-xs font-bold text-white bg-teal-500 rounded-xl hover:bg-teal-400 transition-colors"
+            className="flex-1 py-2.5 text-xs font-bold text-white bg-[var(--brand-blue-500)] rounded-xl hover:bg-[var(--brand-blue-400)] transition-colors"
           >
             Save Record
           </button>
@@ -1262,7 +1288,7 @@ const STATUS_FILTERS: { label: string; value: LeadStatus | 'all' }[] = [
 const KANBAN_COLUMNS: { status: LeadStatus; label: string; accent: string; dot: string }[] = [
   { status: 'new', label: 'New', accent: 'border-sky-500/30', dot: 'bg-sky-400' },
   { status: 'contacted', label: 'Contacted', accent: 'border-amber-500/30', dot: 'bg-amber-400' },
-  { status: 'qualified', label: 'Qualified', accent: 'border-teal-500/30', dot: 'bg-teal-400' },
+  { status: 'qualified', label: 'Qualified', accent: 'border-[var(--brand-blue-500)]/30', dot: 'bg-[var(--brand-blue-400)]' },
   { status: 'disqualified', label: 'Disqualified', accent: 'border-rose-500/30', dot: 'bg-rose-400' },
 ];
 
@@ -1281,7 +1307,7 @@ const KanbanCard: React.FC<{
       {...(overlay ? {} : attributes)}
       {...(overlay ? {} : listeners)}
       onClick={onClick}
-      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-white/5 bg-slate-900 p-3 shadow-sm hover:border-teal-500/30 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-teal-500/40' : ''} ${isSelected ? 'border-teal-500/50 bg-teal-500/10' : ''}`}
+      className={`group cursor-grab active:cursor-grabbing rounded-xl border border-white/5 bg-slate-900 p-3 shadow-sm hover:border-[var(--brand-blue-500)]/30 transition-colors ${isDragging && !overlay ? 'opacity-30' : ''} ${overlay ? 'rotate-2 shadow-2xl shadow-black/40 ring-1 ring-[var(--brand-blue-500)]/40' : ''} ${isSelected ? 'border-[var(--brand-blue-500)]/50 bg-[var(--brand-blue-500)]/10' : ''}`}
     >
       <div className="flex items-center gap-2.5">
         {onToggleSelect && !overlay && (
@@ -1289,10 +1315,10 @@ const KanbanCard: React.FC<{
             type="button"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onToggleSelect(lead); }}
-            className="flex-shrink-0 text-slate-500 hover:text-teal-400"
+            className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)]"
             aria-label={isSelected ? 'Deselect lead' : 'Select lead'}
           >
-            {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
+            {isSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
           </button>
         )}
         {onSendEmail && !overlay && lead.email && (
@@ -1339,7 +1365,7 @@ const KanbanColumn: React.FC<{
       </div>
       <div
         ref={setNodeRef}
-        className={`flex-1 min-h-[120px] rounded-3xl border ${col.accent} ${isOver ? 'bg-teal-500/10 border-teal-500/40' : 'bg-slate-950/40'} p-2.5 space-y-2 transition-colors`}
+        className={`flex-1 min-h-[120px] rounded-3xl border ${col.accent} ${isOver ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)]/40' : 'bg-slate-950/40'} p-2.5 space-y-2 transition-colors`}
       >
         {leads.map(l => (
           <KanbanCard
@@ -2133,7 +2159,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/20 bg-teal-500/10 px-2.5 py-1.5 text-[11px] font-bold text-teal-200 transition-colors hover:bg-teal-500/15"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-blue-500)]/20 bg-[var(--brand-blue-500)]/10 px-2.5 py-1.5 text-[11px] font-bold text-[var(--brand-blue-200)] transition-colors hover:bg-[var(--brand-blue-600)]/15"
                 >
                   <UserPlus className="h-3 w-3" />
                   Quick Add
@@ -2183,7 +2209,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                     setSelectedEntity(null);
                     setAccountFilter('all');
                   }}
-                  className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-teal-400 border-b-2 border-teal-400' : 'text-slate-500'}`}
+                  className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}
                 >
                   {label} ({count})
                 </button>
@@ -2233,7 +2259,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   onClick={() => setFilter(f.value)}
                   className={`flex-shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
                     filter === f.value
-                      ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/10'
+                      ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-500)] shadow-md shadow-[var(--brand-blue-500)]/10'
                       : 'bg-slate-900 text-slate-400 border-white/5 hover:border-slate-800'
                   }`}
                 >
@@ -2246,7 +2272,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <button
                   key={v}
                   onClick={() => setLeadsView(v)}
-                  className={`px-2.5 h-7 rounded-md text-[10px] font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-teal-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-2.5 h-7 rounded-md text-[10px] font-black uppercase tracking-wider transition-colors ${leadsView === v ? 'bg-[var(--brand-blue-500)] text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                   {v}
                 </button>
@@ -2262,8 +2288,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           </div>
           <p className="hidden sm:block text-[10px] text-slate-500 pt-0.5">
             {leadsView === 'board'
-              ? <>Tip: <span className="text-teal-300 font-semibold">drag a card</span> between columns to move a lead across the pipeline.</>
-              : <>Tip: hover a lead to <span className="text-amber-400 font-semibold">contact</span>, <span className="text-teal-300 font-semibold">qualify</span> or <span className="text-rose-400 font-semibold">disqualify</span> it — or swipe on mobile.</>}
+              ? <>Tip: <span className="text-[var(--brand-blue-300)] font-semibold">drag a card</span> between columns to move a lead across the pipeline.</>
+              : <>Tip: hover a lead to <span className="text-amber-400 font-semibold">contact</span>, <span className="text-[var(--brand-blue-300)] font-semibold">qualify</span> or <span className="text-rose-400 font-semibold">disqualify</span> it — or swipe on mobile.</>}
           </p>
           </>
         )}
@@ -2282,7 +2308,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 onClick={() => setAccountFilter(f.value)}
                 className={`flex-shrink-0 h-8 px-3.5 rounded-full text-xs font-bold transition-all border ${
                   accountFilter === f.value
-                    ? 'bg-teal-500 text-white border-teal-500 shadow-md shadow-teal-500/10'
+                    ? 'bg-[var(--brand-blue-500)] text-white border-[var(--brand-blue-500)] shadow-md shadow-[var(--brand-blue-500)]/10'
                     : 'bg-slate-900 text-slate-400 border-white/5 hover:border-slate-800'
                 }`}
               >
@@ -2306,7 +2332,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
               }}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
             >
-              {allBulkSelected ? <CheckSquare className="w-3.5 h-3.5 text-teal-400" /> : <Square className="w-3.5 h-3.5" />}
+              {allBulkSelected ? <CheckSquare className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" /> : <Square className="w-3.5 h-3.5" />}
               {allBulkSelected ? 'Deselect all' : `Select all (${bulkSelectTargetKeys.length})`}
             </button>
             {selectedCount > 0 && (
@@ -2361,7 +2387,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           </div>
         ) : filteredEntities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-slate-500 px-4 text-center">
-            <Users className="w-12 h-12 mb-3 opacity-30 text-teal-400" />
+            <Users className="w-12 h-12 mb-3 opacity-30 text-[var(--brand-blue-400)]" />
             <p className="text-sm font-bold text-slate-300">{t('No matching records')}</p>
             <p className="text-xs text-slate-500 max-w-xs mt-1 leading-normal">
               {subView === 'leads' ? t('Swipe right to qualify/contact accounts, swipe left to archive.') : t('Add accounts or qualify leads to view them here.')}
@@ -2376,8 +2402,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   key={entity.id}
                   onClick={() => setSelectedEntity(entity)}
                   className={[
-                    selectedKeys.has(entityKey(entity)) ? 'ring-1 ring-teal-500/50' : '',
-                    flashIds.has(entity.id) ? 'animate-pulse bg-teal-500/10' : '',
+                    selectedKeys.has(entityKey(entity)) ? 'ring-1 ring-[var(--brand-blue-500)]/50' : '',
+                    flashIds.has(entity.id) ? 'animate-pulse bg-[var(--brand-blue-500)]/10' : '',
                   ].filter(Boolean).join(' ') || undefined}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -2392,11 +2418,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                           toggleEntitySelection(entity);
                         }
                       }}
-                      className="flex-shrink-0 text-slate-500 hover:text-teal-400 cursor-pointer"
+                      className="flex-shrink-0 text-slate-500 hover:text-[var(--brand-blue-400)] cursor-pointer"
                       aria-label={selectedKeys.has(entityKey(entity)) ? 'Deselect' : 'Select'}
                     >
                       {selectedKeys.has(entityKey(entity)) ? (
-                        <CheckSquare className="w-4 h-4 text-teal-400" />
+                        <CheckSquare className="w-4 h-4 text-[var(--brand-blue-400)]" />
                       ) : (
                         <Square className="w-4 h-4" />
                       )}
@@ -2405,7 +2431,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                       <p className="font-semibold text-white">{entity.name}</p>
                       <p className="text-sm text-slate-400">{entity.email || entity.phone || '-'}</p>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-teal-500/20 text-teal-300' : 'bg-slate-500/20 text-slate-400'}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${entity.status === 'new' ? 'bg-purple-500/20 text-purple-300' : entity.status === 'contacted' ? 'bg-blue-500/20 text-blue-300' : entity.status === 'qualified' ? 'bg-[var(--brand-blue-500)]/20 text-[var(--brand-blue-300)]' : 'bg-slate-500/20 text-slate-400'}`}>
                       {t(entity.status)}
                     </span>
                   </div>
@@ -2417,7 +2443,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             <ResponsiveTableDesktop className="hidden md:block">
               <div className="divide-y divide-white/5">
                 {visibleEntities.map(entity => (
-                  <div key={entity.id} className={flashIds.has(entity.id) ? 'bg-teal-500/10 transition-colors duration-1000' : 'transition-colors duration-1000'}>
+                  <div key={entity.id} className={flashIds.has(entity.id) ? 'bg-[var(--brand-blue-500)]/10 transition-colors duration-1000' : 'transition-colors duration-1000'}>
                   <SwipeableRow
                     entity={entity}
                     status={isTeamsConnected ? (teamsPresenceMap[entity.id] || 'offline') : (presenceMap[entity.id] || 'offline')}
@@ -2451,7 +2477,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
       {/* FAB (Add Entity drawer trigger) */}
       <button
         onClick={() => setIsCreateOpen(true)}
-        className="fixed bottom-20 right-4 md:absolute md:bottom-6 md:right-6 w-14 h-14 bg-teal-500 rounded-full flex items-center justify-center shadow-lg shadow-teal-500/20 z-40 hover:bg-teal-400 active:scale-95 transition-all"
+        className="fixed bottom-20 right-4 md:absolute md:bottom-6 md:right-6 w-14 h-14 bg-[var(--brand-blue-500)] rounded-full flex items-center justify-center shadow-lg shadow-[var(--brand-blue-500)]/20 z-40 hover:bg-[var(--brand-blue-400)] active:scale-95 transition-all"
       >
         <UserPlus className="w-6 h-6 text-white" />
       </button>

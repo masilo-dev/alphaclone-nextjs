@@ -393,7 +393,7 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                             value={contactSearch}
                                             onChange={(e) => setContactSearch(e.target.value)}
                                             placeholder="Search clients..."
-                                            className="w-full bg-slate-900 text-white text-xs rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-teal-500/50 transition-all"
+                                            className="w-full bg-slate-900 text-white text-xs rounded-lg pl-8 pr-3 py-2 outline-none border border-slate-700 focus:border-[var(--brand-blue-500)]/50 transition-all"
                                         />
                                     </div>
                                 </div>
@@ -409,10 +409,10 @@ Rules: Do not invent greetings (Hello/Hi/Dear) or sign-offs unless the subject o
                                                 setShowPicker(false);
                                                 setContactSearch('');
                                             }}
-                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700 transition-colors ${selectedClient?.id === contact.id ? 'bg-teal-500/10' : ''}`}
+                                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-700 transition-colors ${selectedClient?.id === contact.id ? 'bg-[var(--brand-blue-500)]/10' : ''}`}
                                         >
-                                            <div className="w-7 h-7 rounded-full bg-teal-600/20 border border-teal-500/20 flex items-center justify-center shrink-0">
-                                                <User className="w-3.5 h-3.5 text-teal-400" />
+                                            <div className="w-7 h-7 rounded-full bg-[var(--brand-blue-600)]/20 border border-[var(--brand-blue-500)]/20 flex items-center justify-center shrink-0">
+                                                <User className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                                             </div>
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-white text-xs font-medium truncate">{contact.name}</p>
