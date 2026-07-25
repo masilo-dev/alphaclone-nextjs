@@ -1958,7 +1958,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               <div className="flex items-center gap-2 sm:gap-3 md:hidden">
                 <Image src={LOGO_URL} alt="Logo" width={32} height={32} className="rounded-lg flex-shrink-0" />
-                <h1 className="pwa-page-title text-white whitespace-nowrap truncate max-w-[150px] sm:max-w-none ac-dashboard-mobile-title">{t(APP_NAME)}</h1>
+                <h1 className={`${WORKSPACE.typography.pageTitle} pwa-page-title whitespace-nowrap truncate max-w-[150px] sm:max-w-none ac-dashboard-mobile-title`}>{t(APP_NAME)}</h1>
               </div>
             </div>
 
