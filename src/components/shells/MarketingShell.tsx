@@ -1,40 +1,38 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import ExitIntentModal from '@/components/ExitIntentModal';
 import { usePathname } from 'next/navigation';
-import PrismBackground from '@/components/common/PrismBackground';
 
+/**
+ * Root marketing pass-through shell.
+ *
+ * IMPORTANT: Do not use nested `fixed + overflow-y-auto` scrollports here.
+ * That pattern traps scroll inside a child layer, breaks sticky/fixed headers,
+ * and can paint duplicated chrome while scrolling.
+ *
+ * Page-level chrome (header/footer) lives in
+ * `src/components/marketing/system/MarketingShell.tsx`.
+ */
 export default function MarketingShell({ children }: { children: React.ReactNode }) {
-    const { user } = useAuth();
-    const pathname = usePathname();
+  const pathname = usePathname();
 
-    const isDashboardOrApp = pathname?.startsWith('/dashboard') ||
-        pathname?.startsWith('/auth') ||
-        pathname?.startsWith('/login') ||
-        pathname?.startsWith('/register') ||
-        pathname?.startsWith('/contract') ||
-        pathname?.startsWith('/project') ||
-        pathname?.startsWith('/invoice') ||
-        pathname?.startsWith('/form');
+  const isDashboardOrApp =
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/auth') ||
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/register') ||
+    pathname?.startsWith('/contract') ||
+    pathname?.startsWith('/project') ||
+    pathname?.startsWith('/invoice') ||
+    pathname?.startsWith('/form');
 
-    // Pass-through shell for standard web users.
-    // Landing page handles its own background for better isolation.
-    const isLandingPage = pathname === '/';
+  if (isDashboardOrApp) {
+    return <>{children}</>;
+  }
 
-    return (
-        <>
-            {!isDashboardOrApp ? (
-                <div className="marketing-theme fixed inset-0 font-marketing-body text-slate-300 overflow-hidden w-full h-full bg-[#020617]">
-                    {!isLandingPage && <PrismBackground />}
-                    <div className="relative z-10 w-full h-full overflow-y-auto app-viewport ios-scroll">
-                        {children}
-                    </div>
-                </div>
-            ) : (
-                children
-            )}
-        </>
-    );
+  return (
+    <div className="marketing-theme min-h-screen font-marketing-body text-slate-300 bg-[#020617]">
+      {children}
+    </div>
+  );
 }
