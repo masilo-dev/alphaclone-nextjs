@@ -7,6 +7,7 @@ import { readStoredAcTheme, applyAcThemeClass } from '@/lib/applyAcTheme';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
+import { BonnieDrawerProvider } from '@/contexts/BonnieDrawerContext';
 import { ToastProvider } from '@/components/Toast';
 import { SuccessFeedbackProvider } from '@/components/ui/SuccessFeedback';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
@@ -17,6 +18,7 @@ import ServiceWorkerBootstrap from '@/components/common/ServiceWorkerBootstrap';
 import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 import { registerPlatformQueryClient } from '@/lib/platformReset';
 import { alphacloneChakraTheme } from '@/theme/chakraTheme';
+import { BonnieDrawer } from '@/components/ui/os/BonnieDrawer';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside component to avoid server/client hydration mismatch
@@ -56,7 +58,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <UserPreferencesBootstrap />
                     <ServiceWorkerBootstrap />
                     <TenantProvider>
-                      <BackgroundTaskProvider>{children}</BackgroundTaskProvider>
+                      <BackgroundTaskProvider>
+                        <BonnieDrawerProvider>
+                          {children}
+                          <BonnieDrawer />
+                        </BonnieDrawerProvider>
+                      </BackgroundTaskProvider>
                     </TenantProvider>
                   </LanguageProvider>
                 </ThemeProvider>

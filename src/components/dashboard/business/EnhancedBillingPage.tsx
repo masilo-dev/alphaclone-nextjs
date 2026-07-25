@@ -260,27 +260,27 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                        <DollarSign className="text-teal-500" /> Revenue Workspace
-                    </h1>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Invoices, recurring revenue, and follow-ups</p>
+                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight flex items-center gap-2.5">
+                        <DollarSign className="w-5 h-5 text-[#149C86]" /> Invoicing
+                    </h2>
+                    <p className="text-sm text-[var(--ws-text-muted)] mt-1">Invoices, recurring revenue, and follow-ups</p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
                   <button 
                     onClick={() => setActiveTab('invoices')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'invoices' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Billing
                   </button>
                   <button 
                     onClick={() => setActiveTab('recurring')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Recurring
                   </button>
                   <button 
                     onClick={() => setActiveTab('services')}
-                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-teal-600 border-teal-500 text-white shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'services' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
                     Catalog
                   </button>

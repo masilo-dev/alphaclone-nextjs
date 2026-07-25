@@ -1,21 +1,21 @@
 'use client';
 
 import React from 'react';
-import { Users, TrendingUp, Target, Contact, CheckSquare, Mail, BarChart3, Database } from 'lucide-react';
+import { Users, TrendingUp, Target, Contact, CheckSquare, Mail, BarChart3, Activity } from 'lucide-react';
 import HubShell from './HubShell';
 
+/** Hub tabs aligned with CRM / leads / pipeline lifecycle — not every submodule at once. */
 const SALES_TABS = [
   { label: 'Overview', href: '/dashboard/crm', icon: Users },
-  { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Users },
-  { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
-  { label: 'Console', href: '/dashboard/crm/console', icon: Target },
+  { label: 'Contacts', href: '/dashboard/crm/unified-contacts', icon: Contact },
+  { label: 'Companies', href: '/dashboard/crm/accounts', icon: Users },
   { label: 'Leads', href: '/dashboard/leads', icon: TrendingUp },
-  { label: 'Deals', href: '/dashboard/deals', icon: Target },
-  { label: 'Contacts', href: '/dashboard/contacts', icon: Contact },
-  { label: 'Accounts', href: '/dashboard/crm/accounts', icon: Users },
+  { label: 'Pipeline', href: '/dashboard/deals', icon: Target },
+  { label: 'Activities', href: '/dashboard/crm/follow-ups', icon: Activity },
+  { label: 'Outreach', href: '/dashboard/outreach', icon: Mail },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   { label: 'Forecast', href: '/dashboard/forecast', icon: BarChart3 },
-  { label: 'Ingestion', href: '/dashboard/business/ingestion', icon: Database },
+  { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Users },
 ];
 
 interface SalesHubProps {

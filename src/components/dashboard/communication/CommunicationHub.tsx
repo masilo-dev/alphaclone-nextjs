@@ -42,7 +42,7 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
     <ModulePageLayout className="h-full min-h-0">
       <div className="flex flex-col h-full min-h-0">
         <div className="px-3 md:px-5 pt-3 pb-2 border-b border-white/5">
-          <h1 className="text-[15px] font-semibold text-[var(--ws-text-primary)]">{HUMAN_LABELS.channelsHub}</h1>
+          <h2 className="text-sm font-semibold text-[var(--ws-text-primary)]">{HUMAN_LABELS.channelsHub}</h2>
           <p className="text-[12px] text-[var(--ws-text-secondary)] mt-0.5">
             Inbox, outreaches, and conversations — pick contacts from your workspace and send cleanly.
           </p>

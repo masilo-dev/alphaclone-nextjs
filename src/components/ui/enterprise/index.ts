@@ -25,5 +25,9 @@ export {
   BonnieInsightCard,
   OsEmptyState,
   OsErrorState,
+  BonnieDrawer,
+  CommunicationComposer,
+  RecordHeader,
 } from '@/components/ui/os';
 export { MODULE_ICONS, getModuleIcon } from '@/components/icons/alphaclone';
+export { useBonnieDrawer, useBonnieDrawerOptional } from '@/contexts/BonnieDrawerContext';

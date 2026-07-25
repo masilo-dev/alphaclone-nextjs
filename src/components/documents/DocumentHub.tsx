@@ -928,11 +928,11 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                        <FolderOpen className="w-5 h-5 text-teal-400" />
-                        Document Hub
+                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5 text-[#C98219]" />
+                        Documents
                     </h2>
-                    <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Upload, view, and edit your PDF and Word documents</p>
+                    <p className="text-[var(--ws-text-muted)] text-xs sm:text-sm mt-0.5">Upload, view, and edit your PDF and Word documents</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">

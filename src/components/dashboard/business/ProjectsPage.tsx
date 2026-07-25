@@ -220,16 +220,16 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-5 min-w-0">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 sm:gap-3 mb-1 min-w-0">
-                        <div className="p-2.5 sm:p-3 bg-gradient-to-br from-teal-600 to-cyan-600 rounded-xl sm:rounded-lg shadow-xl shadow-teal-900/20 shrink-0">
-                            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                        <div className="p-2.5 sm:p-3 rounded-[12px] bg-[var(--ws-active)] shrink-0 text-[var(--brand-blue-500)]">
+                            <Briefcase className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight break-words">
-                            Projects <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-teal-500">Overview</span>
+                        <h2 className="text-xl sm:text-2xl font-semibold text-[var(--ws-text-primary)] tracking-tight break-words">
+                            Projects
                         </h2>
                     </div>
-                    <p className="text-slate-500 text-sm ml-1 mt-2 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                        {projects.length} Active Projects
+                    <p className="text-[var(--ws-text-muted)] text-sm ml-1 mt-2 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[var(--success-500)]"></span>
+                        {projects.length} active projects
                     </p>
                 </div>
 

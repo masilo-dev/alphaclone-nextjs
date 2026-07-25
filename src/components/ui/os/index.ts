@@ -8,3 +8,6 @@ export { TodayPanel, type TodayItem } from './TodayPanel';
 export { OsEmptyState, OsErrorState, OsPermissionState, OsLoadingBlock } from './OsStates';
 export { ModuleFrame } from './ModuleFrame';
 export { OverviewChartCard } from './OverviewChartCard';
+export { BonnieDrawer } from './BonnieDrawer';
+export { CommunicationComposer, ComposerCloseButton } from './CommunicationComposer';
+export { RecordHeader } from './RecordHeader';

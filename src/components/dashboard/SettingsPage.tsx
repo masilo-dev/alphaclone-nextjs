@@ -36,6 +36,11 @@ import Microsoft365Integration from './business/Microsoft365Integration';
 import MFAEnrollment from './business/MFAEnrollment';
 import DeletedRecordsSection from './settings/DeletedRecordsSection';
 import EmailProviderSettings from './settings/EmailProviderSettings';
+import {
+    SettingsCategoryNav,
+    type SettingsCategory,
+    type SettingsCategoryId,
+} from './settings/SettingsCategoryNav';
 
 interface SettingsPageProps {
     user: UserType;
@@ -55,9 +60,33 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
     // Accordion visibility mapping
     const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+    const [activeCategory, setActiveCategory] = useState<SettingsCategoryId | null>(null);
 
     const toggleRow = (id: string) => {
         setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleSelectCategory = (category: SettingsCategory) => {
+        setActiveCategory(category.id);
+        setExpandedRows((prev) => {
+            const next = { ...prev };
+            for (const sectionId of category.sectionIds) {
+                next[sectionId] = true;
+            }
+            return next;
+        });
+        // Appearance lives outside accordion rows — scroll into view when selected
+        if (category.id === 'appearance') {
+            requestAnimationFrame(() => {
+                document.getElementById('settings-appearance')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        } else if (category.sectionIds[0]) {
+            requestAnimationFrame(() => {
+                document
+                    .getElementById(`settings-section-${category.sectionIds[0]}`)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
     };
 
     // States
@@ -96,7 +125,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         businessName: '',
         tradingName: '',
         logoUrl: '',
-        brandColor: '#2dd4bf',
+        brandColor: '#356AF4',
         address: '',
         phone: '',
         email: '',
@@ -340,16 +369,20 @@ export default function SettingsPage({ user }: SettingsPageProps) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-10 pb-32 px-4 sm:px-6">
-            
+        <div className="max-w-5xl mx-auto space-y-8 pb-32 px-4 sm:px-6">
+            <SettingsCategoryNav
+                activeId={activeCategory}
+                onSelect={handleSelectCategory}
+            />
+
             {/* Header Profile Summary */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 p-6 bg-slate-900 border border-white/5 rounded-3xl relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-center gap-6 p-5 ac-workspace-panel relative overflow-hidden">
                 <div className="relative group cursor-pointer">
-                    <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-teal-500 overflow-hidden flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-[var(--ws-surface-tertiary)] border-2 border-[var(--brand-blue-500)] overflow-hidden flex items-center justify-center">
                         {businessSettings.logoUrl ? (
                             <img src={businessSettings.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                         ) : (
-                            <span className="text-2xl font-black text-white">{user.name?.[0]?.toUpperCase()}</span>
+                            <span className="text-2xl font-bold text-[var(--ws-text-primary)]">{user.name?.[0]?.toUpperCase()}</span>
                         )}
                     </div>
                     <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 rounded-full flex items-center justify-center transition-all cursor-pointer">
@@ -358,13 +391,13 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </label>
                 </div>
                 <div className="text-center sm:text-left space-y-1 flex-1">
-                    <h2 className="text-lg font-black text-white">{user.name}</h2>
-                    <p className="text-xs text-slate-400 font-mono">{user.email}</p>
+                    <h2 className="text-lg font-bold text-[var(--ws-text-primary)]">{user.name}</h2>
+                    <p className="text-xs text-[var(--ws-text-muted)] font-mono">{user.email}</p>
                     <div className="flex flex-wrap gap-2 mt-2 justify-center sm:justify-start">
-                        <span className="px-2.5 py-0.5 bg-teal-500/10 text-teal-400 border border-teal-500/20 text-[10px] font-black uppercase rounded-lg">
+                        <span className="px-2.5 py-0.5 text-[var(--brand-blue-500)] border border-[var(--ws-border)] bg-[var(--ws-active)] text-[10px] font-bold uppercase rounded-lg">
                             {currentTenant?.subscription_plan || 'free'} tier
                         </span>
-                        <span className="px-2.5 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold uppercase rounded-lg">
+                        <span className="px-2.5 py-0.5 bg-[var(--ws-surface-tertiary)] text-[var(--ws-text-muted)] text-[10px] font-bold uppercase rounded-lg">
                             WS: {currentTenant?.name}
                         </span>
                     </div>
@@ -373,18 +406,18 @@ export default function SettingsPage({ user }: SettingsPageProps) {
 
             <Link
                 href="/dashboard/help"
-                className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/15 transition-colors group"
+                className="flex items-center justify-between gap-4 p-4 rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-surface-secondary)] hover:border-[var(--brand-blue-500)] transition-colors group"
             >
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center shrink-0">
-                        <BookOpen className="w-5 h-5 text-teal-400" />
+                    <div className="w-10 h-10 rounded-[12px] bg-[var(--ws-active)] flex items-center justify-center shrink-0">
+                        <BookOpen className="w-5 h-5 text-[var(--brand-blue-500)]" />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-white">Platform guide & glossary</p>
-                        <p className="text-xs text-slate-400 mt-0.5">Learn hub names, overview vs workspace, and where to find each feature.</p>
+                        <p className="text-sm font-semibold text-[var(--ws-text-primary)]">Platform guide & glossary</p>
+                        <p className="text-xs text-[var(--ws-text-muted)] mt-0.5">Learn hub names, overview vs workspace, and where to find each feature.</p>
                     </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-teal-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                <ChevronRight className="w-5 h-5 text-[var(--brand-blue-500)] group-hover:translate-x-0.5 transition-transform shrink-0" />
             </Link>
 
             {/* 1. ACCOUNT GROUP */}
@@ -393,7 +426,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden">
                     
                     {/* Row 1: Profile Details */}
-                    <div>
+                    <div id="settings-section-profile">
                         <div 
                             onClick={() => toggleRow('profile')}
                             className="flex items-center justify-between p-4 hover:bg-white/5 active:bg-white/10 transition-all cursor-pointer select-none"
@@ -820,26 +853,33 @@ export default function SettingsPage({ user }: SettingsPageProps) {
             </div>
 
             {/* 5. APPEARANCE GROUP */}
-            <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 px-2 block">Appearance Theme</span>
-                <div className="bg-slate-900 border border-white/5 rounded-2xl divide-y divide-white/5 overflow-hidden p-4 space-y-4">
+            <div id="settings-appearance" className="space-y-3 scroll-mt-4">
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--ws-text-muted)] px-2 block">Appearance</span>
+                <div className="ac-workspace-panel p-4 space-y-4">
                     
                     {/* Theme Mode Segment switcher */}
                     <div className="space-y-1.5">
-                        <label className="text-[10px] text-slate-500 uppercase font-black">Interface Theme</label>
-                        <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                            {(['dark', 'light', 'system'] as const).map((theme) => (
+                        <label className="text-[10px] text-[var(--ws-text-muted)] uppercase font-semibold">Interface theme</label>
+                        <div className="flex bg-[var(--ws-surface-tertiary)] p-1 rounded-[10px] border border-[var(--ws-border)]">
+                            {([
+                                { id: 'light' as const, label: 'Light' },
+                                { id: 'dark' as const, label: 'Dark' },
+                                { id: 'system' as const, label: 'Use device' },
+                            ]).map((theme) => (
                                 <button
-                                    key={theme}
+                                    key={theme.id}
+                                    type="button"
                                     onClick={() => {
-                                        setThemeMode(theme);
-                                        toast.success(`Theme updated to ${theme}`);
+                                        setThemeMode(theme.id);
+                                        toast.success(`Theme updated to ${theme.label}`);
                                     }}
-                                    className={`flex-1 py-1.5 text-[11px] font-bold rounded-lg uppercase transition-all ${
-                                        themeMode === theme ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-300'
+                                    className={`flex-1 py-1.5 text-[11px] font-semibold rounded-[8px] transition-all ${
+                                        themeMode === theme.id
+                                            ? 'bg-[var(--ws-surface-primary)] text-[var(--ws-text-primary)] shadow-sm'
+                                            : 'text-[var(--ws-text-muted)] hover:text-[var(--ws-text-secondary)]'
                                     }`}
                                 >
-                                    {theme}
+                                    {theme.label}
                                 </button>
                             ))}
                         </div>

@@ -38,5 +38,12 @@ Use `getModuleIcon(moduleId)` for module identity. Variants: `outline`, `filled`
 
 1. Tokens + shell (done)
 2. Home dashboard (done)
-3. Hub chrome + CRM overview (started)
-4. Remaining modules adopt `ModuleFrame` / `KpiCard` without replacing APIs or business logic
+3. Hub chrome + CRM overview (done)
+4. Bonnie drawer, settings categories, communication composer shell (done)
+5. Remaining module interiors adopt `KpiCard` / `RecordHeader` / OS states without replacing APIs or business logic
+
+## Global assistants
+
+- `BonnieDrawerProvider` + `BonnieDrawer` — contextual drawer from the FAB; full workspace still available
+- `CommunicationComposer` — channel shell for record-level compose (inject existing send forms as children)
+- Settings category nav maps admin areas without removing existing accordion sections

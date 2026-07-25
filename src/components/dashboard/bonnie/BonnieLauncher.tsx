@@ -1,35 +1,30 @@
 'use client';
 
 import React from 'react';
-import {
-  Badge,
-  Box,
-  Button,
-  HStack,
-  IconButton,
-  Text,
-  VStack,
-} from '@chakra-ui/react';
-import { Brain, ExternalLink, Sun } from 'lucide-react';
+import { ExternalLink, LayoutPanelLeft } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
 import { useBonnieMorningBrief } from '@/hooks/useBonnieMorningBrief';
+import { useBonnieDrawerOptional } from '@/contexts/BonnieDrawerContext';
 import {
   openBonniePopoutWindow,
   resolveBonnieDashboardRoute,
 } from '@/lib/bonnie/bonnieWorkspace';
-import { BONNIE_CHAKRA } from './bonnieChakra';
+import { IconBonnie } from '@/components/icons/alphaclone';
+import { cn } from '@/lib/utils';
 
 /**
- * Global Bonnie entry — solid teal enterprise FAB (no indigo/glow gradient).
+ * Global Bonnie entry — violet brand FAB.
+ * Opens the contextual drawer by default; full workspace remains available.
  */
 export default function BonnieLauncher() {
   const { currentTenant } = useTenant();
   const { user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const drawer = useBonnieDrawerOptional();
   const tenantId = currentTenant?.id;
   const { pendingCount } = useBonnieApprovals(tenantId);
   const { brief: morningBrief } = useBonnieMorningBrief(tenantId);
@@ -52,6 +47,15 @@ export default function BonnieLauncher() {
 
   if (!tenantId) return null;
 
+  const openDrawer = () => {
+    setMenuOpen(false);
+    if (drawer) {
+      drawer.openDrawer({ mode: 'ask' });
+      return;
+    }
+    router.push(bonnieRoute);
+  };
+
   const openWorkspace = () => {
     setMenuOpen(false);
     router.push(bonnieRoute);
@@ -63,132 +67,73 @@ export default function BonnieLauncher() {
   };
 
   return (
-    <Box
+    <div
       ref={menuRef}
-      position="fixed"
-      bottom={{ base: 'calc(env(safe-area-inset-bottom, 0px) + 78px)', md: 5 }}
-      right={{ base: 3, md: 5 }}
-      zIndex={70}
-      display="flex"
-      flexDirection="column"
-      alignItems="flex-end"
+      className="fixed z-[70] flex flex-col items-end right-3 md:right-5 bottom-[calc(env(safe-area-inset-bottom,0px)+78px)] md:bottom-5"
       data-tour="bonnie-widget"
     >
-      {menuOpen && (
-        <VStack
-          align="stretch"
-          spacing={1}
-          mb={2}
-          w="56"
-          p={1.5}
-          {...BONNIE_CHAKRA.panelProps}
-          bg="gray.950"
-          boxShadow="md"
-        >
-          <Button
-            variant="ghost"
-            justifyContent="flex-start"
-            h="auto"
-            py={2.5}
-            px={3}
-            color="white"
-            fontWeight="medium"
-            fontSize="sm"
-            leftIcon={<Brain size={16} color="#2DD4BF" />}
+      {menuOpen ? (
+        <div className="mb-2 w-56 rounded-[14px] border border-[var(--ws-border)] bg-[var(--ws-surface-primary)] p-1.5 shadow-[var(--ws-card-shadow-hover)]">
+          <button
+            type="button"
+            onClick={openDrawer}
+            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm font-medium text-[var(--ws-text-primary)] hover:bg-[var(--ws-hover)]"
+          >
+            <IconBonnie size={16} variant="duotone" className="text-[var(--brand-violet-500)]" decorative />
+            Ask Bonnie
+          </button>
+          <button
+            type="button"
             onClick={openWorkspace}
-            _hover={{ bg: 'whiteAlpha.100' }}
+            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"
           >
-            Open Bonnie workspace
-          </Button>
-          <Button
-            variant="ghost"
-            justifyContent="flex-start"
-            h="auto"
-            py={2.5}
-            px={3}
-            color="gray.300"
-            fontWeight="medium"
-            fontSize="sm"
-            leftIcon={<ExternalLink size={16} color="#94A3B8" />}
+            <LayoutPanelLeft className="w-4 h-4 text-[var(--ws-text-muted)]" />
+            Open full workspace
+          </button>
+          <button
+            type="button"
             onClick={openPopout}
-            _hover={{ bg: 'whiteAlpha.100' }}
+            className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-sm font-medium text-[var(--ws-text-secondary)] hover:bg-[var(--ws-hover)]"
           >
+            <ExternalLink className="w-4 h-4 text-[var(--ws-text-muted)]" />
             Pop out window
-          </Button>
-          {pendingCount > 0 && (
-            <Text px={3} py={1.5} fontSize="11px" color="amber.400">
+          </button>
+          {pendingCount > 0 ? (
+            <p className="px-3 py-1.5 text-[11px] text-[var(--warning-text)]">
               {pendingCount} approval{pendingCount === 1 ? '' : 's'} waiting
-            </Text>
-          )}
-        </VStack>
-      )}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
-      <Box position="relative">
-        <IconButton
-          aria-label="Open Bonnie AI workspace"
+      <div className="relative">
+        <button
+          type="button"
+          aria-label="Open Bonnie AI"
           aria-expanded={menuOpen}
-          title="Bonnie AI workspace"
+          title="Bonnie AI"
           onClick={() => setMenuOpen((open) => !open)}
-          icon={
-            <HStack spacing={1.5}>
-              <Brain size={22} />
-              <Text display={{ base: 'none', sm: 'inline' }} fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wide">
-                Bonnie
-              </Text>
-            </HStack>
-          }
-          h="14"
-          minW="14"
-          px={{ base: 0, sm: 4 }}
-          borderRadius="lg"
-          bg="teal.600"
-          color="white"
-          borderWidth="1px"
-          borderColor="teal.500"
-          boxShadow="md"
-          _hover={{ bg: 'teal.500' }}
-          _active={{ bg: 'teal.700' }}
-          _focusVisible={{ boxShadow: '0 0 0 2px var(--chakra-colors-teal-400)' }}
-        />
-        {hasUnreadBrief && (
-          <Badge
-            position="absolute"
-            top={-1}
-            right={-1}
-            borderRadius="md"
-            bg="teal.300"
-            color="gray.950"
-            p={0}
-            minW={5}
-            h={5}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Sun size={12} />
-          </Badge>
-        )}
-        {pendingCount > 0 && (
-          <Badge
-            position="absolute"
-            top={-1}
-            left={-1}
-            borderRadius="md"
-            bg="amber.500"
-            color="gray.950"
-            fontSize="10px"
-            fontWeight="bold"
-            minW={5}
-            h={5}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            px={1}
-          >
+          className={cn(
+            'inline-flex h-14 min-w-14 items-center justify-center gap-1.5 rounded-[12px] px-0 sm:px-4',
+            'bg-[var(--brand-violet-500)] text-white border border-[var(--brand-violet-400)]',
+            'shadow-md hover:bg-[var(--brand-violet-600)] active:bg-[var(--brand-violet-700)]',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-violet-300)]'
+          )}
+        >
+          <IconBonnie size={22} variant="filled" decorative />
+          <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Bonnie</span>
+        </button>
+        {hasUnreadBrief ? (
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-[var(--brand-violet-300)] text-[var(--brand-violet-950)] text-[10px] font-bold px-1">
+            •
+          </span>
+        ) : null}
+        {pendingCount > 0 ? (
+          <span className="absolute -top-1 -left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-[var(--warning-500)] text-[var(--dark-app-background,#0C1220)] text-[10px] font-bold px-1">
             {pendingCount}
-          </Badge>
-        )}
-      </Box>
-    </Box>
+          </span>
+        ) : null}
+      </div>
+    </div>
   );
 }

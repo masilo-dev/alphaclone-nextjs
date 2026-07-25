@@ -661,7 +661,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 {/* Simplified Header */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                        <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">My Clients</h2>
+                        <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Customers</h2>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                             <Badge variant="blue">{totalCount || clients.length} total</Badge>
                             <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">CRM</p>
@@ -724,7 +724,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                    <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">Sales contacts</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">Pipeline</p>

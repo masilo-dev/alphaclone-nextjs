@@ -1046,7 +1046,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
   }
 
   return (
-    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950">
+    <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="pipeline">
       <div className="px-4 pt-3 shrink-0 space-y-2.5">
         <CRMNav pathname={pathname} />
         <CrmSyncToolbar />
@@ -1054,16 +1054,16 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
       </div>
       <ModulePageLayout
         toolbar={(
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-white/5 bg-slate-950/80 sticky top-0 z-20 backdrop-blur-md shrink-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-4 py-3 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)] sticky top-0 z-20 shrink-0">
         <div>
-          <h1 className="text-[15px] font-black text-white">Pipeline Workspace</h1>
-          <p className="text-[11px] text-slate-500 mt-0.5 font-semibold">
-            Open pipeline: <span className="text-teal-400 font-bold">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
+          <h2 className="text-sm font-semibold text-[var(--ws-text-primary)]">Sales pipeline</h2>
+          <p className="text-[12px] text-[var(--ws-text-muted)] mt-0.5 font-medium">
+            Open pipeline: <span className="text-[var(--module-pipeline-primary,#E69222)] font-semibold tabular-nums">${totalPipelineValue.toLocaleString()}</span> • {deals.length} active deals
             {pipelineHealth != null && (
-              <> • Avg progress <span className="text-teal-400 font-bold">{pipelineHealth}%</span></>
+              <> • Avg progress <span className="text-[var(--brand-blue-500)] font-semibold tabular-nums">{pipelineHealth}%</span></>
             )}
           </p>
-          <p className="text-[10px] text-slate-600 mt-1 max-w-md leading-relaxed">{PIPELINE_FORWARD_ONLY_HINT}</p>
+          <p className="text-[11px] text-[var(--ws-text-disabled)] mt-1 max-w-md leading-relaxed">{PIPELINE_FORWARD_ONLY_HINT}</p>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">

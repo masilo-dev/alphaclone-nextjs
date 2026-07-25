@@ -15,6 +15,7 @@ export const SALES_HUB_ROUTES = new Set([
   '/dashboard/crm/console',
   '/dashboard/crm/accounts',
   '/dashboard/crm/reports',
+  '/dashboard/crm/follow-ups',
   '/dashboard/crm/unified-contacts',
   '/dashboard/leads',
   '/dashboard/leads/campaigns',
