@@ -56,7 +56,7 @@ export function MetricCard({
         <span
           className={cn(
             ENTERPRISE.metricCard.valueSize,
-            'font-semibold text-white leading-none tabular-nums tracking-tight block',
+            'font-bold text-[var(--ws-text-primary)] leading-none tabular-nums tracking-tight block',
           )}
         >
           {value}
@@ -76,7 +76,7 @@ export function MetricCard({
               </span>
             ) : null}
             {period ? (
-              <span className={cn(ENTERPRISE.metricCard.comparisonSize, 'text-slate-500')}>
+              <span className={cn(ENTERPRISE.metricCard.comparisonSize, 'text-[var(--ws-text-muted)]')}>
                 {period}
               </span>
             ) : null}
@@ -104,9 +104,9 @@ export function MetricCardSkeleton({
       )}
       style={style}
     >
-      <div className="h-3.5 w-24 bg-slate-800 rounded" />
-      <div className="h-8 w-32 bg-slate-800 rounded mt-3" />
-      <div className="h-3 w-20 bg-slate-800/70 rounded mt-2" />
+      <div className="h-3.5 w-24 bg-[var(--ws-surface-tertiary)] rounded" />
+      <div className="h-8 w-32 bg-[var(--ws-surface-tertiary)] rounded mt-3" />
+      <div className="h-3 w-20 bg-[var(--ws-surface-tertiary)] rounded mt-2" />
     </div>
   );
 }

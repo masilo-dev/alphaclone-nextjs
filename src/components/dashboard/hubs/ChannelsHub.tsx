@@ -23,10 +23,11 @@ interface ChannelsHubProps {
 export default function ChannelsHub({ children }: ChannelsHubProps) {
   return (
     <HubShell
-      title="Channels"
+      title="Email & Outreach"
       description="Tickets, team messages, email, and messaging"
       tabs={CHANNELS_TABS}
-      accent="blue"
+      moduleId="email"
+      accent="rose"
     >
       {children}
     </HubShell>

@@ -14,8 +14,9 @@ import { resolveModuleActions } from '@/config/moduleDashboardActions';
 import { metricLabel } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Mail, MessageCircle, Phone, Receipt, Sparkles, Trophy, Users, Zap } from 'lucide-react';
-import { CRMNav } from '../crm/CRMNav';
 import { CrmSyncToolbar } from '../crm/CrmSyncToolbar';
+import { SubNavigation } from '@/components/ui/os';
+import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -290,8 +291,12 @@ export function CrmDashboard() {
   }, [router, quickAdd]);
 
   return (
-    <div className="space-y-4 ac-scroll-full ac-module-section">
-      <CRMNav pathname="/dashboard/crm" />
+    <div className="space-y-4 ac-scroll-full ac-module-section" data-module="crm">
+      <SubNavigation
+        moduleId="crm"
+        items={getModuleSubnav('crm')}
+        activeHref="/dashboard/crm"
+      />
       <CrmSyncToolbar />
       <ModuleDashboardView
         moduleId="crm"

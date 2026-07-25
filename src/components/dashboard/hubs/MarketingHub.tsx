@@ -37,10 +37,11 @@ interface MarketingHubProps {
 export default function MarketingHub({ children }: MarketingHubProps) {
   return (
     <HubShell
-      title="Marketing"
+      title="Marketing Hub"
       description="Campaigns, social posts, and forms that bring in customers"
       tabs={MARKETING_TABS}
-      accent="teal"
+      moduleId="marketing"
+      accent="blue"
     >
       {children}
     </HubShell>

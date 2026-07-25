@@ -194,7 +194,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         </label>
                         <select
                             id="ac-sidebar-jump"
-                            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                            className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-tertiary,#1C283B)] border border-[var(--ws-border)] text-md text-[var(--ws-text-primary,#F4F7FC)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500,#356AF4)]"
                             defaultValue=""
                             onChange={(e) => {
                                 const href = e.target.value;
@@ -224,7 +224,7 @@ const Sidebar = React.memo<SidebarProps>(({
                         <div className="mb-2 px-0.5 space-y-0.5">
                             <button
                                 onClick={() => navigate('/dashboard/admin/tenants')}
-                                className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} border border-[var(--ws-border)] text-teal-400`}
+                                className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} border border-[var(--ws-border)] text-[var(--brand-blue-400)]`}
                             >
                                 <ShieldAlert className="w-4 h-4 flex-shrink-0" />
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Admin Panel')}</span>
@@ -266,7 +266,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
                                         {item.comingSoon && sidebarOpen && (
-                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
+                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-tighter bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded-md">
                                                 {t('Soon')}
                                             </span>
                                         )}
@@ -310,7 +310,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                                     <span className="whitespace-nowrap">
                                                         {t(sub.label)}
                                                         {sub.comingSoon && (
-                                                            <span className="ml-1.5 px-1 py-0.5 text-xs font-black uppercase bg-slate-800 text-teal-400 border border-teal-500/20 rounded">{t('Soon')}</span>
+                                                            <span className="ml-1.5 px-1 py-0.5 text-xs font-semibold uppercase bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded">{t('Soon')}</span>
                                                         )}
                                                     </span>
                                                 </button>
@@ -328,13 +328,13 @@ const Sidebar = React.memo<SidebarProps>(({
 
                     {/* Operations HUD (Integrated) */}
                     {tasks.length > 0 && sidebarOpen && (
-                        <div className="mb-4 border border-teal-500/20 bg-teal-500/5 rounded-xl overflow-hidden">
-                            <div className="px-3 py-2 bg-teal-500/10 border-b border-teal-500/20 flex items-center justify-between">
+                        <div className="mb-4 border border-[var(--ws-border)] bg-[var(--ws-active)] rounded-[14px] overflow-hidden">
+                            <div className="px-3 py-2 bg-[var(--ws-hover)] border-b border-[var(--ws-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Activity className="w-3.5 h-3.5 text-teal-400" />
-                                    <span className="text-xs font-black uppercase tracking-widest text-teal-400">{t('Operations')}</span>
+                                    <Activity className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
+                                    <span className="text-xs font-semibold uppercase tracking-widest text-[var(--brand-blue-400)]">{t('Operations')}</span>
                                 </div>
-                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-xs font-bold text-teal-300">
+                                <span className="px-1.5 py-0.5 rounded-md bg-[var(--ws-active)] text-xs font-bold text-[var(--brand-blue-300,#91B5FF)]">
                                     {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
                             </div>
@@ -344,13 +344,13 @@ const Sidebar = React.memo<SidebarProps>(({
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 min-w-0">
                                                 {task.status === 'running' ? (
-                                                    <Loader2 className="w-3 h-3 text-teal-400 animate-spin" />
+                                                    <Loader2 className="w-3 h-3 text-[var(--brand-blue-400)] animate-spin" />
                                                 ) : task.status === 'completed' ? (
-                                                    <Activity className="w-3 h-3 text-emerald-400" />
+                                                    <Activity className="w-3 h-3 text-[var(--success-text,#6FE0AD)]" />
                                                 ) : (
-                                                    <Activity className="w-3 h-3 text-rose-400" />
+                                                    <Activity className="w-3 h-3 text-[var(--error-text,#FF9097)]" />
                                                 )}
-                                                <span className="text-xs font-bold text-slate-300 truncate">{task.name}</span>
+                                                <span className="text-xs font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
                                                 <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
@@ -361,7 +361,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                         {task.status === 'running' && (
                                             <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
                                                 <motion.div 
-                                                    className="h-full bg-teal-500"
+                                                    className="h-full bg-[var(--brand-blue-500)]"
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${task.progress || 50}%` }}
                                                 />
@@ -377,8 +377,8 @@ const Sidebar = React.memo<SidebarProps>(({
                     {tasks.length > 0 && !sidebarOpen && (
                         <div className="mb-4 flex flex-col items-center gap-2">
                             <div className="relative">
-                                <Activity className="w-5 h-5 text-teal-400 animate-pulse" />
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-teal-500 rounded-full" />
+                                <Activity className="w-5 h-5 text-[var(--brand-blue-400)] animate-pulse" />
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-[var(--brand-blue-500)] rounded-full" />
                             </div>
                         </div>
                     )}
@@ -403,7 +403,7 @@ const Sidebar = React.memo<SidebarProps>(({
                                 sidebarOpen ? 'flex-1 gap-2.5 px-1 py-1' : 'justify-center p-1'
                             }`}
                         >
-                            <span className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                            <span className="w-9 h-9 rounded-full bg-[var(--brand-blue-500)] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
                                 {initials}
                             </span>
                             {sidebarOpen && (

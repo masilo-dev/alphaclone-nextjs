@@ -23,11 +23,12 @@ interface MoneyHubProps {
 export default function MoneyHub({ children }: MoneyHubProps) {
   return (
     <HubShell
-      title="Money"
-      description="Money coming in, bills to pay, and invoices waiting"
+      title="Money Hub"
+      description="Billing, cash movement, and financial oversight"
       tabs={MONEY_TABS}
       dataTour="money-hub"
-      accent="amber"
+      moduleId="money"
+      accent="green"
     >
       {children}
     </HubShell>

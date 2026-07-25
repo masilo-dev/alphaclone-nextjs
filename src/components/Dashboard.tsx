@@ -104,6 +104,7 @@ const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdm
 const SuperAdminUsersTab = React.lazy(() => import('./dashboard/admin/SuperAdminUsersTab'));
 const ImprovementsPage = React.lazy(() => import('./dashboard/admin/ImprovementsPage'));
 const PlatformOwnerHome = React.lazy(() => import('./dashboard/admin/PlatformOwnerHome'));
+const OperatingSystemHome = React.lazy(() => import('./dashboard/OperatingSystemHome'));
 const ContactSubmissionsTab = React.lazy(() => import('./dashboard/ContactSubmissionsTab'));
 import TasksTab from './dashboard/TasksTab';
 import DealsTab from './dashboard/DealsTab';
@@ -1697,7 +1698,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           }
           return (
             <div data-tour="dashboard-overview">
-              <OverviewDashboard />
+              <React.Suspense fallback={<TabSkeleton />}>
+                <OperatingSystemHome />
+              </React.Suspense>
             </div>
           );
         }
@@ -1720,7 +1723,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root [height:100dvh]">
+    <div className="min-h-screen min-w-0 flex overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 ac-dashboard-root ac-workspace-canvas [height:100dvh]">
       <ConnectionStatus />
 
       <WelcomeModal

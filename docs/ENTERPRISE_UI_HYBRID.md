@@ -1,6 +1,6 @@
-# Enterprise UI — Hybrid Design System (v1)
+# Enterprise UI — Hybrid Design System (v2 / Alphaclone OS)
 
-AlphaClone uses **enterprise structural patterns** with the **existing brand palette** (teal, dark slate, violet accents). This is not the Office-style light theme from the original enterprise spec.
+Alphaclone uses **enterprise structural patterns** with the **Alphaclone OS brand** (blue primary, violet Bonnie, navy sidebar, light `#F5F7FB` / dark `#0C1220` surfaces). See `docs/ALPHACLONE_OS_DESIGN_SYSTEM.md` for the complete token and icon system.
 
 ## Principles
 

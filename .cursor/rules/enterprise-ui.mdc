@@ -1,27 +1,28 @@
 ---
-description: Enterprise hybrid UI patterns for dashboard modules (AlphaClone brand)
+description: Alphaclone OS UI patterns for dashboard modules
 globs: src/components/dashboard/**/*.tsx,src/components/ui/**/*.tsx
 alwaysApply: false
 ---
 
-# Enterprise UI (Hybrid)
+# Alphaclone OS UI
 
 When building or editing dashboard UI:
 
-1. **Brand**: Keep teal/dark slate palette — do not introduce Office navy/light theme.
-2. **Layout**: Use `ModulePageLayout`, `ModuleStatCards`, `EnterpriseTabWrapper` patterns.
+1. **Brand**: Use Alphaclone OS tokens from `src/constants/brand.ts` — blue primary (`#356AF4`), violet for Bonnie (`#8950F5`), navy sidebar, soft blue-grey light canvas. Do not reintroduce teal-as-primary or pure-black dark mode.
+2. **Layout**: Prefer `ModuleFrame`, `ModuleHeader`, `SubNavigation`, `KpiCard` from `@/components/ui/os` (also re-exported from `@/components/ui/enterprise`). Legacy `ModulePageLayout` / `ModuleStatCards` remain valid during migration.
 3. **Detail panels**: Use `DetailDrawer` from `@/components/ui/enterprise` — bottom on mobile, right on desktop.
 4. **Tables**: Prefer `EnterpriseDataTable` + `StatusBadge` for list modules.
 5. **Scroll**: Never clip primary list content with `max-h` or `overflow-hidden` — use `ac-scroll-full`.
-6. **Loading**: Use `MetricCardSkeleton` / `TabSkeleton`, not spinners alone.
-7. **Reference**: `docs/ENTERPRISE_UI_HYBRID.md` and `ENTERPRISE` in `src/constants/design.ts`.
+6. **Loading**: Use `KpiCardSkeleton` / `MetricCardSkeleton` / `TabSkeleton`, not spinners alone.
+7. **Icons**: Module identity uses `@/components/icons/alphaclone`. Lucide is fine for generic affordances only.
+8. **Reference**: `docs/ALPHACLONE_OS_DESIGN_SYSTEM.md`, `docs/ENTERPRISE_UI_HYBRID.md`, and `ENTERPRISE` / `WORKSPACE` in `src/constants/design.ts`.
 
 ## PR checklist (dashboard modules)
 
 When adding or changing list/detail UI in a PR:
 
-- **Empty lists**: Use `EmptyState` from `@/components/ui/EmptyState` — not ad-hoc “no data” divs or one-off illustrations.
-- **Status chips**: Use `StatusBadge` from `@/components/ui/StatusBadge` (or `@/components/ui/enterprise`) — not raw colored `<span>` badges.
+- **Empty lists**: Use `EmptyState` / `OsEmptyState` — not ad-hoc “no data” divs.
+- **Status chips**: Use `StatusBadge` from `@/components/ui/StatusBadge` (or `@/components/ui/enterprise`).
 - **Tables**: Prefer `EnterpriseDataTable` + column `render` with `StatusBadge` for status columns.
 - **Detail panels**: Use `DetailDrawer`, not legacy `Modal` wrappers for record detail.
 - **Do not** reintroduce duplicate route switches for shared extension routes — use `renderSharedDashboardRoute` in `src/lib/dashboard/sharedDashboardRoutes.tsx`.

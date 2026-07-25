@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import type { User } from '@/types';
 import { useTenant } from '@/contexts/TenantContext';
-import { AttentionFirstDashboard } from '../AttentionFirstDashboard';
+import { OperatingSystemHome } from '../OperatingSystemHome';
 import { OverviewDashboard } from '../views/ModuleDashboardView';
 import { PlatformAdvantageHome } from '../platform-advantage/PlatformAdvantageHome';
 import { IntegratedIntelligencePanel } from '../IntegratedIntelligencePanel';
@@ -19,8 +19,8 @@ interface BusinessHomeProps {
 }
 
 /**
- * Home answers: What needs attention? What did Bonnie do? What's next?
- * Attention-first leads; secondary panels sit below the first viewport.
+ * Alphaclone OS home — KPIs, attention, overview charts, modules, Today, Bonnie.
+ * Deeper platform context stays behind progressive disclosure.
  */
 const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   const { currentTenant, getDashboardStats } = useTenant();
@@ -43,7 +43,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     !dismissed && (isNewWorkspaceStats(stats) || stats === null);
 
   return (
-    <div className="space-y-4 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
+    <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">
       {showSetup ? (
         <NewUserSetupPanel
           user={user}
@@ -54,13 +54,13 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
         />
       ) : null}
 
-      <AttentionFirstDashboard />
+      <OperatingSystemHome />
 
       <div className="flex justify-center pt-1">
         <button
           type="button"
           onClick={() => setShowMoreContext((v) => !v)}
-          className="text-xs font-medium text-slate-400 hover:text-teal-300 transition-colors underline-offset-2 hover:underline"
+          className="text-xs font-medium text-[var(--ws-text-muted)] hover:text-[var(--brand-blue-500)] transition-colors underline-offset-2 hover:underline"
         >
           {showMoreContext ? 'Hide extra workspace context' : 'Show platform insights & overview'}
         </button>

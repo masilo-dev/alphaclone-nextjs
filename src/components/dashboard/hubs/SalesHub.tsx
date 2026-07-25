@@ -25,10 +25,11 @@ interface SalesHubProps {
 export default function SalesHub({ children }: SalesHubProps) {
   return (
     <HubShell
-      title="Sales"
-      description="Customers waiting, deals in progress, and people ready to buy"
+      title="CRM & Sales"
+      description="Relationships, leads, and deals moving toward close"
       tabs={SALES_TABS}
-      accent="teal"
+      moduleId="crm"
+      accent="green"
     >
       {children}
     </HubShell>

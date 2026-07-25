@@ -6,7 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
 import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
-import { WORKSPACE } from '@/constants/design';
+import { WORKSPACE, MODULE_IDENTITY, type ModuleId } from '@/constants/design';
+import { getModuleIcon } from '@/components/icons/alphaclone';
 import { cn } from '@/lib/utils';
 
 export interface HubTab {
@@ -21,14 +22,18 @@ interface HubShellProps {
   tabs: HubTab[];
   children: React.ReactNode;
   dataTour?: string;
-  accent?: 'teal' | 'blue' | 'amber' | 'violet';
+  /** @deprecated Prefer moduleId for Alphaclone OS identity */
+  accent?: 'teal' | 'blue' | 'amber' | 'violet' | 'rose' | 'green';
+  moduleId?: ModuleId;
 }
 
-const ACCENT_BAR: Record<NonNullable<HubShellProps['accent']>, string> = {
-  teal: 'bg-[var(--ac-accent)]',
-  blue: 'bg-dashboard-blue',
-  amber: 'bg-dashboard-amber',
-  violet: 'bg-violet-500',
+const LEGACY_ACCENT: Record<NonNullable<HubShellProps['accent']>, string> = {
+  teal: '#0F9F8F',
+  blue: '#356AF4',
+  amber: '#E69222',
+  violet: '#8950F5',
+  rose: '#DE4C7A',
+  green: '#16A36A',
 };
 
 export default function HubShell({
@@ -37,26 +42,52 @@ export default function HubShell({
   tabs,
   children,
   dataTour,
-  accent = 'teal',
+  accent = 'blue',
+  moduleId,
 }: HubShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const identity = moduleId ? MODULE_IDENTITY[moduleId] : null;
+  const accentColor = identity?.primary ?? LEGACY_ACCENT[accent];
+  const ModuleIcon = moduleId ? getModuleIcon(moduleId) : null;
 
   return (
-    <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module">
+    <div
+      className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module ac-module-frame"
+      style={{ ['--module-accent' as string]: accentColor }}
+      data-module={moduleId}
+    >
       <div
         className={cn(
-          'flex-shrink-0 px-4 pt-3 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)]',
+          'flex-shrink-0 px-4 pt-4 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)]',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
-        <div className="flex items-center gap-2">
-          <span className={cn('w-1 h-4 rounded-full shrink-0', ACCENT_BAR[accent])} aria-hidden />
-          <h1 className={WORKSPACE.typography.pageTitle}>{title}</h1>
+        <div className="flex items-center gap-2.5">
+          {ModuleIcon ? (
+            <span
+              className="inline-flex h-9 w-9 items-center justify-center rounded-[10px] shrink-0"
+              style={{
+                background: `color-mix(in srgb, ${accentColor} 14%, transparent)`,
+                color: accentColor,
+              }}
+            >
+              <ModuleIcon size={18} variant="duotone" decorative />
+            </span>
+          ) : (
+            <span
+              className="w-1 h-4 rounded-full shrink-0"
+              style={{ background: accentColor }}
+              aria-hidden
+            />
+          )}
+          <div className="min-w-0">
+            <h1 className={WORKSPACE.typography.pageTitle}>{title}</h1>
+            {description ? (
+              <p className="text-[13px] text-[var(--ws-text-muted)] mt-0.5">{description}</p>
+            ) : null}
+          </div>
         </div>
-        {description ? (
-          <p className="text-[12px] text-[var(--ws-text-tertiary)] mt-0.5 ml-3">{description}</p>
-        ) : null}
 
         <ModuleJumpSelect
           options={tabs.map((t) => ({ label: t.label, href: t.href }))}
@@ -73,7 +104,10 @@ export default function HubShell({
         >
           {tabs.map((tab) => {
             const isActive =
-              pathname != null && (pathname === tab.href || pathname.startsWith(`${tab.href}?`));
+              pathname != null &&
+              (pathname === tab.href ||
+                pathname.startsWith(`${tab.href}/`) ||
+                pathname.startsWith(`${tab.href}?`));
             const Icon = tab.icon;
             return (
               <Link
@@ -83,9 +117,14 @@ export default function HubShell({
                 aria-selected={isActive}
                 className={cn(
                   WORKSPACE.tab.base,
-                  'flex-shrink-0 whitespace-nowrap',
+                  'flex-shrink-0 whitespace-nowrap relative',
                   isActive && WORKSPACE.tab.active,
                 )}
+                style={
+                  isActive
+                    ? { borderBottomColor: accentColor, color: 'var(--ws-text-primary)' }
+                    : undefined
+                }
               >
                 {Icon ? <Icon className="w-3.5 h-3.5" aria-hidden /> : null}
                 {tab.label}
