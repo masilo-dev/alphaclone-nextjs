@@ -41,6 +41,9 @@ Baseline: platform UX audit + `ROUTE_IMPLEMENTATION_MATRIX.md`.
 - **CRMTab** — detail PageHeader; ResponsiveTable split at `lg`
 - **Settings** — phone category list → drill-in; Danger Zone separated
 - **HomeTab** expenses shortcut fixed
+- **Tasks** — PageHeader + workspace toolbar/view toggle; teal phone FAB; calmer Microsoft To Do block
+- **Shell** — sidebar avatar/ops chrome on workspace tokens; ModuleShell title aligned with PageHeader
+- **Home (polish)** — greeting + money snapshot first viewport
 
 ## Remaining (continue implementation order 12–24)
 
