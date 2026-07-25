@@ -39,6 +39,13 @@ type BrowserSpeechRecognition = {
 
 // Sanitize text to remove problematic characters
 function sanitizeDisplayText(text: string): string {
+  // Hide Zod / schema dumps if they leak into chat
+  if (
+    /"code"\s*:\s*"invalid_/.test(text) ||
+    /\binvalid_type\b|\binvalid_value\b|\binvalid_format\b/.test(text)
+  ) {
+    return 'Bonnie couldn’t finish that step — the details weren’t clear enough. Please ask again in plain language.';
+  }
   return text
     .replace(/[\*]{2,}/g, '')
     .replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '')

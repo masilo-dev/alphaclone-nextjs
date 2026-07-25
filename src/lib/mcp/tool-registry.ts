@@ -9,6 +9,7 @@ import {
   sleep,
 } from '@/lib/mcp/knownBrokenTools';
 import { logMcpToolExecution, normalizeToolName } from '@/lib/mcp/mcpToolTelemetry';
+import { humanizeTechnicalFailure } from '@/lib/copy/businessFriendlyErrors';
 
 const registry = new Map<string, MCPTool>();
 
@@ -151,7 +152,11 @@ export async function executeTool(
     }
     return result;
   } catch (err: any) {
-    errorMessage = err.message || 'Unknown error';
+    const rawMessage = err?.message || 'Unknown error';
+    // Never persist or return Zod issue JSON to operators / dashboards.
+    errorMessage = humanizeTechnicalFailure(err?.name === 'ZodError' ? err : rawMessage, {
+      tool: resolvedToolName,
+    });
     return {
       content: [
         {

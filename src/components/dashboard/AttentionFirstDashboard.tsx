@@ -11,7 +11,6 @@ import {
   DollarSign,
   Mail,
   Receipt,
-  Sparkles,
   Target,
   Trophy,
 } from 'lucide-react';
@@ -20,6 +19,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
 import { useBonnieMorningBrief } from '@/hooks/useBonnieMorningBrief';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
+import {
+  businessOutcomeSummary,
+  isTechnicalJargonText,
+} from '@/lib/copy/businessFriendlyErrors';
 import { cn } from '@/lib/utils';
 
 interface AttentionItem {
@@ -57,13 +60,33 @@ export function AttentionFirstDashboard() {
     void fetch(`/api/bonnie/outcomes?tenantId=${currentTenant.id}&limit=5`)
       .then((r) => r.json())
       .then((data) => {
-        const items = (data?.outcomes || data?.items || []) as Array<{ id: string; summary?: string; label?: string; created_at?: string }>;
+        const items = (data?.outcomes || data?.items || []) as Array<{
+          id: string;
+          summary?: string;
+          label?: string;
+          created_at?: string;
+          success?: boolean;
+          tool_name?: string;
+        }>;
         setBonnieActions(
-          items.slice(0, 5).map((o) => ({
-            id: o.id,
-            label: o.summary || o.label || 'Completed a task',
-            timestamp: o.created_at || new Date().toISOString(),
-          }))
+          items
+            .slice(0, 5)
+            .map((o) => {
+              const raw = o.summary || o.label || '';
+              const label = isTechnicalJargonText(raw)
+                ? businessOutcomeSummary({
+                    tool: o.tool_name || 'define_outcome',
+                    success: o.success,
+                    errorMessage: raw,
+                  })
+                : raw || 'Completed a workspace action';
+              return {
+                id: o.id,
+                label,
+                timestamp: o.created_at || new Date().toISOString(),
+              };
+            })
+            .filter((o) => !isTechnicalJargonText(o.label))
         );
       })
       .catch(() => {});
@@ -171,7 +194,7 @@ export function AttentionFirstDashboard() {
           <ul className="space-y-2">
             {bonnieActions.map((action) => (
               <li key={action.id} className="flex items-start gap-2 text-[12px] text-[var(--ws-text-secondary)]">
-                <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" aria-hidden="true" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" aria-hidden="true" />
                 <span>{action.label}</span>
               </li>
             ))}
