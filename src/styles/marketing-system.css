@@ -2,13 +2,13 @@
 
 .marketing-theme {
   /* Backgrounds */
-  --background-root: #041027;
-  --background-deep: #06142d;
-  --background-section: #081932;
-  --background-elevated: #0c1e3b;
-  --background-card: #0e213f;
-  --background-card-hover: #122a4d;
-  --background-muted: #13294a;
+  --background-root: #060d18;
+  --background-deep: #08111d;
+  --background-section: rgba(9, 18, 31, 0.34);
+  --background-elevated: rgba(15, 27, 43, 0.68);
+  --background-card: rgba(14, 27, 44, 0.56);
+  --background-card-hover: rgba(20, 37, 58, 0.72);
+  --background-muted: rgba(24, 42, 64, 0.62);
 
   /* Brand */
   --brand-primary: #18c7c8;
@@ -25,8 +25,8 @@
   --text-inverse: #041027;
 
   /* Borders */
-  --border-subtle: rgba(148, 170, 207, 0.15);
-  --border-default: rgba(148, 170, 207, 0.24);
+  --border-subtle: rgba(183, 204, 231, 0.12);
+  --border-default: rgba(183, 204, 231, 0.2);
   --border-strong: rgba(109, 232, 226, 0.38);
 
   /* States */
@@ -57,7 +57,7 @@
   --radius-preview: 16px;
   --shadow-card:
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
-    0 12px 32px rgba(0, 4, 18, 0.18);
+    0 18px 46px rgba(0, 4, 18, 0.2);
   --shadow-preview:
     0 0 0 1px rgba(109, 232, 226, 0.25),
     0 28px 90px rgba(0, 5, 24, 0.58),
@@ -214,6 +214,7 @@
   background: var(--background-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
+  backdrop-filter: blur(14px);
 }
 
 .mkt-surface-elevated {
@@ -221,6 +222,7 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-large);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
 }
 
 .mkt-label,
@@ -1218,6 +1220,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   background: var(--background-card);
+  backdrop-filter: blur(14px);
   padding: 1.05rem 1.1rem;
   text-decoration: none;
   content-visibility: auto;
@@ -1469,6 +1472,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-large);
   background: var(--background-card);
+  backdrop-filter: blur(16px);
   padding: 1.5rem;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -2696,16 +2700,23 @@
 
 .mkt-marketing-background .mkt-bg-root {
   background:
-    linear-gradient(180deg, #07101d 0%, #0a1421 34%, #0b151f 68%, #08111d 100%);
+    radial-gradient(ellipse 72% 30% at 50% 6%, rgba(53, 106, 244, 0.17), transparent 70%),
+    radial-gradient(ellipse 46% 28% at 8% 44%, rgba(24, 199, 200, 0.1), transparent 72%),
+    radial-gradient(ellipse 42% 30% at 92% 72%, rgba(115, 87, 232, 0.09), transparent 74%),
+    linear-gradient(180deg, #060d18 0%, #091321 34%, #08111d 68%, #060d18 100%);
 }
 
 .mkt-marketing-background[data-variant="editorial"] .mkt-bg-root,
 .mkt-marketing-background[data-variant="quiet"] .mkt-bg-root {
-  background: linear-gradient(180deg, #0b141e 0%, #101820 48%, #0a121b 100%);
+  background:
+    radial-gradient(ellipse 54% 26% at 76% 16%, rgba(53, 106, 244, 0.11), transparent 72%),
+    linear-gradient(180deg, #09121d 0%, #0d1722 48%, #08111c 100%);
 }
 
 .mkt-marketing-background[data-variant="conversion"] .mkt-bg-root {
-  background: linear-gradient(160deg, #0b131d 0%, #15171d 52%, #09131c 100%);
+  background:
+    radial-gradient(ellipse 58% 30% at 50% 8%, rgba(24, 199, 200, 0.11), transparent 72%),
+    linear-gradient(160deg, #09121d 0%, #12171d 52%, #08121c 100%);
 }
 
 .mkt-marketing-background[data-intensity="subtle"] .mkt-orb-field {
@@ -2729,7 +2740,7 @@
 }
 
 .mkt-marketing-background[data-intensity="subtle"].is-settled .mkt-orb-field {
-  opacity: 0.72;
+  opacity: 0.88;
 }
 
 .mkt-organic-orb {
@@ -2844,12 +2855,12 @@
 
 /* Keep section rhythm neutral; atmosphere supplies the restrained accent. */
 .mkt-section[data-atmosphere] {
-  background: linear-gradient(180deg, rgba(14, 23, 31, 0.5), rgba(9, 17, 25, 0.66));
+  background: linear-gradient(180deg, rgba(9, 17, 27, 0.14), rgba(8, 16, 26, 0.24));
 }
 
 .mkt-section[data-atmosphere="cta"],
 .mkt-section[data-atmosphere="pricing"] {
-  background: linear-gradient(180deg, rgba(18, 24, 29, 0.58), rgba(11, 19, 27, 0.76));
+  background: linear-gradient(180deg, rgba(12, 20, 30, 0.2), rgba(9, 17, 27, 0.32));
 }
 
 .mkt-feature-card,

@@ -88,10 +88,10 @@
   --dashboard-red-bg: #FCEBEB;
   --dashboard-blue: #378ADD;
   --dashboard-blue-bg: #E6F1FB;
-  --dashboard-bg: #0f172a;
-  --dashboard-surface: rgba(15, 23, 42, 0.82);
-  --dashboard-surface-strong: rgba(26, 26, 26, 0.88);
-  --dashboard-surface-soft: rgba(47, 47, 47, 0.72);
+  --dashboard-bg: rgba(8, 14, 27, 0.34);
+  --dashboard-surface: rgba(15, 23, 42, 0.62);
+  --dashboard-surface-strong: rgba(18, 26, 41, 0.7);
+  --dashboard-surface-soft: rgba(34, 45, 64, 0.58);
   --dashboard-border: rgba(148, 163, 184, 0.16);
   --dashboard-text: #f5f5f5;
   --dashboard-text-muted: #c0c0c0;
@@ -1580,13 +1580,13 @@ html.pwa-standalone .pwa-page-title {
 .ac-dashboard-root,
 .ac-business-root {
   --ws-sidebar: #090F1C;
-  --ws-canvas: #0C1220;
-  --ws-toolbar: #121A2A;
-  --ws-panel: #121A2A;
-  --ws-panel-hover: #172133;
-  --ws-surface-primary: #121A2A;
-  --ws-surface-secondary: #172133;
-  --ws-surface-tertiary: #1C283B;
+  --ws-canvas: #0A101D;
+  --ws-toolbar: rgba(14, 22, 37, 0.8);
+  --ws-panel: rgba(18, 28, 46, 0.7);
+  --ws-panel-hover: rgba(26, 39, 61, 0.82);
+  --ws-surface-primary: rgba(18, 28, 46, 0.72);
+  --ws-surface-secondary: rgba(25, 38, 59, 0.7);
+  --ws-surface-tertiary: rgba(31, 46, 69, 0.72);
   --ws-border: #243147;
   --ws-border-strong: #35445E;
   --ws-hover: #1B2638;
@@ -1661,7 +1661,10 @@ html.light .ac-business-root {
 .ac-workspace-canvas,
 .ac-dashboard-main.ac-workspace-canvas,
 .ac-business-scroll.ac-workspace-canvas {
-  background-color: var(--ws-canvas);
+  background:
+    radial-gradient(ellipse 62% 44% at 88% 4%, rgba(53, 106, 244, 0.13), transparent 72%),
+    radial-gradient(ellipse 48% 42% at 4% 78%, rgba(20, 184, 166, 0.07), transparent 74%),
+    linear-gradient(180deg, #0A101D 0%, #0B1321 48%, #090F1B 100%);
 }
 
 .ac-workspace-toolbar,
@@ -1678,6 +1681,30 @@ html.light .ac-business-root {
   border-radius: var(--ws-radius-lg);
   box-shadow: var(--ws-card-shadow);
   transition: border-color 150ms ease, box-shadow 180ms ease, transform 180ms ease, background-color 150ms ease;
+  backdrop-filter: blur(14px);
+}
+
+.ac-module-frame {
+  padding: clamp(0.75rem, 1.8vw, 1.5rem);
+}
+
+.ac-module-frame-body {
+  min-width: 0;
+}
+
+.ac-enterprise-module {
+  background-color: transparent !important;
+}
+
+.ac-enterprise-module > [class*="bg-slate-950"],
+.ac-enterprise-module [class*="bg-slate-950/"] {
+  background-color: rgba(8, 14, 27, 0.26) !important;
+}
+
+@media (max-width: 767px) {
+  .ac-module-frame {
+    padding: 0.75rem;
+  }
 }
 
 .ac-kpi-card--interactive:hover,

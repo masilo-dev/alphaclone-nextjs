@@ -32,16 +32,16 @@ export function ModulePageLayout({
   return (
     <div
       className={cn(
-        'flex flex-col ac-scroll-full min-h-0',
+        'flex flex-col gap-4 ac-scroll-full min-h-0',
         phoneNavSafe && 'pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-0',
         className,
       )}
     >
       {header ? <div className="flex-shrink-0">{header}</div> : null}
       {toolbar ? (
-        <div className="flex-shrink-0 px-1 py-2 mb-2">{toolbar}</div>
+        <div className="flex-shrink-0">{toolbar}</div>
       ) : null}
-      {stats ? <section className="flex-shrink-0 mb-4 md:mb-6">{stats}</section> : null}
+      {stats ? <section className="flex-shrink-0">{stats}</section> : null}
       <section className="flex-1 min-h-0 ac-scroll-full">{children}</section>
     </div>
   );

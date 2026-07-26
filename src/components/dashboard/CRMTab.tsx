@@ -49,7 +49,7 @@ import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { Input } from '../ui/UIComponents';
 import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { ModuleFrame, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -2137,11 +2137,16 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
   ], [t, totalLeadsCount, activeClientsCount, totalClientValue]);
 
   return (
-    <div className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module bg-slate-950 select-none relative">
+    <ModuleFrame
+      moduleId="crm"
+      activeHref="/dashboard/crm/workspace"
+      className="flex min-h-0 flex-col ac-scroll-full ac-enterprise-module select-none relative"
+    >
       <ModulePageLayout
+        className="gap-5"
         header={(
-          <div className="px-4 pt-3 space-y-2.5 shrink-0">
-            <div className="rounded-2xl border border-white/5 bg-slate-900/60 px-2.5 py-2">
+          <div className="space-y-3 shrink-0">
+            <div className="ac-workspace-panel rounded-2xl px-3 py-3">
               <div className="mb-2 flex items-center gap-2">
                 <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
                   Command bar
@@ -2182,12 +2187,12 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         )}
         stats={(
           <>
-            <div className="p-4 border-b border-white/5 bg-slate-900/20">
+            <div>
               <ModuleStatCards stats={crmStats} className="grid-cols-1 sm:grid-cols-3 lg:grid-cols-3" />
             </div>
-            <div className="px-4 pb-2 space-y-3">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
               <RevenueLeakagePanel leakageOnly heading={t('Pipeline integrity')} />
-              <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3">
+              <div className="ac-workspace-panel rounded-xl p-3">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.24em] text-indigo-300">Client pulse</p>
                 <ClientPulsePanel compact />
               </div>
@@ -2196,7 +2201,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         )}
         toolbar={(
           <>
-            <div className="flex border-b border-white/5 bg-slate-950">
+            <div className="flex border-b border-white/5">
               {([
                 { key: 'leads', label: t('Leads'), count: leads.length },
                 { key: 'clients', label: t('Customers'), count: activeClientsCount },
@@ -2215,9 +2220,9 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 </button>
               ))}
             </div>
-            <div className="px-4 py-3 space-y-2.5 bg-slate-950/80">
+            <div className="space-y-3 pt-3">
         {isTeamsConnected && (
-          <div className="flex items-center justify-between rounded-xl border border-blue-500/10 bg-blue-500/5 px-3 py-2">
+          <div className="ac-workspace-panel flex items-center justify-between rounded-xl px-3 py-2">
             <div>
               <p className="text-xs font-bold text-blue-200">Outlook Contact Sync</p>
               <p className="text-[11px] text-slate-400">Import Microsoft contacts into the existing CRM.</p>
@@ -2369,7 +2374,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           </>
         )}
       >
-      <div ref={crmListRef} className={`flex-1 ac-scroll-full bg-slate-950 ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
+      <div ref={crmListRef} className={`ac-workspace-panel flex-1 ac-scroll-full overflow-hidden ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
         {!loading && subView === 'leads' && leadsView === 'board' ? (
             <LeadKanban
             leads={filteredKanbanLeads}
@@ -2563,7 +2568,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
           body={teamCompose.body}
         />
       )}
-    </div>
+    </ModuleFrame>
   );
 };
 
