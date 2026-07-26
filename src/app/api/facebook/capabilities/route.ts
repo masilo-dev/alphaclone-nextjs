@@ -17,7 +17,13 @@ export async function GET(req: NextRequest) {
   const integration = await getFacebookIntegration(admin, { userId: user.id, pageId });
 
   if (!integration) {
-    return NextResponse.json({ error: 'Facebook page not connected', action: 'reconnect' }, { status: 404 });
+    return NextResponse.json({
+      success: false,
+      connected: false,
+      error: 'Facebook page not connected',
+      action: 'reconnect',
+      capabilities: {},
+    });
   }
 
   const tokens = await getFacebookTokens(admin, integration);
@@ -41,6 +47,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
+    connected: true,
     page_id: integration.page_id,
     page_name: integration.page_name,
     scope_mode: integration.metadata?.scope_mode || 'advanced',

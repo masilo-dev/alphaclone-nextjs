@@ -4,6 +4,15 @@ import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { AlphaNexus } from '@/lib/social/alphaNexus';
 import { runNexusIntelligenceSession } from '@/lib/automation/nexusIntelligenceTask';
 
+function isUnavailableSchema(error: unknown): boolean {
+    const candidate = error as { code?: string; message?: string } | null;
+    const message = String(candidate?.message || '').toLowerCase();
+    return candidate?.code === '42P01'
+        || candidate?.code === 'PGRST205'
+        || message.includes('schema cache')
+        || message.includes('does not exist');
+}
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -15,19 +24,21 @@ export async function GET(request: NextRequest) {
         const [bmRes, wlRes, xRes, siRes] = await Promise.all([
             admin.from('social_bookmarks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
             admin.from('social_watchlist').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
-            admin.from('x_integrations').select('id, x_username, x_user_id, created_at').eq('tenant_id', tenantId).single(),
+            admin.from('x_integrations').select('id, x_username, x_user_id, created_at').eq('tenant_id', tenantId).maybeSingle(),
             admin.from('social_interactions').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(5),
         ]);
 
-        if (bmRes.error) return NextResponse.json({ error: bmRes.error.message }, { status: 500 });
-        if (wlRes.error) return NextResponse.json({ error: wlRes.error.message }, { status: 500 });
-        
+        const results = [bmRes, wlRes, xRes, siRes];
         return NextResponse.json({ 
             success: true, 
-            bookmarks: bmRes.data || [], 
-            watchlist: wlRes.data || [],
-            xIntegration: xRes.data || null,
-            recentInteractions: siRes.data || []
+            bookmarks: bmRes.error ? [] : (bmRes.data || []),
+            watchlist: wlRes.error ? [] : (wlRes.data || []),
+            xIntegration: xRes.error ? null : (xRes.data || null),
+            recentInteractions: siRes.error ? [] : (siRes.data || []),
+            available: !results.some((result) => Boolean(result.error)),
+            notice: results.some((result) => result.error && isUnavailableSchema(result.error))
+                ? 'Some social workspace collections are still being prepared.'
+                : undefined,
         });
     } catch (error) {
         return routeErrorResponse(error, 'Failed to load social workspace', request);

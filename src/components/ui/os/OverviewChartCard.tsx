@@ -85,7 +85,7 @@ export function OverviewChartCard({
             Not enough data yet for this view.
           </div>
         ) : tab === 'pipeline' ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
             <BarChart data={data}>
               <CartesianGrid stroke="var(--ws-border)" vertical={false} />
               <XAxis dataKey="label" tick={{ fill: 'var(--ws-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -102,7 +102,7 @@ export function OverviewChartCard({
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="osArea" x1="0" y1="0" x2="0" y2="1">

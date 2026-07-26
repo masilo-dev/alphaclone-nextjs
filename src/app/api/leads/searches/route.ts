@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { leadSearchInput } from '@/lib/lead-finder/core';
 
+function isUnavailableSchema(error: unknown): boolean {
+  const candidate = error as { code?: string; message?: string } | null;
+  const message = String(candidate?.message || '').toLowerCase();
+  return candidate?.code === '42P01'
+    || candidate?.code === 'PGRST205'
+    || (message.includes('lead_searches') && (message.includes('does not exist') || message.includes('schema cache')));
+}
+
 export async function GET(req: NextRequest) {
   try {
     const workspaceId = req.nextUrl.searchParams.get('workspaceId');
@@ -9,8 +17,15 @@ export async function GET(req: NextRequest) {
     const { admin } = await requireTenantAccess(workspaceId, req);
     const { data, error } = await admin.from('lead_searches').select('*')
       .eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(100);
+    if (error && isUnavailableSchema(error)) {
+      return NextResponse.json({
+        searches: [],
+        available: false,
+        notice: 'Lead search history is being prepared for this workspace.',
+      });
+    }
     if (error) throw error;
-    return NextResponse.json({ searches: data || [] });
+    return NextResponse.json({ searches: data || [], available: true });
   } catch (error) { return routeErrorResponse(error, 'Failed to load lead searches', req); }
 }
 

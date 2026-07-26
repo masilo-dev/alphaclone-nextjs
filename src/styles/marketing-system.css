@@ -591,7 +591,10 @@
 
 /* Compact hero: atmosphere + conversion only (no product demo frame) */
 .mkt-hero--compact {
-  padding: clamp(4.75rem, 8vw, 6.25rem) 0 clamp(2.5rem, 5vw, 3.75rem);
+  min-height: clamp(36rem, 66vh, 48rem);
+  display: flex;
+  align-items: center;
+  padding: clamp(6rem, 10vw, 9rem) 0 clamp(4.5rem, 8vw, 7rem);
 }
 
 .mkt-hero-copy {
@@ -1646,16 +1649,17 @@
 }
 
 .mkt-header-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(1rem, 2.5vw, 2.5rem);
   height: 3.75rem;
 }
 
 .mkt-nav-desktop {
   display: none;
   align-items: center;
+  justify-content: center;
   gap: 0.1rem;
 }
 
@@ -1691,7 +1695,11 @@
 .mkt-nav-trigger:hover,
 .mkt-nav-trigger.is-active {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(125, 211, 252, 0.09);
+}
+
+.mkt-nav-trigger.is-active {
+  box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.18);
 }
 
 .mkt-nav-trigger:focus-visible {
@@ -1702,7 +1710,14 @@
 .mkt-header-actions {
   display: none;
   align-items: center;
+  justify-self: end;
   gap: 0.55rem;
+}
+
+@media (max-width: 1023px) {
+  .mkt-header-bar {
+    grid-template-columns: 1fr auto;
+  }
 }
 
 .mkt-nav-login {
@@ -2430,6 +2445,7 @@
   z-index: var(--mkt-z-waves);
   pointer-events: none;
   overflow: hidden;
+  opacity: 0.88;
 }
 
 .hero-data-wave-svg {
@@ -2445,31 +2461,31 @@
 
 .wave-path {
   fill: none;
-  stroke-width: 0.85;
+  stroke-width: 1.08;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
 .hero-data-wave-drift--left {
-  animation: mkt-wave-drift-x 14s ease-in-out alternate infinite;
+  animation: mkt-wave-drift-x 34s ease-in-out alternate infinite;
   transform-origin: left center;
   will-change: transform;
 }
 
 .hero-data-wave-drift--right {
-  animation: mkt-wave-drift-x-rev 17s ease-in-out alternate infinite;
+  animation: mkt-wave-drift-x-rev 41s ease-in-out alternate infinite;
   transform-origin: right center;
   will-change: transform;
 }
 
 @keyframes mkt-wave-drift-x {
   from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(48px, 18px, 0) scale(1.04); }
+  to { transform: translate3d(34px, 14px, 0) scale(1.035); }
 }
 
 @keyframes mkt-wave-drift-x-rev {
   from { transform: translate3d(0, 0, 0) scale(1); }
-  to { transform: translate3d(-44px, 14px, 0) scale(1.035); }
+  to { transform: translate3d(-32px, 12px, 0) scale(1.03); }
 }
 
 /* Curved dot field */
@@ -2784,18 +2800,35 @@
     inset -16px -20px 42px rgba(2, 8, 14, 0.13),
     0 32px 80px rgba(var(--orb-color), 0.08);
   filter: blur(18px);
-  animation: mkt-fluid-drop 21s var(--ease-fluid) var(--orb-delay) infinite;
+  animation: mkt-fluid-drop 48s var(--ease-fluid) var(--orb-delay) infinite;
 }
 
 .mkt-organic-orb__highlight {
   inset: 7% 12% 18% 8%;
   background: radial-gradient(ellipse at 34% 26%, rgba(255, 255, 255, 0.1), transparent 44%);
   filter: blur(8px);
-  animation: mkt-orb-inner-shift 17s var(--ease-fluid) calc(var(--orb-delay) - 3s) infinite alternate;
+  animation: mkt-orb-inner-shift 39s var(--ease-fluid) calc(var(--orb-delay) - 3s) infinite alternate;
 }
 
-.mkt-organic-orb:nth-child(2) .mkt-organic-orb__body { animation-duration: 27s; }
-.mkt-organic-orb:nth-child(3) .mkt-organic-orb__body { animation-duration: 16s; }
+.mkt-organic-orb:nth-child(2) .mkt-organic-orb__body { animation-duration: 57s; }
+.mkt-organic-orb:nth-child(3) .mkt-organic-orb__body { animation-duration: 44s; }
+
+@media (min-width: 900px) and (max-width: 1400px) {
+  .mkt-header-bar {
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+  }
+
+  .mkt-nav-trigger {
+    padding-inline: 0.65rem;
+  }
+
+  .mkt-hero--compact {
+    min-height: 38rem;
+    padding-top: 7rem;
+    padding-bottom: 5.5rem;
+  }
+}
 
 @keyframes mkt-fluid-drop {
   0%, 16%, 100% {

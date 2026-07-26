@@ -201,7 +201,7 @@ export default function PnLStatement() {
             </div>
           </div>
           <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
               <BarChart data={data?.revenue.by_month || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                 <XAxis dataKey="month" stroke="#64748b" fontSize={10} axisLine={false} tickLine={false} />
@@ -235,7 +235,7 @@ export default function PnLStatement() {
                 No categorized expenses for this period
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
                 <PieChart>
                   <Pie
                     data={data?.expenses.by_category}

@@ -95,7 +95,7 @@ export default function CRMReportsTab() {
 
       <div className="bg-slate-900 border border-white/5 rounded-lg p-4">
         <h3 className="text-sm font-bold text-white mb-4">Pipeline by Stage</h3>
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
           <BarChart data={pipeline}>
             <XAxis dataKey="stage" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -108,7 +108,7 @@ export default function CRMReportsTab() {
       {winLoss.length > 0 && (
         <div className="bg-slate-900 border border-white/5 rounded-lg p-4">
           <h3 className="text-sm font-bold text-white mb-4">Win / Loss (closed deals)</h3>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={180}>
             <PieChart>
               <Pie data={winLoss} dataKey="count" nameKey="stage" cx="50%" cy="50%" outerRadius={70}>
                 {winLoss.map((_, i) => (

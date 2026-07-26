@@ -23,7 +23,13 @@ export async function GET(req: NextRequest) {
   const tokens = integration ? await getFacebookTokens(admin, integration) : { pageAccessToken: null, userAccessToken: null };
   const token = tokens.pageAccessToken || tokens.userAccessToken;
   if (!token) {
-    return NextResponse.json({ error: 'Facebook page not connected or token missing — please reconnect' }, { status: 400 });
+    return NextResponse.json({
+      success: false,
+      connected: false,
+      error: 'Facebook page not connected or token missing — please reconnect',
+      action: 'reconnect',
+      page: null,
+    });
   }
 
   try {
@@ -44,7 +50,13 @@ export async function GET(req: NextRequest) {
     const data = await response.json();
 
     if (!response.ok || data?.error) {
-      return NextResponse.json({ error: 'Facebook could not load page info.', detail: data?.error || null }, { status: 400 });
+      return NextResponse.json({
+        success: false,
+        connected: true,
+        error: 'Facebook could not load page info.',
+        detail: data?.error || null,
+        page: null,
+      });
     }
 
     return NextResponse.json({ success: true, page: data });

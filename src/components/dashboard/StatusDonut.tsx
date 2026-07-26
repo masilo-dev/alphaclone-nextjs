@@ -27,7 +27,7 @@ export function StatusDonut({
         <div className="flex-1 flex items-center gap-4 min-h-0">
           <div className="w-[132px] h-[132px] shrink-0">
             <ChartMount height={132}>
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={132}>
                 <PieChart>
                   <Pie
                     data={segments}

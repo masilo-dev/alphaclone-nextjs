@@ -10,15 +10,7 @@ interface ProductTourProps {
 const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole }) => {
     const [run, setRun] = useState(false);
     const [stepIndex, setStepIndex] = useState(0);
-
-    useEffect(() => {
-        if (isOpen) {
-            setRun(true);
-            setStepIndex(0);
-        } else {
-            setRun(false);
-        }
-    }, [isOpen]);
+    const [mountedSteps, setMountedSteps] = useState<Step[]>([]);
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
@@ -133,6 +125,25 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
               ? adminSteps
               : clientSteps;
 
+    useEffect(() => {
+        if (!isOpen || typeof document === 'undefined') {
+            setRun(false);
+            setMountedSteps([]);
+            return;
+        }
+
+        const frame = window.requestAnimationFrame(() => {
+            const available = steps.filter((step) =>
+                typeof step.target === 'string' ? Boolean(document.querySelector(step.target)) : true
+            );
+            setMountedSteps(available);
+            setStepIndex(0);
+            setRun(available.length > 0);
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [isOpen, userRole]);
+
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status, index } = data;
 
@@ -148,7 +159,7 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
 
     return (
         <Joyride
-            steps={steps}
+            steps={mountedSteps}
             run={run}
             stepIndex={stepIndex}
             continuous
@@ -204,4 +215,3 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
 };
 
 export default ProductTour;
-

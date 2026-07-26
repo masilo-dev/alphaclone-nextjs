@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/marketing/ui/sheet';
-import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { CTA_LABELS, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 import { AlphaIcon, type AlphaIconName } from '@/components/marketing/icons';
 
 type DropdownKey = 'product' | 'solutions' | 'resources' | 'company';
@@ -225,9 +225,6 @@ export default function MarketingHeader() {
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
                 {CTA_LABELS.primary}
               </Link>
-              <Link href={DEMO_HREF} className="mkt-btn mkt-btn-secondary mkt-btn-compact">
-                {CTA_LABELS.secondary}
-              </Link>
             </div>
 
             <div className="mkt-header-mobile">
@@ -265,13 +262,6 @@ export default function MarketingHeader() {
                       className="mkt-btn mkt-btn-primary w-full"
                     >
                       {CTA_LABELS.primary}
-                    </Link>
-                    <Link
-                      href={DEMO_HREF}
-                      onClick={() => setMobileOpen(false)}
-                      className="mkt-btn mkt-btn-secondary w-full"
-                    >
-                      {CTA_LABELS.secondary}
                     </Link>
                     <Link
                       href={LOGIN_HREF}

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import type { ModuleId } from '@/constants/brand';
 import { ModuleHeader } from './ModuleHeader';
+import { AskBonnieButton } from './AskBonnieButton';
 import { SubNavigation } from './SubNavigation';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { cn } from '@/lib/utils';
@@ -44,7 +45,18 @@ export function ModuleFrame({
         moduleId={moduleId}
         title={title}
         description={description}
-        actions={actions}
+        actions={
+          <>
+            {actions}
+            {moduleId !== 'bonnie' ? (
+              <AskBonnieButton
+                compact
+                label="Work with Bonnie"
+                className="ac-module-bonnie-action"
+              />
+            ) : null}
+          </>
+        }
       />
       {!hideSubnav && items.length > 1 ? (
         <SubNavigation moduleId={moduleId} items={items} activeHref={activeHref} />

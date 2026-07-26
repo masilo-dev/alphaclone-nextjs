@@ -10,7 +10,7 @@ interface ChartMountProps {
 /** Recharts needs explicit height — render immediately (no extra paint delay). */
 export function ChartMount({ height = 240, children }: ChartMountProps) {
   return (
-    <div className="w-full" style={{ height, minHeight: height }}>
+    <div className="w-full min-w-0 overflow-hidden" style={{ height, minHeight: height }}>
       {children}
     </div>
   );
