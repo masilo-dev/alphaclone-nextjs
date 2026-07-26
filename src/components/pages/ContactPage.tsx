@@ -4,24 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Phone, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button, Input } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
-import MarketingFooter from '@/components/landing/MarketingFooter';
 import { formatLegalAddress } from '@/lib/seo/siteEntity';
 import { contactSchema } from '../../schemas/validation';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
+import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const ContactPage: React.FC = () => {
-    const router = useRouter();
-    const [, setIsLoginOpen] = React.useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileNonce, setTurnstileNonce] = useState(0);
@@ -77,14 +67,7 @@ const ContactPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen page-network-bg text-white relative overflow-hidden">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-            
+        <div className="marketing-theme min-h-screen page-network-bg text-white relative overflow-hidden">
             {/* Contact Hero Area */}
             <section className="relative min-h-[40vh] flex flex-col items-center justify-center pt-32">
                 
@@ -112,12 +95,9 @@ const ContactPage: React.FC = () => {
                             Get in touch to discuss your project. For the fastest response, use WhatsApp or book a meeting directly.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Button
-                                onClick={() => router.push('/book-demo')}
-                                className="bg-teal-600 text-white font-bold h-12 px-8 font-marketing-heading uppercase tracking-tight button-fill-hover"
-                            >
-                                <span className="relative z-10">Book a Consultation</span>
-                            </Button>
+                            <SecondaryCTA className="w-full sm:w-auto font-marketing-heading uppercase tracking-tight">
+                                Book a Consultation
+                            </SecondaryCTA>
                             <Button
                                 variant="outline"
                                 onClick={() => window.open('https://wa.me/48517809674', '_blank')}
@@ -206,13 +186,15 @@ const ContactPage: React.FC = () => {
                                     placeholder="What is this regarding?"
                                 />
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Message</label>
+                                    <label htmlFor="contact-message" className="block text-sm font-medium text-slate-300 mb-2">Message</label>
                                     <textarea
+                                        id="contact-message"
+                                        name="message"
                                         value={formData.message}
                                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                         required
                                         rows={6}
-                                        className="w-full bg-slate-900/90 backdrop-blur-sm border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                        className="w-full bg-slate-900/90 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                         placeholder="Tell us about your project..."
                                     />
                                 </div>
@@ -257,7 +239,6 @@ const ContactPage: React.FC = () => {
                     </AnimateIn>
                 </div>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

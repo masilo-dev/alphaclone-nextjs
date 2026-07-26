@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import EcosystemPage from '@/components/pages/EcosystemPage';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 
 export const metadata: Metadata = {
     title: 'The AlphaClone Ecosystem | One Unified Business OS Architecture',
@@ -30,5 +31,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-    return <EcosystemPage />;
+    return (
+        <MarketingLandingShell>
+            <EcosystemPage />
+        </MarketingLandingShell>
+    );
 }

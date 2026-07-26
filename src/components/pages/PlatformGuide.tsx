@@ -1,19 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
-    CheckCircle2, ArrowRight, User, CreditCard, Settings, Mail,
+    CheckCircle2, User, CreditCard, Settings, Mail,
     Calendar, Users, DollarSign, Bot, Video, Shield, ChevronDown,
     ChevronUp, Globe, Zap, Clock, Star, Terminal, Layers,
     BookOpen, TrendingUp, Lock, Building2
 } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
-import MarketingFooter from '@/components/landing/MarketingFooter';
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const PlatformGuide: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
     const steps = [
@@ -123,7 +119,7 @@ You can also configure availability windows directly in AlphaClone without a Cal
         },
         {
             icon: Users,
-            color: 'from-teal-500 to-cyan-500',
+            color: 'from-teal-500 to-emerald-500',
             step: 6,
             title: 'Import Your CRM Contacts',
             subtitle: 'Bring your existing client list in minutes',
@@ -191,7 +187,7 @@ Review the discovered leads and de-select any that aren't relevant. Then click "
         },
         {
             icon: Video,
-            color: 'from-blue-600 to-cyan-500',
+            color: 'from-blue-600 to-teal-500',
             step: 9,
             title: 'Run Client Video Meetings',
             subtitle: 'Built-in HD video — no Zoom account needed',
@@ -304,9 +300,7 @@ The invited person receives an email with a secure invitation link. When they cl
 
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20">
+            <div>
                 {/* Hero — BLUF Answer Section */}
                 <section className="bg-gradient-to-b from-slate-900/70 to-slate-950/70 border-b border-slate-800/50 py-20">
                     <div className="max-w-4xl mx-auto px-4">
@@ -521,23 +515,13 @@ The invited person receives an email with a secure invitation link. When they cl
                             Create your free account now. The setup wizard inside the platform mirrors this guide step by step so first-time users can onboard without founder involvement.
                         </p>
                         <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link href="/register">
-                                <Button className="text-lg px-10 py-4 h-auto bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold shadow-xl shadow-teal-500/20">
-                                    Start Free Trial
-                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </Link>
-                            <Link href="/docs">
-                                <Button variant="outline" className="text-lg px-10 py-4 h-auto border-slate-700 hover:bg-slate-800">
-                                    View Documentation
-                                </Button>
-                            </Link>
+                            <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
+                            <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                         </div>
                         <p className="mt-6 text-slate-500 text-sm">$15/month after trial · No credit card required to start · Cancel anytime</p>
                     </div>
                 </section>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

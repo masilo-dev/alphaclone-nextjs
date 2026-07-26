@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState } from 'react';
 import {
     CheckCircle2,
     Target,
@@ -13,20 +12,10 @@ import {
     Workflow,
     type LucideIcon,
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Button } from '@/components/ui/UIComponents';
-import LoginModal from '@/components/auth/LoginModal';
-import { User } from '@/types';
-import PublicNavigation from '@/components/PublicNavigation';
 import AnimateIn from '@/components/common/AnimateIn';
-import MarketingFooter from '@/components/landing/MarketingFooter';
 import { WHO_WE_SERVE_HERO, WHO_WE_SERVE_SEGMENTS, type WhoWeServeSegment } from '@/config/marketingOutcomes';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const SEGMENT_ICONS: Record<WhoWeServeSegment['icon'], LucideIcon> = {
     target: Target,
@@ -37,31 +26,10 @@ const SEGMENT_ICONS: Record<WhoWeServeSegment['icon'], LucideIcon> = {
     video: Video,
 };
 
-const SIGNUP_HREF = '/auth/login?register=true&type=business&plan=starter';
-
 export default function WhoWeServePage() {
-    const [isLoginOpen, setIsLoginOpen] = useState(false);
-
-    const handleLogin = (user: User) => {
-        setIsLoginOpen(false);
-        window.location.href = '/dashboard';
-    };
-
     return (
-        <div className="min-h-screen page-network-bg text-slate-200">
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <LoginModal
-                isOpen={isLoginOpen}
-                onClose={() => setIsLoginOpen(false)}
-                onLogin={handleLogin}
-            />
-
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20 relative overflow-hidden">
+        <div className="marketing-theme min-h-screen page-network-bg text-slate-200">
+            <div className="relative overflow-hidden">
                 <section className="relative min-h-[55vh] flex flex-col items-center justify-center pt-24 pb-16 px-4">
                     <div className="relative z-10 max-w-4xl mx-auto text-center">
                         <AnimateIn type="fadeIn" delay={0}>
@@ -81,22 +49,8 @@ export default function WhoWeServePage() {
                                 {WHO_WE_SERVE_HERO.subhead}
                             </p>
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                                <Link href={SIGNUP_HREF}>
-                                    <Button className="bg-teal-500 text-slate-950 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start 14-day trial</span>
-                                    </Button>
-                                </Link>
-                                <Link href="/results">
-                                    <Button
-                                        variant="outline"
-                                        className="px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover border-slate-700"
-                                    >
-                                        <span className="relative z-10 inline-flex items-center gap-2">
-                                            Read workflow stories
-                                            <ArrowRight className="w-4 h-4" />
-                                        </span>
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start 14-day trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </AnimateIn>
                     </div>
@@ -178,19 +132,8 @@ export default function WhoWeServePage() {
                             Move one real client from lead to invoice in a 14-day trial. No card required.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <Link href={SIGNUP_HREF}>
-                                <Button className="bg-teal-500 text-slate-950 font-bold px-12 py-5 h-auto text-lg rounded-2xl button-fill-hover">
-                                    <span className="relative z-10">Start free trial</span>
-                                </Button>
-                            </Link>
-                            <Link href="/book-demo">
-                                <Button
-                                    variant="outline"
-                                    className="px-12 py-5 h-auto text-lg rounded-2xl button-fill-hover border-slate-700"
-                                >
-                                    <span className="relative z-10">Book a demo</span>
-                                </Button>
-                            </Link>
+                            <PrimaryCTA className="w-full sm:w-auto">Start free trial</PrimaryCTA>
+                            <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                         </div>
                         <p className="mt-8 text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
                             14-day trial · No credit card · Cancel anytime
@@ -199,7 +142,6 @@ export default function WhoWeServePage() {
                 </AnimateIn>
             </section>
 
-            <MarketingFooter />
         </div>
     );
 }

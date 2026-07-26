@@ -5,6 +5,11 @@
  *
  * Usage: npx tsx scripts/validate-social-tool-catalog.ts
  */
+import { createRequire } from 'node:module';
+
+// CLI/tsx loads tool modules outside Next — stub before any server-only imports.
+createRequire(import.meta.url)('./stub-server-only.cjs');
+
 import { initializeRegistry, listTools, hasTool } from '../src/lib/mcp/tool-registry';
 import { getUnifiedMcpTools, invalidateUnifiedMcpToolCache } from '../src/lib/mcp/listAllTools';
 import { CANONICAL_SOCIAL_MCP_TOOLS } from '../src/lib/social/types';

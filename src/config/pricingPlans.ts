@@ -43,7 +43,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
       'Automated workflows',
       'Email support',
     ],
-    cta: 'Start 14-Day Free Trial',
+    cta: 'Start free for 14 days',
     ctaLink: '/auth/login?register=true&type=business&plan=starter',
   },
   {
@@ -64,7 +64,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
       'Custom domain',
       'Priority support',
     ],
-    cta: 'Start 14-Day Free Trial',
+    cta: 'Start free for 14 days',
     ctaLink: '/auth/login?register=true&type=business&plan=pro',
   },
   {
@@ -81,7 +81,7 @@ export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
       'Dedicated onboarding',
       'Priority + SLA support',
     ],
-    cta: 'Start 14-Day Free Trial',
+    cta: 'Start free for 14 days',
     ctaLink: '/auth/login?register=true&type=business&plan=enterprise',
   },
 ];

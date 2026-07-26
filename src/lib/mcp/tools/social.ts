@@ -120,13 +120,15 @@ registerTool('social', {
 // 2. schedule_social_post
 registerTool('social', {
   name: 'schedule_social_post',
-  description: 'Schedule a social media post for future publication. Tenant is resolved from session.',
+  description:
+    'Schedule a social media post for future publication. Pass identity_id from get_social_identities when the workspace has multiple accounts; otherwise the single publishable identity for the platform is selected. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
     platform: z.enum(['linkedin', 'x', 'facebook']),
     content: z.string(),
     scheduled_at: z.string(),
     asset_id: z.string().optional(),
+    identity_id: z.string().uuid().optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -135,12 +137,51 @@ registerTool('social', {
       content: { type: 'string', description: 'Post content' },
       scheduled_at: { type: 'string', format: 'date-time' },
       asset_id: { type: 'string', description: 'Optional media asset ID' },
+      identity_id: {
+        type: 'string',
+        format: 'uuid',
+        description: 'Optional identity from get_social_identities (required when multiple accounts exist for the platform)',
+      },
     },
     required: ['platform', 'content', 'scheduled_at'],
   },
   handler: async (args, ctx) => {
     const tenantId = requireTenantId(args, ctx);
     if (!ctx.userId) throw new Error('user_id is required');
+
+    const provider = args.platform === 'x' ? 'x' : args.platform;
+    let identityId = args.identity_id ? String(args.identity_id) : '';
+
+    if (!identityId) {
+      const {
+        listTenantSocialIdentities,
+        syncTenantSocialIdentitiesFromLegacy,
+        getTenantDefaultIdentity,
+      } = await import('@/lib/social/socialIdentityStore');
+      await syncTenantSocialIdentitiesFromLegacy(tenantId).catch(() => undefined);
+      const identities = await listTenantSocialIdentities({
+        tenantId,
+        provider,
+        activeOnly: true,
+      });
+      const publishable = identities.filter((i) => i.can_publish);
+      if (publishable.length === 1) {
+        identityId = publishable[0].identity_id;
+      } else if (publishable.length > 1) {
+        const def =
+          publishable.find((i) => i.is_default) ||
+          (await getTenantDefaultIdentity(tenantId, provider));
+        if (def?.identity_id) {
+          identityId = def.identity_id;
+        } else {
+          throw new Error(
+            `identity_id is required — workspace has ${publishable.length} ${provider} identities. Call get_social_identities and pass identity_id.`
+          );
+        }
+      }
+      // zero publishable: let create_social_post surface the connection error
+    }
+
     const { createMCPServer } = await import('@/services/mcp/MCPServer');
     const server = createMCPServer({ tenantId, userId: ctx.userId });
 
@@ -152,6 +193,7 @@ registerTool('social', {
       platforms: [args.platform],
       publish_now: false,
       scheduled_at: args.scheduled_at,
+      ...(identityId ? { identity_id: identityId } : {}),
     });
   },
 });

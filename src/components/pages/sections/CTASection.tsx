@@ -15,7 +15,7 @@ const CTASection: React.FC = () => {
                     Start your 14-day trial and build your operating workspace before you pay.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                    <Link href="/register" className="w-full sm:w-auto">
+                    <Link href="/auth/login?register=true&type=business&plan=starter" className="w-full sm:w-auto">
                         <button className="cta-primary w-full px-12 py-5 text-xl rounded-2xl">
                             Deploy Now
                         </button>

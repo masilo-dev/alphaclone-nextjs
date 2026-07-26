@@ -56,11 +56,11 @@ export function EmptyState({
         className
       )}
     >
-      <div className="w-12 h-12 rounded-lg ac-workspace-panel flex items-center justify-center mb-4">
-        <Icon className="w-5 h-5 text-[var(--ws-text-tertiary)]" strokeWidth={1.5} />
+      <div className="w-11 h-11 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-hover)] flex items-center justify-center mb-4">
+        <Icon className="w-5 h-5 text-teal-400/90" strokeWidth={1.5} />
       </div>
-      <h3 className={cn(WORKSPACE.typography.pageTitle, 'mb-2')}>{title}</h3>
-      <p className="text-[13px] text-[var(--ws-text-secondary)] leading-relaxed mb-6">{description}</p>
+      <h3 className={cn(WORKSPACE.typography.pageTitle, 'mb-2 text-[1rem]')}>{title}</h3>
+      <p className="text-[13px] text-[var(--ws-text-secondary)] leading-relaxed mb-6 max-w-sm">{description}</p>
       {action}
       {!action && actionLabel && onAction && (
         <button

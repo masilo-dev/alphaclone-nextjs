@@ -1,29 +1,18 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import {
     Zap, Database, Shield, BarChart3, Settings, Globe,
-    ArrowRight, Clock, Users, DollarSign,
+    Clock, Users, DollarSign,
     Mail, Video, FileText, Calendar, TrendingUp, Layers,
-    Award, Lock, RefreshCw, Phone, ChevronRight
+    Award, Lock, RefreshCw
 } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
-import MarketingFooter from '../landing/MarketingFooter';
 import { MarketingTestimonialsCarousel } from '@/components/marketing/ui/carousel';
 import { MARKETING_TESTIMONIALS } from '@/config/marketingTestimonials';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const ServicesPage: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
-
     const blufSummary = `AlphaClone Systems is a unified AI-powered Business Operating Platform for service companies. It centralizes CRM, finance, contracts, meetings, messaging, scheduling, and execution workflows in one operational system designed for daily use by founders and teams.`;
 
     const services = [
@@ -121,7 +110,7 @@ const ServicesPage: React.FC = () => {
             icon: Video,
             title: 'HD Video Meetings',
             subtitle: 'Client calls without Zoom or Teams',
-            color: 'from-blue-600 to-cyan-500',
+            color: 'from-blue-600 to-teal-500',
             badge: 'Built-In',
             description: `Video conferencing has become as essential as having a phone number for modern service businesses. But maintaining a separate Zoom subscription, managing meeting links, and then manually updating your CRM after every call adds friction and cost. AlphaClone includes a full HD video meeting platform built directly into the dashboard.`,
             extendedDescription: `You can start an instant call with any client from their CRM profile with one click, or join scheduled board meetings through the Active Meetings panel. Meeting recordings are stored directly in your Document Hub, linked to the relevant client and project. There's no need to share invitation links via email, create dummy calendar events, or update meeting notes separately — everything happens in one place. For businesses that run multiple client calls per week, this alone saves significant time in meeting logistics and follow-up administration.`,
@@ -192,16 +181,9 @@ const ServicesPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen page-network-bg text-white">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
+        <div className="marketing-theme min-h-screen page-network-bg text-white">
             {/* BLUF Summary — SSR rendered above the fold */}
-            <div className="pt-20 relative overflow-hidden">
+            <div className="relative overflow-hidden">
                 <section className="relative min-h-[60vh] flex flex-col items-center justify-center py-16">
 
                     <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -224,16 +206,8 @@ const ServicesPage: React.FC = () => {
                                 {blufSummary}
                             </p>
                             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                                <Link href="/register">
-                                    <Button className="bg-teal-500 text-slate-950 font-bold px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start Free Trial</span>
-                                    </Button>
-                                </Link>
-                                <Link href="/guide">
-                                    <Button variant="outline" className="px-10 py-5 h-auto text-lg rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">View Setup Guide</span>
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start Free Trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                         </AnimateIn>
                     </div>
@@ -291,18 +265,8 @@ const ServicesPage: React.FC = () => {
                                                 ))}
                                             </div>
                                             <div className="mt-8 flex flex-col gap-3">
-                                                <Link href="/register">
-                                                    <Button className="w-full bg-teal-600 font-bold py-4 rounded-xl button-fill-hover">
-                                                        <span className="relative z-10 text-slate-950">Try This Free</span>
-                                                    </Button>
-                                                </Link>
-                                                <Button
-                                                    variant="outline"
-                                                    className="w-full py-4 rounded-xl button-fill-hover"
-                                                    onClick={() => window.open('https://calendly.com/bonniealphaclonesystems/30min', '_blank')}
-                                                >
-                                                    <span className="relative z-10">Book a Demo Call</span>
-                                                </Button>
+                                                <PrimaryCTA className="w-full">Try This Free</PrimaryCTA>
+                                                <SecondaryCTA className="w-full">Book a Demo Call</SecondaryCTA>
                                             </div>
                                         </div>
                                     </div>
@@ -391,21 +355,8 @@ const ServicesPage: React.FC = () => {
                                 Start your free trial today. No credit card required for the first 14 days. Cancel anytime from your account.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-4">
-                                <Link href="/register">
-                                    <Button className="text-lg px-10 py-5 h-auto bg-teal-500 text-slate-950 font-black shadow-xl shadow-teal-500/20 rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start 14-Day Free Trial</span>
-                                    </Button>
-                                </Link>
-                                <Button
-                                    variant="outline"
-                                    className="text-lg px-10 py-5 h-auto rounded-2xl button-fill-hover"
-                                    onClick={() => window.open('https://calendly.com/bonniealphaclonesystems/30min', '_blank')}
-                                >
-                                    <span className="relative z-10 flex items-center">
-                                        <Phone className="w-5 h-5 mr-2" />
-                                        Book a Live Demo
-                                    </span>
-                                </Button>
+                                <PrimaryCTA className="w-full sm:w-auto">Start 14-Day Free Trial</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a Live Demo</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-widest">
                                 Starter $15/mo · Pro $45/mo · Enterprise $80/mo · 14-day trial · No card required
@@ -414,7 +365,6 @@ const ServicesPage: React.FC = () => {
                     </div>
                 </section>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

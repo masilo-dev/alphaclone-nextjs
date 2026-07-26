@@ -1,24 +1,13 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import {
-    Globe, ArrowRight, Building2, Clock, CircuitBoard, Sparkles, Zap, Shield
+    Globe, Clock, CircuitBoard, Sparkles
 } from 'lucide-react';
-import { Button } from '../ui/UIComponents';
-import PublicNavigation from '../PublicNavigation';
-import dynamic from 'next/dynamic';
 import AnimateIn from '../common/AnimateIn';
-import MarketingFooter from '../landing/MarketingFooter';
-
-const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
+import { PrimaryCTA, SecondaryCTA } from '@/components/marketing/system/CtaButtons';
 
 const AboutPage: React.FC = () => {
-    const [, setIsLoginOpen] = React.useState(false);
-
     const stats = [
         { label: 'Core Workflows', value: 'CRM', sub: 'pipeline and contacts' },
         { label: 'Revenue Workflow', value: 'Billing', sub: 'quotes, invoices, payments' },
@@ -102,15 +91,8 @@ const AboutPage: React.FC = () => {
     ];
 
     return (
-        <div className="min-h-screen page-network-bg text-white">
-            {/* Persistent full-page animated network background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <HeroBackground />
-            </div>
-
-            <PublicNavigation onLoginClick={() => setIsLoginOpen(true)} />
-
-            <div className="pt-20 relative overflow-hidden">
+        <div className="marketing-theme min-h-screen page-network-bg text-white">
+            <div className="relative overflow-hidden">
                 <section className="relative min-h-[50vh] flex flex-col items-center justify-center pt-24 pb-20">
                     
                     <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -303,19 +285,8 @@ const AboutPage: React.FC = () => {
                                 Start a 14-day trial and build your Unified Business OS before you pay.
                             </p>
                             <div className="flex flex-col sm:flex-row justify-center gap-6">
-                                <Link href="/register">
-                                    <Button className="bg-teal-500 text-slate-950 text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
-                                        <span className="relative z-10">Start Your OS</span>
-                                    </Button>
-                                </Link>
-                                <Link href="/pricing">
-                                    <Button variant="outline" className="text-xl px-12 py-5 h-auto rounded-2xl button-fill-hover">
-                                        <span className="relative z-10 flex items-center">
-                                            View Plans
-                                            <ArrowRight className="w-5 h-5 ml-3" />
-                                        </span>
-                                    </Button>
-                                </Link>
+                                <PrimaryCTA className="w-full sm:w-auto">Start Your OS</PrimaryCTA>
+                                <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
                             </div>
                             <p className="mt-8 text-slate-500 text-sm font-semibold uppercase tracking-[0.2em]">
                                 14-Day Free Trial • No Credit Card • Zero Friction
@@ -324,7 +295,6 @@ const AboutPage: React.FC = () => {
                     </div>
                 </section>
             </div>
-            <MarketingFooter />
         </div>
     );
 };

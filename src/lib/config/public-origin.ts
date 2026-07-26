@@ -134,13 +134,14 @@ function assertSafePublicOrigin(origin: string): void {
     throw new PublicOriginConfigurationError(`PUBLIC_APP_ORIGIN is not a valid URL: ${origin}`);
   }
 
+  // Localhost / loopback is fine for local development only — never in production.
   if (containsBlockedHost(origin) || containsBlockedHost(parsed.hostname)) {
-    throw new PublicOriginConfigurationError(
-      `PUBLIC_APP_ORIGIN must not use localhost, 0.0.0.0, or internal Railway hostnames: ${origin}`
-    );
-  }
-
-  if (isProductionRuntime() && parsed.protocol !== 'https:') {
+    if (isProductionRuntime()) {
+      throw new PublicOriginConfigurationError(
+        `PUBLIC_APP_ORIGIN must not use localhost, 0.0.0.0, or internal Railway hostnames: ${origin}`
+      );
+    }
+  } else if (isProductionRuntime() && parsed.protocol !== 'https:') {
     throw new PublicOriginConfigurationError(
       `PUBLIC_APP_ORIGIN must use HTTPS in production: ${origin}`
     );
@@ -162,12 +163,12 @@ function assertSafeMcpResource(resource: string, origin: string): void {
   }
 
   if (containsBlockedHost(resource) || containsBlockedHost(parsed.hostname)) {
-    throw new PublicOriginConfigurationError(
-      `PUBLIC_MCP_RESOURCE must not use internal or loopback hosts: ${resource}`
-    );
-  }
-
-  if (isProductionRuntime() && parsed.protocol !== 'https:') {
+    if (isProductionRuntime()) {
+      throw new PublicOriginConfigurationError(
+        `PUBLIC_MCP_RESOURCE must not use internal or loopback hosts: ${resource}`
+      );
+    }
+  } else if (isProductionRuntime() && parsed.protocol !== 'https:') {
     throw new PublicOriginConfigurationError(
       `PUBLIC_MCP_RESOURCE must be HTTPS in production: ${resource}`
     );

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Receipt, Plus, Trash2, Edit2, Filter, Download, CheckCircle2,
-    Clock, XCircle, DollarSign, TrendingUp, TrendingDown, Loader2,
-    Tag, Calendar, ChevronDown, X, AlertCircle, FileText, Camera, Sparkles
+    Receipt, Trash2, Edit2, CheckCircle2,
+    Clock, DollarSign, Loader2,
+    X, Camera, Sparkles
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -17,6 +17,11 @@ import {
     ResponsiveTableMobile,
     rowActionsClass,
 } from '../../ui/ResponsiveTable';
+import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
+import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
+import { TabSkeleton } from '@/components/ui/TabSkeleton';
 
 interface ExpenseCategory {
     id: string;
@@ -328,155 +333,141 @@ export default function ExpenseTrackerTab() {
     const fmt = (n: number, currency = 'USD') =>
         new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(n);
 
+    const openAddExpense = () => {
+        setShowForm(true);
+        setEditingId(null);
+        setForm({ ...EMPTY_FORM });
+        setReceiptPreview(null);
+    };
+
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
-            </div>
-        );
+        return <TabSkeleton rows={6} showStats />;
     }
 
     return (
-        <div className="space-y-6">
+        <ModulePageLayout
+            header={(
+                <PageHeader
+                    moduleLabel="Money"
+                    title="Expenses"
+                    description="Track, categorize, and manage business spending"
+                    primaryAction={{ label: 'Add Expense', onClick: openAddExpense, variant: 'primary' }}
+                    secondaryActions={[
+                        {
+                            label: scanning ? 'Scanning…' : 'Receipt Scan',
+                            onClick: () => {
+                                const input = document.getElementById('expense-receipt-scan') as HTMLInputElement | null;
+                                input?.click();
+                            },
+                            disabled: scanning,
+                        },
+                    ]}
+                />
+            )}
+            toolbar={(
+                <div className="flex flex-wrap gap-2 items-center px-1">
+                    <input
+                        id="expense-receipt-scan"
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        className="hidden"
+                        onChange={handleCameraScan}
+                    />
+                    <select
+                        value={statusFilter}
+                        onChange={e => setStatusFilter(e.target.value)}
+                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="reimbursed">Reimbursed</option>
+                    </select>
+                    <select
+                        value={categoryFilter}
+                        onChange={e => setCategoryFilter(e.target.value)}
+                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
+                    >
+                        <option value="all">All Categories</option>
+                        {categories.map(c => (
+                            <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                        ))}
+                    </select>
+                    <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={e => setDateFrom(e.target.value)}
+                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
+                        aria-label="From date"
+                    />
+                    <input
+                        type="date"
+                        value={dateTo}
+                        onChange={e => setDateTo(e.target.value)}
+                        className="min-h-11 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
+                        aria-label="To date"
+                    />
+                    {(statusFilter !== 'all' || categoryFilter !== 'all' || dateFrom || dateTo) && (
+                        <button
+                            type="button"
+                            onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setDateFrom(''); setDateTo(''); }}
+                            className="flex items-center gap-1 min-h-11 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400 hover:bg-red-500/20 transition-colors"
+                        >
+                            <X className="w-3 h-3" /> Clear
+                        </button>
+                    )}
+                </div>
+            )}
+            stats={(
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-1">
+                    <div className="rounded-xl border border-white/5 bg-slate-900/50 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total Spending</span>
+                            <DollarSign className="w-4 h-4 text-teal-400" />
+                        </div>
+                        <div className="text-xl font-semibold text-white font-mono tracking-tight">{fmt(totalAmount)}</div>
+                        <span className="text-xs text-slate-500">Filtered expenses</span>
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-slate-900/50 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Pending Approval</span>
+                            <Clock className="w-4 h-4 text-amber-400" />
+                        </div>
+                        <div className="text-xl font-semibold text-amber-400 font-mono tracking-tight">{fmt(pendingAmount)}</div>
+                        <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'pending').length} pending</span>
+                    </div>
+                    <div className="rounded-xl border border-white/5 bg-slate-900/50 p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Approved Spend</span>
+                            <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                        </div>
+                        <div className="text-xl font-semibold text-teal-400 font-mono tracking-tight">{fmt(approvedAmount)}</div>
+                        <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'approved').length} approved</span>
+                    </div>
+                </div>
+            )}
+        >
             {scanning && (
                 <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[110] flex flex-col items-center justify-center gap-4">
                     <div className="relative w-20 h-20">
-                        <div className="absolute inset-0 border-4 border-violet-500/30 rounded-full" />
-                        <div className="absolute inset-0 border-4 border-t-violet-500 rounded-full animate-spin" />
+                        <div className="absolute inset-0 border-4 border-teal-500/30 rounded-full" />
+                        <div className="absolute inset-0 border-4 border-t-teal-500 rounded-full animate-spin" />
                         <div className="absolute inset-4 bg-slate-900 rounded-full flex items-center justify-center">
-                            <Camera className="w-6 h-6 text-violet-400" />
+                            <Camera className="w-6 h-6 text-teal-400" />
                         </div>
                     </div>
                     <div className="text-center space-y-1">
-                        <p className="text-white font-bold flex items-center gap-2 justify-center">
-                            <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
-                            AI Scanner Active
+                        <p className="text-white font-semibold flex items-center gap-2 justify-center">
+                            <Sparkles className="w-4 h-4 text-teal-400 animate-pulse" />
+                            Scanning receipt
                         </p>
-                        <p className="text-xs text-slate-400">Extracting receipt details with OCR...</p>
+                        <p className="text-xs text-slate-400">Extracting details with OCR…</p>
                     </div>
                 </div>
             )}
 
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-white">Expense Tracker</h2>
-                    <p className="text-sm text-slate-400">Track, categorize, and manage business expenses</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-white/10 rounded-xl font-semibold text-sm transition-all cursor-pointer active:scale-95">
-                        <Camera className="w-4 h-4 text-violet-400" />
-                        <span>Receipt Scan</span>
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            capture="environment" 
-                            className="hidden" 
-                            onChange={handleCameraScan} 
-                        />
-                    </label>
-                    <button
-                        onClick={() => { setShowForm(true); setEditingId(null); setForm({ ...EMPTY_FORM }); setReceiptPreview(null); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-all active:scale-95"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Expense
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* 28px Prominent Spend Card */}
-                <div className="col-span-1 bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-500/30 rounded-3xl p-6 relative overflow-hidden shadow-lg shadow-violet-500/5">
-                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-violet-500/10 rounded-full blur-xl pointer-events-none" />
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Spending</span>
-                        <DollarSign className="w-5 h-5 text-violet-400" />
-                    </div>
-                    <div className="text-[28px] font-black text-white font-mono tracking-tight leading-none mb-1">
-                        {fmt(totalAmount)}
-                    </div>
-                    <span className="text-xs text-slate-500">Filtered active expenses</span>
-                </div>
-
-                {/* Pending Card */}
-                <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pending Approval</span>
-                        <Clock className="w-5 h-5 text-amber-400" />
-                    </div>
-                    <div>
-                        <div className="text-xl font-bold text-amber-400 font-mono tracking-tight leading-none mb-1">
-                            {fmt(pendingAmount)}
-                        </div>
-                        <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'pending').length} pending items</span>
-                    </div>
-                </div>
-
-                {/* Approved Card */}
-                <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-6 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Approved Spend</span>
-                        <CheckCircle2 className="w-5 h-5 text-teal-400" />
-                    </div>
-                    <div>
-                        <div className="text-xl font-bold text-teal-400 font-mono tracking-tight leading-none mb-1">
-                            {fmt(approvedAmount)}
-                        </div>
-                        <span className="text-xs text-slate-500">{filtered.filter(e => e.status === 'approved').length} approved items</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
-                <select
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                >
-                    <option value="all">All Statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="reimbursed">Reimbursed</option>
-                </select>
-                <select
-                    value={categoryFilter}
-                    onChange={e => setCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                >
-                    <option value="all">All Categories</option>
-                    {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                    ))}
-                </select>
-                <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={e => setDateFrom(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                    placeholder="From"
-                />
-                <input
-                    type="date"
-                    value={dateTo}
-                    onChange={e => setDateTo(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-teal-500"
-                />
-                {(statusFilter !== 'all' || categoryFilter !== 'all' || dateFrom || dateTo) && (
-                    <button
-                        onClick={() => { setStatusFilter('all'); setCategoryFilter('all'); setDateFrom(''); setDateTo(''); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400 hover:bg-red-500/20 transition-colors"
-                    >
-                        <X className="w-3 h-3" /> Clear
-                    </button>
-                )}
-            </div>
-
-            {/* Add/Edit Form */}
-            {/* Add/Edit Form */}
             <DetailDrawer
                 open={showForm}
                 onOpenChange={(open) => {
@@ -590,7 +581,7 @@ export default function ExpenseTrackerTab() {
                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">Scanned Receipt Attachment</label>
                                 <div className="relative w-32 h-32 rounded-2xl overflow-hidden border border-white/10 bg-slate-950 flex items-center justify-center group/receipt">
                                     <img src={receiptPreview} alt="Receipt Preview" className="w-full h-full object-cover" />
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => setReceiptPreview(null)}
                                         className="absolute top-2 right-2 p-1.5 bg-black/80 hover:bg-black text-white rounded-full transition-colors"
@@ -615,13 +606,36 @@ export default function ExpenseTrackerTab() {
                 </div>
             </DetailDrawer>
 
-            {/* Expenses Table */}
             {filtered.length === 0 ? (
-                <div className="text-center py-16 border border-dashed border-slate-700 rounded-2xl">
-                    <Receipt className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                    <p className="text-slate-400 font-semibold">No expenses found</p>
-                    <p className="text-slate-600 text-sm mt-1">Add your first expense to start tracking spending.</p>
-                </div>
+                expenses.length === 0 ? (
+                    <EmptyState
+                        icon={Receipt}
+                        title="No expenses yet"
+                        description="Add your first expense or scan a receipt to start tracking spend."
+                        actionLabel="Add Expense"
+                        onAction={openAddExpense}
+                    />
+                ) : (
+                    <StatePanel
+                        kind="empty"
+                        title="No expenses match these filters"
+                        description="Clear filters or adjust the date range to see more results."
+                        compact
+                        actions={[
+                            {
+                                label: 'Clear filters',
+                                onClick: () => {
+                                    setStatusFilter('all');
+                                    setCategoryFilter('all');
+                                    setDateFrom('');
+                                    setDateTo('');
+                                },
+                                primary: true,
+                            },
+                            { label: 'Add Expense', onClick: openAddExpense },
+                        ]}
+                    />
+                )
             ) : (
                 <>
                 <ResponsiveTableMobile>
@@ -760,6 +774,6 @@ export default function ExpenseTrackerTab() {
                 </ResponsiveTableDesktop>
                 </>
             )}
-        </div>
+        </ModulePageLayout>
     );
 }

@@ -26,6 +26,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/project-management',
         '/ai-agents',
         '/video-meetings',
+        '/marketing/email',
+        '/marketing/automation',
+        '/marketing/forms',
+        '/marketing/sequences',
+        '/solutions/solo-founders',
+        '/solutions/agencies',
+        '/solutions/consultants',
+        '/results',
         '/claude-manus-integrations',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
@@ -39,6 +47,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             route === '/project-management' ||
             route === '/ai-agents' ||
             route === '/video-meetings' ||
+            route.startsWith('/marketing/') ||
+            route.startsWith('/solutions/') ||
+            route === '/results' ||
             route === '/claude-manus-integrations'
                 ? 0.85
                 : 0.7,

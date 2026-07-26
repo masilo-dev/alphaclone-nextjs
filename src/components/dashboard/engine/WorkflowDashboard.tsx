@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 import type { WorkflowCondition, WorkflowAction, TriggerType, ActionType } from '@/services/engine/WorkflowExecutor';
 
 interface WorkflowDef {
@@ -334,26 +335,22 @@ export default function WorkflowDashboard() {
 
     return (
         <div className="space-y-6 ac-scroll-full ac-enterprise-module">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-xl font-bold text-white">AlphaClone Flow Engine</h2>
-                    <p className="text-sm text-slate-400">Automated orchestration for leads, forms, SMS, and ingestion events</p>
-                </div>
-                <div className="flex gap-2">
-                    {workflows.length === 0 && (
-                        <button onClick={seedDefaults} disabled={seeding}
-                            className="flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 rounded-xl text-sm transition-colors">
-                            {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                            Add Defaults
-                        </button>
-                    )}
-                    <button onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-white rounded-xl font-semibold text-sm transition-colors">
-                        <Plus className="w-4 h-4" /> New Workflow
-                    </button>
-                </div>
-            </div>
+            <EnterprisePageHeader
+                moduleKey="workflows"
+                primaryAction={{
+                    label: 'New Workflow',
+                    onClick: () => setShowForm(true),
+                }}
+                secondaryActions={
+                    workflows.length === 0
+                        ? [{
+                            label: seeding ? 'Adding…' : 'Add Defaults',
+                            onClick: seedDefaults,
+                            disabled: seeding,
+                        }]
+                        : undefined
+                }
+            />
 
             {(workflows.length > 0 || executions.length > 0) && (
                 <ModuleStatCards stats={workflowStats} />

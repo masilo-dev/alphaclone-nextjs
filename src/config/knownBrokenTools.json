@@ -5,19 +5,6 @@
     "reason": "Deal creation fails intermittently; use manual task escalation in automated playbooks.",
     "workaround": null
   },
-  "schedule_social_post": {
-    "symptom": "missing DB table",
-    "action": "redirect",
-    "reason": "schedule_social_post table missing; use create_social_post with scheduled_at.",
-    "workaround": {
-      "tool": "create_social_post",
-      "argMap": {
-        "scheduled_at": "scheduled_at",
-        "caption": "caption",
-        "platforms": "platforms"
-      }
-    }
-  },
   "create_post_with_ai_image": {
     "symptom": "invalid hd param",
     "action": "sanitize_args",

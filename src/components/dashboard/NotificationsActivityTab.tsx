@@ -13,6 +13,7 @@ import { usePushNotifications } from '../../hooks/usePushNotifications';
 import type { DashboardFeedItem } from '@/types/dashboardStats';
 import EmptyState from '@/components/ui/EmptyState';
 import { WORKSPACE } from '@/constants/design';
+import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
 
 interface NotificationsActivityTabProps {
   user: User;
@@ -67,12 +68,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
 
   return (
     <ModulePageLayout
-      header={
-        <div className="px-1 pb-2">
-          <h1 className="text-lg font-semibold text-white">Notifications & Activity</h1>
-          <p className="text-sm text-slate-400">Alerts, audit trail, and preference controls</p>
-        </div>
-      }
+      header={<EnterprisePageHeader moduleKey="notifications" />}
     >
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4 ac-scroll-full pb-24">
         <div className={`overflow-hidden ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>

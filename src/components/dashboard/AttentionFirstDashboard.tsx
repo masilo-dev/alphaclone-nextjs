@@ -24,6 +24,8 @@ import {
   isTechnicalJargonText,
 } from '@/lib/copy/businessFriendlyErrors';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/lib/format/currency';
+import { WORKSPACE } from '@/constants/design';
 
 interface AttentionItem {
   id: string;
@@ -40,6 +42,14 @@ interface BonnieAction {
   timestamp: string;
 }
 
+function greetingForNow(name?: string | null): string {
+  const hour = new Date().getHours();
+  const part =
+    hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const short = (name || '').trim().split(/\s+/)[0];
+  return short ? `${part}, ${short}` : part;
+}
+
 export function AttentionFirstDashboard() {
   const { currentTenant, getDashboardStats } = useTenant();
   const { user } = useAuth();
@@ -47,12 +57,16 @@ export function AttentionFirstDashboard() {
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [bonnieActions, setBonnieActions] = useState<BonnieAction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!currentTenant?.id || !user?.id) return;
-    void getDashboardStats(currentTenant.id, user.id).then((r) => {
-      setStats((r.stats as Record<string, unknown>) ?? null);
-    });
+    setLoading(true);
+    void getDashboardStats(currentTenant.id, user.id)
+      .then((r) => {
+        setStats((r.stats as Record<string, unknown>) ?? null);
+      })
+      .finally(() => setLoading(false));
   }, [currentTenant?.id, user?.id, getDashboardStats]);
 
   useEffect(() => {
@@ -140,18 +154,101 @@ export function AttentionFirstDashboard() {
 
   const revenue = Number(stats?.revenue ?? stats?.totalRevenue ?? 0);
   const outstanding = Number(stats?.outstanding ?? stats?.outstandingInvoices ?? 0);
+  const recentActivity = Array.isArray(stats?.recentActivity)
+    ? (stats.recentActivity as Array<{ text?: string; time?: string }>).slice(0, 5)
+    : [];
+
+  const greeting = greetingForNow(user?.name || user?.email);
+
+  if (loading && !stats) {
+    return (
+      <div className="space-y-4 ac-module-section" role="status" aria-busy="true" aria-label="Loading home">
+        <div className="ac-workspace-panel p-5 ac-skeleton-pulse min-h-[88px]">
+          <div className="h-4 w-40 bg-[var(--ws-hover)] rounded" />
+          <div className="h-3 w-56 bg-[var(--ws-hover)] rounded mt-3" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="ac-workspace-panel p-4 ac-skeleton-pulse min-h-[84px]" />
+          ))}
+        </div>
+        <div className="ac-workspace-panel p-4 ac-skeleton-pulse min-h-[120px]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4 ac-module-section">
-      {/* Needs Attention */}
-      <section className="ac-workspace-panel p-4">
-        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-amber-400" aria-hidden="true" />
-          {HUMAN_LABELS.needsAttention}
-        </h2>
+    <div className="space-y-4 ac-module-section ac-home-feed">
+      {/* First viewport: greeting + money — one clear composition */}
+      <header className="ac-workspace-panel px-4 py-4 md:px-5 md:py-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0">
+            <p className={WORKSPACE.typography.sectionLabel}>Home</p>
+            <h2 className="mt-1 text-[1.25rem] md:text-[1.375rem] font-semibold tracking-tight text-[var(--ws-text-primary,#fff)]">
+              {greeting}
+            </h2>
+            <p className="mt-1 text-[13px] text-[var(--ws-text-secondary)] line-clamp-2">
+              {currentTenant?.name
+                ? `${currentTenant.name} — focus on what needs you, then let Bonnie handle the rest.`
+                : 'Focus on what needs you, then let Bonnie handle the rest.'}
+            </p>
+          </div>
+          <Link
+            href="/dashboard/bonnie"
+            className={cn(WORKSPACE.action.primary, 'inline-flex items-center justify-center gap-2 min-h-11 px-4 shrink-0')}
+          >
+            <Bot className="w-4 h-4" aria-hidden />
+            Ask Bonnie
+          </Link>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Link
+            href="/dashboard/business/billing"
+            className="rounded-[var(--ws-radius-lg)] border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-3 transition-colors hover:border-emerald-500/35"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
+              <DollarSign className="w-3.5 h-3.5 text-emerald-400" aria-hidden />
+              Money in
+            </p>
+            <p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums tracking-tight text-emerald-400">
+              {formatCurrency(revenue)}
+            </p>
+          </Link>
+          <Link
+            href="/dashboard/business/billing/manage"
+            className="rounded-[var(--ws-radius-lg)] border border-amber-500/20 bg-amber-500/[0.06] px-3 py-3 transition-colors hover:border-amber-500/35"
+          >
+            <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--ws-text-tertiary)] flex items-center gap-1.5">
+              <Receipt className="w-3.5 h-3.5 text-amber-400" aria-hidden />
+              To collect
+            </p>
+            <p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums tracking-tight text-amber-400">
+              {formatCurrency(outstanding)}
+            </p>
+          </Link>
+        </div>
+      </header>
+
+      {/* Primary job: needs attention */}
+      <section className="ac-workspace-panel p-4 md:p-5" aria-labelledby="home-attention-heading">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3
+            id="home-attention-heading"
+            className={cn(WORKSPACE.typography.panelTitle, 'flex items-center gap-2')}
+          >
+            <AlertCircle className="w-4 h-4 text-amber-400" aria-hidden />
+            {HUMAN_LABELS.needsAttention}
+          </h3>
+          {attentionItems.length > 0 ? (
+            <span className="text-[11px] font-medium text-[var(--ws-text-tertiary)] tabular-nums">
+              {Math.min(attentionItems.length, 6)} open
+            </span>
+          ) : null}
+        </div>
         {attentionItems.length === 0 ? (
-          <p className="text-[12px] text-[var(--ws-text-secondary)] flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" aria-hidden="true" />
+          <p className="text-[13px] text-[var(--ws-text-secondary)] flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" aria-hidden />
             Nothing urgent right now — Bonnie is watching your business.
           </p>
         ) : (
@@ -161,18 +258,22 @@ export function AttentionFirstDashboard() {
                 <Link
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 p-2.5 rounded-lg border transition-colors hover:border-teal-500/30',
-                    item.severity === 'high' ? 'border-amber-500/20 bg-amber-500/5' : 'border-white/5 bg-white/[0.02]'
+                    'flex items-center gap-3 min-h-11 px-3 py-2.5 rounded-[var(--ws-radius-lg)] border transition-colors',
+                    item.severity === 'high'
+                      ? 'border-amber-500/25 bg-amber-500/[0.06] hover:border-amber-500/40'
+                      : 'border-[var(--ws-border)] bg-[var(--ws-hover)] hover:border-teal-500/30'
                   )}
                 >
-                  <item.icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden="true" />
+                  <item.icon className="w-4 h-4 text-teal-400 shrink-0" aria-hidden />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[var(--ws-text-primary)]">{item.label}</p>
+                    <p className="text-[13px] font-medium text-[var(--ws-text-primary,#fff)]">
+                      {item.label}
+                    </p>
                     {item.detail ? (
-                      <p className="text-[11px] text-[var(--ws-text-tertiary)]">{item.detail}</p>
+                      <p className="text-[12px] text-[var(--ws-text-tertiary)]">{item.detail}</p>
                     ) : null}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)] shrink-0" aria-hidden="true" />
+                  <ChevronRight className="w-4 h-4 text-[var(--ws-text-tertiary)] shrink-0" aria-hidden />
                 </Link>
               </li>
             ))}
@@ -180,88 +281,83 @@ export function AttentionFirstDashboard() {
         )}
       </section>
 
-      {/* What Bonnie Did */}
-      <section className="ac-workspace-panel p-4">
-        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3 flex items-center gap-2">
-          <Bot className="w-4 h-4 text-teal-400" aria-hidden="true" />
-          {HUMAN_LABELS.whatBonnieDid}
-        </h2>
-        {bonnieActions.length === 0 ? (
-          <p className="text-[12px] text-[var(--ws-text-secondary)]">
-            Bonnie will show recent actions here as your workspace gets active.
-          </p>
-        ) : (
-          <ul className="space-y-2">
-            {bonnieActions.map((action) => (
-              <li key={action.id} className="flex items-start gap-2 text-[12px] text-[var(--ws-text-secondary)]">
-                <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" aria-hidden="true" />
-                <span>{action.label}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <Link href="/dashboard/bonnie" className="inline-block mt-3 text-[11px] text-teal-400 hover:text-teal-300">
-          Open Bonnie →
-        </Link>
-      </section>
-
-      {/* Recent business activity */}
-      <section className="ac-workspace-panel p-4">
-        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-400" aria-hidden="true" />
-          Recent activity
-        </h2>
-        {Array.isArray(stats?.recentActivity) && (stats.recentActivity as Array<{ text?: string; time?: string }>).length > 0 ? (
-          <ul className="space-y-2">
-            {(stats.recentActivity as Array<{ text?: string; time?: string }>).slice(0, 5).map((item, i) => (
-              <li key={`${item.text}-${i}`} className="flex items-start justify-between gap-3 text-[12px]">
-                <span className="text-[var(--ws-text-secondary)] line-clamp-2">{item.text || 'Update'}</span>
-                {item.time ? (
-                  <span className="text-[10px] text-[var(--ws-text-tertiary)] shrink-0">{item.time}</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-[12px] text-[var(--ws-text-secondary)]">
-            Wins and updates will show here as invoices, deals, and messages move forward.
-          </p>
-        )}
-        <Link href="/dashboard/notifications" className="inline-block mt-3 text-[11px] text-teal-400 hover:text-teal-300">
-          View all activity →
-        </Link>
-      </section>
-
-      {/* Money Snapshot */}
-      <section className="ac-workspace-panel p-4">
-        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-3 flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-emerald-400" aria-hidden="true" />
-          {HUMAN_LABELS.moneySnapshot}
-        </h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
-            <p className="text-[10px] uppercase tracking-wide text-[var(--ws-text-tertiary)]">Money coming in</p>
-            <p className="text-lg font-semibold text-emerald-400 mt-1">
-              ${revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+      {/* Secondary: Bonnie + activity side-by-side on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section className="ac-workspace-panel p-4 md:p-5" aria-labelledby="home-bonnie-heading">
+          <h3
+            id="home-bonnie-heading"
+            className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
+          >
+            <Bot className="w-4 h-4 text-teal-400" aria-hidden />
+            {HUMAN_LABELS.whatBonnieDid}
+          </h3>
+          {bonnieActions.length === 0 ? (
+            <p className="text-[13px] text-[var(--ws-text-secondary)]">
+              Recent Bonnie actions will show here as your workspace gets active.
             </p>
-          </div>
-          <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/15">
-            <p className="text-[10px] uppercase tracking-wide text-[var(--ws-text-tertiary)]">Waiting to collect</p>
-            <p className="text-lg font-semibold text-amber-400 mt-1">
-              ${outstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </p>
-          </div>
-        </div>
-        <Link
-          href="/dashboard/business/billing"
-          className="inline-block mt-3 text-[11px] text-teal-400 hover:text-teal-300"
-        >
-          View money details →
-        </Link>
-      </section>
+          ) : (
+            <ul className="space-y-2.5">
+              {bonnieActions.map((action) => (
+                <li
+                  key={action.id}
+                  className="flex items-start gap-2 text-[13px] text-[var(--ws-text-secondary)]"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" aria-hidden />
+                  <span className="line-clamp-2">{action.label}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            href="/dashboard/bonnie"
+            className="inline-flex mt-4 text-[12px] font-medium text-teal-400 hover:text-teal-300"
+          >
+            Open Bonnie
+          </Link>
+        </section>
 
-      {/* Quick actions */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <section className="ac-workspace-panel p-4 md:p-5" aria-labelledby="home-activity-heading">
+          <h3
+            id="home-activity-heading"
+            className={cn(WORKSPACE.typography.panelTitle, 'mb-3 flex items-center gap-2')}
+          >
+            <Trophy className="w-4 h-4 text-amber-400" aria-hidden />
+            Recent activity
+          </h3>
+          {recentActivity.length > 0 ? (
+            <ul className="space-y-2.5">
+              {recentActivity.map((item, i) => (
+                <li
+                  key={`${item.text}-${i}`}
+                  className="flex items-start justify-between gap-3 text-[13px]"
+                >
+                  <span className="text-[var(--ws-text-secondary)] line-clamp-2">
+                    {item.text || 'Update'}
+                  </span>
+                  {item.time ? (
+                    <span className="text-[11px] text-[var(--ws-text-tertiary)] shrink-0 tabular-nums">
+                      {item.time}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-[var(--ws-text-secondary)]">
+              Invoices, deals, and messages will appear here as work moves forward.
+            </p>
+          )}
+          <Link
+            href="/dashboard/notifications"
+            className="inline-flex mt-4 text-[12px] font-medium text-teal-400 hover:text-teal-300"
+          >
+            View all activity
+          </Link>
+        </section>
+      </div>
+
+      {/* Compact jump row — not a card grid of equal panels */}
+      <nav aria-label="Quick links" className="flex flex-wrap gap-2">
         {[
           { label: 'Customers', href: '/dashboard/crm/workspace', icon: Target },
           { label: 'Communication', href: '/dashboard/comms', icon: Mail },
@@ -271,24 +367,13 @@ export function AttentionFirstDashboard() {
           <Link
             key={item.href}
             href={item.href}
-            className="ac-workspace-panel p-3 flex flex-col items-center gap-1.5 hover:border-teal-500/30 transition-colors text-center"
+            className="inline-flex items-center gap-2 min-h-11 px-3 rounded-[var(--ws-radius-lg)] border border-[var(--ws-border)] bg-[var(--ws-panel)] text-[12px] font-medium text-[var(--ws-text-secondary)] hover:border-teal-500/35 hover:text-[var(--ws-text-primary,#fff)] transition-colors"
           >
-            <item.icon className="w-4 h-4 text-teal-400" aria-hidden="true" />
-            <span className="text-[11px] font-medium text-[var(--ws-text-secondary)]">{item.label}</span>
+            <item.icon className="w-3.5 h-3.5 text-teal-400" aria-hidden />
+            {item.label}
           </Link>
         ))}
-      </section>
-
-      {/* Recent wins placeholder */}
-      <section className="ac-workspace-panel p-4">
-        <h2 className="text-[13px] font-semibold text-[var(--ws-text-primary)] mb-2 flex items-center gap-2">
-          <Trophy className="w-4 h-4 text-amber-400" aria-hidden="true" />
-          {HUMAN_LABELS.recentWins}
-        </h2>
-        <p className="text-[12px] text-[var(--ws-text-secondary)]">
-          Wins like paid invoices, signed contracts, and booked meetings will appear here as your business grows.
-        </p>
-      </section>
+      </nav>
     </div>
   );
 }

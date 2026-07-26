@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
 import DocsPageContent from './DocsPageContent';
 
 export const metadata: Metadata = {
@@ -35,7 +36,9 @@ export default function Page() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
             />
-            <DocsPageContent />
+            <MarketingLandingShell>
+                <DocsPageContent />
+            </MarketingLandingShell>
         </>
     );
 }

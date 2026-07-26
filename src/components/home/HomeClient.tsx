@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import LandingPage from '@/components/LandingPage';
+import MarketingHomePage from '@/components/marketing/system/MarketingHomePage';
 import AppLauncher from '@/components/AppLauncher';
 import { Project } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
@@ -110,7 +110,7 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />
       ) : (
-        <LandingPage />
+        <MarketingHomePage />
       )}
     </>
   );

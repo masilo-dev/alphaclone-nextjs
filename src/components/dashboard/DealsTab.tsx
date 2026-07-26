@@ -34,6 +34,7 @@ import {
 } from '@/lib/stageProgression';
 import { ACTIVE_DEAL_STAGES, isActiveDealStage } from '@/lib/crmPipelineStages';
 import { showDealStageNextSteps } from '@/lib/dealStageActions';
+import { showActionNextSteps, showInvoiceCreatedWithSendPrompt } from '@/components/common/showActionNextSteps';
 import { CRMNav } from './crm/CRMNav';
 import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
@@ -68,6 +69,7 @@ interface Deal {
   name: string;
   value: number;
   stage: DealStage;
+  contact_id?: string | null;
   contact_name?: string;
   contact_email?: string;
   score?: number;
@@ -164,8 +166,10 @@ const DealDetail: React.FC<{
   onBack: () => void;
   onStageChange: (id: string, stage: DealStage) => void;
   onComposeEmail?: (recipient: EmailRecipient, subject: string) => void;
+  onNavigate?: (path: string) => void;
   inDrawer?: boolean;
-}> = ({ deal, user, onBack, onStageChange, onComposeEmail, inDrawer }) => {
+}> = ({ deal, user, onBack, onStageChange, onComposeEmail, onNavigate, inDrawer }) => {
+  const router = useRouter();
   const col = STAGE_COLORS[deal.stage];
   const progress = getDealStageProgress(deal.stage);
   const nextStage = getForwardStageTarget(deal.stage);
@@ -178,6 +182,14 @@ const DealDetail: React.FC<{
   const [activityNote, setActivityNote] = useState('');
   const [creatingInvoice, setCreatingInvoice] = useState(false);
 
+  const navigate = useCallback(
+    (path: string) => {
+      if (onNavigate) onNavigate(path);
+      else router.push(path);
+    },
+    [onNavigate, router],
+  );
+
   const loadProducts = useCallback(async () => {
     setProductsLoading(true);
     const { products: rows } = await dealService.getDealProducts(deal.id);
@@ -188,6 +200,17 @@ const DealDetail: React.FC<{
   useEffect(() => { loadProducts(); }, [loadProducts]);
 
   const productsTotal = products.reduce((s, p) => s + (p.total || 0), 0);
+
+  const resolveClientIdForInvoice = useCallback(async (): Promise<string | undefined> => {
+    if (!deal.contact_id || !deal.tenant_id) return undefined;
+    const { data } = await supabase
+      .from('business_clients')
+      .select('id')
+      .eq('tenant_id', deal.tenant_id)
+      .eq('crm_contact_id', deal.contact_id)
+      .maybeSingle();
+    return data?.id as string | undefined;
+  }, [deal.contact_id, deal.tenant_id]);
 
   const handleAddProduct = async () => {
     const qty = parseFloat(newProduct.quantity) || 0;
@@ -224,23 +247,36 @@ const DealDetail: React.FC<{
   };
 
   const handleCreateInvoice = async () => {
-    if (!deal.tenant_id) { toast.error('Missing tenant'); return; }
+    if (!deal.tenant_id) { toast.error('Missing workspace'); return; }
     setCreatingInvoice(true);
-    const lineItems = products.length > 0
-      ? products.map(p => ({ description: p.productName, quantity: p.quantity, rate: p.unitPrice, amount: p.total }))
-      : [{ description: deal.name, quantity: 1, rate: deal.value || 0, amount: deal.value || 0 }];
-    const subtotal = lineItems.reduce((s, li) => s + (li.amount || 0), 0);
-    const { error } = await businessInvoiceService.createInvoice(deal.tenant_id, {
-      status: 'draft',
-      issueDate: new Date().toISOString().split('T')[0],
-      lineItems,
-      subtotal,
-      total: subtotal,
-      notes: `Generated from deal: ${deal.name}`,
-    });
-    setCreatingInvoice(false);
-    if (error) { toast.error(error); return; }
-    toast.success('Draft invoice created in Billing');
+    try {
+      const lineItems = products.length > 0
+        ? products.map(p => ({ description: p.productName, quantity: p.quantity, rate: p.unitPrice, amount: p.total }))
+        : [{ description: deal.name, quantity: 1, rate: deal.value || 0, amount: deal.value || 0 }];
+      const subtotal = lineItems.reduce((s, li) => s + (li.amount || 0), 0);
+      const clientId = await resolveClientIdForInvoice();
+      const { invoice, error } = await businessInvoiceService.createInvoice(deal.tenant_id, {
+        status: 'draft',
+        issueDate: new Date().toISOString().split('T')[0],
+        lineItems,
+        subtotal,
+        total: subtotal,
+        notes: `Generated from deal: ${deal.name}`,
+        ...(clientId ? { clientId } : {}),
+      });
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      const billingPath = invoice?.id
+        ? `/dashboard/business/billing/manage?invoiceId=${encodeURIComponent(invoice.id)}`
+        : '/dashboard/business/billing/manage';
+      navigate(billingPath);
+      showInvoiceCreatedWithSendPrompt(navigate);
+      showActionNextSteps('invoice_created', navigate);
+    } finally {
+      setCreatingInvoice(false);
+    }
   };
 
   return (
@@ -430,18 +466,50 @@ const DealDetail: React.FC<{
       </div>
 
       {inDrawer ? (
-        <div className="flex gap-2 pt-2 border-t border-white/5">
-          <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 text-[13px] text-slate-400 font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
-          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 text-[13px] text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
+        <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => navigate(deal.contact_id ? `/dashboard/crm/workspace?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/workspace')}
+              className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
+            >
+              Open customer
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)}
+              className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
+            >
+              Create quote
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/business/calendar')}
+              className="min-h-11 px-3 text-[13px] text-slate-300 font-bold rounded-xl border border-white/10 hover:bg-white/5"
+            >
+              Schedule follow-up
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setLogging(v => !v)} className="flex-1 min-h-11 py-2.5 text-[13px] text-slate-400 font-bold rounded-xl border border-white/10 hover:bg-white/5">Log Activity</button>
+            <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 min-h-11 py-2.5 text-[13px] text-emerald-400 font-bold rounded-xl border border-emerald-500/20 hover:bg-emerald-500/10 disabled:opacity-50">
+              {creatingInvoice ? 'Creating…' : 'Create Invoice'}
+            </button>
+          </div>
+        </div>
+      ) : (
+      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex flex-col pb-[env(safe-area-inset-bottom,0px)] z-20">
+        <div className="flex divide-x divide-white/5 overflow-x-auto">
+          <button type="button" onClick={() => navigate(deal.contact_id ? `/dashboard/crm/workspace?contactId=${encodeURIComponent(deal.contact_id)}` : '/dashboard/crm/workspace')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Customer</button>
+          <button type="button" onClick={() => navigate(`/dashboard/business/quotes?dealId=${encodeURIComponent(deal.id)}`)} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Quote</button>
+          <button type="button" onClick={() => navigate('/dashboard/business/calendar')} className="flex-1 min-w-[5.5rem] py-2.5 text-[11px] text-slate-400 font-bold hover:bg-white/5">Follow-up</button>
+        </div>
+        <div className="flex divide-x divide-white/5">
+          <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
+          <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 text-[13px] text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
             {creatingInvoice ? 'Creating…' : 'Create Invoice'}
           </button>
         </div>
-      ) : (
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-white/5 flex divide-x divide-white/5 pb-[env(safe-area-inset-bottom,0px)]">
-        <button onClick={() => setLogging(v => !v)} className="flex-1 py-3.5 text-[13px] text-slate-400 font-bold hover:bg-white/5 transition-colors">Log Activity</button>
-        <button onClick={handleCreateInvoice} disabled={creatingInvoice} className="flex-1 py-3.5 text-[13px] text-emerald-400 font-bold hover:bg-white/5 transition-colors disabled:opacity-50">
-          {creatingInvoice ? 'Creating…' : 'Create Invoice'}
-        </button>
       </div>
       )}
     </div>
@@ -1325,6 +1393,7 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
             onBack={() => setSelectedDeal(null)}
             onStageChange={handleStageChange}
             onComposeEmail={(recipient, subject) => setEmailCompose({ recipient, subject })}
+            onNavigate={(path) => router.push(path)}
             inDrawer
           />
         )}

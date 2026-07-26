@@ -107,7 +107,7 @@ export default function DemoPage() {
                             See how teams connect leads, delivery, and billing in one workspace — representative workflows from consultants and agencies.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                            <Link href="/register" className="w-full sm:w-auto">
+                            <Link href="/auth/login?register=true&type=business&plan=starter" className="w-full sm:w-auto">
                                 <Button size="lg" className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold px-12 h-14 w-full shadow-xl shadow-teal-500/20">
                                     Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
                                 </Button>

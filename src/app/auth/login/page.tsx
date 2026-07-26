@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic';
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import nextDynamic from 'next/dynamic';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
 import { AlertCircle, LogIn, UserPlus, Shield, Eye, EyeOff } from 'lucide-react';
@@ -19,11 +18,6 @@ import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import DevSetupBanner from '@/components/auth/DevSetupBanner';
-
-const HeroBackground = nextDynamic(() => import('@/components/landing/HeroBackground'), {
-    ssr: false,
-    loading: () => <div className="absolute inset-0 bg-slate-950" />,
-});
 
 export default function LoginPage() {
     return (
@@ -63,7 +57,6 @@ function LoginContent() {
       return null;
     };
     const oauthReturnPath = resolveExplicitNextRedirect();
-    const isOauthConnectFlow = Boolean(oauthReturnPath?.startsWith('/authorize'));
 
     const [isRegistering, setIsRegistering] = useState(isRegisterMode);
     const [email, setEmail] = useState('');
@@ -433,10 +426,6 @@ function LoginContent() {
     if (showMfaChallenge) {
         return (
             <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-center p-4 py-12 relative overflow-x-hidden overflow-y-auto">
-                <div className="fixed inset-0 z-0 pointer-events-none">
-                    <HeroBackground />
-                </div>
-
                 <div className="max-w-md w-full bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative z-10 text-center my-auto animate-slide-up">
                     <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Shield className="w-10 h-10 text-teal-400" />
@@ -492,16 +481,6 @@ function LoginContent() {
 
     return (
         <div className="min-h-[100dvh] page-network-bg marketing-theme bg-transparent flex flex-col items-center justify-start sm:justify-center p-3 py-3 relative overflow-x-hidden">
-            {/* Background Effects — skip heavy canvas in OAuth popups to avoid long blink */}
-            {!isOauthConnectFlow && (
-                <div className="fixed inset-0 z-0 pointer-events-none">
-                    <HeroBackground />
-                </div>
-            )}
-            {isOauthConnectFlow && (
-                <div className="fixed inset-0 z-0 pointer-events-none bg-slate-950" />
-            )}
-
             <div className="w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-xl p-4 sm:p-5 shadow-2xl relative z-10 flex-shrink-0 my-auto">
                 <div className="mb-3 text-center">
                     {isPWA ? (
