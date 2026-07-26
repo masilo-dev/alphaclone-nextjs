@@ -4610,86 +4610,17 @@ class AlphaCloneMCPServer {
         // â”€â”€ send_invoice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         case 'send_invoice': {
           const a = args as Record<string, any>;
-          const tenant_id = String(this.requireTenant(a) || '').trim();
-          const invoice_id = String(a.invoice_id || '').trim();
-          const { recipient_email, provider: preferredProvider } = a;
-          const user_id = this.ctx?.userId || null;
+          const tenant_id = this.requireTenant(a);
+          const { invoice_id } = a;
           if (!isUuidString(invoice_id)) {
             throw new Error('invoice_id must be a valid invoice UUID');
           }
-
-          const { invoice, error: fetchErr } = await getInvoiceWithDetailsAdmin(supabaseAdmin, invoice_id, tenant_id);
-          if (fetchErr || !invoice) throw new Error(`Invoice not found: ${fetchErr || 'Unknown error'}`);
-
-          // Generate PDF
-          const doc = businessInvoiceService.generatePDF(invoice, invoice.tenant, invoice.client);
-          const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-          const pdfBase64 = pdfBuffer.toString('base64');
-
-          const to = recipient_email || invoice.client?.email;
-          if (!to) throw new Error('Recipient email is required (not found on client record)');
-
-          const amount = `${invoice.currency || '$'}${Number(invoice.total).toFixed(2)}`;
-          const pdfUrl = await getPublicInvoicePaymentUrl(supabaseAdmin, invoice_id, tenant_id);
-
-          const dispatch = await sendEmailServer({
-            tenantId: tenant_id,
-            userId: user_id || undefined,
-            preferredProvider: preferredProvider as any,
-            to,
-            subject: `Invoice ${invoice.invoice_number} — ${amount}`,
-            fromName: invoice.tenant?.name || 'AlphaClone',
-            html: invoiceEmailTemplates.invoiceSent({
-              recipientName: invoice.client?.name || 'Valued Client',
-              recipientEmail: to,
-              tenantId: tenant_id,
-              invoiceNumber: invoice.invoice_number,
-              amount: Number(invoice.total || 0),
-              currency: invoice.currency || 'USD',
-              dueDate: invoice.due_date,
-              actionUrl: pdfUrl,
-              workspaceName: invoice.tenant?.name || 'AlphaClone Systems',
-              notes: invoice.notes || undefined,
-            }),
-            attachments: [{
-              filename: `Invoice_${invoice.invoice_number}.pdf`,
-              content: pdfBase64,
-              content_type: 'application/pdf',
-            }],
-            templateName: 'mcpInvoiceSent',
-            skipFooter: true,
-          });
-
-          if (!dispatch.success) {
-            throw new Error(`Invoice email delivery failed: ${dispatch.error || 'unknown error'} ${JSON.stringify(dispatch.errorDetails || [])}`);
-          }
-
-          const { error: updateError } = await supabaseAdmin
-            .from('business_invoices')
-            .update({
-              status: 'sent',
-              is_public: true,
-              sent_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('tenant_id', tenant_id)
-            .eq('id', invoice_id);
-          if (updateError) throw supabaseErrorToMcpClientError('send_invoice', updateError.message);
-
+          const { runId } = await start(invoiceLifecycleWorkflow, [{ invoiceId: invoice_id, tenantId: tenant_id }]);
           result = { content: [{ type: 'text', text: JSON.stringify({
             status: 'sent',
-            message: `Invoice ${invoice.invoice_number} sent successfully.`,
-            sent_to: to,
-            invoice_number: invoice.invoice_number,
-            amount,
-            provider_used: dispatch.provider,
-            email_id: dispatch.emailId,
-            pdf_url: pdfUrl,
-            attachment: {
-              filename: `Invoice_${invoice.invoice_number}.pdf`,
-              content_type: 'application/pdf',
-              base64: pdfBase64,
-            },
+            message: `Invoice lifecycle started successfully via background workflow.`,
+            invoice_id,
+            runId
           }, null, 2) }] };
           break;
         }

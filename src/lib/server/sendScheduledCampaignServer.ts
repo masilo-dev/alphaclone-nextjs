@@ -467,6 +467,21 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     senderName: fromName,
                 }
             );
+
+            const hasUnresolvedTags = /\{\{[a-zA-Z0-9_]+\}\}/.test(personalizedHtml) || /\{\{[a-zA-Z0-9_]+\}\}/.test(personalizedSubject);
+            if (hasUnresolvedTags) {
+                failedCount += 1;
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'failed',
+                        error_message: 'Blocked: Unresolved merge tags found in personalized email',
+                        metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage },
+                    })
+                    .eq('id', recipient.id);
+                continue;
+            }
+
             const preferredProvider = provider.id;
             const sendResult = await sendEmail(String(c.tenant_id || ''), {
                 to: recipient.email,
