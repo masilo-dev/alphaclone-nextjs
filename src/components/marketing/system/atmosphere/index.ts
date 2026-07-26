@@ -1,4 +1,8 @@
 export { default as MarketingBackground } from './MarketingBackground';
+export { default as MarketingAtmosphere } from './MarketingAtmosphere';
+export { default as AtmosphericOrb } from './AtmosphericOrb';
+export { default as OrbField } from './OrbField';
+export { default as FluidTransitionLayer } from './FluidTransitionLayer';
 export { default as HeroDataWaves } from './HeroDataWaves';
 export { default as CurvedDotField } from './CurvedDotField';
 export { default as SectionAmbientLight } from './SectionAmbientLight';

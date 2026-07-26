@@ -1,0 +1,374 @@
+[
+  {
+    "route": "/about",
+    "file": "src/app/about/page.tsx"
+  },
+  {
+    "route": "/account/privacy",
+    "file": "src/app/account/privacy/page.tsx"
+  },
+  {
+    "route": "/ai-agents",
+    "file": "src/app/ai-agents/page.tsx"
+  },
+  {
+    "route": "/ai-business-os",
+    "file": "src/app/ai-business-os/page.tsx"
+  },
+  {
+    "route": "/alpha",
+    "file": "src/app/alpha/page.tsx"
+  },
+  {
+    "route": "/auth/auth-code-error",
+    "file": "src/app/auth/auth-code-error/page.tsx"
+  },
+  {
+    "route": "/auth/login",
+    "file": "src/app/auth/login/page.tsx"
+  },
+  {
+    "route": "/auth/reset-password",
+    "file": "src/app/auth/reset-password/page.tsx"
+  },
+  {
+    "route": "/auth/welcome-gate",
+    "file": "src/app/auth/welcome-gate/page.tsx"
+  },
+  {
+    "route": "/authorize",
+    "file": "src/app/authorize/page.tsx"
+  },
+  {
+    "route": "/billing/upgrade",
+    "file": "src/app/billing/upgrade/page.tsx"
+  },
+  {
+    "route": "/blog/[slug]",
+    "file": "src/app/blog/[slug]/page.tsx"
+  },
+  {
+    "route": "/blog",
+    "file": "src/app/blog/page.tsx"
+  },
+  {
+    "route": "/bonnie/workspace",
+    "file": "src/app/bonnie/workspace/page.tsx"
+  },
+  {
+    "route": "/book/[slug]/[service_slug]",
+    "file": "src/app/book/[slug]/[service_slug]/page.tsx"
+  },
+  {
+    "route": "/book/[slug]",
+    "file": "src/app/book/[slug]/page.tsx"
+  },
+  {
+    "route": "/book",
+    "file": "src/app/book/page.tsx"
+  },
+  {
+    "route": "/book-demo",
+    "file": "src/app/book-demo/page.tsx"
+  },
+  {
+    "route": "/bp/[id]",
+    "file": "src/app/bp/[id]/page.tsx"
+  },
+  {
+    "route": "/call/[roomId]",
+    "file": "src/app/call/[roomId]/page.tsx"
+  },
+  {
+    "route": "/claude-manus-integrations",
+    "file": "src/app/claude-manus-integrations/page.tsx"
+  },
+  {
+    "route": "/compliance",
+    "file": "src/app/compliance/page.tsx"
+  },
+  {
+    "route": "/contact",
+    "file": "src/app/contact/page.tsx"
+  },
+  {
+    "route": "/contract/[id]",
+    "file": "src/app/contract/[id]/page.tsx"
+  },
+  {
+    "route": "/cookie-policy",
+    "file": "src/app/cookie-policy/page.tsx"
+  },
+  {
+    "route": "/crm",
+    "file": "src/app/crm/page.tsx"
+  },
+  {
+    "route": "/customers",
+    "file": "src/app/customers/page.tsx"
+  },
+  {
+    "route": "/dashboard/[[...slug]]",
+    "file": "src/app/dashboard/[[...slug]]/page.tsx"
+  },
+  {
+    "route": "/dashboard/call/[roomId]",
+    "file": "src/app/dashboard/call/[roomId]/page.tsx"
+  },
+  {
+    "route": "/data-deletion",
+    "file": "src/app/data-deletion/page.tsx"
+  },
+  {
+    "route": "/demo",
+    "file": "src/app/demo/page.tsx"
+  },
+  {
+    "route": "/docs",
+    "file": "src/app/docs/page.tsx"
+  },
+  {
+    "route": "/dpa",
+    "file": "src/app/dpa/page.tsx"
+  },
+  {
+    "route": "/ecosystem",
+    "file": "src/app/ecosystem/page.tsx"
+  },
+  {
+    "route": "/faq",
+    "file": "src/app/faq/page.tsx"
+  },
+  {
+    "route": "/form/[slug]/[formSlug]",
+    "file": "src/app/form/[slug]/[formSlug]/page.tsx"
+  },
+  {
+    "route": "/form/[slug]",
+    "file": "src/app/form/[slug]/page.tsx"
+  },
+  {
+    "route": "/guide",
+    "file": "src/app/guide/page.tsx"
+  },
+  {
+    "route": "/invite/[token]",
+    "file": "src/app/invite/[token]/page.tsx"
+  },
+  {
+    "route": "/invoice/[id]",
+    "file": "src/app/invoice/[id]/page.tsx"
+  },
+  {
+    "route": "/lead-management",
+    "file": "src/app/lead-management/page.tsx"
+  },
+  {
+    "route": "/legal/acceptable-use",
+    "file": "src/app/legal/acceptable-use/page.tsx"
+  },
+  {
+    "route": "/legal/ai-disclaimer",
+    "file": "src/app/legal/ai-disclaimer/page.tsx"
+  },
+  {
+    "route": "/legal/cookies",
+    "file": "src/app/legal/cookies/page.tsx"
+  },
+  {
+    "route": "/legal/data-request",
+    "file": "src/app/legal/data-request/page.tsx"
+  },
+  {
+    "route": "/legal/dpa",
+    "file": "src/app/legal/dpa/page.tsx"
+  },
+  {
+    "route": "/legal",
+    "file": "src/app/legal/page.tsx"
+  },
+  {
+    "route": "/legal/policy/[tenantId]/[slug]",
+    "file": "src/app/legal/policy/[tenantId]/[slug]/page.tsx"
+  },
+  {
+    "route": "/legal/privacy",
+    "file": "src/app/legal/privacy/page.tsx"
+  },
+  {
+    "route": "/legal/refund",
+    "file": "src/app/legal/refund/page.tsx"
+  },
+  {
+    "route": "/legal/sla",
+    "file": "src/app/legal/sla/page.tsx"
+  },
+  {
+    "route": "/legal/terms",
+    "file": "src/app/legal/terms/page.tsx"
+  },
+  {
+    "route": "/login",
+    "file": "src/app/login/page.tsx"
+  },
+  {
+    "route": "/maintenance",
+    "file": "src/app/maintenance/page.tsx"
+  },
+  {
+    "route": "/marketing/automation",
+    "file": "src/app/marketing/automation/page.tsx"
+  },
+  {
+    "route": "/marketing/email",
+    "file": "src/app/marketing/email/page.tsx"
+  },
+  {
+    "route": "/marketing/forms",
+    "file": "src/app/marketing/forms/page.tsx"
+  },
+  {
+    "route": "/marketing/sequences",
+    "file": "src/app/marketing/sequences/page.tsx"
+  },
+  {
+    "route": "/meet/[id]",
+    "file": "src/app/meet/[id]/page.tsx"
+  },
+  {
+    "route": "/onboarding/create-business",
+    "file": "src/app/onboarding/create-business/page.tsx"
+  },
+  {
+    "route": "/p/[id]",
+    "file": "src/app/p/[id]/page.tsx"
+  },
+  {
+    "route": "/page.tsx",
+    "file": "src/app/page.tsx"
+  },
+  {
+    "route": "/platform-status",
+    "file": "src/app/platform-status/page.tsx"
+  },
+  {
+    "route": "/portal/[token]",
+    "file": "src/app/portal/[token]/page.tsx"
+  },
+  {
+    "route": "/pricing",
+    "file": "src/app/pricing/page.tsx"
+  },
+  {
+    "route": "/privacy/preferences",
+    "file": "src/app/privacy/preferences/page.tsx"
+  },
+  {
+    "route": "/privacy/request",
+    "file": "src/app/privacy/request/page.tsx"
+  },
+  {
+    "route": "/privacy/request/status",
+    "file": "src/app/privacy/request/status/page.tsx"
+  },
+  {
+    "route": "/privacy-choices",
+    "file": "src/app/privacy-choices/page.tsx"
+  },
+  {
+    "route": "/privacy-policy",
+    "file": "src/app/privacy-policy/page.tsx"
+  },
+  {
+    "route": "/private-docs",
+    "file": "src/app/private-docs/page.tsx"
+  },
+  {
+    "route": "/project/[id]",
+    "file": "src/app/project/[id]/page.tsx"
+  },
+  {
+    "route": "/project-management",
+    "file": "src/app/project-management/page.tsx"
+  },
+  {
+    "route": "/proposal/[token]",
+    "file": "src/app/proposal/[token]/page.tsx"
+  },
+  {
+    "route": "/public/receipt/[id]",
+    "file": "src/app/public/receipt/[id]/page.tsx"
+  },
+  {
+    "route": "/quote/[token]",
+    "file": "src/app/quote/[token]/page.tsx"
+  },
+  {
+    "route": "/reset-password",
+    "file": "src/app/reset-password/page.tsx"
+  },
+  {
+    "route": "/results",
+    "file": "src/app/results/page.tsx"
+  },
+  {
+    "route": "/search",
+    "file": "src/app/search/page.tsx"
+  },
+  {
+    "route": "/security-policy",
+    "file": "src/app/security-policy/page.tsx"
+  },
+  {
+    "route": "/services",
+    "file": "src/app/services/page.tsx"
+  },
+  {
+    "route": "/settings/legal/[[...section]]",
+    "file": "src/app/settings/legal/[[...section]]/page.tsx"
+  },
+  {
+    "route": "/share/[id]",
+    "file": "src/app/share/[id]/page.tsx"
+  },
+  {
+    "route": "/sign/[token]",
+    "file": "src/app/sign/[token]/page.tsx"
+  },
+  {
+    "route": "/sign-contract",
+    "file": "src/app/sign-contract/page.tsx"
+  },
+  {
+    "route": "/sla",
+    "file": "src/app/sla/page.tsx"
+  },
+  {
+    "route": "/solutions/agencies",
+    "file": "src/app/solutions/agencies/page.tsx"
+  },
+  {
+    "route": "/solutions/consultants",
+    "file": "src/app/solutions/consultants/page.tsx"
+  },
+  {
+    "route": "/solutions/solo-founders",
+    "file": "src/app/solutions/solo-founders/page.tsx"
+  },
+  {
+    "route": "/terms-of-service",
+    "file": "src/app/terms-of-service/page.tsx"
+  },
+  {
+    "route": "/tools/ai-architect",
+    "file": "src/app/tools/ai-architect/page.tsx"
+  },
+  {
+    "route": "/video-meetings",
+    "file": "src/app/video-meetings/page.tsx"
+  },
+  {
+    "route": "/who-we-serve",
+    "file": "src/app/who-we-serve/page.tsx"
+  }
+]

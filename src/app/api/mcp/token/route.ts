@@ -10,8 +10,8 @@ import { loadMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
 import {
   assertRefreshClientBinding,
   logOAuthTokenIssuance,
-  revokeActiveTokensForClient,
 } from '@/lib/mcp/oauthTokenIsolation';
+import { encryptIntegrationToken } from '@/lib/integration/integrationTokenCrypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -388,27 +388,38 @@ export async function POST(req: NextRequest) {
 
       const issuedClientId = storedClientId || client_id || null;
 
-      // Per-client isolation: rotate only this client's prior active rows.
-      // Other MCP clients for the same user keep their tokens untouched.
-      if (issuedClientId && authCode.user_id) {
-        const revokePrior = await revokeActiveTokensForClient(supabase, {
-          userId: authCode.user_id,
-          clientId: issuedClientId,
-        });
-        if (revokePrior.error) {
-          console.warn('[MCP Token] Failed to revoke prior tokens for client (continuing):', {
-            client_id: issuedClientId,
-            user_id: authCode.user_id,
-            error: revokePrior.error.message,
-          });
-        }
+      // Every authorization creates an independent grant. Reconnecting a client
+      // or adding a second device must not replace any existing connection.
+      const { data: oauthClient } = issuedClientId
+        ? await supabase.from('mcp_oauth_clients').select('id, client_name').eq('client_id', issuedClientId).maybeSingle()
+        : { data: null };
+      const { data: grant, error: grantError } = await supabase
+        .from('mcp_oauth_grants')
+        .insert({
+          tenant_id: authCode.tenant_id,
+          user_id: authCode.user_id,
+          oauth_client_id: oauthClient?.id || null,
+          external_client_key: `${issuedClientId || 'generic'}:${crypto.randomUUID()}`,
+          connection_name: oauthClient?.client_name || issuedClientId || 'MCP connection',
+          scopes: authCode.scopes || ['workspace:read'],
+          status: 'active',
+          metadata: { authorization_code_id: authCode.id },
+        })
+        .select('id')
+        .single();
+      if (grantError || !grant) {
+        console.error('[MCP Token] Failed to create grant:', { code: grantError?.code });
+        return tokenError('server_error', 'Failed to create OAuth grant', 500);
       }
+      const tokenFamilyId = crypto.randomUUID();
 
       const tokenRow: Record<string, unknown> = {
         access_token: accessToken,
         refresh_token: refreshToken,
         access_token_hash: hashToken(accessToken),
         refresh_token_hash: hashToken(refreshToken),
+        access_token_encrypted: await encryptIntegrationToken(accessToken),
+        refresh_token_encrypted: await encryptIntegrationToken(refreshToken),
         token_type: 'Bearer',
         client_id: issuedClientId,
         user_id: authCode.user_id,
@@ -418,6 +429,9 @@ export async function POST(req: NextRequest) {
         refresh_expires_at: refreshExpiresAt,
         revoked: false,
         resource: expectedResource,
+        grant_id: grant.id,
+        token_family_id: tokenFamilyId,
+        access_expires_at: expiresAt,
       };
 
       let tokenInsertError = (await supabase.from('mcp_oauth_tokens').insert(tokenRow)).error;
@@ -556,12 +570,24 @@ export async function POST(req: NextRequest) {
       const refreshExpiresAt = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
       const boundResource = session.resource || expectedResource;
 
+      let claimed: Record<string, any> | null = null;
       if (session.id) {
-        await supabase
+        const claim = await supabase
           .from('mcp_oauth_tokens')
-          .update({ revoked: true, revoked_at: new Date().toISOString() })
+          .update({ revoked: true, revoked_at: new Date().toISOString(), revoke_reason: 'refresh_rotation' })
           .eq('id', session.id)
-          .eq('revoked', false);
+          .eq('revoked', false)
+          .select('id')
+          .maybeSingle();
+        claimed = claim.data;
+        if (claim.error || !claimed) {
+          return tokenError(
+            'invalid_grant',
+            'The refresh token is expired, revoked, malformed, or belongs to another client.',
+            401,
+            'Bearer realm="alphaclone-mcp", error="invalid_grant"'
+          );
+        }
       } else {
         await supabase.from('mcp_oauth_tokens').delete().eq('refresh_token', refresh_token);
       }
@@ -571,6 +597,8 @@ export async function POST(req: NextRequest) {
         refresh_token: newRefreshToken,
         access_token_hash: hashToken(newAccessToken),
         refresh_token_hash: hashToken(newRefreshToken),
+        access_token_encrypted: await encryptIntegrationToken(newAccessToken),
+        refresh_token_encrypted: await encryptIntegrationToken(newRefreshToken),
         token_type: 'Bearer',
         client_id: sessionClientId,
         user_id: session.user_id,
@@ -581,6 +609,9 @@ export async function POST(req: NextRequest) {
         revoked: false,
         resource: boundResource,
         token_family_id: session.token_family_id || session.id || null,
+        grant_id: session.grant_id,
+        previous_token_id: session.id,
+        access_expires_at: expiresAt,
       };
 
       let rotateError = (await supabase.from('mcp_oauth_tokens').insert(rotateRow)).error;
@@ -601,12 +632,28 @@ export async function POST(req: NextRequest) {
       }
 
       if (rotateError) {
+        if (session.id) {
+          await supabase.from('mcp_oauth_tokens').update({
+            revoked: false, revoked_at: null, revoke_reason: null,
+          }).eq('id', session.id).eq('revoke_reason', 'refresh_rotation');
+        }
         console.error('[MCP Token] Refresh rotation failed:', {
           error: rotateError.message,
           client_id: sessionClientId,
           user_id: session.user_id,
         });
         return tokenError('server_error', 'Failed to rotate tokens', 500);
+      }
+
+      const { data: replacement } = await supabase
+        .from('mcp_oauth_tokens')
+        .select('id')
+        .eq('refresh_token_hash', hashToken(newRefreshToken))
+        .maybeSingle();
+      if (replacement?.id && session.id) {
+        await supabase.from('mcp_oauth_tokens')
+          .update({ replaced_by_token_id: replacement.id })
+          .eq('id', session.id);
       }
 
       logOAuthTokenIssuance({

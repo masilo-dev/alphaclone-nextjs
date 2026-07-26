@@ -105,6 +105,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
     if (phases.length) {
       const start = new Date(input.startDate || project.created_at);
       const { error: phaseError } = await admin.from('project_milestones').insert(phases.map((phase) => ({
+        tenant_id: tenantId,
         project_id: project.id,
         name: phase.name,
         description: phase.description,

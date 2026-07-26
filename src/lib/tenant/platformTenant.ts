@@ -79,23 +79,13 @@ export async function assertTenantMembership(
   const admin = createSupabaseAdminClient();
   const { data, error } = await admin
     .from('tenant_users')
-    .select('tenant_id, user_id, role, status')
+    .select('tenant_id, user_id, role')
     .eq('tenant_id', tenantId)
     .eq('user_id', userId)
     .maybeSingle();
 
   if (error) {
-    // status column may not exist on older schemas
-    const retry = await admin
-      .from('tenant_users')
-      .select('tenant_id, user_id, role')
-      .eq('tenant_id', tenantId)
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (retry.error || !retry.data) {
-      throw new PlatformTenantError('Not a member of this workspace', 'NOT_A_MEMBER');
-    }
-    return { ...retry.data, status: 'active' };
+    throw new PlatformTenantError('Not a member of this workspace', 'NOT_A_MEMBER');
   }
 
   if (!data) {
@@ -116,12 +106,7 @@ export async function assertTenantMembership(
     throw new PlatformTenantError('Not a member of this workspace', 'NOT_A_MEMBER');
   }
 
-  const status = String(data.status || 'active').toLowerCase();
-  if (status === 'suspended' || status === 'removed' || status === 'invited') {
-    throw new PlatformTenantError('Workspace membership is not active', 'SUSPENDED');
-  }
-
-  return data as TenantMembershipRow;
+  return { ...data, status: 'active' } as TenantMembershipRow;
 }
 
 /**
@@ -143,16 +128,14 @@ export async function resolveActiveTenantForUser(params: {
   }
 
   const admin = createSupabaseAdminClient();
-  const { data: rows } = await admin
+  const { data: rows, error } = await admin
     .from('tenant_users')
-    .select('tenant_id, user_id, role, status')
+    .select('tenant_id, user_id, role')
     .eq('user_id', params.userId)
     .limit(25);
 
-  const active = (rows || []).filter((r) => {
-    const s = String((r as any).status || 'active').toLowerCase();
-    return s === 'active' || !r.status;
-  });
+  if (error) throw new PlatformTenantError('Unable to resolve workspace membership', 'NOT_A_MEMBER');
+  const active = (rows || []).map((row) => ({ ...row, status: 'active' }));
 
   if (active.length === 0) {
     throw new PlatformTenantError('No active workspace membership', 'NOT_A_MEMBER');

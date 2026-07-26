@@ -8,7 +8,16 @@ import { supabase } from '@/lib/supabase';
 import { tenantService } from './tenancy/TenantService';
 
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed' | 'reopened';
+export type TicketStatus =
+    | 'new'
+    | 'open'
+    | 'in_progress'
+    | 'waiting_on_customer'
+    | 'waiting_on_business'
+    | 'escalated'
+    | 'resolved'
+    | 'closed'
+    | 'reopened';
 export type TicketSource = 'lead' | 'client' | 'project' | 'invoice' | 'contract' | 'general';
 
 export interface Ticket {
@@ -28,13 +37,22 @@ export interface Ticket {
     resolved_at?: string;
     closed_at?: string;
     sla_due_at?: string;
+    ticket_number?: string;
+    contact_id?: string;
+    client_id?: string;
+    company_id?: string;
+    email_thread_id?: string;
+    channel?: string;
+    waiting_on?: 'customer' | 'business';
+    first_response_due_at?: string;
+    resolution_due_at?: string;
     tags?: string[];
     metadata?: Record<string, any>;
-    _origin?: 'tickets' | 'support_tickets';
+    _origin?: 'tickets';
 }
 
 export function isSupportChannelTicket(ticket: Ticket): boolean {
-    return ticket._origin === 'support_tickets' || ticket.metadata?.fromSupportTable === true;
+    return Boolean(ticket.channel && !['manual', 'email'].includes(ticket.channel));
 }
 
 export interface TicketComment {
@@ -121,13 +139,12 @@ class TicketService {
     /**
      * Update ticket status
      */
-    async updateStatus(ticketId: string, status: TicketStatus, origin: 'tickets' | 'support_tickets' = 'tickets'): Promise<void> {
+    async updateStatus(ticketId: string, status: TicketStatus, origin: 'tickets' = 'tickets'): Promise<void> {
         const tenantId = await this.getTenantId();
 
         const res = await fetch(`/api/tickets/${ticketId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, origin, status }) });
         const result = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(result.error || 'Failed to update ticket');
-        if (origin === 'support_tickets') return;
         const ticket = result.ticket;
         if (ticket) {
             await this.dispatchNotification('status_changed', ticket as Ticket, {
@@ -139,7 +156,7 @@ class TicketService {
     /**
      * Update ticket priority
      */
-    async updatePriority(ticketId: string, priority: TicketPriority, origin: 'tickets' | 'support_tickets' = 'tickets'): Promise<void> {
+    async updatePriority(ticketId: string, priority: TicketPriority, origin: 'tickets' = 'tickets'): Promise<void> {
         const tenantId = await this.getTenantId();
 
         const res = await fetch(`/api/tickets/${ticketId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, origin, priority }) });

@@ -73,3 +73,30 @@ test("rejects an invalid encryption-secret length", () => {
   assert.equal(result.ok, false);
   assert.match(result.errors.join("\n"), /exactly 32 characters/);
 });
+
+test("rejects public-prefixed server secrets", () => {
+  const result = validateProductionEnv(validEnv({
+    NEXT_PUBLIC_SERVICE_ROLE_KEY: "must-never-be-public",
+  }));
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /public environment prefix/);
+});
+
+test("rejects contradictory public origins", () => {
+  const result = validateProductionEnv(validEnv({
+    PUBLIC_APP_ORIGIN: "https://alphaclonesystems.com",
+    NEXT_PUBLIC_SITE_URL: "https://wrong.example.com",
+  }));
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /contradictory public URL/);
+});
+
+test("rejects partial SMTP and missing Stripe webhook configuration", () => {
+  const result = validateProductionEnv(validEnv({
+    SMTP_HOST: "smtp.example.com",
+    STRIPE_SECRET_KEY: "configured",
+  }));
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /SMTP configuration is incomplete/);
+  assert.match(result.errors.join("\n"), /STRIPE_WEBHOOK_SECRET/);
+});

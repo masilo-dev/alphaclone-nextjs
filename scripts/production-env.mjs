@@ -27,6 +27,17 @@ export function validateProductionEnv(env = process.env) {
   const errors = [];
   const configured = {};
 
+  for (const name of Object.keys(env)) {
+    if (
+      /^(?:NEXT_PUBLIC_|VITE_)/.test(name) &&
+      /(?:SERVICE_ROLE|DATABASE_URL|SMTP_PASS|WEBHOOK_SECRET|ENCRYPTION_SECRET|PRIVATE_KEY)/.test(name) &&
+      typeof env[name] === "string" &&
+      env[name].trim()
+    ) {
+      errors.push(`server secret must not use a public environment prefix (${name})`);
+    }
+  }
+
   const requiredGroups = [
     {
       label: "Supabase URL",
@@ -89,6 +100,23 @@ export function validateProductionEnv(env = process.env) {
       : "NEXT_PUBLIC_APP_URL";
   }
 
+  const configuredOrigins = [
+    ["PUBLIC_APP_ORIGIN", env.PUBLIC_APP_ORIGIN],
+    ["NEXT_PUBLIC_APP_URL", env.NEXT_PUBLIC_APP_URL],
+    ["NEXT_PUBLIC_SITE_URL", env.NEXT_PUBLIC_SITE_URL],
+    ["APP_URL", env.APP_URL],
+    ["SUPABASE_AUTH_REDIRECT_URL", env.SUPABASE_AUTH_REDIRECT_URL],
+  ].filter(([, value]) => typeof value === "string" && value.trim());
+  const normalizedOrigins = new Set(
+    configuredOrigins.flatMap(([, value]) => {
+      try { return [new URL(value.trim()).origin.toLowerCase()]; }
+      catch { return []; }
+    }),
+  );
+  if (normalizedOrigins.size > 1) {
+    errors.push(`contradictory public URL variables (${configuredOrigins.map(([name]) => name).join(", ")})`);
+  }
+
   const mcpResource = env.PUBLIC_MCP_RESOURCE?.trim();
   if (mcpResource) {
     if (!checkUrl(mcpResource, { https: true, publicProduction: true })) {
@@ -135,6 +163,16 @@ export function validateProductionEnv(env = process.env) {
     }
   } else if (redisUrl && redisToken) {
     configured.Redis = "UPSTASH_REDIS_REST_URL";
+  }
+
+  const smtpValues = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS"]
+    .filter((name) => typeof env[name] === "string" && env[name].trim());
+  if (smtpValues.length > 0 && smtpValues.length < 4) {
+    errors.push("SMTP configuration is incomplete (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS)");
+  }
+
+  if (env.STRIPE_SECRET_KEY?.trim() && !env.STRIPE_WEBHOOK_SECRET?.trim()) {
+    errors.push("STRIPE_WEBHOOK_SECRET is required when Stripe is configured");
   }
 
   return { ok: errors.length === 0, errors, configured };

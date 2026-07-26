@@ -57,13 +57,14 @@ test("Claude redirect seed includes api/oauth/callback and merges URIs", async (
   assert.match(ensureSrc, /never shrinks/);
 });
 
-test("OAuth approve bootstraps workspace and tolerates missing status column", () => {
+test("OAuth approve bootstraps workspace without probing tenant_users.status", () => {
   const src = fs.readFileSync(
     new URL("../../src/app/api/mcp/oauth/approve/route.ts", import.meta.url),
     "utf8",
   );
   assert.match(src, /bootstrapTenantForUser/);
-  assert.match(src, /isMissingColumnError/);
+  assert.match(src, /\.select\(['"]tenant_id, role['"]\)/);
+  assert.doesNotMatch(src, /\.select\(['"]tenant_id, role, status['"]\)/);
   assert.match(src, /CLAUDE_OAUTH_REDIRECT_URIS/);
   assert.match(src, /maxDuration/);
   assert.match(src, /mcp-oauth-approve-v1/);

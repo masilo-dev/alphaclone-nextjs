@@ -21,15 +21,6 @@ function isActiveStatus(status: unknown): boolean {
     return !INACTIVE_STATUSES.has(s);
 }
 
-function isMissingColumnError(error: { message?: string; code?: string } | null | undefined): boolean {
-    if (!error) return false;
-    return (
-        error.code === '42703' ||
-        error.code === 'PGRST204' ||
-        /column|does not exist/i.test(error.message || '')
-    );
-}
-
 /**
  * MCP OAuth2 Approve Endpoint — UI-based authorization code issuance
  *
@@ -71,24 +62,14 @@ export async function POST(req: Request) {
 
         type MembershipRow = { tenant_id: string; role?: string | null; status?: string | null };
 
-        const membershipWithStatus = await supabaseAdmin
+        const membershipResult = await supabaseAdmin
             .from('tenant_users')
-            .select('tenant_id, role, status')
+            .select('tenant_id, role')
             .eq('user_id', user_id)
             .limit(20);
 
-        let membershipError = membershipWithStatus.error;
-        let membershipData = membershipWithStatus.data as MembershipRow[] | null;
-
-        if (isMissingColumnError(membershipError)) {
-            const membershipWithoutStatus = await supabaseAdmin
-                .from('tenant_users')
-                .select('tenant_id, role')
-                .eq('user_id', user_id)
-                .limit(20);
-            membershipError = membershipWithoutStatus.error;
-            membershipData = membershipWithoutStatus.data as MembershipRow[] | null;
-        }
+        const membershipError = membershipResult.error;
+        const membershipData = membershipResult.data as MembershipRow[] | null;
 
         if (!membershipError && Array.isArray(membershipData) && membershipData.length) {
             const active = membershipData.find((m) => isActiveStatus(m.status));

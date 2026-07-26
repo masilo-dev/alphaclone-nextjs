@@ -6,19 +6,14 @@ export const dynamic = 'force-dynamic';
 
 const patchSchema = z.object({
   tenantId: z.string().uuid(),
-  origin: z.enum(['tickets', 'support_tickets']),
-  status: z.enum(['open', 'in_progress', 'resolved', 'closed', 'reopened', 'waiting']).optional(),
+  origin: z.literal('tickets').default('tickets'),
+  status: z.enum([
+    'new', 'open', 'in_progress', 'waiting_on_customer', 'waiting_on_business',
+    'escalated', 'resolved', 'closed', 'reopened'
+  ]).optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
 });
 const commentSchema = z.object({ tenantId: z.string().uuid(), content: z.string().trim().min(1).max(10000), isInternal: z.boolean().default(false) });
-
-const UI_STATUS_TO_SUPPORT: Record<string, string> = {
-  open: 'open',
-  in_progress: 'in_progress',
-  reopened: 'open',
-  resolved: 'resolved',
-  closed: 'closed',
-};
 
 export async function PATCH(
   req: NextRequest,
@@ -32,21 +27,21 @@ export async function PATCH(
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { tenantId, origin, status, priority } = parsed.data;
+    const { tenantId, status, priority } = parsed.data;
     await requireTenantAccess(tenantId);
     const admin = createAdminSupabaseClientOrThrow();
 
-    const table = origin === 'support_tickets' ? 'support_tickets' : 'tickets';
     const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
     if (status) {
-      if (origin === 'support_tickets') {
-        update.status = UI_STATUS_TO_SUPPORT[status] || status;
-      } else {
-        update.status = status;
-        if (status === 'resolved') update.resolved_at = new Date().toISOString();
-        if (status === 'closed') update.closed_at = new Date().toISOString();
-      }
+      update.status = status;
+      update.waiting_on = status === 'waiting_on_customer'
+        ? 'customer'
+        : ['new', 'open', 'in_progress', 'waiting_on_business', 'escalated', 'reopened'].includes(status)
+          ? 'business'
+          : null;
+      if (status === 'resolved') update.resolved_at = new Date().toISOString();
+      if (status === 'closed') update.closed_at = new Date().toISOString();
     }
 
     if (priority) {
@@ -54,7 +49,7 @@ export async function PATCH(
     }
 
     const { data, error } = await admin
-      .from(table)
+      .from('tickets')
       .update(update)
       .eq('id', id)
       .eq('tenant_id', tenantId)

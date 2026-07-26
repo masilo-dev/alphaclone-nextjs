@@ -41,7 +41,7 @@ export const SALES_SECONDARY_TABS: SalesWorkspaceTab[] = [
   { label: 'Workspace', href: '/dashboard/crm/workspace', icon: Workflow },
   { label: 'Console', href: '/dashboard/crm/console', icon: MessageCircle },
   { label: 'Reports', href: '/dashboard/crm/reports', icon: FileText },
-  { label: 'Lead Finder', shortLabel: 'Finder', href: '/dashboard/leads/campaigns', icon: Search },
+  { label: 'Lead Finder', shortLabel: 'Finder', href: '/dashboard/leads/finder', icon: Search },
   { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
 ];
 

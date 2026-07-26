@@ -1,0 +1,1934 @@
+[
+  {
+    "route": "/api/account/communication-prefs",
+    "file": "src/app/api/account/communication-prefs/route.ts"
+  },
+  {
+    "route": "/api/account/delete",
+    "file": "src/app/api/account/delete/route.ts"
+  },
+  {
+    "route": "/api/account/profile",
+    "file": "src/app/api/account/profile/route.ts"
+  },
+  {
+    "route": "/api/account/registration-context",
+    "file": "src/app/api/account/registration-context/route.ts"
+  },
+  {
+    "route": "/api/accounting/management",
+    "file": "src/app/api/accounting/management/route.ts"
+  },
+  {
+    "route": "/api/accounting/pnl",
+    "file": "src/app/api/accounting/pnl/route.ts"
+  },
+  {
+    "route": "/api/accounting/receipts/[id]",
+    "file": "src/app/api/accounting/receipts/[id]/route.ts"
+  },
+  {
+    "route": "/api/accounting/receipts",
+    "file": "src/app/api/accounting/receipts/route.ts"
+  },
+  {
+    "route": "/api/accounting/sales-receipts",
+    "file": "src/app/api/accounting/sales-receipts/route.ts"
+  },
+  {
+    "route": "/api/adapters/operate",
+    "file": "src/app/api/adapters/operate/route.ts"
+  },
+  {
+    "route": "/api/admin/operations-brief",
+    "file": "src/app/api/admin/operations-brief/route.ts"
+  },
+  {
+    "route": "/api/admin/platform-settings",
+    "file": "src/app/api/admin/platform-settings/route.ts"
+  },
+  {
+    "route": "/api/admin/rate-limits",
+    "file": "src/app/api/admin/rate-limits/route.ts"
+  },
+  {
+    "route": "/api/admin/security-logs",
+    "file": "src/app/api/admin/security-logs/route.ts"
+  },
+  {
+    "route": "/api/admin/tenants/[tenantId]",
+    "file": "src/app/api/admin/tenants/[tenantId]/route.ts"
+  },
+  {
+    "route": "/api/admin/tenants",
+    "file": "src/app/api/admin/tenants/route.ts"
+  },
+  {
+    "route": "/api/admin/users",
+    "file": "src/app/api/admin/users/route.ts"
+  },
+  {
+    "route": "/api/ai/batches",
+    "file": "src/app/api/ai/batches/route.ts"
+  },
+  {
+    "route": "/api/ai/chat",
+    "file": "src/app/api/ai/chat/route.ts"
+  },
+  {
+    "route": "/api/ai/complete",
+    "file": "src/app/api/ai/complete/route.ts"
+  },
+  {
+    "route": "/api/ai/deepseek",
+    "file": "src/app/api/ai/deepseek/route.ts"
+  },
+  {
+    "route": "/api/ai/files",
+    "file": "src/app/api/ai/files/route.ts"
+  },
+  {
+    "route": "/api/ai/generate",
+    "file": "src/app/api/ai/generate/route.ts"
+  },
+  {
+    "route": "/api/ai/image",
+    "file": "src/app/api/ai/image/route.ts"
+  },
+  {
+    "route": "/api/ai/leads",
+    "file": "src/app/api/ai/leads/route.ts"
+  },
+  {
+    "route": "/api/ai/scrape-social",
+    "file": "src/app/api/ai/scrape-social/route.ts"
+  },
+  {
+    "route": "/api/ai/stream",
+    "file": "src/app/api/ai/stream/route.ts"
+  },
+  {
+    "route": "/api/ai/video",
+    "file": "src/app/api/ai/video/route.ts"
+  },
+  {
+    "route": "/api/ai/vision",
+    "file": "src/app/api/ai/vision/route.ts"
+  },
+  {
+    "route": "/api/alpha",
+    "file": "src/app/api/alpha/route.ts"
+  },
+  {
+    "route": "/api/alpha/support",
+    "file": "src/app/api/alpha/support/route.ts"
+  },
+  {
+    "route": "/api/auth/calendly/callback",
+    "file": "src/app/api/auth/calendly/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/calendly/connect",
+    "file": "src/app/api/auth/calendly/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/callback/x",
+    "file": "src/app/api/auth/callback/x/route.ts"
+  },
+  {
+    "route": "/api/auth/facebook/callback",
+    "file": "src/app/api/auth/facebook/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/facebook/connect",
+    "file": "src/app/api/auth/facebook/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/facebook/data-deletion",
+    "file": "src/app/api/auth/facebook/data-deletion/route.ts"
+  },
+  {
+    "route": "/api/auth/google/calendar/callback",
+    "file": "src/app/api/auth/google/calendar/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/google/calendar/connect",
+    "file": "src/app/api/auth/google/calendar/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/google/gmail/callback",
+    "file": "src/app/api/auth/google/gmail/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/google/gmail/connect",
+    "file": "src/app/api/auth/google/gmail/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/hubspot/callback",
+    "file": "src/app/api/auth/hubspot/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/hubspot/connect",
+    "file": "src/app/api/auth/hubspot/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/human-check",
+    "file": "src/app/api/auth/human-check/route.ts"
+  },
+  {
+    "route": "/api/auth/instagram/callback",
+    "file": "src/app/api/auth/instagram/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/instagram/connect",
+    "file": "src/app/api/auth/instagram/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/linkedin/callback",
+    "file": "src/app/api/auth/linkedin/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/linkedin/connect",
+    "file": "src/app/api/auth/linkedin/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/linkedin/disconnect",
+    "file": "src/app/api/auth/linkedin/disconnect/route.ts"
+  },
+  {
+    "route": "/api/auth/microsoft/access-token",
+    "file": "src/app/api/auth/microsoft/access-token/route.ts"
+  },
+  {
+    "route": "/api/auth/microsoft/connect",
+    "file": "src/app/api/auth/microsoft/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/microsoft/disconnect",
+    "file": "src/app/api/auth/microsoft/disconnect/route.ts"
+  },
+  {
+    "route": "/api/auth/microsoft/refresh",
+    "file": "src/app/api/auth/microsoft/refresh/route.ts"
+  },
+  {
+    "route": "/api/auth/signup-eligibility",
+    "file": "src/app/api/auth/signup-eligibility/route.ts"
+  },
+  {
+    "route": "/api/auth/verify-token",
+    "file": "src/app/api/auth/verify-token/route.ts"
+  },
+  {
+    "route": "/api/auth/x",
+    "file": "src/app/api/auth/x/route.ts"
+  },
+  {
+    "route": "/api/auth/zoho/callback",
+    "file": "src/app/api/auth/zoho/callback/route.ts"
+  },
+  {
+    "route": "/api/auth/zoho/connect",
+    "file": "src/app/api/auth/zoho/connect/route.ts"
+  },
+  {
+    "route": "/api/auth/zoho/disconnect",
+    "file": "src/app/api/auth/zoho/disconnect/route.ts"
+  },
+  {
+    "route": "/api/auth/zoho/refresh",
+    "file": "src/app/api/auth/zoho/refresh/route.ts"
+  },
+  {
+    "route": "/api/auth/zoho/status",
+    "file": "src/app/api/auth/zoho/status/route.ts"
+  },
+  {
+    "route": "/api/automation/emit",
+    "file": "src/app/api/automation/emit/route.ts"
+  },
+  {
+    "route": "/api/autonomous/approve",
+    "file": "src/app/api/autonomous/approve/route.ts"
+  },
+  {
+    "route": "/api/autonomous/rules",
+    "file": "src/app/api/autonomous/rules/route.ts"
+  },
+  {
+    "route": "/api/autonomous/trigger",
+    "file": "src/app/api/autonomous/trigger/route.ts"
+  },
+  {
+    "route": "/api/bonnie/approvals",
+    "file": "src/app/api/bonnie/approvals/route.ts"
+  },
+  {
+    "route": "/api/bonnie/briefing",
+    "file": "src/app/api/bonnie/briefing/route.ts"
+  },
+  {
+    "route": "/api/bonnie/conversations/[id]",
+    "file": "src/app/api/bonnie/conversations/[id]/route.ts"
+  },
+  {
+    "route": "/api/bonnie/conversations",
+    "file": "src/app/api/bonnie/conversations/route.ts"
+  },
+  {
+    "route": "/api/bonnie/dream",
+    "file": "src/app/api/bonnie/dream/route.ts"
+  },
+  {
+    "route": "/api/bonnie/goals/[id]",
+    "file": "src/app/api/bonnie/goals/[id]/route.ts"
+  },
+  {
+    "route": "/api/bonnie/goals",
+    "file": "src/app/api/bonnie/goals/route.ts"
+  },
+  {
+    "route": "/api/bonnie/instruct",
+    "file": "src/app/api/bonnie/instruct/route.ts"
+  },
+  {
+    "route": "/api/bonnie/orchestrate",
+    "file": "src/app/api/bonnie/orchestrate/route.ts"
+  },
+  {
+    "route": "/api/bonnie/os",
+    "file": "src/app/api/bonnie/os/route.ts"
+  },
+  {
+    "route": "/api/bonnie/outcomes",
+    "file": "src/app/api/bonnie/outcomes/route.ts"
+  },
+  {
+    "route": "/api/bonnie/quota",
+    "file": "src/app/api/bonnie/quota/route.ts"
+  },
+  {
+    "route": "/api/bonnie/research",
+    "file": "src/app/api/bonnie/research/route.ts"
+  },
+  {
+    "route": "/api/bonnie/runtime/runs/[id]",
+    "file": "src/app/api/bonnie/runtime/runs/[id]/route.ts"
+  },
+  {
+    "route": "/api/bonnie/runtime/runs",
+    "file": "src/app/api/bonnie/runtime/runs/route.ts"
+  },
+  {
+    "route": "/api/bonnie/runtime/tasks",
+    "file": "src/app/api/bonnie/runtime/tasks/route.ts"
+  },
+  {
+    "route": "/api/bonnie/stream",
+    "file": "src/app/api/bonnie/stream/route.ts"
+  },
+  {
+    "route": "/api/bonnie/tool",
+    "file": "src/app/api/bonnie/tool/route.ts"
+  },
+  {
+    "route": "/api/bonnie/voice",
+    "file": "src/app/api/bonnie/voice/route.ts"
+  },
+  {
+    "route": "/api/booking/create",
+    "file": "src/app/api/booking/create/route.ts"
+  },
+  {
+    "route": "/api/booking",
+    "file": "src/app/api/booking/route.ts"
+  },
+  {
+    "route": "/api/booking/slots",
+    "file": "src/app/api/booking/slots/route.ts"
+  },
+  {
+    "route": "/api/brevo/send",
+    "file": "src/app/api/brevo/send/route.ts"
+  },
+  {
+    "route": "/api/calendly/cancel",
+    "file": "src/app/api/calendly/cancel/route.ts"
+  },
+  {
+    "route": "/api/calendly/contacts",
+    "file": "src/app/api/calendly/contacts/route.ts"
+  },
+  {
+    "route": "/api/calendly/event-types",
+    "file": "src/app/api/calendly/event-types/route.ts"
+  },
+  {
+    "route": "/api/calendly/schedule",
+    "file": "src/app/api/calendly/schedule/route.ts"
+  },
+  {
+    "route": "/api/calendly/scheduled-events",
+    "file": "src/app/api/calendly/scheduled-events/route.ts"
+  },
+  {
+    "route": "/api/calendly/status",
+    "file": "src/app/api/calendly/status/route.ts"
+  },
+  {
+    "route": "/api/calendly/sync",
+    "file": "src/app/api/calendly/sync/route.ts"
+  },
+  {
+    "route": "/api/campaigns",
+    "file": "src/app/api/campaigns/route.ts"
+  },
+  {
+    "route": "/api/campaigns/send",
+    "file": "src/app/api/campaigns/send/route.ts"
+  },
+  {
+    "route": "/api/client/feedback",
+    "file": "src/app/api/client/feedback/route.ts"
+  },
+  {
+    "route": "/api/client-finance/portal",
+    "file": "src/app/api/client-finance/portal/route.ts"
+  },
+  {
+    "route": "/api/client-finance/portal-link/[clientId]",
+    "file": "src/app/api/client-finance/portal-link/[clientId]/route.ts"
+  },
+  {
+    "route": "/api/communication-compliance/check",
+    "file": "src/app/api/communication-compliance/check/route.ts"
+  },
+  {
+    "route": "/api/contact",
+    "file": "src/app/api/contact/route.ts"
+  },
+  {
+    "route": "/api/contracts/[id]/generate-pdf",
+    "file": "src/app/api/contracts/[id]/generate-pdf/route.ts"
+  },
+  {
+    "route": "/api/contracts/[id]",
+    "file": "src/app/api/contracts/[id]/route.ts"
+  },
+  {
+    "route": "/api/contracts/management",
+    "file": "src/app/api/contracts/management/route.ts"
+  },
+  {
+    "route": "/api/contracts/respond",
+    "file": "src/app/api/contracts/respond/route.ts"
+  },
+  {
+    "route": "/api/contracts",
+    "file": "src/app/api/contracts/route.ts"
+  },
+  {
+    "route": "/api/contracts/sign",
+    "file": "src/app/api/contracts/sign/route.ts"
+  },
+  {
+    "route": "/api/contracts/stats",
+    "file": "src/app/api/contracts/stats/route.ts"
+  },
+  {
+    "route": "/api/credit-notes",
+    "file": "src/app/api/credit-notes/route.ts"
+  },
+  {
+    "route": "/api/crm/activities",
+    "file": "src/app/api/crm/activities/route.ts"
+  },
+  {
+    "route": "/api/crm/bridge",
+    "file": "src/app/api/crm/bridge/route.ts"
+  },
+  {
+    "route": "/api/crm/follow-ups",
+    "file": "src/app/api/crm/follow-ups/route.ts"
+  },
+  {
+    "route": "/api/crm/follow-ups/schedule",
+    "file": "src/app/api/crm/follow-ups/schedule/route.ts"
+  },
+  {
+    "route": "/api/crm/import",
+    "file": "src/app/api/crm/import/route.ts"
+  },
+  {
+    "route": "/api/crm/migrate",
+    "file": "src/app/api/crm/migrate/route.ts"
+  },
+  {
+    "route": "/api/crm/stats",
+    "file": "src/app/api/crm/stats/route.ts"
+  },
+  {
+    "route": "/api/crm/sync/pull",
+    "file": "src/app/api/crm/sync/pull/route.ts"
+  },
+  {
+    "route": "/api/crm/sync/push",
+    "file": "src/app/api/crm/sync/push/route.ts"
+  },
+  {
+    "route": "/api/cron/activity-digest",
+    "file": "src/app/api/cron/activity-digest/route.ts"
+  },
+  {
+    "route": "/api/cron/automation-heartbeat",
+    "file": "src/app/api/cron/automation-heartbeat/route.ts"
+  },
+  {
+    "route": "/api/cron/autonomous",
+    "file": "src/app/api/cron/autonomous/route.ts"
+  },
+  {
+    "route": "/api/cron/autonomous-runner",
+    "file": "src/app/api/cron/autonomous-runner/route.ts"
+  },
+  {
+    "route": "/api/cron/autonomous-sync",
+    "file": "src/app/api/cron/autonomous-sync/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-continuous",
+    "file": "src/app/api/cron/bonnie-continuous/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-dream",
+    "file": "src/app/api/cron/bonnie-dream/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-goals-chase",
+    "file": "src/app/api/cron/bonnie-goals-chase/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-morning-brief",
+    "file": "src/app/api/cron/bonnie-morning-brief/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-runtime-outbox",
+    "file": "src/app/api/cron/bonnie-runtime-outbox/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-runtime-reconcile",
+    "file": "src/app/api/cron/bonnie-runtime-reconcile/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-runtime-timers",
+    "file": "src/app/api/cron/bonnie-runtime-timers/route.ts"
+  },
+  {
+    "route": "/api/cron/bonnie-runtime-worker",
+    "file": "src/app/api/cron/bonnie-runtime-worker/route.ts"
+  },
+  {
+    "route": "/api/cron/calendly-sync",
+    "file": "src/app/api/cron/calendly-sync/route.ts"
+  },
+  {
+    "route": "/api/cron/chief-of-staff",
+    "file": "src/app/api/cron/chief-of-staff/route.ts"
+  },
+  {
+    "route": "/api/cron/contact-psychology",
+    "file": "src/app/api/cron/contact-psychology/route.ts"
+  },
+  {
+    "route": "/api/cron/daily",
+    "file": "src/app/api/cron/daily/route.ts"
+  },
+  {
+    "route": "/api/cron/deal-intelligence",
+    "file": "src/app/api/cron/deal-intelligence/route.ts"
+  },
+  {
+    "route": "/api/cron/entanglement-model",
+    "file": "src/app/api/cron/entanglement-model/route.ts"
+  },
+  {
+    "route": "/api/cron/integration-token-health",
+    "file": "src/app/api/cron/integration-token-health/route.ts"
+  },
+  {
+    "route": "/api/cron/intelligence-snapshots",
+    "file": "src/app/api/cron/intelligence-snapshots/route.ts"
+  },
+  {
+    "route": "/api/cron/linkedin-inbox-sync",
+    "file": "src/app/api/cron/linkedin-inbox-sync/route.ts"
+  },
+  {
+    "route": "/api/cron/linkedin-token-health",
+    "file": "src/app/api/cron/linkedin-token-health/route.ts"
+  },
+  {
+    "route": "/api/cron/meta-token-health",
+    "file": "src/app/api/cron/meta-token-health/route.ts"
+  },
+  {
+    "route": "/api/cron/process-campaigns",
+    "file": "src/app/api/cron/process-campaigns/route.ts"
+  },
+  {
+    "route": "/api/cron/process-events",
+    "file": "src/app/api/cron/process-events/route.ts"
+  },
+  {
+    "route": "/api/cron/process-invoice-overdue-reminders",
+    "file": "src/app/api/cron/process-invoice-overdue-reminders/route.ts"
+  },
+  {
+    "route": "/api/cron/process-mcp-event-queue",
+    "file": "src/app/api/cron/process-mcp-event-queue/route.ts"
+  },
+  {
+    "route": "/api/cron/process-recurring-invoices",
+    "file": "src/app/api/cron/process-recurring-invoices/route.ts"
+  },
+  {
+    "route": "/api/cron/process-scheduled-ai-tasks",
+    "file": "src/app/api/cron/process-scheduled-ai-tasks/route.ts"
+  },
+  {
+    "route": "/api/cron/process-task-reminders",
+    "file": "src/app/api/cron/process-task-reminders/route.ts"
+  },
+  {
+    "route": "/api/cron/publish-linkedin",
+    "file": "src/app/api/cron/publish-linkedin/route.ts"
+  },
+  {
+    "route": "/api/cron/publish-scheduled-posts",
+    "file": "src/app/api/cron/publish-scheduled-posts/route.ts"
+  },
+  {
+    "route": "/api/cron/reconcile-social-posts",
+    "file": "src/app/api/cron/reconcile-social-posts/route.ts"
+  },
+  {
+    "route": "/api/cron/resolve-stuck-social-posts",
+    "file": "src/app/api/cron/resolve-stuck-social-posts/route.ts"
+  },
+  {
+    "route": "/api/cron/retry-failed",
+    "file": "src/app/api/cron/retry-failed/route.ts"
+  },
+  {
+    "route": "/api/cron/sequence-worker",
+    "file": "src/app/api/cron/sequence-worker/route.ts"
+  },
+  {
+    "route": "/api/cron/social-publish",
+    "file": "src/app/api/cron/social-publish/route.ts"
+  },
+  {
+    "route": "/api/cron/sync-zoho-inbox",
+    "file": "src/app/api/cron/sync-zoho-inbox/route.ts"
+  },
+  {
+    "route": "/api/cron/webhook-deliveries",
+    "file": "src/app/api/cron/webhook-deliveries/route.ts"
+  },
+  {
+    "route": "/api/cron/workflows",
+    "file": "src/app/api/cron/workflows/route.ts"
+  },
+  {
+    "route": "/api/cron/zoho-token-health",
+    "file": "src/app/api/cron/zoho-token-health/route.ts"
+  },
+  {
+    "route": "/api/daily/token",
+    "file": "src/app/api/daily/token/route.ts"
+  },
+  {
+    "route": "/api/daily/webhook",
+    "file": "src/app/api/daily/webhook/route.ts"
+  },
+  {
+    "route": "/api/dashboard/action-queue",
+    "file": "src/app/api/dashboard/action-queue/route.ts"
+  },
+  {
+    "route": "/api/dashboard/hub-stats",
+    "file": "src/app/api/dashboard/hub-stats/route.ts"
+  },
+  {
+    "route": "/api/dashboard/overview",
+    "file": "src/app/api/dashboard/overview/route.ts"
+  },
+  {
+    "route": "/api/dashboard/progress",
+    "file": "src/app/api/dashboard/progress/route.ts"
+  },
+  {
+    "route": "/api/dashboard/stats",
+    "file": "src/app/api/dashboard/stats/route.ts"
+  },
+  {
+    "route": "/api/data/deleted-records",
+    "file": "src/app/api/data/deleted-records/route.ts"
+  },
+  {
+    "route": "/api/data-deletion",
+    "file": "src/app/api/data-deletion/route.ts"
+  },
+  {
+    "route": "/api/deals/[dealId]/stakeholders",
+    "file": "src/app/api/deals/[dealId]/stakeholders/route.ts"
+  },
+  {
+    "route": "/api/debug-ai",
+    "file": "src/app/api/debug-ai/route.ts"
+  },
+  {
+    "route": "/api/dev-migrate",
+    "file": "src/app/api/dev-migrate/route.ts"
+  },
+  {
+    "route": "/api/docs",
+    "file": "src/app/api/docs/route.ts"
+  },
+  {
+    "route": "/api/email/auto-reply/pending",
+    "file": "src/app/api/email/auto-reply/pending/route.ts"
+  },
+  {
+    "route": "/api/email/campaigns/diagnose",
+    "file": "src/app/api/email/campaigns/diagnose/route.ts"
+  },
+  {
+    "route": "/api/email/campaigns/import-recipients",
+    "file": "src/app/api/email/campaigns/import-recipients/route.ts"
+  },
+  {
+    "route": "/api/email/campaigns",
+    "file": "src/app/api/email/campaigns/route.ts"
+  },
+  {
+    "route": "/api/email/campaigns/send",
+    "file": "src/app/api/email/campaigns/send/route.ts"
+  },
+  {
+    "route": "/api/email/drafts",
+    "file": "src/app/api/email/drafts/route.ts"
+  },
+  {
+    "route": "/api/email/platform-transactional",
+    "file": "src/app/api/email/platform-transactional/route.ts"
+  },
+  {
+    "route": "/api/email/providers/test",
+    "file": "src/app/api/email/providers/test/route.ts"
+  },
+  {
+    "route": "/api/email/proxy-image",
+    "file": "src/app/api/email/proxy-image/route.ts"
+  },
+  {
+    "route": "/api/email/send",
+    "file": "src/app/api/email/send/route.ts"
+  },
+  {
+    "route": "/api/email/sender-profile",
+    "file": "src/app/api/email/sender-profile/route.ts"
+  },
+  {
+    "route": "/api/email/unsubscribe",
+    "file": "src/app/api/email/unsubscribe/route.ts"
+  },
+  {
+    "route": "/api/email/welcome",
+    "file": "src/app/api/email/welcome/route.ts"
+  },
+  {
+    "route": "/api/engine/execute",
+    "file": "src/app/api/engine/execute/route.ts"
+  },
+  {
+    "route": "/api/engine/ingest",
+    "file": "src/app/api/engine/ingest/route.ts"
+  },
+  {
+    "route": "/api/facebook/activity",
+    "file": "src/app/api/facebook/activity/route.ts"
+  },
+  {
+    "route": "/api/facebook/capabilities",
+    "file": "src/app/api/facebook/capabilities/route.ts"
+  },
+  {
+    "route": "/api/facebook/comment",
+    "file": "src/app/api/facebook/comment/route.ts"
+  },
+  {
+    "route": "/api/facebook/comments",
+    "file": "src/app/api/facebook/comments/route.ts"
+  },
+  {
+    "route": "/api/facebook/disconnect",
+    "file": "src/app/api/facebook/disconnect/route.ts"
+  },
+  {
+    "route": "/api/facebook/leads/search",
+    "file": "src/app/api/facebook/leads/search/route.ts"
+  },
+  {
+    "route": "/api/facebook/like",
+    "file": "src/app/api/facebook/like/route.ts"
+  },
+  {
+    "route": "/api/facebook/management",
+    "file": "src/app/api/facebook/management/route.ts"
+  },
+  {
+    "route": "/api/facebook/messenger/conversations/[conversationId]/read",
+    "file": "src/app/api/facebook/messenger/conversations/[conversationId]/read/route.ts"
+  },
+  {
+    "route": "/api/facebook/messenger/send",
+    "file": "src/app/api/facebook/messenger/send/route.ts"
+  },
+  {
+    "route": "/api/facebook/oauth",
+    "file": "src/app/api/facebook/oauth/route.ts"
+  },
+  {
+    "route": "/api/facebook/page-info",
+    "file": "src/app/api/facebook/page-info/route.ts"
+  },
+  {
+    "route": "/api/facebook/post/delete",
+    "file": "src/app/api/facebook/post/delete/route.ts"
+  },
+  {
+    "route": "/api/facebook/post",
+    "file": "src/app/api/facebook/post/route.ts"
+  },
+  {
+    "route": "/api/facebook/post-insights",
+    "file": "src/app/api/facebook/post-insights/route.ts"
+  },
+  {
+    "route": "/api/facebook/posts",
+    "file": "src/app/api/facebook/posts/route.ts"
+  },
+  {
+    "route": "/api/facebook/upload-photo",
+    "file": "src/app/api/facebook/upload-photo/route.ts"
+  },
+  {
+    "route": "/api/finance/attach-expenses-to-invoice",
+    "file": "src/app/api/finance/attach-expenses-to-invoice/route.ts"
+  },
+  {
+    "route": "/api/finance/expenses",
+    "file": "src/app/api/finance/expenses/route.ts"
+  },
+  {
+    "route": "/api/finance/unbilled-expenses",
+    "file": "src/app/api/finance/unbilled-expenses/route.ts"
+  },
+  {
+    "route": "/api/forms/public",
+    "file": "src/app/api/forms/public/route.ts"
+  },
+  {
+    "route": "/api/forms",
+    "file": "src/app/api/forms/route.ts"
+  },
+  {
+    "route": "/api/forms/submit",
+    "file": "src/app/api/forms/submit/route.ts"
+  },
+  {
+    "route": "/api/forms/webhook/tally",
+    "file": "src/app/api/forms/webhook/tally/route.ts"
+  },
+  {
+    "route": "/api/forms/webhook/typeform",
+    "file": "src/app/api/forms/webhook/typeform/route.ts"
+  },
+  {
+    "route": "/api/gmail/messages/send",
+    "file": "src/app/api/gmail/messages/send/route.ts"
+  },
+  {
+    "route": "/api/gmail/threads/[id]/modify",
+    "file": "src/app/api/gmail/threads/[id]/modify/route.ts"
+  },
+  {
+    "route": "/api/gmail/threads/[id]",
+    "file": "src/app/api/gmail/threads/[id]/route.ts"
+  },
+  {
+    "route": "/api/gmail/threads",
+    "file": "src/app/api/gmail/threads/route.ts"
+  },
+  {
+    "route": "/api/google/drive/upload",
+    "file": "src/app/api/google/drive/upload/route.ts"
+  },
+  {
+    "route": "/api/health",
+    "file": "src/app/api/health/route.ts"
+  },
+  {
+    "route": "/api/hubspot/delete",
+    "file": "src/app/api/hubspot/delete/route.ts"
+  },
+  {
+    "route": "/api/hubspot/sync",
+    "file": "src/app/api/hubspot/sync/route.ts"
+  },
+  {
+    "route": "/api/inbox/draft-reply",
+    "file": "src/app/api/inbox/draft-reply/route.ts"
+  },
+  {
+    "route": "/api/inbox/facebook",
+    "file": "src/app/api/inbox/facebook/route.ts"
+  },
+  {
+    "route": "/api/inbox/instagram",
+    "file": "src/app/api/inbox/instagram/route.ts"
+  },
+  {
+    "route": "/api/inbox/process-intelligence",
+    "file": "src/app/api/inbox/process-intelligence/route.ts"
+  },
+  {
+    "route": "/api/inbox/whatsapp",
+    "file": "src/app/api/inbox/whatsapp/route.ts"
+  },
+  {
+    "route": "/api/inbox/zoho",
+    "file": "src/app/api/inbox/zoho/route.ts"
+  },
+  {
+    "route": "/api/indexnow",
+    "file": "src/app/api/indexnow/route.ts"
+  },
+  {
+    "route": "/api/integrations/actions",
+    "file": "src/app/api/integrations/actions/route.ts"
+  },
+  {
+    "route": "/api/integrations/email-providers",
+    "file": "src/app/api/integrations/email-providers/route.ts"
+  },
+  {
+    "route": "/api/integrations/readiness",
+    "file": "src/app/api/integrations/readiness/route.ts"
+  },
+  {
+    "route": "/api/integrations/status",
+    "file": "src/app/api/integrations/status/route.ts"
+  },
+  {
+    "route": "/api/integrations/whatsapp",
+    "file": "src/app/api/integrations/whatsapp/route.ts"
+  },
+  {
+    "route": "/api/integrations/whatsapp/send",
+    "file": "src/app/api/integrations/whatsapp/send/route.ts"
+  },
+  {
+    "route": "/api/integrations/whatsapp/send-document",
+    "file": "src/app/api/integrations/whatsapp/send-document/route.ts"
+  },
+  {
+    "route": "/api/integrations/whatsapp/status",
+    "file": "src/app/api/integrations/whatsapp/status/route.ts"
+  },
+  {
+    "route": "/api/integrations/zernio/settings",
+    "file": "src/app/api/integrations/zernio/settings/route.ts"
+  },
+  {
+    "route": "/api/intelligence/deals/recompute",
+    "file": "src/app/api/intelligence/deals/recompute/route.ts"
+  },
+  {
+    "route": "/api/intelligence/ingest-signal",
+    "file": "src/app/api/intelligence/ingest-signal/route.ts"
+  },
+  {
+    "route": "/api/intelligence/system",
+    "file": "src/app/api/intelligence/system/route.ts"
+  },
+  {
+    "route": "/api/intelligence/trends",
+    "file": "src/app/api/intelligence/trends/route.ts"
+  },
+  {
+    "route": "/api/internal/auth-health",
+    "file": "src/app/api/internal/auth-health/route.ts"
+  },
+  {
+    "route": "/api/internal/leads/mcp-sync",
+    "file": "src/app/api/internal/leads/mcp-sync/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/audit-log",
+    "file": "src/app/api/invoices/[id]/audit-log/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/delivery-certificate",
+    "file": "src/app/api/invoices/[id]/delivery-certificate/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/delivery-webhook",
+    "file": "src/app/api/invoices/[id]/delivery-webhook/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/followup-settings",
+    "file": "src/app/api/invoices/[id]/followup-settings/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/payment",
+    "file": "src/app/api/invoices/[id]/payment/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/pdf",
+    "file": "src/app/api/invoices/[id]/pdf/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/public-link",
+    "file": "src/app/api/invoices/[id]/public-link/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/reconcile",
+    "file": "src/app/api/invoices/[id]/reconcile/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]",
+    "file": "src/app/api/invoices/[id]/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/view",
+    "file": "src/app/api/invoices/[id]/view/route.ts"
+  },
+  {
+    "route": "/api/invoices/[id]/void",
+    "file": "src/app/api/invoices/[id]/void/route.ts"
+  },
+  {
+    "route": "/api/invoices/confirm-payment",
+    "file": "src/app/api/invoices/confirm-payment/route.ts"
+  },
+  {
+    "route": "/api/invoices/lifecycle",
+    "file": "src/app/api/invoices/lifecycle/route.ts"
+  },
+  {
+    "route": "/api/invoices/public",
+    "file": "src/app/api/invoices/public/route.ts"
+  },
+  {
+    "route": "/api/invoices/recurring/[id]",
+    "file": "src/app/api/invoices/recurring/[id]/route.ts"
+  },
+  {
+    "route": "/api/invoices/recurring",
+    "file": "src/app/api/invoices/recurring/route.ts"
+  },
+  {
+    "route": "/api/invoices/reminder",
+    "file": "src/app/api/invoices/reminder/route.ts"
+  },
+  {
+    "route": "/api/invoices",
+    "file": "src/app/api/invoices/route.ts"
+  },
+  {
+    "route": "/api/invoices/send",
+    "file": "src/app/api/invoices/send/route.ts"
+  },
+  {
+    "route": "/api/invoices/stats",
+    "file": "src/app/api/invoices/stats/route.ts"
+  },
+  {
+    "route": "/api/invoices/track/[token]",
+    "file": "src/app/api/invoices/track/[token]/route.ts"
+  },
+  {
+    "route": "/api/ip-location",
+    "file": "src/app/api/ip-location/route.ts"
+  },
+  {
+    "route": "/api/language",
+    "file": "src/app/api/language/route.ts"
+  },
+  {
+    "route": "/api/leads/[id]",
+    "file": "src/app/api/leads/[id]/route.ts"
+  },
+  {
+    "route": "/api/leads/candidates/[id]/review",
+    "file": "src/app/api/leads/candidates/[id]/review/route.ts"
+  },
+  {
+    "route": "/api/leads/enrich",
+    "file": "src/app/api/leads/enrich/route.ts"
+  },
+  {
+    "route": "/api/leads/lists",
+    "file": "src/app/api/leads/lists/route.ts"
+  },
+  {
+    "route": "/api/leads/management",
+    "file": "src/app/api/leads/management/route.ts"
+  },
+  {
+    "route": "/api/leads/searches/[id]/results",
+    "file": "src/app/api/leads/searches/[id]/results/route.ts"
+  },
+  {
+    "route": "/api/leads/searches/[id]",
+    "file": "src/app/api/leads/searches/[id]/route.ts"
+  },
+  {
+    "route": "/api/leads/searches/[id]/run",
+    "file": "src/app/api/leads/searches/[id]/run/route.ts"
+  },
+  {
+    "route": "/api/leads/searches",
+    "file": "src/app/api/leads/searches/route.ts"
+  },
+  {
+    "route": "/api/legal/data-export",
+    "file": "src/app/api/legal/data-export/route.ts"
+  },
+  {
+    "route": "/api/legal/data-request",
+    "file": "src/app/api/legal/data-request/route.ts"
+  },
+  {
+    "route": "/api/legal/dpa-request",
+    "file": "src/app/api/legal/dpa-request/route.ts"
+  },
+  {
+    "route": "/api/linkedin/capture-lead",
+    "file": "src/app/api/linkedin/capture-lead/route.ts"
+  },
+  {
+    "route": "/api/linkedin/comment",
+    "file": "src/app/api/linkedin/comment/route.ts"
+  },
+  {
+    "route": "/api/linkedin/comments",
+    "file": "src/app/api/linkedin/comments/route.ts"
+  },
+  {
+    "route": "/api/linkedin/engagement",
+    "file": "src/app/api/linkedin/engagement/route.ts"
+  },
+  {
+    "route": "/api/linkedin/inbox",
+    "file": "src/app/api/linkedin/inbox/route.ts"
+  },
+  {
+    "route": "/api/linkedin/link-company-page",
+    "file": "src/app/api/linkedin/link-company-page/route.ts"
+  },
+  {
+    "route": "/api/linkedin/posts",
+    "file": "src/app/api/linkedin/posts/route.ts"
+  },
+  {
+    "route": "/api/linkedin/reaction",
+    "file": "src/app/api/linkedin/reaction/route.ts"
+  },
+  {
+    "route": "/api/linkedin/refresh-pages",
+    "file": "src/app/api/linkedin/refresh-pages/route.ts"
+  },
+  {
+    "route": "/api/livekit/token",
+    "file": "src/app/api/livekit/token/route.ts"
+  },
+  {
+    "route": "/api/location/validate",
+    "file": "src/app/api/location/validate/route.ts"
+  },
+  {
+    "route": "/api/marketing/campaigns/[campaignId]/status",
+    "file": "src/app/api/marketing/campaigns/[campaignId]/status/route.ts"
+  },
+  {
+    "route": "/api/marketing/campaigns",
+    "file": "src/app/api/marketing/campaigns/route.ts"
+  },
+  {
+    "route": "/api/mcp/authorize",
+    "file": "src/app/api/mcp/authorize/route.ts"
+  },
+  {
+    "route": "/api/mcp/health",
+    "file": "src/app/api/mcp/health/route.ts"
+  },
+  {
+    "route": "/api/mcp/keys",
+    "file": "src/app/api/mcp/keys/route.ts"
+  },
+  {
+    "route": "/api/mcp/messages",
+    "file": "src/app/api/mcp/messages/route.ts"
+  },
+  {
+    "route": "/api/mcp/oauth/approve",
+    "file": "src/app/api/mcp/oauth/approve/route.ts"
+  },
+  {
+    "route": "/api/mcp/prompts",
+    "file": "src/app/api/mcp/prompts/route.ts"
+  },
+  {
+    "route": "/api/mcp/register",
+    "file": "src/app/api/mcp/register/route.ts"
+  },
+  {
+    "route": "/api/mcp/resources",
+    "file": "src/app/api/mcp/resources/route.ts"
+  },
+  {
+    "route": "/api/mcp",
+    "file": "src/app/api/mcp/route.ts"
+  },
+  {
+    "route": "/api/mcp/sse",
+    "file": "src/app/api/mcp/sse/route.ts"
+  },
+  {
+    "route": "/api/mcp/token/introspect",
+    "file": "src/app/api/mcp/token/introspect/route.ts"
+  },
+  {
+    "route": "/api/mcp/token/revoke",
+    "file": "src/app/api/mcp/token/revoke/route.ts"
+  },
+  {
+    "route": "/api/mcp/token",
+    "file": "src/app/api/mcp/token/route.ts"
+  },
+  {
+    "route": "/api/mcp/tools",
+    "file": "src/app/api/mcp/tools/route.ts"
+  },
+  {
+    "route": "/api/mcp/well-known/oauth-authorization-server",
+    "file": "src/app/api/mcp/well-known/oauth-authorization-server/route.ts"
+  },
+  {
+    "route": "/api/mcp/well-known/oauth-protected-resource",
+    "file": "src/app/api/mcp/well-known/oauth-protected-resource/route.ts"
+  },
+  {
+    "route": "/api/meetings/[callId]/chat",
+    "file": "src/app/api/meetings/[callId]/chat/route.ts"
+  },
+  {
+    "route": "/api/meetings/[callId]/state",
+    "file": "src/app/api/meetings/[callId]/state/route.ts"
+  },
+  {
+    "route": "/api/meetings/by-id/[meetingId]/status",
+    "file": "src/app/api/meetings/by-id/[meetingId]/status/route.ts"
+  },
+  {
+    "route": "/api/meetings/create",
+    "file": "src/app/api/meetings/create/route.ts"
+  },
+  {
+    "route": "/api/meetings/hooks/join",
+    "file": "src/app/api/meetings/hooks/join/route.ts"
+  },
+  {
+    "route": "/api/meetings/reconcile-rooms",
+    "file": "src/app/api/meetings/reconcile-rooms/route.ts"
+  },
+  {
+    "route": "/api/meetings/resolve/[identifier]",
+    "file": "src/app/api/meetings/resolve/[identifier]/route.ts"
+  },
+  {
+    "route": "/api/notifications/broadcast",
+    "file": "src/app/api/notifications/broadcast/route.ts"
+  },
+  {
+    "route": "/api/notifications/dispatch",
+    "file": "src/app/api/notifications/dispatch/route.ts"
+  },
+  {
+    "route": "/api/notifications/push",
+    "file": "src/app/api/notifications/push/route.ts"
+  },
+  {
+    "route": "/api/notifications",
+    "file": "src/app/api/notifications/route.ts"
+  },
+  {
+    "route": "/api/onboarding/start",
+    "file": "src/app/api/onboarding/start/route.ts"
+  },
+  {
+    "route": "/api/outreach/generate",
+    "file": "src/app/api/outreach/generate/route.ts"
+  },
+  {
+    "route": "/api/outreach",
+    "file": "src/app/api/outreach/route.ts"
+  },
+  {
+    "route": "/api/outreach/send",
+    "file": "src/app/api/outreach/send/route.ts"
+  },
+  {
+    "route": "/api/outreach/stats",
+    "file": "src/app/api/outreach/stats/route.ts"
+  },
+  {
+    "route": "/api/pdf/invoice/[id]",
+    "file": "src/app/api/pdf/invoice/[id]/route.ts"
+  },
+  {
+    "route": "/api/platform/policy",
+    "file": "src/app/api/platform/policy/route.ts"
+  },
+  {
+    "route": "/api/platform-advantage/snapshot",
+    "file": "src/app/api/platform-advantage/snapshot/route.ts"
+  },
+  {
+    "route": "/api/playwright/jobs",
+    "file": "src/app/api/playwright/jobs/route.ts"
+  },
+  {
+    "route": "/api/playwright/scrape",
+    "file": "src/app/api/playwright/scrape/route.ts"
+  },
+  {
+    "route": "/api/pricing/bundles",
+    "file": "src/app/api/pricing/bundles/route.ts"
+  },
+  {
+    "route": "/api/pricing/catalog",
+    "file": "src/app/api/pricing/catalog/route.ts"
+  },
+  {
+    "route": "/api/privacy/preferences",
+    "file": "src/app/api/privacy/preferences/route.ts"
+  },
+  {
+    "route": "/api/privacy/requests",
+    "file": "src/app/api/privacy/requests/route.ts"
+  },
+  {
+    "route": "/api/projects/[id]/client-notify",
+    "file": "src/app/api/projects/[id]/client-notify/route.ts"
+  },
+  {
+    "route": "/api/projects/[id]/client-progress-notify",
+    "file": "src/app/api/projects/[id]/client-progress-notify/route.ts"
+  },
+  {
+    "route": "/api/projects/[id]/portal-share",
+    "file": "src/app/api/projects/[id]/portal-share/route.ts"
+  },
+  {
+    "route": "/api/projects/public/[token]/access",
+    "file": "src/app/api/projects/public/[token]/access/route.ts"
+  },
+  {
+    "route": "/api/projects/public/[token]/comments",
+    "file": "src/app/api/projects/public/[token]/comments/route.ts"
+  },
+  {
+    "route": "/api/projects/stats",
+    "file": "src/app/api/projects/stats/route.ts"
+  },
+  {
+    "route": "/api/proposals/public",
+    "file": "src/app/api/proposals/public/route.ts"
+  },
+  {
+    "route": "/api/proposals/respond",
+    "file": "src/app/api/proposals/respond/route.ts"
+  },
+  {
+    "route": "/api/public/shares/[id]/download",
+    "file": "src/app/api/public/shares/[id]/download/route.ts"
+  },
+  {
+    "route": "/api/public/shares/[id]",
+    "file": "src/app/api/public/shares/[id]/route.ts"
+  },
+  {
+    "route": "/api/push/send",
+    "file": "src/app/api/push/send/route.ts"
+  },
+  {
+    "route": "/api/push/subscribe",
+    "file": "src/app/api/push/subscribe/route.ts"
+  },
+  {
+    "route": "/api/quotes/[token]/pdf",
+    "file": "src/app/api/quotes/[token]/pdf/route.ts"
+  },
+  {
+    "route": "/api/quotes/convert",
+    "file": "src/app/api/quotes/convert/route.ts"
+  },
+  {
+    "route": "/api/quotes/respond",
+    "file": "src/app/api/quotes/respond/route.ts"
+  },
+  {
+    "route": "/api/quotes/send",
+    "file": "src/app/api/quotes/send/route.ts"
+  },
+  {
+    "route": "/api/readiness",
+    "file": "src/app/api/readiness/route.ts"
+  },
+  {
+    "route": "/api/referrals/claim",
+    "file": "src/app/api/referrals/claim/route.ts"
+  },
+  {
+    "route": "/api/reports/export",
+    "file": "src/app/api/reports/export/route.ts"
+  },
+  {
+    "route": "/api/resend/domains",
+    "file": "src/app/api/resend/domains/route.ts"
+  },
+  {
+    "route": "/api/resend/send",
+    "file": "src/app/api/resend/send/route.ts"
+  },
+  {
+    "route": "/api/scraper/affordable",
+    "file": "src/app/api/scraper/affordable/route.ts"
+  },
+  {
+    "route": "/api/scraper/campaign/poll",
+    "file": "src/app/api/scraper/campaign/poll/route.ts"
+  },
+  {
+    "route": "/api/scraper/deep-crawl",
+    "file": "src/app/api/scraper/deep-crawl/route.ts"
+  },
+  {
+    "route": "/api/scraper/email-context",
+    "file": "src/app/api/scraper/email-context/route.ts"
+  },
+  {
+    "route": "/api/scraper/email-discovery",
+    "file": "src/app/api/scraper/email-discovery/route.ts"
+  },
+  {
+    "route": "/api/scraper/jobs/[id]",
+    "file": "src/app/api/scraper/jobs/[id]/route.ts"
+  },
+  {
+    "route": "/api/scraper/jobs/[id]/step",
+    "file": "src/app/api/scraper/jobs/[id]/step/route.ts"
+  },
+  {
+    "route": "/api/scraper/jobs/create",
+    "file": "src/app/api/scraper/jobs/create/route.ts"
+  },
+  {
+    "route": "/api/scraper/search",
+    "file": "src/app/api/scraper/search/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns/[id]",
+    "file": "src/app/api/scraper-campaigns/[id]/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns/[id]/run",
+    "file": "src/app/api/scraper-campaigns/[id]/run/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns/[id]/status",
+    "file": "src/app/api/scraper-campaigns/[id]/status/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns/chat",
+    "file": "src/app/api/scraper-campaigns/chat/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns/learn",
+    "file": "src/app/api/scraper-campaigns/learn/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns",
+    "file": "src/app/api/scraper-campaigns/route.ts"
+  },
+  {
+    "route": "/api/scraper-campaigns/stats",
+    "file": "src/app/api/scraper-campaigns/stats/route.ts"
+  },
+  {
+    "route": "/api/scraper-leads",
+    "file": "src/app/api/scraper-leads/route.ts"
+  },
+  {
+    "route": "/api/security/owasp-headers",
+    "file": "src/app/api/security/owasp-headers/route.ts"
+  },
+  {
+    "route": "/api/security/scan",
+    "file": "src/app/api/security/scan/route.ts"
+  },
+  {
+    "route": "/api/sendgrid/send",
+    "file": "src/app/api/sendgrid/send/route.ts"
+  },
+  {
+    "route": "/api/seo/articles/[articleId]/view",
+    "file": "src/app/api/seo/articles/[articleId]/view/route.ts"
+  },
+  {
+    "route": "/api/settings/email-provider",
+    "file": "src/app/api/settings/email-provider/route.ts"
+  },
+  {
+    "route": "/api/settings/legal/policies/[policyId]/publish",
+    "file": "src/app/api/settings/legal/policies/[policyId]/publish/route.ts"
+  },
+  {
+    "route": "/api/settings/legal/policies/[policyId]/versions/[versionId]/status",
+    "file": "src/app/api/settings/legal/policies/[policyId]/versions/[versionId]/status/route.ts"
+  },
+  {
+    "route": "/api/settings/legal/policies/[policyId]/versions",
+    "file": "src/app/api/settings/legal/policies/[policyId]/versions/route.ts"
+  },
+  {
+    "route": "/api/settings/legal/policies",
+    "file": "src/app/api/settings/legal/policies/route.ts"
+  },
+  {
+    "route": "/api/slack/commands",
+    "file": "src/app/api/slack/commands/route.ts"
+  },
+  {
+    "route": "/api/slack/events",
+    "file": "src/app/api/slack/events/route.ts"
+  },
+  {
+    "route": "/api/slack/interactive",
+    "file": "src/app/api/slack/interactive/route.ts"
+  },
+  {
+    "route": "/api/slack/notifications",
+    "file": "src/app/api/slack/notifications/route.ts"
+  },
+  {
+    "route": "/api/slack/oauth/authorize",
+    "file": "src/app/api/slack/oauth/authorize/route.ts"
+  },
+  {
+    "route": "/api/slack/oauth/callback",
+    "file": "src/app/api/slack/oauth/callback/route.ts"
+  },
+  {
+    "route": "/api/slack/resend",
+    "file": "src/app/api/slack/resend/route.ts"
+  },
+  {
+    "route": "/api/slack/send",
+    "file": "src/app/api/slack/send/route.ts"
+  },
+  {
+    "route": "/api/sms/campaign/[id]/run",
+    "file": "src/app/api/sms/campaign/[id]/run/route.ts"
+  },
+  {
+    "route": "/api/sms/campaign",
+    "file": "src/app/api/sms/campaign/route.ts"
+  },
+  {
+    "route": "/api/sms/send",
+    "file": "src/app/api/sms/send/route.ts"
+  },
+  {
+    "route": "/api/social/command-center",
+    "file": "src/app/api/social/command-center/route.ts"
+  },
+  {
+    "route": "/api/social/media/upload",
+    "file": "src/app/api/social/media/upload/route.ts"
+  },
+  {
+    "route": "/api/social/schedule",
+    "file": "src/app/api/social/schedule/route.ts"
+  },
+  {
+    "route": "/api/social/stats",
+    "file": "src/app/api/social/stats/route.ts"
+  },
+  {
+    "route": "/api/storage/[bucket]/[...path]",
+    "file": "src/app/api/storage/[bucket]/[...path]/route.ts"
+  },
+  {
+    "route": "/api/stripe/connect/callback",
+    "file": "src/app/api/stripe/connect/callback/route.ts"
+  },
+  {
+    "route": "/api/stripe/connect/login",
+    "file": "src/app/api/stripe/connect/login/route.ts"
+  },
+  {
+    "route": "/api/stripe/connect/onboarding",
+    "file": "src/app/api/stripe/connect/onboarding/route.ts"
+  },
+  {
+    "route": "/api/stripe/connect/status",
+    "file": "src/app/api/stripe/connect/status/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-addon-session",
+    "file": "src/app/api/stripe/create-addon-session/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-checkout",
+    "file": "src/app/api/stripe/create-checkout/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-checkout-session",
+    "file": "src/app/api/stripe/create-checkout-session/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-invoice-session",
+    "file": "src/app/api/stripe/create-invoice-session/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-legacy-invoice-session",
+    "file": "src/app/api/stripe/create-legacy-invoice-session/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-payment-intent",
+    "file": "src/app/api/stripe/create-payment-intent/route.ts"
+  },
+  {
+    "route": "/api/stripe/create-portal-session",
+    "file": "src/app/api/stripe/create-portal-session/route.ts"
+  },
+  {
+    "route": "/api/stripe/manage-subscription",
+    "file": "src/app/api/stripe/manage-subscription/route.ts"
+  },
+  {
+    "route": "/api/stripe/reconcile-payment",
+    "file": "src/app/api/stripe/reconcile-payment/route.ts"
+  },
+  {
+    "route": "/api/stripe/send-receipt",
+    "file": "src/app/api/stripe/send-receipt/route.ts"
+  },
+  {
+    "route": "/api/stripe/webhook",
+    "file": "src/app/api/stripe/webhook/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/activity",
+    "file": "src/app/api/tenant/[tenantId]/activity/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/addons",
+    "file": "src/app/api/tenant/[tenantId]/addons/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/automation-workflows",
+    "file": "src/app/api/tenant/[tenantId]/automation-workflows/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/availability",
+    "file": "src/app/api/tenant/[tenantId]/availability/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/booking-types",
+    "file": "src/app/api/tenant/[tenantId]/booking-types/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/business-events",
+    "file": "src/app/api/tenant/[tenantId]/business-events/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/business-settings",
+    "file": "src/app/api/tenant/[tenantId]/business-settings/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/clients",
+    "file": "src/app/api/tenant/[tenantId]/clients/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/contacts",
+    "file": "src/app/api/tenant/[tenantId]/contacts/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/deals/[dealId]/activities",
+    "file": "src/app/api/tenant/[tenantId]/deals/[dealId]/activities/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/deals/[dealId]/products",
+    "file": "src/app/api/tenant/[tenantId]/deals/[dealId]/products/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/deals",
+    "file": "src/app/api/tenant/[tenantId]/deals/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/documents/[documentId]",
+    "file": "src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/documents",
+    "file": "src/app/api/tenant/[tenantId]/documents/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/email-sequences",
+    "file": "src/app/api/tenant/[tenantId]/email-sequences/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/files",
+    "file": "src/app/api/tenant/[tenantId]/files/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/financial-planning",
+    "file": "src/app/api/tenant/[tenantId]/financial-planning/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/gamification",
+    "file": "src/app/api/tenant/[tenantId]/gamification/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/generated-assets",
+    "file": "src/app/api/tenant/[tenantId]/generated-assets/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/google-calendar/events",
+    "file": "src/app/api/tenant/[tenantId]/google-calendar/events/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/inbox/messages",
+    "file": "src/app/api/tenant/[tenantId]/inbox/messages/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/integrations",
+    "file": "src/app/api/tenant/[tenantId]/integrations/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/invitations",
+    "file": "src/app/api/tenant/[tenantId]/invitations/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/meetings/permanent-room",
+    "file": "src/app/api/tenant/[tenantId]/meetings/permanent-room/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/members/resolve",
+    "file": "src/app/api/tenant/[tenantId]/members/resolve/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/members",
+    "file": "src/app/api/tenant/[tenantId]/members/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/onboarding",
+    "file": "src/app/api/tenant/[tenantId]/onboarding/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/pages",
+    "file": "src/app/api/tenant/[tenantId]/pages/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]/comments",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/comments/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects/[projectId]",
+    "file": "src/app/api/tenant/[tenantId]/projects/[projectId]/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/projects",
+    "file": "src/app/api/tenant/[tenantId]/projects/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/quotes/[quoteId]/items",
+    "file": "src/app/api/tenant/[tenantId]/quotes/[quoteId]/items/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/quotes",
+    "file": "src/app/api/tenant/[tenantId]/quotes/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]",
+    "file": "src/app/api/tenant/[tenantId]/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/scheduled-ai-tasks/[taskId]/run",
+    "file": "src/app/api/tenant/[tenantId]/scheduled-ai-tasks/[taskId]/run/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/scheduled-ai-tasks",
+    "file": "src/app/api/tenant/[tenantId]/scheduled-ai-tasks/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/tasks",
+    "file": "src/app/api/tenant/[tenantId]/tasks/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/team-message-receipts",
+    "file": "src/app/api/tenant/[tenantId]/team-message-receipts/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/webhooks",
+    "file": "src/app/api/tenant/[tenantId]/webhooks/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/whatsapp-chatbot",
+    "file": "src/app/api/tenant/[tenantId]/whatsapp-chatbot/route.ts"
+  },
+  {
+    "route": "/api/tenant/[tenantId]/workflows",
+    "file": "src/app/api/tenant/[tenantId]/workflows/route.ts"
+  },
+  {
+    "route": "/api/tenant/bootstrap",
+    "file": "src/app/api/tenant/bootstrap/route.ts"
+  },
+  {
+    "route": "/api/tenant/invitations/accept",
+    "file": "src/app/api/tenant/invitations/accept/route.ts"
+  },
+  {
+    "route": "/api/test",
+    "file": "src/app/api/test/route.ts"
+  },
+  {
+    "route": "/api/tickets/[id]",
+    "file": "src/app/api/tickets/[id]/route.ts"
+  },
+  {
+    "route": "/api/tickets/notify",
+    "file": "src/app/api/tickets/notify/route.ts"
+  },
+  {
+    "route": "/api/tickets",
+    "file": "src/app/api/tickets/route.ts"
+  },
+  {
+    "route": "/api/track/open",
+    "file": "src/app/api/track/open/route.ts"
+  },
+  {
+    "route": "/api/twilio/credentials",
+    "file": "src/app/api/twilio/credentials/route.ts"
+  },
+  {
+    "route": "/api/unsubscribe",
+    "file": "src/app/api/unsubscribe/route.ts"
+  },
+  {
+    "route": "/api/webhooks/calendly",
+    "file": "src/app/api/webhooks/calendly/route.ts"
+  },
+  {
+    "route": "/api/webhooks/email/[provider]",
+    "file": "src/app/api/webhooks/email/[provider]/route.ts"
+  },
+  {
+    "route": "/api/webhooks/email/inbound/[provider]",
+    "file": "src/app/api/webhooks/email/inbound/[provider]/route.ts"
+  },
+  {
+    "route": "/api/webhooks/email",
+    "file": "src/app/api/webhooks/email/route.ts"
+  },
+  {
+    "route": "/api/webhooks/facebook/leads",
+    "file": "src/app/api/webhooks/facebook/leads/route.ts"
+  },
+  {
+    "route": "/api/webhooks/facebook/messenger",
+    "file": "src/app/api/webhooks/facebook/messenger/route.ts"
+  },
+  {
+    "route": "/api/webhooks/facebook/pages",
+    "file": "src/app/api/webhooks/facebook/pages/route.ts"
+  },
+  {
+    "route": "/api/webhooks/facebook/whatsapp",
+    "file": "src/app/api/webhooks/facebook/whatsapp/route.ts"
+  },
+  {
+    "route": "/api/webhooks/twilio/sms",
+    "file": "src/app/api/webhooks/twilio/sms/route.ts"
+  },
+  {
+    "route": "/api/webhooks/whatsapp",
+    "file": "src/app/api/webhooks/whatsapp/route.ts"
+  },
+  {
+    "route": "/api/webhooks/zernio/whatsapp",
+    "file": "src/app/api/webhooks/zernio/whatsapp/route.ts"
+  },
+  {
+    "route": "/api/webhooks/zoho/incoming",
+    "file": "src/app/api/webhooks/zoho/incoming/route.ts"
+  },
+  {
+    "route": "/api/webhooks/zoho/process-reply",
+    "file": "src/app/api/webhooks/zoho/process-reply/route.ts"
+  },
+  {
+    "route": "/api/webhooks/zoom",
+    "file": "src/app/api/webhooks/zoom/route.ts"
+  },
+  {
+    "route": "/api/whatsapp/send",
+    "file": "src/app/api/whatsapp/send/route.ts"
+  },
+  {
+    "route": "/api/x/tweets",
+    "file": "src/app/api/x/tweets/route.ts"
+  },
+  {
+    "route": "/api/zoho/books",
+    "file": "src/app/api/zoho/books/route.ts"
+  },
+  {
+    "route": "/api/zoho/campaigns",
+    "file": "src/app/api/zoho/campaigns/route.ts"
+  },
+  {
+    "route": "/api/zoho/crm/sync",
+    "file": "src/app/api/zoho/crm/sync/route.ts"
+  },
+  {
+    "route": "/api/zoho/mail",
+    "file": "src/app/api/zoho/mail/route.ts"
+  },
+  {
+    "route": "/api/zoom/oauth/callback",
+    "file": "src/app/api/zoom/oauth/callback/route.ts"
+  },
+  {
+    "route": "/api/zoom/oauth",
+    "file": "src/app/api/zoom/oauth/route.ts"
+  }
+]

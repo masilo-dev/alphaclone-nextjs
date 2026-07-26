@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
 import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 import { WORKSPACE, MODULE_IDENTITY, type ModuleId } from '@/constants/design';
-import { getModuleIcon } from '@/components/icons/alphaclone';
+import { MODULE_ICONS } from '@/components/icons/alphaclone';
 import { cn } from '@/lib/utils';
 
 export interface HubTab {
@@ -49,7 +49,7 @@ export default function HubShell({
   const router = useRouter();
   const identity = moduleId ? MODULE_IDENTITY[moduleId] : null;
   const accentColor = identity?.primary ?? LEGACY_ACCENT[accent];
-  const ModuleIcon = moduleId ? getModuleIcon(moduleId) : null;
+  const ModuleIcon = moduleId ? MODULE_ICONS[moduleId] : null;
 
   return (
     <div

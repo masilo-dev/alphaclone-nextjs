@@ -208,9 +208,8 @@ export default function DeepDeskView() {
 
   const handleStatusChange = async (status: TicketStatus) => {
     if (!selectedTicket) return;
-    const origin = isSupportChannelTicket(selectedTicket) ? 'support_tickets' : 'tickets';
     try {
-      await ticketService.updateStatus(selectedTicket.id, status, origin);
+      await ticketService.updateStatus(selectedTicket.id, status);
       setTickets((prev) =>
         prev.map((t) => (t.id === selectedTicket.id ? { ...t, status } : t))
       );
@@ -224,9 +223,8 @@ export default function DeepDeskView() {
 
   const handlePriorityChange = async (priority: TicketPriority) => {
     if (!selectedTicket) return;
-    const origin = isSupportChannelTicket(selectedTicket) ? 'support_tickets' : 'tickets';
     try {
-      await ticketService.updatePriority(selectedTicket.id, priority, origin);
+      await ticketService.updatePriority(selectedTicket.id, priority);
       setTickets((prev) =>
         prev.map((t) => (t.id === selectedTicket.id ? { ...t, priority } : t))
       );
@@ -555,6 +553,9 @@ export default function DeepDeskView() {
                     <option value="all">All statuses</option>
                     <option value="open">Open</option>
                     <option value="in_progress">In progress</option>
+                    <option value="waiting_on_customer">Waiting on customer</option>
+                    <option value="waiting_on_business">Waiting on business</option>
+                    <option value="escalated">Escalated</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
                     <option value="reopened">Reopened</option>
@@ -722,6 +723,9 @@ export default function DeepDeskView() {
                   >
                     <option value="open">Open</option>
                     <option value="in_progress">In progress</option>
+                    <option value="waiting_on_customer">Waiting on customer</option>
+                    <option value="waiting_on_business">Waiting on business</option>
+                    <option value="escalated">Escalated</option>
                     <option value="resolved">Resolved</option>
                     <option value="closed">Closed</option>
                     <option value="reopened">Reopened</option>

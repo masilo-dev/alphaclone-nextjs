@@ -161,14 +161,14 @@ export async function POST(request: NextRequest) {
 
     if (action === 'create') {
       const title = String(body.title || 'New conversation').trim().slice(0, 120);
-      const module = body.module ? String(body.module).slice(0, 64) : null;
+      const conversationModule = body.module ? String(body.module).slice(0, 64) : null;
       const { data: created, error } = await admin
         .from('bonnie_conversations')
         .insert({
           tenant_id: tenantId,
           user_id: userId,
           title: title || 'New conversation',
-          module,
+          module: conversationModule,
         })
         .select('id, title, module, pinned, archived_at, metadata, created_at, updated_at')
         .single();

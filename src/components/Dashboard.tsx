@@ -92,12 +92,14 @@ import { useOverdueTaskNotifier } from '../hooks/useOverdueTaskNotifier';
 import { useMeetingSession } from '../hooks/useMeetingSession';
 import { DeletionOverlay } from './dashboard/DeletionOverlay';
 import PullToRefresh from './common/PullToRefresh';
+import SkipToMainContent from './accessibility/SkipToMainContent';
 
 const ConferenceTab = React.lazy(() => import('./dashboard/ConferenceTab'));
 const AnalyticsTab = React.lazy(() => import('./dashboard/AnalyticsTab'));
 import CRMTab from './dashboard/CRMTab';
 import MessagesTab from './dashboard/MessagesTab';
 const FinanceTab = React.lazy(() => import('./dashboard/FinanceTab'));
+const EnhancedBillingPage = React.lazy(() => import('./dashboard/business/EnhancedBillingPage'));
 const ArticleEditor = React.lazy(() => import('./dashboard/ArticleEditor'));
 const CalendarComponent = React.lazy(() => import('./dashboard/CalendarComponent'));
 const SuperAdminTenantsTab = React.lazy(() => import('./dashboard/admin/SuperAdminTenantsTab'));
@@ -1618,7 +1620,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/finance/manage':
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
-            <FinanceTab user={user} />
+            <EnhancedBillingPage user={user} />
           </React.Suspense>
         );
 
@@ -1724,6 +1726,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="min-h-screen min-w-0 flex overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 ac-dashboard-root ac-workspace-canvas [height:100dvh]">
+      <SkipToMainContent />
       <ConnectionStatus />
 
       <WelcomeModal

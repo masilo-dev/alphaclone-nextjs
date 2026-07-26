@@ -38,6 +38,7 @@ import { useMeetingSession } from '@/hooks/useMeetingSession';
 import { usePrefetchDashboardStats } from '@/hooks/useDashboardStats';
 import { startClientVideoCall } from '@/services/instantMeetingService';
 import { WORKSPACE } from '@/constants/design';
+import SkipToMainContent from '@/components/accessibility/SkipToMainContent';
 
 // Components
 import BusinessHome from './BusinessHome';
@@ -73,7 +74,7 @@ import SalesAgent from '../SalesAgent';
 const ScraperCampaignsPage = React.lazy(() => import('../leads/ScraperCampaignsPage'));
 import AlphaCloneContractModal from '../../contracts/AlphaCloneContractModal';
 import ContractDashboard from '../../contracts/ContractDashboard';
-import DocumentHub from '../../documents/DocumentHub';
+import SharedDocumentsWorkspace from '../../documents/SharedDocumentsWorkspace';
 // Accounting Components - Lazy loaded to prevent module resolution issues
 const AccountingDashboard = React.lazy(() => import('../accounting/AccountingDashboard'));
 // New Components
@@ -460,6 +461,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         const sharedRoute = renderSharedDashboardRoute(tab, user);
         if (sharedRoute) return sharedRoute;
 
+        if (tab === '/dashboard/business/documents' || tab.startsWith('/dashboard/business/documents/')) {
+            const section = tab.slice('/dashboard/business/documents'.length).replace(/^\//, '').split('/')[0];
+            return <SharedDocumentsWorkspace section={section} />;
+        }
+
         switch (tab) {
             case '/dashboard':
             case '/dashboard/business':
@@ -635,6 +641,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/sales-agent':
                 return <SalesAgent />;
             case '/dashboard/leads/campaigns':
+            case '/dashboard/leads/finder':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
                         <ScraperCampaignsPage />
@@ -660,12 +667,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <QuotaManager />
-                    </React.Suspense>
-                );
-            case '/dashboard/business/documents':
-                return (
-                    <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <DocumentHub user={user} />
                     </React.Suspense>
                 );
             case '/dashboard/business/pages':
@@ -964,7 +965,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');
             case '/dashboard/sales-agent': return t('AI Growth');
-            case '/dashboard/leads/campaigns': return t('Lead Finder');
+            case '/dashboard/leads/campaigns':
+            case '/dashboard/leads/finder': return t('Lead Finder');
             case '/dashboard/business/bonnie':
             case '/dashboard/bonnie': return t('Bonnie AI Console');
             case '/dashboard/bonnie/approvals':
@@ -1053,6 +1055,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     return (
         <div className="flex min-w-0 ac-workspace-canvas text-[var(--ws-text-primary)] overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 w-full max-w-full ac-business-root [height:100dvh]">
+            <SkipToMainContent />
             <div data-tour="navigation" className="flex-shrink-0">
             <Sidebar
                 sidebarOpen={sidebarOpen}
@@ -1068,7 +1071,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
             {/* Main Content */}
             {/* Removed radial gradient for strict mobile view cleanliness as requested to avoid 'motion' feel if any */}
-            <main className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main">
+            <main id="main-content" className="flex-1 flex flex-col min-w-0 min-h-0 ac-workspace-canvas ac-business-main">
 
                 <TrialBanner />
 
@@ -1177,6 +1180,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
                             ? // Lead Finder & similar tall modules must scroll; mail/messages keep clipped shells.
                               route === '/dashboard/leads/campaigns' ||
+                              route === '/dashboard/leads/finder' ||
                               route === '/dashboard/business/projects' ||
                               route === '/dashboard/sales-agent'
                                 ? 'overflow-y-auto overflow-x-hidden p-0'

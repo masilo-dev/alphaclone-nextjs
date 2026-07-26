@@ -63,6 +63,17 @@
     0 28px 90px rgba(0, 5, 24, 0.58),
     0 0 80px rgba(24, 199, 200, 0.08);
 
+  /* Shared interaction and atmospheric motion */
+  --motion-instant: 100ms;
+  --motion-fast: 180ms;
+  --motion-standard: 280ms;
+  --motion-slow: 450ms;
+  --motion-atmosphere: 900ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-fluid: cubic-bezier(0.45, 0, 0.2, 1);
+
   /* Layer order */
   --mkt-z-root: 0;
   --mkt-z-ambient: 1;
@@ -243,11 +254,11 @@
   border: 1px solid transparent;
   cursor: pointer;
   transition:
-    background-color 160ms ease,
-    color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 140ms ease;
+    background-color var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-enter);
 }
 
 .mkt-btn:focus-visible {
@@ -2668,5 +2679,208 @@
 
   .mkt-preview {
     transform: none !important;
+  }
+}
+
+/* Premium atmospheric material system */
+.mkt-marketing-background {
+  --orb-pointer-x: 0px;
+  --orb-pointer-y: 0px;
+  position: absolute;
+  inset: 0;
+  z-index: var(--mkt-z-root);
+  overflow: hidden;
+  pointer-events: none;
+  contain: paint;
+}
+
+.mkt-marketing-background .mkt-bg-root {
+  background:
+    linear-gradient(180deg, #07101d 0%, #0a1421 34%, #0b151f 68%, #08111d 100%);
+}
+
+.mkt-marketing-background[data-variant="editorial"] .mkt-bg-root,
+.mkt-marketing-background[data-variant="quiet"] .mkt-bg-root {
+  background: linear-gradient(180deg, #0b141e 0%, #101820 48%, #0a121b 100%);
+}
+
+.mkt-marketing-background[data-variant="conversion"] .mkt-bg-root {
+  background: linear-gradient(160deg, #0b131d 0%, #15171d 52%, #09131c 100%);
+}
+
+.mkt-marketing-background[data-intensity="subtle"] .mkt-orb-field {
+  opacity: 0;
+}
+
+.mkt-orb-field {
+  position: absolute;
+  inset: 0;
+  z-index: var(--mkt-z-ambient);
+  opacity: 0;
+  transform: translate3d(0, -5px, 0);
+  transition:
+    opacity var(--motion-slow) var(--ease-enter),
+    transform var(--motion-atmosphere) var(--ease-fluid);
+}
+
+.mkt-marketing-background.is-settled .mkt-orb-field {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.mkt-marketing-background[data-intensity="subtle"].is-settled .mkt-orb-field {
+  opacity: 0.72;
+}
+
+.mkt-organic-orb {
+  --orb-color: 127, 141, 147;
+  position: absolute;
+  display: block;
+  width: clamp(15rem, 28vw, 34rem);
+  aspect-ratio: 1.2;
+  opacity: 0.38;
+  transform: translate3d(var(--orb-pointer-x), var(--orb-pointer-y), 0);
+  transition: transform var(--motion-atmosphere) var(--ease-fluid);
+}
+
+.mkt-organic-orb.is-small { width: clamp(10rem, 18vw, 19rem); opacity: 0.3; }
+.mkt-organic-orb.is-large { width: clamp(23rem, 40vw, 48rem); opacity: 0.42; }
+.mkt-organic-orb.is-coral { --orb-color: 224, 105, 87; }
+.mkt-organic-orb.is-teal { --orb-color: 31, 163, 158; }
+.mkt-organic-orb.is-navy { --orb-color: 35, 57, 82; }
+.mkt-organic-orb.is-neutral { --orb-color: 150, 139, 124; }
+
+.mkt-organic-orb.at-north-west { top: -10rem; left: -9rem; }
+.mkt-organic-orb.at-north-east { top: 8%; right: -12rem; }
+.mkt-organic-orb.at-south-west { top: 54%; left: -11rem; }
+.mkt-organic-orb.at-south-east { top: 68%; right: -12rem; }
+
+.mkt-organic-orb__body,
+.mkt-organic-orb__highlight {
+  position: absolute;
+  inset: 0;
+  border-radius: 58% 42% 64% 36% / 44% 57% 43% 56%;
+  will-change: transform, border-radius;
+}
+
+.mkt-organic-orb__body {
+  background:
+    radial-gradient(circle at 31% 24%, rgba(255, 255, 255, 0.15), transparent 18%),
+    radial-gradient(ellipse at 45% 42%, rgba(var(--orb-color), 0.32), rgba(var(--orb-color), 0.1) 46%, transparent 72%);
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.09),
+    inset -16px -20px 42px rgba(2, 8, 14, 0.13),
+    0 32px 80px rgba(var(--orb-color), 0.08);
+  filter: blur(18px);
+  animation: mkt-fluid-drop 21s var(--ease-fluid) var(--orb-delay) infinite;
+}
+
+.mkt-organic-orb__highlight {
+  inset: 7% 12% 18% 8%;
+  background: radial-gradient(ellipse at 34% 26%, rgba(255, 255, 255, 0.1), transparent 44%);
+  filter: blur(8px);
+  animation: mkt-orb-inner-shift 17s var(--ease-fluid) calc(var(--orb-delay) - 3s) infinite alternate;
+}
+
+.mkt-organic-orb:nth-child(2) .mkt-organic-orb__body { animation-duration: 27s; }
+.mkt-organic-orb:nth-child(3) .mkt-organic-orb__body { animation-duration: 16s; }
+
+@keyframes mkt-fluid-drop {
+  0%, 16%, 100% {
+    transform: translate3d(0, 0, 0) scale(1.02, 0.96) rotate(-2deg);
+    border-radius: 58% 42% 64% 36% / 44% 57% 43% 56%;
+  }
+  25% {
+    transform: translate3d(2%, 14px, 0) scale(0.94, 1.08) rotate(1deg);
+    border-radius: 48% 52% 57% 43% / 34% 42% 58% 66%;
+  }
+  34%, 78% {
+    transform: translate3d(3%, 19px, 0) scale(0.98, 1.03) rotate(3deg);
+    border-radius: 54% 46% 43% 57% / 38% 55% 45% 62%;
+  }
+  48% {
+    transform: translate3d(-2%, 8px, 0) scale(1.04, 0.98) rotate(0);
+    border-radius: 62% 38% 52% 48% / 51% 44% 56% 49%;
+  }
+}
+
+@keyframes mkt-orb-inner-shift {
+  from { transform: translate3d(-3%, -2%, 0) rotate(-3deg); opacity: 0.55; }
+  to { transform: translate3d(5%, 4%, 0) rotate(4deg); opacity: 0.9; }
+}
+
+.mkt-fluid-transition {
+  position: absolute;
+  inset: 0;
+  z-index: var(--mkt-z-waves);
+  opacity: 0.18;
+  transition: opacity var(--motion-atmosphere) var(--ease-enter);
+}
+
+.mkt-fluid-transition span {
+  position: absolute;
+  left: -8%;
+  right: -8%;
+  height: 12rem;
+  background: linear-gradient(90deg, transparent, rgba(207, 199, 185, 0.07), transparent);
+  transform: skewY(-3deg);
+  filter: blur(28px);
+}
+.mkt-fluid-transition span:first-child { top: 31%; }
+.mkt-fluid-transition span:last-child { top: 72%; transform: skewY(2deg); }
+
+.mkt-marketing-background[data-performance="reduced"] .mkt-organic-orb:nth-child(n+3) {
+  display: none;
+}
+
+.mkt-marketing-background[data-performance="reduced"] .mkt-organic-orb__body {
+  filter: blur(12px);
+  animation-duration: 28s;
+}
+
+.mkt-marketing-background[data-performance="static"] .mkt-organic-orb:nth-child(n+3) {
+  display: none;
+}
+
+/* Keep section rhythm neutral; atmosphere supplies the restrained accent. */
+.mkt-section[data-atmosphere] {
+  background: linear-gradient(180deg, rgba(14, 23, 31, 0.5), rgba(9, 17, 25, 0.66));
+}
+
+.mkt-section[data-atmosphere="cta"],
+.mkt-section[data-atmosphere="pricing"] {
+  background: linear-gradient(180deg, rgba(18, 24, 29, 0.58), rgba(11, 19, 27, 0.76));
+}
+
+.mkt-feature-card,
+.mkt-price-card,
+.mkt-surface {
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-standard) var(--ease-standard),
+    transform var(--motion-standard) var(--ease-enter);
+}
+
+.mkt-feature-card:hover,
+.mkt-price-card:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 767px) {
+  .mkt-organic-orb { opacity: 0.25; }
+  .mkt-organic-orb.is-large { width: 23rem; }
+  .mkt-fluid-transition { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-marketing-background[data-performance="static"] .mkt-organic-orb__body,
+  .mkt-marketing-background[data-performance="static"] .mkt-organic-orb__highlight {
+    animation: none !important;
+    transform: none !important;
+  }
+  .mkt-marketing-background .mkt-orb-field {
+    opacity: 1;
+    transform: none;
+    transition: opacity var(--motion-instant) linear;
   }
 }

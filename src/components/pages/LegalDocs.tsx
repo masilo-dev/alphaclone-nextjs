@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle, Clock, Users } from 'lucide-react';
 import MarketingShell from '@/components/marketing/system/MarketingShell';
-import LegalNav from '@/components/legal/LegalNav';
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 // ---------------------------------------------------------------------------
@@ -26,7 +25,6 @@ function LegalLayout({
 }) {
    return (
       <MarketingShell>
-         <LegalNav />
          <div className="max-w-4xl mx-auto px-4 py-16">
             <div className="flex items-center gap-3 mb-4">
                <div className="mkt-icon-wrap">

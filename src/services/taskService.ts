@@ -150,7 +150,8 @@ export const taskService = {
             let query = supabase
                 .from('tasks')
                 .select('*', { count: 'exact' }) // Request exact count for pagination
-                .eq('tenant_id', tenantId);
+                .eq('tenant_id', tenantId)
+                .is('deleted_at', null);
 
             if (filters?.assignedTo) {
                 query = query.eq('assigned_to', filters.assignedTo);
@@ -230,6 +231,7 @@ export const taskService = {
                 .select('*')
                 .eq('id', taskId)
                 .eq('tenant_id', tenantId)
+                .is('deleted_at', null)
                 .single();
 
             if (error) throw error;

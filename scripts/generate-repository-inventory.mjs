@@ -377,7 +377,6 @@ lines.push(
   "```bash",
   "node scripts/generate-repository-inventory.mjs",
   "```",
-  "",
 );
 writeFileSync(
   resolve(root, "docs/AUDIT_REPOSITORY_INVENTORY.md"),

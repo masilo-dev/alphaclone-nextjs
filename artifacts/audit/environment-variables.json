@@ -1,0 +1,1807 @@
+[
+  {
+    "name": "ACS_CONNECTION_STRING",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AI_ALLOW_MULTI_PROVIDER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALLOW_MCP_RESOURCE_CROSS_ORIGIN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ALLOW_UNSAFE_INFRASTRUCTURE_MOCKS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ANTHROPIC_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ANTHROPIC_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "APOLLO_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "APP_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AUDIT_REQUIRED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AZURE_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AZURE_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "AZURE_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_DURABLE_RUNTIME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_EVENT_SIGNING_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_INTERNAL_SERVICE_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_AGENT_ROUNDS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_GRAPH_DEPTH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_PARALLEL_TASKS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_RETRIES",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_TASKS_PER_RUN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_MAX_TOOLS_PER_ROUND",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BONNIE_WORKER_POLL_MS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BREVO_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BREVO_FROM_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BREVO_FROM_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BREVO_PLATFORM_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BREVO_PLATFORM_FROM_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BROWSERBASE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BROWSERBASE_PROJECT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BROWSER_WS_ENDPOINT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "BUILTWITH_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CALENDLY_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CALENDLY_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CALENDLY_REDIRECT_URI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CALENDLY_WEBHOOK_SIGNING_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CHROME_EXECUTABLE_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CLAUDE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CLIENT_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CLIENT_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "COMPLIANCE_TOKEN_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CONTACT_SALES_INBOX_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CONTACT_TENANT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CONTRACT_ENCRYPTION_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "CRON_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DAILY_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DAILY_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DATABASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEBUG",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEBUG_FILE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEEPSEEK_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEEPSEEK_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEFAULT_FROM_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEFAULT_FROM_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DEV_MIGRATE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "DOTENV_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_AUTO_REPLY_AUTO_SEND",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_AUTO_REPLY_COOLDOWN_DAYS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_AUTO_REPLY_DELAY_SECONDS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_AUTO_REPLY_DISABLED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_FROM",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_UNSUBSCRIBE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_WEBHOOK_SHARED_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EMAIL_WEBHOOK_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ENCRYPTION_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EXPO_PUBLIC_SUPABASE_ANON_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "EXPO_PUBLIC_SUPABASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FACEBOOK_APP_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FACEBOOK_APP_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FACEBOOK_PAGE_ACCESS_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FACEBOOK_VERIFY_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FACEBOOK_WEBHOOK_VERIFY_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FIRECRAWL_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FORCE_LOCAL_HEAVY_WORK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FORM_WEBHOOK_REQUIRE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "FOURSQUARE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GEMINI_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GEMINI_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GITHUB_ACTION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GITHUB_ACTIONS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GIT_COMMIT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_AI_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_AI_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_GENERATIVE_AI_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GOOGLE_WORKSPACE_MCP_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GRACEFUL_FS_PLATFORM",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GROK_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "GROK_IMAGE_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HERE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HOMEDRIVE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HTTPS_PROXY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HTTP_PROXY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HUBSPOT_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HUBSPOT_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HUBSPOT_MCP_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HUBSPOT_REDIRECT_URI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "HUNTER_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "INDEXNOW_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "INSTAGRAM_ACCESS_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "INTEGRATION_TOKEN_ENCRYPTION_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "INTERNAL_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "INTERNAL_API_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "JEST_WORKER_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LD_LIBRARY_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LINKEDIN_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LINKEDIN_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LINKEDIN_REDIRECT_URI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LINKEDIN_STATE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LIVEKIT_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LIVEKIT_API_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LIVEKIT_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LOCALAPPDATA",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LOCAL_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "LOCAL_MODEL_ENDPOINT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MANUS_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MAX_LOG_LENGTH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_DRY_RUN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MCP_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MICROSOFT_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "MICROSOFT_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXTAUTH_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PHASE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ANTHROPIC_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_APP_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_APP_VERSION",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_AZURE_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_BASE_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_BING_SITE_VERIFICATION",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_CALENDLY_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_CALENDLY_REDIRECT_URI",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_DAILY_DOMAIN",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_DEEPSEEK_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ENABLE_PWA",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ENABLE_SERWIST",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GA_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GEMINI_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GIT_COMMIT_SHA",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GOOGLE_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_HUBSPOT_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_HUBSPOT_REDIRECT_URI",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_LINKEDIN_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_LINKEDIN_REDIRECT_URI",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_LIVEKIT_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_OPENAI_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_SENTRY_DSN",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_SITE_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_STRIPE_PUBLIC_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_SUPABASE_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_TWILIO_CONFIGURED",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ZOHO_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ZOHO_REDIRECT_URI",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_PUBLIC_ZOOM_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "NEXT_RUNTIME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NODE_DEBUG",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NODE_ENV",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NOTIFICATION_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "NO_PROXY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OAUTH_STATE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OPENAI_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OPENAI_IMAGE_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OPENAI_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OPENROUTER_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OPENROUTER_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OUTLOOK_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OUTLOOK_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "OUTREACH_AUTO_SEND_CONFIDENCE_THRESHOLD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_BASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_LEGACY_SCREENSHOT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_NO_UA_PLATFORM",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_PROXY_BYPASS_FOR_TESTING",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_SERVER_REGISTRY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_SKIP_NAVIGATION_CHECK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PLAYWRIGHT_SOCKETS_DIR",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PORTAL_JWT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PROGRAMFILES",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PUBLIC_APP_ORIGIN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PUBLIC_MCP_RESOURCE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PUPPETEER_EXECUTABLE_PATH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PWDEBUGIMPL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PWTEST_CLI_HEADLESS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PWTEST_PRINT_WS_ENDPOINT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PWTEST_PROFILE_DIR",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PWTEST_SERVER_WS_HEADERS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_CHROMIUM_ATTACH_TO_OTHER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_CLI_DISPLAY_VERSION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_CODEGEN_NO_INSPECTOR",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_DEBUG_CONTROLLER_HEADLESS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_LANG_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_LANG_NAME_VERSION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_TEST_CDN_THAT_SHOULD_WORK",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_TEST_SCREENSHOT_NO_FONTS_READY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "PW_VERSION_OVERRIDE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "QSTASH_CURRENT_SIGNING_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "QSTASH_NEXT_SIGNING_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "QSTASH_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "QSTASH_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "QTS_DEBUG",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_DEPLOYMENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_ENVIRONMENT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_ENVIRONMENT_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_GIT_COMMIT_SHA",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_PROJECT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_REGION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_REPLICA_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_SCRAPER_SERVICE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_SERVICE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_SERVICE_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_STATIC_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RAILWAY_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "READINESS_ALWAYS_200",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_REQUIRED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "REDIS_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RESEND_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RESEND_FROM_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "RESEND_FROM_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SANDBOX_EMAIL_ONLY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SCRAPER_SERVICE_INTERNAL_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SCRAPER_SERVICE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SELENIUM_REMOTE_CAPABILITIES",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SELENIUM_REMOTE_HEADERS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SELENIUM_REMOTE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENDGRID_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENDGRID_FROM_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENDGRID_FROM_NAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENDINBLUE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENTRY_DSN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENTRY_ORG",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SENTRY_PROJECT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SERVICE_ROLE_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SLACK_BOT_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SLACK_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SLACK_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SLACK_MCP_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SLACK_REDIRECT_URI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SLACK_SIGNING_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SMTP_HOST",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SMTP_PASS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SMTP_PORT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SMTP_USER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SOCIAL_LEGACY_SCHEDULED_POSTS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SOCIAL_PUBLISH_ENABLED",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SOCIAL_PUBLISH_TEST_FACEBOOK_PAGE_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SOCIAL_PUBLISH_TEST_LINKEDIN_ORG_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SOCIAL_PUBLISH_TEST_MODE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_SECRET_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "STRIPE_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPABASE_ANON_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPABASE_DB_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPABASE_SERVICE_ROLE_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPABASE_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPER_ADMIN_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SUPER_ADMIN_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SYSTEMROOT",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "SYSTEM_EMAIL_FOOTER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TENANT_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TENANT_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TEST_GRACEFUL_FS_GLOBAL_PATCH",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TEST_INSPECTOR_LANGUAGE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TEST_MODE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TEST_USER_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TEST_USER_PASSWORD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TOKEN_ENCRYPTION_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TURNSTILE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TURNSTILE_SECRET_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TWILIO_ACCOUNT_SID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TWILIO_AUTH_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TWILIO_PHONE_NUMBER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TWITTER_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "TWITTER_API_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "UNDICI_NO_WASM_SIMD",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "UNSUBSCRIBE_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "UPSTASH_REDIS_REST_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "UPSTASH_REDIS_REST_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "USER",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "USERNAME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VALIDATE_ENV_WARN_ONLY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VAPID_EMAIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VAPID_PRIVATE_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VERCEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VERCEL_DEPLOYMENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VERCEL_GIT_COMMIT_SHA",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VERCEL_REGION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VERCEL_URL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_ANTHROPIC_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_AZURE_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_CALENDLY_CLIENT_ID",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_CALENDLY_REDIRECT_URI",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_CALENDLY_WEBHOOK_SIGNING_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_DAILY_DOMAIN",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_GEMINI_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_LIVEKIT_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_OPENAI_API_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_SENTRY_DSN",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_STRIPE_PUBLIC_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_SUPABASE_ANON_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_SUPABASE_URL",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "VITE_VAPID_PUBLIC_KEY",
+    "public": true,
+    "valueIncluded": false
+  },
+  {
+    "name": "WHATSAPP_ACCESS_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "WHATSAPP_PHONE_NUMBER_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "WHATSAPP_WEBHOOK_VERIFY_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "WK_DISABLE_FRAME_SESSIONS",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "WS_NO_BUFFER_UTIL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "WS_NO_UTF_8_VALIDATE",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "XAI_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "XAI_IMAGE_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "XAI_VIDEO_MODEL",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "XDG_CACHE_HOME",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "X_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "X_API_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "X_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "X_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "X_CONSUMER_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "X_CONSUMER_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "YARGS_MIN_NODE_VERSION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZERNIO_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZERNIO_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZEROBOUNCE_API_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZEROBOUNCE_KEY",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_ACCESS_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID_AU",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID_CA",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID_EU",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID_IN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID_JP",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_ID_US",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET_AU",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET_CA",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET_EU",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET_IN",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET_JP",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_CLIENT_SECRET_US",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_ENCRYPTION_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_REDIRECT_URI",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_REGION",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOHO_WEBHOOK_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOOM_CLIENT_ID",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOOM_CLIENT_SECRET",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOOM_OAUTH_SCOPES",
+    "public": false,
+    "valueIncluded": false
+  },
+  {
+    "name": "ZOOM_WEBHOOK_SECRET_TOKEN",
+    "public": false,
+    "valueIncluded": false
+  }
+]

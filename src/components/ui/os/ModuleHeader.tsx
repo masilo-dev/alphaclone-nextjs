@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import type { ModuleId } from '@/constants/brand';
 import { MODULE_IDENTITY } from '@/constants/brand';
-import { getModuleIcon } from '@/components/icons/alphaclone';
+import { MODULE_ICONS } from '@/components/icons/alphaclone';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ export function ModuleHeader({
   className,
 }: ModuleHeaderProps) {
   const identity = MODULE_IDENTITY[moduleId];
-  const Icon = getModuleIcon(moduleId);
+  const Icon = MODULE_ICONS[moduleId];
 
   return (
     <header

@@ -131,9 +131,9 @@ export async function POST(request: NextRequest) {
           contactId = contact.id;
           clientId = contact.client_id;
         } else {
-          // Try clients table
+          // Reuse the canonical CRM client; never create or query a parallel client table.
           const { data: client } = await admin
-            .from('clients')
+            .from('business_clients')
             .select('id, name')
             .eq('phone', fromPhone)
             .eq('tenant_id', tenantId)
@@ -181,22 +181,82 @@ export async function POST(request: NextRequest) {
           .select('id')
           .single();
 
-        // 3. Auto-create support ticket
+        // 3. Reuse the canonical open ticket for this client/channel or create it once.
         if (savedMessage) {
-          await admin
-            .from('support_tickets')
-            .insert({
+          let existingTicketQuery = admin
+            .from('tickets')
+            .select('id,status')
+            .eq('tenant_id', tenantId)
+            .eq('channel', 'whatsapp')
+            .in('status', ['new', 'open', 'in_progress', 'waiting_on_customer', 'waiting_on_business', 'escalated', 'reopened', 'resolved', 'closed']);
+          if (contactId) {
+            existingTicketQuery = existingTicketQuery.eq('contact_id', contactId);
+          } else if (clientId) {
+            existingTicketQuery = existingTicketQuery.eq('client_id', clientId);
+          } else {
+            existingTicketQuery = existingTicketQuery.eq('id', '00000000-0000-0000-0000-000000000000');
+          }
+          const { data: existingTicket } = await existingTicketQuery
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          let ticketId = existingTicket?.id as string | undefined;
+          if (!ticketId) {
+            const { data: creator } = await admin
+              .from('tenant_users')
+              .select('user_id')
+              .eq('tenant_id', tenantId)
+              .order('created_at')
+              .limit(1)
+              .maybeSingle();
+            if (!creator?.user_id) throw new Error('Support workspace has no active member');
+
+            const { data: createdTicket, error: ticketError } = await admin
+              .from('tickets')
+              .insert({
               tenant_id: tenantId,
               title: `WhatsApp message from ${senderName}`,
               description: messageBody,
               status: 'open',
               priority: 'medium',
-              category: 'general',
               source: 'whatsapp',
+              channel: 'whatsapp',
+              ticket_type: 'question',
               contact_id: contactId,
               client_id: clientId,
-              message_id: savedMessage.id,
-            });
+              created_by: creator.user_id,
+              metadata: { whatsapp_message_id: savedMessage.id },
+            })
+              .select('id')
+              .single();
+            if (ticketError) throw ticketError;
+            ticketId = createdTicket.id;
+          } else if (
+            existingTicket &&
+            ['waiting_on_customer', 'resolved', 'closed'].includes(existingTicket.status)
+          ) {
+            await admin.from('tickets').update({
+              status: 'open',
+              waiting_on: 'business',
+              updated_at: new Date().toISOString(),
+            }).eq('tenant_id', tenantId).eq('id', ticketId);
+          }
+
+          const { error: messageError } = await admin.from('ticket_messages').insert({
+            tenant_id: tenantId,
+            ticket_id: ticketId,
+            contact_id: contactId,
+            message_type: 'customer_message',
+            body_text: messageBody,
+            visibility: 'external',
+            created_at: timestamp,
+            metadata: {
+              whatsapp_message_id: savedMessage.id,
+              provider_message_id: messageId,
+            },
+          });
+          if (messageError) throw messageError;
         }
 
         // 4. Trigger auto-reply if chatbot enabled

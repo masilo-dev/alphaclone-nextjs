@@ -130,10 +130,64 @@ export async function POST(req: NextRequest, context: { params: Promise<{ tenant
       );
     }
 
+    // Register the same stored object in the shared Documents catalogue. This is
+    // metadata only: no second storage object or public URL is created.
+    const { data: documentRecord, error: documentError } = await supabaseAdmin
+      .from('documents')
+      .insert({
+        tenant_id: tenantId,
+        title: file.name,
+        name: file.name,
+        mime_type: mimeType,
+        storage_path: fileRecord.storage_path,
+        size_bytes: file.size,
+        status: 'active',
+        document_type: category || 'general_file',
+        owner_user_id: user.id,
+        uploaded_by: user.id,
+        source_file_id: fileRecord.id,
+        metadata: { tags, ai_summary: aiSummary, scan_status: 'clean' },
+      })
+      .select('id')
+      .single();
+
+    if (documentError) {
+      console.error('[tenant/files] shared document insert:', documentError);
+      await supabaseAdmin.from('file_uploads').delete().eq('tenant_id', tenantId).eq('id', fileRecord.id);
+      await supabaseAdmin.storage.from('uploads').remove([storagePath]).catch(() => undefined);
+      return NextResponse.json({ error: 'Failed to register shared document' }, { status: 500 });
+    }
+
+    await supabaseAdmin.from('file_uploads')
+      .update({ document_id: documentRecord.id })
+      .eq('tenant_id', tenantId)
+      .eq('id', fileRecord.id);
+
+    if (entityType && entityId) {
+      const { error: relationshipError } = await supabaseAdmin.from('document_relationships').insert({
+        tenant_id: tenantId,
+        document_id: documentRecord.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        relationship_type: 'attachment',
+        is_primary: true,
+        created_by: user.id,
+      });
+      if (relationshipError) console.error('[tenant/files] document relationship:', relationshipError);
+    }
+    await supabaseAdmin.from('document_activity').insert({
+      tenant_id: tenantId,
+      document_id: documentRecord.id,
+      actor_user_id: user.id,
+      action: 'uploaded',
+      new_values: { file_id: fileRecord.id, mime_type: mimeType, size_bytes: file.size },
+    });
+
     const proxiedUrl = `/api/storage/uploads/${storagePath}`;
     return NextResponse.json({
       success: true,
       fileId: fileRecord.id,
+      documentId: documentRecord.id,
       url: proxiedUrl,
       proxiedUrl,
       storagePath,

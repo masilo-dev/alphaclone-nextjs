@@ -48,7 +48,7 @@ test("ToolPolicyGate enforces human oversight for high-risk tools (source)", asy
   assert.match(src, /requiresApproval/);
 });
 
-test("unified tools/list returns non-empty full catalog for internal alphaclone client", async () => {
+test("unified tools/list returns bounded progressive catalog for internal client", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: false,
@@ -57,19 +57,19 @@ test("unified tools/list returns non-empty full catalog for internal alphaclone 
     clientLabel: "internal",
     userAgent: null,
   });
-  assert.ok(tools.length > 50, `expected full catalog, got ${tools.length}`);
+  assert.ok(tools.length >= 20 && tools.length <= 40, `expected 20-40 core tools, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
   for (const required of [
-    "create_lead",
-    "create_post",
+    "search_tools",
+    "load_module_tools",
     "search_leads",
-    "list_leads",
+    "list_modules",
   ]) {
     assert.ok(names.has(required), `missing required tool ${required}`);
   }
 });
 
-test("Claude OAuth client gets FULL compacted platform catalog", async () => {
+test("Claude OAuth client gets compacted progressive catalog", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
@@ -79,31 +79,27 @@ test("Claude OAuth client gets FULL compacted platform catalog", async () => {
     userAgent: "Claude-User",
   });
   assert.ok(
-    tools.length > 50,
-    `expected full platform catalog, got ${tools.length}`,
-  );
-  assert.ok(
-    tools.length > CHATGPT_CONNECTOR_TOOL_NAMES.length,
-    `Claude must not be limited to curated subset (${tools.length} vs curated ${CHATGPT_CONNECTOR_TOOL_NAMES.length})`,
+    tools.length >= 20 && tools.length <= 40,
+    `expected progressive platform catalog, got ${tools.length}`,
   );
   const names = new Set(tools.map((t) => t.name));
   for (const required of [
-    "create_lead",
+    "search_tools",
     "search_leads",
-    "list_leads",
-    "inspect_tools",
+    "load_module_tools",
+    "list_capabilities",
   ]) {
     assert.ok(names.has(required), `missing platform tool ${required}`);
   }
   // Compaction: property descriptions should be stripped on discovery schemas
-  const sample = tools.find((t) => t.name === "create_lead") || tools[0];
+  const sample = tools.find((t) => t.name === "search_leads") || tools[0];
   const props = sample?.inputSchema?.properties || {};
   for (const prop of Object.values(props)) {
     assert.equal(prop?.description, undefined);
   }
 });
 
-test("API-key path (null clientId) also gets full platform catalog", async () => {
+test("API-key path also gets progressive catalog by default", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
@@ -111,7 +107,7 @@ test("API-key path (null clientId) also gets full platform catalog", async () =>
     clientId: null,
   });
   assert.ok(
-    tools.length > 50,
-    `expected full platform default, got ${tools.length}`,
+    tools.length >= 20 && tools.length <= 40,
+    `expected progressive platform default, got ${tools.length}`,
   );
 });

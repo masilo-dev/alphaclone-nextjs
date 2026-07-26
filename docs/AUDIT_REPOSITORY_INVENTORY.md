@@ -1,84 +1,84 @@
 # AlphaClone machine-generated repository inventory
 
-Generated: 2026-07-17T21:40:39.800Z
+Generated: 2026-07-26T13:28:21.215Z
 
 > This is a static source inventory, not evidence that a feature works. Status is conservative: no module is marked Complete without end-to-end test evidence.
 
 ## Summary
 
-| Artifact                 | Count |
-| ------------------------ | ----: |
-| files                    |  2346 |
-| pages                    |    81 |
-| routeHandlers            |   397 |
-| apiRoutes                |   385 |
-| serverActions            |     1 |
-| clientServices           |   309 |
-| migrations               |   353 |
-| canonicalMigrations      |   255 |
-| legacyMigrations         |    98 |
-| tables                   |   361 |
-| storageBuckets           |     8 |
-| cronRoutes               |    35 |
-| workers                  |     5 |
-| externalIntegrationFiles |   708 |
-| mcpFiles                 |   128 |
-| mcpTools                 |   426 |
-| navigationFiles          |   244 |
-| modals                   |    32 |
-| destructiveActionFiles   |   278 |
-| publicUrls               |   995 |
-| environmentVariables     |   308 |
-| featureFlags             |     8 |
-| tests                    |    12 |
+| Artifact | Count |
+| --- | ---: |
+| files | 2839 |
+| pages | 93 |
+| routeHandlers | 496 |
+| apiRoutes | 483 |
+| serverActions | 1 |
+| clientServices | 286 |
+| migrations | 421 |
+| canonicalMigrations | 323 |
+| legacyMigrations | 98 |
+| tables | 514 |
+| storageBuckets | 11 |
+| cronRoutes | 42 |
+| workers | 7 |
+| externalIntegrationFiles | 779 |
+| mcpFiles | 266 |
+| mcpTools | 578 |
+| navigationFiles | 284 |
+| modals | 33 |
+| destructiveActionFiles | 380 |
+| publicUrls | 1042 |
+| environmentVariables | 356 |
+| featureFlags | 9 |
+| tests | 68 |
 
 ## Module matrix
 
-| Module                |  UI | API | Database | Permissions | Tests | Status             |
-| --------------------- | --: | --: | -------: | ----------: | ----: | ------------------ |
-| Authentication        |   7 |  40 |       13 |          48 |     0 | Partially complete |
-| Tenant and workspace  |   0 |   3 |       25 |          65 |     1 | Backend only       |
-| CRM                   |   3 |  30 |       42 |         140 |     1 | Partially complete |
-| Lead Finder           |   0 |  16 |        1 |          26 |     0 | Backend only       |
-| Projects              |   2 |   8 |        9 |          30 |     1 | Partially complete |
-| Contracts             |   2 |   7 |        6 |          26 |     0 | Partially complete |
-| Quotes                |   1 |   4 |        3 |          10 |     0 | Partially complete |
-| Invoices and payments |   1 |  35 |       14 |          65 |     0 | Partially complete |
-| Accounting            |   0 |   7 |       11 |          47 |     1 | Backend only       |
-| Documents             |   0 |   4 |        5 |          30 |     0 | Backend only       |
-| Email and campaigns   |   1 |  35 |       18 |          97 |     0 | Partially complete |
-| SMS and WhatsApp      |   0 |  14 |        7 |          31 |     0 | Backend only       |
-| Integrations          |   1 |  41 |       25 |          90 |     0 | Partially complete |
-| Bonnie, Nexus and MCP |   0 |  35 |       27 |         132 |     0 | Backend only       |
-| Notifications         |   0 |   4 |        8 |          19 |     0 | Backend only       |
-| Search                |   1 |   2 |        3 |          10 |     0 | Partially complete |
-| Settings              |   0 |  10 |        9 |          36 |     2 | Backend only       |
+| Module | UI | API | Database | Permissions | Tests | Status |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Authentication | 7 | 42 | 20 | 71 | 9 | Partially complete |
+| Tenant and workspace | 2 | 45 | 34 | 130 | 4 | Partially complete |
+| CRM | 3 | 42 | 48 | 164 | 5 | Partially complete |
+| Lead Finder | 0 | 17 | 2 | 27 | 1 | Backend only |
+| Projects | 2 | 15 | 11 | 41 | 2 | Partially complete |
+| Contracts | 2 | 7 | 7 | 28 | 1 | Partially complete |
+| Quotes | 1 | 6 | 4 | 14 | 0 | Partially complete |
+| Invoices and payments | 1 | 40 | 21 | 78 | 0 | Partially complete |
+| Accounting | 0 | 10 | 13 | 53 | 2 | Backend only |
+| Documents | 0 | 9 | 13 | 45 | 1 | Backend only |
+| Email and campaigns | 1 | 41 | 20 | 113 | 2 | Partially complete |
+| SMS and WhatsApp | 0 | 15 | 7 | 32 | 0 | Backend only |
+| Integrations | 1 | 44 | 31 | 116 | 8 | Partially complete |
+| Bonnie, Nexus and MCP | 1 | 51 | 43 | 253 | 23 | Partially complete |
+| Notifications | 0 | 5 | 8 | 20 | 0 | Backend only |
+| Search | 1 | 7 | 4 | 17 | 1 | Partially complete |
+| Settings | 1 | 17 | 9 | 46 | 2 | Partially complete |
 
 ## Risk-marker scan
 
-| Marker                | Files |
-| --------------------- | ----: |
-| TODO                  |    53 |
-| FIXME                 |     3 |
-| HACK                  |     3 |
-| temporary             |    15 |
-| placeholder           |   231 |
-| coming soon           |    12 |
-| mock/fake/demo        |    61 |
-| hardcoded             |    15 |
-| not implemented       |     5 |
-| console.log           |   221 |
-| alert                 |     9 |
-| window.confirm        |    11 |
-| as any                |   212 |
-| @ts-ignore            |     9 |
-| eslint-disable        |    15 |
-| localhost             |    31 |
-| vercel.app            |     8 |
-| service-role use      |   484 |
-| raw SQL               |     7 |
-| direct browser writes |     0 |
-| unrestricted delete   |     9 |
+| Marker | Files |
+| --- | ---: |
+| TODO | 52 |
+| FIXME | 2 |
+| HACK | 2 |
+| temporary | 13 |
+| placeholder | 218 |
+| coming soon | 5 |
+| mock/fake/demo | 61 |
+| hardcoded | 15 |
+| not implemented | 3 |
+| console.log | 205 |
+| alert | 7 |
+| window.confirm | 14 |
+| as any | 214 |
+| @ts-ignore | 8 |
+| eslint-disable | 16 |
+| localhost | 38 |
+| vercel.app | 8 |
+| service-role use | 646 |
+| raw SQL | 8 |
+| direct browser writes | 0 |
+| unrestricted delete | 8 |
 
 ## Detailed artifacts
 
@@ -97,6 +97,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/billing/upgrade/page.tsx`
 - `src/app/blog/[slug]/page.tsx`
 - `src/app/blog/page.tsx`
+- `src/app/bonnie/workspace/page.tsx`
 - `src/app/book-demo/page.tsx`
 - `src/app/book/[slug]/[service_slug]/page.tsx`
 - `src/app/book/[slug]/page.tsx`
@@ -121,6 +122,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/form/[slug]/[formSlug]/page.tsx`
 - `src/app/form/[slug]/page.tsx`
 - `src/app/guide/page.tsx`
+- `src/app/invite/[token]/page.tsx`
 - `src/app/invoice/[id]/page.tsx`
 - `src/app/lead-management/page.tsx`
 - `src/app/legal/acceptable-use/page.tsx`
@@ -129,6 +131,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/legal/data-request/page.tsx`
 - `src/app/legal/dpa/page.tsx`
 - `src/app/legal/page.tsx`
+- `src/app/legal/policy/[tenantId]/[slug]/page.tsx`
 - `src/app/legal/privacy/page.tsx`
 - `src/app/legal/refund/page.tsx`
 - `src/app/legal/sla/page.tsx`
@@ -148,19 +151,28 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/pricing/page.tsx`
 - `src/app/privacy-choices/page.tsx`
 - `src/app/privacy-policy/page.tsx`
+- `src/app/privacy/preferences/page.tsx`
+- `src/app/privacy/request/page.tsx`
+- `src/app/privacy/request/status/page.tsx`
 - `src/app/private-docs/page.tsx`
 - `src/app/project-management/page.tsx`
 - `src/app/project/[id]/page.tsx`
+- `src/app/proposal/[token]/page.tsx`
+- `src/app/public/receipt/[id]/page.tsx`
 - `src/app/quote/[token]/page.tsx`
 - `src/app/reset-password/page.tsx`
 - `src/app/results/page.tsx`
 - `src/app/search/page.tsx`
 - `src/app/security-policy/page.tsx`
 - `src/app/services/page.tsx`
+- `src/app/settings/legal/[[...section]]/page.tsx`
 - `src/app/share/[id]/page.tsx`
 - `src/app/sign-contract/page.tsx`
 - `src/app/sign/[token]/page.tsx`
 - `src/app/sla/page.tsx`
+- `src/app/solutions/agencies/page.tsx`
+- `src/app/solutions/consultants/page.tsx`
+- `src/app/solutions/solo-founders/page.tsx`
 - `src/app/terms-of-service/page.tsx`
 - `src/app/tools/ai-architect/page.tsx`
 - `src/app/video-meetings/page.tsx`
@@ -170,9 +182,13 @@ Generated: 2026-07-17T21:40:39.800Z
 
 - `src/app/api/account/communication-prefs/route.ts`
 - `src/app/api/account/delete/route.ts`
+- `src/app/api/account/profile/route.ts`
 - `src/app/api/account/registration-context/route.ts`
 - `src/app/api/accounting/management/route.ts`
 - `src/app/api/accounting/pnl/route.ts`
+- `src/app/api/accounting/receipts/[id]/route.ts`
+- `src/app/api/accounting/receipts/route.ts`
+- `src/app/api/accounting/sales-receipts/route.ts`
 - `src/app/api/adapters/operate/route.ts`
 - `src/app/api/admin/operations-brief/route.ts`
 - `src/app/api/admin/platform-settings/route.ts`
@@ -207,6 +223,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/auth/google/gmail/connect/route.ts`
 - `src/app/api/auth/hubspot/callback/route.ts`
 - `src/app/api/auth/hubspot/connect/route.ts`
+- `src/app/api/auth/human-check/route.ts`
 - `src/app/api/auth/instagram/callback/route.ts`
 - `src/app/api/auth/instagram/connect/route.ts`
 - `src/app/api/auth/linkedin/callback/route.ts`
@@ -230,11 +247,20 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/autonomous/trigger/route.ts`
 - `src/app/api/bonnie/approvals/route.ts`
 - `src/app/api/bonnie/briefing/route.ts`
+- `src/app/api/bonnie/conversations/[id]/route.ts`
+- `src/app/api/bonnie/conversations/route.ts`
 - `src/app/api/bonnie/dream/route.ts`
+- `src/app/api/bonnie/goals/[id]/route.ts`
+- `src/app/api/bonnie/goals/route.ts`
 - `src/app/api/bonnie/instruct/route.ts`
 - `src/app/api/bonnie/orchestrate/route.ts`
+- `src/app/api/bonnie/os/route.ts`
 - `src/app/api/bonnie/outcomes/route.ts`
 - `src/app/api/bonnie/quota/route.ts`
+- `src/app/api/bonnie/research/route.ts`
+- `src/app/api/bonnie/runtime/runs/[id]/route.ts`
+- `src/app/api/bonnie/runtime/runs/route.ts`
+- `src/app/api/bonnie/runtime/tasks/route.ts`
 - `src/app/api/bonnie/stream/route.ts`
 - `src/app/api/bonnie/tool/route.ts`
 - `src/app/api/bonnie/voice/route.ts`
@@ -247,11 +273,14 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/calendly/event-types/route.ts`
 - `src/app/api/calendly/schedule/route.ts`
 - `src/app/api/calendly/scheduled-events/route.ts`
+- `src/app/api/calendly/status/route.ts`
 - `src/app/api/calendly/sync/route.ts`
 - `src/app/api/campaigns/route.ts`
 - `src/app/api/campaigns/send/route.ts`
 - `src/app/api/client-finance/portal-link/[clientId]/route.ts`
 - `src/app/api/client-finance/portal/route.ts`
+- `src/app/api/client/feedback/route.ts`
+- `src/app/api/communication-compliance/check/route.ts`
 - `src/app/api/contact/route.ts`
 - `src/app/api/contracts/[id]/generate-pdf/route.ts`
 - `src/app/api/contracts/[id]/route.ts`
@@ -275,8 +304,14 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/cron/autonomous-runner/route.ts`
 - `src/app/api/cron/autonomous-sync/route.ts`
 - `src/app/api/cron/autonomous/route.ts`
+- `src/app/api/cron/bonnie-continuous/route.ts`
 - `src/app/api/cron/bonnie-dream/route.ts`
+- `src/app/api/cron/bonnie-goals-chase/route.ts`
 - `src/app/api/cron/bonnie-morning-brief/route.ts`
+- `src/app/api/cron/bonnie-runtime-outbox/route.ts`
+- `src/app/api/cron/bonnie-runtime-reconcile/route.ts`
+- `src/app/api/cron/bonnie-runtime-timers/route.ts`
+- `src/app/api/cron/bonnie-runtime-worker/route.ts`
 - `src/app/api/cron/calendly-sync/route.ts`
 - `src/app/api/cron/chief-of-staff/route.ts`
 - `src/app/api/cron/contact-psychology/route.ts`
@@ -303,12 +338,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/cron/sequence-worker/route.ts`
 - `src/app/api/cron/social-publish/route.ts`
 - `src/app/api/cron/sync-zoho-inbox/route.ts`
+- `src/app/api/cron/webhook-deliveries/route.ts`
 - `src/app/api/cron/workflows/route.ts`
 - `src/app/api/cron/zoho-token-health/route.ts`
-- `src/app/api/daily/create-permanent-room/route.ts`
-- `src/app/api/daily/create-room/route.ts`
 - `src/app/api/daily/token/route.ts`
 - `src/app/api/daily/webhook/route.ts`
+- `src/app/api/dashboard/action-queue/route.ts`
 - `src/app/api/dashboard/hub-stats/route.ts`
 - `src/app/api/dashboard/overview/route.ts`
 - `src/app/api/dashboard/progress/route.ts`
@@ -319,10 +354,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/debug-ai/route.ts`
 - `src/app/api/dev-migrate/route.ts`
 - `src/app/api/docs/route.ts`
+- `src/app/api/email/auto-reply/pending/route.ts`
 - `src/app/api/email/campaigns/diagnose/route.ts`
 - `src/app/api/email/campaigns/import-recipients/route.ts`
 - `src/app/api/email/campaigns/route.ts`
 - `src/app/api/email/campaigns/send/route.ts`
+- `src/app/api/email/drafts/route.ts`
 - `src/app/api/email/platform-transactional/route.ts`
 - `src/app/api/email/providers/test/route.ts`
 - `src/app/api/email/proxy-image/route.ts`
@@ -336,9 +373,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/facebook/capabilities/route.ts`
 - `src/app/api/facebook/comment/route.ts`
 - `src/app/api/facebook/comments/route.ts`
+- `src/app/api/facebook/disconnect/route.ts`
 - `src/app/api/facebook/leads/search/route.ts`
 - `src/app/api/facebook/like/route.ts`
 - `src/app/api/facebook/management/route.ts`
+- `src/app/api/facebook/messenger/conversations/[conversationId]/read/route.ts`
 - `src/app/api/facebook/messenger/send/route.ts`
 - `src/app/api/facebook/oauth/route.ts`
 - `src/app/api/facebook/page-info/route.ts`
@@ -359,6 +398,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/gmail/threads/[id]/modify/route.ts`
 - `src/app/api/gmail/threads/[id]/route.ts`
 - `src/app/api/gmail/threads/route.ts`
+- `src/app/api/google/drive/upload/route.ts`
 - `src/app/api/health/route.ts`
 - `src/app/api/hubspot/delete/route.ts`
 - `src/app/api/hubspot/sync/route.ts`
@@ -377,15 +417,18 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/integrations/whatsapp/send-document/route.ts`
 - `src/app/api/integrations/whatsapp/send/route.ts`
 - `src/app/api/integrations/whatsapp/status/route.ts`
+- `src/app/api/integrations/zernio/settings/route.ts`
 - `src/app/api/intelligence/deals/recompute/route.ts`
 - `src/app/api/intelligence/ingest-signal/route.ts`
 - `src/app/api/intelligence/system/route.ts`
 - `src/app/api/intelligence/trends/route.ts`
+- `src/app/api/internal/auth-health/route.ts`
 - `src/app/api/internal/leads/mcp-sync/route.ts`
 - `src/app/api/invoices/[id]/audit-log/route.ts`
 - `src/app/api/invoices/[id]/delivery-certificate/route.ts`
 - `src/app/api/invoices/[id]/delivery-webhook/route.ts`
 - `src/app/api/invoices/[id]/followup-settings/route.ts`
+- `src/app/api/invoices/[id]/payment/route.ts`
 - `src/app/api/invoices/[id]/pdf/route.ts`
 - `src/app/api/invoices/[id]/public-link/route.ts`
 - `src/app/api/invoices/[id]/reconcile/route.ts`
@@ -393,18 +436,26 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/invoices/[id]/view/route.ts`
 - `src/app/api/invoices/[id]/void/route.ts`
 - `src/app/api/invoices/confirm-payment/route.ts`
+- `src/app/api/invoices/lifecycle/route.ts`
 - `src/app/api/invoices/public/route.ts`
 - `src/app/api/invoices/recurring/[id]/route.ts`
 - `src/app/api/invoices/recurring/route.ts`
 - `src/app/api/invoices/reminder/route.ts`
+- `src/app/api/invoices/route.ts`
 - `src/app/api/invoices/send/route.ts`
 - `src/app/api/invoices/stats/route.ts`
 - `src/app/api/invoices/track/[token]/route.ts`
 - `src/app/api/ip-location/route.ts`
 - `src/app/api/language/route.ts`
 - `src/app/api/leads/[id]/route.ts`
+- `src/app/api/leads/candidates/[id]/review/route.ts`
 - `src/app/api/leads/enrich/route.ts`
+- `src/app/api/leads/lists/route.ts`
 - `src/app/api/leads/management/route.ts`
+- `src/app/api/leads/searches/[id]/results/route.ts`
+- `src/app/api/leads/searches/[id]/route.ts`
+- `src/app/api/leads/searches/[id]/run/route.ts`
+- `src/app/api/leads/searches/route.ts`
 - `src/app/api/legal/data-export/route.ts`
 - `src/app/api/legal/data-request/route.ts`
 - `src/app/api/legal/dpa-request/route.ts`
@@ -418,8 +469,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/linkedin/reaction/route.ts`
 - `src/app/api/linkedin/refresh-pages/route.ts`
 - `src/app/api/livekit/token/route.ts`
+- `src/app/api/location/validate/route.ts`
+- `src/app/api/marketing/campaigns/[campaignId]/status/route.ts`
+- `src/app/api/marketing/campaigns/route.ts`
 - `src/app/api/mcp/authorize/route.ts`
 - `src/app/api/mcp/health/route.ts`
+- `src/app/api/mcp/keys/route.ts`
 - `src/app/api/mcp/messages/route.ts`
 - `src/app/api/mcp/oauth/approve/route.ts`
 - `src/app/api/mcp/prompts/route.ts`
@@ -433,33 +488,39 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/mcp/tools/route.ts`
 - `src/app/api/mcp/well-known/oauth-authorization-server/route.ts`
 - `src/app/api/mcp/well-known/oauth-protected-resource/route.ts`
-- `src/app/api/meetings/by-id/[meetingId]/end/route.ts`
+- `src/app/api/meetings/[callId]/chat/route.ts`
+- `src/app/api/meetings/[callId]/state/route.ts`
 - `src/app/api/meetings/by-id/[meetingId]/status/route.ts`
-- `src/app/api/meetings/by-token/[token]/join/route.ts`
-- `src/app/api/meetings/by-token/[token]/validate/route.ts`
 - `src/app/api/meetings/create/route.ts`
 - `src/app/api/meetings/hooks/join/route.ts`
 - `src/app/api/meetings/reconcile-rooms/route.ts`
+- `src/app/api/meetings/resolve/[identifier]/route.ts`
 - `src/app/api/notifications/broadcast/route.ts`
 - `src/app/api/notifications/dispatch/route.ts`
 - `src/app/api/notifications/push/route.ts`
+- `src/app/api/notifications/route.ts`
 - `src/app/api/onboarding/start/route.ts`
 - `src/app/api/outreach/generate/route.ts`
 - `src/app/api/outreach/route.ts`
 - `src/app/api/outreach/send/route.ts`
 - `src/app/api/outreach/stats/route.ts`
 - `src/app/api/pdf/invoice/[id]/route.ts`
+- `src/app/api/platform-advantage/snapshot/route.ts`
 - `src/app/api/platform/policy/route.ts`
 - `src/app/api/playwright/jobs/route.ts`
 - `src/app/api/playwright/scrape/route.ts`
 - `src/app/api/pricing/bundles/route.ts`
 - `src/app/api/pricing/catalog/route.ts`
+- `src/app/api/privacy/preferences/route.ts`
+- `src/app/api/privacy/requests/route.ts`
 - `src/app/api/projects/[id]/client-notify/route.ts`
 - `src/app/api/projects/[id]/client-progress-notify/route.ts`
 - `src/app/api/projects/[id]/portal-share/route.ts`
 - `src/app/api/projects/public/[token]/access/route.ts`
 - `src/app/api/projects/public/[token]/comments/route.ts`
 - `src/app/api/projects/stats/route.ts`
+- `src/app/api/proposals/public/route.ts`
+- `src/app/api/proposals/respond/route.ts`
 - `src/app/api/public/shares/[id]/download/route.ts`
 - `src/app/api/public/shares/[id]/route.ts`
 - `src/app/api/push/send/route.ts`
@@ -471,8 +532,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/readiness/route.ts`
 - `src/app/api/referrals/claim/route.ts`
 - `src/app/api/reports/export/route.ts`
-- `src/app/api/resend/connect/route.ts`
-- `src/app/api/resend/disconnect/route.ts`
 - `src/app/api/resend/domains/route.ts`
 - `src/app/api/resend/send/route.ts`
 - `src/app/api/scraper-campaigns/[id]/route.ts`
@@ -484,6 +543,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/scraper-campaigns/stats/route.ts`
 - `src/app/api/scraper-leads/route.ts`
 - `src/app/api/scraper/affordable/route.ts`
+- `src/app/api/scraper/campaign/poll/route.ts`
 - `src/app/api/scraper/deep-crawl/route.ts`
 - `src/app/api/scraper/email-context/route.ts`
 - `src/app/api/scraper/email-discovery/route.ts`
@@ -492,8 +552,14 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/scraper/jobs/create/route.ts`
 - `src/app/api/scraper/search/route.ts`
 - `src/app/api/security/owasp-headers/route.ts`
+- `src/app/api/security/scan/route.ts`
 - `src/app/api/sendgrid/send/route.ts`
+- `src/app/api/seo/articles/[articleId]/view/route.ts`
 - `src/app/api/settings/email-provider/route.ts`
+- `src/app/api/settings/legal/policies/[policyId]/publish/route.ts`
+- `src/app/api/settings/legal/policies/[policyId]/versions/[versionId]/status/route.ts`
+- `src/app/api/settings/legal/policies/[policyId]/versions/route.ts`
+- `src/app/api/settings/legal/policies/route.ts`
 - `src/app/api/slack/commands/route.ts`
 - `src/app/api/slack/events/route.ts`
 - `src/app/api/slack/interactive/route.ts`
@@ -513,17 +579,61 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/stripe/connect/callback/route.ts`
 - `src/app/api/stripe/connect/login/route.ts`
 - `src/app/api/stripe/connect/onboarding/route.ts`
+- `src/app/api/stripe/connect/status/route.ts`
+- `src/app/api/stripe/create-addon-session/route.ts`
 - `src/app/api/stripe/create-checkout-session/route.ts`
 - `src/app/api/stripe/create-checkout/route.ts`
 - `src/app/api/stripe/create-invoice-session/route.ts`
+- `src/app/api/stripe/create-legacy-invoice-session/route.ts`
 - `src/app/api/stripe/create-payment-intent/route.ts`
 - `src/app/api/stripe/create-portal-session/route.ts`
-- `src/app/api/stripe/create-topup-session/route.ts`
 - `src/app/api/stripe/manage-subscription/route.ts`
 - `src/app/api/stripe/reconcile-payment/route.ts`
 - `src/app/api/stripe/send-receipt/route.ts`
 - `src/app/api/stripe/webhook/route.ts`
+- `src/app/api/tenant/[tenantId]/activity/route.ts`
+- `src/app/api/tenant/[tenantId]/addons/route.ts`
+- `src/app/api/tenant/[tenantId]/automation-workflows/route.ts`
+- `src/app/api/tenant/[tenantId]/availability/route.ts`
+- `src/app/api/tenant/[tenantId]/booking-types/route.ts`
+- `src/app/api/tenant/[tenantId]/business-events/route.ts`
+- `src/app/api/tenant/[tenantId]/business-settings/route.ts`
+- `src/app/api/tenant/[tenantId]/clients/route.ts`
+- `src/app/api/tenant/[tenantId]/contacts/route.ts`
+- `src/app/api/tenant/[tenantId]/deals/[dealId]/activities/route.ts`
+- `src/app/api/tenant/[tenantId]/deals/[dealId]/products/route.ts`
+- `src/app/api/tenant/[tenantId]/deals/route.ts`
+- `src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts`
+- `src/app/api/tenant/[tenantId]/documents/route.ts`
+- `src/app/api/tenant/[tenantId]/email-sequences/route.ts`
+- `src/app/api/tenant/[tenantId]/files/route.ts`
+- `src/app/api/tenant/[tenantId]/financial-planning/route.ts`
+- `src/app/api/tenant/[tenantId]/gamification/route.ts`
+- `src/app/api/tenant/[tenantId]/generated-assets/route.ts`
+- `src/app/api/tenant/[tenantId]/google-calendar/events/route.ts`
+- `src/app/api/tenant/[tenantId]/inbox/messages/route.ts`
+- `src/app/api/tenant/[tenantId]/integrations/route.ts`
+- `src/app/api/tenant/[tenantId]/invitations/route.ts`
+- `src/app/api/tenant/[tenantId]/meetings/permanent-room/route.ts`
+- `src/app/api/tenant/[tenantId]/members/resolve/route.ts`
+- `src/app/api/tenant/[tenantId]/members/route.ts`
+- `src/app/api/tenant/[tenantId]/onboarding/route.ts`
+- `src/app/api/tenant/[tenantId]/pages/route.ts`
+- `src/app/api/tenant/[tenantId]/projects/[projectId]/comments/route.ts`
+- `src/app/api/tenant/[tenantId]/projects/[projectId]/route.ts`
+- `src/app/api/tenant/[tenantId]/projects/route.ts`
+- `src/app/api/tenant/[tenantId]/quotes/[quoteId]/items/route.ts`
+- `src/app/api/tenant/[tenantId]/quotes/route.ts`
+- `src/app/api/tenant/[tenantId]/route.ts`
+- `src/app/api/tenant/[tenantId]/scheduled-ai-tasks/[taskId]/run/route.ts`
+- `src/app/api/tenant/[tenantId]/scheduled-ai-tasks/route.ts`
+- `src/app/api/tenant/[tenantId]/tasks/route.ts`
+- `src/app/api/tenant/[tenantId]/team-message-receipts/route.ts`
+- `src/app/api/tenant/[tenantId]/webhooks/route.ts`
+- `src/app/api/tenant/[tenantId]/whatsapp-chatbot/route.ts`
+- `src/app/api/tenant/[tenantId]/workflows/route.ts`
 - `src/app/api/tenant/bootstrap/route.ts`
+- `src/app/api/tenant/invitations/accept/route.ts`
 - `src/app/api/test/route.ts`
 - `src/app/api/tickets/[id]/route.ts`
 - `src/app/api/tickets/notify/route.ts`
@@ -574,7 +684,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/accounting/auditExportService.ts`
 - `src/services/accounting/chartOfAccountsService.ts`
 - `src/services/accounting/exchangeRateService.ts`
-- `src/services/accounting/financialReportService.ts`
 - `src/services/accounting/generalLedgerService.ts`
 - `src/services/accounting/journalEntryService.ts`
 - `src/services/accounting/operationalAccountingService.ts`
@@ -583,7 +692,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/adapters/businessAdapters.ts`
 - `src/services/ai/aiArchitectService.ts`
 - `src/services/ai/aiEmailService.ts`
-- `src/services/ai/aiHealthService.ts`
 - `src/services/ai/aiService.ts`
 - `src/services/ai/autonomousGuardrails.ts`
 - `src/services/ai/filesApiService.ts`
@@ -608,7 +716,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/alpha/tools.ts`
 - `src/services/alphacloneContractTemplate.ts`
 - `src/services/analyticsService.ts`
-- `src/services/apiMarketplaceService.ts`
 - `src/services/apolloService.ts`
 - `src/services/articleService.ts`
 - `src/services/auditLogService.ts`
@@ -636,7 +743,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/calendarService.ts`
 - `src/services/calendly/calendlyIntegrationService.ts`
 - `src/services/calendlyService.ts`
-- `src/services/callSignalingService.ts`
 - `src/services/campaignService.ts`
 - `src/services/clientActivityService.ts`
 - `src/services/clientLifecycleService.ts`
@@ -655,13 +761,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/dailyService.ts`
 - `src/services/dashboardService.ts`
 - `src/services/dashboardStatsService.ts`
-- `src/services/dataExportService.ts`
-- `src/services/databaseOptimizationService.ts`
 - `src/services/dealProbabilityService.ts`
 - `src/services/dealService.ts`
 - `src/services/diagnostics.ts`
+- `src/services/documentOs/documentOsService.ts`
 - `src/services/documentationService.ts`
-- `src/services/edgeCacheService.ts`
 - `src/services/email/UnifiedEmailService.ts`
 - `src/services/email/emailService.ts`
 - `src/services/emailCampaignService.ts`
@@ -670,7 +774,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/engine/ProcessingEngine.ts`
 - `src/services/engine/WorkflowExecutor.ts`
 - `src/services/enhancedLeadFinderServices.ts`
-- `src/services/errorTracking.ts`
 - `src/services/esignatureComplianceService.ts`
 - `src/services/eventBus/EventBus.ts`
 - `src/services/eventBus/helpers.ts`
@@ -695,6 +798,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/gdpr/dataExportService.ts`
 - `src/services/gdprComplianceService.ts`
 - `src/services/gmailService.ts`
+- `src/services/google/googleAccessTokenService.ts`
 - `src/services/google/googleCalendarIntegrationService.ts`
 - `src/services/googleCalendarService.ts`
 - `src/services/googleDriveService.ts`
@@ -742,11 +846,9 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/ipTrackingService.ts`
 - `src/services/knowledgeBaseService.ts`
 - `src/services/launchFunnelService.ts`
-- `src/services/leadAutoAssignmentService.ts`
 - `src/services/leadService.ts`
 - `src/services/linkedin/linkedinIntegrationService.ts`
 - `src/services/logoService.ts`
-- `src/services/marketing/campaignService.ts`
 - `src/services/mcp/MCPAuthService.ts`
 - `src/services/mcp/MCPServer.ts`
 - `src/services/mcp/StatelessTransport.ts`
@@ -756,9 +858,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/mcp/mcpStore.ts`
 - `src/services/mcp/toolCaller.ts`
 - `src/services/mcp/toolManifest.ts`
-- `src/services/mediaOptimizationService.ts`
-- `src/services/meetingAdapterService.ts`
-- `src/services/meetingService.ts`
 - `src/services/messageSearchService.ts`
 - `src/services/messageService.ts`
 - `src/services/microsoft/microsoftConnectionService.ts`
@@ -776,7 +875,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/offlineService.ts`
 - `src/services/onboarding/OnboardingService.ts`
 - `src/services/paymentService.ts`
-- `src/services/performanceMonitoringService.ts`
 - `src/services/permissionsService.ts`
 - `src/services/plugins/PluginManager.ts`
 - `src/services/plugins/index.ts`
@@ -784,7 +882,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/predictiveAnalyticsService.ts`
 - `src/services/presenceService.ts`
 - `src/services/pricingCatalogService.ts`
-- `src/services/projectIntelligenceService.ts`
 - `src/services/projectService.ts`
 - `src/services/projectStageService.ts`
 - `src/services/projectTemplateService.ts`
@@ -795,8 +892,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/quoteService.ts`
 - `src/services/quoteVersionService.ts`
 - `src/services/rateLimitService.ts`
-- `src/services/reportingService.ts`
-- `src/services/resourceService.ts`
 - `src/services/searchService.ts`
 - `src/services/securityLogService.ts`
 - `src/services/securityScannerService.ts`
@@ -810,12 +905,9 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/slack/slackIntegrationService.ts`
 - `src/services/slackService.ts`
 - `src/services/socialPostGenerationService.ts`
-- `src/services/sso/samlService.ts`
-- `src/services/ssoService.ts`
 - `src/services/subscriptionService.ts`
 - `src/services/taskDependencyService.ts`
 - `src/services/taskNoteService.ts`
-- `src/services/taskRecurrenceService.ts`
 - `src/services/taskService.ts`
 - `src/services/teamService.ts`
 - `src/services/tenancy/TenantService.ts`
@@ -844,16 +936,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/video/index.ts`
 - `src/services/video/liveKitBridge.ts`
 - `src/services/video/videoUrlService.ts`
-- `src/services/videoConferenceService.ts`
-- `src/services/videoService.ts`
 - `src/services/voiceCommandService.ts`
-- `src/services/webhookDeliveryService.ts`
-- `src/services/webhooks/webhookService.ts`
 - `src/services/whatsapp/ChatbotTrainingService.ts`
 - `src/services/whatsapp/WhatsAppChatbotService.ts`
 - `src/services/whatsapp/WhatsAppOutreachService.ts`
 - `src/services/whatsapp/whatsappIntegrationService.ts`
-- `src/services/whiteLabelService.ts`
 - `src/services/workerTrackingService.ts`
 - `src/services/workflow/WorkflowEngine.ts`
 - `src/services/workflow/WorkflowService.ts`
@@ -1127,6 +1214,74 @@ Generated: 2026-07-17T21:40:39.800Z
 - `supabase/migrations/20260713010000_referrals.sql`
 - `supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql`
 - `supabase/migrations/20260714120000_platform_hardening.sql`
+- `supabase/migrations/20260718090000_idempotent_tenant_creation.sql`
+- `supabase/migrations/20260718093000_public_data_deletion_verification.sql`
+- `supabase/migrations/20260718100000_tenant_invitation_completion.sql`
+- `supabase/migrations/20260718103000_alpha_missions.sql`
+- `supabase/migrations/20260718104500_subscription_addons.sql`
+- `supabase/migrations/20260718110000_tenant_scoped_oauth_credentials.sql`
+- `supabase/migrations/20260718113000_zoom_oauth_secrets.sql`
+- `supabase/migrations/20260718114500_remove_plaintext_mcp_keys.sql`
+- `supabase/migrations/20260718120000_atomic_quote_updates.sql`
+- `supabase/migrations/20260718121000_harden_natural_language_query_rpc.sql`
+- `supabase/migrations/20260718122000_scheduled_ai_tasks.sql`
+- `supabase/migrations/20260718123000_financial_planning_details.sql`
+- `supabase/migrations/20260718124000_webhook_delivery_pipeline.sql`
+- `supabase/migrations/20260718125000_onboarding_submission_rejection.sql`
+- `supabase/migrations/20260718125500_team_message_receipts.sql`
+- `supabase/migrations/20260718130000_atomic_seo_article_views.sql`
+- `supabase/migrations/20260718131000_unique_permanent_meeting_room.sql`
+- `supabase/migrations/20260718142000_social_assets_storage.sql`
+- `supabase/migrations/20260718143000_atomic_business_invoice_updates.sql`
+- `supabase/migrations/20260718144000_atomic_daily_resource_quotas.sql`
+- `supabase/migrations/20260718144500_automation_workflow_tables.sql`
+- `supabase/migrations/20260718144600_flow_engine_tables.sql`
+- `supabase/migrations/20260718145000_atomic_invoice_payments.sql`
+- `supabase/migrations/20260718145100_invoice_document_storage.sql`
+- `supabase/migrations/20260718145200_sales_receipts.sql`
+- `supabase/migrations/20260718145300_atomic_expense_receipt_payment.sql`
+- `supabase/migrations/20260720220000_bonnie_agentic_os_engine.sql`
+- `supabase/migrations/20260721121500_mcp_api_keys_nullable.sql`
+- `supabase/migrations/20260721143000_repair_unified_messages_source_check.sql`
+- `supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql`
+- `supabase/migrations/20260722120000_document_themes_templates.sql`
+- `supabase/migrations/20260722121500_fix_logged_missing_columns.sql`
+- `supabase/migrations/20260722140000_platform_auth_oauth_hardening.sql`
+- `supabase/migrations/20260722153000_mcp_auth_hotfixes.sql`
+- `supabase/migrations/20260723102000_business_invoices_amount_paid.sql`
+- `supabase/migrations/20260723103000_manual_invoice_payment_support.sql`
+- `supabase/migrations/20260723104000_fix_mcp_hash_and_payment_coa.sql`
+- `supabase/migrations/20260723120000_document_operating_system.sql`
+- `supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql`
+- `supabase/migrations/20260723183000_mcp_oauth_per_client_token_isolation.sql`
+- `supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql`
+- `supabase/migrations/20260724120000_social_publishing_repair.sql`
+- `supabase/migrations/20260724120001_social_publishing_orphan_repair.sql`
+- `supabase/migrations/20260724130000_multitenant_social_connections.sql`
+- `supabase/migrations/20260724140000_platform_multitenant_foundation.sql`
+- `supabase/migrations/20260724153000_bonnie_conversation_workspace.sql`
+- `supabase/migrations/20260724160000_bonnie_agentic_goals.sql`
+- `supabase/migrations/20260724170000_bonnie_durable_runtime.sql`
+- `supabase/migrations/20260724180000_bonnie_agentic_bos_extensions.sql`
+- `supabase/migrations/20260724190000_audit_logs_actor_type_columns.sql`
+- `supabase/migrations/20260724200000_mcp_connector_media_email_actions.sql`
+- `supabase/migrations/20260724210000_fix_claude_mcp_oauth_redirects.sql`
+- `supabase/migrations/20260724223000_uploads_storage_tenant_rls.sql`
+- `supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql`
+- `supabase/migrations/20260724230001_uploads_storage_policies_dashboard.sql`
+- `supabase/migrations/20260724240000_scraper_leads_geo_reach.sql`
+- `supabase/migrations/20260726120000_lead_finder_rebuild.sql`
+- `supabase/migrations/20260726150000_marketing_module_foundation.sql`
+- `supabase/migrations/20260726180000_documents_contracts_shared_platform.sql`
+- `supabase/migrations/20260726200000_projects_tasks_operating_system.sql`
+- `supabase/migrations/20260726220000_canonical_finance_foundation.sql`
+- `supabase/migrations/20260726230000_unified_email_foundation.sql`
+- `supabase/migrations/20260727090000_client_centric_support.sql`
+- `supabase/migrations/20260727120000_communication_compliance_governance.sql`
+- `supabase/migrations/20260727150000_mcp_oauth_grants_multiclient_hardening.sql`
+- `supabase/migrations/20260727160000_close_public_compliance_and_quarantine_tables.sql`
+- `supabase/migrations/20260727161000_security_invoker_public_views.sql`
+- `supabase/migrations/20260727162000_harden_security_definer_search_paths.sql`
 
 ### Legacy migrations
 
@@ -1238,6 +1393,28 @@ Generated: 2026-07-17T21:40:39.800Z
 - `activity_logs`
 - `adapter_event_logs`
 - `admin_availability`
+- `agent_approvals`
+- `agent_chasing_policies`
+- `agent_event_inbox`
+- `agent_event_outbox`
+- `agent_event_subscriptions`
+- `agent_external_references`
+- `agent_graph_versions`
+- `agent_graphs`
+- `agent_idempotency_keys`
+- `agent_interventions`
+- `agent_reconciliation_logs`
+- `agent_runs`
+- `agent_runtime_limits`
+- `agent_state_transitions`
+- `agent_task_attempts`
+- `agent_task_checkpoints`
+- `agent_task_dependencies`
+- `agent_tasks`
+- `agent_timers`
+- `agent_tool_executions`
+- `agent_verifications`
+- `agent_worker_leases`
 - `ai_decisions`
 - `ai_insights`
 - `ai_lead_generation_daily`
@@ -1246,6 +1423,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `ai_quotas`
 - `ai_recommendations`
 - `ai_usage`
+- `alpha_missions`
 - `analytics_events`
 - `api_integrations`
 - `api_keys`
@@ -1259,6 +1437,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `automation_run_steps`
 - `automation_runs`
 - `automation_tasks`
+- `automation_workflow_executions`
 - `autonomous_runner_actions`
 - `autonomous_runner_approvals`
 - `autonomous_runner_rules`
@@ -1269,12 +1448,25 @@ Generated: 2026-07-17T21:40:39.800Z
 - `blocked_account_emails`
 - `blocked_countries`
 - `blocked_ips`
+- `bonnie_agent_executions`
+- `bonnie_cognitive_runs`
+- `bonnie_conversations`
+- `bonnie_digital_twin_snapshots`
 - `bonnie_dream_sessions`
+- `bonnie_goal_subtasks`
+- `bonnie_goals`
+- `bonnie_knowledge_edges`
+- `bonnie_knowledge_nodes`
 - `bonnie_logs`
+- `bonnie_messages`
+- `bonnie_reflections`
+- `bonnie_workflows`
 - `booking_types`
 - `bookings`
+- `brand_assets`
 - `business_automation_events`
 - `business_clients`
+- `business_invoice_payments`
 - `business_invoices`
 - `business_metrics`
 - `business_projects`
@@ -1299,13 +1491,22 @@ Generated: 2026-07-17T21:40:39.800Z
 - `client_notes`
 - `client_portal_events`
 - `collaboration_documents`
+- `communication_compliance_checks`
+- `communication_preference_events`
+- `communication_preferences`
+- `communication_purposes`
 - `companies`
+- `consent_events`
+- `consent_records`
 - `contact_interactions`
 - `contact_psychology_profiles`
 - `contact_submissions`
 - `contacts`
 - `contract_approvals`
 - `contract_audit_trail`
+- `contract_milestones`
+- `contract_obligations`
+- `contract_parties`
 - `contract_signing_tokens`
 - `contract_templates`
 - `contract_versions`
@@ -1325,10 +1526,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `dashboards`
 - `data_deletion_requests`
 - `data_export_requests`
+- `data_inventory_records`
 - `data_processing_log`
 - `data_processing_logs`
 - `data_requests`
 - `data_retention_policies`
+- `data_retention_rules`
 - `deal_activities`
 - `deal_intelligence_events`
 - `deal_products`
@@ -1337,21 +1540,47 @@ Generated: 2026-07-17T21:40:39.800Z
 - `deals`
 - `department_members`
 - `departments`
+- `doc_os_approvals`
+- `doc_os_documents`
+- `doc_os_events`
+- `doc_os_notifications`
+- `doc_os_retention_policies`
+- `doc_os_signature_envelopes`
+- `doc_os_versions`
+- `document_activity`
+- `document_brand_profiles`
 - `document_comments`
 - `document_intelligence_runs`
+- `document_relationships`
+- `document_requests`
+- `document_shares`
+- `document_templates`
+- `document_themes`
 - `document_versions`
 - `documentation_pages`
+- `documents`
 - `dpa_requests`
 - `email_audit_log`
 - `email_batch_jobs`
 - `email_campaigns`
+- `email_default_rules`
+- `email_delivery_events`
 - `email_logs`
+- `email_message_recipients`
+- `email_messages`
+- `email_outbound_jobs`
+- `email_provider_accounts`
 - `email_rate_limits`
+- `email_sender_addresses`
+- `email_sender_identities`
 - `email_sequence_enrollments`
 - `email_sequence_steps`
 - `email_sequences`
+- `email_signatures`
 - `email_suppressions`
+- `email_template_versions`
 - `email_templates`
+- `email_threads`
 - `email_webhook_events`
 - `emails`
 - `enterprise_contracts`
@@ -1363,6 +1592,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `events`
 - `expense_categories`
 - `expenses`
+- `external_actions`
 - `facebook_integration_secrets`
 - `facebook_integrations`
 - `facebook_page_posts`
@@ -1370,8 +1600,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `failed_logins`
 - `favorites`
 - `file_uploads`
+- `finance_feature_flags`
+- `finance_migration_batches`
+- `finance_payments`
 - `follow_up_queue`
 - `form_submissions`
+- `funnels`
 - `gallery_items`
 - `gamification_logs`
 - `gamification_profiles`
@@ -1392,10 +1626,14 @@ Generated: 2026-07-17T21:40:39.800Z
 - `intelligence_correlation_models`
 - `intelligence_snapshots`
 - `inventory_items`
+- `invoice_adjustments`
 - `invoice_audit_log`
 - `invoice_delivery_log`
 - `invoice_line_items`
+- `invoice_public_shares`
 - `invoice_reminders`
+- `invoice_status_events`
+- `invoice_versions`
 - `invoice_views`
 - `invoices`
 - `journal_entries`
@@ -1403,25 +1641,49 @@ Generated: 2026-07-17T21:40:39.800Z
 - `knowledge_articles`
 - `kpi_history`
 - `kpis`
+- `landing_pages`
 - `lead_activities`
+- `lead_audit_logs`
 - `lead_campaign_runs`
+- `lead_candidate_activities`
+- `lead_candidates`
+- `lead_contact_points`
+- `lead_exports`
+- `lead_imports`
+- `lead_list_members`
+- `lead_lists`
 - `lead_outreach_log`
+- `lead_rate_limits`
 - `lead_run_log`
 - `lead_score_history`
 - `lead_search_jobs`
+- `lead_searches`
+- `lead_sources`
+- `lead_suppressions`
+- `lead_verifications`
 - `leads`
 - `leads_raw`
+- `legal_holds`
+- `legal_policies`
+- `legal_policy_publications`
+- `legal_policy_versions`
 - `linkedin_identities`
 - `linkedin_integration_secrets`
 - `linkedin_integrations`
 - `login_history`
 - `login_sessions`
+- `marketing_campaign_events`
+- `marketing_campaign_metrics_daily`
 - `marketing_campaigns`
+- `marketing_segments`
+- `mcp_action_receipts`
 - `mcp_api_keys`
 - `mcp_event_queue`
 - `mcp_event_subscriptions`
+- `mcp_jobs`
 - `mcp_oauth_clients`
 - `mcp_oauth_codes`
+- `mcp_oauth_grants`
 - `mcp_oauth_tokens`
 - `mcp_sessions`
 - `media_assets`
@@ -1435,6 +1697,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `microsoft_connection_secrets`
 - `microsoft_connections`
 - `missed_calls`
+- `model_execution_evidence`
 - `nexus_decision_log`
 - `nexus_memory`
 - `nexus_orchestration_runs`
@@ -1447,7 +1710,10 @@ Generated: 2026-07-17T21:40:39.800Z
 - `onboarding_submissions`
 - `opportunities`
 - `outreach_campaign_stats`
+- `outreach_campaigns`
+- `outreach_messages`
 - `pages`
+- `payment_allocations`
 - `payment_plans`
 - `payments`
 - `performance_logs`
@@ -1461,13 +1727,27 @@ Generated: 2026-07-17T21:40:39.800Z
 - `plugins`
 - `pricing_experiments`
 - `privacy_policy_versions`
+- `privacy_request_events`
+- `privacy_requests`
 - `profiles`
+- `project_activity`
 - `project_comments`
+- `project_custom_field_values`
+- `project_custom_fields`
+- `project_decisions`
+- `project_deliverables`
+- `project_issues`
+- `project_members`
 - `project_milestones`
+- `project_relationships`
+- `project_risks`
+- `project_saved_views`
 - `project_snapshots`
 - `project_time_logs`
 - `projects`
 - `projects_archive`
+- `proposals`
+- `public`
 - `public_shares`
 - `purchase_orders`
 - `push_subscriptions`
@@ -1479,6 +1759,8 @@ Generated: 2026-07-17T21:40:39.800Z
 - `quote_views`
 - `quotes`
 - `reconciliation_sessions`
+- `recurring_invoice_occurrences`
+- `recurring_invoice_profiles`
 - `recurring_invoices`
 - `referrals`
 - `report_templates`
@@ -1486,6 +1768,8 @@ Generated: 2026-07-17T21:40:39.800Z
 - `roles`
 - `sales_forecasts`
 - `sales_goals`
+- `sales_receipt_items`
+- `sales_receipts`
 - `saml_requests`
 - `saml_responses`
 - `scheduled_ai_task_results`
@@ -1510,6 +1794,8 @@ Generated: 2026-07-17T21:40:39.800Z
 - `slack_notifications`
 - `sms_opt_outs`
 - `social_bookmarks`
+- `social_connections`
+- `social_identities`
 - `social_interactions`
 - `social_leads`
 - `social_post_analytics`
@@ -1519,30 +1805,46 @@ Generated: 2026-07-17T21:40:39.800Z
 - `sso_configs`
 - `sso_connections`
 - `sso_providers`
+- `storage`
 - `strike_intel_log`
 - `stripe_payments`
 - `stripe_webhook_events`
 - `subscription_addons`
 - `subscription_tier_limits`
+- `support_channels`
+- `support_knowledge_articles`
+- `support_sla_policies`
+- `support_team_members`
+- `support_teams`
 - `support_tickets`
 - `system_trigger_templates`
+- `task_assignees`
+- `task_checklist_items`
 - `task_comments`
 - `task_dependencies`
 - `task_recurrence`
+- `task_recurrence_rules`
+- `task_relationships`
 - `tasks`
 - `tax_records`
 - `tax_rules`
 - `team_members`
 - `tenant_api_installations`
 - `tenant_branding`
+- `tenant_brands`
+- `tenant_creation_requests`
+- `tenant_document_versions`
 - `tenant_forms`
 - `tenant_integrations`
 - `tenant_invitations`
 - `tenant_ip_whitelist`
+- `tenant_isolation_quarantine`
+- `tenant_memory_embeddings`
 - `tenant_plugins`
 - `tenant_service_bundle_items`
 - `tenant_service_bundles`
 - `tenant_service_catalog_items`
+- `tenant_social_defaults`
 - `tenant_subscriptions`
 - `tenant_usage`
 - `tenant_usage_tracking`
@@ -1551,6 +1853,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `tenants`
 - `terms_of_service_versions`
 - `ticket_comments`
+- `ticket_linked_records`
+- `ticket_messages`
+- `ticket_sla_events`
+- `ticket_time_entries`
+- `ticket_watchers`
 - `tickets`
 - `twilio_integrations`
 - `unified_messages`
@@ -1592,15 +1899,19 @@ Generated: 2026-07-17T21:40:39.800Z
 - `x_integration_secrets`
 - `x_integrations`
 - `zoho_auto_responder_logs`
+- `zoom_integration_secrets`
 
 ### Storage buckets
 
 - `avatars`
 - `chat-attachments`
 - `gallery`
+- `invoice-documents`
+- `private`
 - `project-files`
 - `project-images`
 - `public-assets`
+- `social-assets`
 - `uploads`
 - `white-label-assets`
 
@@ -1611,8 +1922,14 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/cron/autonomous-runner/route.ts`
 - `src/app/api/cron/autonomous-sync/route.ts`
 - `src/app/api/cron/autonomous/route.ts`
+- `src/app/api/cron/bonnie-continuous/route.ts`
 - `src/app/api/cron/bonnie-dream/route.ts`
+- `src/app/api/cron/bonnie-goals-chase/route.ts`
 - `src/app/api/cron/bonnie-morning-brief/route.ts`
+- `src/app/api/cron/bonnie-runtime-outbox/route.ts`
+- `src/app/api/cron/bonnie-runtime-reconcile/route.ts`
+- `src/app/api/cron/bonnie-runtime-timers/route.ts`
+- `src/app/api/cron/bonnie-runtime-worker/route.ts`
 - `src/app/api/cron/calendly-sync/route.ts`
 - `src/app/api/cron/chief-of-staff/route.ts`
 - `src/app/api/cron/contact-psychology/route.ts`
@@ -1639,6 +1956,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/cron/sequence-worker/route.ts`
 - `src/app/api/cron/social-publish/route.ts`
 - `src/app/api/cron/sync-zoho-inbox/route.ts`
+- `src/app/api/cron/webhook-deliveries/route.ts`
 - `src/app/api/cron/workflows/route.ts`
 - `src/app/api/cron/zoho-token-health/route.ts`
 
@@ -1648,25 +1966,43 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/scraper/jobs/[id]/route.ts`
 - `src/app/api/scraper/jobs/[id]/step/route.ts`
 - `src/app/api/scraper/jobs/create/route.ts`
+- `src/bonnie/worker.ts`
 - `src/components/dashboard/jobs/JobsQueueTab.tsx`
+- `src/workers/lead-discovery-worker.ts`
 
 ### MCP/Bonnie/Nexus files
 
 - `src/app/api/bonnie/approvals/route.ts`
 - `src/app/api/bonnie/briefing/route.ts`
+- `src/app/api/bonnie/conversations/[id]/route.ts`
+- `src/app/api/bonnie/conversations/route.ts`
 - `src/app/api/bonnie/dream/route.ts`
+- `src/app/api/bonnie/goals/[id]/route.ts`
+- `src/app/api/bonnie/goals/route.ts`
 - `src/app/api/bonnie/instruct/route.ts`
 - `src/app/api/bonnie/orchestrate/route.ts`
+- `src/app/api/bonnie/os/route.ts`
 - `src/app/api/bonnie/outcomes/route.ts`
 - `src/app/api/bonnie/quota/route.ts`
+- `src/app/api/bonnie/research/route.ts`
+- `src/app/api/bonnie/runtime/runs/[id]/route.ts`
+- `src/app/api/bonnie/runtime/runs/route.ts`
+- `src/app/api/bonnie/runtime/tasks/route.ts`
 - `src/app/api/bonnie/stream/route.ts`
 - `src/app/api/bonnie/tool/route.ts`
 - `src/app/api/bonnie/voice/route.ts`
+- `src/app/api/cron/bonnie-continuous/route.ts`
 - `src/app/api/cron/bonnie-dream/route.ts`
+- `src/app/api/cron/bonnie-goals-chase/route.ts`
 - `src/app/api/cron/bonnie-morning-brief/route.ts`
+- `src/app/api/cron/bonnie-runtime-outbox/route.ts`
+- `src/app/api/cron/bonnie-runtime-reconcile/route.ts`
+- `src/app/api/cron/bonnie-runtime-timers/route.ts`
+- `src/app/api/cron/bonnie-runtime-worker/route.ts`
 - `src/app/api/internal/leads/mcp-sync/route.ts`
 - `src/app/api/mcp/authorize/route.ts`
 - `src/app/api/mcp/health/route.ts`
+- `src/app/api/mcp/keys/route.ts`
 - `src/app/api/mcp/messages/route.ts`
 - `src/app/api/mcp/oauth/approve/route.ts`
 - `src/app/api/mcp/prompts/route.ts`
@@ -1680,14 +2016,34 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/mcp/tools/route.ts`
 - `src/app/api/mcp/well-known/oauth-authorization-server/route.ts`
 - `src/app/api/mcp/well-known/oauth-protected-resource/route.ts`
+- `src/app/bonnie/workspace/BonnieWorkspaceClient.tsx`
+- `src/app/bonnie/workspace/page.tsx`
+- `src/bonnie/worker.ts`
 - `src/components/dashboard/NexusWidget.tsx`
+- `src/components/dashboard/bonnie/AgentPlanViewer.tsx`
+- `src/components/dashboard/bonnie/ApprovalCenter.tsx`
 - `src/components/dashboard/bonnie/BonnieApprovalCard.tsx`
 - `src/components/dashboard/bonnie/BonnieChatPanel.tsx`
 - `src/components/dashboard/bonnie/BonnieFullView.tsx`
+- `src/components/dashboard/bonnie/BonnieLauncher.tsx`
 - `src/components/dashboard/bonnie/BonnieModuleDock.tsx`
 - `src/components/dashboard/bonnie/BonnieModulePageShell.tsx`
+- `src/components/dashboard/bonnie/BonnieResearchPanel.tsx`
 - `src/components/dashboard/bonnie/BonnieWidget.tsx`
+- `src/components/dashboard/bonnie/ExecutionTimelineEvent.tsx`
+- `src/components/dashboard/bonnie/UnifiedActionCenter.tsx`
+- `src/components/dashboard/bonnie/bonnieChakra.ts`
+- `src/components/dashboard/bonnie/runtime/BonnieRuntimePanel.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieContextPanel.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieGoalsPanel.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieSidebar.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieToolActivityCard.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieWelcome.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieWorkspaceViews.tsx`
 - `src/components/dashboard/integrations/MCPSetupGuide.tsx`
+- `src/components/ui/os/BonnieDrawer.tsx`
+- `src/components/ui/os/BonnieInsightCard.tsx`
+- `src/contexts/BonnieDrawerContext.tsx`
 - `src/docs/MCP_AND_ZOOM_INTEGRATION.md`
 - `src/lib/automation/nexusIntelligenceTask.ts`
 - `src/lib/bonnie/bonnieAgent.ts`
@@ -1697,6 +2053,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/lib/bonnie/bonnieConversationalPrompt.ts`
 - `src/lib/bonnie/bonnieCorePrompt.ts`
 - `src/lib/bonnie/bonnieCustomTools.ts`
+- `src/lib/bonnie/bonnieDeepLink.ts`
 - `src/lib/bonnie/bonnieDreamSynthesis.ts`
 - `src/lib/bonnie/bonnieError.ts`
 - `src/lib/bonnie/bonnieLeadOps.ts`
@@ -1704,6 +2061,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/lib/bonnie/bonnieModelRouter.ts`
 - `src/lib/bonnie/bonniePlatformOps.ts`
 - `src/lib/bonnie/bonnieResponseSanitizer.ts`
+- `src/lib/bonnie/bonnieRiskPolicy.ts`
 - `src/lib/bonnie/bonnieSalesPersona.ts`
 - `src/lib/bonnie/bonnieSystemPrompt.ts`
 - `src/lib/bonnie/bonnieTenantDataRules.ts`
@@ -1712,49 +2070,127 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/lib/bonnie/bonnieToolTypes.ts`
 - `src/lib/bonnie/bonnieVoiceAgent.ts`
 - `src/lib/bonnie/bonnieWarmContext.ts`
+- `src/lib/bonnie/bonnieWorkspace.ts`
 - `src/lib/bonnie/bonnieWorkspaceSnapshot.ts`
 - `src/lib/bonnie/executeSingleBonnieTool.ts`
+- `src/lib/bonnie/os/agentRegistry.ts`
+- `src/lib/bonnie/os/cognitiveLoop.ts`
+- `src/lib/bonnie/os/digitalTwin.ts`
+- `src/lib/bonnie/os/eventReasoning.ts`
+- `src/lib/bonnie/os/goalEngine.ts`
+- `src/lib/bonnie/os/index.ts`
+- `src/lib/bonnie/os/knowledgeGraph.ts`
+- `src/lib/bonnie/os/layeredMemory.ts`
+- `src/lib/bonnie/os/reflectionEngine.ts`
+- `src/lib/bonnie/os/supervisor.ts`
+- `src/lib/bonnie/os/types.ts`
+- `src/lib/bonnie/outcomeArgs.ts`
+- `src/lib/bonnie/research/researchCatalog.ts`
+- `src/lib/bonnie/research/researchEvaluator.ts`
 - `src/lib/bonnie/resolveBonnieTools.ts`
 - `src/lib/bonnie/resumeApprovedTool.ts`
 - `src/lib/bonnie/resumeBonnieMission.ts`
+- `src/lib/bonnie/runtime/approvalDurabilityService.ts`
+- `src/lib/bonnie/runtime/chasingService.ts`
+- `src/lib/bonnie/runtime/checkpointService.ts`
+- `src/lib/bonnie/runtime/goalRunService.ts`
+- `src/lib/bonnie/runtime/graphService.ts`
+- `src/lib/bonnie/runtime/idempotencyService.ts`
+- `src/lib/bonnie/runtime/inboxService.ts`
+- `src/lib/bonnie/runtime/index.ts`
+- `src/lib/bonnie/runtime/interventionService.ts`
+- `src/lib/bonnie/runtime/leaseService.ts`
+- `src/lib/bonnie/runtime/observability.ts`
+- `src/lib/bonnie/runtime/outboxService.ts`
+- `src/lib/bonnie/runtime/plannerService.ts`
+- `src/lib/bonnie/runtime/reconciliation/index.ts`
+- `src/lib/bonnie/runtime/schedulerService.ts`
+- `src/lib/bonnie/runtime/schemas/index.ts`
+- `src/lib/bonnie/runtime/subscriptionService.ts`
+- `src/lib/bonnie/runtime/taskStateMachine.ts`
+- `src/lib/bonnie/runtime/timerService.ts`
+- `src/lib/bonnie/runtime/transitionService.ts`
+- `src/lib/bonnie/runtime/types.ts`
+- `src/lib/bonnie/runtime/utils.ts`
+- `src/lib/bonnie/runtime/verificationService.ts`
+- `src/lib/bonnie/runtime/workerService.ts`
+- `src/lib/bonnie/runtime/workflows/invoiceCollection.ts`
+- `src/lib/client/bonnieApprovalsStore.ts`
+- `src/lib/dashboard/bonnieRouteContext.ts`
 - `src/lib/linkedin/mcpLinkedIn.ts`
+- `src/lib/mcp/actionReceipts.ts`
 - `src/lib/mcp/apiHealthReport.ts`
+- `src/lib/mcp/audit/platformAuditEngine.ts`
+- `src/lib/mcp/capabilityManifest.ts`
+- `src/lib/mcp/clientCapabilities.ts`
+- `src/lib/mcp/compactToolSchema.ts`
+- `src/lib/mcp/connector/defineTool.ts`
+- `src/lib/mcp/connector/index.ts`
+- `src/lib/mcp/connector/pagination.ts`
+- `src/lib/mcp/connector/permissions.ts`
+- `src/lib/mcp/connector/rateLimit.ts`
+- `src/lib/mcp/connector/response.ts`
+- `src/lib/mcp/connector/types.ts`
+- `src/lib/mcp/ensureOAuthClient.ts`
 - `src/lib/mcp/external-servers.ts`
 - `src/lib/mcp/financeSnapshot.ts`
 - `src/lib/mcp/getInitialBusinessAIStateForTenant.ts`
 - `src/lib/mcp/knownBrokenTools.ts`
 - `src/lib/mcp/listAllTools.ts`
 - `src/lib/mcp/mcpToolTelemetry.ts`
+- `src/lib/mcp/mediaGateway.ts`
 - `src/lib/mcp/oauthRedirect.ts`
+- `src/lib/mcp/oauthTokenIsolation.ts`
+- `src/lib/mcp/progressiveDiscovery.ts`
 - `src/lib/mcp/prompts/review_bonnie_patterns.ts`
 - `src/lib/mcp/sanitizeToolSchema.ts`
+- `src/lib/mcp/scopes.ts`
+- `src/lib/mcp/standardResponse.ts`
 - `src/lib/mcp/supplementalToolDefinitions.ts`
 - `src/lib/mcp/tool-registry.ts`
+- `src/lib/mcp/toolAnnotations.ts`
 - `src/lib/mcp/tools/accounting.ts`
 - `src/lib/mcp/tools/ai-analytics.ts`
 - `src/lib/mcp/tools/api-health.ts`
+- `src/lib/mcp/tools/autonomous-ops.ts`
+- `src/lib/mcp/tools/bonnie-approvals.ts`
 - `src/lib/mcp/tools/bonnie-dream.ts`
+- `src/lib/mcp/tools/bonnie-inspect.ts`
 - `src/lib/mcp/tools/bonnie-orchestrate.ts`
+- `src/lib/mcp/tools/bonnie-os.ts`
 - `src/lib/mcp/tools/bonnie-outcomes.ts`
 - `src/lib/mcp/tools/bonnie-skills.ts`
 - `src/lib/mcp/tools/business-state.ts`
+- `src/lib/mcp/tools/calendar-ops.ts`
 - `src/lib/mcp/tools/campaigns.ts`
+- `src/lib/mcp/tools/chatgpt-aliases.ts`
 - `src/lib/mcp/tools/contracts.ts`
+- `src/lib/mcp/tools/crm-ops.ts`
 - `src/lib/mcp/tools/crm.ts`
 - `src/lib/mcp/tools/deals.ts`
+- `src/lib/mcp/tools/document-os.ts`
+- `src/lib/mcp/tools/documents-ops.ts`
 - `src/lib/mcp/tools/documents.ts`
+- `src/lib/mcp/tools/email-ops.ts`
 - `src/lib/mcp/tools/facebook.ts`
 - `src/lib/mcp/tools/files.ts`
 - `src/lib/mcp/tools/gamification.ts`
 - `src/lib/mcp/tools/google-workspace.ts`
+- `src/lib/mcp/tools/integrations-health.ts`
 - `src/lib/mcp/tools/invoicing.ts`
+- `src/lib/mcp/tools/marketing-ops.ts`
 - `src/lib/mcp/tools/messaging.ts`
 - `src/lib/mcp/tools/microsoft-diagnostics.ts`
 - `src/lib/mcp/tools/microsoft.ts`
 - `src/lib/mcp/tools/nexus-memory.ts`
 - `src/lib/mcp/tools/outreach.ts`
 - `src/lib/mcp/tools/platform-advantage.ts`
+- `src/lib/mcp/tools/platform-ops.ts`
 - `src/lib/mcp/tools/projects.ts`
+- `src/lib/mcp/tools/reports-ops.ts`
+- `src/lib/mcp/tools/sales-ops.ts`
+- `src/lib/mcp/tools/social-ops.ts`
+- `src/lib/mcp/tools/social-publishing.ts`
 - `src/lib/mcp/tools/social.ts`
 - `src/lib/mcp/tools/solo-owner.ts`
 - `src/lib/mcp/tools/video.ts`
@@ -1780,6 +2216,28 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/nexusMemoryService.ts`
 - `src/types/mcp.ts`
 - `src/workflows/mcp-agent.ts`
+- `tests/mcp-chatgpt-oauth.spec.js`
+- `tests/unit/bonnie-agentic-bos-master.test.mjs`
+- `tests/unit/bonnie-agentic-os.test.mjs`
+- `tests/unit/bonnie-deep-link.test.mjs`
+- `tests/unit/bonnie-durable-runtime.test.mjs`
+- `tests/unit/bonnie-durable-state-machine.test.mjs`
+- `tests/unit/bonnie-goals-engine.test.mjs`
+- `tests/unit/bonnie-risk-policy.test.mjs`
+- `tests/unit/bonnie-route-context.test.mjs`
+- `tests/unit/bonnie-tool-policy-gate.test.mjs`
+- `tests/unit/bonnie-workspace-shell.test.mjs`
+- `tests/unit/mcp-chatgpt-connector.test.mjs`
+- `tests/unit/mcp-claude-oauth-reject.test.mjs`
+- `tests/unit/mcp-compact-tool-schema.test.mjs`
+- `tests/unit/mcp-connector-upgrade.test.mjs`
+- `tests/unit/mcp-oauth-client-ensure.test.mjs`
+- `tests/unit/mcp-oauth-multiclient-isolation.test.mjs`
+- `tests/unit/mcp-oauth-www-authenticate.test.mjs`
+- `tests/unit/mcp-production-hardening.test.mjs`
+- `tests/unit/mcp-tool-exposure-gate.test.mjs`
+- `tests/unit/mcp-tool-registry-static-load.test.mjs`
+- `tests/unit/mcp-universal-compat.test.mjs`
 
 ### MCP tool-like names
 
@@ -1789,18 +2247,29 @@ Generated: 2026-07-17T21:40:39.800Z
 - `ac_timezone`
 - `ac_webvitals`
 - `accept`
+- `accept_document`
 - `accounting_snapshot`
 - `activate`
 - `activate_skill_for_session`
 - `actuate`
+- `add_note`
 - `add_task_dependency`
 - `ai_business_readiness_score`
+- `all_tasks_terminal_or_waiting_ok`
 - `amber`
+- `amend_document`
+- `analytics`
 - `analyze_document_intelligence`
 - `analyze_workspace_document_url`
 - `android`
+- `appointments`
+- `approve_document`
 - `approve_dream_update`
+- `approve_pending_action`
+- `approve_workflow_step`
+- `archive_document`
 - `arcrole`
+- `audit_platform`
 - `auto_create_lead_from_message`
 - `autofill`
 - `automate_expense_entry`
@@ -1809,21 +2278,30 @@ Generated: 2026-07-17T21:40:39.800Z
 - `backfill_contact_phone_country_codes`
 - `book_calendar_meeting`
 - `business_memory_graph`
+- `calendly_health`
 - `campaign_brief`
 - `campaign_diagnose`
+- `campaign_metrics`
+- `campaigns`
 - `cancel_meeting`
 - `cancel_run`
 - `capabilities`
 - `capture_linkedin_comment_leads`
+- `change_pipeline_stage`
 - `chromium`
 - `clank`
 - `click`
 - `client_pulse`
 - `close`
+- `compare_document_versions`
+- `compare_versions`
+- `connected_accounts`
 - `connection`
 - `content`
 - `context`
 - `contract_drafter`
+- `conversions`
+- `convert_quote_to_invoice`
 - `create_bank_account`
 - `create_bulk_email_batch`
 - `create_bulk_email_campaign`
@@ -1835,8 +2313,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `create_contract_template`
 - `create_contract_version`
 - `create_deal`
+- `create_document`
+- `create_document_version`
+- `create_email_draft`
 - `create_email_sequence`
 - `create_expense`
+- `create_follow_up`
 - `create_in_app_notification`
 - `create_invoice`
 - `create_journal_entry`
@@ -1860,39 +2342,55 @@ Generated: 2026-07-17T21:40:39.800Z
 - `create_ticket`
 - `create_vendor_bill`
 - `css`
+- `customer_report`
+- `dashboard_metrics`
 - `data_enricher`
 - `deal_to_cash_flow`
+- `decline_document`
+- `deepseek_health`
 - `define_outcome`
 - `delete_contact`
 - `delete_facebook_post`
+- `delete_lead`
+- `delete_media`
+- `delete_post`
+- `delete_social_post`
 - `dialog`
 - `disable_whatsapp_chatbot`
 - `disown`
 - `dispose`
 - `document_qa`
 - `document_url_qa`
+- `document_versions`
 - `dotenv`
 - `download`
 - `draft_reply`
+- `drafts`
 - `drag`
 - `drop`
 - `electron`
+- `email_campaigns`
 - `enable_lead_auto_outreach`
 - `enable_whatsapp_chatbot`
 - `end`
+- `engagement_report`
 - `enroll_contact_in_sequence`
 - `escalate_ticket`
 - `escodegen`
 - `evaluate`
 - `evaluate_business_ai_readiness`
 - `events`
+- `execute`
 - `execute_strategic_intelligence`
+- `export_document_record`
 - `export_to_google_workspace`
+- `fetch`
 - `ffmpeg`
 - `fill`
 - `find_and_qualify_leads`
 - `firefox`
 - `focus`
+- `funnels`
 - `generate_business_report`
 - `generate_contract_draft`
 - `generate_contract_signing_token`
@@ -1904,12 +2402,16 @@ Generated: 2026-07-17T21:40:39.800Z
 - `get_account_overview`
 - `get_accounts_payable_aging`
 - `get_accounts_receivable_aging`
+- `get_action_status`
+- `get_agentic_os_status`
 - `get_api_health`
+- `get_audit_logs`
 - `get_automation_health`
 - `get_balance_sheet`
 - `get_bank_accounts`
 - `get_batch_job_status`
 - `get_business_ai_state`
+- `get_business_digital_twin`
 - `get_business_events`
 - `get_business_snapshot`
 - `get_calendly_status`
@@ -1927,19 +2429,25 @@ Generated: 2026-07-17T21:40:39.800Z
 - `get_contract_templates`
 - `get_contract_versions`
 - `get_contracts`
+- `get_conversation`
 - `get_current_user`
 - `get_dashboard_stats`
 - `get_deals`
+- `get_delivery_status`
+- `get_document`
+- `get_document_timeline`
 - `get_documents`
 - `get_dream_sessions`
 - `get_email_campaign_delivery_status`
 - `get_email_campaign_stats`
+- `get_environment`
 - `get_expenses`
 - `get_facebook_identities`
 - `get_facebook_page_capabilities`
 - `get_facebook_post_insights`
 - `get_facebook_token`
 - `get_failure_report`
+- `get_feature_flags`
 - `get_file_download_url`
 - `get_finance_snapshot`
 - `get_gamification_leaderboard`
@@ -1953,13 +2461,17 @@ Generated: 2026-07-17T21:40:39.800Z
 - `get_linkedin_member_profile`
 - `get_linkedin_post_stats`
 - `get_linkedin_posts`
+- `get_media`
+- `get_media_asset`
 - `get_meetings`
 - `get_momentum_score`
 - `get_nexus_memory`
 - `get_orchestration_history`
 - `get_pipeline_summary`
+- `get_platform_status`
 - `get_pnl_statement`
 - `get_post_analytics`
+- `get_post_status`
 - `get_project_details`
 - `get_project_milestones`
 - `get_project_summary`
@@ -1967,6 +2479,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `get_project_timeline`
 - `get_projects`
 - `get_quotes`
+- `get_recent_errors`
 - `get_recent_messages`
 - `get_reconciliation_sessions`
 - `get_revenue_summary`
@@ -1974,8 +2487,14 @@ Generated: 2026-07-17T21:40:39.800Z
 - `get_scheduled_posts`
 - `get_scraper_leads`
 - `get_sequence_stats`
+- `get_signature_status`
 - `get_social_accounts`
+- `get_social_identities`
+- `get_social_post`
+- `get_social_post_insights`
+- `get_social_posts`
 - `get_strategic_plan`
+- `get_system_health`
 - `get_tasks`
 - `get_tenant_messages`
 - `get_throughput_report`
@@ -1983,34 +2502,66 @@ Generated: 2026-07-17T21:40:39.800Z
 - `get_tickets`
 - `get_user_points`
 - `get_vendor_bills`
+- `get_version`
 - `get_whatsapp_status`
+- `get_workflow`
+- `get_workflow_run`
 - `get_workspace_widgets`
 - `get_x_profile`
 - `get_x_timeline`
 - `get_zoho_mail_messages`
 - `get_zoho_mail_thread`
+- `github_health`
 - `gmail_get_thread`
+- `gmail_health`
 - `gmail_list_threads`
 - `gmail_send_email`
+- `google_calendar_health`
 - `goto`
+- `growth_report`
 - `handle`
 - `headers`
 - `hover`
 - `href`
+- `inspect_agent_reasoning`
+- `inspect_embeddings`
+- `inspect_executor`
+- `inspect_memory`
+- `inspect_planner`
+- `inspect_prompts`
+- `inspect_rag`
+- `inspect_scheduler`
+- `inspect_task_queue`
+- `inspect_tools`
+- `inspect_vector_store`
+- `integrations_status`
 - `invoice_paid`
 - `invoice_receipt`
+- `invoices`
 - `kickoff_project_automation`
+- `landing_pages`
 - `lang`
 - `lead_prospector`
 - `lead_to_deal`
 - `limit`
+- `list_companies`
+- `list_contacts`
+- `list_conversations`
+- `list_department_agents`
+- `list_document_versions`
+- `list_email_accounts`
 - `list_event_subscriptions`
 - `list_files`
+- `list_leads`
+- `list_media_assets`
+- `list_pending_approvals`
 - `list_playbooks`
 - `list_skills`
+- `list_workflows`
 - `load_skill`
 - `locator`
 - `log_contact_activity`
+- `mark_invoice_paid`
 - `mark_message_read`
 - `memory_updates_json`
 - `microsoft_connection_diagnostic`
@@ -2032,9 +2583,9 @@ Generated: 2026-07-17T21:40:39.800Z
 - `microsoft_upload_file`
 - `mobile`
 - `move_deal_stage`
-- `name`
 - `navigate`
 - `navigation`
+- `negotiate_capabilities`
 - `next`
 - `nexus_calendar_nexus`
 - `nexus_content_synthesis`
@@ -2052,10 +2603,15 @@ Generated: 2026-07-17T21:40:39.800Z
 - `nexus_sales_campaign`
 - `nexus_strategic_orchestrator`
 - `nexus_support_triage`
+- `no_duplicate_idempotency_completions`
+- `no_uncertain_executions`
 - `node`
 - `notifier`
+- `observe`
 - `offset`
 - `onboard_user_automation`
+- `openai_health`
+- `opportunities`
 - `orchestrate_meeting_workflow`
 - `orchestrate_task`
 - `outreach_executive`
@@ -2063,51 +2619,84 @@ Generated: 2026-07-17T21:40:39.800Z
 - `parse_lead_criteria`
 - `password_reset`
 - `patterns_json`
+- `payments`
 - `period`
+- `pipeline_status`
+- `place_legal_hold`
 - `plan_social_calendar`
 - `popup`
 - `post_x_tweet`
 - `predict_deal_win_probability`
 - `press`
+- `preview_document`
 - `print`
 - `productivity_scheduler`
 - `publish_facebook_multi_photo`
 - `publish_facebook_reel`
+- `publish_now`
+- `publish_post`
+- `publish_social_post`
 - `qualify_crm_leads`
 - `queue_email_campaign_send`
 - `quota_warning`
+- `quotes`
+- `railway_health`
 - `react`
 - `read_url_content`
 - `recommend_next_steps`
 - `reconcile_outreach_vs_logs`
 - `reconcile_payment`
+- `record_document_view`
+- `refresh_business_digital_twin`
+- `reject_document`
+- `reject_pending_action`
+- `reject_workflow_step`
+- `release_legal_hold`
 - `reload`
+- `reminders`
 - `remove`
+- `render_document`
 - `reorder_widgets`
+- `reply_to_email`
 - `reply_to_x_tweet`
 - `reply_to_zoho_mail`
+- `request_changes`
 - `request_contract_approval`
+- `restart_service`
+- `restore_document`
+- `resume_workflow`
+- `retrieve_document`
 - `retry_run_step`
+- `retry_social_post`
+- `revenue_dashboard`
 - `revenue_recovery_agent`
+- `revenue_report`
 - `review_bonnie_patterns`
 - `review_contract_approval`
 - `role`
 - `rose`
 - `run_autonomous_scan`
 - `run_chief_of_staff_routine`
+- `run_cognitive_loop`
 - `run_mcp_agent_workflow`
 - `run_playbook`
 - `run_strategic_pnl_audit`
+- `run_workflow`
 - `save_contract`
+- `schedule_post`
 - `schedule_social_automation`
 - `schedule_social_post`
+- `scheduled_posts`
 - `scope`
 - `score_deal`
 - `screenshot`
+- `search`
 - `search_clients`
 - `search_contacts`
 - `search_documents`
+- `search_documents_os`
 - `search_facebook_leads`
+- `search_leads`
 - `search_x_tweets`
 - `search_x_users`
 - `segment_clients_by_criteria`
@@ -2117,7 +2706,10 @@ Generated: 2026-07-17T21:40:39.800Z
 - `send_batch_outreach`
 - `send_bulk_email_campaign`
 - `send_contract`
+- `send_document`
 - `send_document_to_claude`
+- `send_email`
+- `send_for_signature`
 - `send_invoice`
 - `send_message`
 - `send_project_email`
@@ -2128,10 +2720,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `send_transactional_email`
 - `send_whatsapp_message`
 - `send_x_dm`
+- `sent`
 - `set_chatbot_handoff_rules`
 - `set_outreach_limits`
 - `set_task_recurrence`
 - `show`
+- `show_related_records`
+- `side_effects_have_provider_refs`
 - `sky`
 - `solo_owner_operator_brief`
 - `solo_owner_time_savings_meter`
@@ -2144,13 +2739,21 @@ Generated: 2026-07-17T21:40:39.800Z
 - `start_lead_nurture`
 - `status`
 - `stop`
+- `stop_workflow`
 - `store_facebook_token`
+- `stripe_health`
+- `submit_for_review`
 - `subscribe`
 - `subscribe_events`
+- `subscriptions`
 - `summarize_ticket`
 - `summarize_workspace`
+- `supabase_health`
+- `supersede_document`
+- `supervise_task`
 - `sync_all_inboxes`
 - `sync_calendly_events`
+- `sync_knowledge_graph`
 - `tap`
 - `task_create`
 - `task_delete`
@@ -2158,6 +2761,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `task_list`
 - `task_pause`
 - `task_resume`
+- `tasks`
 - `teal`
 - `test`
 - `timestamp`
@@ -2176,9 +2780,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `update_client`
 - `update_client_metadata`
 - `update_client_status_batch`
+- `update_company`
 - `update_contact`
 - `update_contract_status`
 - `update_deal`
+- `update_document`
 - `update_inventory_stock`
 - `update_invoice`
 - `update_invoice_status`
@@ -2191,9 +2797,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `update_task`
 - `update_ticket`
 - `upload_document`
+- `upload_media`
 - `upload_media_asset`
 - `upsert_nexus_memory`
 - `user_id`
+- `validate_document`
 - `vary`
 - `verify_invoice_sent`
 - `verify_lead_created`
@@ -2201,6 +2809,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `verify_social_post_published`
 - `violet`
 - `voice_action_router`
+- `void_document`
 - `webkit`
 - `welcome`
 - `winldd`
@@ -2209,11 +2818,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `x_connection_diagnostic`
 - `xlink`
 - `xmlns`
+- `zoho_health`
 
 ### Navigation files
 
-- `app/.well-known/workflow/v1/flow/route.js`
+- `scripts/design-system-guard.mjs`
 - `scripts/generate-repository-inventory.mjs`
+- `scripts/module-audit-all.cjs`
 - `src/COMPLETE_BUSINESS_OS_PLAN.md`
 - `src/COMPLETE_FUNCTIONALITY_FIXES.md`
 - `src/COMPLETE_PLATFORM_FIXES.md`
@@ -2238,8 +2849,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/VIDEO_ADAPTER_IMPLEMENTATION_STATUS.md`
 - `src/WEBSITE_TEST_RESULTS.md`
 - `src/app/.well-known/workflow/v1/flow/route.js`
-- `src/app/ai-agents/page.tsx`
+- `src/app/ai-business-os/page.tsx`
+- `src/app/api/bonnie/conversations/route.ts`
 - `src/app/api/crm/follow-ups/route.ts`
+- `src/app/api/dashboard/action-queue/route.ts`
+- `src/app/api/scraper/deep-crawl/route.ts`
+- `src/app/api/scraper/email-discovery/route.ts`
 - `src/app/auth/auth-code-error/AuthCodeErrorClient.tsx`
 - `src/app/auth/login/page.tsx`
 - `src/app/auth/reset-password/page.tsx`
@@ -2254,37 +2869,41 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/call/[roomId]/page.tsx`
 - `src/app/claude-manus-integrations/page.tsx`
 - `src/app/contract/[id]/page.tsx`
-- `src/app/crm/page.tsx`
 - `src/app/customers/page.tsx`
 - `src/app/dashboard/[[...slug]]/DashboardClientPage.tsx`
 - `src/app/dashboard/call/[roomId]/page.tsx`
 - `src/app/docs/DocsPageContent.tsx`
 - `src/app/invoice/[id]/page.tsx`
 - `src/app/layout.tsx`
-- `src/app/lead-management/page.tsx`
+- `src/app/legal/cookies/page.tsx`
+- `src/app/legal/dpa/page.tsx`
 - `src/app/legal/page.tsx`
+- `src/app/legal/policy/[tenantId]/[slug]/page.tsx`
+- `src/app/legal/privacy/page.tsx`
+- `src/app/legal/sla/page.tsx`
+- `src/app/legal/terms/page.tsx`
 - `src/app/login/page.tsx`
 - `src/app/meet/[id]/page.tsx`
 - `src/app/p/[id]/page.tsx`
 - `src/app/portal/[token]/page.tsx`
-- `src/app/pricing/PricingPageContent.tsx`
 - `src/app/private-docs/page.tsx`
-- `src/app/project-management/page.tsx`
 - `src/app/project/[id]/page.tsx`
+- `src/app/proposal/[token]/page.tsx`
+- `src/app/public/receipt/[id]/page.tsx`
 - `src/app/quote/[token]/page.tsx`
 - `src/app/reset-password/page.tsx`
 - `src/app/search/page.tsx`
+- `src/app/settings/legal/[[...section]]/page.tsx`
 - `src/app/sign-contract/page.tsx`
 - `src/app/sign/[token]/page.tsx`
+- `src/app/solutions/agencies/page.tsx`
+- `src/app/solutions/consultants/page.tsx`
+- `src/app/solutions/solo-founders/page.tsx`
 - `src/app/sw.ts`
-- `src/app/video-meetings/page.tsx`
-- `src/app/who-we-serve/WhoWeServeContent.tsx`
 - `src/components/Breadcrumbs.tsx`
 - `src/components/Dashboard.tsx`
 - `src/components/FeatureGate.tsx`
 - `src/components/KeyboardShortcuts.tsx`
-- `src/components/LandingPage.tsx`
-- `src/components/LandingPageClean.tsx`
 - `src/components/PageTransition.tsx`
 - `src/components/Pagination.tsx`
 - `src/components/PublicNavigation.tsx`
@@ -2294,20 +2913,22 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/accessibility/SkipToMainContent.tsx`
 - `src/components/admin/ARCHIVED.md`
 - `src/components/alpha/GlobalAlpha.tsx`
-- `src/components/alpha/MissionControl.tsx`
+- `src/components/business/BusinessFlowGuardrail.tsx`
 - `src/components/common/GlobalShortcutListener.tsx`
 - `src/components/common/LocalizationWrapper.tsx`
 - `src/components/common/PrismBackground.tsx`
-- `src/components/common/PwaInstallNudge.tsx`
 - `src/components/common/PwaInstallPrompt.tsx`
+- `src/components/compliance/LegalGovernanceWorkspace.tsx`
+- `src/components/compliance/PreferenceCentre.tsx`
+- `src/components/compliance/PrivacyRequestStatus.tsx`
 - `src/components/contracts/AlphaCloneContractModal.tsx`
 - `src/components/contracts/ContractDashboard.tsx`
 - `src/components/dashboard/AIAgentsTab.tsx`
+- `src/components/dashboard/AIPredictiveWidget.tsx`
 - `src/components/dashboard/AnalyticsTab.tsx`
+- `src/components/dashboard/AttentionFirstDashboard.tsx`
 - `src/components/dashboard/BottomNav.tsx`
-- `src/components/dashboard/BusinessHomeDashboard.tsx`
 - `src/components/dashboard/CRMTab.tsx`
-- `src/components/dashboard/ComingSoon.tsx`
 - `src/components/dashboard/CommandPalette.tsx`
 - `src/components/dashboard/ConferenceTab.tsx`
 - `src/components/dashboard/ContactSubmissionsTab.tsx`
@@ -2317,13 +2938,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/ExecutiveDashboard.tsx`
 - `src/components/dashboard/FinanceTab.tsx`
 - `src/components/dashboard/GlobalSearch.tsx`
-- `src/components/dashboard/HomeTab.tsx`
 - `src/components/dashboard/InteractiveHeroPreview.tsx`
 - `src/components/dashboard/Layout/Sidebar.tsx`
 - `src/components/dashboard/MarketplacePage.tsx`
 - `src/components/dashboard/MessagesTab.tsx`
 - `src/components/dashboard/MicrosoftMailView.tsx`
 - `src/components/dashboard/ModuleDashboardActions.tsx`
+- `src/components/dashboard/OperatingSystemHome.tsx`
 - `src/components/dashboard/OperationalWorkflowStrip.tsx`
 - `src/components/dashboard/ProjectsTab.tsx`
 - `src/components/dashboard/QuotesTab.tsx`
@@ -2334,9 +2955,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/TrialBanner.tsx`
 - `src/components/dashboard/VoiceCaptureFAB.tsx`
 - `src/components/dashboard/accounting/FinancialReportsPage.tsx`
+- `src/components/dashboard/admin/PlatformOwnerHome.tsx`
+- `src/components/dashboard/bonnie/BonnieChatPanel.tsx`
 - `src/components/dashboard/bonnie/BonnieFullView.tsx`
+- `src/components/dashboard/bonnie/BonnieLauncher.tsx`
 - `src/components/dashboard/bonnie/BonnieModuleDock.tsx`
-- `src/components/dashboard/bonnie/BonnieWidget.tsx`
+- `src/components/dashboard/bonnie/UnifiedActionCenter.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieSidebar.tsx`
 - `src/components/dashboard/business/BusinessDashboard.tsx`
 - `src/components/dashboard/business/BusinessPerformanceDashboard.tsx`
 - `src/components/dashboard/business/BusinessWelcomeModal.tsx`
@@ -2344,7 +2969,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/business/CampaignBuilder.tsx`
 - `src/components/dashboard/business/CashFlowForecastTab.tsx`
 - `src/components/dashboard/business/ClientsPage.tsx`
-- `src/components/dashboard/business/EngagingDashboard.tsx`
 - `src/components/dashboard/business/EnhancedBillingPage.tsx`
 - `src/components/dashboard/business/LaunchActivationChecklist.tsx`
 - `src/components/dashboard/business/Microsoft365Integration.tsx`
@@ -2355,13 +2979,16 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/business/ReferralsPage.tsx`
 - `src/components/dashboard/business/TeamPage.tsx`
 - `src/components/dashboard/business/TeamsPage.tsx`
+- `src/components/dashboard/business/UnifiedInbox.tsx`
 - `src/components/dashboard/business/UnifiedInboxTab.tsx`
 - `src/components/dashboard/business/UnifiedInboxView.tsx`
 - `src/components/dashboard/business/WhatsAppChatHub.tsx`
 - `src/components/dashboard/business/WhatsAppIntegration.tsx`
 - `src/components/dashboard/client/ClientMeetingsView.tsx`
 - `src/components/dashboard/common/ModuleJumpSelect.tsx`
+- `src/components/dashboard/communication/CommunicationHub.tsx`
 - `src/components/dashboard/crm/AccountsPage.tsx`
+- `src/components/dashboard/crm/CRMNav.tsx`
 - `src/components/dashboard/crm/FollowUpQueue.tsx`
 - `src/components/dashboard/crm/KanbanBoard.tsx`
 - `src/components/dashboard/crm/SalesConsole.tsx`
@@ -2377,14 +3004,15 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/hubs/SalesWorkspaceTabs.tsx`
 - `src/components/dashboard/hubs/ScheduleHub.tsx`
 - `src/components/dashboard/hubs/WorkspaceHub.tsx`
+- `src/components/dashboard/integrations/IntegrationMarketplaceDashboard.tsx`
 - `src/components/dashboard/leads/AerialLeadNavigator.tsx`
 - `src/components/dashboard/leads/LeadDetailModal.tsx`
 - `src/components/dashboard/messenger/MessengerInbox.tsx`
 - `src/components/dashboard/projects/ProjectModal.tsx`
+- `src/components/dashboard/responsive/MobileMoreSheet.tsx`
 - `src/components/dashboard/settings/IntegrationSettings.tsx`
 - `src/components/dashboard/social/LinkedInManagementTab.tsx`
 - `src/components/dashboard/social/XIntegrationTab.tsx`
-- `src/components/dashboard/tickets/DeepDeskView.tsx`
 - `src/components/dashboard/video/CustomVideoRoom.tsx`
 - `src/components/dashboard/video/IncomingCallModal.tsx`
 - `src/components/dashboard/video/VideoCallFix.tsx`
@@ -2393,60 +3021,77 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/zoho/ZohoCRMIntegration.tsx`
 - `src/components/dashboard/zoho/ZohoCampaignsHub.tsx`
 - `src/components/dashboard/zoho/ZohoMailView.tsx`
+- `src/components/documents/SmartWorkflowChain.tsx`
 - `src/components/home/HomeClient.tsx`
-- `src/components/landing/MarketingFooter.tsx`
-- `src/components/landing/MarketingLandingShell.tsx`
 - `src/components/landing/MarketingRelatedLinks.tsx`
-- `src/components/legal/LegalMarketingShell.tsx`
+- `src/components/legal/CookieBanner.tsx`
 - `src/components/legal/LegalNav.tsx`
-- `src/components/meeting/JoinMeeting.tsx`
-- `src/components/meeting/MeetingPage.tsx`
+- `src/components/marketing/system/CtaButtons.tsx`
+- `src/components/marketing/system/FeatureBlocks.tsx`
+- `src/components/marketing/system/MarketingFooter.tsx`
+- `src/components/marketing/system/MarketingHeader.tsx`
+- `src/components/marketing/system/ProductPageTemplate.tsx`
+- `src/components/marketing/system/SolutionPageTemplate.tsx`
+- `src/components/marketing/system/atmosphere/MarketingAtmosphere.tsx`
+- `src/components/marketing/system/homeContent.tsx`
 - `src/components/onboarding/CreateBusinessOnboarding.tsx`
 - `src/components/onboarding/OnboardingWizard.tsx`
 - `src/components/onboarding/ProductTour.tsx`
 - `src/components/onboarding/SetupWizard.tsx`
-- `src/components/pages/AboutPage.tsx`
-- `src/components/pages/ContactPage.tsx`
 - `src/components/pages/DataDeletionPage.tsx`
-- `src/components/pages/EcosystemPage.tsx`
-- `src/components/pages/HomePage.tsx`
 - `src/components/pages/LegalDocs.tsx`
 - `src/components/pages/PagesTab.tsx`
 - `src/components/pages/PlatformGuide.tsx`
 - `src/components/pages/PublicPortfolio.tsx`
-- `src/components/pages/ServicesPage.tsx`
 - `src/components/pwa/PwaSettingsScreen.tsx`
 - `src/components/shells/AppShell.tsx`
 - `src/components/shells/MarketingShell.tsx`
 - `src/components/shells/ShellSwitcher.tsx`
 - `src/components/tenant/TenantSwitcher.tsx`
+- `src/components/ui/EmptyState.tsx`
 - `src/components/ui/LoadingSkeleton.tsx`
+- `src/components/ui/enterprise/index.ts`
+- `src/components/ui/os/AttentionPanel.tsx`
+- `src/components/ui/os/BonnieDrawer.tsx`
+- `src/components/ui/os/ModuleFrame.tsx`
+- `src/components/ui/os/ModuleLauncher.tsx`
+- `src/components/ui/os/ModuleOverviewChrome.tsx`
+- `src/components/ui/os/SubNavigation.tsx`
+- `src/components/ui/os/TodayPanel.tsx`
+- `src/components/ui/os/index.ts`
+- `src/config/emptyStatePresets.ts`
 - `src/config/faqItems.ts`
 - `src/config/marketingOutcomes.ts`
 - `src/config/moduleDashboardActions.ts`
 - `src/config/platformGlossary.ts`
 - `src/config/pwaMobileNav.ts`
+- `src/config/responsive/mobileNav.ts`
 - `src/constants.ts`
+- `src/constants/brand.ts`
 - `src/constants/design.ts`
+- `src/constants/responsive.ts`
 - `src/docs/DASHBOARD_IMPROVEMENTS.md`
+- `src/hooks/useBonnieDeepLinkFocus.ts`
 - `src/hooks/useExitIntent.ts`
 - `src/hooks/useWorkerTracking.ts`
 - `src/i18n/uiTranslate.ts`
 - `src/instrumentation-client.ts`
 - `src/lib/applyAcTheme.ts`
 - `src/lib/crmNextSteps.ts`
+- `src/lib/dashboard/bonnieRouteContext.ts`
+- `src/lib/dashboard/moduleSubnav.ts`
 - `src/lib/dealRevenueTimeline.ts`
-- `src/lib/marketing/siteNavigation.ts`
+- `src/lib/marketing/cta.ts`
+- `src/lib/marketing/productFeatures.ts`
 - `src/lib/middleware.ts`
-- `src/lib/monitoring/metrics.ts`
 - `src/lib/revenueLifecycle.ts`
 - `src/lib/scraper/emailLeadAutoSearch.ts`
+- `src/lib/scraper/freeLeadSearch.ts`
 - `src/lib/seo/siteEntity.ts`
 - `src/services/activityService.ts`
 - `src/services/bonnieService.ts`
 - `src/services/businessInvoiceService.ts`
 - `src/services/monitoringService.ts`
-- `src/services/performanceMonitoringService.ts`
 - `src/services/plugins/types.ts`
 - `src/services/projectService.ts`
 - `src/services/voiceCommandService.ts`
@@ -2454,8 +3099,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/types.ts`
 - `src/utils/accessibility.ts`
 - `tests/client.spec.js`
+- `tests/marketing-qa-audit.spec.js`
 - `tests/mobile-audit.spec.js`
+- `tests/mobile-sanity.spec.js`
 - `tests/tenant.spec.js`
+- `tests/unit/alphaclone-os-brand.test.mjs`
+- `tests/unit/bonnie-workspace-shell.test.mjs`
+- `tests/unit/marketing-atmosphere.test.mjs`
 
 ### Modals and dialogs
 
@@ -2479,6 +3129,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/business/ComposeEmailModal.tsx`
 - `src/components/dashboard/business/ProjectPortalShareDialog.tsx`
 - `src/components/dashboard/crm/AccountFormModal.tsx`
+- `src/components/dashboard/crm/BulkTeamMessageModal.tsx`
 - `src/components/dashboard/crm/CommunicationModal.tsx`
 - `src/components/dashboard/crm/LeadImportModal.tsx`
 - `src/components/dashboard/facebook/MediaStudioModal.tsx`
@@ -2488,17 +3139,17 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/video/IncomingCallModal.tsx`
 - `src/components/dashboard/zoho/CRMContactPickerModal.tsx`
 - `src/components/dashboard/zoho/LeadOutreachModal.tsx`
-- `src/components/modals/CreateMeetingModal.tsx`
 - `src/components/modals/LinkValidationModal.tsx`
 - `src/components/ui/DetailDrawer.tsx`
+- `src/components/ui/os/BonnieDrawer.tsx`
 
 ### Destructive-action files
 
 - `.github/CICD_SETUP.md`
 - `.github/workflows/deploy.yml`
-- `app/.well-known/workflow/v1/flow/route.js`
-- `middleware.ts`
 - `next.config.ts`
+- `proxy.ts`
+- `scripts/annotate-chatgpt-connector-tools.mjs`
 - `scripts/database/optimize.sql`
 - `scripts/generate-repository-inventory.mjs`
 - `src/MULTI_TENANT_BUILD_COMPLETE.md`
@@ -2508,9 +3159,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/QUICK_REFERENCE.md`
 - `src/REPAIR_AUTH_MISMATCH.sql`
 - `src/app/.well-known/workflow/v1/flow/route.js`
+- `src/app/.well-known/workflow/v1/step/route.js`
 - `src/app/api/account/delete/route.ts`
 - `src/app/api/admin/tenants/route.ts`
 - `src/app/api/ai/files/route.ts`
+- `src/app/api/auth/calendly/callback/route.ts`
 - `src/app/api/auth/callback/x/route.ts`
 - `src/app/api/auth/facebook/data-deletion/route.ts`
 - `src/app/api/auth/google/calendar/callback/route.ts`
@@ -2519,8 +3172,15 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/auth/linkedin/callback/route.ts`
 - `src/app/api/auth/linkedin/disconnect/route.ts`
 - `src/app/api/auth/microsoft/disconnect/route.ts`
+- `src/app/api/auth/zoho/callback/route.ts`
+- `src/app/api/bonnie/conversations/[id]/route.ts`
+- `src/app/api/bonnie/conversations/route.ts`
+- `src/app/api/calendly/status/route.ts`
 - `src/app/api/campaigns/route.ts`
+- `src/app/api/contracts/[id]/route.ts`
 - `src/app/api/contracts/management/route.ts`
+- `src/app/api/contracts/route.ts`
+- `src/app/api/dashboard/action-queue/route.ts`
 - `src/app/api/data/deleted-records/route.ts`
 - `src/app/api/deals/[dealId]/stakeholders/route.ts`
 - `src/app/api/docs/route.ts`
@@ -2534,23 +3194,65 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/app/api/integrations/whatsapp/route.ts`
 - `src/app/api/invoices/[id]/route.ts`
 - `src/app/api/invoices/recurring/[id]/route.ts`
+- `src/app/api/invoices/route.ts`
 - `src/app/api/leads/[id]/route.ts`
 - `src/app/api/leads/management/route.ts`
+- `src/app/api/marketing/campaigns/[campaignId]/status/route.ts`
+- `src/app/api/marketing/campaigns/route.ts`
+- `src/app/api/mcp/keys/route.ts`
 - `src/app/api/mcp/route.ts`
 - `src/app/api/mcp/sse/route.ts`
 - `src/app/api/mcp/token/revoke/route.ts`
 - `src/app/api/mcp/token/route.ts`
-- `src/app/api/meetings/by-id/[meetingId]/end/route.ts`
+- `src/app/api/meetings/create/route.ts`
 - `src/app/api/notifications/dispatch/route.ts`
 - `src/app/api/notifications/push/route.ts`
+- `src/app/api/notifications/route.ts`
 - `src/app/api/pricing/bundles/route.ts`
 - `src/app/api/pricing/catalog/route.ts`
+- `src/app/api/privacy/preferences/route.ts`
 - `src/app/api/push/send/route.ts`
+- `src/app/api/push/subscribe/route.ts`
 - `src/app/api/scraper-campaigns/[id]/route.ts`
+- `src/app/api/settings/legal/policies/[policyId]/versions/[versionId]/status/route.ts`
+- `src/app/api/settings/legal/policies/route.ts`
+- `src/app/api/slack/oauth/callback/route.ts`
+- `src/app/api/sms/campaign/route.ts`
 - `src/app/api/social/command-center/route.ts`
+- `src/app/api/social/media/upload/route.ts`
+- `src/app/api/social/schedule/route.ts`
+- `src/app/api/stripe/connect/callback/route.ts`
+- `src/app/api/stripe/connect/status/route.ts`
 - `src/app/api/stripe/webhook/route.ts`
+- `src/app/api/tenant/[tenantId]/automation-workflows/route.ts`
+- `src/app/api/tenant/[tenantId]/business-events/route.ts`
+- `src/app/api/tenant/[tenantId]/clients/route.ts`
+- `src/app/api/tenant/[tenantId]/contacts/route.ts`
+- `src/app/api/tenant/[tenantId]/deals/[dealId]/products/route.ts`
+- `src/app/api/tenant/[tenantId]/deals/route.ts`
+- `src/app/api/tenant/[tenantId]/documents/[documentId]/route.ts`
+- `src/app/api/tenant/[tenantId]/documents/route.ts`
+- `src/app/api/tenant/[tenantId]/email-sequences/route.ts`
+- `src/app/api/tenant/[tenantId]/files/route.ts`
+- `src/app/api/tenant/[tenantId]/financial-planning/route.ts`
+- `src/app/api/tenant/[tenantId]/generated-assets/route.ts`
+- `src/app/api/tenant/[tenantId]/google-calendar/events/route.ts`
+- `src/app/api/tenant/[tenantId]/inbox/messages/route.ts`
+- `src/app/api/tenant/[tenantId]/integrations/route.ts`
+- `src/app/api/tenant/[tenantId]/members/route.ts`
+- `src/app/api/tenant/[tenantId]/onboarding/route.ts`
+- `src/app/api/tenant/[tenantId]/pages/route.ts`
+- `src/app/api/tenant/[tenantId]/projects/[projectId]/route.ts`
+- `src/app/api/tenant/[tenantId]/projects/route.ts`
+- `src/app/api/tenant/[tenantId]/quotes/[quoteId]/items/route.ts`
+- `src/app/api/tenant/[tenantId]/quotes/route.ts`
+- `src/app/api/tenant/[tenantId]/scheduled-ai-tasks/route.ts`
+- `src/app/api/tenant/[tenantId]/tasks/route.ts`
+- `src/app/api/tenant/[tenantId]/webhooks/route.ts`
+- `src/app/api/tenant/[tenantId]/workflows/route.ts`
 - `src/app/api/twilio/credentials/route.ts`
 - `src/app/api/webhooks/calendly/route.ts`
+- `src/app/api/webhooks/zoom/route.ts`
 - `src/app/api/zoho/mail/route.ts`
 - `src/app/api/zoom/oauth/callback/route.ts`
 - `src/app/auth/login/page.tsx`
@@ -2579,6 +3281,8 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/accounting/JournalEntriesPage.tsx`
 - `src/components/dashboard/admin/SuperAdminTenantsTab.tsx`
 - `src/components/dashboard/admin/SuperAdminUsersTab.tsx`
+- `src/components/dashboard/bonnie/BonnieFullView.tsx`
+- `src/components/dashboard/bonnie/workspace/BonnieSidebar.tsx`
 - `src/components/dashboard/business/CalendarPage.tsx`
 - `src/components/dashboard/business/CalendlySettings.tsx`
 - `src/components/dashboard/business/CampaignBuilder.tsx`
@@ -2600,8 +3304,10 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/business/TeamsPage.tsx`
 - `src/components/dashboard/business/TwilioIntegration.tsx`
 - `src/components/dashboard/business/UnifiedInboxTab.tsx`
+- `src/components/dashboard/business/UnifiedInboxView.tsx`
 - `src/components/dashboard/business/ZohoIntegration.tsx`
 - `src/components/dashboard/common/ClientEmailContextPicker.tsx`
+- `src/components/dashboard/communication/EmailOutreachComposer.tsx`
 - `src/components/dashboard/crm/ContactsList.tsx`
 - `src/components/dashboard/crm/DealPipeline.tsx`
 - `src/components/dashboard/crm/LeadImportModal.tsx`
@@ -2620,18 +3326,22 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/components/dashboard/leads/ScraperLeadsTable.tsx`
 - `src/components/dashboard/projects/MilestoneManager.tsx`
 - `src/components/dashboard/settings/DeletedRecordsSection.tsx`
+- `src/components/dashboard/settings/SettingsCategoryNav.tsx`
 - `src/components/dashboard/social/LinkedInManagementTab.tsx`
 - `src/components/dashboard/social/SocialCommandCenter.tsx`
 - `src/components/dashboard/zoho/CRMContactPickerModal.tsx`
 - `src/components/dashboard/zoho/ZohoMailView.tsx`
 - `src/components/documents/DocumentHub.tsx`
+- `src/components/documents/SharedDocumentsWorkspace.tsx`
 - `src/components/leads/OmniLeadFinder.tsx`
 - `src/components/pages/DataDeletionPage.tsx`
 - `src/components/pages/LegalDocs.tsx`
 - `src/components/pages/PagesTab.tsx`
 - `src/components/pages/PlatformGuide.tsx`
+- `src/components/tenant/TenantSettings.tsx`
 - `src/docs/MCP_AND_ZOOM_INTEGRATION.md`
 - `src/docs/PERFORMANCE_GUIDE.md`
+- `src/hooks/useBonnieConversations.ts`
 - `src/hooks/useClients.ts`
 - `src/hooks/useOptimisticUpdate.ts`
 - `src/hooks/useRealTimeMessages.ts`
@@ -2642,21 +3352,44 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/lib/accounting/chartOfAccountsGuard.ts`
 - `src/lib/ai/ToolPolicyGate.ts`
 - `src/lib/ai/providerHealth.ts`
+- `src/lib/apiAuth.ts`
 - `src/lib/audit/invoiceAuditLogger.ts`
+- `src/lib/bonnie/bonniePlatformOps.ts`
+- `src/lib/bonnie/runtime/utils.ts`
 - `src/lib/calendar/nativeCalendarSync.ts`
 - `src/lib/calendar/taskCalendarSync.ts`
 - `src/lib/calendly/syncToNative.ts`
+- `src/lib/client/bonnieApprovalsStore.ts`
+- `src/lib/contracts/contractManagerDomain.ts`
 - `src/lib/crm/softDeleteContact.ts`
 - `src/lib/crm/unifiedContacts.ts`
 - `src/lib/dashboard/statsCache.ts`
+- `src/lib/document-os/engines/signatureEngine.ts`
+- `src/lib/document-os/lifecycle.ts`
+- `src/lib/document-os/retention.ts`
+- `src/lib/document-os/types.ts`
+- `src/lib/email/providerAdapter.ts`
 - `src/lib/email/resolveEmailTemplateVars.ts`
 - `src/lib/email/resolveMcpEmailRecipient.ts`
 - `src/lib/email/validateRecipient.ts`
+- `src/lib/finance/canonicalDomain.ts`
+- `src/lib/marketing/campaignDomain.ts`
+- `src/lib/mcp/capabilityManifest.ts`
+- `src/lib/mcp/scopes.ts`
+- `src/lib/mcp/toolAnnotations.ts`
+- `src/lib/mcp/tools/autonomous-ops.ts`
+- `src/lib/mcp/tools/crm-ops.ts`
 - `src/lib/mcp/tools/crm.ts`
+- `src/lib/mcp/tools/document-os.ts`
+- `src/lib/mcp/tools/email-ops.ts`
+- `src/lib/mcp/tools/social-ops.ts`
+- `src/lib/mcp/tools/social-publishing.ts`
 - `src/lib/middleware.ts`
-- `src/lib/monitoring/metrics.ts`
+- `src/lib/platformReset.ts`
+- `src/lib/projects/projectTaskDomain.ts`
 - `src/lib/pwa/registerServiceWorker.ts`
-- `src/lib/rateLimit.ts`
+- `src/lib/social/SocialPublishingService.ts`
+- `src/lib/social/types.ts`
 - `src/schemas/validation.ts`
 - `src/services/__tests__/projectService.test.ts`
 - `src/services/accountDeletionService.ts`
@@ -2665,7 +3398,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/accounting/journalEntryService.ts`
 - `src/services/ai/filesApiService.ts`
 - `src/services/aiGenerationService.ts`
-- `src/services/apiMarketplaceService.ts`
+- `src/services/alpha/alphaAgent.ts`
 - `src/services/articleService.ts`
 - `src/services/authService.ts`
 - `src/services/automation/taskAutomationService.ts`
@@ -2681,7 +3414,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/cronService.ts`
 - `src/services/dashboardService.ts`
 - `src/services/dealService.ts`
-- `src/services/edgeCacheService.ts`
+- `src/services/documentOs/documentOsService.ts`
 - `src/services/emailCampaignService.ts`
 - `src/services/eventBus/EventBus.ts`
 - `src/services/eventBus/helpers.ts`
@@ -2695,7 +3428,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/gdpr/dataErasureService.ts`
 - `src/services/googleCalendarService.ts`
 - `src/services/hubspotService.ts`
-- `src/services/integrationService.ts`
 - `src/services/integrationsService.ts`
 - `src/services/intelligence/naturalLanguageSqlService.ts`
 - `src/services/intelligence/semanticResolutionService.ts`
@@ -2719,11 +3451,8 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/quotaService.ts`
 - `src/services/quoteService.ts`
 - `src/services/quoteVersionService.ts`
-- `src/services/resourceService.ts`
 - `src/services/securityThreatService.ts`
-- `src/services/ssoService.ts`
 - `src/services/taskNoteService.ts`
-- `src/services/taskRecurrenceService.ts`
 - `src/services/taskService.ts`
 - `src/services/tenancy/TenantService.ts`
 - `src/services/tenantManagementService.ts`
@@ -2734,11 +3463,9 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/services/userService.ts`
 - `src/services/video/MediaStateManager.ts`
 - `src/services/video/VideoEngine.ts`
-- `src/services/webhooks/webhookService.ts`
 - `src/services/whatsapp/whatsappIntegrationService.ts`
 - `src/services/workflow/WorkflowService.ts`
 - `src/services/workflow/executors.ts`
-- `src/services/workflowService.ts`
 - `src/services/workflowServiceEnterprise.ts`
 - `src/services/zoho/ZohoMailService.ts`
 - `src/services/zoho/ZohoService.ts`
@@ -2752,6 +3479,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `src/types.ts`
 - `src/utils/errorHandlers.ts`
 - `src/utils/mimeTypes.ts`
+- `src/workflows/contract-flows.ts`
 - `supabase/migrations/20260210163500_optimize_financial_reporting.sql`
 - `supabase/migrations/20260211000002_add_performance_indexes.sql`
 - `supabase/migrations/20260218000002_add_storage_features.sql`
@@ -2772,19 +3500,55 @@ Generated: 2026-07-17T21:40:39.800Z
 - `supabase/migrations/20260708180000_block_re_signup_after_account_deletion.sql`
 - `supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql`
 - `supabase/migrations/20260708234500_production_schema_drift_fix.sql`
+- `supabase/migrations/20260718145000_atomic_invoice_payments.sql`
+- `supabase/migrations/20260718145200_sales_receipts.sql`
+- `supabase/migrations/20260718145300_atomic_expense_receipt_payment.sql`
+- `supabase/migrations/20260723103000_manual_invoice_payment_support.sql`
+- `supabase/migrations/20260723104000_fix_mcp_hash_and_payment_coa.sql`
+- `supabase/migrations/20260723120000_document_operating_system.sql`
+- `supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql`
+- `supabase/migrations/20260724120000_social_publishing_repair.sql`
+- `supabase/migrations/20260724153000_bonnie_conversation_workspace.sql`
+- `supabase/migrations/20260726150000_marketing_module_foundation.sql`
+- `supabase/migrations/20260726180000_documents_contracts_shared_platform.sql`
+- `supabase/migrations/20260726200000_projects_tasks_operating_system.sql`
+- `supabase/migrations/20260726220000_canonical_finance_foundation.sql`
+- `supabase/migrations/20260726230000_unified_email_foundation.sql`
+- `supabase/migrations/20260727090000_client_centric_support.sql`
+- `supabase/migrations/20260727120000_communication_compliance_governance.sql`
+- `supabase/migrations/20260727150000_mcp_oauth_grants_multiclient_hardening.sql`
+- `supabase/rollbacks/20260726200000_projects_tasks_operating_system.down.sql`
+- `supabase/rollbacks/20260726220000_canonical_finance_foundation.down.sql`
+- `tests/unit/autonomous-bos-repair.test.mjs`
+- `tests/unit/bonnie-workspace-shell.test.mjs`
+- `tests/unit/contract-manager-domain.test.mjs`
+- `tests/unit/mcp-chatgpt-connector.test.mjs`
+- `tests/unit/project-task-domain.test.mjs`
+- `tests/unit/social-publishing-repair.test.mjs`
 
 ### Environment variables
 
 - `AI_ALLOW_MULTI_PROVIDER`
+- `ALLOW_MCP_RESOURCE_CROSS_ORIGIN`
 - `ALLOW_UNSAFE_INFRASTRUCTURE_MOCKS`
 - `ANTHROPIC_API_KEY`
+- `ANTHROPIC_MODEL`
 - `APOLLO_API_KEY`
 - `APP_URL`
+- `AUDIT_REQUIRED`
 - `AZURE_CLIENT_ID`
 - `AZURE_CLIENT_SECRET`
 - `BASE_URL`
+- `BONNIE_DURABLE_RUNTIME`
+- `BONNIE_EVENT_SIGNING_SECRET`
+- `BONNIE_INTERNAL_SERVICE_TOKEN`
 - `BONNIE_MAX_AGENT_ROUNDS`
+- `BONNIE_MAX_GRAPH_DEPTH`
+- `BONNIE_MAX_PARALLEL_TASKS`
+- `BONNIE_MAX_RETRIES`
+- `BONNIE_MAX_TASKS_PER_RUN`
 - `BONNIE_MAX_TOOLS_PER_ROUND`
+- `BONNIE_WORKER_POLL_MS`
 - `BREVO_API_KEY`
 - `BREVO_FROM_EMAIL`
 - `BREVO_FROM_NAME`
@@ -2800,10 +3564,12 @@ Generated: 2026-07-17T21:40:39.800Z
 - `CALENDLY_REDIRECT_URI`
 - `CALENDLY_WEBHOOK_SIGNING_KEY`
 - `CHROME_CONFIG_HOME`
+- `CHROME_EXECUTABLE_PATH`
 - `CI`
 - `CLAUDE_API_KEY`
 - `CLIENT_EMAIL`
 - `CLIENT_PASSWORD`
+- `COMPLIANCE_TOKEN_SECRET`
 - `CONTACT_SALES_INBOX_EMAIL`
 - `CONTACT_TENANT_ID`
 - `CRON_SECRET`
@@ -2813,11 +3579,15 @@ Generated: 2026-07-17T21:40:39.800Z
 - `DEBUG`
 - `DEBUG_FILE`
 - `DEEPSEEK_API_KEY`
+- `DEEPSEEK_MODEL`
+- `DEFAULT_FROM_EMAIL`
+- `DEFAULT_FROM_NAME`
 - `DEV_MIGRATE_SECRET`
 - `DOTENV_KEY`
-- `EDGE_CONFIG`
+- `EMAIL_AUTO_REPLY_AUTO_SEND`
 - `EMAIL_AUTO_REPLY_COOLDOWN_DAYS`
 - `EMAIL_AUTO_REPLY_DELAY_SECONDS`
+- `EMAIL_AUTO_REPLY_DISABLED`
 - `EMAIL_FROM`
 - `EMAIL_UNSUBSCRIBE_SECRET`
 - `EMAIL_WEBHOOK_SHARED_TOKEN`
@@ -2830,9 +3600,10 @@ Generated: 2026-07-17T21:40:39.800Z
 - `FACEBOOK_WEBHOOK_VERIFY_TOKEN`
 - `FIRECRAWL_API_KEY`
 - `FORCE_LOCAL_HEAVY_WORK`
+- `FORM_WEBHOOK_REQUIRE_SECRET`
 - `FOURSQUARE_API_KEY`
-- `G`
 - `GEMINI_API_KEY`
+- `GEMINI_MODEL`
 - `GITHUB_ACTION`
 - `GITHUB_ACTIONS`
 - `GIT_COMMIT`
@@ -2841,8 +3612,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `GOOGLE_API_KEY`
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_MAPS_API_KEY`
-- `GOOGLE_PLACES_API_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`
 - `GOOGLE_WORKSPACE_MCP_URL`
 - `GRACEFUL_FS_PLATFORM`
 - `GROK_API_KEY`
@@ -2858,6 +3628,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `HUNTER_API_KEY`
 - `INDEXNOW_KEY`
 - `INSTAGRAM_ACCESS_TOKEN`
+- `INTEGRATION_TOKEN_ENCRYPTION_SECRET`
 - `INTERNAL_API_KEY`
 - `JEST_WORKER_ID`
 - `LD_LIBRARY_PATH`
@@ -2869,10 +3640,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `LIVEKIT_API_SECRET`
 - `LIVEKIT_URL`
 - `LOCALAPPDATA`
+- `LOCAL_MODEL`
+- `LOCAL_MODEL_ENDPOINT`
 - `MANUS_API_KEY`
 - `MAX_LOG_LENGTH`
 - `MCP_API_KEY`
 - `MCP_BASE_URL`
+- `MCP_DRY_RUN`
 - `MCP_TOKEN`
 - `MICROSOFT_CLIENT_ID`
 - `MICROSOFT_CLIENT_SECRET`
@@ -2893,6 +3667,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `NEXT_PUBLIC_ENABLE_SERWIST`
 - `NEXT_PUBLIC_GA_ID`
 - `NEXT_PUBLIC_GEMINI_API_KEY`
+- `NEXT_PUBLIC_GIT_COMMIT_SHA`
 - `NEXT_PUBLIC_GOOGLE_API_KEY`
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
@@ -2903,6 +3678,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `NEXT_PUBLIC_LINKEDIN_REDIRECT_URI`
 - `NEXT_PUBLIC_LIVEKIT_URL`
 - `NEXT_PUBLIC_OPENAI_API_KEY`
+- `NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA`
 - `NEXT_PUBLIC_SENTRY_DSN`
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_STRIPE_PUBLIC_KEY`
@@ -2912,7 +3688,6 @@ Generated: 2026-07-17T21:40:39.800Z
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
 - `NEXT_PUBLIC_TWILIO_CONFIGURED`
 - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
-- `NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA`
 - `NEXT_PUBLIC_ZOHO_CLIENT_ID`
 - `NEXT_PUBLIC_ZOHO_REDIRECT_URI`
 - `NEXT_PUBLIC_ZOOM_CLIENT_ID`
@@ -2923,10 +3698,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `OAUTH_STATE_SECRET`
 - `OPENAI_API_KEY`
 - `OPENAI_IMAGE_MODEL`
+- `OPENAI_MODEL`
 - `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL`
 - `OUTLOOK_CLIENT_ID`
 - `OUTLOOK_CLIENT_SECRET`
 - `OUTREACH_AUTO_SEND_CONFIDENCE_THRESHOLD`
+- `PLAYWRIGHT_BASE_URL`
 - `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK`
 - `PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE`
 - `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK`
@@ -2939,7 +3717,10 @@ Generated: 2026-07-17T21:40:39.800Z
 - `PLAYWRIGHT_SOCKETS_DIR`
 - `PLAYWRIGHT_TEST`
 - `PROGRAMFILES`
+- `PUBLIC_APP_ORIGIN`
+- `PUBLIC_MCP_RESOURCE`
 - `PUPPETEER_DANGEROUS_NO_SANDBOX`
+- `PUPPETEER_EXECUTABLE_PATH`
 - `PUPPETEER_TEST_EXPERIMENTAL_CHROME_FEATURES`
 - `PUPPETEER_WEBDRIVER_BIDI_ONLY`
 - `PWDEBUGIMPL`
@@ -2961,16 +3742,25 @@ Generated: 2026-07-17T21:40:39.800Z
 - `QSTASH_TOKEN`
 - `QSTASH_URL`
 - `QTS_DEBUG`
+- `RAILWAY_DEPLOYMENT_ID`
 - `RAILWAY_ENVIRONMENT`
 - `RAILWAY_ENVIRONMENT_NAME`
+- `RAILWAY_GIT_COMMIT_SHA`
 - `RAILWAY_PROJECT_ID`
+- `RAILWAY_REGION`
+- `RAILWAY_REPLICA_ID`
 - `RAILWAY_SCRAPER_SERVICE_URL`
 - `RAILWAY_SERVICE_ID`
 - `RAILWAY_SERVICE_NAME`
 - `RAILWAY_STATIC_URL`
+- `RAILWAY_TOKEN`
+- `READINESS_ALWAYS_200`
+- `REDIS_REQUIRED`
+- `REDIS_URL`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `RESEND_FROM_NAME`
+- `SANDBOX_EMAIL_ONLY`
 - `SCRAPER_SERVICE_INTERNAL_URL`
 - `SCRAPER_SERVICE_URL`
 - `SELENIUM_REMOTE_CAPABILITIES`
@@ -2980,6 +3770,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `SENDGRID_FROM_EMAIL`
 - `SENDGRID_FROM_NAME`
 - `SENDINBLUE_API_KEY`
+- `SENTRY_DSN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
 - `SERVICE_ROLE_KEY`
@@ -2993,7 +3784,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `SMTP_PASS`
 - `SMTP_PORT`
 - `SMTP_USER`
+- `SOCIAL_LEGACY_SCHEDULED_POSTS`
 - `SOCIAL_PUBLISH_ENABLED`
+- `SOCIAL_PUBLISH_TEST_FACEBOOK_PAGE_ID`
+- `SOCIAL_PUBLISH_TEST_LINKEDIN_ORG_ID`
+- `SOCIAL_PUBLISH_TEST_MODE`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `SUPABASE_DB_URL`
@@ -3007,8 +3802,11 @@ Generated: 2026-07-17T21:40:39.800Z
 - `TENANT_PASSWORD`
 - `TEST_GRACEFUL_FS_GLOBAL_PATCH`
 - `TEST_INSPECTOR_LANGUAGE`
+- `TEST_MODE`
 - `TEST_USER_EMAIL`
 - `TEST_USER_PASSWORD`
+- `TOKEN_ENCRYPTION_SECRET`
+- `TURNSTILE_SECRET`
 - `TURNSTILE_SECRET_KEY`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
@@ -3022,11 +3820,13 @@ Generated: 2026-07-17T21:40:39.800Z
 - `URL`
 - `USER`
 - `USERNAME`
+- `VALIDATE_ENV_WARN_ONLY`
 - `VAPID_EMAIL`
 - `VAPID_PRIVATE_KEY`
 - `VERCEL`
-- `VERCEL_ENV`
-- `VERCEL_URL`
+- `VERCEL_DEPLOYMENT_ID`
+- `VERCEL_GIT_COMMIT_SHA`
+- `VERCEL_REGION`
 - `VITE_ANTHROPIC_API_KEY`
 - `VITE_AZURE_CLIENT_ID`
 - `VITE_CALENDLY_CLIENT_ID`
@@ -3060,6 +3860,7 @@ Generated: 2026-07-17T21:40:39.800Z
 - `X_CONSUMER_SECRET`
 - `YARGS_MIN_NODE_VERSION`
 - `ZERNIO_API_KEY`
+- `ZERNIO_WEBHOOK_SECRET`
 - `ZEROBOUNCE_API_KEY`
 - `ZOHO_CLIENT_ID`
 - `ZOHO_CLIENT_ID_AU`
@@ -3086,6 +3887,7 @@ Generated: 2026-07-17T21:40:39.800Z
 
 ### Feature flags
 
+- `EMAIL_AUTO_REPLY_DISABLED`
 - `NEXT_PUBLIC_ENABLE_PWA`
 - `NEXT_PUBLIC_ENABLE_SERWIST`
 - `PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK`
@@ -3102,13 +3904,69 @@ Generated: 2026-07-17T21:40:39.800Z
 - `tests/client.spec.js`
 - `tests/final-audit-smoke.spec.js`
 - `tests/finance-integrity.spec.js`
+- `tests/marketing-qa-audit.spec.js`
+- `tests/mcp-chatgpt-oauth.spec.js`
 - `tests/mobile-audit.spec.js`
 - `tests/mobile-production.spec.js`
 - `tests/mobile-sanity.spec.js`
+- `tests/mobile-unified-inbox.spec.js`
+- `tests/oauth-connect.spec.js`
 - `tests/signup-admin-security.spec.js`
 - `tests/super-admin.spec.js`
 - `tests/tenant.spec.js`
+- `tests/unified-inbox.spec.js`
+- `tests/unit/alphaclone-os-brand.test.mjs`
+- `tests/unit/autonomous-bos-repair.test.mjs`
+- `tests/unit/bonnie-agentic-bos-master.test.mjs`
+- `tests/unit/bonnie-agentic-os.test.mjs`
+- `tests/unit/bonnie-deep-link.test.mjs`
+- `tests/unit/bonnie-durable-runtime.test.mjs`
+- `tests/unit/bonnie-durable-state-machine.test.mjs`
+- `tests/unit/bonnie-goals-engine.test.mjs`
+- `tests/unit/bonnie-risk-policy.test.mjs`
+- `tests/unit/bonnie-route-context.test.mjs`
+- `tests/unit/bonnie-tool-policy-gate.test.mjs`
+- `tests/unit/bonnie-workspace-shell.test.mjs`
+- `tests/unit/business-friendly-errors.test.mjs`
+- `tests/unit/communication-compliance.test.mjs`
+- `tests/unit/compliance-hardening.test.mjs`
+- `tests/unit/contract-manager-domain.test.mjs`
+- `tests/unit/document-os.test.mjs`
+- `tests/unit/email-signup-flow.test.mjs`
+- `tests/unit/facebook-publish-verify.test.mjs`
+- `tests/unit/finance-canonical-domain.test.mjs`
+- `tests/unit/free-lead-search-reach.test.mjs`
+- `tests/unit/google-oauth-dashboard-landing.test.mjs`
+- `tests/unit/known-broken-tools.test.mjs`
+- `tests/unit/lead-finder-core.test.mjs`
+- `tests/unit/marketing-atmosphere.test.mjs`
+- `tests/unit/marketing-cta.test.mjs`
+- `tests/unit/mcp-chatgpt-connector.test.mjs`
+- `tests/unit/mcp-claude-oauth-reject.test.mjs`
+- `tests/unit/mcp-compact-tool-schema.test.mjs`
+- `tests/unit/mcp-connector-upgrade.test.mjs`
+- `tests/unit/mcp-oauth-client-ensure.test.mjs`
+- `tests/unit/mcp-oauth-multiclient-isolation.test.mjs`
+- `tests/unit/mcp-oauth-www-authenticate.test.mjs`
+- `tests/unit/mcp-production-hardening.test.mjs`
+- `tests/unit/mcp-tool-exposure-gate.test.mjs`
+- `tests/unit/mcp-tool-registry-static-load.test.mjs`
+- `tests/unit/mcp-universal-compat.test.mjs`
+- `tests/unit/metrics-and-canonical-routes.test.mjs`
+- `tests/unit/multitenant-social-isolation.test.mjs`
+- `tests/unit/oauth-www-dns-fix.test.mjs`
+- `tests/unit/owner-user-delete.test.mjs`
+- `tests/unit/platform-auth-origin.test.mjs`
+- `tests/unit/platform-excellence.test.mjs`
+- `tests/unit/platform-multitenant-isolation.test.mjs`
+- `tests/unit/prod-url-and-outcome-args.test.mjs`
+- `tests/unit/production-baseline-hardening.test.mjs`
 - `tests/unit/production-env.test.mjs`
+- `tests/unit/production-readiness.test.mjs`
+- `tests/unit/project-task-domain.test.mjs`
+- `tests/unit/social-publishing-repair.test.mjs`
+- `tests/unit/ticket-support-domain.test.mjs`
+- `tests/unit/unified-email-domain.test.mjs`
 
 ## Reproduction
 

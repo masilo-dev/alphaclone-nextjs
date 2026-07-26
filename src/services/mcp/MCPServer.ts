@@ -2341,22 +2341,6 @@ class AlphaCloneMCPServer {
         // get_deals, create_deal, update_deal — handled by lib/mcp/tools/deals.ts registry
 
         // â”€â”€ get_projects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        case 'get_projects': {
-          const a = args as Record<string, any>;
-          const tenant_id = this.requireTenant(a);
-          const { status } = a;
-          let query = supabaseAdmin
-            .from('business_projects')
-            .select('id, name, status, due_date, description, client_id, created_at')
-            .eq('tenant_id', tenant_id)
-            .limit(50);
-          if (status) query = query.eq('status', status);
-          const { data, error } = await query;
-          if (error) throw supabaseErrorToMcpClientError('get_projects', error.message);
-          result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-          break;
-        }
-
         case 'get_project_summary': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);

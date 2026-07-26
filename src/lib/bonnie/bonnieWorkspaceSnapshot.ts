@@ -64,8 +64,9 @@ export async function getBonnieWorkspaceSnapshot(tenantId: string): Promise<Bonn
     countTable('invoices', (q) =>
       q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['sent', 'overdue', 'pending'])
     ),
-    countTable('support_tickets', (q) =>
-      q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId).eq('status', 'open')
+    countTable('tickets', (q) =>
+      q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)
+        .in('status', ['new', 'open', 'in_progress', 'waiting_on_business', 'escalated', 'reopened'])
     ),
     countTable('contracts', (q) =>
       q.select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)

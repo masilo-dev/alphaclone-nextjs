@@ -1,0 +1,2825 @@
+{
+  "policies": [
+    {
+      "file": "supabase/migrations/20240121000003_error_tracking.sql",
+      "policy": "Admins can view all failed logins",
+      "table": "failed_logins"
+    },
+    {
+      "file": "supabase/migrations/20240121000003_error_tracking.sql",
+      "policy": "Admins can view all error logs",
+      "table": "error_logs"
+    },
+    {
+      "file": "supabase/migrations/20240121000003_error_tracking.sql",
+      "policy": "Users can view their own error logs",
+      "table": "error_logs"
+    },
+    {
+      "file": "supabase/migrations/20240121000003_error_tracking.sql",
+      "policy": "System can insert failed logins",
+      "table": "failed_logins"
+    },
+    {
+      "file": "supabase/migrations/20240121000003_error_tracking.sql",
+      "policy": "System can insert error logs",
+      "table": "error_logs"
+    },
+    {
+      "file": "supabase/migrations/20240121000005_security_logs.sql",
+      "policy": "Admins can view all security logs",
+      "table": "security_logs"
+    },
+    {
+      "file": "supabase/migrations/20240121000005_security_logs.sql",
+      "policy": "Tenant admins can view their tenant logs",
+      "table": "security_logs"
+    },
+    {
+      "file": "supabase/migrations/20240121000005_security_logs.sql",
+      "policy": "System can insert security logs",
+      "table": "security_logs"
+    },
+    {
+      "file": "supabase/migrations/20240122_push_notifications.sql",
+      "policy": "Users can manage own subscriptions",
+      "table": "push_subscriptions"
+    },
+    {
+      "file": "supabase/migrations/20240415000002_social_expansion.sql",
+      "policy": "Tenant users can manage their bookmarks",
+      "table": "social_bookmarks"
+    },
+    {
+      "file": "supabase/migrations/20240415000002_social_expansion.sql",
+      "policy": "Tenant users can manage their watchlist",
+      "table": "social_watchlist"
+    },
+    {
+      "file": "supabase/migrations/20240415120500_business_strategy.sql",
+      "policy": "Tenant users can manage their strategy",
+      "table": "business_strategy"
+    },
+    {
+      "file": "supabase/migrations/20240505_resource_allocation.sql",
+      "policy": "Users can view team members of their tenant",
+      "table": "team_members"
+    },
+    {
+      "file": "supabase/migrations/20240505_resource_allocation.sql",
+      "policy": "Users can manage team members of their tenant",
+      "table": "team_members"
+    },
+    {
+      "file": "supabase/migrations/20240505_resource_allocation.sql",
+      "policy": "Users can view resources of their tenant",
+      "table": "business_resources"
+    },
+    {
+      "file": "supabase/migrations/20240505_resource_allocation.sql",
+      "policy": "Users can manage resources of their tenant",
+      "table": "business_resources"
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "policy": "Users can view tickets in their tenant",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "policy": "Users can create tickets in their tenant",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "policy": "Users can update tickets in their tenant",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "policy": "Users can view comments on tickets in their tenant",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20250618100000_create_tickets.sql",
+      "policy": "Users can create comments on tickets in their tenant",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can view campaigns in their tenant",
+      "table": "marketing_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can create campaigns in their tenant",
+      "table": "marketing_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can update campaigns in their tenant",
+      "table": "marketing_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can delete campaigns in their tenant",
+      "table": "marketing_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can view campaign messages in their tenant",
+      "table": "campaign_messages"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can create campaign messages in their tenant",
+      "table": "campaign_messages"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can view campaign recipients in their tenant",
+      "table": "campaign_recipients"
+    },
+    {
+      "file": "supabase/migrations/20250618120500_create_marketing_campaigns.sql",
+      "policy": "Users can create campaign recipients in their tenant",
+      "table": "campaign_recipients"
+    },
+    {
+      "file": "supabase/migrations/20260122000002_create_improvements_table.sql",
+      "policy": "Admins can view all improvements",
+      "table": "improvements"
+    },
+    {
+      "file": "supabase/migrations/20260122000002_create_improvements_table.sql",
+      "policy": "Anyone can submit improvements",
+      "table": "improvements"
+    },
+    {
+      "file": "supabase/migrations/20260122000002_create_improvements_table.sql",
+      "policy": "Admins can update improvements",
+      "table": "improvements"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "Users can view their own notifications",
+      "table": "notifications"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "Users can update their own notifications",
+      "table": "notifications"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "System can insert notifications",
+      "table": "notifications"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "Tenant admins can view invitations",
+      "table": "tenant_invitations"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "Tenant admins can create invitations",
+      "table": "tenant_invitations"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "Tenant users can view scans",
+      "table": "security_scans"
+    },
+    {
+      "file": "supabase/migrations/20260126_audit_support_tables.sql",
+      "policy": "Tenant users can insert scans",
+      "table": "security_scans"
+    },
+    {
+      "file": "supabase/migrations/20260127_create_project_milestones.sql",
+      "policy": "Public read access for project_milestones",
+      "table": "project_milestones"
+    },
+    {
+      "file": "supabase/migrations/20260127_create_project_milestones.sql",
+      "policy": "Users can manage milestones for their projects",
+      "table": "project_milestones"
+    },
+    {
+      "file": "supabase/migrations/20260129120500_booking_system_v3.sql",
+      "policy": "Public can view active booking types",
+      "table": "booking_types"
+    },
+    {
+      "file": "supabase/migrations/20260129120500_booking_system_v3.sql",
+      "policy": "Tenants manage their own booking types",
+      "table": "booking_types"
+    },
+    {
+      "file": "supabase/migrations/20260129120500_booking_system_v3.sql",
+      "policy": "Public can view schedules",
+      "table": "availability_schedules"
+    },
+    {
+      "file": "supabase/migrations/20260129120500_booking_system_v3.sql",
+      "policy": "Tenants manage their own schedules",
+      "table": "availability_schedules"
+    },
+    {
+      "file": "supabase/migrations/20260129120500_booking_system_v3.sql",
+      "policy": "Public can create bookings",
+      "table": "bookings"
+    },
+    {
+      "file": "supabase/migrations/20260129120500_booking_system_v3.sql",
+      "policy": "Tenants manage their own bookings",
+      "table": "bookings"
+    },
+    {
+      "file": "supabase/migrations/20260211000006_gmail_integration.sql",
+      "policy": "Users can manage their own gmail tokens",
+      "table": "gmail_sync_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260216000002_lead_activities.sql",
+      "policy": "Users can view activities for leads they can see",
+      "table": "lead_activities"
+    },
+    {
+      "file": "supabase/migrations/20260216000002_lead_activities.sql",
+      "policy": "Users can insert activities for leads they can see",
+      "table": "lead_activities"
+    },
+    {
+      "file": "supabase/migrations/20260216120500_fix_crm_conversion.sql",
+      "policy": "Tenant Admins can manage business clients",
+      "table": "business_clients"
+    },
+    {
+      "file": "supabase/migrations/20260218000006_google_calendar_tokens.sql",
+      "policy": "Users can manage their own calendar tokens",
+      "table": "google_calendar_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260218120500_add_quote_items_rls.sql",
+      "policy": "Tenant users can ALL quote_items",
+      "table": "quote_items"
+    },
+    {
+      "file": "supabase/migrations/20260227_sync_repair.sql",
+      "policy": "Profiles are viewable by authenticated users",
+      "table": "profiles"
+    },
+    {
+      "file": "supabase/migrations/20260227_sync_repair.sql",
+      "policy": "Users can update own profile",
+      "table": "profiles"
+    },
+    {
+      "file": "supabase/migrations/20260306_create_integrations_and_oauth.sql",
+      "policy": "Users can view their own integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260306_create_integrations_and_oauth.sql",
+      "policy": "Users can insert their own integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260306_create_integrations_and_oauth.sql",
+      "policy": "Users can update their own integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260306_create_integrations_and_oauth.sql",
+      "policy": "Users can delete their own integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260306_create_integrations_and_oauth.sql",
+      "policy": "Users can manage their own oauth states",
+      "table": "oauth_states"
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "policy": "profiles_self_all",
+      "table": "profiles"
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "policy": "profiles_admin_all",
+      "table": "profiles"
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "policy": "profiles_tenant_admin_select_v3",
+      "table": "profiles"
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "policy": "tenant_users_all_admin",
+      "table": "tenant_users"
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "policy": "tenant_users_self_select",
+      "table": "tenant_users"
+    },
+    {
+      "file": "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+      "policy": "tenant_users_tenant_admin_all",
+      "table": "tenant_users"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can view their companies",
+      "table": "companies"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can insert their companies",
+      "table": "companies"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can update their companies",
+      "table": "companies"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can delete their companies",
+      "table": "companies"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can view their contacts",
+      "table": "contacts"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can insert their contacts",
+      "table": "contacts"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can update their contacts",
+      "table": "contacts"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can delete their contacts",
+      "table": "contacts"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can view their opportunities",
+      "table": "opportunities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can insert their opportunities",
+      "table": "opportunities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can update their opportunities",
+      "table": "opportunities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can delete their opportunities",
+      "table": "opportunities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can view their activities",
+      "table": "activities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can insert their activities",
+      "table": "activities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can update their activities",
+      "table": "activities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can delete their activities",
+      "table": "activities"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can view their messages",
+      "table": "unified_messages"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can insert their messages",
+      "table": "unified_messages"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can update their messages",
+      "table": "unified_messages"
+    },
+    {
+      "file": "supabase/migrations/20260325000002_unified_data_architecture.sql",
+      "policy": "Tenant users can delete their messages",
+      "table": "unified_messages"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_companies",
+      "table": "companies"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_contacts",
+      "table": "contacts"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_expense_categories",
+      "table": "expense_categories"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_expenses",
+      "table": "expenses"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_vendor_bills",
+      "table": "vendor_bills"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_bank_accounts",
+      "table": "bank_accounts"
+    },
+    {
+      "file": "supabase/migrations/20260325120500_finance_crm_extensions.sql",
+      "policy": "tenant_bank_transactions",
+      "table": "bank_transactions"
+    },
+    {
+      "file": "supabase/migrations/20260328120500_pages_system.sql",
+      "policy": "Tenant members can read their pages",
+      "table": "pages"
+    },
+    {
+      "file": "supabase/migrations/20260328120500_pages_system.sql",
+      "policy": "Tenant members can insert pages",
+      "table": "pages"
+    },
+    {
+      "file": "supabase/migrations/20260328120500_pages_system.sql",
+      "policy": "Tenant members can update their pages",
+      "table": "pages"
+    },
+    {
+      "file": "supabase/migrations/20260328120500_pages_system.sql",
+      "policy": "Tenant members can delete their pages",
+      "table": "pages"
+    },
+    {
+      "file": "supabase/migrations/20260330120500_create_twilio_integrations.sql",
+      "policy": "Service role full access to twilio_integrations",
+      "table": "twilio_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260330154000_create_automation_tasks.sql",
+      "policy": "Users can view tasks for their tenant",
+      "table": "automation_tasks"
+    },
+    {
+      "file": "supabase/migrations/20260330154000_create_automation_tasks.sql",
+      "policy": "Users can insert tasks for their tenant",
+      "table": "automation_tasks"
+    },
+    {
+      "file": "supabase/migrations/20260330154000_create_automation_tasks.sql",
+      "policy": "Users can update tasks for their tenant",
+      "table": "automation_tasks"
+    },
+    {
+      "file": "supabase/migrations/20260330154000_create_automation_tasks.sql",
+      "policy": "Users can delete tasks for their tenant",
+      "table": "automation_tasks"
+    },
+    {
+      "file": "supabase/migrations/20260331_fix_google_calendar_rls.sql",
+      "policy": "Users can view own calendar tokens",
+      "table": "google_calendar_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260331_fix_google_calendar_rls.sql",
+      "policy": "Users can insert own calendar tokens",
+      "table": "google_calendar_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260331_fix_google_calendar_rls.sql",
+      "policy": "Users can update own calendar tokens",
+      "table": "google_calendar_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260331_fix_google_calendar_rls.sql",
+      "policy": "Users can delete own calendar tokens",
+      "table": "google_calendar_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260404000002_create_email_campaigns.sql",
+      "policy": "Users can view their own tenant campaigns",
+      "table": "email_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260404000002_create_email_campaigns.sql",
+      "policy": "Users can insert campaigns for their tenant",
+      "table": "email_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260404000002_create_email_campaigns.sql",
+      "policy": "Users can update campaigns for their tenant",
+      "table": "email_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260404000002_create_email_campaigns.sql",
+      "policy": "Users can delete campaigns for their tenant",
+      "table": "email_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260404000003_create_email_logs.sql",
+      "policy": "Users can view their own tenant email logs",
+      "table": "email_logs"
+    },
+    {
+      "file": "supabase/migrations/20260404000003_create_email_logs.sql",
+      "policy": "Users can insert email logs for their tenant",
+      "table": "email_logs"
+    },
+    {
+      "file": "supabase/migrations/20260404000004_create_emails_table.sql",
+      "policy": "Users can view their own tenant emails",
+      "table": "emails"
+    },
+    {
+      "file": "supabase/migrations/20260404000004_create_emails_table.sql",
+      "policy": "Users can insert emails for their tenant",
+      "table": "emails"
+    },
+    {
+      "file": "supabase/migrations/20260404000004_create_emails_table.sql",
+      "policy": "Users can update emails for their tenant",
+      "table": "emails"
+    },
+    {
+      "file": "supabase/migrations/20260404000004_create_emails_table.sql",
+      "policy": "Users can delete emails for their tenant",
+      "table": "emails"
+    },
+    {
+      "file": "supabase/migrations/20260404000005_create_scraping_jobs.sql",
+      "policy": "Users can view their own tenant scraping jobs",
+      "table": "scraping_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260404000005_create_scraping_jobs.sql",
+      "policy": "Users can insert scraping jobs for their tenant",
+      "table": "scraping_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260404000005_create_scraping_jobs.sql",
+      "policy": "Users can update scraping jobs for their tenant",
+      "table": "scraping_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260404000006_create_slack_notifications.sql",
+      "policy": "Users can view their own tenant slack notifications",
+      "table": "slack_notifications"
+    },
+    {
+      "file": "supabase/migrations/20260404000006_create_slack_notifications.sql",
+      "policy": "Users can insert slack notifications for their tenant",
+      "table": "slack_notifications"
+    },
+    {
+      "file": "supabase/migrations/20260404000006_create_slack_notifications.sql",
+      "policy": "Users can update slack notifications for their tenant",
+      "table": "slack_notifications"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can view own tenant facebook integrations",
+      "table": "facebook_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can manage own tenant facebook integrations",
+      "table": "facebook_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can view own tenant slack integrations",
+      "table": "slack_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can manage own tenant slack integrations",
+      "table": "slack_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can view own tenant google calendar integrations",
+      "table": "google_calendar_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can manage own tenant google calendar integrations",
+      "table": "google_calendar_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can view own tenant integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404000008_fix_tenant_integrations.sql",
+      "policy": "Users can manage own tenant integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260404120500_create_contact_submissions.sql",
+      "policy": "Anyone can insert contact submissions",
+      "table": "contact_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260404120500_create_contact_submissions.sql",
+      "policy": "Authenticated users can view contact submissions",
+      "table": "contact_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260404120500_create_contact_submissions.sql",
+      "policy": "Authenticated users can update contact submissions",
+      "table": "contact_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260405_create_tenant_integrations.sql",
+      "policy": "tenant_integrations_tenant_admin_all",
+      "table": "tenant_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260405_create_tenant_integrations.sql",
+      "policy": "tenant_integrations_admin_read",
+      "table": "tenant_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406000002_create_error_logs.sql",
+      "policy": "Users can view error logs for their tenant",
+      "table": "error_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406000002_create_error_logs.sql",
+      "policy": "System can insert error logs",
+      "table": "error_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406000002_create_error_logs.sql",
+      "policy": "Users can view performance logs for their tenant",
+      "table": "performance_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406000002_create_error_logs.sql",
+      "policy": "System can insert performance logs",
+      "table": "performance_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406000002_create_error_logs.sql",
+      "policy": "Users can view audit logs for their tenant",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406000002_create_error_logs.sql",
+      "policy": "System can insert audit logs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406000003_create_microsoft365_tables.sql",
+      "policy": "Users can view Microsoft 365 config for their tenant",
+      "table": "microsoft365_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406000003_create_microsoft365_tables.sql",
+      "policy": "Admins can insert Microsoft 365 config",
+      "table": "microsoft365_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406000003_create_microsoft365_tables.sql",
+      "policy": "Admins can update Microsoft 365 config",
+      "table": "microsoft365_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406000003_create_microsoft365_tables.sql",
+      "policy": "Admins can delete Microsoft 365 config",
+      "table": "microsoft365_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406000004_create_recurring_invoices.sql",
+      "policy": "Users can view recurring invoices for their tenant",
+      "table": "recurring_invoices"
+    },
+    {
+      "file": "supabase/migrations/20260406000004_create_recurring_invoices.sql",
+      "policy": "Admins can insert recurring invoices",
+      "table": "recurring_invoices"
+    },
+    {
+      "file": "supabase/migrations/20260406000004_create_recurring_invoices.sql",
+      "policy": "Admins can update recurring invoices",
+      "table": "recurring_invoices"
+    },
+    {
+      "file": "supabase/migrations/20260406000004_create_recurring_invoices.sql",
+      "policy": "Admins can delete recurring invoices",
+      "table": "recurring_invoices"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "Users can view SSO config for their tenant",
+      "table": "sso_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "Admins can insert SSO config",
+      "table": "sso_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "Admins can update SSO config",
+      "table": "sso_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "Admins can delete SSO config",
+      "table": "sso_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "System can insert SAML requests",
+      "table": "saml_requests"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "System can view SAML requests",
+      "table": "saml_requests"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "System can insert SAML responses",
+      "table": "saml_responses"
+    },
+    {
+      "file": "supabase/migrations/20260406000005_create_sso_tables.sql",
+      "policy": "Users can view SAML responses for their tenant",
+      "table": "saml_responses"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Users can view white-label config for their tenant",
+      "table": "white_label_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Admins can insert white-label config",
+      "table": "white_label_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Admins can update white-label config",
+      "table": "white_label_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Admins can delete white-label config",
+      "table": "white_label_configs"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Users can upload white-label assets for their tenant",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Public can view white-label assets",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260406000006_create_white_label.sql",
+      "policy": "Users can delete their white-label assets",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Anyone can view published integrations",
+      "table": "api_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Admins can insert integrations",
+      "table": "api_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Admins can update integrations",
+      "table": "api_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Admins can delete integrations",
+      "table": "api_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Admins can insert installations",
+      "table": "tenant_api_installations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Admins can update installations",
+      "table": "tenant_api_installations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Admins can delete installations",
+      "table": "tenant_api_installations"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "System can insert usage logs",
+      "table": "api_usage_logs"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Users can view ratings",
+      "table": "api_ratings"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Users can insert their ratings",
+      "table": "api_ratings"
+    },
+    {
+      "file": "supabase/migrations/20260406120500_create_api_marketplace.sql",
+      "policy": "Users can update their ratings",
+      "table": "api_ratings"
+    },
+    {
+      "file": "supabase/migrations/20260407_worker_activity_tracking.sql",
+      "policy": "worker_sessions_tenant_isolation",
+      "table": "worker_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260407_worker_activity_tracking.sql",
+      "policy": "worker_sessions_admin_view_all",
+      "table": "worker_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can view own facebook integrations",
+      "table": "facebook_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can manage own facebook integrations",
+      "table": "facebook_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can view own slack integrations",
+      "table": "slack_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can manage own slack integrations",
+      "table": "slack_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can view own google calendar integrations",
+      "table": "google_calendar_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can manage own google calendar integrations",
+      "table": "google_calendar_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can view own integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+      "policy": "Users can manage own integrations",
+      "table": "integrations"
+    },
+    {
+      "file": "supabase/migrations/20260410000002_ai_audit_schema.sql",
+      "policy": "Service role can do everything",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260410000002_ai_audit_schema.sql",
+      "policy": "Users can see their own audit logs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260411200000_zoom_video_provider.sql",
+      "policy": "tenant_zoom_settings_tenant_admin_all",
+      "table": "tenant_zoom_settings"
+    },
+    {
+      "file": "supabase/migrations/20260411200000_zoom_video_provider.sql",
+      "policy": "tenant_zoom_settings_super_admin_read",
+      "table": "tenant_zoom_settings"
+    },
+    {
+      "file": "supabase/migrations/20260412213000_social_publishing_tables.sql",
+      "policy": "social_posts_select_tenant_members",
+      "table": "social_posts"
+    },
+    {
+      "file": "supabase/migrations/20260412213000_social_publishing_tables.sql",
+      "policy": "social_posts_insert_tenant_members",
+      "table": "social_posts"
+    },
+    {
+      "file": "supabase/migrations/20260412213000_social_publishing_tables.sql",
+      "policy": "social_posts_update_tenant_members",
+      "table": "social_posts"
+    },
+    {
+      "file": "supabase/migrations/20260412213000_social_publishing_tables.sql",
+      "policy": "media_assets_select_tenant_members",
+      "table": "media_assets"
+    },
+    {
+      "file": "supabase/migrations/20260412213000_social_publishing_tables.sql",
+      "policy": "media_assets_insert_tenant_members",
+      "table": "media_assets"
+    },
+    {
+      "file": "supabase/migrations/20260412213000_social_publishing_tables.sql",
+      "policy": "media_assets_update_tenant_members",
+      "table": "media_assets"
+    },
+    {
+      "file": "supabase/migrations/20260414123000_add_lead_search_jobs_queue.sql",
+      "policy": "lead_search_jobs_select_tenant_members",
+      "table": "lead_search_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260414123000_add_lead_search_jobs_queue.sql",
+      "policy": "lead_search_jobs_insert_tenant_members",
+      "table": "lead_search_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260414123000_add_lead_search_jobs_queue.sql",
+      "policy": "lead_search_jobs_update_tenant_members",
+      "table": "lead_search_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260414171000_add_daily_image_generation_usage.sql",
+      "policy": "daily_image_generation_usage_select_own",
+      "table": "daily_image_generation_usage"
+    },
+    {
+      "file": "supabase/migrations/20260414171000_add_daily_image_generation_usage.sql",
+      "policy": "daily_image_generation_usage_insert_own",
+      "table": "daily_image_generation_usage"
+    },
+    {
+      "file": "supabase/migrations/20260414171000_add_daily_image_generation_usage.sql",
+      "policy": "daily_image_generation_usage_update_own",
+      "table": "daily_image_generation_usage"
+    },
+    {
+      "file": "supabase/migrations/20260414191000_add_linkedin_integrations_and_indexes.sql",
+      "policy": "linkedin_integrations_select_tenant_members",
+      "table": "linkedin_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260414191000_add_linkedin_integrations_and_indexes.sql",
+      "policy": "linkedin_integrations_insert_tenant_members",
+      "table": "linkedin_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260414191000_add_linkedin_integrations_and_indexes.sql",
+      "policy": "linkedin_integrations_update_tenant_members",
+      "table": "linkedin_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260417143000_repair_lead_search_jobs_queue.sql",
+      "policy": "lead_search_jobs_select_tenant_members",
+      "table": "lead_search_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260417143000_repair_lead_search_jobs_queue.sql",
+      "policy": "lead_search_jobs_insert_tenant_members",
+      "table": "lead_search_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260417143000_repair_lead_search_jobs_queue.sql",
+      "policy": "lead_search_jobs_update_tenant_members",
+      "table": "lead_search_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260421103000_add_email_suppressions_and_events.sql",
+      "policy": "Users can view suppressions in their tenants",
+      "table": "email_suppressions"
+    },
+    {
+      "file": "supabase/migrations/20260421103000_add_email_suppressions_and_events.sql",
+      "policy": "Users can view email webhook events in their tenants",
+      "table": "email_webhook_events"
+    },
+    {
+      "file": "supabase/migrations/20260421112000_add_credit_notes.sql",
+      "policy": "Users can view credit notes in their tenants",
+      "table": "credit_notes"
+    },
+    {
+      "file": "supabase/migrations/20260421112000_add_credit_notes.sql",
+      "policy": "Users can insert credit notes in their tenants",
+      "table": "credit_notes"
+    },
+    {
+      "file": "supabase/migrations/20260421112000_add_credit_notes.sql",
+      "policy": "Users can update credit notes in their tenants",
+      "table": "credit_notes"
+    },
+    {
+      "file": "supabase/migrations/20260421150000_add_business_adapters.sql",
+      "policy": "Tenant users can read adapter event logs",
+      "table": "adapter_event_logs"
+    },
+    {
+      "file": "supabase/migrations/20260421150000_add_business_adapters.sql",
+      "policy": "Tenant users can create adapter event logs",
+      "table": "adapter_event_logs"
+    },
+    {
+      "file": "supabase/migrations/20260421150000_add_business_adapters.sql",
+      "policy": "Tenant users can read client portal events",
+      "table": "client_portal_events"
+    },
+    {
+      "file": "supabase/migrations/20260421150000_add_business_adapters.sql",
+      "policy": "Tenant users can create client portal events",
+      "table": "client_portal_events"
+    },
+    {
+      "file": "supabase/migrations/20260421150000_add_business_adapters.sql",
+      "policy": "Tenant users can read document intelligence runs",
+      "table": "document_intelligence_runs"
+    },
+    {
+      "file": "supabase/migrations/20260421150000_add_business_adapters.sql",
+      "policy": "Tenant users can create document intelligence runs",
+      "table": "document_intelligence_runs"
+    },
+    {
+      "file": "supabase/migrations/20260421162000_add_autonomous_runner_logs.sql",
+      "policy": "Tenant users can read autonomous runner runs",
+      "table": "autonomous_runner_runs"
+    },
+    {
+      "file": "supabase/migrations/20260421162000_add_autonomous_runner_logs.sql",
+      "policy": "Tenant users can create autonomous runner runs",
+      "table": "autonomous_runner_runs"
+    },
+    {
+      "file": "supabase/migrations/20260421162000_add_autonomous_runner_logs.sql",
+      "policy": "Tenant users can update autonomous runner runs",
+      "table": "autonomous_runner_runs"
+    },
+    {
+      "file": "supabase/migrations/20260421162000_add_autonomous_runner_logs.sql",
+      "policy": "Tenant users can read autonomous runner actions",
+      "table": "autonomous_runner_actions"
+    },
+    {
+      "file": "supabase/migrations/20260421162000_add_autonomous_runner_logs.sql",
+      "policy": "Tenant users can create autonomous runner actions",
+      "table": "autonomous_runner_actions"
+    },
+    {
+      "file": "supabase/migrations/20260421170000_add_autonomous_runner_rules_and_approvals.sql",
+      "policy": "Tenant users can read autonomous runner rules",
+      "table": "autonomous_runner_rules"
+    },
+    {
+      "file": "supabase/migrations/20260421170000_add_autonomous_runner_rules_and_approvals.sql",
+      "policy": "Tenant admins can write autonomous runner rules",
+      "table": "autonomous_runner_rules"
+    },
+    {
+      "file": "supabase/migrations/20260421170000_add_autonomous_runner_rules_and_approvals.sql",
+      "policy": "Tenant users can read autonomous runner approvals",
+      "table": "autonomous_runner_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260421170000_add_autonomous_runner_rules_and_approvals.sql",
+      "policy": "Tenant users can create autonomous runner approvals",
+      "table": "autonomous_runner_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260421170000_add_autonomous_runner_rules_and_approvals.sql",
+      "policy": "Tenant admins can update autonomous runner approvals",
+      "table": "autonomous_runner_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260422121500_create_intelligence_snapshots.sql",
+      "policy": "Users can view tenant intelligence snapshots",
+      "table": "intelligence_snapshots"
+    },
+    {
+      "file": "supabase/migrations/20260422121500_create_intelligence_snapshots.sql",
+      "policy": "Users can insert tenant intelligence snapshots",
+      "table": "intelligence_snapshots"
+    },
+    {
+      "file": "supabase/migrations/20260422150000_create_sales_forecasts_and_deal_intelligence_events.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "sales_forecasts"
+    },
+    {
+      "file": "supabase/migrations/20260422150000_create_sales_forecasts_and_deal_intelligence_events.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "deal_intelligence_events"
+    },
+    {
+      "file": "supabase/migrations/20260422160000_extend_unified_messages_sources_and_intelligence_models.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "deal_stakeholders"
+    },
+    {
+      "file": "supabase/migrations/20260422160000_extend_unified_messages_sources_and_intelligence_models.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "contact_psychology_profiles"
+    },
+    {
+      "file": "supabase/migrations/20260422160000_extend_unified_messages_sources_and_intelligence_models.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "intelligence_correlation_models"
+    },
+    {
+      "file": "supabase/migrations/20260422160500_create_whatsapp_integrations.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "whatsapp_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "policy": "tenant_service_catalog_select",
+      "table": "tenant_service_catalog_items"
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "policy": "tenant_service_catalog_admin_write",
+      "table": "tenant_service_catalog_items"
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "policy": "tenant_service_bundles_select",
+      "table": "tenant_service_bundles"
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "policy": "tenant_service_bundles_admin_write",
+      "table": "tenant_service_bundles"
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "policy": "tenant_service_bundle_items_select",
+      "table": "tenant_service_bundle_items"
+    },
+    {
+      "file": "supabase/migrations/20260423153000_create_tenant_pricing_catalog.sql",
+      "policy": "tenant_service_bundle_items_admin_write",
+      "table": "tenant_service_bundle_items"
+    },
+    {
+      "file": "supabase/migrations/20260423170000_create_contract_signing_tokens.sql",
+      "policy": "contract_signing_tokens_read_tenant_users",
+      "table": "contract_signing_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260423170000_create_contract_signing_tokens.sql",
+      "policy": "contract_signing_tokens_manage_tenant_admins",
+      "table": "contract_signing_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260424110000_automation_runtime_phase1.sql",
+      "policy": "automation_runs_tenant_isolation_select",
+      "table": "automation_runs"
+    },
+    {
+      "file": "supabase/migrations/20260424110000_automation_runtime_phase1.sql",
+      "policy": "automation_runs_tenant_isolation_write",
+      "table": "automation_runs"
+    },
+    {
+      "file": "supabase/migrations/20260424110000_automation_runtime_phase1.sql",
+      "policy": "automation_run_steps_tenant_isolation",
+      "table": "automation_run_steps"
+    },
+    {
+      "file": "supabase/migrations/20260424110000_automation_runtime_phase1.sql",
+      "policy": "automation_approvals_tenant_isolation",
+      "table": "automation_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260424123000_email_user_scoped_automation.sql",
+      "policy": "email_webhook_events_tenant_isolation_select",
+      "table": "email_webhook_events"
+    },
+    {
+      "file": "supabase/migrations/20260424123000_email_user_scoped_automation.sql",
+      "policy": "email_webhook_events_tenant_isolation_write",
+      "table": "email_webhook_events"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Service role only for clients",
+      "table": "mcp_oauth_clients"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Users can view their own auth codes",
+      "table": "mcp_oauth_codes"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Users can manage their own auth codes",
+      "table": "mcp_oauth_codes"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Users can view their own tokens",
+      "table": "mcp_oauth_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Users can manage their own tokens",
+      "table": "mcp_oauth_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Tenant isolation for business_invoices",
+      "table": "business_invoices"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Tenant isolation for business_clients",
+      "table": "business_clients"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Tenant isolation for leads",
+      "table": "leads"
+    },
+    {
+      "file": "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+      "policy": "Tenant isolation for deals",
+      "table": "deals"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_reconciliation_sessions",
+      "table": "reconciliation_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_contract_templates_read",
+      "table": "contract_templates"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_contract_templates_manage",
+      "table": "contract_templates"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_contract_versions_read",
+      "table": "contract_versions"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_contract_versions_manage",
+      "table": "contract_versions"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_contract_approvals_read",
+      "table": "contract_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260509100000_enterprise_finance_contracts_phase1.sql",
+      "policy": "tenant_contract_approvals_manage",
+      "table": "contract_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260509130000_create_mcp_oauth_tables.sql",
+      "policy": "tenant_members_manage_api_keys",
+      "table": "mcp_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260509130000_create_mcp_oauth_tables.sql",
+      "policy": "tenant_members_view_own_tokens",
+      "table": "mcp_oauth_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260509140000_create_mcp_missing_tables.sql",
+      "policy": "tenant_members_manage_api_keys",
+      "table": "mcp_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260509140000_create_mcp_missing_tables.sql",
+      "policy": "tenant_members_view_own_tokens",
+      "table": "mcp_oauth_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260514120000_harden_new_user_tenant_bootstrap.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "activity_logs"
+    },
+    {
+      "file": "supabase/migrations/20260514120000_harden_new_user_tenant_bootstrap.sql",
+      "policy": "Users can insert/update own sessions",
+      "table": "login_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260514140000_access_tokens.sql",
+      "policy": "Admin can manage access tokens",
+      "table": "access_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260514180000_create_x_integrations.sql",
+      "policy": "Users can view their own tenant x integrations",
+      "table": "x_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260514180000_create_x_integrations.sql",
+      "policy": "Users can manage their own tenant x integrations",
+      "table": "x_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260514190000_social_leads_and_engagement.sql",
+      "policy": "tenant_users_manage_social_leads",
+      "table": "social_leads"
+    },
+    {
+      "file": "supabase/migrations/20260514190000_social_leads_and_engagement.sql",
+      "policy": "tenant_users_manage_captured_content",
+      "table": "captured_content"
+    },
+    {
+      "file": "supabase/migrations/20260514190000_social_leads_and_engagement.sql",
+      "policy": "tenant_users_manage_social_interactions",
+      "table": "social_interactions"
+    },
+    {
+      "file": "supabase/migrations/20260515130000_security_infrastructure.sql",
+      "policy": "tenant_email_audit_log",
+      "table": "email_audit_log"
+    },
+    {
+      "file": "supabase/migrations/20260517_whatsapp_chatbot.sql",
+      "policy": "tenant_manage_chatbot_settings",
+      "table": "whatsapp_chatbot_settings"
+    },
+    {
+      "file": "supabase/migrations/20260517_whatsapp_chatbot.sql",
+      "policy": "tenant_manage_outreach_logs",
+      "table": "whatsapp_outreach_logs"
+    },
+    {
+      "file": "supabase/migrations/20260518_whatsapp_schema_refresh.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "whatsapp_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260520100000_pwa_push_subscriptions.sql",
+      "policy": "Users can manage own subscriptions",
+      "table": "push_subscriptions"
+    },
+    {
+      "file": "supabase/migrations/20260520120000_strategic_intelligence_upgrades.sql",
+      "policy": "Enable read access for custom_playbooks by tenant_id",
+      "table": "custom_playbooks"
+    },
+    {
+      "file": "supabase/migrations/20260520120000_strategic_intelligence_upgrades.sql",
+      "policy": "Enable write access for custom_playbooks by tenant_id",
+      "table": "custom_playbooks"
+    },
+    {
+      "file": "supabase/migrations/20260520120000_strategic_intelligence_upgrades.sql",
+      "policy": "Enable read access for outreach_campaign_stats by tenant_id",
+      "table": "outreach_campaign_stats"
+    },
+    {
+      "file": "supabase/migrations/20260520120000_strategic_intelligence_upgrades.sql",
+      "policy": "Enable write access for outreach_campaign_stats by tenant_id",
+      "table": "outreach_campaign_stats"
+    },
+    {
+      "file": "supabase/migrations/20260521100000_public_shares.sql",
+      "policy": "anon_select_public_shares",
+      "table": "public_shares"
+    },
+    {
+      "file": "supabase/migrations/20260521100000_public_shares.sql",
+      "policy": "manage_public_shares",
+      "table": "public_shares"
+    },
+    {
+      "file": "supabase/migrations/20260521103000_recent_database_safe_catchup.sql",
+      "policy": "Users can manage own subscriptions",
+      "table": "push_subscriptions"
+    },
+    {
+      "file": "supabase/migrations/20260521103000_recent_database_safe_catchup.sql",
+      "policy": "anon_select_public_shares",
+      "table": "public_shares"
+    },
+    {
+      "file": "supabase/migrations/20260521103000_recent_database_safe_catchup.sql",
+      "policy": "manage_public_shares",
+      "table": "public_shares"
+    },
+    {
+      "file": "supabase/migrations/20260522100000_create_bonnie_tables.sql",
+      "policy": "Tenant users can read bonnie logs",
+      "table": "bonnie_logs"
+    },
+    {
+      "file": "supabase/migrations/20260522100000_create_bonnie_tables.sql",
+      "policy": "Tenant users can insert bonnie logs",
+      "table": "bonnie_logs"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "crm_contacts"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "crm_activities"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "email_sequences"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "email_sequence_steps"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "email_sequence_enrollments"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "email_batch_jobs"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "workspace_files"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "deal_stage_history"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "social_post_analytics"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "scheduled_posts"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "facebook_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "inventory_items"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "gamification_profiles"
+    },
+    {
+      "file": "supabase/migrations/20260524181600_mcp_power_upgrade.sql",
+      "policy": "tenant_isolation",
+      "table": "gamification_logs"
+    },
+    {
+      "file": "supabase/migrations/20260525000000_create_bonnie_dream_sessions.sql",
+      "policy": "Tenant users can read dream sessions",
+      "table": "bonnie_dream_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260525000000_create_bonnie_dream_sessions.sql",
+      "policy": "Tenant admins can modify dream sessions",
+      "table": "bonnie_dream_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260528000000_fix_contract_tables.sql",
+      "policy": "tenant_contract_versions_read",
+      "table": "contract_versions"
+    },
+    {
+      "file": "supabase/migrations/20260528000000_fix_contract_tables.sql",
+      "policy": "tenant_contract_versions_manage",
+      "table": "contract_versions"
+    },
+    {
+      "file": "supabase/migrations/20260528000000_fix_contract_tables.sql",
+      "policy": "tenant_contract_approvals_read",
+      "table": "contract_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260528000000_fix_contract_tables.sql",
+      "policy": "tenant_contract_approvals_manage",
+      "table": "contract_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260529000000_create_whatsapp_standalone_messages.sql",
+      "policy": "tenant_whatsapp_messages_read",
+      "table": "whatsapp_messages"
+    },
+    {
+      "file": "supabase/migrations/20260529000000_create_whatsapp_standalone_messages.sql",
+      "policy": "tenant_whatsapp_messages_manage",
+      "table": "whatsapp_messages"
+    },
+    {
+      "file": "supabase/migrations/20260529120000_create_ingestion_events.sql",
+      "policy": "Tenant members manage ingestion events",
+      "table": "ingestion_events"
+    },
+    {
+      "file": "supabase/migrations/20260531120000_create_microsoft_connections.sql",
+      "policy": "microsoft_connections_select_own",
+      "table": "microsoft_connections"
+    },
+    {
+      "file": "supabase/migrations/20260531120000_create_microsoft_connections.sql",
+      "policy": "microsoft_connections_insert_own",
+      "table": "microsoft_connections"
+    },
+    {
+      "file": "supabase/migrations/20260531120000_create_microsoft_connections.sql",
+      "policy": "microsoft_connections_update_own",
+      "table": "microsoft_connections"
+    },
+    {
+      "file": "supabase/migrations/20260531120000_create_microsoft_connections.sql",
+      "policy": "microsoft_connections_delete_own",
+      "table": "microsoft_connections"
+    },
+    {
+      "file": "supabase/migrations/20260602121000_database_repair.sql",
+      "policy": "tenant_isolation",
+      "table": "workspace_files"
+    },
+    {
+      "file": "supabase/migrations/20260602121000_database_repair.sql",
+      "policy": "tenant_isolation",
+      "table": "scheduled_posts"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can view onboarding_steps",
+      "table": "onboarding_steps"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can insert onboarding_steps",
+      "table": "onboarding_steps"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can update onboarding_steps",
+      "table": "onboarding_steps"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can delete onboarding_steps",
+      "table": "onboarding_steps"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can view onboarding_submissions",
+      "table": "onboarding_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can insert onboarding_submissions",
+      "table": "onboarding_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can update onboarding_submissions",
+      "table": "onboarding_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can delete onboarding_submissions",
+      "table": "onboarding_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can view cash_flow_projections",
+      "table": "cash_flow_projections"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can insert cash_flow_projections",
+      "table": "cash_flow_projections"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can delete cash_flow_projections",
+      "table": "cash_flow_projections"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can view vault_documents",
+      "table": "vault_documents"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can insert vault_documents",
+      "table": "vault_documents"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can update vault_documents",
+      "table": "vault_documents"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can delete vault_documents",
+      "table": "vault_documents"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can view tax_records",
+      "table": "tax_records"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can insert tax_records",
+      "table": "tax_records"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can update tax_records",
+      "table": "tax_records"
+    },
+    {
+      "file": "supabase/migrations/20260603120000_back_office_os.sql",
+      "policy": "Tenant users can delete tax_records",
+      "table": "tax_records"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_views_service_insert",
+      "table": "invoice_views"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_views_tenant_select",
+      "table": "invoice_views"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_audit_log_service_insert",
+      "table": "invoice_audit_log"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_audit_log_tenant_select",
+      "table": "invoice_audit_log"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "tax_rules_public_read",
+      "table": "tax_rules"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_delivery_service_insert",
+      "table": "invoice_delivery_log"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_delivery_service_update",
+      "table": "invoice_delivery_log"
+    },
+    {
+      "file": "supabase/migrations/20260603120500_invoice_intelligence.sql",
+      "policy": "invoice_delivery_tenant_select",
+      "table": "invoice_delivery_log"
+    },
+    {
+      "file": "supabase/migrations/20260605110000_deal_products_tenant_rls.sql",
+      "policy": "Tenant members manage deal products",
+      "table": "deal_products"
+    },
+    {
+      "file": "supabase/migrations/20260605130000_public_project_share_select.sql",
+      "policy": "Public projects are viewable by link",
+      "table": "projects"
+    },
+    {
+      "file": "supabase/migrations/20260605181508_automation_events_bus.sql",
+      "policy": "service_role_manage_events",
+      "table": "business_automation_events"
+    },
+    {
+      "file": "supabase/migrations/20260605181508_automation_events_bus.sql",
+      "policy": "tenant_read_events",
+      "table": "business_automation_events"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can manage time logs",
+      "table": "project_time_logs"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view project comments",
+      "table": "project_comments"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Anyone can submit project comments",
+      "table": "project_comments"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view project snapshots",
+      "table": "project_snapshots"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can manage contact interactions",
+      "table": "contact_interactions"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view strike intel",
+      "table": "strike_intel_log"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can manage follow-up queue",
+      "table": "follow_up_queue"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view lead score history",
+      "table": "lead_score_history"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can manage triggers",
+      "table": "cross_module_triggers"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view trigger log",
+      "table": "cross_module_trigger_log"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view business scores",
+      "table": "business_score_snapshots"
+    },
+    {
+      "file": "supabase/migrations/20260607090725_sprint1_intelligence_foundation.sql",
+      "policy": "Tenant members can view daily briefs",
+      "table": "daily_briefs"
+    },
+    {
+      "file": "supabase/migrations/20260607090733_tenant_forms.sql",
+      "policy": "tenant_forms_member_all",
+      "table": "tenant_forms"
+    },
+    {
+      "file": "supabase/migrations/20260607090733_tenant_forms.sql",
+      "policy": "form_submissions_member_read",
+      "table": "form_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260607090733_tenant_forms.sql",
+      "policy": "form_submissions_member_update",
+      "table": "form_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260607090733_tenant_forms.sql",
+      "policy": "service_role_forms",
+      "table": "tenant_forms"
+    },
+    {
+      "file": "supabase/migrations/20260607090733_tenant_forms.sql",
+      "policy": "service_role_form_submissions",
+      "table": "form_submissions"
+    },
+    {
+      "file": "supabase/migrations/20260607090742_phase_all_enhancements.sql",
+      "policy": "Public can read comments on public projects",
+      "table": "project_comments"
+    },
+    {
+      "file": "supabase/migrations/20260611095000_mcp_sessions_rls.sql",
+      "policy": "tenant_members_manage_mcp_sessions",
+      "table": "mcp_sessions"
+    },
+    {
+      "file": "supabase/migrations/20260611095500_sms_opt_outs.sql",
+      "policy": "tenant_members_manage_sms_opt_outs",
+      "table": "sms_opt_outs"
+    },
+    {
+      "file": "supabase/migrations/20260611200000_meta_whatsapp_multitenant.sql",
+      "policy": "tenant_isolation_policy",
+      "table": "whatsapp_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260624100000_user_presence_rpc.sql",
+      "policy": "Anyone can read user presence",
+      "table": "user_presence"
+    },
+    {
+      "file": "supabase/migrations/20260624100000_user_presence_rpc.sql",
+      "policy": "Users manage own presence",
+      "table": "user_presence"
+    },
+    {
+      "file": "supabase/migrations/20260625100000_support_tickets_rls.sql",
+      "policy": "support_tickets_select_tenant_members",
+      "table": "support_tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625100000_support_tickets_rls.sql",
+      "policy": "support_tickets_insert_tenant_members",
+      "table": "support_tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625100000_support_tickets_rls.sql",
+      "policy": "support_tickets_update_tenant_members",
+      "table": "support_tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625100000_support_tickets_rls.sql",
+      "policy": "support_tickets_delete_tenant_members",
+      "table": "support_tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "tickets_select_tenant_members",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "tickets_insert_tenant_members",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "tickets_update_tenant_members",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "tickets_delete_tenant_members",
+      "table": "tickets"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "ticket_comments_select_tenant_members",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "ticket_comments_insert_tenant_members",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "ticket_comments_update_tenant_members",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20260625120000_merge_tickets_and_support_tickets.sql",
+      "policy": "ticket_comments_delete_tenant_members",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Authenticated users can read trigger templates",
+      "table": "system_trigger_templates"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Tenants can insert own events",
+      "table": "mcp_event_queue"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Tenants can read own events",
+      "table": "mcp_event_queue"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Tenant members manage stakeholders",
+      "table": "deal_stakeholders"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Tenant members manage SMS opt-outs",
+      "table": "sms_opt_outs"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Users manage own notification prefs",
+      "table": "notification_preferences"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Tenant members manage task dependencies",
+      "table": "task_dependencies"
+    },
+    {
+      "file": "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+      "policy": "Tenants manage own MCP subscriptions",
+      "table": "mcp_event_subscriptions"
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "policy": "Everyone can read active plugins",
+      "table": "plugins"
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "policy": "Tenant members read own plugins",
+      "table": "tenant_plugins"
+    },
+    {
+      "file": "supabase/migrations/20260625160000_missing_rpc_functions.sql",
+      "policy": "Tenant members manage own plugin logs",
+      "table": "plugin_logs"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "service_role_scraper_campaigns",
+      "table": "scraper_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "tenant_scraper_campaigns",
+      "table": "scraper_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "service_role_leads_raw",
+      "table": "leads_raw"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "tenant_leads_raw",
+      "table": "leads_raw"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "service_role_scraper_leads",
+      "table": "scraper_leads"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "tenant_scraper_leads",
+      "table": "scraper_leads"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "service_role_lead_campaign_runs",
+      "table": "lead_campaign_runs"
+    },
+    {
+      "file": "supabase/migrations/20260625200000_scraper_campaigns.sql",
+      "policy": "tenant_lead_campaign_runs",
+      "table": "lead_campaign_runs"
+    },
+    {
+      "file": "supabase/migrations/20260627120000_account_deletion_and_user_api_keys.sql",
+      "policy": "Users manage own API keys",
+      "table": "user_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260627150000_link_remaining_deals_and_module_tables.sql",
+      "policy": "Tenant webhooks",
+      "table": "webhooks"
+    },
+    {
+      "file": "supabase/migrations/20260627150000_link_remaining_deals_and_module_tables.sql",
+      "policy": "Tenant webhook deliveries",
+      "table": "webhook_deliveries"
+    },
+    {
+      "file": "supabase/migrations/20260627151000_nexus_memory_and_decision_log.sql",
+      "policy": "Tenant users can read nexus memory",
+      "table": "nexus_memory"
+    },
+    {
+      "file": "supabase/migrations/20260627151000_nexus_memory_and_decision_log.sql",
+      "policy": "Tenant admins can write nexus memory",
+      "table": "nexus_memory"
+    },
+    {
+      "file": "supabase/migrations/20260627151000_nexus_memory_and_decision_log.sql",
+      "policy": "Tenant users can read nexus decision log",
+      "table": "nexus_decision_log"
+    },
+    {
+      "file": "supabase/migrations/20260627160000_nexus_orchestration_runs.sql",
+      "policy": "Tenant users can read orchestration runs",
+      "table": "nexus_orchestration_runs"
+    },
+    {
+      "file": "supabase/migrations/20260628140000_fix_schema_gaps_contacts_business_settings_audit_stripe.sql",
+      "policy": "Tenant members manage business settings",
+      "table": "business_settings"
+    },
+    {
+      "file": "supabase/migrations/20260628140000_fix_schema_gaps_contacts_business_settings_audit_stripe.sql",
+      "policy": "Service role manages stripe webhooks",
+      "table": "stripe_webhook_events"
+    },
+    {
+      "file": "supabase/migrations/20260628160000_zoho_auto_responder_logs.sql",
+      "policy": "Users can view their own auto-responder logs",
+      "table": "zoho_auto_responder_logs"
+    },
+    {
+      "file": "supabase/migrations/20260628160000_zoho_auto_responder_logs.sql",
+      "policy": "System can update auto-responder logs",
+      "table": "zoho_auto_responder_logs"
+    },
+    {
+      "file": "supabase/migrations/20260701120000_linkedin_security_hardening.sql",
+      "policy": "linkedin_identities_select_tenant_members",
+      "table": "linkedin_identities"
+    },
+    {
+      "file": "supabase/migrations/20260701140000_platform_security_hardening.sql",
+      "policy": "mcp_api_keys_owner_select",
+      "table": "mcp_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260701140000_platform_security_hardening.sql",
+      "policy": "mcp_api_keys_owner_insert",
+      "table": "mcp_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260701140000_platform_security_hardening.sql",
+      "policy": "mcp_api_keys_owner_update",
+      "table": "mcp_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260701140000_platform_security_hardening.sql",
+      "policy": "mcp_api_keys_owner_delete",
+      "table": "mcp_api_keys"
+    },
+    {
+      "file": "supabase/migrations/20260702120000_add_linkedin_identities_table.sql",
+      "policy": "linkedin_identities_select_tenant_members",
+      "table": "linkedin_identities"
+    },
+    {
+      "file": "supabase/migrations/20260702120000_add_linkedin_identities_table.sql",
+      "policy": "linkedin_identities_insert_tenant_members",
+      "table": "linkedin_identities"
+    },
+    {
+      "file": "supabase/migrations/20260702120000_add_linkedin_identities_table.sql",
+      "policy": "linkedin_identities_update_tenant_members",
+      "table": "linkedin_identities"
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "policy": "Tenant members manage leads",
+      "table": "leads"
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "policy": "Tenant members manage lead activities",
+      "table": "lead_activities"
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "policy": "Tenant members manage deals",
+      "table": "deals"
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "policy": "Tenant members manage deal activities",
+      "table": "deal_activities"
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "policy": "Tenant members manage contacts",
+      "table": "contacts"
+    },
+    {
+      "file": "supabase/migrations/20260708230000_tenant_crm_delete_permissions.sql",
+      "policy": "Tenant members manage business clients",
+      "table": "business_clients"
+    },
+    {
+      "file": "supabase/migrations/20260708234500_production_schema_drift_fix.sql",
+      "policy": "Tenant members manage google calendar tokens",
+      "table": "google_calendar_tokens"
+    },
+    {
+      "file": "supabase/migrations/20260708234500_production_schema_drift_fix.sql",
+      "policy": "Tenant members manage deal stage history",
+      "table": "deal_stage_history"
+    },
+    {
+      "file": "supabase/migrations/20260713000000_lead_traceability.sql",
+      "policy": "authenticated_view_auto_cron_logs",
+      "table": "automation_cron_logs"
+    },
+    {
+      "file": "supabase/migrations/20260713000000_lead_traceability.sql",
+      "policy": "service_role_lead_run_log",
+      "table": "lead_run_log"
+    },
+    {
+      "file": "supabase/migrations/20260713000000_lead_traceability.sql",
+      "policy": "tenant_lead_run_log",
+      "table": "lead_run_log"
+    },
+    {
+      "file": "supabase/migrations/20260713010000_referrals.sql",
+      "policy": "service_role_referrals",
+      "table": "referrals"
+    },
+    {
+      "file": "supabase/migrations/20260713010000_referrals.sql",
+      "policy": "tenant_referrals",
+      "table": "referrals"
+    },
+    {
+      "file": "supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql",
+      "policy": "Authenticated users insert audit logs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql",
+      "policy": "Service role manages audit logs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql",
+      "policy": "Tenant members view audit logs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql",
+      "policy": "service_role_lead_run_log",
+      "table": "lead_run_log"
+    },
+    {
+      "file": "supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql",
+      "policy": "tenant_lead_run_log",
+      "table": "lead_run_log"
+    },
+    {
+      "file": "supabase/migrations/20260714120000_platform_hardening.sql",
+      "policy": "tenant_members_read_workflow_runs",
+      "table": "workflow_runs"
+    },
+    {
+      "file": "supabase/migrations/20260718090000_idempotent_tenant_creation.sql",
+      "policy": "tenant_creation_requests_select_own",
+      "table": "tenant_creation_requests"
+    },
+    {
+      "file": "supabase/migrations/20260718103000_alpha_missions.sql",
+      "policy": "alpha_missions_member_select",
+      "table": "alpha_missions"
+    },
+    {
+      "file": "supabase/migrations/20260718104500_subscription_addons.sql",
+      "policy": "subscription_addons_member_select",
+      "table": "subscription_addons"
+    },
+    {
+      "file": "supabase/migrations/20260718131000_unique_permanent_meeting_room.sql",
+      "policy": "meeting_links_tenant_members_select",
+      "table": "meeting_links"
+    },
+    {
+      "file": "supabase/migrations/20260718142000_social_assets_storage.sql",
+      "policy": "Tenant users read own generated assets",
+      "table": "generated_assets"
+    },
+    {
+      "file": "supabase/migrations/20260718142000_social_assets_storage.sql",
+      "policy": "Tenant users delete own generated assets",
+      "table": "generated_assets"
+    },
+    {
+      "file": "supabase/migrations/20260718142000_social_assets_storage.sql",
+      "policy": "Public read social assets",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260718144000_atomic_daily_resource_quotas.sql",
+      "policy": "Tenant members can view their quota usage",
+      "table": "quota_usage"
+    },
+    {
+      "file": "supabase/migrations/20260718144500_automation_workflow_tables.sql",
+      "policy": "Tenant members manage workflows",
+      "table": "workflows"
+    },
+    {
+      "file": "supabase/migrations/20260718144500_automation_workflow_tables.sql",
+      "policy": "Tenant members manage workflow actions",
+      "table": "workflow_actions"
+    },
+    {
+      "file": "supabase/migrations/20260718144500_automation_workflow_tables.sql",
+      "policy": "Tenant members view workflow executions",
+      "table": "automation_workflow_executions"
+    },
+    {
+      "file": "supabase/migrations/20260718144500_automation_workflow_tables.sql",
+      "policy": "Users view workflow templates",
+      "table": "workflow_templates"
+    },
+    {
+      "file": "supabase/migrations/20260718144600_flow_engine_tables.sql",
+      "policy": "Tenant members manage flow definitions",
+      "table": "workflow_definitions"
+    },
+    {
+      "file": "supabase/migrations/20260718144600_flow_engine_tables.sql",
+      "policy": "Tenant members view flow executions",
+      "table": "workflow_executions"
+    },
+    {
+      "file": "supabase/migrations/20260718145000_atomic_invoice_payments.sql",
+      "policy": "business_invoice_payments_tenant_read",
+      "table": "business_invoice_payments"
+    },
+    {
+      "file": "supabase/migrations/20260718145100_invoice_document_storage.sql",
+      "policy": "invoice_documents_tenant_read",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260718145200_sales_receipts.sql",
+      "policy": "sales_receipts_tenant_access",
+      "table": "sales_receipts"
+    },
+    {
+      "file": "supabase/migrations/20260718145200_sales_receipts.sql",
+      "policy": "sales_receipt_items_tenant_access",
+      "table": "sales_receipt_items"
+    },
+    {
+      "file": "supabase/migrations/20260720220000_bonnie_agentic_os_engine.sql",
+      "policy": "Tenant users can manage own conversations",
+      "table": "bonnie_conversations"
+    },
+    {
+      "file": "supabase/migrations/20260720220000_bonnie_agentic_os_engine.sql",
+      "policy": "Tenant users can manage own messages",
+      "table": "bonnie_messages"
+    },
+    {
+      "file": "supabase/migrations/20260720220000_bonnie_agentic_os_engine.sql",
+      "policy": "Tenant users can manage own workflows",
+      "table": "bonnie_workflows"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant users can read bonnie knowledge nodes",
+      "table": "bonnie_knowledge_nodes"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant admins can write bonnie knowledge nodes",
+      "table": "bonnie_knowledge_nodes"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant users can read bonnie knowledge edges",
+      "table": "bonnie_knowledge_edges"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant admins can write bonnie knowledge edges",
+      "table": "bonnie_knowledge_edges"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant users can read digital twin",
+      "table": "bonnie_digital_twin_snapshots"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant admins can write digital twin",
+      "table": "bonnie_digital_twin_snapshots"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant users can read cognitive runs",
+      "table": "bonnie_cognitive_runs"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant admins can write cognitive runs",
+      "table": "bonnie_cognitive_runs"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant users can read reflections",
+      "table": "bonnie_reflections"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant admins can write reflections",
+      "table": "bonnie_reflections"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant users can read agent executions",
+      "table": "bonnie_agent_executions"
+    },
+    {
+      "file": "supabase/migrations/20260722120000_bonnie_agentic_bos_foundation.sql",
+      "policy": "Tenant admins can write agent executions",
+      "table": "bonnie_agent_executions"
+    },
+    {
+      "file": "supabase/migrations/20260722153000_mcp_auth_hotfixes.sql",
+      "policy": "Service role manages audit logs",
+      "table": "audit_logs"
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "policy": "business_invoice_payments_tenant_read",
+      "table": "business_invoice_payments"
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "policy": "business_invoice_payments_service_all",
+      "table": "business_invoice_payments"
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "policy": "service_role_manage_events",
+      "table": "business_automation_events"
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "policy": "tenant_read_events",
+      "table": "business_automation_events"
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "policy": "invoice_audit_log_service_insert",
+      "table": "invoice_audit_log"
+    },
+    {
+      "file": "supabase/migrations/20260723103000_manual_invoice_payment_support.sql",
+      "policy": "invoice_audit_log_tenant_select",
+      "table": "invoice_audit_log"
+    },
+    {
+      "file": "supabase/migrations/20260723104000_fix_mcp_hash_and_payment_coa.sql",
+      "policy": "business_invoice_payments_service_all",
+      "table": "business_invoice_payments"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "document_brand_profiles_tenant_access",
+      "table": "document_brand_profiles"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_documents_tenant_access",
+      "table": "doc_os_documents"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_versions_tenant_access",
+      "table": "doc_os_versions"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_events_tenant_select",
+      "table": "doc_os_events"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_events_tenant_insert",
+      "table": "doc_os_events"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_signatures_tenant_access",
+      "table": "doc_os_signature_envelopes"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_approvals_tenant_access",
+      "table": "doc_os_approvals"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_retention_tenant_access",
+      "table": "doc_os_retention_policies"
+    },
+    {
+      "file": "supabase/migrations/20260723120000_document_operating_system.sql",
+      "policy": "doc_os_notifications_tenant_access",
+      "table": "doc_os_notifications"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "documents_tenant_select",
+      "table": "documents"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "documents_tenant_write",
+      "table": "documents"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "tenant_document_versions_tenant_all",
+      "table": "tenant_document_versions"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "funnels_tenant_all",
+      "table": "funnels"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "landing_pages_tenant_all",
+      "table": "landing_pages"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "mcp_action_receipts_tenant_select",
+      "table": "mcp_action_receipts"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "tenant_memory_embeddings_tenant_all",
+      "table": "tenant_memory_embeddings"
+    },
+    {
+      "file": "supabase/migrations/20260723160000_autonomous_bos_schema_compat.sql",
+      "policy": "model_execution_evidence_tenant_select",
+      "table": "model_execution_evidence"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "private_select_authenticated",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "private_insert_authenticated",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "private_update_own",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "private_delete_own",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "documents_select_authenticated",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "documents_insert_authenticated",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "documents_update_own",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724120000_mcp_queue_storage_cron_compat.sql",
+      "policy": "documents_delete_own",
+      "table": "storage"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "social_connections_tenant_select",
+      "table": "social_connections"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "social_connections_tenant_write",
+      "table": "social_connections"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "social_identities_tenant_select",
+      "table": "social_identities"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "social_identities_tenant_write",
+      "table": "social_identities"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "tenant_social_defaults_select",
+      "table": "tenant_social_defaults"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "tenant_social_defaults_write",
+      "table": "tenant_social_defaults"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "facebook_integrations_tenant_select",
+      "table": "facebook_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260724130000_multitenant_social_connections.sql",
+      "policy": "facebook_integrations_tenant_write",
+      "table": "facebook_integrations"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "tasks_tenant_select",
+      "table": "tasks"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "tasks_tenant_write",
+      "table": "tasks"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "project_milestones_tenant_select",
+      "table": "project_milestones"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "project_milestones_tenant_write",
+      "table": "project_milestones"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "ticket_comments_tenant_select",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "ticket_comments_tenant_write",
+      "table": "ticket_comments"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "lead_activities_tenant_select",
+      "table": "lead_activities"
+    },
+    {
+      "file": "supabase/migrations/20260724140000_platform_multitenant_foundation.sql",
+      "policy": "lead_activities_tenant_write",
+      "table": "lead_activities"
+    },
+    {
+      "file": "supabase/migrations/20260724160000_bonnie_agentic_goals.sql",
+      "policy": "Tenant members manage bonnie_cognitive_runs",
+      "table": "bonnie_cognitive_runs"
+    },
+    {
+      "file": "supabase/migrations/20260724160000_bonnie_agentic_goals.sql",
+      "policy": "Tenant members manage bonnie_agent_executions",
+      "table": "bonnie_agent_executions"
+    },
+    {
+      "file": "supabase/migrations/20260724160000_bonnie_agentic_goals.sql",
+      "policy": "Tenant members manage bonnie_goals",
+      "table": "bonnie_goals"
+    },
+    {
+      "file": "supabase/migrations/20260724160000_bonnie_agentic_goals.sql",
+      "policy": "Tenant members manage bonnie_goal_subtasks",
+      "table": "bonnie_goal_subtasks"
+    },
+    {
+      "file": "supabase/migrations/20260724170000_bonnie_durable_runtime.sql",
+      "policy": "Tenant members manage %I",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260724170000_bonnie_durable_runtime.sql",
+      "policy": "Tenant members manage agent_reconciliation_logs",
+      "table": "agent_reconciliation_logs"
+    },
+    {
+      "file": "supabase/migrations/20260724180000_bonnie_agentic_bos_extensions.sql",
+      "policy": "agent_verifications_tenant_isolation",
+      "table": "agent_verifications"
+    },
+    {
+      "file": "supabase/migrations/20260724180000_bonnie_agentic_bos_extensions.sql",
+      "policy": "agent_chasing_policies_tenant_isolation",
+      "table": "agent_chasing_policies"
+    },
+    {
+      "file": "supabase/migrations/20260724180000_bonnie_agentic_bos_extensions.sql",
+      "policy": "agent_runtime_limits_tenant_isolation",
+      "table": "agent_runtime_limits"
+    },
+    {
+      "file": "supabase/migrations/20260724200000_mcp_connector_media_email_actions.sql",
+      "policy": "Tenant members read email sender addresses",
+      "table": "email_sender_addresses"
+    },
+    {
+      "file": "supabase/migrations/20260724200000_mcp_connector_media_email_actions.sql",
+      "policy": "Tenant admins write email sender addresses",
+      "table": "email_sender_addresses"
+    },
+    {
+      "file": "supabase/migrations/20260724200000_mcp_connector_media_email_actions.sql",
+      "policy": "Tenant members read external actions",
+      "table": "external_actions"
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "policy": "file_uploads_tenant_select",
+      "table": "file_uploads"
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "policy": "file_uploads_tenant_insert",
+      "table": "file_uploads"
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "policy": "file_uploads_tenant_update",
+      "table": "file_uploads"
+    },
+    {
+      "file": "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+      "policy": "file_uploads_tenant_delete",
+      "table": "file_uploads"
+    },
+    {
+      "file": "supabase/migrations/20260726120000_lead_finder_rebuild.sql",
+      "policy": "lead_finder_workspace_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260726120000_lead_finder_rebuild.sql",
+      "policy": "lead_finder_service_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260726150000_marketing_module_foundation.sql",
+      "policy": "marketing_tenant_select",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260726150000_marketing_module_foundation.sql",
+      "policy": "marketing_events_select",
+      "table": "marketing_campaign_events"
+    },
+    {
+      "file": "supabase/migrations/20260726150000_marketing_module_foundation.sql",
+      "policy": "marketing_metrics_select",
+      "table": "marketing_campaign_metrics_daily"
+    },
+    {
+      "file": "supabase/migrations/20260726150000_marketing_module_foundation.sql",
+      "policy": "marketing_campaigns_write",
+      "table": "marketing_campaigns"
+    },
+    {
+      "file": "supabase/migrations/20260726180000_documents_contracts_shared_platform.sql",
+      "policy": "%I",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260726180000_documents_contracts_shared_platform.sql",
+      "policy": "document_activity_tenant_select",
+      "table": "document_activity"
+    },
+    {
+      "file": "supabase/migrations/20260726180000_documents_contracts_shared_platform.sql",
+      "policy": "document_activity_tenant_insert",
+      "table": "document_activity"
+    },
+    {
+      "file": "supabase/migrations/20260726200000_projects_tasks_operating_system.sql",
+      "policy": "tenant_member_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260726220000_canonical_finance_foundation.sql",
+      "policy": "tenant_membership_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260726230000_unified_email_foundation.sql",
+      "policy": "tenant_member_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260727090000_client_centric_support.sql",
+      "policy": "tenant_member_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260727120000_communication_compliance_governance.sql",
+      "policy": "tenant_member_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260727120000_communication_compliance_governance.sql",
+      "policy": "tenant_member_access",
+      "table": "public"
+    },
+    {
+      "file": "supabase/migrations/20260727150000_mcp_oauth_grants_multiclient_hardening.sql",
+      "policy": "tenant members read own mcp grants",
+      "table": "mcp_oauth_grants"
+    },
+    {
+      "file": "supabase/migrations/20260727150000_mcp_oauth_grants_multiclient_hardening.sql",
+      "policy": "tenant members read own mcp jobs",
+      "table": "mcp_jobs"
+    }
+  ],
+  "migrationFiles": [
+    "supabase/migrations/20260217_fix_deal_activities_rls.sql",
+    "supabase/migrations/20260218120500_add_quote_items_rls.sql",
+    "supabase/migrations/20260309000002_fix_rls_recursion.sql",
+    "supabase/migrations/20260331_fix_google_calendar_rls.sql",
+    "supabase/migrations/20260409120500_fix_integration_rls_policies.sql",
+    "supabase/migrations/20260508000003_mcp_rls_hardening.sql",
+    "supabase/migrations/20260605110000_deal_products_tenant_rls.sql",
+    "supabase/migrations/20260611095000_mcp_sessions_rls.sql",
+    "supabase/migrations/20260625100000_support_tickets_rls.sql",
+    "supabase/migrations/20260625150000_realtime_rls_and_missing_tables.sql",
+    "supabase/migrations/20260714100000_fix_audit_logs_rls_and_lead_run_log.sql",
+    "supabase/migrations/20260724223000_uploads_storage_tenant_rls.sql",
+    "supabase/migrations/20260724230000_fix_tenant_status_and_uploads_rls.sql",
+    "supabase/migrations/20260724230001_uploads_storage_policies_dashboard.sql"
+  ]
+}

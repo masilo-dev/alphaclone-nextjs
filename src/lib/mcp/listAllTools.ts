@@ -9,16 +9,16 @@ import {
   CHATGPT_CONNECTOR_TOOL_NAMES,
   resolveToolAnnotations,
 } from '@/lib/mcp/toolAnnotations';
-import { getToolCatalogModeForClient } from '@/lib/mcp/ensureOAuthClient';
+import { coreTools, DISCOVERY_CONTROL_TOOLS } from '@/lib/mcp/progressiveDiscovery';
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
 let cachedFullTools: UnifiedMcpTool[] | null = null;
 let cachedCuratedTools: UnifiedMcpTool[] | null = null;
+let cachedConnectorTools: UnifiedMcpTool[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 60_000;
-
-const CURATED_TOOL_SET = new Set<string>(CHATGPT_CONNECTOR_TOOL_NAMES);
+const CONNECTOR_TOOL_SET = new Set<string>(CHATGPT_CONNECTOR_TOOL_NAMES);
 
 /** Optional discovery aliases (search/fetch) available to all clients. */
 const DISCOVERY_ALIAS_TOOLS: UnifiedMcpTool[] = [
@@ -83,9 +83,9 @@ function prepareDiscoveryTools(
 
 /**
  * Single source of truth for MCP tool discovery.
- * Default = FULL platform catalog for every client (Claude, ChatGPT, Cursor, DCR, API key).
- * Schemas are compacted for discovery so clients do not silently drop tools.
- * Optional curated subset remains only when a client seed / forChatGPT explicitly requests it.
+ * Default = bounded progressive catalogue for every client.
+ * The full canonical registry remains server-side and is reached with search_tools /
+ * load_module_tools, avoiding client truncation and poor tool selection.
  * Never sniff User-Agent to decide capabilities.
  */
 export async function getUnifiedMcpTools(options?: {
@@ -98,14 +98,15 @@ export async function getUnifiedMcpTools(options?: {
   userAgent?: string | null;
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  // Explicit forChatGPT true still requests curated (legacy Apps path).
-  // Explicit false forces full. Otherwise use registered-client policy (default full).
-  const curated =
+  // Explicit true is the stable ChatGPT connector contract. Explicit false is
+  // the complete server-side catalog. All other clients start with the bounded
+  // progressive catalog and can load additional modules on demand.
+  const catalogMode =
     options?.forChatGPT === true
-      ? true
+      ? 'connector'
       : options?.forChatGPT === false
-        ? false
-        : getToolCatalogModeForClient(options?.clientId) === 'curated';
+        ? 'full'
+        : 'progressive';
   const now = Date.now();
 
   if (
@@ -113,11 +114,17 @@ export async function getUnifiedMcpTools(options?: {
     now - cacheTime < CACHE_TTL_MS &&
     cachedFullTools &&
     cachedFullTools.length > 0 &&
-    (!curated || (cachedCuratedTools && cachedCuratedTools.length > 0))
+    (catalogMode !== 'progressive' || (cachedCuratedTools && cachedCuratedTools.length > 0)) &&
+    (catalogMode !== 'connector' || (cachedConnectorTools && cachedConnectorTools.length > 0))
   ) {
-    const cached = curated ? cachedCuratedTools! : cachedFullTools;
+    const cached =
+      catalogMode === 'connector'
+        ? cachedConnectorTools!
+        : catalogMode === 'progressive'
+          ? cachedCuratedTools!
+          : cachedFullTools;
     console.info(
-      `[mcp.tools/list] cache hit catalog=${curated ? 'curated' : 'full'} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
+      `[mcp.tools/list] cache hit catalog=${catalogMode} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
     );
     return cached;
   }
@@ -165,13 +172,19 @@ export async function getUnifiedMcpTools(options?: {
     );
   } else {
     console.info(
-      `[mcp.tools/list] discovered total=${merged.length} registry=${registryTools.length} manifest_extra=${manifestLegacy.length} supplemental=${supplemental.length} curated_filter=${curated}`
+      `[mcp.tools/list] discovered total=${merged.length} registry=${registryTools.length} manifest_extra=${manifestLegacy.length} supplemental=${supplemental.length} catalog=${catalogMode}`
     );
   }
 
   cachedFullTools = prepareDiscoveryTools(annotated, sanitizeForClient);
+  cachedConnectorTools = cachedFullTools.filter((tool) => CONNECTOR_TOOL_SET.has(tool.name));
 
-  cachedCuratedTools = cachedFullTools.filter((tool) => CURATED_TOOL_SET.has(tool.name));
+  cachedCuratedTools = coreTools(cachedFullTools, 32);
+  for (const control of withAnnotations(DISCOVERY_CONTROL_TOOLS)) {
+    if (!cachedCuratedTools.some((tool) => tool.name === control.name)) {
+      cachedCuratedTools.push(...prepareDiscoveryTools([control], sanitizeForClient));
+    }
+  }
   for (const alias of withAnnotations(DISCOVERY_ALIAS_TOOLS)) {
     if (!cachedCuratedTools.some((t) => t.name === alias.name)) {
       cachedCuratedTools.push(
@@ -181,7 +194,7 @@ export async function getUnifiedMcpTools(options?: {
   }
   cachedCuratedTools.sort((a, b) => a.name.localeCompare(b.name));
 
-  if (curated && cachedCuratedTools.length === 0 && cachedFullTools.length > 0) {
+  if (catalogMode === 'progressive' && cachedCuratedTools.length === 0 && cachedFullTools.length > 0) {
     console.error(
       `[mcp.tools/list] curated filter matched 0/${cachedFullTools.length} tools — falling back to full catalog`
     );
@@ -190,9 +203,14 @@ export async function getUnifiedMcpTools(options?: {
   }
 
   cacheTime = now;
-  const result = curated ? cachedCuratedTools : cachedFullTools;
+  const result =
+    catalogMode === 'connector'
+      ? cachedConnectorTools
+      : catalogMode === 'progressive'
+        ? cachedCuratedTools
+        : cachedFullTools;
   console.info(
-    `[mcp.tools/list] returning catalog=${curated ? 'curated' : 'full'} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
+    `[mcp.tools/list] returning catalog=${catalogMode} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
   );
   return result;
 }
@@ -208,6 +226,7 @@ export async function getUnifiedMcpToolCount(options?: {
 export function invalidateUnifiedMcpToolCache(): void {
   cachedFullTools = null;
   cachedCuratedTools = null;
+  cachedConnectorTools = null;
   cacheTime = 0;
 }
 

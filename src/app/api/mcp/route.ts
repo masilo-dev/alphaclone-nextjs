@@ -8,6 +8,7 @@ import {
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+import { negotiateClientCapabilities } from '@/lib/mcp/clientCapabilities';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -217,6 +218,13 @@ export async function POST(req: NextRequest) {
   // 2. Short-circuit handshake methods (SDK import crashes in serverless for initialize)
   if (requestBody.method === 'initialize') {
     const protocolVersion = negotiateProtocolVersion(requestBody.params?.protocolVersion);
+    const clientName = String(requestBody.params?.clientInfo?.name || 'generic-mcp');
+    const clientCapabilities = negotiateClientCapabilities({
+      protocolVersion,
+      clientName,
+      userAgent: req.headers.get('user-agent'),
+      advertised: requestBody.params?.capabilities,
+    });
     const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
     headers.set('MCP-Protocol-Version', protocolVersion);
 
@@ -238,6 +246,14 @@ export async function POST(req: NextRequest) {
           tenant_id: tenantId,
           user_id: userId,
           expires_at: expiresAt,
+          client_name: clientName,
+          client_instance_id: String(requestBody.params?.clientInfo?.version || crypto.randomUUID()),
+          protocol_version: protocolVersion,
+          transport: 'streamable-http',
+          capabilities: clientCapabilities,
+          connected_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString(),
+          status: 'connected',
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
             client_id: initClientId,
@@ -411,6 +427,32 @@ export async function POST(req: NextRequest) {
     const toolName = requestBody.params?.name;
     const toolArgs = requestBody.params?.arguments || {};
 
+    if (['list_tools', 'list_modules', 'list_capabilities', 'search_tools', 'load_module_tools'].includes(toolName)) {
+      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+      const { MODULE_KEYWORDS, coreTools, searchToolCatalog } = await import('@/lib/mcp/progressiveDiscovery');
+      const full = await getUnifiedMcpTools({ forChatGPT: false });
+      let data: unknown;
+      if (toolName === 'list_modules') data = Object.keys(MODULE_KEYWORDS);
+      else if (toolName === 'list_tools') data = coreTools(full);
+      else if (toolName === 'list_capabilities') data = {
+        progressive_discovery: true,
+        durable_jobs: true,
+        oauth_grants: true,
+        media_transfer: ['base64', 'source_url', 'signed_upload'],
+      };
+      else data = searchToolCatalog(full, {
+        query: toolArgs.query,
+        module: toolName === 'load_module_tools' ? toolArgs.module : toolArgs.module,
+        action: toolArgs.action,
+        limit: toolArgs.limit,
+      });
+      return NextResponse.json({
+        jsonrpc: '2.0',
+        id: requestBody.id,
+        result: { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: { data } },
+      }, { headers: mcpJsonHeaders(req) });
+    }
+
     // Enforce OAuth scopes before any tool side effects
     try {
       const auth = await resolveAuth(req);
@@ -436,16 +478,24 @@ export async function POST(req: NextRequest) {
     if (toolName === 'create_ticket') {
       const admin = createAdminSupabaseClientOrThrow();
       const { data: ticket, error } = await admin
-        .from('support_tickets')
+        .from('tickets')
         .insert({
           tenant_id: tenantId,
           title: toolArgs.title,
           description: toolArgs.description || '',
           priority: toolArgs.priority || 'medium',
-          category: toolArgs.category || 'general',
           source: toolArgs.source || 'bonnie_agent',
+          channel: toolArgs.source || 'bonnie_agent',
+          ticket_type: ['billing', 'technical'].includes(toolArgs.category)
+            ? toolArgs.category
+            : toolArgs.category === 'bug'
+              ? 'incident'
+              : toolArgs.category === 'feature_request'
+                ? 'request'
+                : 'question',
           contact_id: toolArgs.contact_id || null,
           client_id: toolArgs.client_id || null,
+          created_by: userId,
           status: 'open',
         })
         .select()
@@ -469,7 +519,7 @@ export async function POST(req: NextRequest) {
     if (toolName === 'get_tickets') {
       const admin = createAdminSupabaseClientOrThrow();
       let query = admin
-        .from('support_tickets')
+        .from('tickets')
         .select('*')
         .eq('tenant_id', tenantId)
         .order('created_at', { ascending: false })
@@ -477,7 +527,16 @@ export async function POST(req: NextRequest) {
 
       if (toolArgs.status) query = query.eq('status', toolArgs.status);
       if (toolArgs.priority) query = query.eq('priority', toolArgs.priority);
-      if (toolArgs.category) query = query.eq('category', toolArgs.category);
+      if (toolArgs.category) {
+        const requestedType = ['billing', 'technical'].includes(toolArgs.category)
+          ? toolArgs.category
+          : toolArgs.category === 'bug'
+            ? 'incident'
+            : toolArgs.category === 'feature_request'
+              ? 'request'
+              : 'question';
+        query = query.eq('ticket_type', requestedType);
+      }
 
       const { data: tickets, error } = await query;
 
@@ -501,7 +560,6 @@ export async function POST(req: NextRequest) {
       const updateData: any = {};
       if (toolArgs.status) updateData.status = toolArgs.status;
       if (toolArgs.priority) updateData.priority = toolArgs.priority;
-      if (toolArgs.resolution_note) updateData.resolution_note = toolArgs.resolution_note;
       if (toolArgs.assigned_to) updateData.assigned_to = toolArgs.assigned_to;
       
       // Auto-set resolved_at if status changes to resolved
@@ -516,7 +574,7 @@ export async function POST(req: NextRequest) {
       updateData.updated_at = new Date().toISOString();
 
       const { data: ticket, error } = await admin
-        .from('support_tickets')
+        .from('tickets')
         .update(updateData)
         .eq('id', toolArgs.ticket_id)
         .eq('tenant_id', tenantId)
@@ -531,6 +589,25 @@ export async function POST(req: NextRequest) {
         }, { status: 500, headers: mcpJsonHeaders(req) });
       }
 
+      if (toolArgs.resolution_note) {
+        const { error: noteError } = await admin.from('ticket_messages').insert({
+          tenant_id: tenantId,
+          ticket_id: ticket.id,
+          author_user_id: userId,
+          message_type: 'internal_note',
+          body_text: String(toolArgs.resolution_note),
+          visibility: 'internal',
+          metadata: { source: 'mcp_update_ticket', resolution_note: true },
+        });
+        if (noteError) {
+          return NextResponse.json({
+            jsonrpc: '2.0',
+            id: requestBody.id,
+            error: { code: -32603, message: 'Ticket updated but its resolution note could not be recorded' },
+          }, { status: 500, headers: mcpJsonHeaders(req) });
+        }
+      }
+
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
@@ -543,7 +620,7 @@ export async function POST(req: NextRequest) {
       
       // Get counts by status
       const { data: allTickets } = await admin
-        .from('support_tickets')
+        .from('tickets')
         .select('status')
         .eq('tenant_id', tenantId);
 
@@ -560,10 +637,10 @@ export async function POST(req: NextRequest) {
 
       // Get SLA breaches
       const { data: slaBreaches } = await admin
-        .from('support_tickets')
+        .from('tickets')
         .select('id, title, sla_due_at, created_at')
         .eq('tenant_id', tenantId)
-        .eq('status', 'open')
+        .in('status', ['new', 'open', 'in_progress', 'waiting_on_business', 'escalated', 'reopened'])
         .lt('sla_due_at', new Date().toISOString())
         .limit(10);
 
@@ -585,9 +662,11 @@ export async function POST(req: NextRequest) {
       const admin = createAdminSupabaseClientOrThrow();
       
       const { data: ticket, error } = await admin
-        .from('support_tickets')
+        .from('tickets')
         .update({
           priority: 'urgent',
+          status: 'escalated',
+          escalated_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', toolArgs.ticket_id)

@@ -59,7 +59,26 @@ export async function POST(req: NextRequest) {
     await consumeDailyResourceQuota(tenantId, user.id, 'contracts');
     quotaReservation = { tenantId, userId: user.id };
 
-    // 2. Insert contract
+    // 2. Create the canonical shared document first. Contract Manager owns
+    // lifecycle metadata; Documents owns the content/version surface.
+    const { data: sharedDocument, error: documentError } = await admin
+      .from('documents')
+      .insert({
+        tenant_id: tenantId,
+        title,
+        name: title,
+        content,
+        document_type: 'contract',
+        status: 'draft',
+        owner_user_id: user.id,
+        uploaded_by: user.id,
+        metadata: { contract_type: type, source: 'contract_manager' },
+      })
+      .select('id')
+      .single();
+    if (documentError) throw documentError;
+
+    // 3. Insert contract
     const { data: contract, error: contractError } = await admin
       .from('contracts')
       .insert({
@@ -67,6 +86,8 @@ export async function POST(req: NextRequest) {
         client_id: client_id || null,
         project_id: project_id || null,
         owner_id: user.id,
+        owner_user_id: user.id,
+        document_id: sharedDocument.id,
         title,
         content,
         type,
@@ -84,9 +105,34 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
-    if (contractError) throw contractError;
+    if (contractError) {
+      await admin.from('documents').delete().eq('tenant_id', tenantId).eq('id', sharedDocument.id);
+      throw contractError;
+    }
 
-    // 3. Create initial approval gate record
+    await admin.from('document_relationships').insert({
+      tenant_id: tenantId,
+      document_id: sharedDocument.id,
+      entity_type: 'contract',
+      entity_id: contract.id,
+      relationship_type: 'belongs_to',
+      is_primary: true,
+      created_by: user.id,
+    });
+    if (client_id) {
+      await admin.from('document_relationships').insert({
+        tenant_id: tenantId, document_id: sharedDocument.id, entity_type: 'customer',
+        entity_id: client_id, relationship_type: 'signed_agreement', created_by: user.id,
+      });
+    }
+    if (project_id) {
+      await admin.from('document_relationships').insert({
+        tenant_id: tenantId, document_id: sharedDocument.id, entity_type: 'project',
+        entity_id: project_id, relationship_type: 'project_file', created_by: user.id,
+      });
+    }
+
+    // 4. Create initial approval gate record
     const { error: approvalError } = await admin.from('contract_approvals').insert({
       contract_id: contract.id,
       tenant_id: tenantId,
@@ -99,7 +145,7 @@ export async function POST(req: NextRequest) {
     }
     quotaReservation = null;
 
-    // 4. Audit Log
+    // 5. Audit Log
     const { error: auditError } = await admin.from('audit_logs').insert({
       tenant_id: tenantId,
       user_id: user.id,

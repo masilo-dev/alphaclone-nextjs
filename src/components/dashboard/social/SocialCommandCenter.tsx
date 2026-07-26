@@ -19,6 +19,7 @@ import { xaiVideoGenerationService, VideoScriptOutput } from '@/services/ai/xaiV
 import { motion, AnimatePresence } from 'framer-motion';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { SocialContentCalendar } from './SocialContentCalendar';
+import { SocialAnalyticsStory } from './SocialAnalyticsStory';
 import { WORKSPACE } from '@/constants/design';
 import { buildBusinessSocialPrompt } from '@/lib/ai/businessContext';
 
@@ -693,21 +694,6 @@ export default function SocialCommandCenter() {
         : '';
     const platformPosts = posts.filter(post => post.platforms.includes(activePlatform));
     const publishedPlatformPosts = platformPosts.filter(post => post.status === 'published');
-    const analyticsTotals = publishedPlatformPosts.reduce(
-        (totals, post) => {
-            const metrics = getPostMetrics(post);
-            totals.impressions += metrics.impressions;
-            totals.reactions += metrics.reactions;
-            totals.comments += metrics.comments;
-            totals.clicks += metrics.clicks;
-            return totals;
-        },
-        { impressions: 0, reactions: 0, comments: 0, clicks: 0 }
-    );
-    const engagementRate = analyticsTotals.impressions > 0
-        ? ((analyticsTotals.reactions + analyticsTotals.comments + analyticsTotals.clicks) / analyticsTotals.impressions) * 100
-        : 0;
-
     if (loading) {
         return (
             <div
@@ -851,83 +837,14 @@ export default function SocialCommandCenter() {
                             />
                         ) : null}
                         {activeSubView === 'analytics' ? (
-                            /* Analytics Dashboard */
-                            <div className="space-y-6 animate-in fade-in duration-300">
-                                <div className={`flex items-center justify-between p-3 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Date Range</span>
-                                    <div className="flex bg-slate-950 p-1 rounded-xl border border-white/5">
-                                        {['7D', '30D', '90D'].map((range) => (
-                                            <button
-                                                key={range}
-                                                onClick={() => setAnalyticsDateRange(range as any)}
-                                                className={`px-3 py-1 text-xs font-bold rounded-lg ${analyticsDateRange === range ? 'bg-teal-600 text-white' : 'text-slate-500'}`}
-                                            >
-                                                {range}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    {[
-                                        { label: 'Impressions', value: compactNumber(analyticsTotals.impressions), change: `${publishedPlatformPosts.length} published`, up: true },
-                                        { label: 'Likes & Reactions', value: compactNumber(analyticsTotals.reactions), change: 'Synced metrics', up: true },
-                                        { label: 'Comments', value: compactNumber(analyticsTotals.comments), change: 'Conversation signal', up: analyticsTotals.comments > 0 },
-                                        { label: 'Clicks', value: compactNumber(analyticsTotals.clicks), change: 'Traffic signal', up: analyticsTotals.clicks > 0 }
-                                    ].map((stat, i) => (
-                                        <div key={i} className={`space-y-1 p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                            <span className="text-[11px] font-bold text-slate-500 uppercase">{stat.label}</span>
-                                            <div className="text-xl font-bold text-white">{stat.value}</div>
-                                            <span className={`text-[10px] font-bold ${stat.up ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                {stat.change}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Engagement chart from synchronized platform metrics. */}
-                                <div className={`space-y-4 p-5 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
-                                    <div className="flex justify-between items-start">
-                                        <div>
-                                            <span className="text-xs font-bold text-slate-500 uppercase">Average Engagement Rate</span>
-                                            <div className="text-2xl font-black text-white">{engagementRate.toFixed(2)}%</div>
-                                        </div>
-                                        <div className="text-xs text-slate-400 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
-                                            <ActivityIcon className="w-3.5 h-3.5" /> High Performance
-                                        </div>
-                                    </div>
-                                    <div className="h-28 flex items-end justify-between pt-6 px-2 gap-1.5">
-                                        {(publishedPlatformPosts.length > 0
-                                            ? publishedPlatformPosts.slice(-12).map(p => {
-                                                const m = getPostMetrics(p);
-                                                return m.impressions + m.reactions * 5 + m.comments * 10;
-                                            })
-                                            : []
-                                        ).map((h, idx) => {
-                                            const maxH = Math.max(...(publishedPlatformPosts.length > 0 ? publishedPlatformPosts.slice(-12).map(p => {
-                                                const m = getPostMetrics(p);
-                                                return m.impressions + m.reactions * 5 + m.comments * 10;
-                                            }) : [90]), 1);
-                                            return (
-                                                <div key={idx} className="group relative flex flex-col items-center w-full">
-                                                    <div 
-                                                        className="w-full max-w-[10px] bg-teal-500 hover:bg-teal-400 rounded-t transition-all cursor-pointer" 
-                                                        style={{ height: `${Math.max((h / maxH) * 100, 5)}%` }}
-                                                    />
-                                                    <div className="absolute -top-7 scale-0 group-hover:scale-100 bg-teal-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded transition-all pointer-events-none shadow z-10 whitespace-nowrap">
-                                                        {h} pts
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="flex justify-between text-[9px] font-bold text-slate-600 uppercase tracking-wider pt-2 border-t border-white/5">
-                                        <span>Start</span>
-                                        <span>Mid Point</span>
-                                        <span>Today</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <SocialAnalyticsStory
+                                posts={publishedPlatformPosts}
+                                metricsByPost={postMetrics}
+                                platform={activePlatform}
+                                range={analyticsDateRange}
+                                onRangeChange={setAnalyticsDateRange}
+                                onOpenPost={setSelectedPost}
+                            />
                         ) : (
                             /* Feed List / Queue with Swipe gestures */
                             <div className="space-y-1">

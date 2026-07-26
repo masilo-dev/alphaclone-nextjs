@@ -494,6 +494,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       .from('tasks')
       .select('*, projects(name), deals:related_to_deal(name), contacts:related_to_contact(first_name, last_name, email), leads:related_to_lead(business_name)', { count: 'exact' })
       .eq('tenant_id', currentTenant.id)
+      .is('deleted_at', null)
       .order('due_date', { ascending: true, nullsFirst: false })
       .order('created_at', { ascending: false })
       .range(from, to);
