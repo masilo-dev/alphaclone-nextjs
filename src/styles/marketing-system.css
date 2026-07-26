@@ -4,11 +4,11 @@
   /* Backgrounds */
   --background-root: #060d18;
   --background-deep: #08111d;
-  --background-section: rgba(9, 18, 31, 0.34);
-  --background-elevated: rgba(15, 27, 43, 0.68);
-  --background-card: rgba(14, 27, 44, 0.56);
-  --background-card-hover: rgba(20, 37, 58, 0.72);
-  --background-muted: rgba(24, 42, 64, 0.62);
+  --background-section: rgba(15, 20, 28, 0.26);
+  --background-elevated: rgba(20, 27, 36, 0.58);
+  --background-card: rgba(19, 26, 35, 0.46);
+  --background-card-hover: rgba(27, 36, 47, 0.62);
+  --background-muted: rgba(31, 41, 53, 0.54);
 
   /* Brand */
   --brand-primary: #18c7c8;
@@ -2364,8 +2364,8 @@
   background:
     radial-gradient(
       ellipse 58% 44% at 50% 16%,
-      rgba(20, 95, 190, 0.24) 0%,
-      rgba(11, 53, 119, 0.14) 36%,
+      rgba(125, 211, 252, 0.2) 0%,
+      rgba(56, 189, 248, 0.08) 36%,
       rgba(4, 16, 39, 0) 72%
     ),
     radial-gradient(
@@ -2700,23 +2700,24 @@
 
 .mkt-marketing-background .mkt-bg-root {
   background:
-    radial-gradient(ellipse 72% 30% at 50% 6%, rgba(53, 106, 244, 0.17), transparent 70%),
-    radial-gradient(ellipse 46% 28% at 8% 44%, rgba(24, 199, 200, 0.1), transparent 72%),
-    radial-gradient(ellipse 42% 30% at 92% 72%, rgba(115, 87, 232, 0.09), transparent 74%),
-    linear-gradient(180deg, #060d18 0%, #091321 34%, #08111d 68%, #060d18 100%);
+    radial-gradient(ellipse 76% 32% at 50% 5%, rgba(125, 211, 252, 0.19), transparent 70%),
+    radial-gradient(ellipse 48% 30% at 8% 44%, rgba(94, 234, 212, 0.1), transparent 72%),
+    radial-gradient(ellipse 44% 32% at 92% 72%, rgba(196, 181, 253, 0.08), transparent 74%),
+    linear-gradient(180deg, #080d14 0%, #0b1119 34%, #091018 68%, #070c13 100%);
 }
 
 .mkt-marketing-background[data-variant="editorial"] .mkt-bg-root,
 .mkt-marketing-background[data-variant="quiet"] .mkt-bg-root {
   background:
-    radial-gradient(ellipse 54% 26% at 76% 16%, rgba(53, 106, 244, 0.11), transparent 72%),
-    linear-gradient(180deg, #09121d 0%, #0d1722 48%, #08111c 100%);
+    radial-gradient(ellipse 56% 28% at 76% 16%, rgba(125, 211, 252, 0.13), transparent 72%),
+    linear-gradient(180deg, #0a1017 0%, #10171f 48%, #091018 100%);
 }
 
 .mkt-marketing-background[data-variant="conversion"] .mkt-bg-root {
   background:
     radial-gradient(ellipse 58% 30% at 50% 8%, rgba(24, 199, 200, 0.11), transparent 72%),
-    linear-gradient(160deg, #09121d 0%, #12171d 52%, #08121c 100%);
+    radial-gradient(ellipse 42% 24% at 82% 28%, rgba(125, 211, 252, 0.1), transparent 72%),
+    linear-gradient(160deg, #0a1017 0%, #14181d 52%, #091118 100%);
 }
 
 .mkt-marketing-background[data-intensity="subtle"] .mkt-orb-field {
@@ -2758,7 +2759,7 @@
 .mkt-organic-orb.is-large { width: clamp(23rem, 40vw, 48rem); opacity: 0.42; }
 .mkt-organic-orb.is-coral { --orb-color: 224, 105, 87; }
 .mkt-organic-orb.is-teal { --orb-color: 31, 163, 158; }
-.mkt-organic-orb.is-navy { --orb-color: 35, 57, 82; }
+.mkt-organic-orb.is-navy { --orb-color: 125, 211, 252; }
 .mkt-organic-orb.is-neutral { --orb-color: 150, 139, 124; }
 
 .mkt-organic-orb.at-north-west { top: -10rem; left: -9rem; }
@@ -2855,12 +2856,12 @@
 
 /* Keep section rhythm neutral; atmosphere supplies the restrained accent. */
 .mkt-section[data-atmosphere] {
-  background: linear-gradient(180deg, rgba(9, 17, 27, 0.14), rgba(8, 16, 26, 0.24));
+  background: linear-gradient(180deg, rgba(12, 17, 23, 0.07), rgba(10, 15, 22, 0.14));
 }
 
 .mkt-section[data-atmosphere="cta"],
 .mkt-section[data-atmosphere="pricing"] {
-  background: linear-gradient(180deg, rgba(12, 20, 30, 0.2), rgba(9, 17, 27, 0.32));
+  background: linear-gradient(180deg, rgba(14, 19, 25, 0.1), rgba(10, 16, 23, 0.2));
 }
 
 .mkt-feature-card,
