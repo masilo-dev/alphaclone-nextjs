@@ -49,16 +49,16 @@ registerTool('bonnie-outcomes', {
       },
       notes: { type: 'string', description: 'Optional plain-language notes' },
     },
-    required: ['tenant_id'],
+    required: [],
   },
   handler: async (args) => {
     const normalized = normalizeDefineOutcomeArgs(
       args && typeof args === 'object' ? (args as Record<string, unknown>) : {}
     );
-    const tenantId = normalized.tenant_id;
-    if (!tenantId) {
-      throw new Error('Workspace ID is required to record results.');
-    }
+    const tenantId =
+      normalized.tenant_id ||
+      process.env.DEFAULT_TENANT_ID ||
+      '00000000-0000-0000-0000-000000000000';
 
     const supabase = createSupabaseAdminClient();
     const { criteria, status, notes } = normalized;

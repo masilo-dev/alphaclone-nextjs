@@ -9,6 +9,7 @@ import type { MediaAssetResult } from './types';
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024; // 15 MB
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200 MB
+const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024; // 25 MB
 
 const ALLOWED_MIME = new Set([
   'image/png',
@@ -16,9 +17,11 @@ const ALLOWED_MIME = new Set([
   'image/jpg',
   'image/webp',
   'image/gif',
+  'image/svg+xml',
   'video/mp4',
   'video/quicktime',
   'video/webm',
+  'application/pdf',
 ]);
 
 type MagicSig = { mime: string; bytes: number[]; offset?: number };
@@ -30,6 +33,7 @@ const SIGNATURES: MagicSig[] = [
   { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF....WEBP
   { mime: 'video/mp4', bytes: [0x66, 0x74, 0x79, 0x70], offset: 4 }, // ....ftyp
   { mime: 'video/webm', bytes: [0x1a, 0x45, 0xdf, 0xa3] },
+  { mime: 'application/pdf', bytes: [0x25, 0x50, 0x44, 0x46] },
 ];
 
 export function isDataUri(value: string): boolean {
@@ -82,7 +86,18 @@ export function detectMimeFromSignature(buffer: Buffer): string | null {
   if (buffer.length >= 12 && buffer.toString('ascii', 4, 8) === 'ftyp') {
     return 'video/quicktime';
   }
+  const head = buffer.subarray(0, Math.min(buffer.length, 1024)).toString('utf8').trimStart();
+  if (/^<\?xml[\s\S]*?<svg\b/i.test(head) || /^<svg\b/i.test(head)) {
+    return 'image/svg+xml';
+  }
   return null;
+}
+
+function assertSafeSvg(buffer: Buffer): void {
+  const svg = buffer.toString('utf8');
+  if (/<script\b|javascript:|<foreignObject\b|on(?:load|error|click)\s*=/i.test(svg)) {
+    throw new Error('SVG contains executable or embedded active content');
+  }
 }
 
 function normalizeMime(mime: string): string {
@@ -158,7 +173,11 @@ export async function uploadSocialMedia(
   }
 
   const binary = decodeBase64Media(input.contentBase64);
-  const maxBytes = declaredMime.startsWith('video/') ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+  const maxBytes = declaredMime.startsWith('video/')
+    ? MAX_VIDEO_BYTES
+    : declaredMime === 'application/pdf'
+      ? MAX_DOCUMENT_BYTES
+      : MAX_IMAGE_BYTES;
   if (binary.length > maxBytes) {
     throw new Error(`File exceeds maximum size of ${maxBytes} bytes`);
   }
@@ -168,6 +187,7 @@ export async function uploadSocialMedia(
     throw new Error('File signature does not match a supported image/video format');
   }
   const detectedNorm = normalizeMime(detected);
+  if (detectedNorm === 'image/svg+xml') assertSafeSvg(binary);
   // Allow jpeg/jpg alias and mp4/quicktime family mismatches only when both image or both video
   const declaredFamily = declaredMime.split('/')[0];
   const detectedFamily = detectedNorm.split('/')[0];
@@ -187,15 +207,26 @@ export async function uploadSocialMedia(
   const checksum = createHash('sha256').update(binary).digest('hex');
   const dims = extractImageDimensions(binary, effectiveMime.startsWith('image/') ? effectiveMime : '');
   const isVideo = effectiveMime.startsWith('video/');
-  const assetType = isVideo ? 'video' : effectiveMime.includes('gif') ? 'gif' : 'image';
+  const isDocument = effectiveMime === 'application/pdf';
+  const assetType = isVideo
+    ? 'video'
+    : isDocument
+      ? 'document'
+      : effectiveMime.includes('gif')
+        ? 'gif'
+        : 'image';
   const ext =
     filename.split('.').pop()?.toLowerCase() ||
     (effectiveMime === 'image/png'
       ? 'png'
       : effectiveMime === 'image/jpeg'
         ? 'jpg'
-        : effectiveMime === 'image/webp'
+          : effectiveMime === 'image/webp'
           ? 'webp'
+          : effectiveMime === 'image/svg+xml'
+            ? 'svg'
+            : effectiveMime === 'application/pdf'
+              ? 'pdf'
           : isVideo
             ? 'mp4'
             : 'bin');
@@ -283,6 +314,26 @@ export async function uploadSocialMedia(
   };
 }
 
+export function rejectLocalAiPaths(value: unknown, field: string = 'media_url'): void {
+  const vals = Array.isArray(value) ? value : [value];
+  for (const item of vals) {
+    const v = String(item || '').trim();
+    if (!v) continue;
+    if (
+      /^\/mnt\/data\//i.test(v) ||
+      /^\/tmp\//i.test(v) ||
+      /^file:/i.test(v) ||
+      /^[A-Za-z]:\\/.test(v)
+    ) {
+      throw new Error(
+        `${field} looks like a local AI sandbox path (${v}). ` +
+          'Read the image bytes in the session, pass them as content_base64 (or data_url) to upload_media first, ' +
+          'then use the returned media_url or media_id with publish_post / publish_social_post.'
+      );
+    }
+  }
+}
+
 /**
  * Resolve media_asset_ids and/or raw URLs into http(s) URLs only.
  * data: URIs are auto-uploaded when base64 can be extracted.
@@ -323,6 +374,7 @@ export async function resolveMediaUrls(params: {
   }
 
   const rawUrls = Array.isArray(params.mediaUrls) ? params.mediaUrls.filter(Boolean) : [];
+  rejectLocalAiPaths(rawUrls, 'media_urls');
   for (let i = 0; i < rawUrls.length; i++) {
     const raw = String(rawUrls[i]);
     if (isDataUri(raw)) {

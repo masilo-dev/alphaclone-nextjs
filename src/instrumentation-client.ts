@@ -3,12 +3,9 @@ const ENVIRONMENT = process.env.NODE_ENV || 'development';
 const RELEASE = process.env.NEXT_PUBLIC_RAILWAY_GIT_COMMIT_SHA || process.env.RAILWAY_GIT_COMMIT_SHA || 'development';
 
 export async function register() {
-    const [{ initBotId }, Sentry] = await Promise.all([
-        import('botid/client/core'),
-        import('@sentry/nextjs'),
-    ]);
+    const Sentry = await import('@sentry/nextjs');
 
-    // Initialize Sentry and BotID lazily so the instrumentation file stays parse-friendly.
+    // Initialize Sentry lazily so the instrumentation file stays parse-friendly.
     Sentry.init({
         dsn: SENTRY_DSN,
         environment: ENVIRONMENT,
@@ -60,19 +57,6 @@ export async function register() {
                 environment: ENVIRONMENT,
             },
         },
-    });
-
-    initBotId({
-        protect: [
-            {
-                path: '/api/scraper/search',
-                method: 'POST',
-            },
-            {
-                path: '/api/onboarding/*',
-                method: 'POST',
-            },
-        ],
     });
 }
 

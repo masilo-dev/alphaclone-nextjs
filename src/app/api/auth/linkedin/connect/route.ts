@@ -12,19 +12,25 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-/** Minimum scopes + business page (org) + ads/events products used by MCP */
+/** Full set of authorized LinkedIn scopes for profiles, pages, ads, events, leads, and verification */
 const LINKEDIN_REQUESTED_SCOPES = [
   'openid',
   'profile',
   'email',
+  'r_basicprofile',
+  'r_profile_basicinfo',
   'w_member_social',
   'w_organization_social',
   'r_organization_social',
   'r_organization_admin',
   'rw_organization_admin',
   'r_ads',
+  'rw_ads',
   'r_ads_reporting',
+  'r_events',
   'rw_events',
+  'r_1st_connections_size',
+  'r_verify',
 ] as const;
 
 export async function GET(req: NextRequest) {

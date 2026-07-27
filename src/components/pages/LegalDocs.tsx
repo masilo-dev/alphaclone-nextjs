@@ -168,10 +168,26 @@ export function PrivacyPolicy() {
                ]} />
                <p className="mt-3">Gmail data is retrieved in real time via Google's API and displayed only to the authenticated user. You can revoke AlphaClone's Gmail access at any time from your <a href="https://myaccount.google.com/permissions" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Google Account Permissions page</a>.</p>
             </Sub>
-            <Sub title="2.4 Usage & Technical Data">
+            <Sub title="2.4 LinkedIn API & Lead Gen Forms Data">
+               <InfoBox>
+                  AlphaClone integrates with LinkedIn APIs to manage organization and profile publishing, retrieve engagement analytics, and automatically synchronize Lead Gen Form responses directly into your workspace CRM.
+               </InfoBox>
+               <p className="mt-3">When you authorize LinkedIn OAuth integration, AlphaClone requests access to requested product scopes including: openid, profile, email, r_basicprofile, r_profile_basicinfo, w_member_social, w_organization_social, r_organization_social, r_organization_admin, rw_organization_admin, r_ads, rw_ads, r_ads_reporting, r_events, rw_events, r_1st_connections_size, and r_verify.</p>
+               <p className="mt-3"><strong className="text-white">LinkedIn Lead Gen Forms & Lead Data Processing:</strong></p>
+               <BulletList items={[
+                  'When prospects submit a LinkedIn Lead Gen Form connected to your account, form responses (such as full name, email address, company name, job title, and phone number) are securely received via real-time webhooks or API sync.',
+                  'Lead data is mapped directly into your AlphaClone CRM leads table to enable automated follow-ups and lead management.',
+                  'We do not sell, share, or monetize LinkedIn lead data with any unauthorized third parties.',
+                  'You retain full control to modify, export, or delete lead records at any time within your workspace.',
+               ]} />
+            </Sub>
+            <Sub title="2.5 Calendly Integration & Scheduling Data">
+               <p>When you connect Calendly via OAuth, AlphaClone retrieves event types, scheduled meetings, invitee names, email addresses, and event details solely to sync booking availability and auto-ingest meeting invitees into your CRM leads and calendar. OAuth access tokens are stored using AES-256 encryption at rest.</p>
+            </Sub>
+            <Sub title="2.6 Usage & Technical Data">
                <p>We automatically collect technical data when you use the platform: IP address, browser type and version, operating system, device type, pages visited, features used, session duration, and error logs. This data is used for platform security, debugging, and improving the user experience.</p>
             </Sub>
-            <Sub title="2.5 Payment Data">
+            <Sub title="2.7 Payment Data">
                <p>Payment processing is handled entirely by Stripe, Inc. AlphaClone never stores, processes, or has access to your credit card details. What we retain is limited to: Stripe Customer ID, subscription plan details, billing address, and payment history (invoice amounts and dates). See <a href="https://stripe.com/privacy" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Stripe's Privacy Policy</a> for how they handle payment data.</p>
             </Sub>
             <Sub title="2.6 AI Growth Agent Data">

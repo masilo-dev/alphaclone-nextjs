@@ -381,19 +381,29 @@ async function fetchWikidataLeads(
   });
 }
 
-/** Optional free DuckDuckGo HTML scrape when Firecrawl is unavailable. */
+function extractPhoneAndEmailFromText(text: string): { phone: string; email: string } {
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  return {
+    phone: phoneMatch ? phoneMatch[0] : '',
+    email: emailMatch ? emailMatch[0] : '',
+  };
+}
+
+/** Optional free DuckDuckGo HTML scrape when Firecrawl or OSM are unavailable. */
 async function fetchDuckDuckGoLeads(
   niche: string,
   location: string,
-  limit = 10
+  limit = 20
 ): Promise<LeadResult[]> {
-  const query = `${niche} ${location} contact phone website`;
+  const query = `"${niche}" "${location}" contact phone website`;
   try {
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'AlphaClone-LeadFinder/3.0 (support@alphaclonesystems.com)',
-        Accept: 'text/html',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
       },
       signal: AbortSignal.timeout(10000),
     });
@@ -409,31 +419,41 @@ async function fetchDuckDuckGoLeads(
       const href = $(el).find('.result__a, a.result__a').first().attr('href') || '';
       const snippet = $(el).find('.result__snippet').text().trim();
       if (!title || title.length < 3) return;
-      // Skip obvious non-business SERP noise
-      if (/wikipedia|facebook\.com\/login|linkedin\.com\/pub/i.test(href + title)) return;
+      if (/wikipedia\.org|facebook\.com\/login|linkedin\.com\/pub/i.test(href + title)) return;
 
       let website = '';
       try {
-        const u = new URL(href.startsWith('http') ? href : `https://${href}`);
-        // DuckDuckGo redirect links
+        const fullUrl = href.startsWith('//')
+          ? `https:${href}`
+          : href.startsWith('/')
+          ? `https://html.duckduckgo.com${href}`
+          : href;
+        const u = new URL(fullUrl);
         const uddg = u.searchParams.get('uddg');
-        website = uddg || (u.hostname.includes('duckduckgo') ? '' : u.origin);
+        if (uddg) {
+          website = uddg;
+        } else if (!u.hostname.includes('duckduckgo.com')) {
+          website = u.origin;
+        }
       } catch {
         website = '';
       }
 
+      const { phone, email } = extractPhoneAndEmailFromText(`${title} ${snippet}`);
+      const cleanTitle = title.replace(/\s*[-|].*$/, '').slice(0, 120);
+
       leads.push({
-        business_name: title.replace(/\s*[-|].*$/, '').slice(0, 120),
+        business_name: cleanTitle,
         website,
-        snippet: snippet.slice(0, 200) || 'Web result',
-        source_id: makeTraceableSourceId('browser', `${title}:${website || href}`),
+        snippet: snippet.slice(0, 200) || `${niche} in ${location}`,
+        source_id: makeTraceableSourceId('browser', `${cleanTitle}:${website || href}`),
         source_url: website || href,
-        phone: '',
-        email: '',
+        phone,
+        email,
         address: location,
         category: niche,
         source: 'browser',
-        hasContact: Boolean(website),
+        hasContact: Boolean(phone || email || website),
       });
     });
 
@@ -481,9 +501,10 @@ export async function runLeadStep(input: {
 
   if (input.step === 'init') {
     try {
-      const [osmRes, wikiRes, firecrawlRes, browserRes] = await Promise.allSettled([
+      const [osmRes, wikiRes, ddgRes, firecrawlRes, browserRes] = await Promise.allSettled([
         fetchOpenStreetMap(input.niche, input.location, LEADS_PER_SEARCH, input.radiusKm),
         fetchWikidataLeads(input.niche, input.location, 10),
+        fetchDuckDuckGoLeads(input.niche, input.location, 15),
         import('@/services/firecrawlService')
           .then((m) =>
             m.firecrawlService.searchLeads(
@@ -514,16 +535,14 @@ export async function runLeadStep(input: {
         sourceStats.wikidata = wikiRes.value.length;
       }
 
+      if (ddgRes.status === 'fulfilled' && ddgRes.value.length) {
+        partial.push(...enrichWithContactFlag(ddgRes.value));
+        sourceStats.browser = (sourceStats.browser || 0) + ddgRes.value.length;
+      }
+
       if (firecrawlRes.status === 'fulfilled' && Array.isArray(firecrawlRes.value) && firecrawlRes.value.length) {
         partial.push(...enrichWithContactFlag(firecrawlRes.value as LeadResult[]));
         sourceStats.firecrawl = firecrawlRes.value.length;
-      } else if (sourceStats.firecrawl === 0) {
-        // Free DuckDuckGo fallback when Firecrawl is missing/empty
-        const ddg = await fetchDuckDuckGoLeads(input.niche, input.location, 8);
-        if (ddg.length) {
-          partial.push(...enrichWithContactFlag(ddg));
-          sourceStats.browser = (sourceStats.browser || 0) + ddg.length;
-        }
       }
 
       if (browserRes.status === 'fulfilled') {

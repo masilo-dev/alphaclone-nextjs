@@ -157,7 +157,10 @@ export const CANONICAL_SOCIAL_MCP_TOOLS = [
   'get_linkedin_identities',
   'upload_media',
   'get_media',
+  'get_media_asset',
+  'list_media_assets',
   'delete_media',
+  'delete_media_asset',
   'create_social_post',
   'create_social_post_with_media',
   'publish_social_post',
@@ -169,8 +172,18 @@ export const CANONICAL_SOCIAL_MCP_TOOLS = [
   'retry_social_post',
   'delete_social_post',
   'get_social_post_insights',
+  'publish_facebook_photo',
+  'publish_facebook_album',
+  'publish_facebook_video',
+  'publish_linkedin_image',
+  'publish_linkedin_document',
+  'publish_instagram_photo',
+  'publish_instagram_reel',
+  'publish_instagram_carousel',
+  'publish_x_image',
+  'publish_x_video',
 ] as const;
 
 export type CanonicalSocialMcpTool = (typeof CANONICAL_SOCIAL_MCP_TOOLS)[number];
 
-export const SOCIAL_PUBLISH_TOOL_CATALOG_VERSION = 'social-publishing-2.1';
+export const SOCIAL_PUBLISH_TOOL_CATALOG_VERSION = 'social-publishing-3.0';

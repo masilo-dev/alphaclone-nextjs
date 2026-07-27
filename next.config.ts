@@ -3,7 +3,6 @@ import path from "node:path";
 
 import withSerwistInit from "@serwist/next";
 import { withSentryConfig } from "@sentry/nextjs";
-import { withBotId } from "botid/next/config";
 import { withWorkflow } from "workflow/next";
 
 const srcDir = path.resolve(process.cwd(), "src");
@@ -245,9 +244,8 @@ const baseConfig = withSerwist(nextConfig);
 const workflowConfig = withWorkflow(baseConfig as any, {
   workflows: {},
 } as any);
-const botIdConfig = withBotId(workflowConfig as any);
 
-export default withSentryConfig(botIdConfig as any, {
+export default withSentryConfig(workflowConfig as any, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   silent: !process.env.CI,

@@ -3,7 +3,12 @@ import { decrypt, encrypt } from '@/lib/encryption';
 import { isProduction } from '@/lib/security/productionGuard';
 
 export function getIntegrationEncryptionSecret(): string | null {
-  const secret = ENV.ENCRYPTION_SECRET || ENV.ZOHO_ENCRYPTION_SECRET || null;
+  const secret =
+    ENV.ENCRYPTION_SECRET ||
+    ENV.ZOHO_ENCRYPTION_SECRET ||
+    process.env.INTEGRATION_TOKEN_ENCRYPTION_SECRET ||
+    process.env.TOKEN_ENCRYPTION_SECRET ||
+    null;
   return secret && secret.length === 32 ? secret : null;
 }
 

@@ -53,8 +53,9 @@ async function registerAndUploadLinkedInMedia(
   accessToken: string,
   author: string,
   mediaUrl: string,
-  isVideo: boolean
+  mediaKind: 'image' | 'video' | 'document'
 ): Promise<string> {
+  const isVideo = mediaKind === 'video';
   const mediaFetch = await fetchWithTimeout(mediaUrl, { method: 'GET' }, isVideo ? 60000 : 25000);
   if (!mediaFetch.ok) {
     throw new Error(`Could not download media URL (${mediaFetch.status})`);
@@ -70,7 +71,11 @@ async function registerAndUploadLinkedInMedia(
       body: JSON.stringify({
         registerUploadRequest: {
           recipes: [
-            isVideo ? 'urn:li:digitalmediaRecipe:feedshare-video' : 'urn:li:digitalmediaRecipe:feedshare-image',
+            mediaKind === 'video'
+              ? 'urn:li:digitalmediaRecipe:feedshare-video'
+              : mediaKind === 'document'
+                ? 'urn:li:digitalmediaRecipe:feedshare-document'
+                : 'urn:li:digitalmediaRecipe:feedshare-image',
           ],
           owner: author,
           serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
@@ -207,18 +212,29 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
       : [];
     const hasMedia = mediaUrls.length > 0;
 
-    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' | 'VIDEO' = 'NONE';
+    let shareMediaCategory: 'NONE' | 'ARTICLE' | 'IMAGE' | 'VIDEO' | 'DOCUMENT' = 'NONE';
     let media: Array<Record<string, unknown>> = [];
 
     if (hasMedia) {
       const firstMediaUrl = mediaUrls[0];
       const isVideo = /\.(mp4|mov|avi|webm|mkv)(\?|$)/i.test(firstMediaUrl);
-      if (isVideo) {
+      const isDocument = /\.pdf(\?|$)/i.test(firstMediaUrl);
+      if (isDocument) {
+        if (mediaUrls.length !== 1) throw new Error('LinkedIn document posts support one PDF');
         const assetUrn = await registerAndUploadLinkedInMedia(
           integration.accessToken,
           authorUrn,
           firstMediaUrl,
-          true
+          'document'
+        );
+        shareMediaCategory = 'DOCUMENT';
+        media = [{ status: 'READY', media: assetUrn, title: { text: 'Alphaclone Document' } }];
+      } else if (isVideo) {
+        const assetUrn = await registerAndUploadLinkedInMedia(
+          integration.accessToken,
+          authorUrn,
+          firstMediaUrl,
+          'video'
         );
         shareMediaCategory = 'VIDEO';
         media = [{ status: 'READY', media: assetUrn, title: { text: 'AlphaClone Video' } }];
@@ -229,7 +245,7 @@ export async function publishLinkedInPost(postId: string): Promise<LinkedInPubli
             integration.accessToken,
             authorUrn,
             mediaUrls[i],
-            false
+            'image'
           );
           media.push({
             status: 'READY',

@@ -182,16 +182,24 @@ export async function runPlatformAudit(params: {
 
   // ── Integrations ───────────────────────────────────────────────────────
   const integFindingsBefore = findings.length;
-  const { data: integrations } = await supabase
-    .from('integrations')
-    .select('type, enabled, config, updated_at')
-    .eq('tenant_id', params.tenantId);
+  const [integrationsRes, tenantIntegRes, tenantRes] = await Promise.all([
+    supabase.from('integrations').select('type, enabled').eq('tenant_id', params.tenantId),
+    supabase.from('tenant_integrations').select('integration_id, status').eq('tenant_id', params.tenantId).eq('status', 'connected'),
+    supabase.from('tenants').select('settings').eq('id', params.tenantId).maybeSingle(),
+  ]);
 
-  const connectedTypes = new Set(
-    (integrations || [])
-      .filter((i: any) => i.enabled !== false)
-      .map((i: any) => String(i.type || '').toLowerCase())
-  );
+  const connectedTypes = new Set<string>();
+  (integrationsRes.data || []).forEach((i: any) => {
+    if (i.enabled !== false && i.type) connectedTypes.add(String(i.type).toLowerCase());
+  });
+  (tenantIntegRes.data || []).forEach((i: any) => {
+    if (i.integration_id) connectedTypes.add(String(i.integration_id).toLowerCase());
+  });
+  const settings = (tenantRes.data?.settings || {}) as Record<string, any>;
+  if (settings.calendly?.enabled || settings.calendly?.calendlyUserUri) connectedTypes.add('calendly');
+  if (settings.google_calendar || settings.googleCalendar) connectedTypes.add('google_calendar');
+  if (settings.gmail || settings.google_gmail) connectedTypes.add('gmail');
+  if (settings.zoho || settings.zoho_mail) connectedTypes.add('zoho');
 
   // Env-backed platform integrations
   const envIntegrationStatus: Record<string, boolean> = {

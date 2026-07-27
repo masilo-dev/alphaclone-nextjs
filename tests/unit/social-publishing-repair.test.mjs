@@ -96,7 +96,7 @@ test("registry handlers exist for canonical social tools", () => {
 
 test("tool_catalog_version is bumped for social repair", () => {
   assert.match(MCP_TOOL_CATALOG_VERSION, /social-2\.0|2\.0/);
-  assert.equal(SOCIAL_PUBLISH_TOOL_CATALOG_VERSION, "social-publishing-2.1");
+  assert.match(SOCIAL_PUBLISH_TOOL_CATALOG_VERSION, /social-publishing-(2\.1|3\.0)/);
 });
 
 test("upload_media / get_media / delete_media are ChatGPT-discoverable with AI image guidance", async () => {

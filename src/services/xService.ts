@@ -339,6 +339,17 @@ export const xService = {
         return data;
     },
 
+    async getTweet(tenantId: string, tweetId: string) {
+        const integration = await this.ensureValidAccessToken(tenantId);
+        const response = await fetch(`https://api.x.com/2/tweets/${encodeURIComponent(tweetId)}`, {
+            headers: { 'Authorization': `Bearer ${integration.access_token}` }
+        });
+        if (!response.ok) {
+            throw new Error(`X post verification failed (${response.status})`);
+        }
+        return response.json();
+    },
+
     /**
      * Send a Direct Message (v2)
      */

@@ -134,7 +134,7 @@ LIMIT ${Math.min(Math.max(limit, 1), 30)}
         'User-Agent': UA,
         Accept: 'application/sparql-results+json',
       },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) return [];
     const data = (await res.json()) as {

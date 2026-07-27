@@ -321,6 +321,69 @@ async function fetchGoogleMapsScrape(
   }
 }
 
+async function fetchWebPlacesFallback(
+  niche: string,
+  location: string,
+  maxResults = 20
+): Promise<MappedPlaceLead[]> {
+  try {
+    const query = `"${niche}" "${location}" contact phone website`;
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const { load } = await import('cheerio');
+    const $ = load(html);
+    const results: MappedPlaceLead[] = [];
+
+    $('.result, .web-result').each((_, el) => {
+      if (results.length >= maxResults) return;
+      const title = $(el).find('.result__a, a.result__a').first().text().trim();
+      const href = $(el).find('.result__a, a.result__a').first().attr('href') || '';
+      const snippet = $(el).find('.result__snippet').text().trim();
+      if (!title || title.length < 3) return;
+      if (/wikipedia\.org|facebook\.com\/login|linkedin\.com\/pub/i.test(href + title)) return;
+
+      let website = '';
+      try {
+        const fullUrl = href.startsWith('//')
+          ? `https:${href}`
+          : href.startsWith('/')
+          ? `https://html.duckduckgo.com${href}`
+          : href;
+        const u = new URL(fullUrl);
+        const uddg = u.searchParams.get('uddg');
+        website = uddg || (!u.hostname.includes('duckduckgo.com') ? u.origin : '');
+      } catch {
+        website = '';
+      }
+
+      const phoneMatch = `${title} ${snippet}`.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+
+      results.push({
+        placeId: `web-${Buffer.from(title).toString('base64').slice(0, 16)}`,
+        businessName: title.replace(/\s*[-|].*$/, '').slice(0, 120),
+        formattedAddress: location,
+        phone: phoneMatch ? phoneMatch[0] : '',
+        website,
+        industry: niche,
+        source: 'OpenStreetMap',
+      });
+    });
+
+    return results;
+  } catch {
+    return [];
+  }
+}
+
 // ─── Main service — same API surface as googlePlacesService ──────────────────
 export const freePlacesService = {
   /**
@@ -403,6 +466,19 @@ export const freePlacesService = {
         console.log(`[FreePlaces] Google Maps scrape: ${newScraped.length} unique results`);
       } catch (err) {
         console.warn('[FreePlaces] Google Maps scrape failed:', err);
+      }
+    }
+
+    // ── Source 4: Web Search Fallback (guarantees results even if OSM/Foursquare down) ──
+    if (allPlaces.length < maxResults) {
+      try {
+        const webPlaces = await fetchWebPlacesFallback(niche, location, maxResults - allPlaces.length);
+        const existingNames = new Set(allPlaces.map(p => p.businessName.toLowerCase()));
+        const newWeb = webPlaces.filter(p => !existingNames.has(p.businessName.toLowerCase()));
+        allPlaces.push(...newWeb);
+        console.log(`[FreePlaces] Web fallback: ${newWeb.length} unique results`);
+      } catch (err) {
+        console.warn('[FreePlaces] Web fallback failed:', err);
       }
     }
 

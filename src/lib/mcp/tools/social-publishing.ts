@@ -177,6 +177,9 @@ type MediaToolAsset = {
   status: string;
   width?: number | null;
   height?: number | null;
+  thumbnail_url?: string | null;
+  checksum?: string | null;
+  provider?: string | null;
 };
 
 /** ChatGPT / Claude / connector-friendly media envelope. */
@@ -188,6 +191,9 @@ function mediaToolResult(asset: MediaToolAsset) {
     media_asset_id: asset.id,
     media_url: asset.url,
     public_url: asset.url,
+    asset_id: asset.id,
+    thumbnail_url: asset.thumbnail_url || null,
+    provider: asset.provider || 'supabase',
     asset,
   };
 }
@@ -396,6 +402,90 @@ registerTool('social-publishing', {
 });
 
 registerTool('social-publishing', {
+  name: 'get_media_asset',
+  description: 'Return tenant-scoped social asset metadata, dimensions, URL, checksum and readiness.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    asset_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: { asset_id: { type: 'string', format: 'uuid' } },
+    required: ['asset_id'],
+  },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:read');
+    const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+    const asset = await ingestMediaInput({
+      tenantId,
+      userId,
+      media: { type: 'asset_id', assetId: args.asset_id },
+    });
+    return mediaToolResult({
+      id: asset.id,
+      filename: asset.filename,
+      mime_type: asset.mime_type,
+      size_bytes: asset.size_bytes,
+      url: asset.url,
+      status: asset.status,
+      width: asset.width,
+      height: asset.height,
+      checksum: asset.checksum,
+    });
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'list_media_assets',
+  description: 'List tenant-scoped social assets filtered by images, videos, or documents.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    type: z.enum(['all', 'images', 'videos', 'documents']).optional().default('all'),
+    limit: z.number().int().min(1).max(100).optional().default(25),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      type: { type: 'string', enum: ['all', 'images', 'videos', 'documents'] },
+      limit: { type: 'number', minimum: 1, maximum: 100 },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const { tenantId } = await requireSocialAuth(args, ctx, 'social:read');
+    const supabase = createSupabaseAdminClient();
+    let query = supabase
+      .from('media_assets')
+      .select('id, file_name, file_type, asset_type, file_size_bytes, public_url, thumbnail_url, width, height, checksum_sha256, storage_provider, status, created_at')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(args.limit || 25);
+    if (args.type === 'images') query = query.in('asset_type', ['image', 'gif']);
+    if (args.type === 'videos') query = query.eq('asset_type', 'video');
+    if (args.type === 'documents') query = query.eq('asset_type', 'document');
+    const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return {
+      assets: (data || []).map((row) => ({
+        asset_id: row.id,
+        filename: row.file_name,
+        mime_type: row.file_type,
+        asset_type: row.asset_type,
+        size_bytes: row.file_size_bytes,
+        media_url: row.public_url,
+        thumbnail_url: row.thumbnail_url || null,
+        width: row.width,
+        height: row.height,
+        checksum: row.checksum_sha256,
+        provider: row.storage_provider || 'supabase',
+        status: row.status || 'ready',
+        created_at: row.created_at,
+      })),
+    };
+  },
+});
+
+registerTool('social-publishing', {
   name: 'delete_media',
   description:
     'Delete a tenant-scoped media asset from Alphaclone storage and the media library. Cannot delete another tenant’s files.',
@@ -453,6 +543,28 @@ registerTool('social-publishing', {
       media_asset_id: assetId,
       media_url: asset.public_url || null,
     };
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'delete_media_asset',
+  description: 'Safely delete an unused tenant-owned media asset and its storage object.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    asset_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: { asset_id: { type: 'string', format: 'uuid' } },
+    required: ['asset_id'],
+  },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
+    const { executeTool } = await import('../tool-registry');
+    return executeTool(tenantId, userId, 'delete_media', {
+      tenant_id: tenantId,
+      asset_id: args.asset_id,
+    });
   },
 });
 
@@ -776,7 +888,7 @@ registerTool('social-publishing', {
 
 registerTool('social-publishing', {
   name: 'create_social_post_with_media',
-  description: 'Upload base64 media then create/publish a social post in one call.',
+  description: 'Create, schedule, or publish a social post using existing asset_ids; base64 upload remains supported for one-step AI image transfer.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(),
     caption: z.string().min(1),
@@ -785,6 +897,7 @@ registerTool('social-publishing', {
     mime_type: z.string(),
     content_base64: z.string().optional(),
     file_base64: z.string().optional(),
+    asset_ids: z.array(z.string().uuid()).min(1).max(10).optional(),
     platform: z.enum(['facebook', 'linkedin']).optional(),
     platforms: z.array(z.string()).optional(),
     identity_type: z
@@ -805,6 +918,7 @@ registerTool('social-publishing', {
       mime_type: { type: 'string' },
       content_base64: { type: 'string' },
       file_base64: { type: 'string' },
+      asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
       platform: { type: 'string', enum: ['facebook', 'linkedin'] },
       platforms: { type: 'array', items: { type: 'string' } },
       identity_type: {
@@ -821,6 +935,23 @@ registerTool('social-publishing', {
   },
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+    if (args.asset_ids?.length) {
+      const { executeTool } = await import('../tool-registry');
+      return executeTool(tenantId, userId, 'create_social_post', {
+        tenant_id: tenantId,
+        platform: args.platform,
+        platforms: args.platforms,
+        identity_type: args.identity_type,
+        identity_id: args.identity_id,
+        page_id: args.page_id,
+        linkedin_organization_id: args.linkedin_organization_id,
+        caption: args.caption,
+        media_asset_ids: args.asset_ids,
+        publish_now: args.publish_now,
+        scheduled_at: args.scheduled_at,
+      });
+    }
+
     const filename = args.filename || args.file_name || 'upload.bin';
     const contentBase64 = args.content_base64 || args.file_base64;
     if (!contentBase64) throw new Error('content_base64 (or file_base64) is required');
@@ -1179,6 +1310,210 @@ defineConnectorTool({
     return result.data;
   },
 });
+
+const assetPublishSchema = z.object({
+  tenant_id: z.string().uuid().optional(),
+  identity_id: z.string().optional(),
+  identity_type: z.enum(['facebook_page', 'linkedin_person', 'linkedin_organization']).optional(),
+  content: z.string().min(1),
+  asset_ids: z.array(z.string().uuid()).min(1).max(10),
+  publish_now: z.boolean().optional().default(true),
+  scheduled_at: z.string().datetime().optional(),
+  idempotency_key: z.string().optional(),
+});
+
+const assetPublishJsonSchema = {
+  type: 'object',
+  properties: {
+    identity_id: { type: 'string' },
+    identity_type: {
+      type: 'string',
+      enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
+    },
+    content: { type: 'string' },
+    asset_ids: {
+      type: 'array',
+      minItems: 1,
+      maxItems: 10,
+      items: { type: 'string', format: 'uuid' },
+    },
+    publish_now: { type: 'boolean' },
+    scheduled_at: { type: 'string', format: 'date-time' },
+    idempotency_key: { type: 'string' },
+  },
+  required: ['content', 'asset_ids'],
+};
+
+function registerCanonicalAssetPublisher(input: {
+  name: string;
+  description: string;
+  platform: 'facebook' | 'linkedin';
+  identityType: 'facebook_page' | 'linkedin_person' | 'linkedin_organization';
+  minAssets?: number;
+  maxAssets?: number;
+  requiredFamily: 'image' | 'video' | 'document';
+}) {
+  registerTool('social-publishing', {
+    name: input.name,
+    description: input.description,
+    inputSchema: assetPublishSchema,
+    jsonSchema: assetPublishJsonSchema,
+    handler: async (args, ctx) => {
+      const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+      const min = input.minAssets || 1;
+      const max = input.maxAssets || 1;
+      if (args.asset_ids.length < min || args.asset_ids.length > max) {
+        throw new Error(`${input.name} requires ${min === max ? min : `${min}–${max}`} asset(s)`);
+      }
+      const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+      const assets = await Promise.all(
+        args.asset_ids.map((assetId) =>
+          ingestMediaInput({ tenantId, userId, media: { type: 'asset_id', assetId } })
+        )
+      );
+      for (const asset of assets) {
+        const family = asset.mime_type.startsWith('image/')
+          ? 'image'
+          : asset.mime_type.startsWith('video/')
+            ? 'video'
+            : asset.mime_type === 'application/pdf'
+              ? 'document'
+              : 'unsupported';
+        if (family !== input.requiredFamily) {
+          throw new Error(`${input.name} requires ${input.requiredFamily} assets`);
+        }
+      }
+      const { resolveTenantIdentityForPublish } = await import('@/lib/social/socialIdentityStore');
+      const requestedIdentityType =
+        input.platform === 'linkedin' && args.identity_type === 'linkedin_organization'
+          ? 'linkedin_organization'
+          : input.identityType;
+      const identity = await resolveTenantIdentityForPublish({
+        tenantId,
+        identityId: args.identity_id,
+        identityType: requestedIdentityType,
+        provider: input.platform,
+        allowDefault: !args.identity_id,
+      });
+      const service = getSocialPublishingService();
+      const result = await service.publish({
+        tenantId,
+        userId,
+        platform: input.platform,
+        identityType: requestedIdentityType,
+        identityId: identity.provider_identity_id,
+        caption: args.content,
+        mediaAssetIds: args.asset_ids,
+        publishNow: args.publish_now !== false,
+        scheduledAt: args.scheduled_at,
+        idempotencyKey: args.idempotency_key,
+        aiClient: 'mcp',
+      });
+      if (!result.ok) throw new Error(result.error?.message || `${input.name} failed`);
+      return toMcpContent(okResult(input.name, result.data, { receipt: result.receipt }));
+    },
+  });
+}
+
+registerCanonicalAssetPublisher({
+  name: 'publish_facebook_photo',
+  description: 'Publish one tenant-owned image asset to a connected Facebook Page.',
+  platform: 'facebook',
+  identityType: 'facebook_page',
+  requiredFamily: 'image',
+});
+registerCanonicalAssetPublisher({
+  name: 'publish_facebook_album',
+  description: 'Publish 2–10 tenant-owned image assets as one Facebook multi-photo post.',
+  platform: 'facebook',
+  identityType: 'facebook_page',
+  minAssets: 2,
+  maxAssets: 10,
+  requiredFamily: 'image',
+});
+registerCanonicalAssetPublisher({
+  name: 'publish_facebook_video',
+  description: 'Publish one tenant-owned video asset to a connected Facebook Page.',
+  platform: 'facebook',
+  identityType: 'facebook_page',
+  requiredFamily: 'video',
+});
+registerCanonicalAssetPublisher({
+  name: 'publish_linkedin_image',
+  description: 'Publish one tenant-owned image asset to a LinkedIn person or organization identity.',
+  platform: 'linkedin',
+  identityType: 'linkedin_person',
+  requiredFamily: 'image',
+});
+registerCanonicalAssetPublisher({
+  name: 'publish_linkedin_document',
+  description: 'Upload and publish one tenant-owned PDF document to LinkedIn.',
+  platform: 'linkedin',
+  identityType: 'linkedin_person',
+  requiredFamily: 'document',
+});
+
+for (const providerTool of [
+  ['publish_instagram_photo', 'photo'],
+  ['publish_instagram_reel', 'reel'],
+  ['publish_instagram_carousel', 'carousel'],
+] as const) {
+  registerTool('social-publishing', {
+    name: providerTool[0],
+    description: `Publish tenant-owned asset IDs as an Instagram ${providerTool[1]} and verify the provider media ID.`,
+    inputSchema: assetPublishSchema,
+    jsonSchema: assetPublishJsonSchema,
+    handler: async (args, ctx) => {
+      const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+      if (args.scheduled_at || args.publish_now === false) {
+        throw new Error('Instagram provider scheduling is not enabled for this direct tool; create a scheduled social post instead');
+      }
+      const { publishInstagramAssets } = await import('@/lib/social/providerAssetPublishers');
+      return publishInstagramAssets({
+        tenantId,
+        userId,
+        assetIds: args.asset_ids,
+        caption: args.content,
+        mode: providerTool[1],
+        instagramAccountId: args.identity_id,
+      });
+    },
+  });
+}
+
+for (const providerTool of ['publish_x_image', 'publish_x_video'] as const) {
+  registerTool('social-publishing', {
+    name: providerTool,
+    description: `Upload tenant-owned ${providerTool.endsWith('video') ? 'video' : 'image'} assets to X, publish the post, and verify its provider ID.`,
+    inputSchema: assetPublishSchema,
+    jsonSchema: assetPublishJsonSchema,
+    handler: async (args, ctx) => {
+      const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:publish');
+      if (args.scheduled_at || args.publish_now === false) {
+        throw new Error('X provider scheduling is not enabled for this direct tool; create a scheduled social post instead');
+      }
+      const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+      const expected = providerTool.endsWith('video') ? 'video/' : 'image/';
+      for (const assetId of args.asset_ids) {
+        const asset = await ingestMediaInput({
+          tenantId,
+          userId,
+          media: { type: 'asset_id', assetId },
+        });
+        if (!asset.mime_type.startsWith(expected)) {
+          throw new Error(`${providerTool} requires ${expected.slice(0, -1)} assets`);
+        }
+      }
+      const { publishXAssets } = await import('@/lib/social/providerAssetPublishers');
+      return publishXAssets({
+        tenantId,
+        userId,
+        assetIds: args.asset_ids,
+        content: args.content,
+      });
+    },
+  });
+}
 
 export { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION };
 
