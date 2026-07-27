@@ -39,18 +39,18 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
         aria-label="Close module catalogue"
         onClick={onClose}
       />
-      <div className="relative mt-auto max-h-[88dvh] flex flex-col rounded-t-2xl border border-[var(--ws-border)] bg-[var(--app-surface,#1e1e1e)] shadow-2xl pb-safe">
+      <div className="relative mt-auto max-h-[88dvh] flex flex-col rounded-t-2xl border border-[var(--border-default)] bg-[var(--surface-elevated)] shadow-2xl pb-safe">
         <div className="flex items-center justify-between px-4 pt-4 pb-2 border-b border-[var(--ws-border)]">
           <div>
-            <h2 id="mobile-more-title" className="text-base font-semibold text-white">
+            <h2 id="mobile-more-title" className="text-base font-semibold text-[var(--text-primary)]">
               More modules
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Grouped by what you need to get done</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Grouped by what you need to get done</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-slate-400 hover:text-white hover:bg-white/5')}
+            className={cn(ENTERPRISE.touchTarget, 'rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)]')}
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -62,7 +62,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
             <section key={group.id} aria-labelledby={`more-group-${group.id}`}>
               <h3
                 id={`more-group-${group.id}`}
-                className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2"
+                className="text-[11px] font-semibold tracking-wide text-[var(--text-muted)] mb-2"
               >
                 {group.label}
               </h3>
@@ -74,10 +74,10 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
                       <button
                         type="button"
                         onClick={() => go(item.href)}
-                        className="w-full flex items-center gap-3 min-h-12 px-3 rounded-xl text-left text-sm text-slate-200 hover:bg-white/5 active:bg-white/10"
+                        className="w-full flex items-center gap-3 min-h-12 px-3 rounded-[10px] text-left text-sm text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
                       >
-                        <span className="w-9 h-9 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center shrink-0">
-                          <Icon className="w-4 h-4 text-teal-400" aria-hidden />
+                        <span className="w-9 h-9 rounded-lg bg-[color-mix(in_srgb,var(--interactive-secondary)_12%,transparent)] border border-[color-mix(in_srgb,var(--interactive-secondary)_24%,transparent)] flex items-center justify-center shrink-0">
+                          <Icon className="w-4 h-4 text-[var(--interactive-secondary)]" aria-hidden />
                         </span>
                         <span className="font-medium">{item.label}</span>
                       </button>

@@ -57,11 +57,6 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                setIsOpen(true);
-                setTimeout(() => inputRef.current?.focus(), 100);
-            }
             if (e.key === 'Escape') {
                 setIsOpen(false);
                 setQuery('');
@@ -152,7 +147,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                 <div className="relative h-4 w-4 opacity-70 transition-opacity group-hover:opacity-100">
                     <Image
                         src="/logo.png"
-                        alt="AlphaClone"
+                        alt="Alphaclone Systems"
                         fill
                         sizes="40px"
                         className="object-contain"
@@ -160,7 +155,7 @@ const EnhancedGlobalSearch: React.FC<EnhancedGlobalSearchProps> = ({ user, onNav
                 </div>
                 <span className="hidden text-sm font-medium sm:inline">Search anything...</span>
                 <kbd className="ml-auto hidden rounded-lg border border-white/5 bg-black/20 px-2 py-0.5 text-xs text-slate-400 sm:inline-block">
-                    ⌘K
+                    Search
                 </kbd>
             </button>
         );

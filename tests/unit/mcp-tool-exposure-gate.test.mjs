@@ -48,7 +48,7 @@ test("ToolPolicyGate enforces human oversight for high-risk tools (source)", asy
   assert.match(src, /requiresApproval/);
 });
 
-test("unified tools/list returns bounded progressive catalog for internal client", async () => {
+test("unified tools/list exposes the compact full catalog for internal client", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: false,
@@ -57,7 +57,7 @@ test("unified tools/list returns bounded progressive catalog for internal client
     clientLabel: "internal",
     userAgent: null,
   });
-  assert.ok(tools.length >= 20 && tools.length <= 40, `expected 20-40 core tools, got ${tools.length}`);
+  assert.ok(tools.length >= 79, `expected full platform catalog, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
   for (const required of [
     "search_tools",
@@ -69,7 +69,7 @@ test("unified tools/list returns bounded progressive catalog for internal client
   }
 });
 
-test("Claude OAuth client gets compacted progressive catalog", async () => {
+test("Claude OAuth client gets compacted full catalog", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
@@ -78,10 +78,7 @@ test("Claude OAuth client gets compacted progressive catalog", async () => {
     clientLabel: "claude.ai",
     userAgent: "Claude-User",
   });
-  assert.ok(
-    tools.length >= 20 && tools.length <= 40,
-    `expected progressive platform catalog, got ${tools.length}`,
-  );
+  assert.ok(tools.length >= 79, `expected full platform catalog, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
   for (const required of [
     "search_tools",
@@ -99,15 +96,12 @@ test("Claude OAuth client gets compacted progressive catalog", async () => {
   }
 });
 
-test("API-key path also gets progressive catalog by default", async () => {
+test("API-key path also gets the full catalog by default", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
     forceRefresh: true,
     clientId: null,
   });
-  assert.ok(
-    tools.length >= 20 && tools.length <= 40,
-    `expected progressive platform default, got ${tools.length}`,
-  );
+  assert.ok(tools.length >= 79, `expected full platform default, got ${tools.length}`);
 });

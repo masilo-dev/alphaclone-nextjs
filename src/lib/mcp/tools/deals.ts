@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { syncDealToUnified, logDealStageActivity } from '@/lib/crm/crmBridgeServer';
 import { emitBusinessEvent } from '@/lib/automation/emit-event';
 
 async function afterDealWrite(
@@ -10,6 +9,9 @@ async function afterDealWrite(
   dealId: string,
   options?: { stageChanged?: boolean; oldStage?: string; newStage?: string; userId?: string | null }
 ) {
+  const { syncDealToUnified, logDealStageActivity } = await import(
+    '@/lib/crm/crmBridgeServer'
+  );
   await syncDealToUnified(supabase, dealId, tenantId).catch((err) => {
     console.warn('[MCP deals] bridge sync failed:', err);
   });

@@ -28,6 +28,7 @@ import {
 } from '@/components/icons/alphaclone';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
+import { BacklitSurface } from '@/components/ui/os/BacklitSurface';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -350,15 +351,17 @@ export function OperatingSystemHome() {
             loading={loading}
           />
           <ModuleLauncher items={modules} />
-          <BonnieInsightCard
-            message={bonnieMessage}
-            actionLabel={attentionItems.length ? 'Review items' : 'Open Bonnie'}
-            href={
-              attentionItems.length
-                ? attentionItems[0].href
-                : '/dashboard/business/bonnie'
-            }
-          />
+          <BacklitSurface tone="teal" intensity="active">
+            <BonnieInsightCard
+              message={bonnieMessage}
+              actionLabel={attentionItems.length ? 'Review items' : 'Open Bonnie'}
+              href={
+                attentionItems.length
+                  ? attentionItems[0].href
+                  : '/dashboard/business/bonnie'
+              }
+            />
+          </BacklitSurface>
         </div>
         <TodayPanel items={todayItems} className="xl:sticky xl:top-4 h-fit" />
       </div>

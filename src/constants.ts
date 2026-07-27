@@ -45,8 +45,8 @@ import {
 } from 'lucide-react';
 import { NavItem, DashboardStat } from './types';
 
-export const APP_NAME = "AlphaClone Systems";
-export const APP_SHORT_NAME = "AlphaClone";
+export const APP_NAME = "Alphaclone Systems";
+export const APP_SHORT_NAME = "Alphaclone";
 export const APP_TAGLINE = "Your business operating system";
 
 /** Platform Calendly link for sales/demo calls (marketing + dashboard). */
@@ -132,10 +132,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 // --- TENANT_ADMIN NAVIGATION (purpose groups: Customers → Settings + Bonnie) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/dashboard', icon: Zap },
-  { label: 'Bonnie', href: '/dashboard/business/bonnie', icon: Brain },
 
   {
-    label: 'Customers',
+    label: 'Relationships',
     href: '#',
     icon: Users,
     subItems: [
@@ -161,7 +160,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Marketing',
+    label: 'Growth',
     href: '#',
     icon: Globe,
     subItems: [
@@ -195,10 +194,9 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
       { label: 'Projects', href: '/dashboard/business/projects', icon: Layers },
-      { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
-      { label: 'Workflows', href: '/dashboard/business/workflows', icon: Zap },
-      { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
-      { label: 'Executive view', href: '/dashboard/executive', icon: BarChart3 },
+      { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
+      { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
+      { label: 'Booking links', href: '/dashboard/business/booking', icon: Clock },
     ],
   },
 
@@ -215,7 +213,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Files',
+    label: 'Knowledge',
     href: '#',
     icon: FolderOpen,
     subItems: [
@@ -226,18 +224,20 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Schedule',
+    label: 'Intelligence',
     href: '#',
-    icon: Clock,
+    icon: Brain,
     subItems: [
-      { label: 'Calendar', href: '/dashboard/business/calendar', icon: Calendar },
-      { label: 'Booking links', href: '/dashboard/business/booking', icon: Clock },
-      { label: 'Meetings', href: '/dashboard/business/meetings', icon: Video },
+      { label: 'Bonnie AI', href: '/dashboard/business/bonnie', icon: Brain },
+      { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },
+      { label: 'Automations', href: '/dashboard/business/workflows', icon: Zap },
+      { label: 'Analytics', href: '/dashboard/analytics', icon: Activity },
+      { label: 'Executive view', href: '/dashboard/executive', icon: BarChart3 },
     ],
   },
 
   {
-    label: 'Settings',
+    label: 'Administration',
     href: '#',
     icon: Settings,
     subItems: [

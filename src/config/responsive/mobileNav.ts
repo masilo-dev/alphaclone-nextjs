@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
-  Inbox,
+  Sparkles,
   Target,
   TrendingUp,
   FileText,
@@ -27,7 +27,7 @@ import {
 import type { UserRole } from '@/types';
 
 export interface MobileBottomDestination {
-  id: 'home' | 'customers' | 'work' | 'inbox' | 'more';
+  id: 'home' | 'crm' | 'work' | 'bonnie' | 'more';
   label: string;
   icon: LucideIcon;
   hrefForRole: (role: UserRole) => string;
@@ -56,8 +56,8 @@ export const MOBILE_BOTTOM_DESTINATIONS: MobileBottomDestination[] = [
     matchPrefixesForRole: () => ['/dashboard'],
   },
   {
-    id: 'customers',
-    label: 'Customers',
+    id: 'crm',
+    label: 'CRM',
     icon: Users,
     hrefForRole: (role) =>
       role === 'tenant_admin' || role === 'business_dashboard'
@@ -92,19 +92,14 @@ export const MOBILE_BOTTOM_DESTINATIONS: MobileBottomDestination[] = [
     ],
   },
   {
-    id: 'inbox',
-    label: 'Inbox',
-    icon: Inbox,
-    hrefForRole: () => '/dashboard/comms',
-    matchPrefixesForRole: () => [
-      '/dashboard/comms',
-      '/dashboard/mail',
-      '/dashboard/messages',
-      '/dashboard/business/messages',
-      '/dashboard/business/tickets',
-      '/dashboard/tickets',
-      '/dashboard/business/whatsapp',
-    ],
+    id: 'bonnie',
+    label: 'Bonnie',
+    icon: Sparkles,
+    hrefForRole: (role) =>
+      role === 'tenant_admin' || role === 'business_dashboard'
+        ? '/dashboard/business/bonnie'
+        : '/dashboard/bonnie',
+    matchPrefixesForRole: () => ['/dashboard/bonnie', '/dashboard/business/bonnie'],
   },
   {
     id: 'more',
@@ -193,6 +188,7 @@ export function getMoreCatalogue(role: UserRole): MoreCatalogueGroup[] {
       id: 'operate',
       label: 'Operate',
       items: [
+        { label: 'Unified inbox', href: '/dashboard/comms', icon: Mail },
         {
           label: 'Reports',
           href: isTenant ? '/dashboard/business/reports' : '/dashboard/reporting',
@@ -226,7 +222,7 @@ export function isMobileBottomActive(
     return activeTab === '/dashboard' || activeTab === '/dashboard/business';
   }
   const prefixes = dest.matchPrefixesForRole(role);
-  if (dest.id === 'customers') {
+  if (dest.id === 'crm') {
     return prefixes.some(
       (p) =>
         activeTab === p ||

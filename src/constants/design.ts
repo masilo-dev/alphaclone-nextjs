@@ -195,7 +195,7 @@ export const ENTERPRISE = {
 } as const;
 
 /**
- * Alphaclone OS workspace chrome — navy sidebar, blue primary, violet Bonnie.
+ * Alphaclone Systems workspace chrome — navy structure, coral primary, teal intelligence.
  */
 export const WORKSPACE = {
   sidebar: {

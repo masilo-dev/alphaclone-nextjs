@@ -27,6 +27,41 @@
 }
 
 :root {
+  /* Alphaclone Systems semantic foundation */
+  --brand-navy: #212446;
+  --brand-teal: #4199A4;
+  --brand-coral: #FB7268;
+  --background-app: #F6F7F9;
+  --background-subtle: #EFF1F4;
+  --surface-primary: #FFFFFF;
+  --surface-secondary: #F9FAFB;
+  --surface-elevated: #FFFFFF;
+  --surface-hover: #F3F5F7;
+  --text-primary: #171923;
+  --text-secondary: #5F6472;
+  --text-muted: #747A88;
+  --text-inverse: #FFFFFF;
+  --border-subtle: rgba(33, 36, 70, 0.09);
+  --border-default: rgba(33, 36, 70, 0.14);
+  --border-strong: rgba(33, 36, 70, 0.24);
+  --interactive-primary: #FB7268;
+  --interactive-primary-hover: #F56359;
+  --interactive-secondary: #4199A4;
+  --interactive-secondary-hover: #388A94;
+  --success: #2E9B72;
+  --warning: #D99728;
+  --danger: #D85858;
+  --info: #4199A4;
+  --focus-ring: rgba(65, 153, 164, 0.35);
+  --backlight-idle-opacity: 0.03;
+  --backlight-hover-opacity: 0.07;
+  --backlight-active-opacity: 0.12;
+  --backlight-focus-opacity: 0.15;
+  --duration-fast: 120ms;
+  --duration-standard: 200ms;
+  --duration-slow: 320ms;
+  --duration-ambient: 45000ms;
+
   /* Alphaclone OS brand */
   --brand-blue-50: #EEF4FF;
   --brand-blue-100: #DCE8FF;
@@ -108,6 +143,31 @@
 .dark,
 .ac-business-root {
   --surface-1: rgba(30, 41, 59, 0.65);
+}
+
+html.dark {
+  --background-app: #0D0F18;
+  --background-subtle: #121520;
+  --surface-primary: #171A26;
+  --surface-secondary: #1B1E2B;
+  --surface-elevated: #202432;
+  --surface-hover: #252936;
+  --text-primary: #F7F8FB;
+  --text-secondary: #B9BDCA;
+  --text-muted: #9095A5;
+  --text-inverse: #171923;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --interactive-primary: #FB7268;
+  --interactive-primary-hover: #FF837A;
+  --interactive-secondary: #5AAAB3;
+  --interactive-secondary-hover: #71BBC3;
+  --success: #4DB48D;
+  --warning: #E5A84A;
+  --danger: #ED7070;
+  --info: #62B0B9;
+  --focus-ring: rgba(90, 170, 179, 0.42);
 }
 
 /* Marketing Theme Definitions */
@@ -1600,25 +1660,25 @@ html.pwa-standalone .pwa-page-title {
 /* ── Alphaclone OS workspace (dashboard shells) ── */
 .ac-dashboard-root,
 .ac-business-root {
-  --ws-sidebar: #090F1C;
-  --ws-canvas: #0A101D;
-  --ws-toolbar: rgba(14, 22, 37, 0.8);
-  --ws-panel: rgba(19, 27, 37, 0.6);
-  --ws-panel-hover: rgba(28, 38, 50, 0.72);
-  --ws-surface-primary: rgba(20, 28, 38, 0.62);
-  --ws-surface-secondary: rgba(27, 37, 49, 0.6);
-  --ws-surface-tertiary: rgba(34, 45, 58, 0.64);
-  --ws-border: #243147;
-  --ws-border-strong: #35445E;
-  --ws-hover: #1B2638;
-  --ws-active: #1D2D50;
-  --ws-text-primary: #F4F7FC;
-  --ws-text-secondary: #D3DEEC;
-  --ws-text-tertiary: #AEBED2;
-  --ws-text-muted: #A8B8CC;
-  --ws-text-disabled: #59667A;
-  --ws-radius: 8px;
-  --ws-radius-lg: 14px;
+  --ws-sidebar: #15182A;
+  --ws-canvas: var(--background-app);
+  --ws-toolbar: rgba(23, 26, 38, 0.88);
+  --ws-panel: rgba(23, 26, 38, 0.82);
+  --ws-panel-hover: rgba(37, 41, 54, 0.9);
+  --ws-surface-primary: var(--surface-primary);
+  --ws-surface-secondary: var(--surface-secondary);
+  --ws-surface-tertiary: var(--surface-elevated);
+  --ws-border: var(--border-default);
+  --ws-border-strong: var(--border-strong);
+  --ws-hover: var(--surface-hover);
+  --ws-active: color-mix(in srgb, var(--brand-teal) 16%, var(--surface-primary));
+  --ws-text-primary: var(--text-primary);
+  --ws-text-secondary: var(--text-secondary);
+  --ws-text-tertiary: var(--text-muted);
+  --ws-text-muted: var(--text-muted);
+  --ws-text-disabled: #656A78;
+  --ws-radius: 10px;
+  --ws-radius-lg: 16px;
   --ws-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
   --ws-card-shadow-hover: 0 8px 22px rgba(0, 0, 0, 0.28);
   --success-surface: #102A22;
@@ -1641,23 +1701,23 @@ html.pwa-standalone .pwa-page-title {
 html.light .ac-dashboard-root,
 html.light .ac-business-root {
   /* Sidebar stays deep navy in light mode */
-  --ws-sidebar: #10182D;
-  --ws-canvas: #F5F7FB;
-  --ws-toolbar: #FFFFFF;
-  --ws-panel: #FFFFFF;
-  --ws-panel-hover: #F8FAFD;
-  --ws-surface-primary: #FFFFFF;
-  --ws-surface-secondary: #F8FAFD;
-  --ws-surface-tertiary: #F0F3F8;
-  --ws-border: #E7EBF2;
-  --ws-border-strong: #D5DCE8;
-  --ws-hover: #F3F6FA;
-  --ws-active: #EEF3FF;
-  --ws-text-primary: #111827;
-  --ws-text-secondary: #536075;
-  --ws-text-tertiary: #7E899B;
-  --ws-text-muted: #7E899B;
-  --ws-text-disabled: #AAB2C0;
+  --ws-sidebar: #212446;
+  --ws-canvas: var(--background-app);
+  --ws-toolbar: rgba(255, 255, 255, 0.94);
+  --ws-panel: var(--surface-primary);
+  --ws-panel-hover: var(--surface-hover);
+  --ws-surface-primary: var(--surface-primary);
+  --ws-surface-secondary: var(--surface-secondary);
+  --ws-surface-tertiary: var(--background-subtle);
+  --ws-border: var(--border-default);
+  --ws-border-strong: var(--border-strong);
+  --ws-hover: var(--surface-hover);
+  --ws-active: #EAF3F4;
+  --ws-text-primary: var(--text-primary);
+  --ws-text-secondary: var(--text-secondary);
+  --ws-text-tertiary: var(--text-muted);
+  --ws-text-muted: var(--text-muted);
+  --ws-text-disabled: #A0A5B0;
   --ws-card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   --ws-card-shadow-hover: 0 6px 18px rgba(16, 24, 40, 0.07);
   --success-surface: #EAFBF3;
@@ -1683,9 +1743,17 @@ html.light .ac-business-root {
 .ac-dashboard-main.ac-workspace-canvas,
 .ac-business-scroll.ac-workspace-canvas {
   background:
-    radial-gradient(ellipse 66% 46% at 88% 4%, rgba(125, 211, 252, 0.16), transparent 72%),
-    radial-gradient(ellipse 50% 44% at 4% 78%, rgba(94, 234, 212, 0.08), transparent 74%),
-    linear-gradient(180deg, #0A1018 0%, #0C131C 48%, #090F17 100%);
+    radial-gradient(ellipse 62% 42% at 86% 3%, rgba(65, 153, 164, 0.10), transparent 74%),
+    radial-gradient(ellipse 38% 32% at 8% 88%, rgba(251, 114, 104, 0.035), transparent 76%),
+    linear-gradient(180deg, #0D0F18 0%, #10131E 52%, #0D0F18 100%);
+}
+
+html.light .ac-workspace-canvas,
+html.light .ac-dashboard-main.ac-workspace-canvas,
+html.light .ac-business-scroll.ac-workspace-canvas {
+  background:
+    radial-gradient(ellipse 58% 38% at 88% 2%, rgba(65, 153, 164, 0.045), transparent 76%),
+    linear-gradient(180deg, #F8F9FB 0%, var(--background-app) 100%);
 }
 
 .ac-workspace-toolbar,
@@ -1845,7 +1913,7 @@ html.light .ac-kpi-card--interactive:hover {
   bottom: 6px;
   width: 2px;
   border-radius: 2px;
-  background: var(--ac-accent);
+  background: var(--brand-teal);
 }
 
 .ac-workspace-nav-subitem {
@@ -1891,7 +1959,7 @@ html.light .ac-kpi-card--interactive:hover {
 
 .ac-workspace-tab--active {
   color: var(--ws-text-primary);
-  border-bottom-color: var(--ac-accent);
+  border-bottom-color: var(--brand-teal);
 }
 
 .ac-workspace-callout {
@@ -1922,25 +1990,68 @@ html.light .ac-kpi-card--interactive:hover {
 }
 
 .ac-workspace-action-btn--primary {
-  background: var(--brand-blue-500);
-  border-color: var(--brand-blue-500);
+  background: var(--interactive-primary);
+  border-color: var(--interactive-primary);
   color: #fff;
 }
 
 .ac-workspace-action-btn--primary:hover {
-  background: var(--brand-blue-600);
-  border-color: var(--brand-blue-600);
+  background: var(--interactive-primary-hover);
+  border-color: var(--interactive-primary-hover);
 }
 
 .ac-workspace-action-btn--bonnie {
-  background: var(--brand-violet-500);
-  border-color: var(--brand-violet-500);
+  background: var(--interactive-secondary);
+  border-color: var(--interactive-secondary);
   color: #fff;
 }
 
 .ac-workspace-action-btn--bonnie:hover {
-  background: var(--brand-violet-600);
-  border-color: var(--brand-violet-600);
+  background: var(--interactive-secondary-hover);
+  border-color: var(--interactive-secondary-hover);
+}
+
+.ac-backlit-surface {
+  position: relative;
+  isolation: isolate;
+}
+
+.ac-backlit-surface::before {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--ac-backlight-color, var(--brand-teal));
+  opacity: var(--backlight-idle-opacity);
+  filter: blur(34px);
+  transform: translateY(8px) scale(0.94);
+  pointer-events: none;
+  transition: opacity var(--duration-standard) ease-out;
+}
+
+.ac-backlit-surface[data-backlight-tone="coral"] {
+  --ac-backlight-color: var(--brand-coral);
+}
+
+.ac-backlit-surface[data-backlight-tone="navy"] {
+  --ac-backlight-color: var(--brand-navy);
+}
+
+.ac-backlit-surface[data-backlight-intensity="hover"]::before {
+  opacity: var(--backlight-hover-opacity);
+}
+
+.ac-backlit-surface[data-backlight-intensity="active"]::before {
+  opacity: var(--backlight-active-opacity);
+}
+
+.ac-backlit-surface[data-backlight-intensity="focus"]::before {
+  opacity: var(--backlight-focus-opacity);
+}
+
+html.light .ac-backlit-surface::before {
+  opacity: min(var(--backlight-idle-opacity), 0.02);
 }
 
 .ac-module-bonnie-action {
@@ -1980,6 +2091,31 @@ html.light .ac-business-root {
   color: var(--ws-text-primary);
 }
 
+/* Legacy utility compatibility inside light authenticated content.
+   Keep the permanently navy sidebar untouched. */
+html.light .ac-dashboard-main .text-white,
+html.light .ac-business-main .text-white,
+html.light .ac-dashboard-main .text-slate-200,
+html.light .ac-business-main .text-slate-200 {
+  color: var(--text-primary) !important;
+}
+
+html.light .ac-dashboard-main .text-slate-300,
+html.light .ac-business-main .text-slate-300,
+html.light .ac-dashboard-main .text-slate-400,
+html.light .ac-business-main .text-slate-400,
+html.light .ac-dashboard-main .text-slate-500,
+html.light .ac-business-main .text-slate-500 {
+  color: var(--text-secondary) !important;
+}
+
+html.light .ac-dashboard-main .bg-slate-950,
+html.light .ac-business-main .bg-slate-950,
+html.light .ac-dashboard-main .bg-slate-900,
+html.light .ac-business-main .bg-slate-900 {
+  background-color: var(--surface-primary) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ac-skeleton-pulse,
   .animate-pulse,
@@ -1990,5 +2126,9 @@ html.light .ac-business-root {
     animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+
+  .ac-backlit-surface::before {
+    transition: none !important;
   }
 }

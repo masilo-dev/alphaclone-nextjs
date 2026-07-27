@@ -10,6 +10,7 @@ import {
   resolveToolAnnotations,
 } from '@/lib/mcp/toolAnnotations';
 import { coreTools, DISCOVERY_CONTROL_TOOLS } from '@/lib/mcp/progressiveDiscovery';
+import { getToolCatalogModeForClient } from '@/lib/mcp/ensureOAuthClient';
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
@@ -83,10 +84,10 @@ function prepareDiscoveryTools(
 
 /**
  * Single source of truth for MCP tool discovery.
- * Default = bounded progressive catalogue for every client.
- * The full canonical registry remains server-side and is reached with search_tools /
- * load_module_tools, avoiding client truncation and poor tool selection.
- * Never sniff User-Agent to decide capabilities.
+ * Catalog selection follows the registered OAuth-client policy. The default is
+ * the compacted full platform catalog so clients can actually call every
+ * authorised tool. Progressive discovery remains available as a selection aid,
+ * rather than being used to hide callable tools from the client.
  */
 export async function getUnifiedMcpTools(options?: {
   sanitizeForClient?: boolean;
@@ -98,15 +99,16 @@ export async function getUnifiedMcpTools(options?: {
   userAgent?: string | null;
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  // Explicit true is the stable ChatGPT connector contract. Explicit false is
-  // the complete server-side catalog. All other clients start with the bounded
-  // progressive catalog and can load additional modules on demand.
+  // Keep the legacy explicit overrides for server callers. Normal tools/list
+  // requests follow the registered client policy (full by default).
   const catalogMode =
     options?.forChatGPT === true
       ? 'connector'
       : options?.forChatGPT === false
         ? 'full'
-        : 'progressive';
+        : getToolCatalogModeForClient(options?.clientId) === 'curated'
+          ? 'connector'
+          : 'full';
   const now = Date.now();
 
   if (
@@ -114,15 +116,10 @@ export async function getUnifiedMcpTools(options?: {
     now - cacheTime < CACHE_TTL_MS &&
     cachedFullTools &&
     cachedFullTools.length > 0 &&
-    (catalogMode !== 'progressive' || (cachedCuratedTools && cachedCuratedTools.length > 0)) &&
     (catalogMode !== 'connector' || (cachedConnectorTools && cachedConnectorTools.length > 0))
   ) {
     const cached =
-      catalogMode === 'connector'
-        ? cachedConnectorTools!
-        : catalogMode === 'progressive'
-          ? cachedCuratedTools!
-          : cachedFullTools;
+      catalogMode === 'connector' ? cachedConnectorTools! : cachedFullTools;
     console.info(
       `[mcp.tools/list] cache hit catalog=${catalogMode} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
     );
@@ -163,7 +160,16 @@ export async function getUnifiedMcpTools(options?: {
       !supplemental.some((m) => m.name === t.name)
   );
 
-  const merged = dedupeTools([...registryTools, ...manifestLegacy, ...supplemental, ...aliases]);
+  // Discovery controls are real callable tools too. Keep them in both the full
+  // and progressive catalogues so module/search guidance never disappears when
+  // a client is upgraded from the bounded surface.
+  const merged = dedupeTools([
+    ...registryTools,
+    ...manifestLegacy,
+    ...supplemental,
+    ...aliases,
+    ...DISCOVERY_CONTROL_TOOLS,
+  ]);
   const annotated = withAnnotations(merged);
 
   if (merged.length === 0) {
@@ -194,21 +200,8 @@ export async function getUnifiedMcpTools(options?: {
   }
   cachedCuratedTools.sort((a, b) => a.name.localeCompare(b.name));
 
-  if (catalogMode === 'progressive' && cachedCuratedTools.length === 0 && cachedFullTools.length > 0) {
-    console.error(
-      `[mcp.tools/list] curated filter matched 0/${cachedFullTools.length} tools — falling back to full catalog`
-    );
-    cacheTime = now;
-    return cachedFullTools;
-  }
-
   cacheTime = now;
-  const result =
-    catalogMode === 'connector'
-      ? cachedConnectorTools
-      : catalogMode === 'progressive'
-        ? cachedCuratedTools
-        : cachedFullTools;
+  const result = catalogMode === 'connector' ? cachedConnectorTools : cachedFullTools;
   console.info(
     `[mcp.tools/list] returning catalog=${catalogMode} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
   );

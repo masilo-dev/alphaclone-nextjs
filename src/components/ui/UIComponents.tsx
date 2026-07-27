@@ -22,14 +22,14 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   ...props
 }) => {
-  const baseStyles = `inline-flex items-center justify-center ${WORKSPACE.panel.radius} font-medium transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:pointer-events-none active:scale-95 min-w-11`;
+  const baseStyles = `inline-flex items-center justify-center rounded-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background-app)] disabled:opacity-50 disabled:pointer-events-none min-w-11`;
 
   const variants = {
     primary: `${WORKSPACE.action.primary} border-0`,
-    secondary: "bg-blue-600 text-white hover:bg-blue-500/90 shadow-sm shadow-blue-900/20",
-    outline: "border border-[var(--ws-border)] bg-[var(--ws-toolbar)] text-white hover:bg-[var(--ws-surface-2)]",
-    ghost: "text-teal-400 hover:text-teal-300 hover:bg-[var(--ws-surface-2)]",
-    danger: "bg-red-600 text-white hover:bg-red-500/90",
+    secondary: "bg-[var(--interactive-secondary)] text-white hover:bg-[var(--interactive-secondary-hover)]",
+    outline: "border border-[var(--border-default)] bg-[var(--surface-primary)] text-[var(--text-primary)] hover:bg-[var(--surface-hover)]",
+    ghost: "text-[var(--interactive-secondary)] hover:bg-[var(--surface-hover)]",
+    danger: "bg-[var(--danger)] text-white hover:brightness-95",
   };
 
   const sizes = {
@@ -78,11 +78,11 @@ interface BadgeProps {
 
 export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', className = '' }) => {
   const variants = {
-    success: "bg-teal-500/10 text-teal-400 border-teal-500/20",
-    warning: "bg-yellow-500/10 text-yellow-300 border-yellow-500/20",
-    neutral: "bg-slate-500/10 text-slate-300 border-slate-500/20",
-    error: "bg-red-500/10 text-red-300 border-red-500/20",
-    blue: "bg-blue-500/10 text-blue-300 border-blue-500/20",
+    success: "bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)] border-[color-mix(in_srgb,var(--success)_28%,transparent)]",
+    warning: "bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)] border-[color-mix(in_srgb,var(--warning)_28%,transparent)]",
+    neutral: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border-default)]",
+    error: "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)] border-[color-mix(in_srgb,var(--danger)_28%,transparent)]",
+    blue: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] border-[color-mix(in_srgb,var(--info)_28%,transparent)]",
   };
 
   return (
@@ -151,16 +151,16 @@ export const Input: React.FC<InputProps> = ({
     !error && hint ? hintId : null,
   ].filter(Boolean).join(' ') || undefined;
 
-  const sharedClass = `w-full bg-[var(--ws-toolbar)] border ${error ? 'border-red-500' : 'border-[var(--ws-border)]'} ${WORKSPACE.panel.radius} px-3 py-2 text-sm leading-normal text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all ${icon ? 'pl-10' : ''} ${className}`;
+  const sharedClass = `w-full bg-[var(--surface-primary)] border ${error ? 'border-[var(--danger)]' : 'border-[var(--border-default)]'} rounded-[10px] px-3 py-2 text-sm leading-normal text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)] focus:border-[var(--interactive-secondary)] transition-colors ${icon ? 'pl-10' : ''} ${className}`;
 
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={fieldId} className="block text-xs font-medium text-slate-400 mb-1">{label}</label>
+        <label htmlFor={fieldId} className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{label}</label>
       )}
       <div className="relative group">
         {icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" aria-hidden="true">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--interactive-secondary)] transition-colors" aria-hidden="true">
             {icon}
           </div>
         )}
@@ -186,9 +186,9 @@ export const Input: React.FC<InputProps> = ({
           />
         )}
       </div>
-      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-red-400">{error}</p>}
+      {error && <p id={errorId} role="alert" className="mt-1 text-xs text-[var(--danger)]">{error}</p>}
       {!error && hint && (
-        <p id={hintId} className="mt-1 text-xs text-slate-500 italic">{hint}</p>
+        <p id={hintId} className="mt-1 text-xs text-[var(--text-muted)]">{hint}</p>
       )}
     </div>
   );
@@ -270,12 +270,12 @@ export const Modal: React.FC<ModalProps> = ({
         className={`relative ${WORKSPACE.panel.base} rounded-t-2xl sm:rounded-xl w-full ${maxWidth} shadow-none animate-fade-in overflow-hidden max-h-[92dvh] sm:max-h-[85vh] flex flex-col ${className}`}
       >
         <div className="flex items-center justify-between p-4 border-b border-[var(--ws-border)] flex-shrink-0">
-          <h3 id={titleId} className="text-lg font-semibold text-white">{title}</h3>
+          <h3 id={titleId} className="text-lg font-semibold text-[var(--text-primary)]">{title}</h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className={`text-slate-400 hover:text-white transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--ws-surface-2)] ${WORKSPACE.panel.radius}`}
+            className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-2 min-h-11 min-w-11 hover:bg-[var(--surface-hover)] ${WORKSPACE.panel.radius}`}
           >
             <X className="w-5 h-5" aria-hidden="true" />
           </button>
@@ -294,7 +294,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ cla
 );
 
 export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({ className = '', ...props }) => (
-  <h3 className={`font-semibold leading-none tracking-tight text-white ${className}`} {...props} />
+  <h3 className={`font-semibold leading-none tracking-tight text-[var(--text-primary)] ${className}`} {...props} />
 );
 
 export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = '', ...props }) => (
@@ -413,4 +413,3 @@ export const Dropdown: React.FC<DropdownProps> = ({ trigger, items, align = 'rig
     </div>
   );
 };
-

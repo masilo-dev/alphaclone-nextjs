@@ -81,7 +81,7 @@ export function StatePanel({
     <div
       role={kind === 'error' || kind === 'network' || kind === 'permission' ? 'alert' : 'status'}
       className={cn(
-        'flex flex-col items-center text-center rounded-xl border border-[var(--ws-border)] bg-[var(--ws-panel)]',
+        'flex flex-col items-center text-center rounded-2xl border border-[var(--border-default)] bg-[var(--surface-primary)]',
         compact ? 'px-4 py-8' : 'px-6 py-12 md:py-16',
         className,
       )}
@@ -90,18 +90,18 @@ export function StatePanel({
         className={cn(
           'mb-3 rounded-full flex items-center justify-center',
           kind === 'permission' || kind === 'error' || kind === 'subscription'
-            ? 'bg-red-500/10 text-red-400'
+            ? 'bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]'
             : kind === 'offline' || kind === 'network'
-              ? 'bg-amber-500/10 text-amber-400'
-              : 'bg-teal-500/10 text-teal-400',
+              ? 'bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]'
+              : 'bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]',
           compact ? 'w-10 h-10' : 'w-12 h-12',
         )}
       >
         <Icon className={cn(compact ? 'w-5 h-5' : 'w-6 h-6', kind === 'loading' && 'animate-spin')} aria-hidden />
       </span>
-      <h2 className="text-base md:text-lg font-semibold text-white">{title}</h2>
+      <h2 className="text-base md:text-lg font-semibold text-[var(--text-primary)]">{title}</h2>
       {description ? (
-        <p className="mt-1.5 max-w-md text-sm text-slate-400 leading-relaxed">{description}</p>
+        <p className="mt-1.5 max-w-md text-sm text-[var(--text-secondary)] leading-relaxed">{description}</p>
       ) : null}
       {actions.length > 0 ? (
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">

@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
-import { convertQuoteToInvoice } from '@/lib/quotes/convertQuoteToInvoice';
 
 // 1. get_invoices
 registerTool('invoicing', {
@@ -347,6 +346,9 @@ registerTool('invoicing', {
     required: ['quote_id'],
   },
   handler: async (args) => {
+    const { convertQuoteToInvoice } = await import(
+      '@/lib/quotes/convertQuoteToInvoice'
+    );
     const result = await convertQuoteToInvoice(args.quote_id, args.tenant_id!, {
       autoSend: args.auto_send,
     });

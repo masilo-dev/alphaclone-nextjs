@@ -3,8 +3,6 @@ import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 import { AppUrls } from '@/lib/urls';
-import { notifyContractCreated, notifyContractSent } from '@/services/contractNotificationService';
-import { resolvePartyEmail } from '@/lib/contracts/contractCoherenceServer';
 
 // 1. get_contracts
 registerTool('contracts', {
@@ -80,6 +78,9 @@ registerTool('contracts', {
 
     if (error) throw error;
 
+    const { notifyContractCreated } = await import(
+      '@/services/contractNotificationService'
+    );
     await notifyContractCreated(args.tenant_id, data.id, data.title).catch((err) =>
       console.error('[create_contract] notify failed:', err)
     );
@@ -158,6 +159,9 @@ registerTool('contracts', {
 
     let clientEmail = '';
     if (contract.client_id) {
+      const { resolvePartyEmail } = await import(
+        '@/lib/contracts/contractCoherenceServer'
+      );
       clientEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || '';
     }
 
@@ -219,6 +223,9 @@ registerTool('contracts', {
         .single();
       
       if (contract?.client_id) {
+        const { resolvePartyEmail } = await import(
+          '@/lib/contracts/contractCoherenceServer'
+        );
         toEmail = (await resolvePartyEmail(supabase, args.tenant_id, contract.client_id)) || undefined;
       }
     }
@@ -252,6 +259,9 @@ registerTool('contracts', {
       .maybeSingle();
 
     const sentAt = new Date().toISOString();
+    const { notifyContractSent } = await import(
+      '@/services/contractNotificationService'
+    );
     await notifyContractSent(
       args.tenant_id,
       args.contract_id,

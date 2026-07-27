@@ -350,3 +350,69 @@ registerTool('bonnie-orchestrate', {
     };
   },
 });
+
+registerTool('bonnie-orchestrate', {
+  name: 'run_growth_lifecycle',
+  description:
+    'Run one auditable lead-to-customer growth lifecycle from a plain-English objective: inspect the audience, generate and permanently store campaign media, prepare platform-specific social content, create personalised email outreach, connect CRM follow-ups, execute permitted steps, pause for required approvals, and return receipts.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    user_id: z.string().uuid().optional(),
+    objective: z.string().min(10),
+    audience: z.string().optional(),
+    image_prompt: z.string().optional(),
+    platforms: z.array(z.enum(['facebook', 'linkedin', 'instagram'])).optional(),
+    recipient_ids: z.array(z.string().uuid()).max(100).optional(),
+    execute_actions: z.boolean().optional().default(false),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      objective: { type: 'string', description: 'Business outcome, offer, and desired call to action.' },
+      audience: { type: 'string', description: 'Target customer profile or CRM segment.' },
+      image_prompt: { type: 'string', description: 'Optional creative direction for the campaign image.' },
+      platforms: {
+        type: 'array',
+        items: { type: 'string', enum: ['facebook', 'linkedin', 'instagram'] },
+      },
+      recipient_ids: {
+        type: 'array',
+        items: { type: 'string', format: 'uuid' },
+        description: 'Optional approved CRM lead/contact IDs. Never invent recipients.',
+      },
+      execute_actions: {
+        type: 'boolean',
+        default: false,
+        description: 'False prepares drafts and an approval-ready plan. True executes permitted steps and pauses at approval gates.',
+      },
+    },
+    required: ['objective'],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = args.tenant_id || ctx.tenantId;
+    const userId = args.user_id || ctx.userId;
+    if (!tenantId || !userId) throw new Error('Authenticated workspace and user are required');
+
+    const task = [
+      'Run the Alphaclone growth lifecycle as one traceable operation.',
+      `Objective: ${args.objective}`,
+      args.audience ? `Audience: ${args.audience}` : 'Audience: inspect CRM and identify only suitable, consent-safe records.',
+      args.image_prompt ? `Image direction: ${args.image_prompt}` : 'Image direction: create a calm, premium, brand-appropriate campaign visual.',
+      `Platforms: ${(args.platforms || ['facebook', 'linkedin']).join(', ')}.`,
+      args.recipient_ids?.length
+        ? `Approved recipient record IDs: ${args.recipient_ids.join(', ')}.`
+        : 'No recipient IDs supplied: prepare drafts and request selection/approval before external outreach.',
+      'Required sequence: inspect connected accounts and audience; create distinct platform copy; generate the image with create_post_with_ai_image or upload_media; create social drafts; prepare personalised email drafts; link CRM notes and follow-up tasks; execute only when requested; verify provider outcomes and return receipts.',
+      'Never claim generated, uploaded, sent, scheduled, or published without a successful tool receipt. Never send a local filesystem path to a provider.',
+    ].join('\n');
+
+    const { executeTool } = await import('../tool-registry');
+    return executeTool(tenantId, userId, 'orchestrate_task', {
+      tenant_id: tenantId,
+      user_id: userId,
+      task,
+      execute_actions: args.execute_actions === true,
+      use_specialist_subagents: true,
+    });
+  },
+});

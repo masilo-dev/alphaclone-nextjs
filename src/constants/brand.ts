@@ -5,17 +5,25 @@
  */
 
 export const BRAND_BLUE = {
-  50: '#EEF4FF',
-  100: '#DCE8FF',
-  200: '#BED3FF',
-  300: '#91B5FF',
-  400: '#5F8FFF',
-  500: '#356AF4',
-  600: '#2553DD',
-  700: '#2043B8',
-  800: '#213B91',
-  900: '#203570',
-  950: '#151F42',
+  50: '#F1F8F9',
+  100: '#DDEEF0',
+  200: '#BEDDE1',
+  300: '#91C4CA',
+  400: '#65ABB4',
+  500: '#4199A4',
+  600: '#388A94',
+  700: '#306F78',
+  800: '#295A61',
+  900: '#234A50',
+  950: '#153136',
+} as const;
+
+/** Recognisable Alphaclone Systems anchors. */
+export const BRAND = {
+  navy: '#212446',
+  teal: '#4199A4',
+  coral: '#FB7268',
+  coralHover: '#F56359',
 } as const;
 
 export const BRAND_VIOLET = {
@@ -33,36 +41,36 @@ export const BRAND_VIOLET = {
 } as const;
 
 export const LIGHT_NEUTRALS = {
-  appBackground: '#F5F7FB',
-  sidebarBackground: '#10182D',
+  appBackground: '#F6F7F9',
+  sidebarBackground: '#212446',
   surfacePrimary: '#FFFFFF',
-  surfaceSecondary: '#F8FAFD',
-  surfaceTertiary: '#F0F3F8',
-  borderSubtle: '#E7EBF2',
-  borderStrong: '#D5DCE8',
-  textPrimary: '#111827',
-  textSecondary: '#536075',
-  textMuted: '#7E899B',
-  textDisabled: '#AAB2C0',
-  hover: '#F3F6FA',
-  selected: '#EEF3FF',
+  surfaceSecondary: '#F9FAFB',
+  surfaceTertiary: '#EFF1F4',
+  borderSubtle: 'rgba(33, 36, 70, 0.09)',
+  borderStrong: 'rgba(33, 36, 70, 0.24)',
+  textPrimary: '#171923',
+  textSecondary: '#5F6472',
+  textMuted: '#747A88',
+  textDisabled: '#A0A5B0',
+  hover: '#F3F5F7',
+  selected: '#EAF3F4',
   overlay: 'rgba(15, 23, 42, 0.42)',
 } as const;
 
 export const DARK_NEUTRALS = {
-  appBackground: '#0C1220',
-  sidebarBackground: '#090F1C',
-  surfacePrimary: '#121A2A',
-  surfaceSecondary: '#172133',
-  surfaceTertiary: '#1C283B',
-  borderSubtle: '#243147',
-  borderStrong: '#35445E',
-  textPrimary: '#F4F7FC',
-  textSecondary: '#B5C0D1',
-  textMuted: '#8491A6',
-  textDisabled: '#59667A',
-  hover: '#1B2638',
-  selected: '#1D2D50',
+  appBackground: '#0D0F18',
+  sidebarBackground: '#15182A',
+  surfacePrimary: '#171A26',
+  surfaceSecondary: '#1B1E2B',
+  surfaceTertiary: '#202432',
+  borderSubtle: 'rgba(255, 255, 255, 0.06)',
+  borderStrong: 'rgba(255, 255, 255, 0.18)',
+  textPrimary: '#F7F8FB',
+  textSecondary: '#B9BDCA',
+  textMuted: '#9095A5',
+  textDisabled: '#656A78',
+  hover: '#252936',
+  selected: '#23363B',
   overlay: 'rgba(0, 0, 0, 0.68)',
 } as const;
 
@@ -155,7 +163,7 @@ export const MODULE_IDENTITY: Record<
   ModuleId,
   { primary: string; supporting: string; label: string; meaning: string }
 > = {
-  dashboard: { primary: '#6D4AFF', supporting: '#356AF4', label: 'Dashboard', meaning: 'Whole-business intelligence' },
+  dashboard: { primary: '#212446', supporting: '#4199A4', label: 'Dashboard', meaning: 'Whole-business intelligence' },
   crm: { primary: '#16A36A', supporting: '#0F9F8F', label: 'CRM', meaning: 'Relationships and customer health' },
   leads: { primary: '#3196E8', supporting: '#356AF4', label: 'Leads', meaning: 'New business opportunities' },
   pipeline: { primary: '#E69222', supporting: '#DE6A28', label: 'Sales Pipeline', meaning: 'Deal movement and conversion' },
@@ -173,8 +181,8 @@ export const MODULE_IDENTITY: Record<
   reports: { primary: '#5653D9', supporting: '#356AF4', label: 'Reports', meaning: 'Analysis and insight' },
   goals: { primary: '#7D56D9', supporting: '#16A36A', label: 'Goals', meaning: 'Progress and outcomes' },
   nexus: { primary: '#6D4AFF', supporting: '#0F9F8F', label: 'Nexus', meaning: 'Connected workflows' },
-  bonnie: { primary: '#8950F5', supporting: '#3196E8', label: 'Bonnie AI', meaning: 'Assistance and intelligence' },
-  settings: { primary: '#64748B', supporting: '#356AF4', label: 'Settings', meaning: 'Administration and control' },
+  bonnie: { primary: '#4199A4', supporting: '#212446', label: 'Bonnie AI', meaning: 'Assistance and intelligence' },
+  settings: { primary: '#64748B', supporting: '#4199A4', label: 'Settings', meaning: 'Administration and control' },
 };
 
 export const CHART_COLORS = {

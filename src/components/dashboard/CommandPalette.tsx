@@ -153,6 +153,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     );
 
     useEffect(() => {
+        if (externalIsOpen !== undefined) return;
         const handleKeyDown = (e: KeyboardEvent) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
                 e.preventDefault();
@@ -162,7 +163,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen]); // Added isOpen to dependencies to ensure setIsOpen refers to current state source
+    }, [externalIsOpen, isOpen]); // Standalone instances own their shortcut; controlled shells do not.
 
     useEffect(() => {
         if (!userId) {
@@ -238,7 +239,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={() => setIsOpen(false)}
-                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
+                        className="fixed inset-0 bg-[rgba(13,15,24,0.72)] backdrop-blur-sm"
                         aria-hidden="true"
                     />
 
@@ -246,13 +247,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         role="dialog"
                         aria-modal="true"
                         aria-label="Command palette"
-                        initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                        initial={{ opacity: 0, scale: 0.99, y: -12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                        className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-lg shadow-2xl overflow-hidden relative"
+                        exit={{ opacity: 0, scale: 0.99, y: -12 }}
+                        data-backlight-tone="teal"
+                        data-backlight-intensity="focus"
+                        className="ac-backlit-surface w-full max-w-2xl bg-[var(--surface-elevated)] border border-[var(--border-default)] rounded-2xl shadow-2xl overflow-hidden relative"
                     >
-                        <div className="p-4 border-b border-slate-800 flex items-center gap-4">
-                            <Search className="w-5 h-5 text-teal-400" aria-hidden="true" />
+                        <div className="p-4 border-b border-[var(--border-default)] flex items-center gap-4">
+                            <Search className="w-5 h-5 text-[var(--interactive-secondary)]" aria-hidden="true" />
                             <input
                                 autoFocus
                                 role="combobox"
@@ -267,7 +270,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 onChange={(e) => setSearch(e.target.value)}
                                 onKeyDown={handleKeyDown}
                                 placeholder="Search commands, tools, and sections..."
-                                className="w-full bg-transparent border-none focus:ring-0 text-white placeholder-slate-500 text-lg font-medium"
+                                className="w-full bg-transparent border-none focus:ring-0 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-lg font-medium"
                             />
                             <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-800 rounded-lg border border-slate-700">
                                 <span className="text-xs font-black text-slate-400">ESC</span>
@@ -412,4 +415,3 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 };
 
 export default CommandPalette;
-

@@ -179,10 +179,10 @@ const Sidebar = React.memo<SidebarProps>(({
                 {/* ── Logo ── */}
                 <div className={`${WORKSPACE.sidebar.logoHeight} flex items-center px-3 border-b border-[var(--ws-border)] shrink-0`}>
                     <div className="flex items-center gap-2.5 overflow-hidden min-w-0">
-                        <Image src={LOGO_URL} alt="AlphaClone" width={28} height={28}
+                        <Image src={LOGO_URL} alt="Alphaclone Systems" width={28} height={28}
                             className="rounded-md object-contain flex-shrink-0" />
                         <span className={`font-semibold text-white text-[13px] tracking-tight transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>
-                            {t('AlphaClone')}
+                            {t('Alphaclone Systems')}
                         </span>
                     </div>
                 </div>

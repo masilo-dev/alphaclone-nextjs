@@ -19,7 +19,7 @@ interface BottomNavProps {
 
 /**
  * Phone bottom navigation — max five destinations:
- * Home · Customers · Work · Inbox · More
+ * Home · CRM · Work · Bonnie · More
  * "More" opens the job-grouped module catalogue (not a second sidebar clone).
  */
 const BottomNav: React.FC<BottomNavProps> = ({
@@ -68,7 +68,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
             const isActive = isMore
               ? moreOpen
               : isMobileBottomActive(activeTab, item, userRole);
-            const showBadge = unreadCount > 0 && item.id === 'inbox';
+            const showBadge = unreadCount > 0 && item.id === 'more';
             const Icon = item.icon;
 
             return (

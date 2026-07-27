@@ -23,6 +23,7 @@ import {
     Receipt,
     RefreshCw,
     MessageCircle,
+    Plus,
     X,
 } from 'lucide-react';
 import IncomingCallModal from '../video/IncomingCallModal';
@@ -221,7 +222,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
     React.useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+            const target = document.activeElement?.tagName;
+            const isTyping = target === 'INPUT' || target === 'TEXTAREA' || target === 'SELECT';
+            const commandShortcut = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k';
+            if ((commandShortcut || e.key === '/') && !isTyping) {
                 e.preventDefault();
                 setCommandPaletteOpen(true);
             }
@@ -977,7 +981,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/zoho/mail': return t('Zoho Mail');
             case '/dashboard/zoho/crm': return t('Zoho CRM Sync');
             case '/dashboard/marketplace': return t('Integration Marketplace');
-            default: return t('AlphaClone');
+            default: return t('Alphaclone Systems');
         }
     };
 
@@ -1147,6 +1151,25 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                                 <span className="hidden lg:inline">Live meeting</span>
                             </button>
                         )}
+
+                        <button
+                            type="button"
+                            onClick={() => setCommandPaletteOpen(true)}
+                            className="hidden lg:inline-flex ac-workspace-action-btn ac-workspace-action-btn--primary min-h-9 px-3"
+                            aria-label="Create a business record"
+                        >
+                            <Plus className="h-4 w-4" aria-hidden="true" />
+                            <span>Create</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('/dashboard/business/bonnie')}
+                            className="hidden md:inline-flex ac-workspace-action-btn ac-workspace-action-btn--bonnie min-h-9 px-3"
+                            aria-label="Open Bonnie AI"
+                        >
+                            <Bot className="h-4 w-4" aria-hidden="true" />
+                            <span className="hidden xl:inline">Ask Bonnie</span>
+                        </button>
 
                         <div data-tour="global-search" className="hidden md:block">
                             <EnhancedGlobalSearch
