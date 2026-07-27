@@ -1,5 +1,6 @@
 [build]
-builder = "NIXPACKS"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 # Always strip a stale root app/ before Next build. The workflow package can leave
 # app/.well-known/workflow in cached layers; when both app/ and src/app exist,
 # webpack fails to resolve @/* (Module not found for @/lib/*, @/config/*, etc.).
