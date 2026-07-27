@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY scripts ./scripts
 RUN npm ci --legacy-peer-deps
 
 # Stage 2: Build Next.js application
