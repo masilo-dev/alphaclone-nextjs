@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # check=skip=SecretsUsedInArgOrEnv
 
-# Base image matching Railway/Nixpacks Debian Bookworm runtime with Node 22
+# Base image matching Railway/Nixpacks Ubuntu runtime with Node 22
 FROM node:22-bookworm-slim AS base
 
 WORKDIR /app
@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-COPY scripts ./scripts
 RUN npm ci --legacy-peer-deps
 
 # Stage 2: Build Next.js application
@@ -72,13 +71,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-ENV PATH="/app/node_modules/.bin:$PATH"
 
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/src ./src
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/next.config.ts ./next.config.ts
 
