@@ -1323,7 +1323,7 @@ const assetPublishSchema = z.object({
 });
 
 const assetPublishJsonSchema = {
-  type: 'object',
+  type: 'object' as const,
   properties: {
     identity_id: { type: 'string' },
     identity_type: {
