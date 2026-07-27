@@ -165,7 +165,7 @@ export const authService = {
             return { user, error: null, needsMfa };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { user: null, error: err.errors[0]?.message || 'Validation failed', needsMfa: false };
+                return { user: null, error: err.errors?.[0]?.message || 'Validation failed', needsMfa: false };
             }
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error', needsMfa: false };
         }
@@ -323,7 +323,7 @@ export const authService = {
             return { user, error: null, needsEmailConfirmation: !data.session };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { user: null, error: err.errors[0]?.message || 'Validation failed' };
+                return { user: null, error: err.errors?.[0]?.message || 'Validation failed' };
             }
             return { user: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
@@ -386,7 +386,7 @@ export const authService = {
             return { error: null };
         } catch (err: any) {
             if (err.name === 'ZodError') {
-                return { error: err.errors[0]?.message || 'Validation failed' };
+                return { error: err.errors?.[0]?.message || 'Validation failed' };
             }
             return { error: err instanceof Error ? err.message : 'Unknown error' };
         }

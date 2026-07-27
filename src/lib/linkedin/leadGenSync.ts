@@ -1,4 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getCalendlyConfig } from '@/services/calendly/calendlyIntegrationService';
+import { upsertCalendlyContact } from '@/lib/calendly/calendlyApiClient';
 
 export interface LinkedInLeadFormData {
   formId?: string;
@@ -145,6 +147,24 @@ export async function syncLinkedInLeadToCrm(
       .single();
 
     if (insertError) throw insertError;
+
+    // ── Bridge: push contact to Calendly for instant scheduling access ────────
+    if (parsedLead.email && parsedLead.fullName) {
+      try {
+        const admin2 = createSupabaseAdminClient();
+        const calendlyConfig = await getCalendlyConfig(admin2, tenantId);
+        if (calendlyConfig?.enabled && calendlyConfig.accessToken) {
+          await upsertCalendlyContact(tenantId, calendlyConfig, {
+            name: parsedLead.fullName,
+            email: parsedLead.email,
+          });
+        }
+      } catch (calendlyErr) {
+        // Non-blocking — never fail the CRM save because of Calendly
+        console.warn('[LinkedInLeadGenSync] Calendly contact push skipped:', calendlyErr);
+      }
+    }
+
     return { success: true, leadId: inserted.id };
   } catch (err: any) {
     console.error('[LinkedInLeadGenSync] Error syncing lead:', err);
