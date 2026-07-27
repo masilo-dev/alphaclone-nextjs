@@ -59,6 +59,16 @@ async function clearRuntimeCaches(): Promise<void> {
   );
 }
 
+async function clearOfflineDatabase(): Promise<void> {
+  if (typeof indexedDB === 'undefined') return;
+  await new Promise<void>((resolve) => {
+    const request = indexedDB.deleteDatabase('AlphaCloneOffline');
+    request.onsuccess = () => resolve();
+    request.onerror = () => resolve();
+    request.onblocked = () => resolve();
+  });
+}
+
 function setupBroadcastListener(): void {
   if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined' || broadcastChannel) return;
   broadcastChannel = new BroadcastChannel(RESET_CHANNEL);
@@ -139,6 +149,7 @@ export async function resetPlatformState({
     await Promise.allSettled([
       supabase.removeAllChannels(),
       clearRuntimeCaches(),
+      clearOfflineDatabase(),
     ]);
 
     if (broadcast && typeof BroadcastChannel !== 'undefined') {

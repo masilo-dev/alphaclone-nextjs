@@ -12,6 +12,7 @@ import {
   Globe,
   FileText,
   Target,
+  Sparkles,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -37,9 +38,39 @@ export interface PwaNavItem {
   labelActive: string;
 }
 
-export const PWA_MAX_BOTTOM_SLOTS = 4;
+export const PWA_MAX_BOTTOM_SLOTS = 5;
 
 export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
+  {
+    id: 'work',
+    label: 'Work',
+    icon: Briefcase,
+    tileBg: 'bg-violet-500',
+    tileBgMuted: 'bg-violet-500/20',
+    labelActive: 'text-violet-300',
+    hrefForRole: () => '/dashboard/projects',
+    matchPrefixesForRole: () => ['/dashboard/projects', '/dashboard/tasks', '/dashboard/business/projects', '/dashboard/business/tasks'],
+  },
+  {
+    id: 'money',
+    label: 'Money',
+    icon: DollarSign,
+    tileBg: 'bg-amber-500',
+    tileBgMuted: 'bg-amber-500/20',
+    labelActive: 'text-amber-300',
+    hrefForRole: (role) => role === 'tenant_admin' ? '/dashboard/business/billing' : '/dashboard/finance',
+    matchPrefixesForRole: () => ['/dashboard/finance', '/dashboard/business/billing', '/dashboard/invoices'],
+  },
+  {
+    id: 'bonnie',
+    label: 'Bonnie',
+    icon: Sparkles,
+    tileBg: 'bg-teal-500',
+    tileBgMuted: 'bg-teal-500/20',
+    labelActive: 'text-teal-300',
+    hrefForRole: () => '/dashboard/bonnie',
+    matchPrefixesForRole: () => ['/dashboard/bonnie'],
+  },
   {
     id: 'home',
     label: 'Home',
@@ -170,7 +201,7 @@ export const PWA_MODULE_CATALOG: PwaModuleDef[] = [
   },
 ];
 
-const DEFAULT_MODULE_IDS = ['home', 'crm', 'mail', 'clients'];
+const DEFAULT_MODULE_IDS = ['home', 'crm', 'work', 'money', 'bonnie'];
 /** Phone browser: keep bottom bar home-first; full modules stay in the More menu. */
 const PHONE_BROWSER_DEFAULT_MODULE_IDS = ['home'];
 

@@ -7,7 +7,7 @@ const STORAGE_KEY = 'alphaclone_pwa_prefs_v1';
 const PREF_EVENT = 'alphaclone-pwa-prefs-changed';
 
 const DEFAULT_PREFS: PwaPreferences = {
-  bottomNavModuleIds: ['home', 'crm', 'mail', 'clients'],
+  bottomNavModuleIds: ['home', 'crm', 'work', 'money', 'bonnie'],
   pushEnabled: true,
 };
 
@@ -19,7 +19,7 @@ export function readPwaPreferences(): PwaPreferences {
     const parsed = JSON.parse(raw) as Partial<PwaPreferences>;
     return {
       bottomNavModuleIds: Array.isArray(parsed.bottomNavModuleIds)
-        ? parsed.bottomNavModuleIds.slice(0, 4)
+        ? parsed.bottomNavModuleIds.slice(0, 5)
         : DEFAULT_PREFS.bottomNavModuleIds,
       pushEnabled: parsed.pushEnabled !== false,
     };

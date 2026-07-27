@@ -2,11 +2,11 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'AlphaClone',
+    name: 'AlphaClone — AI Business Operating System',
     short_name: 'AlphaClone',
-    description: 'Your business operating system — CRM, mail, billing, and projects.',
-    id: '/',
-    start_url: '/',
+    description: 'Run CRM, work, money, communications, documents, and AI-assisted operations in one secure workspace.',
+    id: '/dashboard?source=pwa',
+    start_url: '/dashboard?source=pwa',
     scope: '/',
     display: 'standalone',
     display_override: ['window-controls-overlay', 'minimal-ui', 'standalone'],
@@ -14,9 +14,11 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#020617',
     orientation: 'any',
     icons: [
-      { src: '/favicon-48x48.png', sizes: '48x48', type: 'image/png', purpose: 'maskable' },
-      { src: '/favicon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'maskable' },
+      { src: '/favicon-48x48.png', sizes: '48x48', type: 'image/png', purpose: 'any' },
+      { src: '/favicon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'any' },
+      { src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: '/favicon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       { src: '/favicon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
     categories: ['business', 'productivity', 'utilities'],
@@ -34,17 +36,38 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
       },
       {
-        name: 'Mail',
-        short_name: 'Mail',
-        url: '/dashboard/mail',
+        name: 'Work',
+        short_name: 'Work',
+        url: '/dashboard/projects',
         icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
       },
       {
-        name: 'Clients',
-        short_name: 'Clients',
-        url: '/dashboard/leads',
+        name: 'Money',
+        short_name: 'Money',
+        url: '/dashboard/finance',
+        icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
+      },
+      {
+        name: 'Bonnie AI',
+        short_name: 'Bonnie',
+        url: '/dashboard/bonnie',
+        icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
+      },
+      {
+        name: 'Communications',
+        short_name: 'Comms',
+        url: '/dashboard/comms',
         icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
       },
     ],
+    share_target: {
+      action: '/dashboard/share-intake',
+      method: 'GET',
+      params: {
+        title: 'title',
+        text: 'text',
+        url: 'url',
+      },
+    },
   };
 }

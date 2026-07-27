@@ -1,240 +1,220 @@
 /**
- * Offline Support Service
- * Manages offline data caching and synchronization
+ * Tenant-partitioned offline store.
+ *
+ * Only low-risk drafts and explicitly allowlisted mutations belong here. Tokens,
+ * payment data, private messages, exports, and unrestricted API responses must
+ * never be persisted in this database.
  */
 
+export const OFFLINE_MUTATION_ALLOWLIST = [
+  'task.create',
+  'task.update',
+  'note.create',
+  'lead.draft',
+  'expense.draft',
+] as const;
+
+export type OfflineMutationType = (typeof OFFLINE_MUTATION_ALLOWLIST)[number];
+export type OfflineSyncState = 'queued' | 'syncing' | 'failed' | 'conflict';
+
+export interface OfflinePartition {
+  tenantId: string;
+  userId: string;
+}
+
+export interface OfflineMutation extends OfflinePartition {
+  id: string;
+  idempotencyKey: string;
+  type: OfflineMutationType;
+  payload: Record<string, unknown>;
+  entityId?: string;
+  baseVersion?: string;
+  state: OfflineSyncState;
+  attempts: number;
+  createdAt: string;
+  updatedAt: string;
+  lastError?: string;
+}
+
+interface CachedRecord<T = unknown> extends OfflinePartition {
+  key: string;
+  data: T;
+  cachedAt: string;
+  expiresAt: string;
+}
+
+const DB_NAME = 'AlphaCloneOffline';
+const DB_VERSION = 2;
+const MUTATIONS = 'mutations';
+const CACHE = 'cache';
+const CONFLICTS = 'conflicts';
+
+function requestResult<T>(request: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+function partitionKey(partition: OfflinePartition, key: string): string {
+  return `${partition.tenantId}:${partition.userId}:${key}`;
+}
+
+function assertPartition(partition: OfflinePartition): void {
+  if (!partition.tenantId || !partition.userId) {
+    throw new Error('Offline storage requires an authenticated tenant and user');
+  }
+}
+
 class OfflineService {
-    private db: IDBDatabase | null = null;
-    private readonly DB_NAME = 'AlphaCloneOffline';
-    private readonly DB_VERSION = 1;
+  private dbPromise: Promise<IDBDatabase> | null = null;
 
-    /**
-     * Initialize IndexedDB
-     */
-    async init(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+  async init(): Promise<void> {
+    await this.database();
+  }
 
-            request.onerror = () => reject(request.error);
-            request.onsuccess = () => {
-                this.db = request.result;
-                resolve();
-            };
-
-            request.onupgradeneeded = (event: any) => {
-                const db = event.target.result;
-
-                // Create object stores
-                if (!db.objectStoreNames.contains('messages')) {
-                    db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
-                }
-
-                if (!db.objectStoreNames.contains('projectUpdates')) {
-                    db.createObjectStore('projectUpdates', { keyPath: 'id', autoIncrement: true });
-                }
-
-                if (!db.objectStoreNames.contains('cachedData')) {
-                    db.createObjectStore('cachedData', { keyPath: 'key' });
-                }
-            };
-        });
-    }
-
-    /**
-     * Queue message for sending when online
-     */
-    async queueMessage(message: any): Promise<void> {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction(['messages'], 'readwrite');
-            const store = transaction.objectStore('messages');
-            const request = store.add({
-                ...message,
-                queuedAt: new Date().toISOString(),
-            });
-
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Queue project update for syncing when online
-     */
-    async queueProjectUpdate(projectId: string, updates: any): Promise<void> {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction(['projectUpdates'], 'readwrite');
-            const store = transaction.objectStore('projectUpdates');
-            const request = store.add({
-                projectId,
-                data: updates,
-                queuedAt: new Date().toISOString(),
-            });
-
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Cache data for offline access
-     */
-    async cacheData(key: string, data: any): Promise<void> {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction(['cachedData'], 'readwrite');
-            const store = transaction.objectStore('cachedData');
-            const request = store.put({
-                key,
-                data,
-                cachedAt: new Date().toISOString(),
-            });
-
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Get cached data
-     */
-    async getCachedData(key: string): Promise<any> {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction(['cachedData'], 'readonly');
-            const store = transaction.objectStore('cachedData');
-            const request = store.get(key);
-
-            request.onsuccess = () => resolve(request.result?.data);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Get queued messages count
-     */
-    async getQueuedMessagesCount(): Promise<number> {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction(['messages'], 'readonly');
-            const store = transaction.objectStore('messages');
-            const request = store.count();
-
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Get queued project updates count
-     */
-    async getQueuedUpdatesCount(): Promise<number> {
-        if (!this.db) await this.init();
-
-        return new Promise((resolve, reject) => {
-            const transaction = this.db!.transaction(['projectUpdates'], 'readonly');
-            const store = transaction.objectStore('projectUpdates');
-            const request = store.count();
-
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        });
-    }
-
-    /**
-     * Check if online
-     */
-    isOnline(): boolean {
-        return navigator.onLine;
-    }
-
-    /**
-     * Register service worker
-     * @deprecated Use pwaService.registerServiceWorker() instead
-     */
-    async registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-        // Delegating to PWA service or returning null to avoid double registration
-        console.warn('offlineService.registerServiceWorker is deprecated. Use pwaService instead.');
-        return null;
-    }
-
-    /**
-     * Request background sync
-     */
-    async requestSync(tag: string): Promise<void> {
-        if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
-            const registration = await navigator.serviceWorker.ready;
-            await (registration as any).sync.register(tag);
+  private database(): Promise<IDBDatabase> {
+    if (typeof indexedDB === 'undefined') return Promise.reject(new Error('IndexedDB unavailable'));
+    if (this.dbPromise) return this.dbPromise;
+    this.dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error('Offline database upgrade blocked by another tab'));
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        for (const legacy of ['messages', 'projectUpdates', 'cachedData']) {
+          if (db.objectStoreNames.contains(legacy)) db.deleteObjectStore(legacy);
         }
-    }
-
-    /**
-     * Show offline indicator
-     */
-    showOfflineIndicator(): void {
-        const indicator = document.createElement('div');
-        indicator.id = 'offline-indicator';
-        indicator.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: white;
-      padding: 12px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 600;
-      z-index: 10000;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    `;
-        indicator.textContent = '📡 You are offline. Changes will sync when connection is restored.';
-        document.body.appendChild(indicator);
-    }
-
-    /**
-     * Hide offline indicator
-     */
-    hideOfflineIndicator(): void {
-        const indicator = document.getElementById('offline-indicator');
-        if (indicator) {
-            indicator.remove();
+        if (!db.objectStoreNames.contains(MUTATIONS)) {
+          const store = db.createObjectStore(MUTATIONS, { keyPath: 'id' });
+          store.createIndex('partition', ['tenantId', 'userId']);
+          store.createIndex('partitionState', ['tenantId', 'userId', 'state']);
+          store.createIndex('idempotencyKey', 'idempotencyKey', { unique: true });
         }
-    }
-
-    /**
-     * Setup online/offline listeners
-     */
-    setupListeners(): void {
-        window.addEventListener('online', async () => {
-            this.hideOfflineIndicator();
-
-            // Trigger sync
-            await this.requestSync('sync-messages');
-            await this.requestSync('sync-projects');
-
-            // Show success message
-            const count = await this.getQueuedMessagesCount() + await this.getQueuedUpdatesCount();
-            if (count > 0) {
-                console.log(`Syncing ${count} queued items...`);
-            }
-        });
-
-        window.addEventListener('offline', () => {
-            this.showOfflineIndicator();
-        });
-
-        // Check initial state
-        if (!this.isOnline()) {
-            this.showOfflineIndicator();
+        if (!db.objectStoreNames.contains(CACHE)) {
+          const store = db.createObjectStore(CACHE, { keyPath: 'key' });
+          store.createIndex('partition', ['tenantId', 'userId']);
+          store.createIndex('expiresAt', 'expiresAt');
         }
+        if (!db.objectStoreNames.contains(CONFLICTS)) {
+          const store = db.createObjectStore(CONFLICTS, { keyPath: 'id' });
+          store.createIndex('partition', ['tenantId', 'userId']);
+        }
+      };
+      request.onsuccess = () => {
+        request.result.onversionchange = () => request.result.close();
+        resolve(request.result);
+      };
+    });
+    return this.dbPromise;
+  }
+
+  async enqueueMutation(
+    partition: OfflinePartition,
+    type: OfflineMutationType,
+    payload: Record<string, unknown>,
+    options: { entityId?: string; baseVersion?: string; idempotencyKey?: string } = {},
+  ): Promise<OfflineMutation> {
+    assertPartition(partition);
+    if (!OFFLINE_MUTATION_ALLOWLIST.includes(type)) throw new Error(`Offline operation is blocked: ${type}`);
+    const db = await this.database();
+    const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    const record: OfflineMutation = {
+      ...partition,
+      id,
+      idempotencyKey: options.idempotencyKey || crypto.randomUUID(),
+      type,
+      payload: structuredClone(payload),
+      entityId: options.entityId,
+      baseVersion: options.baseVersion,
+      state: 'queued',
+      attempts: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await requestResult(db.transaction(MUTATIONS, 'readwrite').objectStore(MUTATIONS).add(record));
+    await this.requestSync();
+    return record;
+  }
+
+  async listMutations(partition: OfflinePartition): Promise<OfflineMutation[]> {
+    assertPartition(partition);
+    const db = await this.database();
+    const index = db.transaction(MUTATIONS).objectStore(MUTATIONS).index('partition');
+    const records = await requestResult(index.getAll([partition.tenantId, partition.userId]));
+    return (records as OfflineMutation[]).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async cacheData<T>(
+    partition: OfflinePartition,
+    key: string,
+    data: T,
+    ttlMs = 15 * 60 * 1000,
+  ): Promise<void> {
+    assertPartition(partition);
+    const db = await this.database();
+    const now = Date.now();
+    const record: CachedRecord<T> = {
+      ...partition,
+      key: partitionKey(partition, key),
+      data: structuredClone(data),
+      cachedAt: new Date(now).toISOString(),
+      expiresAt: new Date(now + ttlMs).toISOString(),
+    };
+    await requestResult(db.transaction(CACHE, 'readwrite').objectStore(CACHE).put(record));
+  }
+
+  async getCachedData<T>(partition: OfflinePartition, key: string): Promise<T | undefined> {
+    assertPartition(partition);
+    const db = await this.database();
+    const store = db.transaction(CACHE, 'readonly').objectStore(CACHE);
+    const storageKey = partitionKey(partition, key);
+    const record = await requestResult(store.get(storageKey)) as CachedRecord<T> | undefined;
+    if (!record) return undefined;
+    if (Date.parse(record.expiresAt) <= Date.now()) {
+      await requestResult(db.transaction(CACHE, 'readwrite').objectStore(CACHE).delete(storageKey));
+      return undefined;
     }
+    return structuredClone(record.data);
+  }
+
+  async getQueuedUpdatesCount(partition?: OfflinePartition): Promise<number> {
+    if (!partition) return 0;
+    return (await this.listMutations(partition)).filter((item) => item.state !== 'failed').length;
+  }
+
+  async getQueuedMessagesCount(): Promise<number> {
+    // Sending messages while offline is intentionally blocked.
+    return 0;
+  }
+
+  isOnline(): boolean {
+    return typeof navigator !== 'undefined' && navigator.onLine;
+  }
+
+  async requestSync(): Promise<void> {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    const registration = await navigator.serviceWorker.ready;
+    const sync = (registration as ServiceWorkerRegistration & {
+      sync?: { register: (tag: string) => Promise<void> };
+    }).sync;
+    await sync?.register('alphaclone-safe-mutations');
+  }
+
+  async clearPartition(partition: OfflinePartition): Promise<void> {
+    assertPartition(partition);
+    const db = await this.database();
+    for (const storeName of [MUTATIONS, CACHE, CONFLICTS]) {
+      const transaction = db.transaction(storeName, 'readwrite');
+      const store = transaction.objectStore(storeName);
+      const index = store.index('partition');
+      const keys = await requestResult(index.getAllKeys([partition.tenantId, partition.userId]));
+      for (const key of keys) {
+        await requestResult(db.transaction(storeName, 'readwrite').objectStore(storeName).delete(key));
+      }
+    }
+  }
 }
 
 export const offlineService = new OfflineService();

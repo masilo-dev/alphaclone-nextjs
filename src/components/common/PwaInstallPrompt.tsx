@@ -11,6 +11,7 @@ const DISMISS_KEY = 'ac_pwa_install_dismissed_until';
 /** How long “Not now / Got it / X” stays dismissed. */
 const DISMISS_MS = 90 * 24 * 60 * 60 * 1000;
 const SESSION_SHOWN_KEY = 'ac_pwa_install_shown_session';
+const ENGAGEMENT_KEY = 'ac_pwa_engaged_sessions';
 
 function isDismissed(): boolean {
   if (typeof window === 'undefined') return true;
@@ -46,6 +47,12 @@ export default function PwaInstallPrompt() {
     if (pathname?.startsWith('/auth') || pathname?.startsWith('/authorize') || pathname?.startsWith('/login')) {
       return;
     }
+    // Installation is a benefit offered after meaningful product engagement,
+    // never an interruption on a first marketing-page visit.
+    if (!pathname?.startsWith('/dashboard')) return;
+    const engagedSessions = Math.min(3, Number(localStorage.getItem(ENGAGEMENT_KEY) || '0') + 1);
+    localStorage.setItem(ENGAGEMENT_KEY, String(engagedSessions));
+    if (engagedSessions < 2) return;
 
     let cancelled = false;
     void pwaService.registerServiceWorker();
@@ -63,7 +70,7 @@ export default function PwaInstallPrompt() {
 
     const timer = window.setTimeout(() => {
       if (!cancelled) show(pwaService.isInstallable());
-    }, 4000);
+    }, 30000);
 
     return () => {
       cancelled = true;

@@ -86,7 +86,7 @@ export const metadata: Metadata = {
     creator: "@AlphaCloneSys",
     images: ["/twitter-image"],
   },
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "AlphaClone",
