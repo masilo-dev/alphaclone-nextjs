@@ -2,53 +2,57 @@ import Link from 'next/link';
 import type { AlphaIconName } from '@/components/marketing/icons';
 import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 
+import Link from 'next/link';
+import type { AlphaIconName } from '@/components/marketing/icons';
+import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
+
 export const HOME_TRUST_NOTES = [
-  { label: 'No credit card required', icon: 'trust-card' as AlphaIconName },
-  { label: 'Set up in under 10 minutes', icon: 'trust-clock' as AlphaIconName },
-  { label: 'Cancel anytime', icon: 'trust-cancel' as AlphaIconName },
-  { label: 'Secure by design', icon: 'trust-secure' as AlphaIconName },
+  { label: '14-Day Free Trial', icon: 'trust-card' as AlphaIconName },
+  { label: 'Zero credit card required', icon: 'trust-card' as AlphaIconName },
+  { label: '10-minute setup', icon: 'trust-clock' as AlphaIconName },
+  { label: 'Instant data import', icon: 'trust-secure' as AlphaIconName },
 ] as const;
 
 export const HOME_PLATFORM_FEATURES = [
   {
-    name: 'CRM',
+    name: 'Living CRM',
     body:
-      'Keep every lead, client, and conversation on one living record so your team always knows who to follow up with next — without jumping between spreadsheets and inboxes.',
+      'Every lead, client record, and email thread linked to active deals. Zero lost context when passing prospects from sales to project delivery.',
     href: '/crm',
     icon: 'crm' as AlphaIconName,
   },
   {
-    name: 'Invoicing',
+    name: 'Smart Proposals & E-Sign Contracts',
     body:
-      'Create branded invoices from the same workspace that holds the project and contract, then track send status and payment progress without a separate billing tool.',
-    href: '/docs#financials',
-    icon: 'invoicing' as AlphaIconName,
-  },
-  {
-    name: 'Projects',
-    body:
-      'Plan delivery with tasks, owners, and milestones tied to the client record, so progress stays visible and handoffs stop disappearing into chat threads.',
-    href: '/project-management',
-    icon: 'projects' as AlphaIconName,
-  },
-  {
-    name: 'Documents',
-    body:
-      'Store proposals, contracts, and approvals beside the related work so everyone reviews the right version and nothing critical lives only in email attachments.',
+      'Draft scope, capture digital signatures, and trigger delivery rules automatically—without paying $400/year for DocuSign or Pandadoc.',
     href: '/docs',
     icon: 'documents' as AlphaIconName,
   },
   {
-    name: 'Bonnie AI',
+    name: 'Project Delivery & Milestones',
     body:
-      'Ask for drafts, summaries, and next actions that already know your clients and projects — practical assistance grounded in your workspace, not a detached chatbot.',
+      'Manage deliverables, team tasks, and client approvals directly tied to the client contract and budget timeline.',
+    href: '/project-management',
+    icon: 'projects' as AlphaIconName,
+  },
+  {
+    name: 'Financial Invoicing & P&L',
+    body:
+      'Convert completed milestones into compliant invoices, collect payments via Stripe, and reconcile your real-time profit and loss ledger.',
+    href: '/docs#financials',
+    icon: 'invoicing' as AlphaIconName,
+  },
+  {
+    name: 'Bonnie AI & MCP Engine',
+    body:
+      'An operational assistant grounded in your actual workspace data. Reads client notes, drafts proposals, and executes actions safely via Model Context Protocol.',
     href: '/ai-agents',
     icon: 'bonnie' as AlphaIconName,
   },
   {
-    name: 'Connected operations',
+    name: 'Connected Communications',
     body:
-      'Bring calendar, reporting, marketing workflows, and integrations into the same operating layer so daily work stays coordinated instead of scattered across apps.',
+      'HD video meetings, calendar scheduling, and Gmail inbox unified inside the client timeline—so no meeting notes or follow-ups slip away.',
     href: '/ecosystem',
     icon: 'connected' as AlphaIconName,
   },
@@ -57,102 +61,90 @@ export const HOME_PLATFORM_FEATURES = [
 export const HOME_HOW_IT_WORKS = [
   {
     step: '1',
-    title: 'Set up your workspace',
+    title: 'Ingest & Qualify Leads',
     body:
-      'Create your account, choose how your service business runs, and configure the modules you need first — usually CRM, projects, and invoicing.',
+      'Leads arrive via web forms or outreach. AlphaClone instantly creates unified client records, records activity, and assigns follow-up owners.',
     icon: 'setup' as AlphaIconName,
   },
   {
     step: '2',
-    title: 'Bring your work together',
+    title: 'Draft & E-Sign Scope',
     body:
-      'Add clients, active projects, invoices, and documents into one shared workspace so every follow-up starts from the same source of truth.',
+      'Use Bonnie AI to turn discovery notes into customized proposals. Send legally binding agreements with instant e-signatures and audit logging.',
     icon: 'organisation' as AlphaIconName,
   },
   {
     step: '3',
-    title: 'Run and grow',
+    title: 'Execute & Get Paid',
     body:
-      'Use connected views and Bonnie AI to spot what needs attention, close loops faster, and grow delivery without adding another tool for every task.',
+      'Signed contracts automatically instantiate project boards. Completed deliverables generate invoices and reconcile your financial P&L.',
     icon: 'growth' as AlphaIconName,
   },
 ] as const;
 
 export const HOME_OUTCOMES = [
   {
-    title: 'One connected workspace',
+    title: 'Zero Data Copy-Pasting',
     detail:
-      'Clients, projects, invoices, and documents stay linked on a single operating record instead of living in separate apps.',
+      'Client details flow naturally from lead capture into contract terms, delivery tasks, and invoice line items.',
     icon: 'connected' as AlphaIconName,
   },
   {
-    title: 'Faster daily operations',
+    title: '10+ Hours Saved Weekly',
     detail:
-      'Fewer handoffs and less re-entry between tools means your team spends more time delivering work and less time chasing context.',
+      'Eliminate manual status updates, lost email threads, and chasing client approvals across 5 separate tabs.',
     icon: 'workflow' as AlphaIconName,
   },
   {
-    title: 'Fewer disconnected tools',
+    title: '$4,600+ Annual Savings',
     detail:
-      'Replace a patchwork of CRM, billing, and file tools with one backbone built for service businesses.',
+      'Replace separate subscriptions for CRM, DocuSign, QuickBooks, Harvest, and Zoom with one transparent backbone.',
     icon: 'integrations' as AlphaIconName,
   },
   {
-    title: 'Clearer business visibility',
+    title: '100% Operational Clarity',
     detail:
-      'See pipeline, delivery, and billing status without tab-switching, so decisions are based on what is actually in progress.',
+      'Monitor deal pipeline, project delivery deadlines, and cash flow in one live executive view.',
     icon: 'reports' as AlphaIconName,
   },
 ] as const;
 
 export const HOME_FAQ = [
   {
+    id: 'difference',
+    question: 'How is AlphaClone different from HubSpot or Zoho?',
+    answer:
+      'Traditional CRMs like HubSpot or Zoho focus primarily on lead tracking and force you to buy third-party tools for contracts, project delivery, invoicing, and video calls. AlphaClone is a single connected operating backbone: when a deal closes in AlphaClone, the e-signed contract automatically instantiates project delivery boards and sets up billing milestones without extra plugins or Zapier hooks.',
+  },
+  {
     id: 'trial',
-    question: 'Is there a free trial?',
+    question: 'How does the 14-day free trial work?',
     answer:
-      'Yes. New business workspaces can start a 14-day free trial so you can run a real client workflow — CRM, projects, invoicing, and documents — before paying.',
+      'You get full access to your own private AlphaClone instance for 14 days. You can test real workflows with actual client data—CRM, proposals, project tasks, and invoicing—without entering a credit card.',
   },
   {
-    id: 'card',
-    question: 'Is a credit card required?',
+    id: 'ai-security',
+    question: 'What makes Bonnie AI different from generic ChatGPT?',
     answer:
-      'No. You can start the trial without entering a card, explore the workspace with your own workflow, and only add billing when you decide to continue.',
+      'Generic AI chatbots have zero context about your business and live in a separate browser tab. Bonnie AI runs on Model Context Protocol (MCP), meaning it securely reads your workspace data (client notes, deal sizes, contract clauses) and executes real operational tasks—like drafting a proposal or preparing an invoice—with owner approval.',
   },
   {
-    id: 'cancel',
-    question: 'Can I cancel at any time?',
+    id: 'data-import',
+    question: 'Can I import my existing client data?',
     answer:
-      'Yes. You can cancel from account billing controls whenever you need to. You keep access through the current paid period according to your plan terms.',
+      'Yes. You can import contacts, active projects, and past invoices via CSV or direct API connection within minutes during initial setup.',
   },
   {
-    id: 'change-plans',
-    question: 'Can I change plans later?',
+    id: 'cancel-terms',
+    question: 'Are there long-term contracts or cancellation fees?',
     answer:
-      'Yes. Upgrade or change plans from billing when your workspace needs grow — seat counts, modules, and limits are listed on the pricing page so you can switch without restarting setup.',
+      'No. All plans operate on a simple month-to-month or discounted annual basis. You can switch plans or cancel at any time directly from account settings.',
   },
   {
-    id: 'data',
-    question: 'How is my data protected?',
+    id: 'security-data',
+    question: 'Is my client data private and secure?',
     answer:
-      'Workspaces use account controls, role-based access, and published privacy, security, and data-deletion policies. See the security policy for current practices and how workspace data is handled.',
-  },
-  {
-    id: 'onboarding',
-    question: 'Is onboarding support included?',
-    answer:
-      'Self-serve setup is available for all plans, with guided prompts for the first modules you enable. Enterprise includes dedicated onboarding, and you can also book a demo for a live walkthrough.',
-  },
-  {
-    id: 'import',
-    question: 'Can I import existing business data?',
-    answer:
-      'You can bring contacts and related records into the workspace during setup so you are not starting from a blank slate. Book a demo if you need help mapping a larger migration.',
-  },
-  {
-    id: 'integrations',
-    question: 'Which integrations are supported?',
-    answer:
-      'AlphaClone connects with tools such as Stripe, HubSpot, Slack, Google, Microsoft 365, Zoom, and Calendly. See the ecosystem page for the current list and how each connection fits into the workspace.',
+      'Yes. Every AlphaClone workspace utilizes isolated data boundaries, role-based access control, end-to-end encryption in transit and at rest, and strict data deletion policies.',
   },
 ] as const;
 
@@ -169,11 +161,10 @@ export function MidPageCTA() {
     <div className="mkt-mid-cta">
       <div>
         <h2 className="font-marketing-heading text-xl sm:text-2xl text-white">
-          Ready to run your business from one workspace?
+          Stop managing disconnected SaaS tools. Experience the connected engine.
         </h2>
         <p className="mt-3 text-[var(--text-secondary)]">
-          Start your 14-day trial with the modules your service business needs most. No credit card
-          required — explore CRM, projects, invoicing, and Bonnie AI in one connected operating layer.
+          Start your 14-day free trial today. Run real client workflows—from lead capture to signed contract and paid invoice—in one living system. No credit card required.
         </p>
       </div>
       <div className="mkt-mid-cta-actions">
@@ -191,3 +182,4 @@ export function ExploreFeaturesLink() {
     </Link>
   );
 }
+

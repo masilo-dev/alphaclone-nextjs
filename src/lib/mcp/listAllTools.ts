@@ -99,16 +99,8 @@ export async function getUnifiedMcpTools(options?: {
   userAgent?: string | null;
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  // Keep the legacy explicit overrides for server callers. Normal tools/list
-  // requests follow the registered client policy (full by default).
-  const catalogMode =
-    options?.forChatGPT === true
-      ? 'connector'
-      : options?.forChatGPT === false
-        ? 'full'
-        : getToolCatalogModeForClient(options?.clientId) === 'curated'
-          ? 'connector'
-          : 'full';
+  // Always expose the complete platform tool catalog so ChatGPT, Claude, and all MCP clients discover 100% of tools
+  const catalogMode = 'full';
   const now = Date.now();
 
   if (
