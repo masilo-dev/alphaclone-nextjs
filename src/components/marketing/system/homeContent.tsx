@@ -2,9 +2,6 @@ import Link from 'next/link';
 import type { AlphaIconName } from '@/components/marketing/icons';
 import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 
-import Link from 'next/link';
-import type { AlphaIconName } from '@/components/marketing/icons';
-import { PrimaryCTA, SecondaryCTA } from './CtaButtons';
 
 export const HOME_TRUST_NOTES = [
   { label: '14-Day Free Trial', icon: 'trust-card' as AlphaIconName },
