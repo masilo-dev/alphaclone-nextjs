@@ -18,11 +18,19 @@ export const metadata: Metadata = {
         'business workflow automation platform',
         'small business operations software',
     ],
+<<<<<<< HEAD
     alternates: { canonical: absoluteUrl('/about') },
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'About AlphaClone | Unified Business Software for Service Teams',
         description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
         url: absoluteUrl('/about'),
+=======
+    alternates: { canonical: 'https://alphaclonesystems.com/about' },
+    openGraph: {
+        title: 'About AlphaClone | Unified Business Software for Service Teams',
+        description: 'AlphaClone combines CRM, billing, scheduling, contracts, communication, and operations into one connected platform for service businesses.',
+        url: 'https://alphaclonesystems.com/about',
+>>>>>>> origin/main
         type: 'website',
     },
     twitter: { images: ['/twitter-image'],
@@ -32,10 +40,21 @@ export const metadata: Metadata = {
     },
 };
 
+<<<<<<< HEAD
 const breadcrumbSchema = buildBreadcrumbSchema([
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
 ]);
+=======
+const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://alphaclonesystems.com' },
+        { '@type': 'ListItem', position: 2, name: 'About', item: 'https://alphaclonesystems.com/about' },
+    ],
+};
+>>>>>>> origin/main
 
 export default function Page() {
     return (

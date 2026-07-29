@@ -86,7 +86,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const meta = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
 
-    const t = useCallback((text: string) => uiTranslate(language, text), [language]);
+    const t = (text: string) => uiTranslate(language, text);
 
     const value = useMemo(
         () => ({

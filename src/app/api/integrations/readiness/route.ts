@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
+=======
+>>>>>>> origin/main
 
 function isMissingTableError(error: unknown): boolean {
   const code = (error as { code?: string })?.code;
@@ -15,11 +18,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing tenantId' }, { status: 400 });
     }
 
+<<<<<<< HEAD
     const { admin: supabase } = await requireTenantAccess(tenantId);
 
     const facebookPromise = supabase
       .from('facebook_integrations')
       .select('id, page_id, is_active, metadata, updated_at, expires_at')
+=======
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
+
+    const facebookPromise = supabase
+      .from('facebook_integrations')
+      .select('id, page_id, is_active, page_access_token, metadata, updated_at')
+>>>>>>> origin/main
       .eq('tenant_id', tenantId);
 
     const mcpKeysPromise = supabase
@@ -48,12 +60,18 @@ export async function GET(request: NextRequest) {
           })()
       : mcpKeysResult.data || [];
 
+<<<<<<< HEAD
     const activeFacebook: typeof facebookRows = [];
     for (const row of facebookRows) {
       if (!row.is_active || row.metadata?.no_pages) continue;
       const tokens = await getFacebookTokens(supabase, row);
       if (tokens.pageAccessToken) activeFacebook.push(row);
     }
+=======
+    const activeFacebook = facebookRows.filter(
+      (row: any) => row.is_active && row.page_access_token && !row.metadata?.no_pages
+    );
+>>>>>>> origin/main
     const activeMcpKeys = mcpKeyRows.filter((row: any) => row.is_active);
 
     const readinessScore = [

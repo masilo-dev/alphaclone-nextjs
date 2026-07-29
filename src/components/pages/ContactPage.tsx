@@ -8,8 +8,16 @@ import { formatLegalAddress } from '@/lib/seo/siteEntity';
 import { contactSchema } from '../../schemas/validation';
 import AnimateIn from '../common/AnimateIn';
 import ObfuscatedEmail from '../common/ObfuscatedEmail';
+<<<<<<< HEAD
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import { SecondaryCTA } from '@/components/marketing/system/CtaButtons';
+=======
+
+const HeroBackground = dynamic(() => import('@/components/landing/HeroBackground'), {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 bg-slate-950" />,
+});
+>>>>>>> origin/main
 
 const ContactPage: React.FC = () => {
     const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -17,7 +25,10 @@ const ContactPage: React.FC = () => {
     const [turnstileNonce, setTurnstileNonce] = useState(0);
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [validationError, setValidationError] = useState<string>('');
+<<<<<<< HEAD
     const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+=======
+>>>>>>> origin/main
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -199,6 +210,7 @@ const ContactPage: React.FC = () => {
                                     />
                                 </div>
 
+<<<<<<< HEAD
                                 {turnstileEnabled && (
                                     <TurnstileWidget
                                         key={turnstileNonce}
@@ -208,6 +220,8 @@ const ContactPage: React.FC = () => {
                                         onError={() => setTurnstileToken('')}
                                     />
                                 )}
+=======
+>>>>>>> origin/main
 
                                 
                                 {status === 'success' && (
@@ -224,7 +238,11 @@ const ContactPage: React.FC = () => {
                                 )}
                                 <Button
                                     type="submit"
+<<<<<<< HEAD
                                     disabled={status === 'sending' || (turnstileEnabled && !turnstileToken)}
+=======
+                                    disabled={status === 'sending'}
+>>>>>>> origin/main
                                     isLoading={status === 'sending'}
                                     size="lg"
                                     className="w-full font-marketing-heading uppercase tracking-tight button-fill-hover bg-teal-500 text-slate-950"

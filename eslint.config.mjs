@@ -27,6 +27,7 @@ const eslintConfig = defineConfig([
       "react/display-name": "off",
     },
   },
+<<<<<<< HEAD
   {
     files: ["src/components/dashboard/**/*.tsx"],
     rules: {
@@ -44,6 +45,8 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+=======
+>>>>>>> origin/main
   globalIgnores([
     ".next/**",
     "out/**",

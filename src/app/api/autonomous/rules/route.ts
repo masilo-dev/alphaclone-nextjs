@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { requireTenantAccess, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { z } from 'zod';
+=======
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+>>>>>>> origin/main
 
 export async function GET(request: NextRequest) {
   try {
     const tenantId = String(new URL(request.url).searchParams.get('tenantId') || '').trim();
     if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+<<<<<<< HEAD
     const { admin } = await requireTenantAccess(tenantId);
+=======
+    await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { data, error } = await admin
       .from('autonomous_runner_rules')
@@ -26,8 +35,11 @@ export async function GET(request: NextRequest) {
         high_risk_approval_required: true,
         stale_deal_days: 7,
         social_inactivity_days: 3,
+<<<<<<< HEAD
         lead_action_mode: 'draft_and_task',
         email_provider: 'system_default',
+=======
+>>>>>>> origin/main
       },
     });
   } catch (error) {
@@ -37,6 +49,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+<<<<<<< HEAD
     const body = z.object({
       tenantId: z.string().uuid(),
       enabled: z.boolean(),
@@ -62,6 +75,22 @@ export async function PUT(request: NextRequest) {
       social_inactivity_days: body.socialInactivityDays,
       lead_action_mode: String(body.leadActionMode || 'draft_and_task'),
       email_provider: String(body.emailProvider || 'system_default'),
+=======
+    const body = await request.json();
+    const tenantId = String(body.tenantId || '').trim();
+    if (!tenantId) return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
+    const access = await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
+
+    const payload = {
+      tenant_id: tenantId,
+      enabled: body.enabled !== false,
+      auto_send_enabled: body.autoSendEnabled === true,
+      auto_send_confidence_threshold: Number(body.autoSendConfidenceThreshold || 85),
+      high_risk_approval_required: body.highRiskApprovalRequired !== false,
+      stale_deal_days: Number(body.staleDealDays || 7),
+      social_inactivity_days: Number(body.socialInactivityDays || 3),
+>>>>>>> origin/main
       updated_by: access.user.id,
       updated_at: new Date().toISOString(),
     };
@@ -73,6 +102,7 @@ export async function PUT(request: NextRequest) {
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+<<<<<<< HEAD
     const autopilotOn = payload.auto_send_enabled && !payload.high_risk_approval_required;
     if (autopilotOn) {
       const { mcpStore } = await import('@/services/mcp/mcpStore');
@@ -89,8 +119,14 @@ export async function PUT(request: NextRequest) {
       message: payload.enabled ? 'Agent execution state changed to RUNNING.' : 'Agent execution state changed to PAUSED.',
     });
 
+=======
+>>>>>>> origin/main
     return NextResponse.json({ success: true, rules: data });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to update autonomous rules');
   }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

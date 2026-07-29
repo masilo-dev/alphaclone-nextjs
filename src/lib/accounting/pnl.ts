@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+
+import { createClient } from '@supabase/supabase-js';
+>>>>>>> origin/main
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
 export type PnLStatement = {
@@ -21,6 +26,7 @@ export type PnLStatement = {
   tenant_id: string;
 };
 
+<<<<<<< HEAD
 function normalizeMoney(value: unknown): number {
   const num = Number(value || 0);
   return Number.isFinite(num) ? num : 0;
@@ -48,6 +54,8 @@ async function loadExpenseCategoryNames(supabase: ReturnType<typeof createSupaba
   return new Map<string, string>((data as Array<{ id: string; name: string }>).map((row) => [row.id, row.name]));
 }
 
+=======
+>>>>>>> origin/main
 export async function generatePnLStatement(
   tenantId: string,
   period: 'monthly' | 'quarterly' | 'yearly' = 'monthly',
@@ -75,6 +83,7 @@ export async function generatePnLStatement(
     }
   }
 
+<<<<<<< HEAD
   const fromIso = from as string;
   const toIso = to as string;
 
@@ -104,13 +113,35 @@ export async function generatePnLStatement(
     return ['sent', 'overdue', 'open', 'unpaid', 'pending'].includes(status);
   });
   const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + normalizeMoney(i.total ?? i.total_amount ?? i.amount), 0);
+=======
+  // 1. Fetch Revenue (Paid Invoices)
+  const { data: invoices, error: invError } = await supabase
+    .from('business_invoices')
+    .select('total, status, created_at')
+    .eq('tenant_id', tenantId)
+    .gte('created_at', from)
+    .lte('created_at', to) as { data: any[] | null, error: any };
+
+  if (invError) throw new Error(`Revenue query failed: ${invError.message}`);
+
+  const paidInvoices = (invoices || []).filter((i: any) => i.status === 'paid');
+  const totalRevenue = paidInvoices.reduce((sum: number, i: any) => sum + (Number(i.total) || 0), 0);
+  
+  const outstandingInvoices = (invoices || []).filter((i: any) => ['sent', 'overdue'].includes(i.status || ''));
+  const outstandingTotal = outstandingInvoices.reduce((sum: number, i: any) => sum + (Number(i.total) || 0), 0);
+>>>>>>> origin/main
 
   // Group revenue by month
   const revenueByMonthMap = new Map<string, number>();
   paidInvoices.forEach((i: any) => {
+<<<<<<< HEAD
     const invoiceDate = normalizeDate(i.paid_at || i.updated_at || i.created_at);
     const month = invoiceDate ? invoiceDate.substring(0, 7) : 'unknown';
     revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + normalizeMoney(i.total ?? i.total_amount ?? i.amount));
+=======
+    const month = i.created_at.substring(0, 7); // YYYY-MM
+    revenueByMonthMap.set(month, (revenueByMonthMap.get(month) || 0) + (Number(i.total) || 0));
+>>>>>>> origin/main
   });
   const revenueByMonth = Array.from(revenueByMonthMap.entries())
     .map(([month, amount]) => ({ month, amount: Number(amount.toFixed(2)) }))
@@ -119,6 +150,7 @@ export async function generatePnLStatement(
   // 2. Fetch Expenses (Approved)
   const { data: expenses, error: expError } = await supabase
     .from('expenses')
+<<<<<<< HEAD
     .select('*')
     .eq('tenant_id', tenantId)
     .gte('date', fromIso.split('T')[0])
@@ -137,12 +169,29 @@ export async function generatePnLStatement(
   // Include approved or all if no status exists (though our schema has status)
   const approvedExpenses = expenseRows.filter((e: any) => String(e.status || 'approved').toLowerCase() === 'approved');
   const totalExpenses = approvedExpenses.reduce((sum: number, e: any) => sum + normalizeMoney(e.amount), 0);
+=======
+    .select('amount, status, category, categories:category_id(name)')
+    .eq('tenant_id', tenantId)
+    .gte('date', (from as string).split('T')[0])
+    .lte('date', (to as string).split('T')[0]) as { data: any[] | null, error: any };
+
+  if (expError) throw new Error(`Expenses query failed: ${expError.message}`);
+
+  // Include approved or all if no status exists (though our schema has status)
+  const approvedExpenses = (expenses || []).filter((e: any) => e.status === 'approved' || !e.status);
+  const totalExpenses = approvedExpenses.reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+>>>>>>> origin/main
 
   // Group expenses by category
   const expenseByCatMap = new Map<string, number>();
   approvedExpenses.forEach((e: any) => {
+<<<<<<< HEAD
     const cat = e.category || categoryNames.get(String(e.category_id || '')) || 'Uncategorized';
     expenseByCatMap.set(cat, (expenseByCatMap.get(cat) || 0) + normalizeMoney(e.amount));
+=======
+    const cat = e.category || (e.categories as any)?.name || 'Uncategorized';
+    expenseByCatMap.set(cat, (expenseByCatMap.get(cat) || 0) + (Number(e.amount) || 0));
+>>>>>>> origin/main
   });
   
   const expenseByCat = Array.from(expenseByCatMap.entries())

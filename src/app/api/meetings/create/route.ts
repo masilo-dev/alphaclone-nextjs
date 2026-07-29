@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+<<<<<<< HEAD
 import { z } from 'zod';
 import { start } from 'workflow/api';
 import { videoRoomOrchestrationWorkflow } from '@/workflows/video-room-orchestration';
 import { PLAN_PRICING, type SubscriptionPlan } from '@/services/tenancy/types';
 import { isLaunchFreeWindow } from '@/lib/launchWindow';
+=======
+import { start } from 'workflow/api';
+import { videoRoomOrchestrationWorkflow } from '@/workflows/video-room-orchestration';
+>>>>>>> origin/main
 import {
     createAdminSupabaseClientOrThrow,
     requireTenantAccess,
@@ -83,6 +88,7 @@ export async function POST(req: NextRequest) {
 
         const supabase = createAdminSupabaseClientOrThrow();
 
+<<<<<<< HEAD
         const uniqueParticipants = [...new Set(participants.filter((participant) => participant !== user.id))];
         if (uniqueParticipants.length) {
             const { data: participantMembers, error: participantError } = await supabase.from('tenant_users').select('user_id').eq('tenant_id', tenantId).in('user_id', uniqueParticipants);
@@ -108,6 +114,15 @@ export async function POST(req: NextRequest) {
             : planLimits.maxVideoMinutesPerMeeting;
         const actualDuration = Math.min(durationMinutes, planDuration);
 
+=======
+        const { data: tenantUser } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .limit(1)
+            .maybeSingle();
+        const tenantId = tenantUser?.tenant_id || null;
+>>>>>>> origin/main
         const roomName = `alphaclone-${crypto.randomUUID()}`;
 
         // Step 2: Create video_call in database
@@ -115,7 +130,11 @@ export async function POST(req: NextRequest) {
             .from('video_calls')
             .insert({
                 room_id: roomName,
+<<<<<<< HEAD
                 daily_room_url: provider === 'teams' ? joinUrl : null,
+=======
+                daily_room_url: null,
+>>>>>>> origin/main
                 daily_room_name: null,
                 tenant_id: tenantId,
                 host_id: hostId,
@@ -128,6 +147,7 @@ export async function POST(req: NextRequest) {
                 screen_share_enabled: screenShareEnabled,
                 chat_enabled: chatEnabled,
                 duration_limit_minutes: actualDuration,
+<<<<<<< HEAD
                 cancellation_policy_hours: cancellationPolicyHours,
                 allow_client_cancellation: allowClientCancellation,
                 is_public: isPublic,
@@ -137,6 +157,13 @@ export async function POST(req: NextRequest) {
                     provider_room_name: provider === 'livekit' ? roomName : undefined,
                     teams_meeting_id: provider === 'teams' ? providerMeetingId || null : undefined,
                     teams_join_url: provider === 'teams' ? joinUrl : undefined,
+=======
+                cancellation_policy_hours: 3,
+                allow_client_cancellation: true,
+                metadata: {
+                    provider: 'livekit',
+                    provider_room_name: roomName,
+>>>>>>> origin/main
                 },
             })
             .select()
@@ -217,6 +244,7 @@ export async function POST(req: NextRequest) {
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
         const meetingUrl = `${baseUrl}/meet/${linkToken}`;
 
+<<<<<<< HEAD
         let runId: string | null = null;
         try {
             const started = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId }]);
@@ -229,6 +257,9 @@ export async function POST(req: NextRequest) {
                 payload: { meetingId: videoCall.id, error: workflowError instanceof Error ? workflowError.message : 'Unknown workflow error' },
             });
         }
+=======
+        const { runId } = await start(videoRoomOrchestrationWorkflow, [{ meetingId: videoCall.id, tenantId }]);
+>>>>>>> origin/main
 
         return NextResponse.json({
             meetingId: videoCall.id,
@@ -238,8 +269,11 @@ export async function POST(req: NextRequest) {
             durationMinutes: actualDuration,
             title: title,
             hostId: hostId,
+<<<<<<< HEAD
             call: { ...linkedVideoCall, calendar_event_id: calendarEvent?.id || null },
             calendarEvent,
+=======
+>>>>>>> origin/main
             runId
         });
 

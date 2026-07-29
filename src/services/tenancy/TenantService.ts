@@ -30,6 +30,7 @@ class TenantService {
             .replace(/[^a-z0-9-]+/g, '-')
             .replace(/^-+|-+$/g, '')
             .slice(0, 72) || `org-${data.adminUserId.slice(0, 8)}`;
+<<<<<<< HEAD
 
         try {
             const { tenant, error: bootstrapError } = await bootstrapTenantViaApi({
@@ -46,6 +47,30 @@ class TenantService {
         } catch (apiErr) {
             throw apiErr instanceof Error ? apiErr : new Error('Workspace creation failed');
         }
+=======
+
+        const { data: tenantId, error } = await supabase.rpc('create_tenant', {
+            p_name: data.name,
+            p_slug: slugBase,
+            p_admin_user_id: data.adminUserId,
+            p_plan: data.plan || 'free'
+        });
+
+        if (error) {
+            console.error('[TenantService] create_tenant RPC failed:', {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+            });
+            throw error;
+        }
+
+        const tenant = await this.getTenant(tenantId);
+        if (!tenant) throw new Error('Failed to retrieve tenant after creation');
+
+        return tenant;
+>>>>>>> origin/main
     }
 
     /**

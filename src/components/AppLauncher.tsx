@@ -83,12 +83,21 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
           <Image src="/logo.png" alt="" width={18} height={18} className="rounded-md shrink-0" />
           <span className="truncate">{APP_SHORT_NAME}</span>
         </div>
+<<<<<<< HEAD
         <div className="flex items-center gap-2 sm:gap-3">
           <Signal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <div className="flex items-center gap-0.5 sm:gap-1">
             <span className="text-[10px] sm:text-xs">88%</span>
             <Battery className="w-3 h-3 sm:w-4 sm:h-4 rotate-90" />
+=======
+        <div className="flex items-center gap-3">
+          <Signal className="w-3.5 h-3.5" />
+          <Wifi className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1">
+            <span className="text-xs">88%</span>
+            <Battery className="w-4 h-4 rotate-90" />
+>>>>>>> origin/main
           </div>
         </div>
       </div>
@@ -160,7 +169,11 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
                 <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent pointer-events-none" />
                 <app.icon className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 text-white drop-shadow-md z-10" />
               </div>
+<<<<<<< HEAD
               <span className="text-[10px] sm:text-xs md:text-[12px] font-bold text-white/90 drop-shadow-md text-center truncate max-w-full">
+=======
+              <span className="text-xs sm:text-[12px] font-bold text-white/90 drop-shadow-md text-center">
+>>>>>>> origin/main
                 {app.name}
               </span>
             </motion.div>
@@ -215,7 +228,11 @@ export default function AppLauncher({ onLogin }: AppLauncherProps) {
               </div>
               <div className="p-4 flex flex-col gap-2">
                 <p className="text-xs uppercase tracking-widest text-white/30 font-bold mb-1">Quick Actions</p>
+<<<<<<< HEAD
                 {['Open CRM', 'Check mail', 'Start a call', 'View clients'].map((action) => (
+=======
+                {['Launch Dashboard', 'Start Meeting', 'Open Support', 'View Invoices'].map((action) => (
+>>>>>>> origin/main
                    <div key={action} className="p-3 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-between group transition-colors">
                      <span className="text-sm font-medium">{action}</span>
                      <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-teal-400 group-hover:translate-x-1 transition-all" />

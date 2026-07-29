@@ -1,6 +1,7 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { emailCampaignService } from '@/services/emailCampaignService';
 import { isEmailSuppressed } from '@/lib/email/suppression';
+<<<<<<< HEAD
 import { hasRecipientMarketingConsent } from '@/lib/email/marketingConsent';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { sendEmail } from '@/lib/email/sendEmail';
@@ -9,6 +10,12 @@ import { blocksBonnieSend, campaignQualityCheck } from '@/lib/bonnie/bonnieBanne
 import { bonnieErrorMessage, BONNIE_KNOWN_ERRORS } from '@/lib/bonnie/bonnieError';
 
 type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho';
+=======
+import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+import { sendEmail } from '@/lib/email/sendEmail';
+
+type CampaignProvider = 'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail';
+>>>>>>> origin/main
 type ProviderConfig = {
     id: CampaignProvider;
     apiKey?: string;
@@ -22,6 +29,10 @@ const DEFAULT_DAILY_LIMITS: Record<CampaignProvider, number> = {
     resend: 300,
     brevo: 300,
     zoho: 200,
+<<<<<<< HEAD
+=======
+    gmail: 150,
+>>>>>>> origin/main
 };
 
 function toNonEmptyString(value: unknown): string | null {
@@ -42,7 +53,11 @@ function parseJsonObject(value: unknown): Record<string, unknown> {
 
 function normalizeProviderId(value: unknown): CampaignProvider | null {
     const raw = String(value || '').trim().toLowerCase();
+<<<<<<< HEAD
     if (raw === 'sendgrid' || raw === 'resend' || raw === 'brevo' || raw === 'zoho') return raw;
+=======
+    if (raw === 'sendgrid' || raw === 'resend' || raw === 'brevo' || raw === 'zoho' || raw === 'gmail') return raw;
+>>>>>>> origin/main
     return null;
 }
 
@@ -56,6 +71,7 @@ function resolveProviderConfig(provider: CampaignProvider, config: Record<string
     };
 }
 
+<<<<<<< HEAD
 function stripHtml(html: string): string {
     return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -100,6 +116,8 @@ async function resolvePhoneForRecipient(
     return customPhone;
 }
 
+=======
+>>>>>>> origin/main
 function selectProviderForRecipient(
     providers: ProviderConfig[],
     providerCountsToday: Map<CampaignProvider, number>,
@@ -176,6 +194,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             (c.html_content as string) ||
             (c.content as string) ||
             'Empty email body';
+<<<<<<< HEAD
 
         const campaignQuality = campaignQualityCheck(bodySource);
         if (blocksBonnieSend(campaignQuality.score)) {
@@ -186,10 +205,13 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             return { success: false, error: bonnieErrorMessage(err) };
         }
 
+=======
+>>>>>>> origin/main
         const campaignFromEmail = String(c.from_email || 'notifications@alphaclonesystems.com');
         const campaignFromName = String(c.from_name || 'AlphaClone Systems');
         const replyTo = (c.reply_to as string) || undefined;
         const campaignLanguage = toNonEmptyString(rawMeta?.language) || toNonEmptyString(rawMeta?.languageMode) || undefined;
+<<<<<<< HEAD
         const deliveryChannel = toNonEmptyString(rawMeta?.deliveryChannel) || 'email';
         const sendEmailChannel = deliveryChannel === 'email' || deliveryChannel === 'both';
         const sendWhatsappChannel = deliveryChannel === 'whatsapp' || deliveryChannel === 'both';
@@ -209,6 +231,15 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         }
 
         const { data: integrationRows, error: integrationError } = await query;
+=======
+
+        const { data: integrationRows, error: integrationError } = await admin
+            .from('integrations')
+            .select('type, enabled, config')
+            .eq('user_id', campaignCreatorId)
+            .eq('enabled', true)
+            .in('type', ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']);
+>>>>>>> origin/main
         if (integrationError) return { success: false, error: integrationError.message };
 
         const providerConfigs = (integrationRows || [])
@@ -223,6 +254,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             selectedProviders.length > 0 ? selectedProviders.includes(provider.id) : true
         );
 
+<<<<<<< HEAD
         if (sendEmailChannel && !activeProviders.length) {
             return {
                 success: false,
@@ -240,6 +272,15 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
             }
         }
 
+=======
+        if (!activeProviders.length) {
+            return {
+                success: false,
+                error: 'No active email providers are connected for this campaign. Connect SendGrid, Resend, Brevo, Zoho Mail, or Gmail.',
+            };
+        }
+
+>>>>>>> origin/main
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
         const { data: sentTodayRows } = await admin
@@ -265,6 +306,7 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
         const tenantId = String(c.tenant_id || '');
         const whatsappBodyBase = `${String(c.subject || '').trim()}\n\n${stripHtml(bodySource)}`.trim();
 
+<<<<<<< HEAD
         if (sendWhatsappChannel) {
             for (const recipient of recipients) {
                 const phone = await resolvePhoneForRecipient(admin, tenantId, recipient.email);
@@ -365,10 +407,123 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
 
         for (const recipient of emailRecipients) {
             if (await isEmailSuppressed(String(c.tenant_id || ''), recipient.email)) {
+=======
+        for (const recipient of recipients) {
+            if (await isEmailSuppressed(String(c.tenant_id || ''), recipient.email)) {
                 await admin
                     .from('campaign_recipients')
                     .update({
                         status: 'failed',
+                        error_message: 'Recipient is suppressed',
+                    })
+                    .eq('id', recipient.id);
+                continue;
+            }
+
+            const { data: contact } = await admin
+                .from('contacts')
+                .select('id, full_name, email, custom_fields, company:companies(name, website)')
+                .eq('id', recipient.contact_id)
+                .single();
+
+            const contactName = String(contact?.full_name || '').trim();
+            const parts = contactName.split(/\s+/).filter(Boolean);
+            const companyRecord = Array.isArray(contact?.company) ? contact.company[0] : contact?.company;
+            const companyName = String(companyRecord?.name || companyRecord?.website || '').trim();
+
+            const recipientData = {
+                id: recipient.contact_id,
+                email: recipient.email,
+                firstName: parts[0] || undefined,
+                lastName: parts.length > 1 ? parts.slice(1).join(' ') : undefined,
+                company: companyName || undefined,
+                ...(contact?.custom_fields || {}),
+            };
+
+            const provider = selectProviderForRecipient(activeProviders, providerCountsToday, balanceByDailyLimit);
+            if (!provider) {
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'failed',
+                        error_message: 'Daily sending limits reached for all selected providers',
+                    })
+                    .eq('id', recipient.id);
+                continue;
+            }
+
+            const fromEmail = provider.fromEmail || campaignFromEmail;
+            const fromName = provider.fromName || campaignFromName;
+            const personalizedHtml = emailCampaignService.injectVariables(bodySource, {
+                ...recipientData,
+                fromName,
+                senderName: fromName,
+            });
+            const personalizedSubject = emailCampaignService.injectVariables(
+                String(c.subject || ''),
+                {
+                    ...recipientData,
+                    fromName,
+                    senderName: fromName,
+                }
+            );
+            const preferredProvider = provider.id === 'gmail' ? undefined : provider.id;
+            const sendResult = await sendEmail(String(c.tenant_id || ''), {
+                to: recipient.email,
+                subject: personalizedSubject,
+                html: personalizedHtml,
+                from_name: fromName,
+                reply_to: replyTo,
+                userId: campaignCreatorId,
+                templateName: 'emailCampaign',
+            }, preferredProvider);
+
+            if (sendResult.success) {
+                sentCount++;
+                const usedProvider = normalizeProviderId(sendResult.provider) || provider.id;
+                providerCountsToday.set(usedProvider, (providerCountsToday.get(usedProvider) || 0) + 1);
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'sent',
+                        sent_at: new Date().toISOString(),
+                        metadata: { provider: sendResult.provider || provider.id, provider_from: fromEmail, language: campaignLanguage },
+                    })
+                    .eq('id', recipient.id);
+                try {
+                    await captureUnifiedMessageFromWebhook({
+                        supabase: admin as any,
+                        tenantId: String(c.tenant_id || ''),
+                        source: (sendResult.provider || provider.id) as any,
+                        channel: 'email',
+                        direction: 'outbound',
+                        externalId: String(recipient.id),
+                        threadId: String(campaignId),
+                        from: fromEmail,
+                        to: recipient.email,
+                        subject: personalizedSubject,
+                        text: null,
+                        html: personalizedHtml,
+                        sentAt: new Date().toISOString(),
+                        metadata: {
+                            campaignId,
+                            campaignName: String(c.name || ''),
+                            contactId: recipient.contact_id,
+                            provider: sendResult.provider || provider.id,
+                            providerFrom: fromEmail,
+                            language: campaignLanguage,
+                        },
+                    });
+                } catch {
+                    // Non-blocking: campaign delivery should not fail due to analytics capture issues.
+                }
+            } else {
+>>>>>>> origin/main
+                await admin
+                    .from('campaign_recipients')
+                    .update({
+                        status: 'failed',
+<<<<<<< HEAD
                         error_message: 'Recipient is suppressed',
                     })
                     .eq('id', recipient.id);
@@ -530,6 +685,8 @@ export async function sendScheduledCampaignServer(campaignId: string): Promise<{
                     .from('campaign_recipients')
                     .update({
                         status: 'failed',
+=======
+>>>>>>> origin/main
                         error_message: sendResult.error || 'Provider send failed',
                         metadata: { provider: provider.id, provider_from: fromEmail, language: campaignLanguage, tried: sendResult.tried },
                     })

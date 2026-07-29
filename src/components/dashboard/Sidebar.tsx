@@ -142,7 +142,11 @@ const Sidebar = React.memo<SidebarProps>(({
                 }
             }
         }
+<<<<<<< HEAD
         if (isPlatformAdminRole(user.role)) {
+=======
+        if (user.role === 'admin') {
+>>>>>>> origin/main
             out.push({ label: t('Operations console'), href: '/dashboard/admin/operations' });
         }
         return out;
@@ -194,7 +198,11 @@ const Sidebar = React.memo<SidebarProps>(({
                         </label>
                         <select
                             id="ac-sidebar-jump"
+<<<<<<< HEAD
                             className="w-full px-3 py-2 rounded-lg bg-[var(--ws-surface-tertiary,#1C283B)] border border-[var(--ws-border)] text-md text-[var(--ws-text-primary,#F4F7FC)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500,#356AF4)]"
+=======
+                            className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+>>>>>>> origin/main
                             defaultValue=""
                             onChange={(e) => {
                                 const href = e.target.value;
@@ -220,11 +228,19 @@ const Sidebar = React.memo<SidebarProps>(({
 
                 <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 custom-scrollbar transform-gpu">
                     {/* Admin badge */}
+<<<<<<< HEAD
                     {isPlatformAdminRole(user.role) && (
                         <div className="mb-2 px-0.5 space-y-0.5">
                             <button
                                 onClick={() => navigate('/dashboard/admin/tenants')}
                                 className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'} border border-[var(--ws-border)] text-[var(--brand-blue-400)]`}
+=======
+                    {user.role === 'admin' && (
+                        <div className="mb-3 px-1 space-y-1">
+                            <button
+                                onClick={() => navigate('/dashboard/admin/tenants')}
+                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-gradient-to-r from-indigo-600/20 to-teal-600/20 border border-teal-500/30 text-teal-400 hover:border-teal-400`}
+>>>>>>> origin/main
                             >
                                 <ShieldAlert className="w-4 h-4 flex-shrink-0" />
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Admin Panel')}</span>
@@ -232,7 +248,11 @@ const Sidebar = React.memo<SidebarProps>(({
                             <button
                                 type="button"
                                 onClick={() => navigate('/dashboard/admin/operations')}
+<<<<<<< HEAD
                                 className={`${WORKSPACE.nav.item} ${sidebarOpen ? 'gap-2.5' : 'justify-center'}`}
+=======
+                                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-1'} py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border border-slate-700 text-slate-400 hover:text-white hover:border-slate-500`}
+>>>>>>> origin/main
                             >
                                 <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'}`}>{t('Operations')}</span>
                             </button>
@@ -266,7 +286,11 @@ const Sidebar = React.memo<SidebarProps>(({
                                     <span className={`${sidebarOpen ? 'opacity-100' : 'opacity-0 w-0 hidden'} flex-1 text-left whitespace-nowrap`}>
                                         {t(item.label)}
                                         {item.comingSoon && sidebarOpen && (
+<<<<<<< HEAD
                                             <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-tighter bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded-md">
+=======
+                                            <span className="ml-2 px-1.5 py-0.5 text-xs font-black uppercase tracking-tighter bg-slate-800 text-teal-400 border border-teal-500/30 rounded-md">
+>>>>>>> origin/main
                                                 {t('Soon')}
                                             </span>
                                         )}
@@ -310,7 +334,11 @@ const Sidebar = React.memo<SidebarProps>(({
                                                     <span className="whitespace-nowrap">
                                                         {t(sub.label)}
                                                         {sub.comingSoon && (
+<<<<<<< HEAD
                                                             <span className="ml-1.5 px-1 py-0.5 text-xs font-semibold uppercase bg-[var(--ws-surface-tertiary)] text-[var(--brand-blue-400)] border border-[var(--ws-border-strong)] rounded">{t('Soon')}</span>
+=======
+                                                            <span className="ml-1.5 px-1 py-0.5 text-xs font-black uppercase bg-slate-800 text-teal-400 border border-teal-500/20 rounded">{t('Soon')}</span>
+>>>>>>> origin/main
                                                         )}
                                                     </span>
                                                 </button>
@@ -331,10 +359,17 @@ const Sidebar = React.memo<SidebarProps>(({
                         <div className="mb-4 border border-[var(--ws-border)] bg-[var(--ws-active)] rounded-[14px] overflow-hidden">
                             <div className="px-3 py-2 bg-[var(--ws-hover)] border-b border-[var(--ws-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-2">
+<<<<<<< HEAD
                                     <Activity className="w-3.5 h-3.5 text-[var(--brand-blue-400)]" />
                                     <span className="text-xs font-semibold uppercase tracking-widest text-[var(--brand-blue-400)]">{t('Operations')}</span>
                                 </div>
                                 <span className="px-1.5 py-0.5 rounded-md bg-[var(--ws-active)] text-xs font-bold text-[var(--brand-blue-300,#91B5FF)]">
+=======
+                                    <Activity className="w-3.5 h-3.5 text-teal-400" />
+                                    <span className="text-xs font-black uppercase tracking-widest text-teal-400">{t('Operations')}</span>
+                                </div>
+                                <span className="px-1.5 py-0.5 rounded-md bg-teal-500/20 text-xs font-bold text-teal-300">
+>>>>>>> origin/main
                                     {tasks.filter((task) => task.status === 'running').length} {t('Active')}
                                 </span>
                             </div>
@@ -350,7 +385,11 @@ const Sidebar = React.memo<SidebarProps>(({
                                                 ) : (
                                                     <Activity className="w-3 h-3 text-[var(--error-text,#FF9097)]" />
                                                 )}
+<<<<<<< HEAD
                                                 <span className="text-xs font-bold text-[var(--ws-text-secondary)] truncate">{task.name}</span>
+=======
+                                                <span className="text-xs font-bold text-slate-300 truncate">{task.name}</span>
+>>>>>>> origin/main
                                             </div>
                                             {(task.status === 'completed' || task.status === 'error') && (
                                                 <button onClick={() => dismissTask(task.id)} className="p-1 hover:bg-slate-800 rounded">
@@ -416,6 +455,36 @@ const Sidebar = React.memo<SidebarProps>(({
                             )}
                         </button>
 
+<<<<<<< HEAD
+=======
+                        {sidebarOpen && (
+                            <>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-white truncate leading-tight">
+                                        {user.name || user.email?.split('@')[0] || t('User')}
+                                    </p>
+                                    <p className="text-xs text-slate-500 truncate capitalize">{user.role || t('member')}</p>
+                                </div>
+
+                                {/* Language switcher - immediate change */}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const currentIdx = LANGUAGES.findIndex((l) => l.code === language);
+                                        const nextLang = LANGUAGES[(currentIdx + 1) % LANGUAGES.length];
+                                        setLanguage(nextLang.code);
+                                        toast.success(`${t('Switched to')} ${nextLang.nativeName}`);
+                                    }}
+                                    title={t('Switch language')}
+                                    className="text-xs font-bold min-w-[2rem] h-8 px-1.5 rounded-lg bg-slate-800 border border-slate-600 text-slate-200 hover:border-teal-500/50 transition-colors flex items-center justify-center flex-shrink-0"
+                                >
+                                    {languageCode}
+                                </button>
+                            </>
+                        )}
+
+                        {/* Logout */}
+>>>>>>> origin/main
                         <button
                             onClick={onLogout}
                             title={t('Log Out')}
@@ -433,3 +502,4 @@ const Sidebar = React.memo<SidebarProps>(({
 
 Sidebar.displayName = 'Sidebar';
 export default Sidebar;
+

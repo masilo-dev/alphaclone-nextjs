@@ -39,10 +39,24 @@ async function getAuthUser() {
     } = await supabase.auth.getUser();
     if (!user) return null;
 
+<<<<<<< HEAD
+=======
+    const { data: tenantUser } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+>>>>>>> origin/main
     return {
         supabase,
         id: user.id,
         name: (user.user_metadata?.name as string | undefined) || user.email?.split('@')[0] || 'User',
+<<<<<<< HEAD
+=======
+        tenantId: tenantUser?.tenant_id as string | undefined,
+>>>>>>> origin/main
     };
 }
 
@@ -54,6 +68,10 @@ async function assertCallAccessStrict(
     supabase: SupabaseClient,
     callId: string,
     userId: string,
+<<<<<<< HEAD
+=======
+    tenantId: string | undefined
+>>>>>>> origin/main
 ): Promise<boolean> {
     const { data: call, error } = await supabase
         .from('video_calls')
@@ -64,10 +82,14 @@ async function assertCallAccessStrict(
     if (error || !call) return false;
     if (call.status === 'ended' || call.status === 'cancelled') return false;
     if (call.host_id === userId) return true;
+<<<<<<< HEAD
     if (call.tenant_id) {
         const { data: membership } = await supabase.from('tenant_users').select('user_id').eq('tenant_id', call.tenant_id).eq('user_id', userId).maybeSingle();
         if (membership) return true;
     }
+=======
+    if (call.tenant_id && tenantId && call.tenant_id === tenantId) return true;
+>>>>>>> origin/main
     return false;
 }
 
@@ -89,11 +111,14 @@ async function verifyPublicMeetingAccess(callId: string, meetingAccessPin: strin
             call.metadata && typeof call.metadata === 'object'
                 ? (call.metadata as { meeting_pin?: string }).meeting_pin
                 : undefined;
+<<<<<<< HEAD
         const meetingStartedAt =
             call.metadata && typeof call.metadata === 'object'
                 ? Number((call.metadata as { meeting_started_at?: number }).meeting_started_at || 0)
                 : 0;
         if (meetingStartedAt && Date.now() - meetingStartedAt > 35 * 60 * 1000) return false;
+=======
+>>>>>>> origin/main
         if (expectedPin && String(expectedPin) !== String(meetingAccessPin || '')) {
             return false;
         }
@@ -108,7 +133,11 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'LiveKit is not configured on the server' }, { status: 503 });
     }
 
+<<<<<<< HEAD
     let body: { callId?: string; meetingAccessPin?: string; meetingAccessToken?: string; guestName?: string };
+=======
+    let body: { callId?: string; meetingAccessPin?: string };
+>>>>>>> origin/main
     try {
         body = await req.json();
     } catch {
@@ -121,6 +150,7 @@ export async function POST(req: Request) {
     }
 
     const pin = typeof body.meetingAccessPin === 'string' ? body.meetingAccessPin.trim() : undefined;
+<<<<<<< HEAD
     const accessToken = typeof body.meetingAccessToken === 'string' ? body.meetingAccessToken.trim() : undefined;
     let validAccessToken = false;
     if (accessToken) {
@@ -138,12 +168,24 @@ export async function POST(req: Request) {
 
     if (authUser) {
         if (!strictOk && !validAccessToken) {
+=======
+
+    const authUser = await getAuthUser();
+
+    if (authUser) {
+        const strictOk = await assertCallAccessStrict(authUser.supabase, callId, authUser.id, authUser.tenantId);
+        if (!strictOk) {
+>>>>>>> origin/main
             const publicOk = await verifyPublicMeetingAccess(callId, pin);
             if (!publicOk) {
                 return NextResponse.json({ error: 'Not allowed to join this meeting room' }, { status: 403 });
             }
         }
+<<<<<<< HEAD
     } else if (!validAccessToken) {
+=======
+    } else {
+>>>>>>> origin/main
         const publicOk = await verifyPublicMeetingAccess(callId, pin);
         if (!publicOk) {
             return NextResponse.json({ error: 'Meeting not found or access denied' }, { status: 403 });
@@ -151,9 +193,14 @@ export async function POST(req: Request) {
     }
 
     const roomName = `alphaclone-${callId}`;
+<<<<<<< HEAD
     const identity = authUser ? authUser.id : `guest-${callId}-${crypto.randomUUID()}`;
     const requestedGuestName = typeof body.guestName === 'string' ? body.guestName.trim().slice(0, 80) : '';
     const displayName = authUser ? authUser.name : requestedGuestName || 'Guest';
+=======
+    const identity = authUser ? authUser.id : `guest-${callId}-${Math.random().toString(36).slice(2, 10)}`;
+    const displayName = authUser ? authUser.name : 'Guest';
+>>>>>>> origin/main
 
     const token = new AccessToken(LIVEKIT.apiKey, LIVEKIT.apiSecret, {
         identity,

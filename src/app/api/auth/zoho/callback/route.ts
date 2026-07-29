@@ -5,6 +5,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
+<<<<<<< HEAD
 function getAppUrl(_req: NextRequest) {
     return PUBLIC_APP_ORIGIN;
 }
@@ -13,6 +14,20 @@ function getZohoRedirectUri(_req: NextRequest) {
     const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
     if (configured) return configured.replace(/\/$/, '');
     return OAUTH_CALLBACKS.zoho;
+=======
+function getAppUrl(req: NextRequest) {
+    if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
+    const proto = req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '');
+    const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
+    return host ? `${proto}://${host}` : 'https://alphaclonesystems.com';
+}
+
+function getZohoRedirectUri(req: NextRequest) {
+    const appUrl = getAppUrl(req).replace(/\/$/, '');
+    const configured = String(ENV.ZOHO_REDIRECT_URI || '').trim();
+    if (configured) return configured.replace(/\/$/, '');
+    return `${appUrl}/api/auth/zoho/callback`;
+>>>>>>> origin/main
 }
 
 type ZohoTokenResponse = {
@@ -67,7 +82,11 @@ export async function GET(req: NextRequest) {
     const stateStr = searchParams.get('state');
     const error = searchParams.get('error');
     const appUrl = getAppUrl(req);
+<<<<<<< HEAD
     const zohoMailReturnUrl = `${appUrl}/dashboard/mail`;
+=======
+    const zohoMailReturnUrl = `${appUrl}/dashboard/zoho/mail`;
+>>>>>>> origin/main
 
     if (error) {
         return NextResponse.redirect(`${zohoMailReturnUrl}?error=${encodeURIComponent(error)}`);
@@ -123,7 +142,11 @@ export async function GET(req: NextRequest) {
         const hosts = ZohoService.getHostsByRegion(resolvedRegion);
 
         // Initialize ZohoService to read/save config
+<<<<<<< HEAD
         const zohoService = new ZohoService(userId, tenantId);
+=======
+        const zohoService = new ZohoService(userId);
+>>>>>>> origin/main
         const existingConfig = await zohoService.getConfig();
         const refreshToken = data.refresh_token || existingConfig?.refreshToken;
         if (!refreshToken) {
@@ -165,6 +188,7 @@ export async function GET(req: NextRequest) {
             ...(booksOrgId ? { booksOrgId } : {}),
         });
 
+<<<<<<< HEAD
         const { error: connectionError } = await admin.from('tenant_integrations').upsert({
             tenant_id: tenantId,
             integration_id: 'zoho-mail',
@@ -180,6 +204,8 @@ export async function GET(req: NextRequest) {
             payload: { integrationId: 'zoho-mail', actorUserId: userId },
         });
 
+=======
+>>>>>>> origin/main
         return NextResponse.redirect(`${zohoMailReturnUrl}?success=zoho_connected`);
     } catch (err: unknown) {
         console.error('Zoho Auth Callback Error:', err);

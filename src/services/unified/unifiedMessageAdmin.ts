@@ -113,11 +113,18 @@ export async function resolveContactByEmailAdmin(
     .select('id, company_id')
     .eq('tenant_id', tenantId)
     .eq('email', normalized)
+<<<<<<< HEAD
     .order('updated_at', { ascending: false })
     .limit(1);
 
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : null;
   return { contact_id: row?.id ?? null, company_id: (row as { company_id?: string | null } | undefined)?.company_id ?? null };
+=======
+    .maybeSingle();
+
+  if (error) throw error;
+  return { contact_id: data?.id ?? null, company_id: (data as any)?.company_id ?? null };
+>>>>>>> origin/main
 }
 

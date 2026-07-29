@@ -6,7 +6,12 @@ import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { dedupeLeadsAgainstTenantHistory } from '@/lib/scraper/serverDedupe';
 import { scraperSearchSchema } from '@/schemas/validation';
 import { enrichLeadWebsite } from '@/lib/scraper/enrichmentPipeline';
+<<<<<<< HEAD
 import { runInBackground } from '@/lib/server/backgroundTask';
+=======
+import { waitUntil } from '@vercel/functions';
+import { checkBotId } from 'botid/server';
+>>>>>>> origin/main
 
 const SOURCE_UNAVAILABLE = 'This source could not return results. Try again or adjust your query.';
 import {
@@ -160,8 +165,11 @@ async function fetchFoursquare(niche: string, location: string, limit = 20, radi
       business_name: place.name || 'Unknown',
       website:       place.website || '',
       snippet:       place.categories?.[0]?.name || 'Business',
+<<<<<<< HEAD
       source_id:     `foursquare:${encodeURIComponent(String(place.fsq_id || place.name || 'unknown'))}`,
       source_url:    place.website || '',
+=======
+>>>>>>> origin/main
       phone:         place.tel || '',
       email:         '',
       address:       addressStr,
@@ -222,8 +230,11 @@ async function fetchDuckDuckGoLeads(niche: string, location: string, limit = 20)
       business_name: name,
       website,
       snippet: snippet || 'Found via web search',
+<<<<<<< HEAD
       source_id: `duckduckgo:${encodeURIComponent(website || name)}`,
       source_url: website || link,
+=======
+>>>>>>> origin/main
       phone,
       email,
       address: '',
@@ -253,8 +264,11 @@ async function fetchFreePlacesFallback(niche: string, location: string, limit = 
       business_name: p.businessName,
       website: p.website || '',
       snippet: p.industry || 'Business',
+<<<<<<< HEAD
       source_id: p.placeId || `places:${encodeURIComponent(`${p.businessName}:${p.formattedAddress}`)}`,
       source_url: p.website || '',
+=======
+>>>>>>> origin/main
       phone: p.phone || '',
       email: '',
       address: p.formattedAddress || '',
@@ -349,7 +363,33 @@ async function fetchOpenStreetMap(niche: string, location: string, targetMin = 2
     centerLat = parseFloat(nomData[0].lat);
     centerLon = parseFloat(nomData[0].lon);
   } else {
+<<<<<<< HEAD
     throw new Error(`Location not found: "${location}". OSM and fallbacks failed to geocode.`);
+=======
+    // Fallback: Try HERE geocoding if available
+    try {
+      const hereApiKey = process.env.HERE_API_KEY;
+      if (hereApiKey && !hereApiKey.startsWith('your_')) {
+        const hereGeoRes = await fetch(
+          `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(geoQuery)}&apiKey=${hereApiKey}`,
+          { 
+            headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
+            signal: AbortSignal.timeout(8000) 
+          }
+        );
+        if (hereGeoRes.ok) {
+          const hereData = await hereGeoRes.json();
+          const pos = hereData.items?.[0]?.position;
+          if (pos) {
+            centerLat = pos.lat;
+            centerLon = pos.lng;
+          } else throw new Error('HERE geocode no results');
+        } else throw new Error('HERE geocode failed');
+      } else throw new Error('No HERE key');
+    } catch (err) {
+      throw new Error(`Location not found: "${location}". OSM and fallbacks failed to geocode.`);
+    }
+>>>>>>> origin/main
   }
 
   // 2. Adaptive Bounding Box (Progressively widen)
@@ -555,6 +595,28 @@ export async function POST(request: Request) {
     const requestStartedAt = Date.now();
     const isBudgetExceeded = () => Date.now() - requestStartedAt > REQUEST_BUDGET_MS;
 
+<<<<<<< HEAD
+
+    const body = await request.json();
+    const fallbackNiche = body.niche || body.query?.split(' in ')[0]?.trim() || '';
+    const fallbackLocation = body.location || body.query?.split(' in ')[1]?.trim() || '';
+    const parsed = scraperSearchSchema.safeParse({
+      niche: fallbackNiche,
+      location: fallbackLocation,
+      sortBy: body.sortBy || 'default',
+      radiusKm: Number(body.radiusKm || 25),
+      tenantId: String(body.tenantId || body.tenant_id || '').trim(),
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
+=======
+    // Vercel BotId Protection
+    const verification = await checkBotId();
+    if (verification.isBot) {
+      return NextResponse.json({ error: 'Bot detected. Access denied.' }, { status: 403 });
+>>>>>>> origin/main
+    }
+    const { niche, location, sortBy, radiusKm, tenantId } = parsed.data;
 
     const body = await request.json();
     const fallbackNiche = body.niche || body.query?.split(' in ')[0]?.trim() || '';
@@ -680,7 +742,11 @@ export async function POST(request: Request) {
     }
 
     if (results.length === 0) {
+<<<<<<< HEAD
       const bestError = sourceErrors.search || sourceErrors.browser || sourceErrors.here || sourceErrors.osm || 'No matching leads for this search. Try a broader niche or location.';
+=======
+      const bestError = sourceErrors.search || sourceErrors.browser || sourceErrors.here || sourceErrors.osm || 'No leads found. Try a different niche or location.';
+>>>>>>> origin/main
       return NextResponse.json({
         success: false,
         results: [],
@@ -721,8 +787,14 @@ export async function POST(request: Request) {
           }
         })
     );
+<<<<<<< HEAD
       // Run final cleanup and history deduplication in the background
       runInBackground((async () => {
+=======
+      // Run final cleanup and history deduplication in the background via waitUntil
+      // This ensures we return results immediately while still maintaining durable state
+      waitUntil((async () => {
+>>>>>>> origin/main
         const tenantIdForDedupe = tenantId || '';
         if (tenantIdForDedupe) {
           const adminForDedupe = getAdminSupabase();

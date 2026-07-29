@@ -163,7 +163,11 @@ STRICT INSTRUCTIONS:
 3. Keep the query simple and clean. Match text patterns using ILIKE where appropriate.`;
 
     try {
+<<<<<<< HEAD
       const response = await generateText(prompt, 1000, 'deepseek-chat', tenantId);
+=======
+      const response = await generateText(prompt, 1000, 'claude-sonnet-4-6-20260217', tenantId);
+>>>>>>> origin/main
       const text = response.text || '';
 
       // Extract JSON block in case of conversational wrapper
@@ -213,8 +217,12 @@ STRICT INSTRUCTIONS:
     const forbidden = [
       'insert', 'update', 'delete', 'drop', 'truncate', 'alter', 'create',
       'replace', 'grant', 'revoke', 'vacuum', 'reindex', 'pg_', 'schema',
+<<<<<<< HEAD
       'information_schema', 'into', 'analyse', 'explain', 'union', 'intersect',
       'except', 'join', 'with', 'or', 'copy', 'execute', 'call'
+=======
+      'information_schema', 'into', 'analyse', 'explain'
+>>>>>>> origin/main
     ];
 
     for (const word of forbidden) {
@@ -225,6 +233,7 @@ STRICT INSTRUCTIONS:
       }
     }
 
+<<<<<<< HEAD
     if ((cleanSql.match(/\bselect\b/g) || []).length !== 1 || /;|--|\/\*|\*\//.test(cleanSql)) {
       return false;
     }
@@ -237,6 +246,10 @@ STRICT INSTRUCTIONS:
 
     const escapedTenantId = tenantId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     if (!new RegExp(`\\btenant_id\\b\\s*=\\s*['"]${escapedTenantId}['"]`, 'i').test(sql)) {
+=======
+    // 3. Ensure tenant isolation constraint is present
+    if (!cleanSql.includes('tenant_id') || !cleanSql.includes(tenantId)) {
+>>>>>>> origin/main
       return false;
     }
 
@@ -245,7 +258,12 @@ STRICT INSTRUCTIONS:
 
   /**
    * Executes the translated read-only query securely.
+<<<<<<< HEAD
    * Queries execute only through the database's security-definer read-only RPC.
+=======
+   * If a direct raw SQL executor isn't available, we fallback to a safe PostgreSQL parser/mock
+   * or direct RPC execution using a secure client proxy.
+>>>>>>> origin/main
    */
   async executeQuery(
     supabase: SupabaseClient,
@@ -267,6 +285,7 @@ STRICT INSTRUCTIONS:
     try {
       // Execute read-only query via custom pg_read RPC if present, or dynamically fetch matching data using PostgREST fallback
       const { data, error } = await supabase.rpc('secure_read_only_query', {
+<<<<<<< HEAD
         query_string: translation.sql_query,
         expected_tenant_id: tenantId,
       });
@@ -278,6 +297,20 @@ STRICT INSTRUCTIONS:
           rows: [],
           row_count: 0,
           execution_error: `Secure query execution failed: ${error.message}`
+=======
+        query_string: translation.sql_query
+      });
+
+      if (error) {
+        // Fallback: Dynamically parse query to execute safe PostgREST equivalents
+        // This ensures compatibility even if the secure_read_only_query RPC has not been migrated
+        const postgrestData = await this.fallbackPostgrestExecution(supabase, tenantId, translation);
+        return {
+          translation,
+          columns: postgrestData.columns,
+          rows: postgrestData.rows,
+          row_count: postgrestData.rows.length
+>>>>>>> origin/main
         };
       }
 
@@ -301,6 +334,31 @@ STRICT INSTRUCTIONS:
     }
   }
 
+<<<<<<< HEAD
+=======
+  /**
+   * Fully safe PostgREST fallback parsing key tables involved to serve read-only requests.
+   */
+  private async fallbackPostgrestExecution(
+    supabase: SupabaseClient,
+    tenantId: string,
+    translation: NLQueryTranslation
+  ): Promise<{ columns: string[]; rows: any[] }> {
+    const table = translation.tables_involved[0] || 'deals';
+
+    // Simple routing to the primary table
+    const { data } = await supabase
+      .from(table)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .limit(20);
+
+    const rows = Array.isArray(data) ? data : [];
+    const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+    return { columns, rows };
+  }
+>>>>>>> origin/main
 }
 
 export const naturalLanguageSqlService = new NaturalLanguageSqlService();

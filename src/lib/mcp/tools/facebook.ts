@@ -2,6 +2,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import {
   getFacebookIntegrationWithToken,
   upsertFacebookIntegration,
@@ -34,11 +35,17 @@ async function resolveFacebookPageForTenant(tenantId: string, pageId?: string) {
     page_access_token: integration.pageAccessToken,
   };
 }
+=======
+>>>>>>> origin/main
 
 // ── get_facebook_token ────────────────────────────────────────────────────────
 registerTool('facebook', {
   name: 'get_facebook_token',
+<<<<<<< HEAD
   description: 'Retrieve connected Facebook Page metadata for the tenant (tokens are never returned).',
+=======
+  description: 'Retrieve stored Facebook Page Access Tokens and page info for the tenant.',
+>>>>>>> origin/main
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     page_id: z.string().optional(),
@@ -54,10 +61,16 @@ registerTool('facebook', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     let query = supabase
+<<<<<<< HEAD
       .from('facebook_integrations')
       .select(SAFE_INTEGRATION_COLUMNS)
       .eq('tenant_id', args.tenant_id)
       .eq('is_active', true);
+=======
+      .from('facebook_tokens')
+      .select('id, page_id, page_name, token_expires_at, scopes, created_at')
+      .eq('tenant_id', args.tenant_id);
+>>>>>>> origin/main
     if (args.page_id) query = query.eq('page_id', args.page_id);
     const { data, error } = await query;
     if (error) throw error;
@@ -68,7 +81,11 @@ registerTool('facebook', {
 // ── store_facebook_token ──────────────────────────────────────────────────────
 registerTool('facebook', {
   name: 'store_facebook_token',
+<<<<<<< HEAD
   description: 'Store or update a Facebook Page Access Token for publishing (encrypted at rest).',
+=======
+  description: 'Store or update a Facebook Page Access Token for publishing.',
+>>>>>>> origin/main
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     user_id: z.string().uuid(),
@@ -92,6 +109,7 @@ registerTool('facebook', {
     required: ['tenant_id', 'user_id', 'page_id', 'page_access_token'],
   },
   handler: async (args) => {
+<<<<<<< HEAD
     const result = await upsertFacebookIntegration({
       userId: args.user_id,
       tenantId: args.tenant_id,
@@ -115,6 +133,29 @@ registerTool('facebook', {
       .select(SAFE_INTEGRATION_COLUMNS)
       .eq('id', result.integrationId)
       .single();
+=======
+    const supabase = createSupabaseAdminClient();
+    const { data: existing } = await supabase
+      .from('facebook_tokens').select('id')
+      .eq('tenant_id', args.tenant_id).eq('page_id', args.page_id).maybeSingle();
+
+    const payload = {
+      user_id: args.user_id,
+      page_name: args.page_name || null,
+      page_access_token: args.page_access_token,
+      token_expires_at: args.token_expires_at || null,
+      scopes: args.scopes || null,
+    };
+
+    if (existing) {
+      const { data, error } = await supabase.from('facebook_tokens')
+        .update(payload).eq('id', existing.id).select().single();
+      if (error) throw error;
+      return data;
+    }
+    const { data, error } = await supabase.from('facebook_tokens')
+      .insert({ tenant_id: args.tenant_id, page_id: args.page_id, ...payload }).select().single();
+>>>>>>> origin/main
     if (error) throw error;
     return data;
   },
@@ -133,29 +174,54 @@ registerTool('facebook', {
     video_filename: z.string().optional().default('reel.mp4'),
     description: z.string().optional(),
     title: z.string().optional(),
+<<<<<<< HEAD
     publish_now: z.boolean().optional().default(false),
+=======
+    publish_now: z.boolean().optional().default(true),
+>>>>>>> origin/main
     scheduled_publish_time: z.number().int().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+<<<<<<< HEAD
       page_id: { type: 'string', description: 'Facebook Page ID (required when tenant has multiple pages; otherwise tenant default or sole page)' },
+=======
+      page_id: { type: 'string', description: 'Facebook Page ID (uses first connected page if omitted)' },
+>>>>>>> origin/main
       video_url: { type: 'string', description: 'Public URL of the video to publish as a Reel' },
       video_base64: { type: 'string', description: 'Base64-encoded video content (alternative to video_url)' },
       video_filename: { type: 'string', description: 'Filename for base64 video (default: reel.mp4)', default: 'reel.mp4' },
       description: { type: 'string', description: 'Reel caption/description' },
       title: { type: 'string', description: 'Optional Reel title' },
+<<<<<<< HEAD
       publish_now: { type: 'boolean', description: 'Publish immediately (default: false)', default: false },
+=======
+      publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
+>>>>>>> origin/main
       scheduled_publish_time: { type: 'number', description: 'Unix timestamp for scheduled publishing (only when publish_now is false)' },
     },
     required: ['tenant_id'],
   },
   handler: async (args) => {
+<<<<<<< HEAD
     const { page_id, page_name, page_access_token } = await resolveFacebookPageForTenant(
       args.tenant_id,
       args.page_id
     );
+=======
+    const supabase = createSupabaseAdminClient();
+
+    // Get page token
+    let query = supabase.from('facebook_tokens')
+      .select('page_id, page_name, page_access_token')
+      .eq('tenant_id', args.tenant_id);
+    if (args.page_id) query = query.eq('page_id', args.page_id);
+    const { data: tokens, error: tokErr } = await query.limit(1);
+    if (tokErr || !tokens?.length) throw new Error('No connected Facebook Page found. Please connect a page first.');
+    const { page_id, page_name, page_access_token } = tokens[0];
+>>>>>>> origin/main
 
     if (!args.video_url && !args.video_base64) {
       throw new Error('Either video_url or video_base64 is required to publish a Reel.');
@@ -295,13 +361,21 @@ registerTool('facebook', {
       })
     ).min(1).max(10),
     link_url: z.string().url().optional(),
+<<<<<<< HEAD
     publish_now: z.boolean().optional().default(false),
+=======
+    publish_now: z.boolean().optional().default(true),
+>>>>>>> origin/main
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+<<<<<<< HEAD
       page_id: { type: 'string', description: 'Facebook Page ID (required when tenant has multiple pages; otherwise tenant default or sole page)' },
+=======
+      page_id: { type: 'string', description: 'Facebook Page ID (uses first connected page if omitted)' },
+>>>>>>> origin/main
       caption: { type: 'string', description: 'Post caption/text' },
       photos: {
         type: 'array',
@@ -318,15 +392,32 @@ registerTool('facebook', {
         },
       },
       link_url: { type: 'string', description: 'Optional link to attach to the post' },
+<<<<<<< HEAD
       publish_now: { type: 'boolean', description: 'Publish immediately (default: false)', default: false },
+=======
+      publish_now: { type: 'boolean', description: 'Publish immediately (default: true)', default: true },
+>>>>>>> origin/main
     },
     required: ['tenant_id', 'caption', 'photos'],
   },
   handler: async (args) => {
+<<<<<<< HEAD
     const { page_id, page_name, page_access_token } = await resolveFacebookPageForTenant(
       args.tenant_id,
       args.page_id
     );
+=======
+    const supabase = createSupabaseAdminClient();
+
+    // Get page token
+    let query = supabase.from('facebook_tokens')
+      .select('page_id, page_name, page_access_token')
+      .eq('tenant_id', args.tenant_id);
+    if (args.page_id) query = query.eq('page_id', args.page_id);
+    const { data: tokens, error: tokErr } = await query.limit(1);
+    if (tokErr || !tokens?.length) throw new Error('No connected Facebook Page found. Please connect a page first.');
+    const { page_id, page_name, page_access_token } = tokens[0];
+>>>>>>> origin/main
 
     // Step 1: Upload each photo as an unpublished photo to get media fbids
     const attachedMediaIds: Array<{ media_fbid: string }> = [];

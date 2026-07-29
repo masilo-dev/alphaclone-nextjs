@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+<<<<<<< HEAD
 import {
   validateMCPAuthApp,
   handleCorsApp,
@@ -9,11 +10,19 @@ import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { negotiateClientCapabilities } from '@/lib/mcp/clientCapabilities';
+=======
+import { createMCPServer } from '@/services/mcp/MCPServer';
+import { validateMCPAuthApp, handleCorsApp, getMcpCorsHeaders } from '@/services/mcp/authMiddlewareApp';
+import { createClient } from '@supabase/supabase-js';
+import { ENV } from '@/config/env';
+import { StatelessTransport } from '@/services/mcp/StatelessTransport';
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 800;
 
+<<<<<<< HEAD
 const MCP_PROTOCOL_VERSION = '2025-11-25';
 const MCP_VERSION_HEADER = '2025-03-26';
 const SUPPORTED_MCP_PROTOCOL_VERSIONS = ['2024-11-05', '2025-03-26', '2025-11-25'] as const;
@@ -63,6 +72,9 @@ function negotiateProtocolVersion(requested: unknown): string {
   }
   return MCP_PROTOCOL_VERSION;
 }
+=======
+const MCP_PROTOCOL_VERSION = '2025-03-26';
+>>>>>>> origin/main
 
 /**
  * Unified MCP Endpoint (/api/mcp)
@@ -84,6 +96,7 @@ async function resolveAuth(req: NextRequest) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (!userError && user) {
+<<<<<<< HEAD
       // Hint is NEVER authoritative — must verify membership first.
       const hinted =
         req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId') || '';
@@ -102,6 +115,27 @@ async function resolveAuth(req: NextRequest) {
       } catch (membershipErr) {
         console.warn('[MCP Route Auth Fallback] tenant membership rejected:', membershipErr);
         // Fall through to unauthorized
+=======
+      const tenantIdHeader = req.headers.get('x-tenant-id') || new URL(req.url).searchParams.get('tenantId');
+      let resolvedTenantId = tenantIdHeader || '';
+
+      if (!resolvedTenantId) {
+        const { data: userTenant } = await supabase
+          .from('tenant_users')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        resolvedTenantId = userTenant?.tenant_id || '';
+      }
+
+      if (resolvedTenantId) {
+        return {
+          tenant_id: resolvedTenantId,
+          user_id: user.id,
+        };
+>>>>>>> origin/main
       }
     }
   } catch (fallbackErr) {
@@ -111,6 +145,7 @@ async function resolveAuth(req: NextRequest) {
   return auth;
 }
 
+<<<<<<< HEAD
 function authClientIdOf(auth: { client_id?: string } | { error: string }): string | null {
   if ('error' in auth) return null;
   return auth.client_id || null;
@@ -135,6 +170,8 @@ function unauthorizedFromAuth(req: NextRequest, auth: { error: string; status: n
   );
 }
 
+=======
+>>>>>>> origin/main
 export async function POST(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
@@ -147,7 +184,11 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32700, message: 'Parse error' },
       id: null,
+<<<<<<< HEAD
     }, { status: 400, headers: mcpJsonHeaders(req) });
+=======
+    }, { status: 400, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
   }
 
   if (!requestBody || typeof requestBody !== 'object' || !requestBody.method) {
@@ -155,7 +196,11 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32600, message: 'Invalid Request' },
       id: requestBody?.id ?? null,
+<<<<<<< HEAD
     }, { status: 400, headers: mcpJsonHeaders(req) });
+=======
+    }, { status: 400, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
   }
 
   const mcpSessionId = req.headers.get('mcp-session-id');
@@ -165,7 +210,11 @@ export async function POST(req: NextRequest) {
   // 1. Authentication
   if (mcpSessionId) {
     if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
+<<<<<<< HEAD
       return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: mcpJsonHeaders(req) });
+=======
+      return NextResponse.json({ error: 'SERVER_CONFIGURATION_ERROR' }, { status: 500, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
     }
     const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
     const { data: session, error: sessionError } = await supabaseAdmin
@@ -177,7 +226,15 @@ export async function POST(req: NextRequest) {
     if (sessionError || !session) {
       const auth = await resolveAuth(req);
       if ('error' in auth) {
+<<<<<<< HEAD
         return unauthorizedFromAuth(req, auth);
+=======
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'Session not found. Please re-initialize.' },
+          id: requestBody.id ?? null,
+        }, { status: 401, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
       }
       tenantId = auth.tenant_id;
       userId = auth.user_id;
@@ -186,7 +243,15 @@ export async function POST(req: NextRequest) {
       if (expiry < new Date()) {
         const auth = await resolveAuth(req);
         if ('error' in auth) {
+<<<<<<< HEAD
           return unauthorizedFromAuth(req, auth);
+=======
+          return NextResponse.json({
+            jsonrpc: '2.0',
+            error: { code: -32001, message: 'Session expired. Please re-initialize.' },
+            id: requestBody.id ?? null,
+          }, { status: 401, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
         }
         tenantId = auth.tenant_id;
         userId = auth.user_id;
@@ -198,12 +263,17 @@ export async function POST(req: NextRequest) {
   } else {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
+<<<<<<< HEAD
       return unauthorizedFromAuth(req, auth);
+=======
+      return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
     }
     tenantId = auth.tenant_id;
     userId = auth.user_id;
   }
 
+<<<<<<< HEAD
   // Re-validate active membership for every request (sessions/tokens alone are not enough)
   try {
     const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
@@ -351,6 +421,21 @@ export async function POST(req: NextRequest) {
         },
       }, { status: 500, headers: mcpJsonHeaders(req) });
     }
+=======
+  // 2. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
+  if (requestBody.method === 'tools/list') {
+    const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
+    const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
+    initializeRegistry();
+    const newTools = listTools();
+    const newToolNames = new Set(newTools.map(t => t.name));
+    const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
+    return NextResponse.json({
+      jsonrpc: '2.0',
+      id: requestBody.id,
+      result: { tools: [...newTools, ...legacyFiltered] }
+    }, { headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
   }
 
   if (requestBody.method === 'resources/list') {
@@ -364,6 +449,7 @@ export async function POST(req: NextRequest) {
             name: 'Business Snapshot',
             description: 'A proactive audit of deals, invoices, leads, and tasks for the current tenant.',
             mimeType: 'application/json'
+<<<<<<< HEAD
           },
           {
             uri: 'mcp://business/ai-state',
@@ -374,6 +460,12 @@ export async function POST(req: NextRequest) {
         ] 
       } 
     }, { headers: mcpJsonHeaders(req) });
+=======
+          }
+        ] 
+      } 
+    }, { headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
   }
 
   if (requestBody.method === 'prompts/list') {
@@ -387,6 +479,7 @@ export async function POST(req: NextRequest) {
         required: a.required ?? false,
       })),
     }));
+<<<<<<< HEAD
     return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { prompts } }, { headers: mcpJsonHeaders(req) });
   }
 
@@ -726,6 +819,17 @@ export async function POST(req: NextRequest) {
     const { createMCPServer } = await import('@/services/mcp/MCPServer');
     const { StatelessTransport } = await import('@/services/mcp/StatelessTransport');
 
+=======
+    return NextResponse.json({ jsonrpc: '2.0', id: requestBody.id, result: { prompts } }, { headers: getMcpCorsHeaders(req) });
+  }
+
+  if (requestBody.method?.startsWith('notifications/')) {
+    return new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
+  }
+
+  // 3. Execute via SDK
+  try {
+>>>>>>> origin/main
     const mcpServer = createMCPServer({
       tenantId,
       userId,
@@ -742,16 +846,26 @@ export async function POST(req: NextRequest) {
     const responseMessage = await transport.getResponse(10000);
 
     if (!responseMessage) {
+<<<<<<< HEAD
       return new NextResponse(null, { status: 202, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
     }
 
     const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
+=======
+      return new NextResponse(null, { status: 202, headers: getMcpCorsHeaders(req) });
+    }
+
+    const headers = new Headers(getMcpCorsHeaders(req));
+>>>>>>> origin/main
     headers.set('MCP-Protocol-Version', MCP_PROTOCOL_VERSION);
 
     // Generate session on initialize
     if (requestBody.method === 'initialize' && ENV.VITE_SUPABASE_URL && ENV.SUPABASE_SERVICE_ROLE_KEY) {
+<<<<<<< HEAD
       const { getInitialBusinessAIStateForTenant } = await import('@/lib/mcp/getInitialBusinessAIStateForTenant');
       const initialAiState = await getInitialBusinessAIStateForTenant(tenantId);
+=======
+>>>>>>> origin/main
       const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
       const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
       const { data: sessionRow } = await supabaseAdmin
@@ -763,8 +877,11 @@ export async function POST(req: NextRequest) {
           metadata: {
             client_label: requestBody.params?.clientInfo?.name || 'mcp-unified-app',
             protocol_version: requestBody.params?.protocolVersion || MCP_PROTOCOL_VERSION,
+<<<<<<< HEAD
             business_ai_version: initialAiState.version,
             business_ai_state: initialAiState,
+=======
+>>>>>>> origin/main
           },
         })
         .select('id')
@@ -782,7 +899,11 @@ export async function POST(req: NextRequest) {
       jsonrpc: '2.0',
       error: { code: -32603, message: 'Internal Server Error' },
       id: requestBody?.id ?? null,
+<<<<<<< HEAD
     }, { status: 500, headers: mcpJsonHeaders(req) });
+=======
+    }, { status: 500, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
   }
 }
 
@@ -790,6 +911,7 @@ export async function GET(req: NextRequest) {
   const cors = handleCorsApp(req);
   if (cors) return cors;
 
+<<<<<<< HEAD
   try {
     const auth = await resolveAuth(req);
     if ('error' in auth) {
@@ -857,9 +979,33 @@ export async function DELETE(req: NextRequest) {
       'MCP-Version': MCP_VERSION_HEADER,
       'MCP-Protocol-Version': MCP_PROTOCOL_VERSION,
     },
+=======
+  const auth = await resolveAuth(req);
+  if ('error' in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status, headers: getMcpCorsHeaders(req) });
+  }
+
+  const { MCP_TOOLS } = await import('@/services/mcp/toolManifest');
+  const { initializeRegistry, listTools } = await import('@/lib/mcp/tool-registry');
+  initializeRegistry();
+  const newTools = listTools();
+  const newToolNames = new Set(newTools.map(t => t.name));
+  const legacyFiltered = MCP_TOOLS.filter(t => !newToolNames.has(t.name));
+
+  return NextResponse.json({ tools: [...newTools, ...legacyFiltered] }, { 
+    headers: { 
+      ...getMcpCorsHeaders(req), 
+      'X-MCP-Version': '2.0.0',
+      'MCP-Protocol-Version': MCP_PROTOCOL_VERSION
+    } 
+>>>>>>> origin/main
   });
 }
 
 export async function OPTIONS(req: NextRequest) {
+<<<<<<< HEAD
   return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: { ...getMcpCorsHeaders(req), 'MCP-Version': MCP_VERSION_HEADER } });
+=======
+  return handleCorsApp(req) || new NextResponse(null, { status: 204, headers: getMcpCorsHeaders(req) });
+>>>>>>> origin/main
 }

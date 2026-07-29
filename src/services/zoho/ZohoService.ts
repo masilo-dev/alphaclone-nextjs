@@ -128,6 +128,35 @@ export class ZohoService {
         return normalized;
     }
 
+    protected async resolveTenantIdForIntegration(): Promise<string | null> {
+        const supabase = this.getSupabaseClient();
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('tenant_id')
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (existing?.tenant_id) return existing.tenant_id as string;
+
+        const { data: tenantMembership } = await supabase
+            .from('tenant_users')
+            .select('tenant_id')
+            .eq('user_id', this.userId)
+            .order('joined_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+        if (tenantMembership?.tenant_id) return tenantMembership.tenant_id as string;
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', this.userId)
+            .maybeSingle();
+        return (profile?.tenant_id as string) || null;
+    }
+
     async saveConfig(config: Partial<ZohoConfig>): Promise<void> {
         this.invalidateConfigCache();
         const currentConfig = await this.getConfig() || {};
@@ -142,14 +171,21 @@ export class ZohoService {
         // Encrypt tokens before saving
         if (newConfig.refreshToken && !newConfig.refreshToken.includes(':')) {
             newConfig.refreshToken = await encrypt(newConfig.refreshToken, this.encryptionSecret);
+<<<<<<< HEAD
             delete newConfig.authExpiredAt;
             delete newConfig.authExpiredReason;
+=======
+>>>>>>> origin/main
         }
         if (newConfig.accessToken && !newConfig.accessToken.includes(':')) {
             newConfig.accessToken = await encrypt(newConfig.accessToken, this.encryptionSecret);
         }
 
         const supabase = this.getSupabaseClient();
+<<<<<<< HEAD
+=======
+        const tenantId = await this.resolveTenantIdForIntegration();
+>>>>>>> origin/main
         const payload = {
             user_id: this.userId,
             type: 'zoho',
@@ -157,6 +193,7 @@ export class ZohoService {
             enabled: true,
             config: newConfig,
             updated_at: new Date().toISOString(),
+<<<<<<< HEAD
             tenant_id: this.tenantId,
         };
 
@@ -220,6 +257,37 @@ export class ZohoService {
                 updated_at: new Date().toISOString(),
             })
             .eq('id', existing.id);
+=======
+            tenant_id: tenantId,
+        };
+
+        const { data: existing } = await supabase
+            .from('integrations')
+            .select('id')
+            .eq('user_id', this.userId)
+            .eq('type', 'zoho')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (existing?.id) {
+            const { error: updateError } = await supabase
+                .from('integrations')
+                .update(payload)
+                .eq('id', existing.id);
+            if (updateError) {
+                throw new Error(`Failed to update Zoho integration config: ${updateError.message}`);
+            }
+            return;
+        }
+
+        const { error: insertError } = await supabase
+            .from('integrations')
+            .insert(payload);
+        if (insertError) {
+            throw new Error(`Failed to save Zoho integration config: ${insertError.message}`);
+        }
+>>>>>>> origin/main
     }
 
     async refreshAccessToken(): Promise<string | null> {

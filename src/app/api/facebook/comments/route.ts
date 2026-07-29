@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+<<<<<<< HEAD
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
+=======
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+>>>>>>> origin/main
 
 export const runtime = 'nodejs';
 
@@ -30,11 +34,23 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+<<<<<<< HEAD
     const admin = createSupabaseAdminClient();
     const integration = await getFacebookIntegration(admin, { userId: user.id, pageId });
 
     const tokens = integration ? await getFacebookTokens(admin, integration) : { pageAccessToken: null, userAccessToken: null };
     const token = tokens.pageAccessToken || tokens.userAccessToken;
+=======
+    const { data: integration } = await supabase
+      .from('facebook_integrations')
+      .select('page_access_token, user_access_token')
+      .eq('user_id', user.id)
+      .eq('page_id', pageId)
+      .eq('is_active', true)
+      .single();
+
+    const token = integration?.page_access_token || integration?.user_access_token;
+>>>>>>> origin/main
     if (!token) {
       return NextResponse.json(
         {

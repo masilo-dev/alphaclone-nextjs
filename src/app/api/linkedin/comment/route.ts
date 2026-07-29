@@ -3,12 +3,31 @@ import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
+<<<<<<< HEAD
 import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
 import {
   getLinkedInIntegrationWithToken,
   markLinkedInIntegrationInactive,
   normalizeLinkedInScopes,
 } from '@/services/linkedin/linkedinIntegrationService';
+=======
+
+function normalizeScopes(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .flatMap((value) => String(value).split(/[,\s]+/))
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,\s]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+  }
+  return [];
+}
+>>>>>>> origin/main
 
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
@@ -110,6 +129,32 @@ export async function POST(req: NextRequest) {
       const message = err instanceof Error ? err.message : 'LinkedIn comment failed';
       return NextResponse.json({ error: message }, { status: 400 });
     }
+<<<<<<< HEAD
+=======
+
+    const commentUrn = res.headers.get('x-restli-id') || res.headers.get('location') || undefined;
+    await captureUnifiedMessageFromWebhook({
+      supabase: admin as any,
+      tenantId,
+      source: 'linkedin',
+      channel: 'chat',
+      direction: 'outbound',
+      externalId: commentUrn ?? null,
+      threadId: postUrn,
+      from: li.linkedin_person_urn,
+      to: postUrn,
+      subject: null,
+      text,
+      html: null,
+      sentAt: new Date().toISOString(),
+      metadata: {
+        postUrn,
+        parentCommentUrn,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+>>>>>>> origin/main
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'linkedin/comment.POST' });
   }

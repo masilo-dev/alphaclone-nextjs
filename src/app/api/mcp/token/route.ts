@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+<<<<<<< HEAD
 import { createHash, timingSafeEqual } from 'crypto';
 import { ENV } from '@/config/env';
 import { isMcpResourceEquivalent, normalizeMcpClientId, normalizeMcpResourceUrl, PLATFORM_MCP_OAUTH_CLIENT_IDS } from '@/lib/mcp/oauthRedirect';
@@ -12,6 +13,9 @@ import {
   logOAuthTokenIssuance,
 } from '@/lib/mcp/oauthTokenIsolation';
 import { encryptIntegrationToken } from '@/lib/integration/integrationTokenCrypto';
+=======
+import { ENV } from '@/config/env';
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -21,11 +25,19 @@ export const maxDuration = 800;
  * MCP OAuth2 Token Endpoint
  *
  * Supports:
+<<<<<<< HEAD
  *  - authorization_code (with PKCE S256 validation - REQUIRED, plain is NOT supported)
  *  - refresh_token
  *  - client_credentials (API-key-based, for legacy agent compatibility)
  *
  * RFC 6749 / RFC 7636 (PKCE) / RFC 8707 (Resource Indicators) compliant.
+=======
+ *  - authorization_code (with PKCE S256 validation)
+ *  - refresh_token
+ *  - client_credentials (API-key-based, for legacy agent compatibility)
+ *
+ * RFC 6749 / RFC 7636 compliant.
+>>>>>>> origin/main
  */
 
 const CORS_HEADERS = {
@@ -34,6 +46,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
 };
 
+<<<<<<< HEAD
 function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -62,10 +75,17 @@ function tokenError(
   return NextResponse.json(
     { error, error_description: description },
     { status, headers }
+=======
+function tokenError(error: string, description: string, status = 400) {
+  return NextResponse.json(
+    { error, error_description: description },
+    { status, headers: CORS_HEADERS }
+>>>>>>> origin/main
   );
 }
 
 /**
+<<<<<<< HEAD
  * Authenticates a confidential client using client credentials.
  * 
  * Per RFC 6749 Section 2.3: Confidential clients MUST authenticate with the
@@ -135,6 +155,9 @@ async function authenticateClient(
  * Verifies PKCE S256: SHA-256(code_verifier) === base64url(code_challenge)
  * 
  * Per MCP 2025-11-25 spec: S256 is REQUIRED, 'plain' is NOT permitted.
+=======
+ * Verifies PKCE S256: SHA-256(code_verifier) === base64url(code_challenge)
+>>>>>>> origin/main
  */
 async function verifyPKCE(codeVerifier: string, codeChallenge: string): Promise<boolean> {
   try {
@@ -149,9 +172,15 @@ async function verifyPKCE(codeVerifier: string, codeChallenge: string): Promise<
       .replace(/\//g, '_')
       .replace(/=/g, '');
       
+<<<<<<< HEAD
     const match = timingSafeStringEqual(base64url, codeChallenge);
     if (!match) {
       console.warn('[PKCE] Mismatch (verifier does not match challenge)');
+=======
+    const match = base64url === codeChallenge;
+    if (!match) {
+        console.warn('[PKCE] Mismatch. Expected:', codeChallenge, 'Got:', base64url);
+>>>>>>> origin/main
     }
     return match;
   } catch (err) {
@@ -176,15 +205,23 @@ export async function POST(req: NextRequest) {
 
     const {
       grant_type,
+<<<<<<< HEAD
       client_id: rawClientId,
+=======
+      client_id,
+>>>>>>> origin/main
       client_secret,
       code,
       redirect_uri,
       code_verifier,
       refresh_token,
+<<<<<<< HEAD
       resource, // RFC 8707 Resource Indicator
     } = body;
     const client_id = normalizeMcpClientId(rawClientId) ?? rawClientId;
+=======
+    } = body;
+>>>>>>> origin/main
 
     console.log('[MCP Token] grant_type:', grant_type, 'client_id:', client_id);
 
@@ -196,11 +233,16 @@ export async function POST(req: NextRequest) {
       global: {
         headers: {
           'Accept': 'application/json',
+<<<<<<< HEAD
           'X-Client-Info': 'mcp-token-endpoint-v3'
+=======
+          'X-Client-Info': 'mcp-token-endpoint-v2'
+>>>>>>> origin/main
         }
       }
     });
 
+<<<<<<< HEAD
     // Expected resource identifier — configured public MCP URL (never container host)
     const expectedResource = PUBLIC_MCP_RESOURCE;
     const normalizedResource = normalizeMcpResourceUrl(resource);
@@ -216,11 +258,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+=======
+>>>>>>> origin/main
     // ── 1. AUTHORIZATION CODE FLOW ─────────────────────────────────────────
     if (grant_type === 'authorization_code') {
       if (!code) return tokenError('invalid_request', 'code is required');
       if (!redirect_uri) return tokenError('invalid_request', 'redirect_uri is required');
 
+<<<<<<< HEAD
       // Verify the code was issued to this client (if client_id provided)
       // For public clients, client_id matching is relaxed
 
@@ -311,12 +356,63 @@ export async function POST(req: NextRequest) {
 
       if (authCode.code_challenge) {
         if (!code_verifier) {
+=======
+      // Look up the authorization code
+      const { data: authCode, error: codeError } = await supabase
+        .from('mcp_oauth_codes')
+        .select('*')
+        .eq('code', code)
+        .single();
+
+      if (codeError || !authCode) {
+        console.warn('[MCP Token] Auth code not found:', code);
+        return tokenError('invalid_grant', 'Authorization code is invalid or expired', 401);
+      }
+
+      // Verify code hasn't been used (single-use)
+      if (authCode.used) {
+        console.warn('[MCP Token] Code replay attack detected:', code);
+        return tokenError('invalid_grant', 'Authorization code has already been used', 401);
+      }
+
+      // Verify not expired
+      if (new Date(authCode.expires_at) < new Date()) {
+        console.warn('[MCP Token] Auth code expired:', code);
+        return tokenError('invalid_grant', 'Authorization code has expired', 401);
+      }
+
+      // Verify client_id (if code was issued to a specific client)
+      if (authCode.client_id && client_id && authCode.client_id !== client_id) {
+        console.warn('[MCP Token] client_id mismatch. Code client:', authCode.client_id, 'Request client:', client_id);
+        return tokenError('invalid_client', 'client_id does not match the authorization code', 401);
+      }
+
+      // Verify redirect_uri matches (Relaxed comparison to avoid common OAuth URL issues)
+      const cleanUrl = (u: string) => u.toLowerCase().replace(/\/$/, '').replace(/^http:/, 'https:');
+      const requestRedirect = cleanUrl(redirect_uri);
+      const storedRedirect = cleanUrl(authCode.redirect_uri);
+      
+      if (requestRedirect !== storedRedirect) {
+        console.warn('[MCP Token] redirect_uri mismatch.', {
+          expected: authCode.redirect_uri,
+          received: redirect_uri,
+          code: authCode.code
+        });
+        return tokenError('invalid_grant', 'redirect_uri does not match', 401);
+      }
+
+      // Verify PKCE if challenge was stored
+      if (authCode.code_challenge) {
+        if (!code_verifier) {
+          console.warn('[MCP Token] Missing code_verifier for PKCE-enabled code');
+>>>>>>> origin/main
           return tokenError('invalid_request', 'code_verifier is required for PKCE');
         }
         if (authCode.code_challenge_method === 'S256') {
           const valid = await verifyPKCE(code_verifier, authCode.code_challenge);
           if (!valid) {
             console.warn('[MCP Token] PKCE S256 verification failed');
+<<<<<<< HEAD
             return tokenError(
               'invalid_grant',
               'code_verifier does not match code_challenge',
@@ -454,24 +550,78 @@ export async function POST(req: NextRequest) {
           userId: authCode.user_id,
           tenantId: authCode.tenant_id,
           client_id: issuedClientId,
+=======
+            return tokenError('invalid_grant', 'code_verifier does not match code_challenge', 401);
+          }
+        }
+        // plain method (less secure, but supported)
+        if (authCode.code_challenge_method === 'plain' && code_verifier !== authCode.code_challenge) {
+          console.warn('[MCP Token] PKCE plain verification failed');
+          return tokenError('invalid_grant', 'code_verifier does not match code_challenge', 401);
+        }
+      }
+
+      // Validate tenant context exists
+      if (!authCode.tenant_id) {
+        console.error('[MCP Token] Auth code has no associated tenant_id:', authCode.id);
+        return tokenError('server_error', 'Invalid authorization context (missing tenant)', 500);
+      }
+
+      // Mark code as used (single-use enforcement)
+      await supabase
+        .from('mcp_oauth_codes')
+        .update({ used: true })
+        .eq('code', code);
+
+      // Generate new access + refresh tokens
+      const accessToken = `mcp_at_${crypto.randomUUID().replace(/-/g, '')}`;
+      const refreshToken = `mcp_rt_${crypto.randomUUID().replace(/-/g, '')}`;
+      const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString(); // 1 hour
+
+      const { error: tokenInsertError } = await supabase
+        .from('mcp_oauth_tokens')
+        .insert({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+          client_id: authCode.client_id || client_id || null,
+          user_id: authCode.user_id,
+          tenant_id: authCode.tenant_id,
+          scopes: authCode.scopes || ['read', 'write'],
+          expires_at: expiresAt,
+        });
+
+      if (tokenInsertError) {
+        console.error('[MCP Token] Failed to store tokens in DB:', {
+          error: tokenInsertError,
+          userId: authCode.user_id,
+          tenantId: authCode.tenant_id
+>>>>>>> origin/main
         });
         return tokenError('server_error', 'Failed to issue tokens (database error)', 500);
       }
 
+<<<<<<< HEAD
       logOAuthTokenIssuance({
         grantType: 'authorization_code',
         clientId: issuedClientId,
         userId: authCode.user_id,
         tenantId: authCode.tenant_id,
       });
+=======
+      console.log('[MCP Token] SUCCESS. Issued for user:', authCode.user_id, 'tenant:', authCode.tenant_id);
+>>>>>>> origin/main
 
       return NextResponse.json({
         access_token: accessToken,
         refresh_token: refreshToken,
         token_type: 'Bearer',
         expires_in: 3600,
+<<<<<<< HEAD
         scope: formatScopeString(authCode.scopes || ['read', 'write']),
         resource: expectedResource,
+=======
+        scope: (authCode.scopes || ['read', 'write']).join(' '),
+>>>>>>> origin/main
       }, { headers: CORS_HEADERS });
     }
 
@@ -479,6 +629,7 @@ export async function POST(req: NextRequest) {
     if (grant_type === 'refresh_token') {
       if (!refresh_token) return tokenError('invalid_request', 'refresh_token is required');
 
+<<<<<<< HEAD
       // RFC 8707: Validate resource indicator if provided
       if (resource && !isMcpResourceEquivalent(resource, expectedResource)) {
         console.warn('[MCP Token] Invalid resource indicator on refresh:', {
@@ -601,10 +752,34 @@ export async function POST(req: NextRequest) {
         refresh_token_encrypted: await encryptIntegrationToken(newRefreshToken),
         token_type: 'Bearer',
         client_id: sessionClientId,
+=======
+      const { data: session, error: sessionError } = await supabase
+        .from('mcp_oauth_tokens')
+        .select('*')
+        .eq('refresh_token', refresh_token)
+        .single();
+
+      if (sessionError || !session) {
+        return tokenError('invalid_grant', 'Refresh token is invalid or revoked', 401);
+      }
+
+      // Rotate tokens
+      const newAccessToken = `mcp_at_${crypto.randomUUID().replace(/-/g, '')}`;
+      const newRefreshToken = `mcp_rt_${crypto.randomUUID().replace(/-/g, '')}`;
+      const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
+
+      // Delete old token entry and insert fresh one
+      await supabase.from('mcp_oauth_tokens').delete().eq('refresh_token', refresh_token);
+      await supabase.from('mcp_oauth_tokens').insert({
+        access_token: newAccessToken,
+        refresh_token: newRefreshToken,
+        client_id: session.client_id,
+>>>>>>> origin/main
         user_id: session.user_id,
         tenant_id: session.tenant_id,
         scopes: session.scopes,
         expires_at: expiresAt,
+<<<<<<< HEAD
         refresh_expires_at: refreshExpiresAt,
         revoked: false,
         resource: boundResource,
@@ -661,6 +836,8 @@ export async function POST(req: NextRequest) {
         clientId: sessionClientId,
         userId: session.user_id,
         tenantId: session.tenant_id,
+=======
+>>>>>>> origin/main
       });
 
       return NextResponse.json({
@@ -668,13 +845,18 @@ export async function POST(req: NextRequest) {
         refresh_token: newRefreshToken,
         token_type: 'Bearer',
         expires_in: 3600,
+<<<<<<< HEAD
         scope: formatScopeString(session.scopes || ['read', 'write']),
         resource: boundResource,
+=======
+        scope: (session.scopes || ['read', 'write']).join(' '),
+>>>>>>> origin/main
       }, { headers: CORS_HEADERS });
     }
 
     // ── 3. CLIENT CREDENTIALS FLOW (Legacy / API-key agents) ──────────────
     if (grant_type === 'client_credentials') {
+<<<<<<< HEAD
       // RFC 8707: Validate resource indicator if provided
       if (resource && !isMcpResourceEquivalent(resource, expectedResource)) {
         console.warn('[MCP Token] Invalid resource indicator on client_credentials:', {
@@ -699,6 +881,18 @@ export async function POST(req: NextRequest) {
           401,
           'Bearer realm="alphaclone-mcp", error="invalid_client"'
         );
+=======
+      const apiKey = client_secret || client_id;
+
+      const { data: keyData, error: keyError } = await supabase
+        .from('mcp_api_keys')
+        .select('tenant_id, user_id')
+        .eq('api_key', apiKey)
+        .single();
+
+      if (keyError || !keyData) {
+        return tokenError('invalid_client', 'Invalid API key', 401);
+>>>>>>> origin/main
       }
 
       // For client_credentials, return API key as access token (stateless, long-lived)
@@ -706,8 +900,12 @@ export async function POST(req: NextRequest) {
         access_token: apiKey,
         token_type: 'Bearer',
         expires_in: 3600,
+<<<<<<< HEAD
         scope: formatScopeString(['read', 'write', 'mcp:tools', 'mcp:resources']),
         resource: expectedResource,
+=======
+        scope: 'read write',
+>>>>>>> origin/main
       }, { headers: CORS_HEADERS });
     }
 

@@ -7,6 +7,10 @@ import VideoControls from './VideoControls';
 import { DeviceSettingsModal } from './DeviceSettingsModal';
 import toast from 'react-hot-toast';
 import { MicOff, Maximize2, PhoneOff, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+<<<<<<< HEAD
+=======
+import { supabase } from '../../../lib/supabase';
+>>>>>>> origin/main
 import { User } from '../../../types';
 import { dailyService } from '../../../services/dailyService';
 import LiveKitStage from './LiveKitStage';
@@ -44,9 +48,12 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
     onLeave,
     isMinimized = false,
     onToggleMinimize,
+<<<<<<< HEAD
     meetingAccessPin,
     guestName,
     meetingAccessToken,
+=======
+>>>>>>> origin/main
 }) => {
     const [resolvedRoomUrl, setResolvedRoomUrl] = useState<string | null>(providedRoomUrl || null);
     const [liveKitSession, setLiveKitSession] = useState<{ url: string; token: string; roomName: string } | null>(null);
@@ -189,7 +196,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
+<<<<<<< HEAD
                     body: JSON.stringify({ callId, meetingAccessPin, meetingAccessToken, guestName }),
+=======
+                    body: JSON.stringify({ callId }),
+>>>>>>> origin/main
                 });
 
                 const payload = await response.json().catch(() => ({}));
@@ -205,6 +216,15 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                 });
                 setCallStartTime(new Date());
 
+<<<<<<< HEAD
+=======
+                if (callId && isUserAdmin(user)) {
+                    await dailyService.startVideoCall(callId).catch(err => {
+                        console.error('Failed to mark call as active:', err);
+                    });
+                }
+
+>>>>>>> origin/main
                 import('@/services/activityService').then(({ activityService }) => {
                     activityService.logActivity(user.id, 'VIDEO_MEETING_JOINED', {
                         callId,
@@ -224,7 +244,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return () => {
             cancelled = true;
         };
+<<<<<<< HEAD
     }, [preJoinAccepted, liveKitSession, liveKitError, callId, user, meetingAccessPin, meetingAccessToken, guestName]);
+=======
+    }, [preJoinAccepted, liveKitSession, liveKitError, callId, user]);
+>>>>>>> origin/main
 
     // Legacy room-url join remains disabled; secure meetings are brokered by /api/livekit/token.
     useEffect(() => {
@@ -234,6 +258,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
 
         const joinMeeting = async () => {
             try {
+<<<<<<< HEAD
                 let token: string | undefined;
                 if (callId) {
                     const { token: fetched } = await dailyService.getMeetingToken(
@@ -241,6 +266,15 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                         guestName || user.name || 'Guest',
                         meetingAccessPin,
                         meetingAccessToken,
+=======
+                const roomName = resolvedRoomUrl.split('/').filter(Boolean).pop();
+                let token: string | undefined;
+                if (roomName) {
+                    const { token: fetched } = await dailyService.getMeetingToken(
+                        roomName,
+                        user.name || 'Guest',
+                        isUserAdmin(user)
+>>>>>>> origin/main
                     );
                     if (fetched) token = fetched;
                 }
@@ -428,6 +462,7 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+<<<<<<< HEAD
     const handleLiveKitLeave = useCallback(() => {
         void finalizeMeetingDb();
     }, [finalizeMeetingDb]);
@@ -437,19 +472,32 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
         toast.error('Secure video connection failed. Please retry.');
     }, []);
 
+=======
+>>>>>>> origin/main
     if (liveKitSession) {
         return (
             <LiveKitStage
                 url={liveKitSession.url}
                 token={liveKitSession.token}
                 displayName={user.name || 'Guest'}
+<<<<<<< HEAD
                 callId={callId}
+=======
+>>>>>>> origin/main
                 secondsElapsed={secondsElapsed}
                 formatElapsed={formatTime}
                 requestHardStop={false}
                 onHardStopConsumed={() => undefined}
+<<<<<<< HEAD
                 onLeave={handleLiveKitLeave}
                 onFatalError={handleLiveKitFatalError}
+=======
+                onLeave={() => void finalizeMeetingDb()}
+                onFatalError={(message) => {
+                    setLiveKitError(message);
+                    toast.error('Secure video connection failed. Please retry.');
+                }}
+>>>>>>> origin/main
             />
         );
     }
@@ -461,7 +509,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl">
                         <h2 className="text-white text-2xl font-bold mb-2">Ready to join meeting</h2>
                         <p className="text-slate-400 text-sm mb-5">
+<<<<<<< HEAD
                             Complete a quick device check, then join the full-screen meeting room. You can share your screen once connected.
+=======
+                            Complete a quick device check, then join. You can minimize and continue working in the dashboard.
+>>>>>>> origin/main
                         </p>
                         {preJoinError && (
                             <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
@@ -516,6 +568,57 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                         Meeting in background
+<<<<<<< HEAD
+=======
+                    </div>
+                    <div className="flex items-center gap-1">
+                        {onToggleMinimize && (
+                            <button
+                                onClick={onToggleMinimize}
+                                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                                title="Restore meeting"
+                            >
+                                <Maximize2 className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => void handleLeave()}
+                            className="p-1.5 rounded-lg text-red-300 hover:text-red-200 hover:bg-red-500/20 transition-colors"
+                            title="Leave meeting"
+                        >
+                            <PhoneOff className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+                <div className="h-[200px] bg-slate-900">
+                    {primaryParticipant ? (
+                        <CustomVideoTile
+                            participant={primaryParticipant}
+                            isLocal={primaryParticipant.isLocal}
+                            isAdmin={isUserAdmin(user)}
+                            variant="stage"
+                        />
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-slate-400">
+                            Waiting for participants...
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 bg-slate-950 z-[100] text-white flex flex-col overflow-hidden select-none">
+            {/* Immersive Header */}
+            <header className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/60 to-transparent z-[110] px-6 flex items-center justify-between pointer-events-none">
+                <div className="flex items-center gap-4 pointer-events-auto">
+                    <div className="flex items-center gap-2 bg-slate-900/60 backdrop-blur-md border border-white/10 px-4 py-2 rounded-2xl">
+                        <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse" />
+                        <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">
+                            REC • {formatTime(secondsElapsed)}
+                        </span>
+>>>>>>> origin/main
                     </div>
                     <div className="flex items-center gap-1">
                         {onToggleMinimize && (
@@ -574,20 +677,32 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                     )}
                 </div>
 
+<<<<<<< HEAD
                 <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
                     <div className={`px-2 sm:px-3 py-1 rounded-xl border text-[10px] sm:text-xs font-bold uppercase tracking-wide ${
+=======
+                <div className="flex items-center gap-2 pointer-events-auto">
+                    <div className={`px-3 py-1 rounded-xl border text-xs font-bold uppercase tracking-widest ${
+>>>>>>> origin/main
                         networkQuality === 'good'
                             ? 'bg-emerald-500/10 border-emerald-400/30 text-emerald-300'
                             : networkQuality === 'poor'
                                 ? 'bg-amber-500/10 border-amber-400/30 text-amber-300'
                                 : 'bg-slate-500/10 border-white/10 text-slate-300'
                     }`}>
+<<<<<<< HEAD
                         {networkQuality === 'good' ? <Wifi className="inline w-3 h-3" /> : <WifiOff className="inline w-3 h-3" />}
                         {!isMobile && (
                           <span className="ml-1">{networkQuality === 'good' ? 'Good' : networkQuality === 'poor' ? 'Poor' : '…'}</span>
                         )}
                     </div>
                     {(platformState === 'error' || networkQuality === 'poor') && !isMobile && (
+=======
+                        {networkQuality === 'good' ? <Wifi className="inline w-3 h-3 mr-1" /> : <WifiOff className="inline w-3 h-3 mr-1" />}
+                        {networkQuality === 'good' ? 'Connection Good' : networkQuality === 'poor' ? 'Connection Poor' : 'Checking Network'}
+                    </div>
+                    {(platformState === 'error' || networkQuality === 'poor') && (
+>>>>>>> origin/main
                         <button
                             onClick={() => void reconnect()}
                             className="px-3 py-1 rounded-xl border border-white/10 text-xs text-slate-200 hover:bg-white/10 transition-colors"
@@ -597,7 +712,11 @@ const CustomVideoRoom: React.FC<CustomVideoRoomProps> = ({
                             Reconnect
                         </button>
                     )}
+<<<<<<< HEAD
                     <div className={`flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-0.5 sm:p-1 ${isMobile ? 'hidden' : ''}`}>
+=======
+                    <div className="flex bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/10 p-1">
+>>>>>>> origin/main
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${viewMode === 'grid' ? 'bg-white text-black shadow-lg' : 'text-slate-400 hover:text-white'}`}

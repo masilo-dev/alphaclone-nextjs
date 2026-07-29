@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+<<<<<<< HEAD
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { normalizeDefineOutcomeArgs } from '@/lib/bonnie/outcomeArgs';
 import { businessOutcomeSummary } from '@/lib/copy/businessFriendlyErrors';
+=======
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+<<<<<<< HEAD
 export async function GET(req: NextRequest) {
   try {
     const tenantId = req.nextUrl.searchParams.get('tenantId');
@@ -62,12 +67,21 @@ export async function POST(req: NextRequest) {
     const tenantId = normalized.tenant_id;
 
     if (!tenantId) {
+=======
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { tenant_id, criteria, status, session_id, notes } = body;
+
+    if (!tenant_id || !criteria || !status) {
+>>>>>>> origin/main
       return NextResponse.json(
         { error: 'tenant_id, criteria, and status are required' },
         { status: 400 }
       );
     }
 
+<<<<<<< HEAD
     const { criteria, status, session_id, notes } = normalized;
     const { admin } = await requireTenantAccess(tenantId);
 
@@ -81,6 +95,30 @@ export async function POST(req: NextRequest) {
       duration_ms: 0,
       tool_success: status === 'success',
       tool_latency_ms: 0,
+=======
+    if (!['success', 'partial', 'failure'].includes(status)) {
+      return NextResponse.json(
+        { error: 'status must be one of: success, partial, failure' },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(criteria) || criteria.length === 0) {
+      return NextResponse.json({ error: 'criteria must be a non-empty array' }, { status: 400 });
+    }
+
+    const supabase = createSupabaseAdminClient();
+
+    const metCount = criteria.filter((c: any) => c.met).length;
+    const score = Math.round((metCount / criteria.length) * 100);
+
+    // Log outcome to mcp_sessions
+    const { error } = await supabase.from('mcp_sessions').insert({
+      tenant_id,
+      tool_name: 'define_outcome',
+      success: status === 'success',
+      duration_ms: 0,
+>>>>>>> origin/main
       expires_at: new Date(Date.now() + 60000).toISOString(),
       error_message: status === 'failure' ? `Outcome failure. Notes: ${notes || 'none'}` : null,
     });
@@ -100,7 +138,13 @@ export async function POST(req: NextRequest) {
         notes: notes || null,
       },
     });
+<<<<<<< HEAD
   } catch (err: unknown) {
     return routeErrorResponse(err, 'Failed to record outcome', req);
+=======
+  } catch (err: any) {
+    console.error('[bonnie/outcomes] Error:', err);
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+>>>>>>> origin/main
   }
 }

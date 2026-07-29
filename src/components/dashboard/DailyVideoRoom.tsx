@@ -213,7 +213,10 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     callObject={callObjectRef.current}
                     isAdmin={true}
                     onEndMeeting={() => void handleCallEndRef.current()}
+<<<<<<< HEAD
                     callId={callId}
+=======
+>>>>>>> origin/main
                 />
             )}
 
@@ -222,7 +225,10 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({
                     callObject={callObjectRef.current}
                     isHost={true}
                     onEndMeeting={() => void handleCallEndRef.current()}
+<<<<<<< HEAD
                     callId={callId}
+=======
+>>>>>>> origin/main
                 />
             )}
         </div>

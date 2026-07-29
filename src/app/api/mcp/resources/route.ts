@@ -19,6 +19,7 @@ async function handleDiscovery(req: NextRequest, method: string) {
 
   try {
     if (method === 'resources/list') {
+<<<<<<< HEAD
       return NextResponse.json({
         resources: [
           {
@@ -35,6 +36,9 @@ async function handleDiscovery(req: NextRequest, method: string) {
           },
         ],
       }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
+=======
+      return NextResponse.json({ resources: [] }, { headers: { ...getMcpCorsHeaders(req), 'X-MCP-Version': '2.0.0' } });
+>>>>>>> origin/main
     }
 
     if (method === 'tools/list') {

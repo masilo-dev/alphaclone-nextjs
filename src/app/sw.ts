@@ -177,6 +177,7 @@ serwist.setCatchHandler(async ({ request }) => {
 
 serwist.addEventListeners();
 
+<<<<<<< HEAD
 const ALLOWED_NOTIFICATION_PATHS = [
     '/dashboard',
     '/settings',
@@ -227,11 +228,16 @@ self.addEventListener('sync', (event: ExtendableEvent & { tag?: string }) => {
 
 // Push payloads contain only routing metadata; the client reauthorizes and fetches live data.
 self.addEventListener('push', (event: PushEvent) => {
+=======
+// Push Notification Event Listeners
+self.addEventListener('push', (event: any) => {
+>>>>>>> origin/main
     if (!event.data) return;
 
     try {
         const data = event.data.json();
         const title = data.title || 'AlphaClone';
+<<<<<<< HEAD
         const expiresAt = Number(data.expiresAt || 0);
         if (expiresAt && expiresAt < Date.now()) return;
         const options: NotificationOptions = {
@@ -243,11 +249,24 @@ self.addEventListener('push', (event: PushEvent) => {
                 url: safeNotificationUrl(data.url),
                 tenantId: typeof data.tenantId === 'string' ? data.tenantId : undefined,
                 type: typeof data.type === 'string' ? data.type : 'activity',
+=======
+        const options = {
+            body: data.body || '',
+            icon: data.icon || '/favicon-192x192.png',
+            badge: data.badge || '/favicon-96x96.png',
+            data: {
+                url: data.url || '/'
+>>>>>>> origin/main
             }
         };
 
         event.waitUntil(self.registration.showNotification(title, options));
+<<<<<<< HEAD
     } catch {
+=======
+    } catch (err) {
+        console.error('Error parsing push data:', err);
+>>>>>>> origin/main
         const text = event.data.text();
         event.waitUntil(
             self.registration.showNotification('AlphaClone', {
@@ -259,6 +278,7 @@ self.addEventListener('push', (event: PushEvent) => {
     }
 });
 
+<<<<<<< HEAD
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
     event.notification.close();
     const urlToOpen = safeNotificationUrl(event.notification.data?.url);
@@ -268,6 +288,17 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
             for (const client of windowClients) {
                 if ('focus' in client) {
                     void client.navigate(urlToOpen);
+=======
+self.addEventListener('notificationclick', (event: any) => {
+    event.notification.close();
+    const urlToOpen = event.notification.data?.url || '/';
+
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                if (client.url.indexOf(urlToOpen) !== -1 && 'focus' in client) {
+>>>>>>> origin/main
                     return client.focus();
                 }
             }
@@ -277,3 +308,7 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
         })
     );
 });
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

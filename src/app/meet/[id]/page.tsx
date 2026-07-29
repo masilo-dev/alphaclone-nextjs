@@ -31,7 +31,10 @@ export default function MeetPage() {
     const [guestIdentityConfirmed, setGuestIdentityConfirmed] = useState(false);
     const [pinError, setPinError] = useState('');
     const [validatedMeetingPin, setValidatedMeetingPin] = useState<string | undefined>(undefined);
+<<<<<<< HEAD
     const [meetingAccessToken, setMeetingAccessToken] = useState<string | undefined>(undefined);
+=======
+>>>>>>> origin/main
 
     // This ID is the database UUID or the business slug
     const meetingIdOrSlug = params?.id as string;
@@ -94,6 +97,15 @@ export default function MeetPage() {
         } else {
             setValidatedMeetingPin(undefined);
         }
+<<<<<<< HEAD
+=======
+
+        if (expectedPin) {
+            setValidatedMeetingPin(inputPin.trim());
+        } else {
+            setValidatedMeetingPin(undefined);
+        }
+>>>>>>> origin/main
         setIsPinValidated(true);
         setGuestIdentityConfirmed(true);
     };
@@ -208,6 +220,7 @@ export default function MeetPage() {
                 <CustomVideoRoom
                     user={user || guestUser}
                     callId={callId!}
+<<<<<<< HEAD
                     meetingAccessPin={validatedMeetingPin}
                     guestName={guestName}
                     meetingAccessToken={meetingAccessToken}
@@ -232,6 +245,9 @@ export default function MeetPage() {
                     title="Jitsi Meeting"
                     className="h-full w-full border-0"
                     allow="camera; microphone; fullscreen; display-capture"
+=======
+                    onLeave={() => router.push(user ? '/dashboard' : '/')}
+>>>>>>> origin/main
                 />
             )}
         </div>

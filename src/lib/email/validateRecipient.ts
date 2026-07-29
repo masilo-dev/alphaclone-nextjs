@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+<<<<<<< HEAD
 async function emailExistsInColumn(
   supabase: SupabaseClient,
   table: string,
@@ -41,17 +42,27 @@ async function emailExistsInEmailsArray(
  * Validates if a recipient email belongs to a CRM record in the tenant.
  * Covers leads, contacts, clients (active + inactive), quotes, deals, and scraper leads.
  * Used to gate bulk outreach; compose from CRM / discovered→negotiation stages must pass.
+=======
+/**
+ * Validates if a recipient email belongs to a lead or client in the given tenant.
+ * This is a security measure to prevent unauthorized arbitrary email sending.
+>>>>>>> origin/main
  */
 export async function validateRecipient(
   supabase: SupabaseClient,
   tenantId: string,
   email: string
+<<<<<<< HEAD
 ): Promise<{ allowed: boolean; reason?: string; source?: string }> {
+=======
+): Promise<{ allowed: boolean; reason?: string }> {
+>>>>>>> origin/main
   if (!email) {
     return { allowed: false, reason: 'Recipient email is missing.' };
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+<<<<<<< HEAD
   if (!normalizedEmail.includes('@')) {
     return { allowed: false, reason: 'Recipient email is invalid.' };
   }
@@ -119,5 +130,31 @@ export async function validateRecipient(
     allowed: false,
     reason:
       'Recipient email not found in your leads, contacts, clients, deals, or quotes. Add them to CRM first, or send from a module compose that already selected this contact.',
+=======
+
+  // Check if email belongs to a lead
+  const { data: lead } = await supabase
+    .from('leads')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (lead) return { allowed: true };
+
+  // Check if email belongs to a contact (client)
+  const { data: contact } = await supabase
+    .from('contacts')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('email', normalizedEmail)
+    .maybeSingle();
+
+  if (contact) return { allowed: true };
+
+  return { 
+    allowed: false, 
+    reason: 'Recipient email not found in your leads or contacts list.' 
+>>>>>>> origin/main
   };
 }

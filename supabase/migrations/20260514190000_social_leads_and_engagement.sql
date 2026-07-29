@@ -61,7 +61,10 @@ ALTER TABLE public.captured_content ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_interactions ENABLE ROW LEVEL SECURITY;
 
 -- 5. Policies (Strict Tenant Isolation)
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_users_manage_social_leads" ON public.social_leads;
+=======
+>>>>>>> origin/main
 CREATE POLICY "tenant_users_manage_social_leads" ON public.social_leads
 FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
@@ -69,7 +72,10 @@ FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
 );
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_users_manage_captured_content" ON public.captured_content;
+=======
+>>>>>>> origin/main
 CREATE POLICY "tenant_users_manage_captured_content" ON public.captured_content
 FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
@@ -77,7 +83,10 @@ FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
 );
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_users_manage_social_interactions" ON public.social_interactions;
+=======
+>>>>>>> origin/main
 CREATE POLICY "tenant_users_manage_social_interactions" ON public.social_interactions
 FOR ALL TO authenticated USING (
     tenant_id IN (SELECT tenant_id FROM public.tenant_users WHERE user_id = auth.uid())
@@ -86,11 +95,19 @@ FOR ALL TO authenticated USING (
 );
 
 -- 6. Indexes
+<<<<<<< HEAD
 CREATE INDEX IF NOT EXISTS idx_social_leads_tenant ON public.social_leads(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_social_leads_platform ON public.social_leads(platform);
 CREATE INDEX IF NOT EXISTS idx_captured_content_tenant ON public.captured_content(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_social_interactions_tenant ON public.social_interactions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_social_interactions_user ON public.social_interactions(user_id);
+=======
+CREATE INDEX idx_social_leads_tenant ON public.social_leads(tenant_id);
+CREATE INDEX idx_social_leads_platform ON public.social_leads(platform);
+CREATE INDEX idx_captured_content_tenant ON public.captured_content(tenant_id);
+CREATE INDEX idx_social_interactions_tenant ON public.social_interactions(tenant_id);
+CREATE INDEX idx_social_interactions_user ON public.social_interactions(user_id);
+>>>>>>> origin/main
 
 -- 7. Add x_post_id to social_posts if not exists
 DO $$

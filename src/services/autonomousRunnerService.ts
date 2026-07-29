@@ -16,11 +16,16 @@ type TenantRunnerRules = {
   high_risk_approval_required: boolean;
   stale_deal_days: number;
   social_inactivity_days: number;
+<<<<<<< HEAD
   lead_action_mode?: string;
   email_provider?: string;
 };
 
 
+=======
+};
+
+>>>>>>> origin/main
 const BUYING_SIGNAL_PATTERNS = [
   /\bprice\b/i,
   /\bcost\b/i,
@@ -38,6 +43,7 @@ function hasBuyingSignal(text: string): boolean {
   return BUYING_SIGNAL_PATTERNS.some((pattern) => pattern.test(text));
 }
 
+<<<<<<< HEAD
 /**
  * Idempotency guard for auto-generated tasks. The autonomous runner executes on a
  * cron (every few minutes); without this check it re-inserts the same task for the
@@ -59,6 +65,8 @@ async function autoTaskAlreadyExists(admin: any, tenantId: string, sourceKey: st
   }
 }
 
+=======
+>>>>>>> origin/main
 function toIsoDate(date: Date): string {
   return date.toISOString().split('T')[0] || '';
 }
@@ -204,6 +212,11 @@ export const autonomousRunnerService = {
   async runOnce(): Promise<{ success: boolean; runs: RunnerSummary[]; error?: string }> {
     const admin = createSupabaseAdminClient();
     const runs: RunnerSummary[] = [];
+<<<<<<< HEAD
+=======
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+    const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: '2025-12-15.clover' }) : null;
+>>>>>>> origin/main
 
     try {
       const { data: tenants, error: tenantError } = await admin.from('tenants').select('id').limit(1000);
@@ -211,6 +224,7 @@ export const autonomousRunnerService = {
 
       for (const tenant of tenants || []) {
         const tenantId = String(tenant.id);
+<<<<<<< HEAD
         const result = await autonomousRunnerService.runForTenant(tenantId, { triggerSource: 'cron' });
         if (result.run) {
           runs.push(result.run);
@@ -220,6 +234,401 @@ export const autonomousRunnerService = {
             actions: [{ key: 'runner_error', status: 'failed', details: result.error || 'Tenant run failed' }],
           });
         }
+=======
+        const summary: RunnerSummary = { tenantId, actions: [] };
+        const runStartedAt = new Date().toISOString();
+        const defaultRules: TenantRunnerRules = {
+          enabled: true,
+          auto_send_enabled: false,
+          auto_send_confidence_threshold: 85,
+          high_risk_approval_required: true,
+          stale_deal_days: 7,
+          social_inactivity_days: 3,
+        };
+        const { data: rulesRow } = await admin
+          .from('autonomous_runner_rules')
+          .select('enabled, auto_send_enabled, auto_send_confidence_threshold, high_risk_approval_required, stale_deal_days, social_inactivity_days')
+          .eq('tenant_id', tenantId)
+          .maybeSingle();
+        const rules = { ...defaultRules, ...(rulesRow || {}) } as TenantRunnerRules;
+        if (!rules.enabled) {
+          runs.push({
+            tenantId,
+            actions: [{ key: 'runner_disabled', status: 'skipped', details: 'Autonomous runner is disabled by tenant rules' }],
+          });
+          continue;
+        }
+
+        const { data: runRow } = await admin
+          .from('autonomous_runner_runs')
+          .insert({
+            tenant_id: tenantId,
+            status: 'running',
+            started_at: runStartedAt,
+            trigger_snapshot: { source: 'cron' },
+          })
+          .select('id')
+          .single();
+
+        const runId = runRow?.id as string | undefined;
+
+        const recordAction = async (key: string, status: RunnerActionStatus, details: string, payload?: Record<string, unknown>) => {
+          summary.actions.push({ key, status, details });
+          if (!runId) return;
+          await admin.from('autonomous_runner_actions').insert({
+            run_id: runId,
+            tenant_id: tenantId,
+            action_key: key,
+            status,
+            details,
+            payload: payload || {},
+          });
+        };
+        const createApproval = async (
+          actionKey: string,
+          riskLevel: 'low' | 'medium' | 'high',
+          confidenceScore: number,
+          reason: string,
+          payload?: Record<string, unknown>
+        ) => {
+          if (!rules.high_risk_approval_required && riskLevel !== 'high') return;
+          await admin.from('autonomous_runner_approvals').insert({
+            tenant_id: tenantId,
+            run_id: runId || null,
+            action_key: actionKey,
+            risk_level: riskLevel,
+            confidence_score: Math.max(0, Math.min(100, Math.round(confidenceScore))),
+            reason,
+            payload: payload || {},
+            status: 'pending',
+          });
+        };
+
+        // 1) Unread buying-signal inbox -> draft reply + task
+        try {
+          const { data: recentMessages } = await admin
+            .from('messages')
+            .select('id, text, sender_id, tenant_id, created_at')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          const buyingSignals = (recentMessages || []).filter((m: any) => hasBuyingSignal(String(m.text || '')));
+          let createdTasks = 0;
+          let autoReplies = 0;
+          for (const msg of buyingSignals.slice(0, 5)) {
+            const text = String(msg.text || '');
+            const confidence = Math.min(98, 55 + (BUYING_SIGNAL_PATTERNS.filter((p) => p.test(text)).length * 9));
+            const riskLevel: 'low' | 'medium' | 'high' = confidence >= 90 ? 'high' : confidence >= 75 ? 'medium' : 'low';
+            const canAutoSend = rules.auto_send_enabled && confidence >= rules.auto_send_confidence_threshold && riskLevel !== 'high';
+            if (canAutoSend && msg.sender_id) {
+              const replyText = `Thank you for your message. We can move this forward today. I have prepared the next step and can send pricing and implementation options immediately.`;
+              const { error: replyError } = await admin.from('messages').insert({
+                tenant_id: tenantId,
+                sender_id: null,
+                sender_name: 'Alpha AI Operator',
+                sender_role: 'ai',
+                recipient_id: msg.sender_id,
+                text: replyText,
+                priority: 'high',
+                reply_to: msg.id,
+              });
+              if (!replyError) {
+                autoReplies += 1;
+                await recordAction('auto_reply_buying_signal', 'success', `Auto-replied to message ${msg.id}`, { confidence, riskLevel });
+              } else {
+                await recordAction('auto_reply_buying_signal', 'failed', `Failed reply on message ${msg.id}: ${replyError.message}`);
+              }
+            } else {
+              await createApproval(
+                'auto_reply_buying_signal',
+                riskLevel,
+                confidence,
+                'Auto-send rule not met or high-risk response requires approval',
+                { messageId: msg.id, senderId: msg.sender_id || null, confidence }
+              );
+            }
+            const taskTitle = `Follow up on buying-signal message`;
+            const taskDescription = `[AI LOG] ${new Date().toISOString()} Buying-signal detected in message ${msg.id}. Draft response and advance lead context.`;
+            const { error: taskError } = await admin.from('tasks').insert({
+              tenant_id: tenantId,
+              title: taskTitle,
+              description: taskDescription,
+              priority: 'high',
+              status: 'todo',
+              due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+            });
+            if (!taskError) createdTasks += 1;
+          }
+          await recordAction('unread_buying_signal_inbox', 'success', `Detected ${buyingSignals.length} signals, created ${createdTasks} tasks, sent ${autoReplies} auto-replies`, {
+            detected: buyingSignals.length,
+            createdTasks,
+            autoReplies,
+          });
+        } catch (error) {
+          await recordAction('unread_buying_signal_inbox', 'failed', error instanceof Error ? error.message : 'Unknown error');
+        }
+
+        // 2) Stale deals (7+ days) -> score hint + follow-up task
+        try {
+          const staleDate = new Date(Date.now() - rules.stale_deal_days * 24 * 60 * 60 * 1000).toISOString();
+          const { data: staleDeals } = await admin
+            .from('deals')
+            .select('id, name, stage, value, updated_at')
+            .eq('tenant_id', tenantId)
+            .lt('updated_at', staleDate)
+            .in('stage', ['lead', 'qualified', 'proposal', 'negotiation'])
+            .limit(30);
+
+          let createdTasks = 0;
+          for (const deal of staleDeals || []) {
+            const { error: taskError } = await admin.from('tasks').insert({
+              tenant_id: tenantId,
+              title: `Advance stale deal: ${deal.name || deal.id}`,
+              description: `[AI LOG] ${new Date().toISOString()} Deal is stale for 7+ days. Re-score and execute follow-up outreach.`,
+              priority: 'high',
+              status: 'todo',
+              due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            });
+            if (!taskError) createdTasks += 1;
+          }
+          await recordAction('stale_deals_7_days', 'success', `Found ${(staleDeals || []).length} stale deals (>${rules.stale_deal_days} days), created ${createdTasks} tasks`, {
+            staleDeals: (staleDeals || []).length,
+            createdTasks,
+          });
+        } catch (error) {
+          await recordAction('stale_deals_7_days', 'failed', error instanceof Error ? error.message : 'Unknown error');
+        }
+
+        // 3) Overdue invoices -> escalation loop
+        try {
+          const todayIso = toIsoDate(new Date());
+          const { data: overdueInvoices } = await admin
+            .from('business_invoices')
+            .select('id, tenant_id, client_id, invoice_number, due_date, status, reminder_count')
+            .eq('tenant_id', tenantId)
+            .lt('due_date', todayIso)
+            .in('status', ['sent', 'overdue'])
+            .limit(50);
+
+          let escalations = 0;
+          for (const invoice of overdueInvoices || []) {
+            const reminderCount = Number(invoice.reminder_count || 0);
+            const escalationLevel = reminderCount >= 2 ? 'final_notice' : 'standard_overdue_followup';
+            const { error: reminderError } = await admin.from('invoice_reminders').insert({
+              tenant_id: tenantId,
+              invoice_id: invoice.id,
+              reminder_type: escalationLevel,
+              sent_to: null,
+              status: 'pending',
+              metadata: {
+                invoiceNumber: invoice.invoice_number,
+                generatedBy: 'autonomous_runner',
+              },
+            });
+            if (!reminderError) escalations += 1;
+          }
+          await recordAction('overdue_invoices_escalation', 'success', `Found ${(overdueInvoices || []).length} overdue invoices, queued ${escalations} escalations`, {
+            overdueInvoices: (overdueInvoices || []).length,
+            escalations,
+          });
+        } catch (error) {
+          await recordAction('overdue_invoices_escalation', 'failed', error instanceof Error ? error.message : 'Unknown error');
+        }
+
+        // 4) No social posts in 3 days -> create proactive drafts
+        try {
+          const threeDaysAgo = new Date(Date.now() - rules.social_inactivity_days * 24 * 60 * 60 * 1000).toISOString();
+          const { data: recentPosts } = await admin
+            .from('social_posts')
+            .select('id, created_at')
+            .eq('tenant_id', tenantId)
+            .gte('created_at', threeDaysAgo)
+            .limit(1);
+
+          if ((recentPosts || []).length === 0) {
+            const now = new Date();
+            const tomorrowMorning = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            tomorrowMorning.setHours(9, 0, 0, 0);
+            const tomorrowAfternoon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            tomorrowAfternoon.setHours(13, 0, 0, 0);
+
+            const linkedInGenerated = await socialPostGenerationService.generateMultiPass({
+              platform: 'linkedin',
+              pillar: 'tactical_how_to',
+              topic: 'sales follow-up automation',
+              monthlyGoal: 'Lead generation and authority growth',
+              includeCta: true,
+            });
+            const facebookGenerated = await socialPostGenerationService.generateMultiPass({
+              platform: 'facebook',
+              pillar: 'behind_the_scenes',
+              topic: 'sales follow-up automation',
+              monthlyGoal: 'Community engagement and pipeline trust',
+              includeCta: true,
+            });
+            const linkedInCaption = linkedInGenerated.content;
+            const facebookCaption = facebookGenerated.content;
+
+            await admin.from('social_posts').insert([
+              {
+                tenant_id: tenantId,
+                caption: linkedInCaption,
+                platforms: ['linkedin'],
+                status: 'scheduled',
+                scheduled_at: tomorrowMorning.toISOString(),
+                metadata: {
+                  generatedBy: 'autonomous_runner',
+                  pillar: 'tactical_how_to',
+                  generation: {
+                    strategistNotes: linkedInGenerated.strategistNotes,
+                    reviewerNotes: linkedInGenerated.reviewerNotes,
+                    confidenceScore: linkedInGenerated.confidenceScore,
+                  },
+                },
+              },
+              {
+                tenant_id: tenantId,
+                caption: facebookCaption,
+                platforms: ['facebook'],
+                status: 'scheduled',
+                scheduled_at: tomorrowAfternoon.toISOString(),
+                metadata: {
+                  generatedBy: 'autonomous_runner',
+                  pillar: 'behind_the_scenes',
+                  generation: {
+                    strategistNotes: facebookGenerated.strategistNotes,
+                    reviewerNotes: facebookGenerated.reviewerNotes,
+                    confidenceScore: facebookGenerated.confidenceScore,
+                  },
+                },
+              },
+            ]);
+            await recordAction('no_posts_in_3_days', 'success', 'No posts in 3 days, created LinkedIn and Facebook drafts');
+          } else {
+            await recordAction('no_posts_in_3_days', 'skipped', 'Recent posts exist, no auto-drafts needed');
+          }
+        } catch (error) {
+          await recordAction('no_posts_in_3_days', 'failed', error instanceof Error ? error.message : 'Unknown error');
+        }
+
+        // 5) Calendar-aware proactive reminders (next 24h)
+        try {
+          const start = new Date().toISOString();
+          const end = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          const { data: upcomingEvents } = await admin
+            .from('calendar_events')
+            .select('id, title, user_id, start_time')
+            .eq('tenant_id', tenantId)
+            .gte('start_time', start)
+            .lte('start_time', end)
+            .limit(30);
+
+          let prepTasks = 0;
+          for (const event of upcomingEvents || []) {
+            const { error: taskError } = await admin.from('tasks').insert({
+              tenant_id: tenantId,
+              assigned_to: event.user_id || null,
+              title: `Prepare for upcoming meeting: ${event.title || 'Calendar event'}`,
+              description: `[AI LOG] ${new Date().toISOString()} Auto-generated preparation task from calendar event ${event.id}.`,
+              priority: 'medium',
+              status: 'todo',
+              due_date: event.start_time,
+            });
+            if (!taskError) prepTasks += 1;
+          }
+          await recordAction('calendar_next_24h_prep', 'success', `Found ${(upcomingEvents || []).length} upcoming events, created ${prepTasks} prep tasks`, {
+            upcomingEvents: (upcomingEvents || []).length,
+            prepTasks,
+          });
+        } catch (error) {
+          await recordAction('calendar_next_24h_prep', 'failed', error instanceof Error ? error.message : 'Unknown error');
+        }
+
+        // 6) Payment loop closure (reconciliation candidates)
+        try {
+          const { data: candidates } = await admin
+            .from('business_invoices')
+            .select('id, tenant_id, status, metadata, updated_at')
+            .eq('tenant_id', tenantId)
+            .in('status', ['sent', 'overdue'])
+            .limit(50);
+
+          let reconcileTasks = 0;
+          let reconciledPaid = 0;
+          for (const invoice of candidates || []) {
+            const paymentIntentId = (invoice.metadata as Record<string, unknown> | null)?.stripe_payment_intent;
+            if (typeof paymentIntentId === 'string' && paymentIntentId.trim()) {
+              if (stripe) {
+                try {
+                  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+                  if (paymentIntent.status === 'succeeded') {
+                    await admin
+                      .from('business_invoices')
+                      .update({ status: 'paid', updated_at: new Date().toISOString() })
+                      .eq('id', invoice.id)
+                      .eq('tenant_id', tenantId);
+                    reconciledPaid += 1;
+                  } else {
+                    const { error: taskError } = await admin.from('tasks').insert({
+                      tenant_id: tenantId,
+                      title: `Reconcile payment status for invoice ${invoice.id}`,
+                      description: `[AI LOG] ${new Date().toISOString()} Payment intent status is ${paymentIntent.status}. Continue follow-up.`,
+                      priority: 'high',
+                      status: 'todo',
+                      due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                    });
+                    if (!taskError) reconcileTasks += 1;
+                  }
+                } catch {
+                  const { error: taskError } = await admin.from('tasks').insert({
+                    tenant_id: tenantId,
+                    title: `Reconcile payment status for invoice ${invoice.id}`,
+                    description: `[AI LOG] ${new Date().toISOString()} Stripe reconciliation failed, manual verification required.`,
+                    priority: 'high',
+                    status: 'todo',
+                    due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                  });
+                  if (!taskError) reconcileTasks += 1;
+                }
+              } else {
+                const { error: taskError } = await admin.from('tasks').insert({
+                  tenant_id: tenantId,
+                  title: `Reconcile payment status for invoice ${invoice.id}`,
+                  description: `[AI LOG] ${new Date().toISOString()} Stripe key unavailable. Manual reconciliation required.`,
+                  priority: 'high',
+                  status: 'todo',
+                  due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                });
+                if (!taskError) reconcileTasks += 1;
+              }
+            }
+          }
+          await recordAction('payment_loop_reconciliation', 'success', `Auto-reconciled ${reconciledPaid} paid invoices, created ${reconcileTasks} reconciliation tasks`, {
+            reconciledPaid,
+            reconcileTasks,
+          });
+        } catch (error) {
+          await recordAction('payment_loop_reconciliation', 'failed', error instanceof Error ? error.message : 'Unknown error');
+        }
+
+        // Autopilot Auto-Approvals Process
+        await processAutopilotApprovals(admin, tenantId, rules, recordAction);
+
+        if (runId) {
+          const failedCount = summary.actions.filter((a) => a.status === 'failed').length;
+          await admin
+            .from('autonomous_runner_runs')
+            .update({
+              status: failedCount > 0 ? 'partial_success' : 'completed',
+              completed_at: new Date().toISOString(),
+              summary: { actions: summary.actions },
+            })
+            .eq('id', runId);
+        }
+
+        runs.push(summary);
+>>>>>>> origin/main
       }
 
       return { success: true, runs };
@@ -228,7 +637,11 @@ export const autonomousRunnerService = {
     }
   },
 
+<<<<<<< HEAD
   async runForTenant(tenantId: string, options?: { triggerSource?: 'cron' | 'manual' | 'bonnie_chat' }): Promise<{ success: boolean; run: RunnerSummary | null; error?: string }> {
+=======
+  async runForTenant(tenantId: string): Promise<{ success: boolean; run: RunnerSummary | null; error?: string }> {
+>>>>>>> origin/main
     const admin = createSupabaseAdminClient();
     const stripeSecret = process.env.STRIPE_SECRET_KEY;
     const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: '2025-12-15.clover' }) : null;
@@ -246,7 +659,11 @@ export const autonomousRunnerService = {
       };
       const { data: rulesRow } = await admin
         .from('autonomous_runner_rules')
+<<<<<<< HEAD
         .select('enabled, auto_send_enabled, auto_send_confidence_threshold, high_risk_approval_required, stale_deal_days, social_inactivity_days, lead_action_mode, email_provider')
+=======
+        .select('enabled, auto_send_enabled, auto_send_confidence_threshold, high_risk_approval_required, stale_deal_days, social_inactivity_days')
+>>>>>>> origin/main
         .eq('tenant_id', tenantId)
         .maybeSingle();
       const rules = { ...defaultRules, ...(rulesRow || {}) } as TenantRunnerRules;
@@ -266,7 +683,11 @@ export const autonomousRunnerService = {
           tenant_id: tenantId,
           status: 'running',
           started_at: runStartedAt,
+<<<<<<< HEAD
           trigger_snapshot: { source: options?.triggerSource || 'manual' },
+=======
+          trigger_snapshot: { source: 'manual' },
+>>>>>>> origin/main
         })
         .select('id')
         .single();
@@ -351,6 +772,7 @@ export const autonomousRunnerService = {
           }
           const taskTitle = `Follow up on buying-signal message`;
           const taskDescription = `[AI LOG] ${new Date().toISOString()} Buying-signal detected in message ${msg.id}. Draft response and advance lead context.`;
+<<<<<<< HEAD
           const sourceKey = `buying_signal:${msg.id}`;
           if (!(await autoTaskAlreadyExists(admin, tenantId, sourceKey))) {
             const { error: taskError } = await admin.from('tasks').insert({
@@ -364,6 +786,17 @@ export const autonomousRunnerService = {
             });
             if (!taskError) createdTasks += 1;
           }
+=======
+          const { error: taskError } = await admin.from('tasks').insert({
+            tenant_id: tenantId,
+            title: taskTitle,
+            description: taskDescription,
+            priority: 'high',
+            status: 'todo',
+            due_date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+          });
+          if (!taskError) createdTasks += 1;
+>>>>>>> origin/main
         }
         await recordAction('unread_buying_signal_inbox', 'success', `Detected ${buyingSignals.length} signals, created ${createdTasks} tasks, sent ${autoReplies} auto-replies`, {
           detected: buyingSignals.length,
@@ -387,8 +820,11 @@ export const autonomousRunnerService = {
 
         let createdTasks = 0;
         for (const deal of staleDeals || []) {
+<<<<<<< HEAD
           const sourceKey = `stale_deal:${deal.id}`;
           if (await autoTaskAlreadyExists(admin, tenantId, sourceKey)) continue;
+=======
+>>>>>>> origin/main
           const { error: taskError } = await admin.from('tasks').insert({
             tenant_id: tenantId,
             title: `Advance stale deal: ${deal.name || deal.id}`,
@@ -396,8 +832,11 @@ export const autonomousRunnerService = {
             priority: 'high',
             status: 'todo',
             due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+<<<<<<< HEAD
             related_to_deal: deal.id,
             metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
+=======
+>>>>>>> origin/main
           });
           if (!taskError) createdTasks += 1;
         }
@@ -445,6 +884,7 @@ export const autonomousRunnerService = {
         await recordAction('overdue_invoices_escalation', 'failed', error instanceof Error ? error.message : 'Unknown error');
       }
 
+<<<<<<< HEAD
       // 3b) Branching invoice chase + lead follow-up
       try {
         const { runInvoiceChasingBranches, runLeadFollowUpBranches } = await import('@/lib/automation/workflowBranching');
@@ -458,6 +898,8 @@ export const autonomousRunnerService = {
         await recordAction('workflow_branching', 'failed', error instanceof Error ? error.message : 'Unknown error');
       }
 
+=======
+>>>>>>> origin/main
       // 4) No social posts in 3 days -> create proactive drafts
       try {
         const threeDaysAgo = new Date(Date.now() - rules.social_inactivity_days * 24 * 60 * 60 * 1000).toISOString();
@@ -548,8 +990,11 @@ export const autonomousRunnerService = {
 
         let prepTasks = 0;
         for (const event of upcomingEvents || []) {
+<<<<<<< HEAD
           const sourceKey = `calendar_prep:${event.id}`;
           if (await autoTaskAlreadyExists(admin, tenantId, sourceKey)) continue;
+=======
+>>>>>>> origin/main
           const { error: taskError } = await admin.from('tasks').insert({
             tenant_id: tenantId,
             assigned_to: event.user_id || null,
@@ -558,7 +1003,10 @@ export const autonomousRunnerService = {
             priority: 'medium',
             status: 'todo',
             due_date: event.start_time,
+<<<<<<< HEAD
             metadata: { source: 'autonomous_runner', autoSourceKey: sourceKey },
+=======
+>>>>>>> origin/main
           });
           if (!taskError) prepTasks += 1;
         }
@@ -584,7 +1032,10 @@ export const autonomousRunnerService = {
         for (const invoice of candidates || []) {
           const paymentIntentId = (invoice.metadata as Record<string, unknown> | null)?.stripe_payment_intent;
           if (typeof paymentIntentId === 'string' && paymentIntentId.trim()) {
+<<<<<<< HEAD
             const reconcileKey = `reconcile_invoice:${invoice.id}`;
+=======
+>>>>>>> origin/main
             if (stripe) {
               try {
                 const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -595,7 +1046,11 @@ export const autonomousRunnerService = {
                     .eq('id', invoice.id)
                     .eq('tenant_id', tenantId);
                   reconciledPaid += 1;
+<<<<<<< HEAD
                 } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
+=======
+                } else {
+>>>>>>> origin/main
                   const { error: taskError } = await admin.from('tasks').insert({
                     tenant_id: tenantId,
                     title: `Reconcile payment status for invoice ${invoice.id}`,
@@ -603,11 +1058,15 @@ export const autonomousRunnerService = {
                     priority: 'high',
                     status: 'todo',
                     due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+<<<<<<< HEAD
                     metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
+=======
+>>>>>>> origin/main
                   });
                   if (!taskError) reconcileTasks += 1;
                 }
               } catch {
+<<<<<<< HEAD
                 if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
                   const { error: taskError } = await admin.from('tasks').insert({
                     tenant_id: tenantId,
@@ -622,6 +1081,19 @@ export const autonomousRunnerService = {
                 }
               }
             } else if (!(await autoTaskAlreadyExists(admin, tenantId, reconcileKey))) {
+=======
+                const { error: taskError } = await admin.from('tasks').insert({
+                  tenant_id: tenantId,
+                  title: `Reconcile payment status for invoice ${invoice.id}`,
+                  description: `[AI LOG] ${new Date().toISOString()} Stripe reconciliation failed, manual verification required.`,
+                  priority: 'high',
+                  status: 'todo',
+                  due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                });
+                if (!taskError) reconcileTasks += 1;
+              }
+            } else {
+>>>>>>> origin/main
               const { error: taskError } = await admin.from('tasks').insert({
                 tenant_id: tenantId,
                 title: `Reconcile payment status for invoice ${invoice.id}`,
@@ -629,7 +1101,10 @@ export const autonomousRunnerService = {
                 priority: 'high',
                 status: 'todo',
                 due_date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+<<<<<<< HEAD
                 metadata: { source: 'autonomous_runner', autoSourceKey: reconcileKey },
+=======
+>>>>>>> origin/main
               });
               if (!taskError) reconcileTasks += 1;
             }

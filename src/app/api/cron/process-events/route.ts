@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+<<<<<<< HEAD
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 
 // Import workflows
@@ -15,13 +16,26 @@ import { quantumDealIntelligenceService } from '@/services/intelligence/quantumD
 import { runEnterpriseWorkflowsForTrigger } from '@/lib/crm/crmEnterpriseWorkflowRunner';
 import { syncCrmEntity } from '@/lib/crm/crmBridgeServer';
 import { isBonnieReasoningEvent, reasonAboutBusinessEvent } from '@/lib/bonnie/os/eventReasoning';
+=======
+
+// Import workflows
+import { dealStageChangedWorkflow } from '@/workflows/deal-flows';
+import { invoiceOverdueWorkflow } from '@/workflows/invoice-flows';
+import { leadCreatedWorkflow } from '@/workflows/lead-flows';
+import { contractSignedWorkflow } from '@/workflows/contract-flows';
+import { taskOverdueWorkflow } from '@/workflows/task-flows';
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Main Automation Dispatcher
  * Polls unprocessed business events and triggers the corresponding workflows.
+<<<<<<< HEAD
  * Run this every 5 minutes via Railway Cron.
+=======
+ * Run this every 5 minutes via Vercel Cron.
+>>>>>>> origin/main
  */
 export async function GET(request: NextRequest) {
   const denied = denyIfCronUnauthorized(request);
@@ -50,6 +64,7 @@ export async function GET(request: NextRequest) {
 
     // 2. Dispatch events to workflows
     for (const event of events) {
+<<<<<<< HEAD
       const guard = await guardCronTenantRow(event, 'business_automation_events', {
         event_type: event.event_type,
       });
@@ -117,6 +132,12 @@ export async function GET(request: NextRequest) {
           case 'tenant_created':
             workflowToStart = tenantCreatedWorkflow;
             break;
+=======
+      try {
+        let workflowToStart: any = null;
+
+        switch (event.event_type) {
+>>>>>>> origin/main
           case 'deal_stage_changed':
             workflowToStart = dealStageChangedWorkflow;
             break;
@@ -132,6 +153,7 @@ export async function GET(request: NextRequest) {
           case 'task_overdue':
             workflowToStart = taskOverdueWorkflow;
             break;
+<<<<<<< HEAD
           case 'invoice_created':
             workflowToStart = invoiceCreatedWorkflow;
             break;
@@ -161,6 +183,8 @@ export async function GET(request: NextRequest) {
             results.push({ eventId: event.id, status: 'dispatched', type: 'deal_intelligence' });
             continue;
           }
+=======
+>>>>>>> origin/main
           default:
             console.warn(`[Automation] No workflow mapping for event type: ${event.event_type}`);
         }
@@ -182,6 +206,7 @@ export async function GET(request: NextRequest) {
             status: 'running'
           });
 
+<<<<<<< HEAD
           await runCrmCoherenceHooks(supabase, event);
 
           await supabase
@@ -204,6 +229,19 @@ export async function GET(request: NextRequest) {
           results.push({ eventId: event.id, status: 'skipped', reason: 'no_workflow' });
         }
 
+=======
+          results.push({ eventId: event.id, status: 'dispatched', runId });
+        } else {
+          results.push({ eventId: event.id, status: 'skipped', reason: 'no_workflow' });
+        }
+
+        // 3. Mark as processed
+        await supabase
+          .from('business_automation_events')
+          .update({ processed: true })
+          .eq('id', event.id);
+
+>>>>>>> origin/main
       } catch (err: any) {
         console.error(`[Automation] Error processing event ${event.id}:`, err.message);
         results.push({ eventId: event.id, status: 'failed', error: err.message });
@@ -230,6 +268,7 @@ async function logCron(trigger: string, status: string, payload: any, ranAt: str
     error_message: status === 'failed' ? payload.error : null
   });
 }
+<<<<<<< HEAD
 
 async function runCrmCoherenceHooks(
   supabase: ReturnType<typeof createSupabaseAdminClient>,
@@ -300,3 +339,5 @@ async function runCrmCoherenceHooks(
 
   return false;
 }
+=======
+>>>>>>> origin/main

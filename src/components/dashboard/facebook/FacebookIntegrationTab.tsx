@@ -7,7 +7,11 @@ import {
     ExternalLink, Plus, Send, Image, Link2, Loader2, Eye, Trash2,
     TrendingUp, UserPlus, Mail, Phone, Building2, Filter, ChevronDown, Sparkles,
     Activity, HelpCircle, Code2, Globe, Shield, Zap, AlertCircle, AlertTriangle, MessageCircle,
+<<<<<<< HEAD
     ThumbsUp, Repeat2, BarChart3, ChevronRight, X, Calendar, Search
+=======
+    ThumbsUp, Repeat2, BarChart3, ChevronRight, X, Calendar
+>>>>>>> origin/main
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
@@ -211,9 +215,12 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
     const [loadingMorePosts, setLoadingMorePosts] = useState(false);
     const [insightsByPost, setInsightsByPost] = useState<Record<string, { loading?: boolean; rows?: { name: string; values?: { value?: number }[] }[]; note?: string }>>({});
     const [capabilitiesByPage, setCapabilitiesByPage] = useState<Record<string, any>>({});
+<<<<<<< HEAD
     const [pageInfoByPage, setPageInfoByPage] = useState<Record<string, any>>({});
     const [pageInfoLoadingByPage, setPageInfoLoadingByPage] = useState<Record<string, boolean>>({});
     const [pageInfoErrorByPage, setPageInfoErrorByPage] = useState<Record<string, string>>({});
+=======
+>>>>>>> origin/main
     const [deletingPostById, setDeletingPostById] = useState<Record<string, boolean>>({});
     const [hashtags, setHashtags] = useState<string[]>([]);
     const [suggestedHashtags, setSuggestedHashtags] = useState<string[]>(['#AlphaClone', '#AItools', '#founders', '#productivity', '#automation']);
@@ -438,6 +445,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
     }, []);
 
+<<<<<<< HEAD
     const loadPageInfo = useCallback(async (pageId: string) => {
         if (!pageId) return;
         setPageInfoLoadingByPage((prev) => ({ ...prev, [pageId]: true }));
@@ -463,6 +471,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         }
     }, []);
 
+=======
+>>>>>>> origin/main
     const deleteFacebookPost = useCallback(async (postId: string) => {
         if (!selectedPageId || !postId) return;
         if (!window.confirm('Delete this Facebook post from the connected Page?')) return;
@@ -554,9 +564,14 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
         if (selectedPageId) {
             void loadScheduleQueue();
             void loadPageCapabilities(selectedPageId);
+<<<<<<< HEAD
             void loadPageInfo(selectedPageId);
         }
     }, [selectedPageId, loadScheduleQueue, loadPageCapabilities, loadPageInfo]);
+=======
+        }
+    }, [selectedPageId, loadScheduleQueue, loadPageCapabilities]);
+>>>>>>> origin/main
 
     const duplicateMap = useMemo(() => {
         const counts: Record<string, number> = {};
@@ -882,6 +897,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         {/* Leads View */}
                         {activeTab === 'leads' && (
                             <div className="space-y-6">
+<<<<<<< HEAD
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                                     <div className="relative flex-1">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -903,6 +919,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         Search
                                     </button>
                                 </div>
+=======
+>>>>>>> origin/main
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                                         <Users className="text-blue-500" />
@@ -958,6 +976,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         <p className="text-sm text-slate-500 text-center py-8">No leads yet. Connect Facebook and run a search above.</p>
                                     )}
                                 </div>
+<<<<<<< HEAD
                                 {graphLeadResults.length > 0 && (
                                     <div className="space-y-3">
                                         <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Live from Facebook Graph</h3>
@@ -972,6 +991,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
                                     </div>
                                 )}
+=======
+>>>>>>> origin/main
                             </div>
                         )}
 
@@ -1115,6 +1136,7 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
                                     )}
 
+<<<<<<< HEAD
                                     {selectedPageId && (
                                         <div className="rounded-2xl border border-white/5 bg-black/20 p-4">
                                             <div className="mb-3 flex items-center justify-between gap-3">
@@ -1170,6 +1192,8 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                                         </div>
                                     )}
 
+=======
+>>>>>>> origin/main
                                     <div className="flex flex-wrap gap-2">
                                         {pages.map((p) => (
                                             <button
@@ -1395,7 +1419,11 @@ function InnerFacebookIntegrationTab({ user, tenant }: FacebookIntegrationTabPro
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
+<<<<<<< HEAD
                         className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+=======
+                        className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+>>>>>>> origin/main
                     >
                         <motion.div 
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}

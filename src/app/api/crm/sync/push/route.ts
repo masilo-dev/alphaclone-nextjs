@@ -43,6 +43,7 @@ export async function POST(req: Request) {
             try {
                 const res =
                     entityType === 'deal' || deal
+<<<<<<< HEAD
                         ? await hubspotService.syncDealToHubSpot(userId, tenantId, deal)
                         : await hubspotService.syncLeadToHubSpot(userId, tenantId, lead);
                 results.push({
@@ -50,6 +51,15 @@ export async function POST(req: Request) {
                     status: res?.success === false && 'skipped' in res && res.skipped ? 'skipped' : 'success',
                     data: res,
                 });
+=======
+                        ? {
+                              success: false,
+                              skipped: true,
+                              message: 'HubSpot deal sync is not implemented for this route yet.'
+                          }
+                        : await hubspotService.syncLeadToHubSpot(userId, lead);
+                results.push({ provider: 'hubspot', status: 'success', data: res });
+>>>>>>> origin/main
             } catch (e: unknown) {
                 console.error('HubSpot Sync Error:', e);
                 results.push({ provider: 'hubspot', status: 'failed', error: OPERATION_FAILED_MESSAGE });

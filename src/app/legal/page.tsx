@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+<<<<<<< HEAD
 import CompanyInfoBlock from '@/components/marketing/CompanyInfoBlock';
+=======
+>>>>>>> origin/main
 
 export const metadata: Metadata = {
   title: 'Legal Documents | AlphaClone Systems',
@@ -15,7 +18,11 @@ export const metadata: Metadata = {
     'AlphaClone trust center',
   ],
   alternates: { canonical: 'https://alphaclonesystems.com/legal' },
+<<<<<<< HEAD
   openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+=======
+  openGraph: {
+>>>>>>> origin/main
     title: 'Legal Documents | AlphaClone Systems',
     description: 'Central legal and trust document hub for AlphaClone Systems.',
     url: 'https://alphaclonesystems.com/legal',
@@ -41,6 +48,7 @@ const legalPages = [
     description: 'Cookie categories, usage purpose, and preference controls.',
   },
   {
+<<<<<<< HEAD
     title: 'Acceptable Use',
     href: '/legal/acceptable-use',
     description: 'Rules for safe and lawful platform use.',
@@ -59,6 +67,11 @@ const legalPages = [
     title: 'AI Disclaimer',
     href: '/legal/ai-disclaimer',
     description: 'How to use Bonnie AI safely and responsibly.',
+=======
+    title: 'Data Deletion',
+    href: '/data-deletion',
+    description: 'Process for account data deletion and formal removal requests.',
+>>>>>>> origin/main
   },
   {
     title: 'Platform Status',
@@ -83,12 +96,16 @@ const legalPages = [
   {
     title: 'Data Processing Agreement',
     href: '/dpa',
+<<<<<<< HEAD
     description: 'Legal framework for data processing, SCCs, sub-processor table, and audit rights.',
   },
   {
     title: 'Privacy Choices (CCPA)',
     href: '/privacy-choices',
     description: 'California privacy rights — Do Not Sell, opt-out, and CCPA/CPRA rights requests.',
+=======
+    description: 'Legal framework for data processing and sub-processor management.',
+>>>>>>> origin/main
   },
 ];
 
@@ -101,8 +118,11 @@ export default function LegalHubPage() {
           All official AlphaClone legal and trust documents are listed here for customers, partners, and search indexing.
         </p>
 
+<<<<<<< HEAD
         <CompanyInfoBlock className="mb-10" />
 
+=======
+>>>>>>> origin/main
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {legalPages.map((page) => (
             <Link
@@ -119,3 +139,7 @@ export default function LegalHubPage() {
     </main>
   );
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

@@ -102,11 +102,14 @@ export const outreachSendSchema = z.object({
     balanceByDailyLimit: z.boolean().optional(),
     language: z.string().max(40).optional(),
     languageMode: z.string().max(40).optional(),
+<<<<<<< HEAD
     /** Direct compose/reply — skip CRM membership gate */
     skipCrmGate: z.boolean().optional(),
     directSend: z.boolean().optional(),
     entityType: z.enum(['invoice', 'contract', 'document', 'lead', 'client', 'direct']).optional(),
     entityId: z.string().uuid().optional(),
+=======
+>>>>>>> origin/main
 });
 
 const tenantIdSchema = z.string().uuid('Invalid tenantId');
@@ -163,8 +166,11 @@ export const integrationEmailProviderSchema = z.object({
     apiKey: z.string().optional(),
     fromEmail: emailSchema,
     fromName: z.string().min(1).max(200).optional(),
+<<<<<<< HEAD
     deepseekApiKey: z.string().optional(),
     deepseekModel: z.enum(['deepseek-chat', 'deepseek-reasoner']).optional().default('deepseek-chat'),
+=======
+>>>>>>> origin/main
 }).passthrough();
 
 export const integrationEmailProviderDeleteSchema = z.object({
@@ -190,18 +196,24 @@ export const scraperSearchSchema = z.object({
     sortBy: z.string().optional().default('default'),
     radiusKm: z.number().min(1).max(100).optional().default(25),
     tenantId: tenantIdSchema,
+<<<<<<< HEAD
     sources: z.array(z.string()).optional(),
     useApollo: z.boolean().optional(),
+=======
+>>>>>>> origin/main
 });
 
 export const scraperAffordableSchema = z.object({
     action: z.enum(['hunter_domain', 'hunter_verify', 'builtwith', 'google_places', 'enrich_lead']),
     domain: z.string().optional(),
     email: emailSchema.optional(),
+<<<<<<< HEAD
     first_name: z.string().optional(),
     last_name: z.string().optional(),
     organization_name: z.string().optional(),
     linkedin_url: z.string().url().optional(),
+=======
+>>>>>>> origin/main
     query: z.string().optional(),
     location: z.string().optional(),
     tenant_id: tenantIdSchema.optional(),
@@ -241,8 +253,11 @@ export const scraperJobCreateSchema = z.object({
     sortBy: z.string().optional().default('default'),
     usePlaywright: z.boolean().optional().default(false),
     radiusKm: z.number().min(1).max(100).optional().default(25),
+<<<<<<< HEAD
     sources: z.array(z.string()).optional(),
     useApollo: z.boolean().optional(),
+=======
+>>>>>>> origin/main
 });
 
 /**

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+<<<<<<< HEAD
 import MarketingLandingShell from '@/components/landing/MarketingLandingShell';
+=======
+>>>>>>> origin/main
 
 export const metadata: Metadata = {
   title: 'Platform Status | AlphaClone Systems',
@@ -14,7 +17,11 @@ export const metadata: Metadata = {
     'AlphaClone incident status',
   ],
   alternates: { canonical: 'https://alphaclonesystems.com/platform-status' },
+<<<<<<< HEAD
   openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
+=======
+  openGraph: {
+>>>>>>> origin/main
     title: 'Platform Status | AlphaClone Systems',
     description:
       'Service health and reliability information for AlphaClone Systems.',
@@ -26,9 +33,14 @@ export const metadata: Metadata = {
 
 export default function PlatformStatusPage() {
   return (
+<<<<<<< HEAD
     <MarketingLandingShell>
       <main className="min-h-screen bg-[#040A12] text-slate-200 pt-20">
         <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+=======
+    <main className="min-h-screen bg-[#040A12] text-slate-200">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+>>>>>>> origin/main
         <h1 className="text-4xl font-black text-white mb-4">Platform Status</h1>
         <p className="text-slate-300 mb-8">
           This page describes current service posture and the way AlphaClone communicates reliability events.
@@ -66,8 +78,12 @@ export default function PlatformStatusPage() {
           </div>
         </div>
       </section>
+<<<<<<< HEAD
       </main>
     </MarketingLandingShell>
+=======
+    </main>
+>>>>>>> origin/main
   );
 }
 

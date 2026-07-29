@@ -192,6 +192,7 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 <ExternalLink className="w-5 h-5" />
                                             </button>
                                         </div>
+<<<<<<< HEAD
                                         {settings.slug && (
                                             <a
                                                 href={`${typeof window !== 'undefined' ? window.location.origin : ''}/book/${settings.slug}`}
@@ -202,6 +203,8 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
                                                 {typeof window !== 'undefined' ? `${window.location.origin}/book/${settings.slug}` : `/book/${settings.slug}`}
                                             </a>
                                         )}
+=======
+>>>>>>> origin/main
                                         <p className="text-xs text-slate-500 px-1">Tip: Keep your slug short and simple.</p>
                                     </div>
                                 </div>
@@ -469,3 +472,4 @@ export const BookingSettings: React.FC<BookingSettingsProps> = ({ tenant, onUpda
         </div>
     );
 };
+

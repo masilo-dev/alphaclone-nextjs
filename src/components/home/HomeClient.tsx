@@ -110,7 +110,11 @@ export default function HomeClient({ initialProjects }: HomeClientProps) {
       {isPwa ? (
         <AppLauncher onLogin={handleLogin} />
       ) : (
+<<<<<<< HEAD
         <MarketingHomePage />
+=======
+        <LandingPage />
+>>>>>>> origin/main
       )}
     </>
   );

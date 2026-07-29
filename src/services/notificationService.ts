@@ -33,10 +33,25 @@ export const notificationService = {
         priority?: 'low' | 'medium' | 'high' | 'urgent';
         metadata?: Record<string, any>;
     }) {
+<<<<<<< HEAD
         const tenantId = tenantService.getCurrentTenantId();
         if (!tenantId) return { success: false, error: 'No active workspace selected' };
         const response = await fetch('/api/notifications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, ...params }) });
         const payload = await response.json().catch(() => ({}));
+=======
+        const { error } = await supabase
+            .from('notifications')
+            .insert({
+                user_id: params.userId,
+                type: params.type,
+                title: params.title,
+                message: params.message,
+                link: params.link,
+                priority: params.priority || 'medium',
+                metadata: params.metadata || {},
+                read: false
+            });
+>>>>>>> origin/main
 
         // Send audit to meeting
         if (_dailyCallObject) {
@@ -248,6 +263,7 @@ export const notificationService = {
                 } else {
                     await fetch(`${baseUrl}/api/email/send`, {
                         method: 'POST',
+<<<<<<< HEAD
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             tenantId: params.tenantId,
@@ -256,6 +272,13 @@ export const notificationService = {
                             body_html: emailParams.html,
                             isPlatformNotification: true,
                         }),
+=======
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'x-internal-api-key': process.env.INTERNAL_API_KEY || ''
+                        },
+                        body: JSON.stringify(emailParams)
+>>>>>>> origin/main
                     });
                 }
             }

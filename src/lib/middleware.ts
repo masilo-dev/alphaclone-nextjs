@@ -141,6 +141,7 @@ export async function updateSession(request: NextRequest) {
         )
 
         // HARD GATE: Enforce trial and subscription status for dashboard routes
+<<<<<<< HEAD
         if (isProtectedPage) {
             if (!isDashboardNavigation) {
                 return response;
@@ -148,6 +149,11 @@ export async function updateSession(request: NextRequest) {
 
             const { data: { user } } = await supabase.auth.getUser();
 
+=======
+        if (pathname.startsWith('/dashboard')) {
+            const { data: { user } } = await supabase.auth.getUser();
+
+>>>>>>> origin/main
             if (!user) {
                 const url = request.nextUrl.clone();
                 url.pathname = '/auth/login';
@@ -155,6 +161,7 @@ export async function updateSession(request: NextRequest) {
                 return NextResponse.redirect(url);
             }
 
+<<<<<<< HEAD
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('account_status')
@@ -187,9 +194,44 @@ export async function updateSession(request: NextRequest) {
 
             // Tenant membership and subscription authorization are enforced by
             // tenant-scoped server routes. Never trust user_metadata.tenant_id here.
+=======
+            // Skip gate for the upgrade page itself to avoid redirect loops
+            if (pathname.startsWith('/billing/upgrade')) {
+                return response;
+            }
+
+            const tenantId = user.user_metadata?.tenant_id;
+            if (tenantId) {
+                // Fetch tenant status directly using service-role-like apikey (anon key works if RLS allows, but we need reliability)
+                // In middleware, we use the user's own supabase client which is restricted by RLS.
+                // Assuming RLS allows users to see their own tenant record.
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('subscription_status, trial_ends_at')
+                    .eq('id', tenantId)
+                    .single();
+
+                if (tenant) {
+                    const isTrialExpired = 
+                        tenant.subscription_status === 'trial' && 
+                        tenant.trial_ends_at && 
+                        new Date(tenant.trial_ends_at) < new Date();
+                    
+                    const isInactive = ['suspended', 'cancelled', 'past_due'].includes(tenant.subscription_status);
+
+                    if (isTrialExpired || isInactive) {
+                        console.log(`[Middleware] Hard Gate: Redirecting tenant ${tenantId} (Status: ${tenant.subscription_status}) to upgrade.`);
+                        const url = request.nextUrl.clone();
+                        url.pathname = '/billing/upgrade';
+                        return NextResponse.redirect(url);
+                    }
+                }
+            }
+>>>>>>> origin/main
         }
     } catch (e) {
         console.error('Middleware Logic Error:', e);
+<<<<<<< HEAD
         if (isDashboardNavigation) {
             const url = request.nextUrl.clone();
             url.pathname = '/maintenance';
@@ -197,6 +239,8 @@ export async function updateSession(request: NextRequest) {
             url.searchParams.set('reason', 'authentication_unavailable');
             return withRequestIdHeader(NextResponse.redirect(url));
         }
+=======
+>>>>>>> origin/main
         return response;
     }
 

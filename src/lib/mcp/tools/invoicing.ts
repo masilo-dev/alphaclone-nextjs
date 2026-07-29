@@ -1,22 +1,38 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { ensureInvoicePaymentLink } from '@/lib/invoicing/invoicePaymentLink';
+=======
+>>>>>>> origin/main
 
 // 1. get_invoices
 registerTool('invoicing', {
   name: 'get_invoices',
+<<<<<<< HEAD
   description: 'Retrieve invoices for a tenant, optionally filtered by status. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
+=======
+  description: 'Retrieve invoices for a tenant, optionally filtered by status.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+>>>>>>> origin/main
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']).optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+<<<<<<< HEAD
       status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'] },
     },
     required: [],
+=======
+      tenant_id: { type: 'string', format: 'uuid' },
+      status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'] },
+    },
+    required: ['tenant_id'],
+>>>>>>> origin/main
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -38,27 +54,41 @@ registerTool('invoicing', {
 // 2. create_invoice
 registerTool('invoicing', {
   name: 'create_invoice',
+<<<<<<< HEAD
   description: 'Create a new invoice. Generates a Stripe payment link when Connect is active. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
+=======
+  description: 'Create a new invoice.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+>>>>>>> origin/main
     client_id: z.string().uuid(),
     amount: z.number().positive(),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']).optional().default('draft'),
     due_date: z.string().optional(),
+<<<<<<< HEAD
     bank_name: z.string().optional(),
     account_number: z.string().optional(),
     branch_code: z.string().optional(),
     swift_code: z.string().optional(),
     payment_reference: z.string().optional(),
     bank_details: z.string().optional(),
+=======
+>>>>>>> origin/main
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+<<<<<<< HEAD
+=======
+      tenant_id: { type: 'string', format: 'uuid' },
+>>>>>>> origin/main
       client_id: { type: 'string', format: 'uuid' },
       amount: { type: 'number', description: 'Total invoice amount' },
       status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'], default: 'draft' },
       due_date: { type: 'string', format: 'date-time' },
+<<<<<<< HEAD
       bank_name: { type: 'string' },
       account_number: { type: 'string' },
       branch_code: { type: 'string' },
@@ -75,11 +105,19 @@ registerTool('invoicing', {
       args.due_date?.slice(0, 10) ||
       new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
+=======
+    },
+    required: ['tenant_id', 'client_id', 'amount'],
+  },
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
     const { data, error } = await supabase
       .from('business_invoices')
       .insert({
         tenant_id: args.tenant_id,
         client_id: args.client_id,
+<<<<<<< HEAD
         total: args.amount,
         total_amount: args.amount,
         subtotal: args.amount,
@@ -93,11 +131,18 @@ registerTool('invoicing', {
         swift_code: args.swift_code || null,
         payment_reference: args.payment_reference || null,
         bank_details: args.bank_details || null,
+=======
+        total_amount: args.amount,
+        status: args.status,
+        due_date: args.due_date || null,
+        invoice_number: `INV-${Date.now().toString().slice(-6)}`,
+>>>>>>> origin/main
       })
       .select()
       .single();
 
     if (error) throw error;
+<<<<<<< HEAD
 
     const payment = await ensureInvoicePaymentLink({
       tenantId: args.tenant_id!, // guaranteed by session injection via forceSessionArgs
@@ -109,25 +154,42 @@ registerTool('invoicing', {
       payment_link: payment.payment_link,
       stripe_connected: payment.stripe_connected,
     };
+=======
+    return data;
+>>>>>>> origin/main
   },
 });
 
 // 3. update_invoice_status
 registerTool('invoicing', {
   name: 'update_invoice_status',
+<<<<<<< HEAD
   description: 'Update the status of an existing invoice. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
+=======
+  description: 'Update the status of an existing invoice.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+>>>>>>> origin/main
     invoice_id: z.string().uuid(),
     status: z.enum(['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void']),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+<<<<<<< HEAD
       invoice_id: { type: 'string', format: 'uuid' },
       status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'] },
     },
     required: ['invoice_id', 'status'],
+=======
+      tenant_id: { type: 'string', format: 'uuid' },
+      invoice_id: { type: 'string', format: 'uuid' },
+      status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'void'] },
+    },
+    required: ['tenant_id', 'invoice_id', 'status'],
+>>>>>>> origin/main
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -147,6 +209,7 @@ registerTool('invoicing', {
   },
 });
 
+<<<<<<< HEAD
 const bankFieldsSchema = z.object({
   bank_name: z.string().optional(),
   account_number: z.string().optional(),
@@ -280,6 +343,21 @@ registerTool('invoicing', {
     type: 'object',
     properties: {},
     required: [],
+=======
+// 4. get_inventory_items
+registerTool('invoicing', {
+  name: 'get_inventory_items',
+  description: 'Retrieve inventory items for stock management.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['tenant_id'],
+>>>>>>> origin/main
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -296,19 +374,33 @@ registerTool('invoicing', {
 // 5. update_inventory_stock
 registerTool('invoicing', {
   name: 'update_inventory_stock',
+<<<<<<< HEAD
   description: 'Update the stock level of an inventory item. Tenant is resolved from session.',
   inputSchema: z.object({
     tenant_id: z.string().uuid().optional(), // injected from session
+=======
+  description: 'Update the stock level of an inventory item.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+>>>>>>> origin/main
     item_id: z.string().uuid(),
     quantity: z.number().int(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+<<<<<<< HEAD
       item_id: { type: 'string', format: 'uuid' },
       quantity: { type: 'number', description: 'New absolute stock quantity' },
     },
     required: ['item_id', 'quantity'],
+=======
+      tenant_id: { type: 'string', format: 'uuid' },
+      item_id: { type: 'string', format: 'uuid' },
+      quantity: { type: 'number', description: 'New absolute stock quantity' },
+    },
+    required: ['tenant_id', 'item_id', 'quantity'],
+>>>>>>> origin/main
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
@@ -327,6 +419,7 @@ registerTool('invoicing', {
     return data;
   },
 });
+<<<<<<< HEAD
 
 registerTool('invoicing', {
   name: 'convert_quote_to_invoice',
@@ -360,3 +453,5 @@ registerTool('invoicing', {
     };
   },
 });
+=======
+>>>>>>> origin/main

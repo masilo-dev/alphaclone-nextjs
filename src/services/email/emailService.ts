@@ -6,9 +6,12 @@
  * - Brevo
  * - SendGrid
  * - Resend
+<<<<<<< HEAD
  * - Zoho
  * - Outlook (Microsoft Graph)
  * - SMTP (generic)
+=======
+>>>>>>> origin/main
  */
 import { sendWithProviderSdk, type EmailProvider } from '@/lib/email/providerSdk';
 import { invoiceEmailTemplates } from '@/lib/email/invoiceEmailTemplates';
@@ -77,10 +80,18 @@ export const EMAIL_TEMPLATES = {
 };
 
 class EmailService {
+<<<<<<< HEAD
     private provider: EmailProvider | null;
     private defaultFrom: string;
 
     constructor() {
+=======
+    private provider: EmailProvider;
+    private defaultFrom: string;
+
+    constructor() {
+        // Determine provider based on environment variables
+>>>>>>> origin/main
         if (process.env.BREVO_API_KEY || process.env.BREVO_PLATFORM_API_KEY) {
             this.provider = 'brevo';
         } else if (process.env.SENDGRID_API_KEY) {
@@ -89,12 +100,17 @@ class EmailService {
             this.provider = 'resend';
         } else if (process.env.ZOHO_CLIENT_ID && process.env.ZOHO_CLIENT_SECRET) {
             this.provider = 'zoho';
+<<<<<<< HEAD
         } else if (process.env.OUTLOOK_CLIENT_ID && process.env.OUTLOOK_CLIENT_SECRET) {
             this.provider = 'outlook';
         } else if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
             this.provider = 'smtp';
         } else {
             this.provider = null;
+=======
+        } else {
+            this.provider = 'resend';
+>>>>>>> origin/main
         }
 
         this.defaultFrom = process.env.EMAIL_FROM || 'notifications@alphaclonesystems.com';
@@ -133,7 +149,11 @@ class EmailService {
         }
 
         try {
+<<<<<<< HEAD
             switch (provider) {
+=======
+            switch (this.provider) {
+>>>>>>> origin/main
                 case 'brevo':
                     return await this.sendWithBrevo(options);
                 case 'resend':
@@ -142,10 +162,13 @@ class EmailService {
                     return await this.sendWithSendGrid(options);
                 case 'zoho':
                     return await this.sendWithZoho(options);
+<<<<<<< HEAD
                 case 'outlook':
                     return await this.sendWithOutlook(options);
                 case 'smtp':
                     return await this.sendWithSmtp(options);
+=======
+>>>>>>> origin/main
                 default:
                     throw new Error(`No email provider configured for ${provider}`);
             }
@@ -260,7 +283,11 @@ class EmailService {
     /**
      * Send email using Zoho Mail
      */
+<<<<<<< HEAD
     private async sendWithZoho(options: EmailOptions) {
+=======
+    private async sendWithZoho(options: EmailOptions & { userId?: string }) {
+>>>>>>> origin/main
         if (!options.userId) {
             throw new Error('Zoho send requires a userId');
         }
@@ -282,6 +309,7 @@ class EmailService {
         }
 
         return { success: true };
+<<<<<<< HEAD
     }
 
     /**
@@ -353,6 +381,8 @@ class EmailService {
         }
 
         return { success: true };
+=======
+>>>>>>> origin/main
     }
 
     /**
@@ -611,7 +641,11 @@ export const emailHelpers = {
             receipt_url: receiptUrl,
         };
 
+<<<<<<< HEAD
         const emailTemplate = emailService.getTemplate(template);
+=======
+        const emailTemplate = (emailService as any).getTemplate(template);
+>>>>>>> origin/main
         if (!emailTemplate) throw new Error('Receipt template not found');
 
         let html = emailTemplate.html;
@@ -622,7 +656,11 @@ export const emailHelpers = {
             subject = subject.replace(placeholder, String(value));
         });
 
+<<<<<<< HEAD
         const options: EmailOptions = {
+=======
+        const options: EmailOptions & { userId?: string } = {
+>>>>>>> origin/main
             to: email,
             subject,
             html,
@@ -632,8 +670,14 @@ export const emailHelpers = {
             options.attachments = [attachment];
         }
 
+<<<<<<< HEAD
         if (provider) {
             options.provider = provider;
+=======
+        // If a specific provider is requested, temporarily override the singleton's provider
+        if (provider) {
+            (options as any).provider = provider;
+>>>>>>> origin/main
         }
         if (userId) {
             options.userId = userId;
@@ -664,8 +708,11 @@ export const emailHelpers = {
             subject: `Invoice ${invoiceNumber} from AlphaClone Systems`,
             html: invoiceEmailTemplates.invoiceSent({
                 recipientName: 'Valued Client',
+<<<<<<< HEAD
                 recipientEmail: email,
                 tenantId: 'platform',
+=======
+>>>>>>> origin/main
                 invoiceNumber,
                 amount,
                 actionUrl: invoiceUrl,
@@ -679,6 +726,7 @@ export const emailHelpers = {
 
         return emailService.send(options);
     },
+<<<<<<< HEAD
 
     /**
      * Send ticket notification
@@ -731,4 +779,6 @@ export const emailHelpers = {
             html,
         });
     },
+=======
+>>>>>>> origin/main
 };

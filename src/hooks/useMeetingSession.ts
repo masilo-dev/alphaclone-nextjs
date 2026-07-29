@@ -41,6 +41,7 @@ function writeActiveMeetingCallId(scopeKey: string, callId: string | null): void
     window.localStorage.removeItem(activeCallStorageKey(scopeKey));
 }
 
+<<<<<<< HEAD
 function clearStoredMeetingSession(scopeKey: string): void {
     writeActiveMeetingCallId(scopeKey, null);
     writeMinimizedPreference(scopeKey, false);
@@ -48,6 +49,8 @@ function clearStoredMeetingSession(scopeKey: string): void {
 
 const JOINABLE_MEETING_STATUSES = new Set(['scheduled', 'active']);
 
+=======
+>>>>>>> origin/main
 export function useMeetingSession(scopeKey = 'global') {
     const [activeMeetingCallId, setActiveMeetingCallIdState] = useState<string | null>(() => readActiveMeetingCallId(scopeKey));
     const [isMeetingMinimized, setIsMeetingMinimizedState] = useState<boolean>(() => readMinimizedPreference(scopeKey));
@@ -70,6 +73,7 @@ export function useMeetingSession(scopeKey = 'global') {
         setIsMeetingMinimizedState(readMinimizedPreference(scopeKey));
     }, [scopeKey]);
 
+<<<<<<< HEAD
     useEffect(() => {
         const callId = readActiveMeetingCallId(scopeKey);
         if (!callId) {
@@ -121,16 +125,24 @@ export function useMeetingSession(scopeKey = 'global') {
         };
     }, [scopeKey]);
 
+=======
+>>>>>>> origin/main
     const startMeeting = useCallback((callId: string) => {
         setActiveMeetingCallId(callId);
         setIsMeetingMinimized(false);
     }, [setActiveMeetingCallId, setIsMeetingMinimized]);
 
     const endMeeting = useCallback(() => {
+<<<<<<< HEAD
         clearStoredMeetingSession(scopeKey);
         setActiveMeetingCallIdState(null);
         setIsMeetingMinimizedState(false);
     }, [scopeKey]);
+=======
+        setActiveMeetingCallId(null);
+        setIsMeetingMinimized(false);
+    }, [setActiveMeetingCallId, setIsMeetingMinimized]);
+>>>>>>> origin/main
 
     const toggleMeetingMinimized = useCallback(() => {
         setIsMeetingMinimized((prev) => !prev);

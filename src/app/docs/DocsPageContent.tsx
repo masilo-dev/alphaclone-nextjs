@@ -589,14 +589,42 @@ export default function DocsPageContent() {
                                 The AlphaClone engineering team can assist with custom AI integration flows, private database clusters, security compliance audits, and enterprise onboarding for large teams.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+<<<<<<< HEAD
                                 <PrimaryCTA className="w-full sm:w-auto">Start free trial</PrimaryCTA>
                                 <SecondaryCTA className="w-full sm:w-auto">Book a demo</SecondaryCTA>
+=======
+                                <Button
+                                    onClick={() => window.location.href = 'mailto:support@alphaclonesystems.com'}
+                                    className="bg-teal-500 text-slate-950 hover:bg-teal-400 font-bold px-10 py-4 h-auto text-base rounded-2xl shadow-xl shadow-teal-500/20"
+                                >
+                                    Contact Engineering Team
+                                </Button>
+                                <Link href="/guide">
+                                    <Button variant="outline" className="border-slate-700 hover:bg-slate-800 px-10 py-4 h-auto text-base rounded-2xl">
+                                        Read Full Guide
+                                    </Button>
+                                </Link>
+>>>>>>> origin/main
                             </div>
                         </div>
 
                     </section>
                 </article>
             </div>
+<<<<<<< HEAD
+=======
+
+            <footer className="border-t border-slate-900 py-12 text-center text-slate-600 text-sm">
+                © {new Date().getFullYear()} AlphaClone Systems. Built for Scale.
+                <span className="mx-4">·</span>
+                <Link href="/guide" className="hover:text-slate-400 transition-colors">Full Onboarding Guide</Link>
+                <span className="mx-4">·</span>
+                <Link href="/services" className="hover:text-slate-400 transition-colors">All Services</Link>
+                <span className="mx-4">·</span>
+                <a href="mailto:support@alphaclonesystems.com" className="hover:text-slate-400 transition-colors">support@alphaclonesystems.com</a>
+            </footer>
+>>>>>>> origin/main
         </div>
     );
 }
+

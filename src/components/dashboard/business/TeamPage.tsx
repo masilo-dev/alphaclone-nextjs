@@ -457,3 +457,4 @@ const InviteMemberModal = ({ onClose, onInvite }: any) => {
 };
 
 export default TeamPage;
+

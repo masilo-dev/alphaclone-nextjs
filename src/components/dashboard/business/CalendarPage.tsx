@@ -846,7 +846,11 @@ const MobileCalendarView = ({ currentDate, events, onSelectDate, onSelectEvent }
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                                         {date.toLocaleDateString('en-US', { weekday: 'long' })}
                                     </span>
+<<<<<<< HEAD
                                     {isToday && <span className="text-xs font-black text-[var(--brand-blue-400)] uppercase tracking-widest">Today</span>}
+=======
+                                    {isToday && <span className="text-xs font-black text-teal-400 uppercase tracking-widest">Today</span>}
+>>>>>>> origin/main
                                 </div>
                             </div>
                             <button
@@ -1017,3 +1021,4 @@ const AddEventModal = ({ selectedDate, initialData, onClose, onAdd }: {
 };
 
 export default CalendarPage;
+

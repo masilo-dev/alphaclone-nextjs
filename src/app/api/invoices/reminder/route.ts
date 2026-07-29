@@ -25,7 +25,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'tenantId and invoiceId are required' }, { status: 400 });
     }
 
+<<<<<<< HEAD
     const { user, admin } = await requireTenantAccess(tenantId);
+=======
+    const { user } = await requireTenantAccess(tenantId);
+    const admin = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { data: invoice, error: invoiceError } = await admin
       .from('business_invoices')

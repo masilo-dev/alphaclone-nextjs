@@ -78,10 +78,18 @@ export const strategicAuditService = {
             ] = await Promise.all([
                 // 1. Top deals by value
                 db
+<<<<<<< HEAD
                     .from('deals')
                     .select('id, name, value, updated_at, stage, probability, contact_id')
                     .eq('tenant_id', tid)
                     .not('stage', 'in', '("closed_won","closed_lost","lost")')
+=======
+                    .from('leads')
+                    .select('id, business_name, value, last_activity_at, stage, probability')
+                    .eq('tenant_id', tid)
+                    .eq('is_test_data', false)
+                    .in('stage', ['qualified', 'negotiation', 'proposition', 'proposal'])
+>>>>>>> origin/main
                     .order('value', { ascending: false })
                     .limit(10),
 
@@ -133,19 +141,30 @@ export const strategicAuditService = {
                 // In a real scenario, an RPC like get_tenant_stats would be better.
                 Promise.all([
                     db.from('leads').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('is_test_data', false),
+<<<<<<< HEAD
                     db.from('deals').select('*', { count: 'exact', head: true }).eq('tenant_id', tid),
+=======
+>>>>>>> origin/main
                     db.from('business_invoices').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('is_test_data', false).not('status', 'eq', 'paid'),
                     db.from('tasks').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('is_test_data', false).not('status', 'eq', 'completed'),
                     db.from('social_posts').select('*', { count: 'exact', head: true }).eq('tenant_id', tid).eq('status', 'published')
                 ])
             ]);
 
+<<<<<<< HEAD
             const [leadsCount, dealsCount, invoicesCount, tasksCount, postsCount] = countsRes;
+=======
+            const [leadsCount, invoicesCount, tasksCount, postsCount] = countsRes;
+>>>>>>> origin/main
 
             const snapshot: BusinessSnapshot = {
                 summary: {
                     leads_total: leadsCount.count || 0,
+<<<<<<< HEAD
                     deals_total: dealsCount.count || (dealsRes.data || []).length,
+=======
+                    deals_total: (dealsRes.data || []).length, // Simplified
+>>>>>>> origin/main
                     invoices_total: invoicesCount.count || 0,
                     tasks_total: tasksCount.count || 0,
                     posts_total: postsCount.count || 0,
@@ -154,9 +173,15 @@ export const strategicAuditService = {
                 },
                 deals: (dealsRes.data || []).map((d: any) => ({
                     id: d.id,
+<<<<<<< HEAD
                     name: d.name || d.business_name,
                     amount: d.value,
                     lastActivityDate: d.updated_at || d.last_activity_at,
+=======
+                    name: d.business_name,
+                    amount: d.value,
+                    lastActivityDate: d.last_activity_at,
+>>>>>>> origin/main
                     stage: d.stage,
                     probability: d.probability || 0
                 })),

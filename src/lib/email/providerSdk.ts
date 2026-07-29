@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 type NodemailerModule = typeof import('nodemailer');
 type ResendCtor = typeof import('resend').Resend;
 type SendGridModule = typeof import('@sendgrid/mail');
@@ -42,11 +43,20 @@ function loadSendGrid(): SendGridModule | null {
   return sendGridCache;
 }
 
+=======
+import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
+import sgMail from '@sendgrid/mail';
+>>>>>>> origin/main
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 
+<<<<<<< HEAD
 export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow' | 'outlook' | 'smtp';
+=======
+export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow';
+>>>>>>> origin/main
 
 export type EmailSendInput = {
     apiKey: string;          // For Gmail: App Password (stored in Supabase per-tenant, never global env)
@@ -66,12 +76,15 @@ export type EmailSendInput = {
         contentType?: string;
     }>;
     userId?: string;
+<<<<<<< HEAD
     tenantId?: string;
     // SMTP-specific
     smtpHost?: string;
     smtpPort?: number;
     smtpUser?: string;
     smtpPass?: string;
+=======
+>>>>>>> origin/main
 };
 
 export type EmailSendResult = {
@@ -87,22 +100,28 @@ function normalizeRecipients(to: string | string[]): string[] {
 
 async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
     try {
+<<<<<<< HEAD
         const Resend = loadResendCtor();
         if (!Resend) {
             return { ok: false, provider: 'resend', error: 'Resend is not available in this environment' };
         }
+=======
+>>>>>>> origin/main
         const resend = new Resend(input.apiKey);
         const resendPayload: Record<string, unknown> = {
             from: input.fromName ? `${input.fromName} <${input.fromEmail}>` : input.fromEmail,
             to: normalizeRecipients(input.to),
             subject: input.subject,
         };
+<<<<<<< HEAD
         if (input.listUnsubscribeUrl) {
             resendPayload.headers = {
                 'List-Unsubscribe': `<${input.listUnsubscribeUrl}>`,
                 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
             };
         }
+=======
+>>>>>>> origin/main
         if (input.html) resendPayload.html = input.html;
         if (input.text) resendPayload.text = input.text;
         if (!input.html && !input.text) resendPayload.text = '';
@@ -112,7 +131,11 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
 
         const { data, error } = await resend.emails.send(
             {
+<<<<<<< HEAD
                 ...(resendPayload as any),
+=======
+                ...(resendPayload as unknown as Parameters<typeof resend.emails.send>[0]),
+>>>>>>> origin/main
                 attachments: input.attachments?.map((attachment) => ({
                     filename: attachment.filename,
                     content: attachment.content,
@@ -136,10 +159,13 @@ async function sendViaResend(input: EmailSendInput): Promise<EmailSendResult> {
 
 async function sendViaSendGrid(input: EmailSendInput): Promise<EmailSendResult> {
     try {
+<<<<<<< HEAD
         const sgMail = loadSendGrid();
         if (!sgMail) {
             return { ok: false, provider: 'sendgrid', error: 'SendGrid is not available in this environment' };
         }
+=======
+>>>>>>> origin/main
         sgMail.setApiKey(input.apiKey);
 
         const [response] = await sgMail.send({
@@ -205,12 +231,15 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
             replyTo: input.replyTo ? { email: input.replyTo } : undefined,
             cc: input.cc?.map((email) => ({ email })),
             bcc: input.bcc?.map((email) => ({ email })),
+<<<<<<< HEAD
             headers: input.listUnsubscribeUrl
                 ? {
                     'List-Unsubscribe': `<${input.listUnsubscribeUrl}>`,
                     'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
                 }
                 : undefined,
+=======
+>>>>>>> origin/main
             attachment: input.attachments?.map((attachment) => ({
                 name: attachment.filename,
                 content: attachment.content instanceof Buffer ? attachment.content.toString('base64') : String(attachment.content),
@@ -235,15 +264,24 @@ async function sendViaBrevo(input: EmailSendInput): Promise<EmailSendResult> {
 
 async function sendViaZoho(input: EmailSendInput): Promise<EmailSendResult> {
     try {
+<<<<<<< HEAD
         if (!input.userId || !input.tenantId) {
             return { ok: false, provider: 'zoho', error: 'Zoho send requires user and workspace context' };
+=======
+        if (!input.userId) {
+            return { ok: false, provider: 'zoho', error: 'Zoho send requires user context' };
+>>>>>>> origin/main
         }
         const recipients = normalizeRecipients(input.to);
         if (!recipients.length) {
             return { ok: false, provider: 'zoho', error: 'Recipient is required' };
         }
 
+<<<<<<< HEAD
         const zohoService = new ZohoMailService(input.userId, input.tenantId);
+=======
+        const zohoService = new ZohoMailService(input.userId);
+>>>>>>> origin/main
         const result = await zohoService.sendEmail({
             fromAddress: input.fromEmail,
             toAddress: recipients.join(','),
@@ -299,11 +337,14 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
             return { ok: false, provider: 'gmail', error: 'Gmail requires an App Password. Generate one at myaccount.google.com/apppasswords' };
         }
 
+<<<<<<< HEAD
         const nodemailer = loadNodemailer();
         if (!nodemailer) {
             return { ok: false, provider: 'gmail', error: 'Nodemailer is not available in this environment' };
         }
 
+=======
+>>>>>>> origin/main
         const transporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             port: 587,
@@ -314,7 +355,11 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
             },
         });
 
+<<<<<<< HEAD
         const mailOptions: any = {
+=======
+        const mailOptions: nodemailer.SendMailOptions = {
+>>>>>>> origin/main
             from: input.fromName
                 ? `"${input.fromName}" <${input.fromEmail}>`
                 : input.fromEmail,
@@ -327,12 +372,15 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
         if (input.replyTo) mailOptions.replyTo = input.replyTo;
         if (input.cc?.length) mailOptions.cc = input.cc.join(', ');
         if (input.bcc?.length) mailOptions.bcc = input.bcc.join(', ');
+<<<<<<< HEAD
         if (input.listUnsubscribeUrl) {
             mailOptions.headers = {
                 'List-Unsubscribe': `<${input.listUnsubscribeUrl}>`,
                 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
             };
         }
+=======
+>>>>>>> origin/main
 
         if (input.attachments?.length) {
             mailOptions.attachments = input.attachments.map((att) => {
@@ -364,6 +412,7 @@ async function sendViaGmail(input: EmailSendInput): Promise<EmailSendResult> {
     }
 }
 
+<<<<<<< HEAD
 async function sendViaOutlook(input: EmailSendInput): Promise<EmailSendResult> {
     try {
         if (!input.userId) {
@@ -475,6 +524,8 @@ async function sendViaSmtp(input: EmailSendInput): Promise<EmailSendResult> {
     }
 }
 
+=======
+>>>>>>> origin/main
 async function sendViaMailflow(input: EmailSendInput): Promise<EmailSendResult> {
     try {
         const recipients = normalizeRecipients(input.to);
@@ -520,8 +571,11 @@ export async function sendWithProviderSdk(
     else if (provider === 'zoho') result = await sendViaZoho(input);
     else if (provider === 'gmail') result = await sendViaGmail(input);
     else if (provider === 'mailflow') result = await sendViaMailflow(input);
+<<<<<<< HEAD
     else if (provider === 'outlook') result = await sendViaOutlook(input);
     else if (provider === 'smtp') result = await sendViaSmtp(input);
+=======
+>>>>>>> origin/main
     else result = await sendViaBrevo(input);
 
     // Sync successfully sent external emails to unified_messages
@@ -562,7 +616,11 @@ export async function sendWithProviderSdk(
                         contact_id,
                         company_id,
                         source: provider as any,
+<<<<<<< HEAD
                         external_id: result.emailId || `${provider}-outbound-${crypto.randomUUID()}`,
+=======
+                        external_id: result.emailId || `${provider}-outbound-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+>>>>>>> origin/main
                         direction: 'outbound',
                         channel: 'email',
                         subject: input.subject,

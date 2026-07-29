@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
+<<<<<<< HEAD
 import { routeErrorResponse } from '@/lib/apiAuth';
 import { denyUnlessInternalApiKey } from '@/lib/security/productionGuard';
+=======
+>>>>>>> origin/main
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { sendPlatformTemplateEmail, SYSTEM_PLATFORM_TEMPLATES, defaultDashboardUrl } from '@/lib/email/platformTemplateEmail';
 
 export async function POST(req: Request) {
+<<<<<<< HEAD
     const denied = denyUnlessInternalApiKey(req);
     if (denied) return denied;
 
+=======
+>>>>>>> origin/main
     try {
         const { email, name, trial_ends_at, workspace_name } = await req.json();
 
@@ -54,6 +60,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true });
     } catch (err) {
         console.error('[api/email/welcome] Critical error:', err);
+<<<<<<< HEAD
         return routeErrorResponse(err, undefined, req);
+=======
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+>>>>>>> origin/main
     }
 }

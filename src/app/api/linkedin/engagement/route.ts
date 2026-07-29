@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+<<<<<<< HEAD
 import { linkedInFetch, LinkedInApiError } from '@/lib/linkedin/linkedinClient';
 import { getLinkedInIntegrationWithToken, markLinkedInIntegrationInactive } from '@/services/linkedin/linkedinIntegrationService';
+=======
+>>>>>>> origin/main
 
 async function ensureTenantMembership(userId: string, tenantId: string) {
   const supabase = await createSupabaseServerClient();
@@ -68,6 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createSupabaseAdminClient();
+<<<<<<< HEAD
     const integration = await getLinkedInIntegrationWithToken(admin, {
       tenantId,
       userId: user.id,
@@ -118,6 +122,42 @@ export async function POST(req: NextRequest) {
       }
       throw err;
     }
+=======
+    let query = admin
+      .from('linkedin_integrations')
+      .select('access_token')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .limit(1);
+    if (linkedinMemberId) query = query.eq('linkedin_member_id', linkedinMemberId);
+    const { data: li, error: liError } = await query.maybeSingle();
+
+    if (liError || !li?.access_token) {
+      return NextResponse.json({ error: 'LinkedIn is not connected for this workspace.' }, { status: 400 });
+    }
+
+    const socialActionUrl = `https://api.linkedin.com/v2/socialActions/${encodeURIComponent(postUrn)}`;
+    const socialActionRes = await fetch(socialActionUrl, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${li.access_token}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+    });
+
+    const payload = (await socialActionRes.json().catch(() => ({}))) as Record<string, any>;
+    if (!socialActionRes.ok) {
+      return NextResponse.json({ success: true, likesCount: 0, commentsCount: 0 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      likesCount: extractLikesCount(payload),
+      commentsCount: extractCommentsCount(payload),
+    });
+>>>>>>> origin/main
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'linkedin/engagement.POST' });
   }

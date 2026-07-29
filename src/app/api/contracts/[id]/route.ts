@@ -10,7 +10,10 @@ const UpdateContractSchema = z.object({
   metadata: z.record(z.string(), z.any()).optional(),
   tenantId: z.string().uuid(),
 });
+<<<<<<< HEAD
 const DeleteContractSchema = z.object({ tenantId: z.string().uuid() });
+=======
+>>>>>>> origin/main
 
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -106,6 +109,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     return routeErrorResponse(error, 'Failed to update contract', req);
   }
 }
+<<<<<<< HEAD
 
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -128,3 +132,5 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
     return NextResponse.json({ success: true });
   } catch (error) { return routeErrorResponse(error, 'Contract could not be deleted', req); }
 }
+=======
+>>>>>>> origin/main

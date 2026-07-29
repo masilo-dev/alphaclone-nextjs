@@ -504,3 +504,4 @@ const Toggle = ({
 );
 
 export default GlobalSettingsTab;
+

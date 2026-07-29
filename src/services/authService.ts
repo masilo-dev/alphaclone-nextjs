@@ -101,10 +101,47 @@ export const authService = {
                 .eq('id', data.user.id)
                 .maybeSingle();
 
+<<<<<<< HEAD
             if (profileError || !profile) {
                 console.error("AuthService: Canonical profile fetch failed", profileError);
                 await supabase.auth.signOut().catch(() => undefined);
                 return { user: null, error: 'Your account profile could not be verified. Please try again.' };
+=======
+                if (profileError) {
+                    console.error("AuthService: Profile fetch error", profileError);
+                    return { user: null, error: 'Failed to fetch user profile' };
+                }
+
+                if (!profile) {
+                    // If no profile yet, don't fail immediately, try to return a basic user 
+                    // and let background sync handle creation
+                    console.warn("AuthService: No profile found for user during sign in", data.user.id);
+                    user = {
+                        id: data.user.id,
+                        email: data.user.email || '',
+                        name: metadata?.name || data.user.email?.split('@')[0] || 'User',
+                        role: (metadata?.role as UserRole) || 'tenant_admin',
+                        avatar: metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.email}`,
+                    };
+                } else {
+                    user = {
+                        id: profile.id,
+                        email: profile.email,
+                        name: profile.name,
+                        role: profile.role,
+                        avatar: profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.email}`,
+                    };
+                }
+
+                // Update metadata for next login (optimization)
+                supabase.auth.updateUser({
+                    data: {
+                        name: user.name,
+                        role: user.role,
+                        avatar: user.avatar,
+                    }
+                }).catch(() => { }); // Non-blocking, silent fail
+>>>>>>> origin/main
             }
 
             if (['deleted', 'suspended', 'pending_deletion'].includes(String(profile.account_status))) {
@@ -543,9 +580,12 @@ export const authService = {
                 const messages: Record<string, string> = {
                     missing_w_member_social: 'LinkedIn connected, but write scope is missing. Reconnect and approve posting permissions.',
                     missing_required_scopes: 'LinkedIn connected, but required scopes are missing. Reconnect and approve all requested permissions.',
+<<<<<<< HEAD
                     missing_write_permissions: 'LinkedIn connected, but posting permissions are missing. Reconnect and approve both personal and company page scopes.',
                     invalid_state: 'LinkedIn sign-in expired. Start the connection again.',
                     unauthorized_state: 'LinkedIn sign-in does not match the current user. Start the connection again.',
+=======
+>>>>>>> origin/main
                     unauthorized_scope_error: 'LinkedIn rejected one or more scopes for this app. Check LinkedIn app products/permissions, then reconnect.',
                     app_not_configured: 'LinkedIn app is not configured on server.',
                     token_exchange_failed: 'LinkedIn OAuth token exchange failed. Please try reconnecting.',

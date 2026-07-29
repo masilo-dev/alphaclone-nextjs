@@ -43,6 +43,7 @@ export interface Deal {
     updatedAt: string;
 }
 
+<<<<<<< HEAD
 type DealStageHistoryEntry = {
     from: string;
     to: string;
@@ -90,6 +91,52 @@ function triggerDealIntelligence(tenantId: string, dealId: string, stage: DealSt
                 if (!res.ok) console.warn('[DealIntel] automation event failed:', res.error);
             })
     );
+=======
+function triggerDealIntelligenceRecompute(tenantId: string, dealId: string) {
+    if (typeof window === 'undefined') return;
+    void fetch('/api/intelligence/deals/recompute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId, dealId }),
+    });
+}
+
+/**
+ * AUTO DEAL INTELLIGENCE (Professional)
+ * Fires score_deal and trigger_deal_automation in the background.
+ * Ensures zero UI lag and strictly professional brand voice.
+ */
+function triggerDealIntelligence(tenantId: string, dealId: string, stage: DealStage) {
+    if (typeof window === 'undefined') return;
+    
+    const professionalRules = `STRICT BRAND VOICE: NO EMOJIS. NO INFORMAL JARGON. NO DECORATIVE SYMBOLS (e.g. ££**).`;
+    
+    // 1. Fire score_deal (Fire and forget)
+    void fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            method: 'call_tool',
+            params: {
+                name: 'score_deal',
+                arguments: { deal_id: dealId, tenant_id: tenantId, style_guidance: professionalRules }
+            }
+        })
+    }).catch(err => console.warn('[AutoDealIntel] score_deal failed:', err));
+
+    // 2. Fire trigger_deal_automation (Fire and forget)
+    void fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            method: 'call_tool',
+            params: {
+                name: 'trigger_deal_automation',
+                arguments: { deal_id: dealId, stage, tenant_id: tenantId, style_guidance: professionalRules }
+            }
+        })
+    }).catch(err => console.warn('[AutoDealIntel] trigger_deal_automation failed:', err));
+>>>>>>> origin/main
 }
 
 export interface DealActivity {
@@ -365,12 +412,48 @@ export const dealService: DealService = {
                 dealValue: dealData.value,
             }, tenantId);
 
+<<<<<<< HEAD
             const deal = mapDealRow(data);
+=======
+            const deal: Deal = {
+                id: data.id,
+                name: data.name,
+                contactId: data.contact_id,
+                projectId: data.project_id,
+                ownerId: data.owner_id,
+                value: data.value,
+                currency: data.currency,
+                stage: data.stage,
+                probability: data.probability,
+                expectedCloseDate: data.expected_close_date,
+                actualCloseDate: data.actual_close_date,
+                source: data.source,
+                sourceDetails: data.source_details,
+                competitorInfo: data.competitor_info,
+                nextStep: data.next_step,
+                description: data.description,
+                tags: data.tags || [],
+                customFields: data.custom_fields || {},
+                lostReason: data.lost_reason,
+                wonDetails: data.won_details,
+                metadata: data.metadata || {},
+                intelligenceScore: data.intelligence_score ?? undefined,
+                intelligenceConfidence: data.intelligence_confidence ?? undefined,
+                intelligenceState: data.intelligence_state ?? undefined,
+                intelligenceRecommendations: data.intelligence_recommendations ?? undefined,
+                psychologyProfile: data.psychology_profile ?? undefined,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at,
+            };
+>>>>>>> origin/main
 
             // SYNC TO EXTERNAL CRM
             // Non-blocking sync to avoid UI delay
             UnifiedCRMService.syncDeal(deal).catch(err => console.error('Background CRM Sync Failed:', err));
+<<<<<<< HEAD
             void requestCrmBridgeSync(tenantId, 'deal', deal.id);
+=======
+>>>>>>> origin/main
             triggerDealIntelligenceRecompute(tenantId, deal.id);
             
             // AUTO DEAL INTELLIGENCE
@@ -391,7 +474,11 @@ export const dealService: DealService = {
 
             const { data: existingDeal } = await supabase
                 .from('deals')
+<<<<<<< HEAD
                 .select('stage, metadata')
+=======
+                .select('stage')
+>>>>>>> origin/main
                 .eq('id', dealId)
                 .eq('tenant_id', tenantId)
                 .single();
@@ -525,9 +612,15 @@ export const dealService: DealService = {
             };
 
             // EMIT AUTOMATION EVENT
+<<<<<<< HEAD
             if (stageChanged && existingDeal && updates.stage) {
                 const { requestBusinessEvent } = await import('../lib/automation/request-event');
                 await requestBusinessEvent(tenantId, 'deal_stage_changed', {
+=======
+            if (updates.stage) {
+                const { emitBusinessEvent } = await import('../lib/automation/emit-event');
+                await emitBusinessEvent(tenantId, 'deal_stage_changed', {
+>>>>>>> origin/main
                     dealId,
                     newStage: updates.stage,
                     oldStage: existingDeal?.stage,
@@ -535,6 +628,7 @@ export const dealService: DealService = {
                     name: data.name
                 }).catch(err => console.error('Failed to emit deal_stage_changed event:', err));
 
+<<<<<<< HEAD
                 void fetch('/api/crm/activities', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -555,6 +649,11 @@ export const dealService: DealService = {
             }
 
             void requestCrmBridgeSync(tenantId, 'deal', dealId);
+=======
+                // AUTO DEAL INTELLIGENCE (Stage Change)
+                triggerDealIntelligence(tenantId, dealId, updates.stage);
+            }
+>>>>>>> origin/main
 
             return { deal, error: null };
         } catch (err) {
@@ -653,10 +752,28 @@ export const dealService: DealService = {
     ): Promise<{ activity: DealActivity | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+<<<<<<< HEAD
             const response = await fetch(`/api/tenant/${tenantId}/deals/${dealId}/activities`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ activityType, title, ...options }) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.activity) throw new Error(payload.error || 'Deal activity could not be added');
             const data = payload.activity;
+=======
+            const { data, error } = await supabase
+                .from('deal_activities')
+                .insert({
+                    deal_id: dealId,
+                    user_id: userId,
+                    activity_type: activityType,
+                    title,
+                    description: options?.description,
+                    duration_minutes: options?.durationMinutes,
+                    outcome: options?.outcome,
+                    next_action: options?.nextAction,
+                    metadata: options?.metadata || {},
+                })
+                .select()
+                .single();
+>>>>>>> origin/main
 
             void fetch('/api/crm/activities', {
                 method: 'POST',

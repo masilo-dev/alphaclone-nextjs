@@ -201,6 +201,7 @@ const SuperAdminUsersTab: React.FC = () => {
                 ))}
             </div>
 
+<<<<<<< HEAD
             <EnterpriseDataTable
                 columns={userColumns}
                 data={filteredUsers}
@@ -208,6 +209,96 @@ const SuperAdminUsersTab: React.FC = () => {
                 emptyMessage="No users match your current criteria."
                 className="bg-slate-900/40 border border-slate-800 rounded-2xl p-2"
             />
+=======
+            {/* Table */}
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-x-auto backdrop-blur-md min-w-0">
+                <table className="w-full min-w-[720px] text-left border-collapse">
+                    <thead>
+                        <tr className="bg-slate-900/60 border-b border-slate-800 text-slate-500 text-xs uppercase tracking-widest font-black">
+                            <th className="p-4">User Identity</th>
+                            <th className="p-4">Platform Role</th>
+                            <th className="p-4">Account Status</th>
+                            <th className="p-4 text-right">Administrative Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                        {filteredUsers.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="p-12 text-center text-slate-500 italic">
+                                    No users match your current criteria.
+                                </td>
+                            </tr>
+                        ) : (
+                            filteredUsers.map(user => (
+                                <tr key={user.id} className="group hover:bg-slate-800/30 transition-colors">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 ring-2 ring-transparent group-hover:ring-teal-500/30 transition-all relative">
+                                                <Image
+                                                    src={user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email}`}
+                                                    alt={user.name}
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="40px"
+                                                />
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-white text-sm">{user.name}</div>
+                                                <div className="text-xs text-slate-500 font-mono">{user.email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="p-4">
+                                        <span className={`px-2 py-1 rounded text-xs font-black uppercase tracking-tighter ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' :
+                                                user.role === 'tenant_admin' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                                                    'bg-slate-800 text-slate-400 border border-white/5'
+                                            }`}>
+                                            {user.role}
+                                        </span>
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-1.5 h-1.5 rounded-full ${(user as any).status === 'suspended' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
+                                            <span className={`text-xs font-bold uppercase tracking-wider ${(user as any).status === 'suspended' ? 'text-red-400' : 'text-green-400'}`}>
+                                                {(user as any).status || 'active'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {(user as any).status === 'suspended' ? (
+                                                <button
+                                                    onClick={() => handleRestore(user.id)}
+                                                    className="p-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-lg border border-green-500/20"
+                                                    title="Restore User"
+                                                >
+                                                    <UserCheck className="w-4 h-4" />
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleSuspend(user.id)}
+                                                    className="p-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 rounded-lg border border-orange-500/20"
+                                                    title="Suspend User"
+                                                >
+                                                    <UserMinus className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleDelete(user.id, user.name)}
+                                                className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg border border-red-500/20"
+                                                title="Permanent Delete"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+>>>>>>> origin/main
         </div>
     );
 };

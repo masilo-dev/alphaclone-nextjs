@@ -1,7 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
 import { sendWithProviderSdk } from '@/lib/email/providerSdk';
+<<<<<<< HEAD
 import { ensureFooter } from '@/lib/email/emailComposition';
+=======
+>>>>>>> origin/main
 
 export const USER_INITIATED_PLATFORM_TEMPLATES = new Set(['Welcome Email']);
 
@@ -111,8 +114,13 @@ async function deliver(
         fromName: 'AlphaClone Systems',
         to,
         subject,
+<<<<<<< HEAD
         html: ensureFooter(html),
         text: text ? ensureFooter(text) : text,
+=======
+        html,
+        text,
+>>>>>>> origin/main
     });
 
     return { ok: result.ok, emailId: result.emailId, error: result.error };

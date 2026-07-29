@@ -115,12 +115,22 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
                     <div>
                         <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                             Outcome Engine
+<<<<<<< HEAD
                         </h3>
                         <p className="text-sm text-white font-semibold mt-0.5">Suggested next actions for this workspace</p>
                     </div>
                 </div>
                 <Button variant="ghost" size="sm" className="h-9 px-4 text-xs uppercase font-black tracking-widest text-slate-500 hover:text-white hover:bg-white/5 border border-white/5 transition-all" onClick={loadInsights}>
                     Refresh
+=======
+                            <span className="px-2 py-0.5 bg-teal-500/10 text-xs text-teal-400 rounded-full border border-teal-500/20 font-black tracking-widest">PROACTIVE v3.5</span>
+                        </h3>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em]">Next Best Action Sequence</p>
+                    </div>
+                </div>
+                <Button variant="ghost" size="sm" className="h-9 px-4 text-xs uppercase font-black tracking-widest text-slate-500 hover:text-white hover:bg-white/5 border border-white/5 transition-all" onClick={loadInsights}>
+                    Re-Sync Data
+>>>>>>> origin/main
                 </Button>
             </div>
 
@@ -174,10 +184,15 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
 
                             <div className="pt-2">
                                 <div className="flex justify-between items-center mb-1.5">
+<<<<<<< HEAD
                                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Confidence</span>
                                     <span className="text-[11px] font-black text-teal-400 uppercase tracking-widest">
                                         {insight.priority} priority
                                     </span>
+=======
+                                    <span className="text-xs font-black text-slate-600 uppercase tracking-widest">Grounding Score</span>
+                                    <span className="text-xs font-black text-teal-500 uppercase tracking-widest">Critical Path</span>
+>>>>>>> origin/main
                                 </div>
                                 <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
                                     <motion.div 
@@ -230,3 +245,4 @@ export const AIPredictiveWidget: React.FC<AIPredictiveWidgetProps> = ({ onAction
 };
 
 export default AIPredictiveWidget;
+

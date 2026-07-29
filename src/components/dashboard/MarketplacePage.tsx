@@ -35,7 +35,11 @@ interface MarketplaceItem {
   developer: string;
   actionUrl?: string;
   isMCP?: boolean;
+<<<<<<< HEAD
   mcpType?: 'claude' | 'manus' | 'grok' | 'chatgpt';
+=======
+  mcpType?: 'claude' | 'manus' | 'grok';
+>>>>>>> origin/main
   badge?: string;
 }
 
@@ -98,6 +102,7 @@ const ITEMS: MarketplaceItem[] = [
     badge: 'New',
   },
   {
+<<<<<<< HEAD
     id: 'mcp-chatgpt',
     name: 'ChatGPT Connector (MCP)',
     description: 'Connect ChatGPT to AlphaClone with OAuth while keeping Claude and Manus available alongside it.',
@@ -116,6 +121,8 @@ const ITEMS: MarketplaceItem[] = [
     badge: 'New',
   },
   {
+=======
+>>>>>>> origin/main
     id: 'sales-agent',
     name: 'AI Sales Agent',
     description: 'Your in-platform AI agent for lead prospecting, outreach campaigns, deal qualification, and CRM automation.',
@@ -384,15 +391,24 @@ const MarketplacePage: React.FC = () => {
   const router = useRouter();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<Category>('all');
+<<<<<<< HEAD
   const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | 'chatgpt' | null>(null);
   const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'mcp-chatgpt', 'sales-agent', 'proposal-template', 'invoice-template']));
+=======
+  const [activeMcp, setActiveMcp] = useState<'claude' | 'manus' | 'grok' | null>(null);
+  const [installed, setInstalled] = useState<Set<string>>(new Set(['mcp-claude', 'mcp-manus', 'mcp-grok', 'sales-agent', 'proposal-template', 'invoice-template']));
+>>>>>>> origin/main
 
   // Handle ?mcp=claude / ?mcp=manus deep link
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const p = new URLSearchParams(window.location.search);
     const mcp = p.get('mcp');
+<<<<<<< HEAD
     if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok' || mcp === 'chatgpt') setActiveMcp(mcp);
+=======
+    if (mcp === 'claude' || mcp === 'manus' || mcp === 'grok') setActiveMcp(mcp);
+>>>>>>> origin/main
   }, []);
 
   const filtered = ITEMS.filter(item => {
@@ -455,12 +471,15 @@ const MarketplacePage: React.FC = () => {
             >
               Grok AI
             </button>
+<<<<<<< HEAD
             <button
               onClick={() => setActiveMcp('chatgpt')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeMcp === 'chatgpt' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
             >
               ChatGPT
             </button>
+=======
+>>>>>>> origin/main
           </div>
         </div>
         <MCPSetupGuide initialType={activeMcp} />
@@ -666,3 +685,4 @@ const MarketplacePage: React.FC = () => {
 };
 
 export default MarketplacePage;
+

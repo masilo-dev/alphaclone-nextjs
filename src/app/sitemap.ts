@@ -6,11 +6,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = SITE_URL;
 
     // 1. Static Marketing Routes
+<<<<<<< HEAD
     const highPriorityRoutes = ['', '/services', '/about', '/guide', '/search', '/onboarding/create-business', '/docs', '/faq', '/pricing', '/contact', '/demo', '/book-demo', '/tools/ai-architect', '/auth/login'].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: route === '' ? 1.0 : (route === '/book-demo' || route === '/demo') ? 0.95 : (route === '/auth/login' || route === '/tools/ai-architect') ? 0.8 : route === '/search' ? 0.7 : route === '/onboarding/create-business' ? 0.6 : 0.9,
+=======
+    const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/faq', '/pricing', '/contact', '/tools/ai-architect', '/auth/login', '/login', '/register'].map((route) => ({
+        url: `${baseUrl}${route}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: route === '' ? 1.0 : (route === '/auth/login' || route === '/login' || route === '/register' || route === '/tools/ai-architect') ? 0.8 : 0.9,
+>>>>>>> origin/main
     }));
 
     const standardRoutes = [
@@ -26,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/project-management',
         '/ai-agents',
         '/video-meetings',
+<<<<<<< HEAD
         '/marketing/email',
         '/marketing/automation',
         '/marketing/forms',
@@ -63,13 +72,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/sla',
         '/dpa',
         '/privacy-choices',
+=======
+        '/claude-manus-integrations',
+>>>>>>> origin/main
     ].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
         changeFrequency: 'monthly' as const,
-        priority: 0.7,
+        priority:
+            route === '/legal' ||
+            route === '/platform-status' ||
+            route === '/crm' ||
+            route === '/lead-management' ||
+            route === '/project-management' ||
+            route === '/ai-agents' ||
+            route === '/video-meetings' ||
+            route === '/claude-manus-integrations'
+                ? 0.85
+                : 0.7,
     }));
 
+<<<<<<< HEAD
     // Note: /legal/privacy, /legal/terms, /legal/cookies, /legal/sla and
     // /legal/dpa now permanently redirect to the canonical docs above, so they
     // are intentionally excluded here to avoid indexing redirecting URLs.
@@ -83,6 +106,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(),
         changeFrequency: 'yearly' as const,
         priority: 0.3,
+=======
+    const legalRoutes = [
+        '/privacy-policy',
+        '/terms-of-service',
+        '/cookie-policy',
+        '/data-deletion',
+    ].map((route) => ({
+        url: `${baseUrl}${route}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+>>>>>>> origin/main
     }));
 
     const staticRoutes = [...highPriorityRoutes, ...standardRoutes, ...legalRoutes, ...newLegalRoutes];

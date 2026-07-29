@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+<<<<<<< HEAD
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
+=======
+>>>>>>> origin/main
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { updateSocialPostLinkedInUrnWithRetry } from '@/lib/social/linkedinPublishHelpers';
 
@@ -8,7 +11,11 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Retries persisting external LinkedIn/Facebook IDs onto social_posts when the initial update failed after a successful publish.
+<<<<<<< HEAD
  * Auth: Railway Cron or Authorization: Bearer ${CRON_SECRET}.
+=======
+ * Auth: Vercel Cron or Authorization: Bearer ${CRON_SECRET}.
+>>>>>>> origin/main
  */
 export async function GET(req: NextRequest) {
   const denied = denyIfCronUnauthorized(req);
@@ -29,6 +36,7 @@ export async function GET(req: NextRequest) {
   const results: Array<{ id: string; ok: boolean; detail?: string }> = [];
 
   for (const row of rows ?? []) {
+<<<<<<< HEAD
     const guard = await guardCronTenantRow(row, 'social_post_sync_queue', {
       platform: row.platform,
     });
@@ -45,6 +53,8 @@ export async function GET(req: NextRequest) {
       continue;
     }
 
+=======
+>>>>>>> origin/main
     if (!row.external_id || !row.social_post_id) {
       await admin
         .from('social_post_sync_queue')

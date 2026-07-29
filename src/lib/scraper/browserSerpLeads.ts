@@ -40,11 +40,14 @@ function firstEmailFromText(text: string): string {
 
 export function hasRemoteBrowserConfigured(): boolean {
   return BrowserManager.hasRemoteConfigured();
+<<<<<<< HEAD
 }
 
 /** Remote Browserbase/CDP or Railway/local Chromium. */
 export function canUseBrowserScraper(): boolean {
   return BrowserManager.canLaunchBrowser();
+=======
+>>>>>>> origin/main
 }
 
 /**
@@ -57,6 +60,12 @@ export async function fetchSerpLeadsViaBrowser(
   limit: number,
   options?: { searchQuery?: string }
 ): Promise<BrowserSerpLeadRow[]> {
+<<<<<<< HEAD
+=======
+  const q = options?.searchQuery?.trim() || `${niche} ${location}`.trim() || niche;
+  const searchUrl = `https://www.bing.com/search?q=${encodeURIComponent(options?.searchQuery?.trim() || `${q} business contact phone`)}`;
+
+>>>>>>> origin/main
   const { page, close } = await BrowserManager.createPage();
 
   try {

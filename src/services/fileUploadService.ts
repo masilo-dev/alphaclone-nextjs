@@ -197,6 +197,7 @@ class FileUploadService {
     /**
      * Upload a file from a binary buffer (used by MCP/Server-side)
      */
+<<<<<<< HEAD
     /**
      * Upload via authenticated Next.js API (service role after membership check).
      * Returns null when the request cannot be attempted (e.g. no window / SSR).
@@ -253,6 +254,8 @@ class FileUploadService {
         }
     }
 
+=======
+>>>>>>> origin/main
     async uploadFileFromBuffer(
         buffer: Buffer,
         filename: string,
@@ -291,6 +294,7 @@ class FileUploadService {
                 };
             }
 
+<<<<<<< HEAD
             // 3. Generate storage path — tenant-prefixed (never global / user-only)
             const timestamp = Date.now();
             const randomString = crypto.randomUUID();
@@ -315,6 +319,16 @@ class FileUploadService {
             }
 
             const { data: uploadData, error: uploadError } = await storageClient.storage
+=======
+            // 3. Generate storage path
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(7);
+            const extension = filename.split('.').pop();
+            const storagePath = `${userId}/${timestamp}-${randomString}.${extension}`;
+
+            // 4. Upload to Storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+>>>>>>> origin/main
                 .from('uploads')
                 .upload(storagePath, buffer, {
                     contentType: mimeType,
@@ -323,6 +337,7 @@ class FileUploadService {
 
             if (uploadError) {
                 console.error('Buffer upload error:', uploadError);
+<<<<<<< HEAD
                 const msg = String(uploadError.message || '');
                 return {
                     success: false,
@@ -334,6 +349,13 @@ class FileUploadService {
 
             // 5. Record in Database
             const { data: fileRecord, error: dbError } = await storageClient
+=======
+                return { success: false, error: 'Failed to upload file to storage' };
+            }
+
+            // 5. Record in Database
+            const { data: fileRecord, error: dbError } = await supabase
+>>>>>>> origin/main
                 .from('file_uploads')
                 .insert({
                     user_id: userId,
@@ -356,7 +378,11 @@ class FileUploadService {
 
             if (dbError) {
                 console.error('Database error after buffer upload:', dbError);
+<<<<<<< HEAD
                 await storageClient.storage.from('uploads').remove([storagePath]);
+=======
+                await supabase.storage.from('uploads').remove([storagePath]);
+>>>>>>> origin/main
                 return { success: false, error: 'Failed to record upload in database' };
             }
 

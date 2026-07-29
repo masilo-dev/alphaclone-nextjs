@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+<<<<<<< HEAD
 import { AlertTriangle, Loader2, Play, RefreshCw, Zap } from 'lucide-react';
 import { tenantService } from '@/services/tenancy/TenantService';
 import { toast } from 'react-hot-toast';
+=======
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { tenantService } from '@/services/tenancy/TenantService';
+>>>>>>> origin/main
 
 interface ModulePayload {
   module: {
@@ -17,8 +22,11 @@ interface ModulePayload {
   systemicRisks: string[];
 }
 
+<<<<<<< HEAD
 import { runModuleIntelligenceAction } from '@/services/intelligence/intelligenceFacade';
 
+=======
+>>>>>>> origin/main
 export function ModuleIntelligenceCard({
   moduleKey,
   title
@@ -28,6 +36,7 @@ export function ModuleIntelligenceCard({
 }) {
   const [data, setData] = useState<ModulePayload | null>(null);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
   const [executing, setExecuting] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
 
@@ -93,6 +102,37 @@ export function ModuleIntelligenceCard({
       setExecuting(null);
     }
   };
+=======
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const tenantId = tenantService.getCurrentTenantId();
+        if (!tenantId) {
+          if (active) setData(null);
+          return;
+        }
+        const response = await fetch(
+          `/api/intelligence/system?tenantId=${encodeURIComponent(tenantId)}&module=${encodeURIComponent(moduleKey)}`,
+          { credentials: 'include' }
+        );
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Failed');
+        if (active) setData(payload.data as ModulePayload);
+      } catch {
+        if (active) setData(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [moduleKey]);
+>>>>>>> origin/main
 
   const scoreTone = useMemo(() => {
     const score = data?.module?.score || 0;
@@ -101,7 +141,11 @@ export function ModuleIntelligenceCard({
     return 'text-red-400';
   }, [data?.module?.score]);
 
+<<<<<<< HEAD
   if (loading && !data) {
+=======
+  if (loading) {
+>>>>>>> origin/main
     return (
       <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-xs text-slate-400 flex items-center gap-2">
         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -110,6 +154,7 @@ export function ModuleIntelligenceCard({
     );
   }
 
+<<<<<<< HEAD
   // Explicit state instead of vanishing silently when intelligence isn't ready.
   if (!data?.module) {
     return (
@@ -168,6 +213,17 @@ export function ModuleIntelligenceCard({
         <p className="text-[11px] text-slate-500">System optimized — no immediate action needed.</p>
       )}
 
+=======
+  if (!data?.module) return null;
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <h4 className="text-xs uppercase tracking-wider text-slate-400">{title}</h4>
+        <div className={`text-sm font-bold ${scoreTone}`}>{Math.round(data.module.score)}</div>
+      </div>
+      {data.topActions?.[0] && <p className="text-xs text-slate-200 line-clamp-2">{data.topActions[0]}</p>}
+>>>>>>> origin/main
       {data.systemicRisks?.[0] && (
         <p className="text-[11px] text-amber-300 flex items-start gap-1.5 line-clamp-2">
           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />

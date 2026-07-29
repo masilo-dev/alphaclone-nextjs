@@ -16,7 +16,7 @@ import {
   ChevronDown, ArrowRight, Download, Share2, Trash2,
   Copy, Edit, Trash, Eye, MoreVertical, LayoutGrid,
   List, RefreshCw, Cpu, Layers, Code, ShieldCheck,
-  Edit2, ListChecks, FileCheck, Video, DollarSign, User as UserIcon
+  Edit2, ListChecks, FileCheck, Video, DollarSign, User as UserIcon, Minimize2
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MilestoneManager from './dashboard/projects/MilestoneManager';
@@ -27,8 +27,12 @@ import { isPlatformAdminRole } from '@/lib/platformAdmin';
 import { useLanguage } from '../contexts/LanguageContext';
 import Image from 'next/image';
 import { User, Project, ChatMessage, DashboardStat, GalleryItem, Invoice, ProjectStage, UserRole, STAGES } from '../types';
+<<<<<<< HEAD
 import { resolveDashboardPath } from '@/lib/dashboardNavigate';
 import InsightsHub from './dashboard/hubs/InsightsHub';
+=======
+import BusinessDashboard from './dashboard/business/BusinessDashboard';
+>>>>>>> origin/main
 import { useTenant } from '../contexts/TenantContext';
 
 import AIStudio from './dashboard/AIStudio';
@@ -56,8 +60,11 @@ import ExitIntentModal from './ExitIntentModal';
 import IncomingCallModal from './dashboard/video/IncomingCallModal';
 import { generateText } from '../services/unifiedAIService';
 import BonnieWidget from './dashboard/bonnie/BonnieWidget';
+<<<<<<< HEAD
 import BonnieFullView from './dashboard/bonnie/BonnieFullView';
 import ApprovalCenter from './dashboard/bonnie/ApprovalCenter';
+=======
+>>>>>>> origin/main
 interface ArchitectData {
   techStack: string;
   developmentPrompt: string;
@@ -116,6 +123,7 @@ import MailTab from './dashboard/MailTab';
 import CommunicationHub from './dashboard/communication/CommunicationHub';
 const GlobalSettingsTab = React.lazy(() => import('./dashboard/admin/GlobalSettingsTab'));
 const OperationsConsoleTab = React.lazy(() => import('./dashboard/admin/OperationsConsoleTab'));
+<<<<<<< HEAD
 import ClientsPage from './dashboard/business/ClientsPage';
 import ProjectsPage from './dashboard/business/ProjectsPage';
 const ContractDashboard = React.lazy(() => import('./contracts/ContractDashboard'));
@@ -127,6 +135,16 @@ const DeepDeskView = React.lazy(() => import('./dashboard/tickets/DeepDeskView')
 const EmailCampaignsPage = React.lazy(() => import('./dashboard/marketing/EmailCampaignsPage'));
 const SocialMediaComposer = React.lazy(() => import('./dashboard/engine/SocialMediaComposer'));
 const WhatsAppManagementPage = React.lazy(() => import('./dashboard/WhatsAppManagementPage'));
+=======
+const ClientsPage = React.lazy(() => import('./dashboard/business/ClientsPage'));
+const CustomVideoRoom = React.lazy(() => import('./dashboard/video/CustomVideoRoom'));
+const ProjectsTab = React.lazy(() => import('./dashboard/ProjectsTab'));
+const PnLStatement = React.lazy(() => import('./accounting/PnLStatement'));
+const BusinessPerformanceDashboard = React.lazy(() => import('./dashboard/business/BusinessPerformanceDashboard'));
+const GamificationTab = React.lazy(() => import('./dashboard/GamificationTab'));
+const AIAgentsTab = React.lazy(() => import('./dashboard/AIAgentsTab'));
+const ContractsTab = React.lazy(() => import('./dashboard/ContractsTab'));
+>>>>>>> origin/main
 
 import { MomentumHUD } from './dashboard/MomentumHUD';
 import { CelebrationOverlay } from './ui/CelebrationOverlay';
@@ -150,7 +168,10 @@ const BankingCenterPage = React.lazy(() => import('./dashboard/accounting/Bankin
 const IngestionPanel = React.lazy(() => import('./dashboard/engine/IngestionPanel'));
 const VoiceCaptureFAB = React.lazy(() => import('./dashboard/VoiceCaptureFAB'));
 const MarketplacePage = React.lazy(() => import('./dashboard/MarketplacePage'));
+<<<<<<< HEAD
 import { renderSharedDashboardRoute } from '@/lib/dashboard/sharedDashboardRoutes';
+=======
+>>>>>>> origin/main
 import { GlobalShortcutListener } from './common/GlobalShortcutListener';
 import { QuickTaskOverlay } from './dashboard/QuickTaskOverlay';
 
@@ -216,6 +237,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       setSidebarOpen(window.innerWidth >= 768);
     }
   }, []);
+<<<<<<< HEAD
   const normalizeTabForRole = (tab: string) => {
     if (!tab) return '/dashboard';
     if (user.role === 'tenant_admin') {
@@ -263,6 +285,17 @@ const Dashboard: React.FC<DashboardProps> = ({
       router.replace(`/meet/${activeMeetingCallId}`);
     }
   }, [activeMeetingCallId, router]);
+=======
+  const [activeTab, setActiveTab] = useState(location || '/dashboard');
+  const {
+    activeMeetingCallId,
+    isMeetingMinimized,
+    startMeeting,
+    endMeeting,
+    setIsMeetingMinimized,
+    toggleMeetingMinimized,
+  } = useMeetingSession(`${user.id}:${currentTenant?.id || 'no-tenant'}`);
+>>>>>>> origin/main
 
   // -- PERSISTENT VIDEO CALL STATE --
   // Note: Video calls now use dedicated pages (/meet/[id])
@@ -278,7 +311,10 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleJoinCall = (callId: string) => {
     startMeeting(callId);
+<<<<<<< HEAD
     router.push(`/meet/${callId}`);
+=======
+>>>>>>> origin/main
   };
 
 
@@ -1208,7 +1244,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton rows={4} showStats={false} />}>
             <WidgetErrorBoundary title={activeTab === '/dashboard/meetings' ? 'Meetings' : 'Video Conference'}>
+<<<<<<< HEAD
               <ConferenceTab user={user} />
+=======
+              <ConferenceTab />
+>>>>>>> origin/main
             </WidgetErrorBoundary>
           </React.Suspense>
         );
@@ -1322,6 +1362,13 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         );
 
+      case '/dashboard/admin/operations':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <OperationsConsoleTab />
+          </React.Suspense>
+        );
+
       case '/dashboard/security':
         return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -1352,6 +1399,13 @@ const Dashboard: React.FC<DashboardProps> = ({
             <InsightsHub>
               <BusinessPerformanceDashboard />
             </InsightsHub>
+          </React.Suspense>
+        );
+
+      case '/dashboard/performance':
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <BusinessPerformanceDashboard />
           </React.Suspense>
         );
 
@@ -1487,6 +1541,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+<<<<<<< HEAD
       case '/dashboard/bonnie':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -1512,6 +1567,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           </React.Suspense>
         );
 
+=======
+>>>>>>> origin/main
       case '/dashboard/gamification':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -1549,6 +1606,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={5} />}>
             <DealsTab user={user} />
+<<<<<<< HEAD
           </React.Suspense>
         );
 
@@ -1590,6 +1648,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <SocialMediaComposer />
+=======
+>>>>>>> origin/main
           </React.Suspense>
         );
 
@@ -1620,11 +1680,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/finance/manage':
         return (
           <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
+<<<<<<< HEAD
             <EnhancedBillingPage user={user} />
+=======
+            <FinanceTab user={user} />
+>>>>>>> origin/main
           </React.Suspense>
         );
 
       case '/dashboard/contracts':
+<<<<<<< HEAD
         return <ContractsDashboard />;
 
       case '/dashboard/contracts/manage':
@@ -1633,6 +1698,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="w-full h-full bg-slate-950 p-2 sm:p-4 rounded-3xl overflow-y-auto">
               <ContractDashboard user={user} />
             </div>
+=======
+        return (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ContractsTab user={user} />
+>>>>>>> origin/main
           </React.Suspense>
         );
 
@@ -1646,7 +1716,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       case '/dashboard/accounting':
         return (
           <React.Suspense fallback={<TabSkeleton />}>
+<<<<<<< HEAD
             <AccountingDashboard />
+=======
+            <PnLStatement />
+>>>>>>> origin/main
           </React.Suspense>
         );
 
@@ -1675,6 +1749,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       case '/dashboard/projects':
         return (
+<<<<<<< HEAD
           <div data-tour="projects">
             <ProjectsDashboard />
           </div>
@@ -1684,6 +1759,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <React.Suspense fallback={<TabSkeleton />}>
             <ProjectsPage user={user} />
+=======
+          <React.Suspense fallback={<TabSkeleton />}>
+            <ProjectsTab user={user} />
+>>>>>>> origin/main
           </React.Suspense>
         );
 
@@ -1707,6 +1786,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           );
         }
         return (
+<<<<<<< HEAD
           <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
             <h2 className="text-lg font-bold text-white mb-2">This section is not available</h2>
             <p className="text-sm text-slate-400 max-w-md mb-6">
@@ -1720,13 +1800,44 @@ const Dashboard: React.FC<DashboardProps> = ({
               Back to dashboard
             </button>
           </div>
+=======
+          <HomeTab
+            user={user}
+            handlePayClick={handlePayClick}
+            currentStats={currentStats}
+            databaseStats={dashboardStats}
+            filteredProjects={filteredProjects}
+            isLoadingProjects={isLoadingProjects}
+            updateProjectStage={updateProjectStage}
+            STAGES={STAGES}
+            momentumScore={dashboardStats?.momentumScore ?? 0}
+            loginStreak={dashboardStats?.loginStreak ?? 1}
+            activity24h={dashboardStats?.activity24h ?? 0}
+            newLeads24h={dashboardStats?.newLeads24h ?? 0}
+            onProjectClick={(id) => {
+              const project = filteredProjects.find(p => p.id === id);
+              if (project) {
+                if (user.role === 'admin') {
+                  setSelectedProjectForMilestones(project);
+                  setMilestoneModalOpen(true);
+                } else {
+                  router.push('/dashboard/projects');
+                }
+              }
+            }}
+          />
+>>>>>>> origin/main
         );
     }
   };
 
   return (
+<<<<<<< HEAD
     <div className="min-h-screen min-w-0 flex overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 ac-dashboard-root ac-workspace-canvas [height:100dvh]">
       <SkipToMainContent />
+=======
+    <div className="min-h-screen min-w-0 bg-slate-950 flex overflow-hidden font-sans selection:bg-teal-500/30 ac-dashboard-root [height:100dvh]">
+>>>>>>> origin/main
       <ConnectionStatus />
 
       <WelcomeModal
@@ -1780,8 +1891,37 @@ const Dashboard: React.FC<DashboardProps> = ({
             {isProcessingPayment ? 'Opening secure checkout…' : `Continue to pay $${selectedInvoice?.amount.toLocaleString()}`}
           </Button>
 
+<<<<<<< HEAD
           <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1">
             <ShieldCheck className="w-3 h-3" /> Payments are processed securely by Stripe Checkout
+=======
+          {paymentMethod === 'card' && (
+            <div className="space-y-4 animate-fade-in">
+              <Input label="Cardholder Name" placeholder="John Doe" />
+              <Input label="Card Number" placeholder="0000 0000 0000 0000" />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Expiry Date" placeholder="MM/YY" />
+                <Input label="CVC" placeholder="123" />
+              </div>
+            </div>
+          )}
+
+          {paymentMethod === 'paypal' && (
+            <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl text-center animate-fade-in">
+              <p className="text-blue-200 text-sm mb-4">You will be redirected to PayPal to complete your purchase securely.</p>
+              <Button className="w-full bg-[#0070BA] hover:bg-[#003087]">Log in to PayPal</Button>
+            </div>
+          )}
+
+          {paymentMethod === 'card' && (
+            <Button onClick={processPayment} className="w-full h-12 text-lg" isLoading={isProcessingPayment}>
+              {isProcessingPayment ? 'Processing...' : `Pay $${selectedInvoice?.amount.toLocaleString()}`}
+            </Button>
+          )}
+
+          <p className="text-center text-xs text-slate-500 flex items-center justify-center gap-1">
+            <ShieldCheck className="w-3 h-3" /> Payments processed securely via Global Payment SSL
+>>>>>>> origin/main
           </p>
         </div>
       </Modal>
@@ -1947,7 +2087,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
 
       {/* Main Content */}
+<<<<<<< HEAD
       <div className="flex-1 flex flex-col overflow-hidden ac-workspace-canvas ac-dashboard-shell-bg [height:100dvh]">
+=======
+      <div className="flex-1 flex flex-col overflow-hidden bg-slate-950 ac-dashboard-shell-bg [height:100dvh]">
+>>>>>>> origin/main
         <TrialBanner />
         {/* Header - Visible in all dashboard views */}
         <header className={`sticky top-0 z-30 pt-safe ac-dashboard-header ac-workspace-toolbar ${WORKSPACE.toolbar.height} ${activeTab === '/dashboard/pwa-settings' ? 'hidden md:block' : ''}`}>
@@ -1976,12 +2120,20 @@ const Dashboard: React.FC<DashboardProps> = ({
               <div className="flex items-center gap-2 sm:gap-3">
                 {activeMeetingCallId && (
                   <button
+<<<<<<< HEAD
                     onClick={() => router.push(`/meet/${activeMeetingCallId}`)}
+=======
+                    onClick={() => setIsMeetingMinimized(false)}
+>>>>>>> origin/main
                     className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-300 px-3 py-1.5 rounded-full text-xs font-semibold hover:bg-teal-500/20 transition-colors"
                     title="Return to active meeting"
                   >
                     <Video className="w-3.5 h-3.5" />
+<<<<<<< HEAD
                     Return to Meeting
+=======
+                    {isMeetingMinimized ? 'Return to Meeting' : 'Meeting Active'}
+>>>>>>> origin/main
                   </button>
                 )}
                 {activeBgTasksCount > 0 && (
@@ -2016,7 +2168,11 @@ const Dashboard: React.FC<DashboardProps> = ({
         </header>
 
         {/* Main Content Area */}
+<<<<<<< HEAD
         <main id="main-content" className={`flex-1 min-h-0 ac-workspace-canvas ac-dashboard-main ${['/dashboard/mail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full scroll-smooth relative pb-safe md:pb-0`} role="main">
+=======
+        <main id="main-content" className={`flex-1 min-h-0 ${['/dashboard/mail', '/dashboard/gmail'].includes(activeTab) ? 'overflow-hidden' : 'overflow-y-auto overflow-x-hidden'} w-full bg-slate-950 scroll-smooth relative pb-safe md:pb-0 ac-dashboard-main`} role="main">
+>>>>>>> origin/main
           {/* Content Wrapper for Max Width & Padding */}
           <div className={`${WORKSPACE.canvas.maxWidth} mx-auto ${WORKSPACE.canvas.padding} dashboard-content-padding pb-24 md:pb-6 ${
             activeTab === '/dashboard/pwa-settings'
@@ -2124,18 +2280,55 @@ const Dashboard: React.FC<DashboardProps> = ({
         userId={user.id}
       />
 
+      <GlobalShortcutListener
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        onOpenQuickTask={() => setCreateTaskOpen(true)}
+        onToggleVoice={() => setIsVoiceActive(prev => !prev)}
+      />
+
+      <QuickTaskOverlay
+        isOpen={createTaskOpen}
+        onClose={() => setCreateTaskOpen(false)}
+        userId={user.id}
+      />
+
 
       <VoiceCaptureFAB 
         isActive={isVoiceActive} 
         onClose={() => setIsVoiceActive(false)} 
       />
 
+<<<<<<< HEAD
+=======
+      {activeMeetingCallId && (
+        <React.Suspense fallback={null}>
+          {!isMeetingMinimized && (
+            <button
+              onClick={() => setIsMeetingMinimized(true)}
+              className="fixed top-20 right-4 z-[130] inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900/90 border border-white/15 text-xs font-semibold text-slate-100 hover:bg-slate-800 transition-colors"
+              title="Run meeting in background"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+              Background mode
+            </button>
+          )}
+          <CustomVideoRoom
+            user={user}
+            callId={activeMeetingCallId}
+            onLeave={endMeeting}
+            isMinimized={isMeetingMinimized}
+            onToggleMinimize={toggleMeetingMinimized}
+          />
+        </React.Suspense>
+      )}
+>>>>>>> origin/main
 
       <ProductTour
         isOpen={showProductTour}
         onComplete={() => setShowProductTour(false)}
         userRole={user.role}
       />
+<<<<<<< HEAD
       <CelebrationOverlay
         isOpen={celebration.show}
         onClose={() => setCelebration((p) => ({ ...p, show: false }))}
@@ -2144,6 +2337,15 @@ const Dashboard: React.FC<DashboardProps> = ({
       />
       {!location.startsWith('/dashboard/bonnie') &&
         location !== '/dashboard/business/bonnie' && <BonnieWidget />}
+=======
+      <CelebrationOverlay 
+        isOpen={false} 
+        onClose={() => {}} 
+        title="Mission Accomplished" 
+        message="Achievement unlocked." 
+      />
+      <BonnieWidget />
+>>>>>>> origin/main
     </div>
   );
 };

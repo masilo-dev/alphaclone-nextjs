@@ -75,7 +75,11 @@ function IntegrationCard({
               <h3 className="font-semibold text-white text-sm">{integration.name}</h3>
               {integration.popular && (
                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 border border-orange-500/20 rounded-full text-xs text-orange-400">
+<<<<<<< HEAD
                   <Star className="w-2.5 h-2.5" /> Featured
+=======
+                  <Star className="w-2.5 h-2.5" /> Popular
+>>>>>>> origin/main
                 </span>
               )}
               {integration.new && (
@@ -261,3 +265,4 @@ export function IntegrationMarketplaceDashboard() {
     </div>
   );
 }
+

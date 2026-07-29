@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { syncSuppressionCleanup } from '@/lib/email/suppression';
+=======
+import { upsertSuppression } from '@/lib/email/suppression';
+>>>>>>> origin/main
 
 type ProviderEvent = {
     email?: string;
@@ -73,7 +77,11 @@ export async function POST(req: NextRequest) {
             });
 
             if (tenantId && (eventType === 'bounce' || eventType === 'spam_report' || eventType === 'unsubscribe')) {
+<<<<<<< HEAD
                 await syncSuppressionCleanup({
+=======
+                await upsertSuppression({
+>>>>>>> origin/main
                     tenantId,
                     email,
                     reason: eventType as 'bounce' | 'spam_report' | 'unsubscribe',

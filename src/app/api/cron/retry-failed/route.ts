@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
+<<<<<<< HEAD
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
+=======
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +39,7 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Find failed runs that are eligible for retry
     // Eligibility: status='failed', retries < 3, updated_at < (now - delay)
+<<<<<<< HEAD
     // Prefer retries column when present; fall back to filtering in memory for older schemas.
     let failedRuns: any[] | null = null;
     let fetchError: { message?: string } | null = null;
@@ -60,6 +64,14 @@ export async function GET(request: NextRequest) {
       failedRuns = (fallback.data || []).filter((run) => Number(run.retries || 0) < 3);
       fetchError = fallback.error;
     }
+=======
+    const { data: failedRuns, error: fetchError } = await supabase
+      .from('automation_runs')
+      .select('*')
+      .eq('status', 'failed')
+      .lt('retries', 3)
+      .order('updated_at', { ascending: true });
+>>>>>>> origin/main
 
     if (fetchError) throw fetchError;
 
@@ -70,7 +82,11 @@ export async function GET(request: NextRequest) {
     const retriedCount = [];
 
     for (const run of failedRuns) {
+<<<<<<< HEAD
       const retryCount = Number(run.retries || 0);
+=======
+      const retryCount = run.retries || 0;
+>>>>>>> origin/main
       const delayMinutes = [1, 5, 15][retryCount] || 60;
       const lastAttempt = new Date(run.updated_at).getTime();
       const now = Date.now();
@@ -79,6 +95,7 @@ export async function GET(request: NextRequest) {
         continue; // Not yet time for retry
       }
 
+<<<<<<< HEAD
       const guard = await guardCronTenantRow(run, 'automation_runs', {
         workflow_type: run.workflow_type,
       });
@@ -86,6 +103,8 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
+=======
+>>>>>>> origin/main
       try {
         const workflow = WORKFLOW_MAP[run.workflow_type];
         if (!workflow) throw new Error(`Unknown workflow type: ${run.workflow_type}`);

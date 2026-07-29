@@ -27,8 +27,12 @@ export default function ZohoCRMIntegration() {
         const loadZohoStatus = async () => {
             setConnectionLoading(true);
             try {
+<<<<<<< HEAD
                 if (!currentTenant?.id) return;
                 const res = await fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' });
+=======
+                const res = await fetch('/api/auth/zoho/status', { credentials: 'include' });
+>>>>>>> origin/main
                 const data = await res.json().catch(() => ({}));
                 if (!cancelled) {
                     setZohoStatus({
@@ -48,7 +52,11 @@ export default function ZohoCRMIntegration() {
         return () => {
             cancelled = true;
         };
+<<<<<<< HEAD
     }, [currentTenant?.id]);
+=======
+    }, []);
+>>>>>>> origin/main
 
     const handleSync = async (module?: string) => {
         if (!user || !currentTenant?.id) {
@@ -61,7 +69,11 @@ export default function ZohoCRMIntegration() {
             const res = await fetch('/api/zoho/crm/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+<<<<<<< HEAD
                 body: JSON.stringify({ module, tenantId: currentTenant.id })
+=======
+                body: JSON.stringify({ module })
+>>>>>>> origin/main
             });
             const data = await res.json();
             if (res.ok) {

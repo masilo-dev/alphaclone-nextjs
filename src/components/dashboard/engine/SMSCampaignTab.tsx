@@ -639,3 +639,4 @@ export default function SMSCampaignTab({ tenant }: SMSCampaignTabProps) {
         </div>
     );
 }
+

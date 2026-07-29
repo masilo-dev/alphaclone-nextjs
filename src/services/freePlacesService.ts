@@ -11,6 +11,10 @@
  */
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
+<<<<<<< HEAD
+=======
+import * as cheerio from 'cheerio';
+>>>>>>> origin/main
 import { googlePlacesService as realGoogleService } from './googlePlacesService';
 
 
@@ -46,6 +50,7 @@ async function geocodeLocation(
   if (!location?.trim()) return null;
   const cleaned = cleanLocationString(location);
   try {
+<<<<<<< HEAD
     const { geocodeFree } = await import('@/lib/scraper/freeGeoSources');
     const geo = await geocodeFree(cleaned);
     if (geo) return geo;
@@ -57,6 +62,40 @@ async function geocodeLocation(
       return geocodeFree(fallback);
     }
     return null;
+=======
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cleaned)}&format=json&limit=1`;
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0 (support@alphaclonesystems.com)' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.[0]) {
+      // Try one more time with just the last part of the string if it's a long address
+      if (cleaned.includes(',')) {
+        const parts = cleaned.split(',');
+        const fallback = parts[parts.length - 1].trim();
+        const res2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(fallback)}&format=json&limit=1`, {
+          headers: { 'User-Agent': 'AlphaClone-LeadFinder/2.0' },
+          signal: AbortSignal.timeout(8000),
+        });
+        const data2 = await res2.json();
+        if (data2?.[0]) {
+          return {
+            lat: parseFloat(data2[0].lat),
+            lng: parseFloat(data2[0].lon),
+            displayName: data2[0].display_name || fallback,
+          };
+        }
+      }
+      return null;
+    }
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon),
+      displayName: data[0].display_name || cleaned,
+    };
+>>>>>>> origin/main
   } catch {
     return null;
   }
@@ -249,6 +288,7 @@ async function fetchGoogleMapsScrape(
     }).catch(() => null);
     await new Promise(r => setTimeout(r, 1500));
 
+<<<<<<< HEAD
     const scraped = await page.evaluate((limit) => {
       const cards: Array<{
         name: string;
@@ -311,6 +351,51 @@ async function fetchGoogleMapsScrape(
             : undefined,
       });
     }
+=======
+    const html = await page.content();
+    const $ = cheerio.load(html);
+
+    // Extract business cards from Google Maps results
+    $('[role="article"], .Nv2PK').each((_, el) => {
+      if (results.length >= maxResults) return false;
+
+      const nameEl = $(el).find('.qBF1Pd, .fontHeadlineSmall, h3').first();
+      const name = nameEl.text().trim();
+      if (!name || name.length < 2) return;
+
+      const ratingEl = $(el).find('.MW4etd').first();
+      const ratingText = ratingEl.text().trim();
+      const rating = ratingText ? parseFloat(ratingText) : undefined;
+
+      const reviewEl = $(el).find('.UY7F9').first();
+      const reviewText = reviewEl.text().replace(/[()]/g, '').trim();
+      const reviewCount = reviewText ? parseInt(reviewText.replace(/,/g, ''), 10) : undefined;
+
+      const categoryEl = $(el).find('.W4Efsd:first-of-type .W4Efsd span').first();
+      const category = categoryEl.text().replace(/·/g, '').trim() || 'Business';
+
+      const addressEl = $(el).find('[data-tooltip="Copy address"], .W4Efsd:last-of-type span').first();
+      const address = addressEl.text().trim();
+
+      // Build Maps link
+      const linkEl = $(el).find('a[href*="/maps/place/"]').first();
+      const mapsLink = linkEl.attr('href') || '';
+
+      results.push({
+        placeId: `gmaps-${Buffer.from(name).toString('base64').slice(0, 16)}`,
+        businessName: name,
+        formattedAddress: address,
+        phone: '',
+        website: '',
+        industry: category,
+        rating: !isNaN(rating!) ? rating : undefined,
+        userRatingCount: !isNaN(reviewCount!) ? reviewCount : undefined,
+        googleMapsUri: mapsLink ? `https://www.google.com${mapsLink}` : undefined,
+        source: 'Google Maps Scrape',
+        countryCode: address.split(',').pop()?.trim().length === 2 ? address.split(',').pop()?.trim().toUpperCase() : undefined,
+      });
+    });
+>>>>>>> origin/main
 
     return results;
   } catch (err) {
@@ -321,6 +406,7 @@ async function fetchGoogleMapsScrape(
   }
 }
 
+<<<<<<< HEAD
 async function fetchWebPlacesFallback(
   niche: string,
   location: string,
@@ -384,6 +470,8 @@ async function fetchWebPlacesFallback(
   }
 }
 
+=======
+>>>>>>> origin/main
 // ─── Main service — same API surface as googlePlacesService ──────────────────
 export const freePlacesService = {
   /**
@@ -469,6 +557,7 @@ export const freePlacesService = {
       }
     }
 
+<<<<<<< HEAD
     // ── Source 4: Web Search Fallback (guarantees results even if OSM/Foursquare down) ──
     if (allPlaces.length < maxResults) {
       try {
@@ -482,6 +571,8 @@ export const freePlacesService = {
       }
     }
 
+=======
+>>>>>>> origin/main
     return {
       places: allPlaces.slice(0, maxResults),
       locationValidated: !!geo,

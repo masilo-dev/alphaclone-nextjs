@@ -12,7 +12,10 @@ import type { MobileActivity, MobileDashboardStats } from '../types';
 
 export default function DashboardScreen() {
   const { user, activeTenant } = useAuth();
+<<<<<<< HEAD
   const navigation = useNavigation();
+=======
+>>>>>>> origin/main
   const [dashboard, setDashboard] = useState<MobileDashboardStats>({
     activeProjects: 0,
     totalLeads: 0,

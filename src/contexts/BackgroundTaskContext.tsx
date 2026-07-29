@@ -9,6 +9,8 @@ import {
 
 const TASKS_STORAGE_KEY = 'alphaclone_background_tasks_v1';
 
+const TASKS_STORAGE_KEY = 'alphaclone_background_tasks_v1';
+
 export type BackgroundTaskStatus = 'pending' | 'running' | 'completed' | 'error';
 
 export interface BackgroundTask {
@@ -56,12 +58,15 @@ export function BackgroundTaskProvider({ children }: { children: ReactNode }) {
             /* ignore quota */
         }
     }, [tasks, hydrated]);
+<<<<<<< HEAD
 
     useEffect(() => {
         const reset = () => setTasks([]);
         window.addEventListener(PLATFORM_RESET_EVENT, reset);
         return () => window.removeEventListener(PLATFORM_RESET_EVENT, reset);
     }, []);
+=======
+>>>>>>> origin/main
 
     const startTask = async <T,>(
         id: string,

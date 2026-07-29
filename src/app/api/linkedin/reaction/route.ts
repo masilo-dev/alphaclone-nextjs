@@ -9,6 +9,16 @@ import {
   normalizeLinkedInScopes,
 } from '@/services/linkedin/linkedinIntegrationService';
 
+function isLikelyPermissionError(payload: Record<string, unknown>) {
+  const message = String(payload?.message || payload?.error_description || payload?.serviceErrorCode || '');
+  return (
+    message.toLowerCase().includes('permission') ||
+    message.toLowerCase().includes('scope') ||
+    message.toLowerCase().includes('access denied') ||
+    message.toLowerCase().includes('not enough')
+  );
+}
+
 const ALLOWED_REACTIONS = new Set([
   'LIKE',
   'PRAISE',
@@ -77,6 +87,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing LinkedIn scope: w_member_social' }, { status: 400 });
     }
 
+<<<<<<< HEAD
     try {
       await linkedInFetch(
         `https://api.linkedin.com/v2/reactions?actor=${encodeURIComponent(integration.linkedin_person_urn)}&q=entity`,
@@ -105,6 +116,36 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: err.message }, { status: 502 });
       }
       throw err;
+=======
+    const res = await fetch(`https://api.linkedin.com/v2/reactions?actor=${encodeURIComponent(li.linkedin_person_urn)}&q=entity`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${li.access_token}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify({
+        root: postUrn,
+        reactionType,
+      }),
+    });
+
+    const raw = await res.text();
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    } catch {
+      parsed = {};
+    }
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403 || isLikelyPermissionError(parsed)) {
+        return NextResponse.json({
+          success: true,
+          warning: 'LinkedIn reaction permission is unavailable for this connection. Reconnect and approve all requested LinkedIn permissions.',
+        });
+      }
+      return NextResponse.json({ error: raw || `LinkedIn API error (${res.status})` }, { status: 502 });
+>>>>>>> origin/main
     }
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'linkedin/reaction.POST' });

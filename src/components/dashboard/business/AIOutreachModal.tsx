@@ -29,8 +29,11 @@ interface AIOutreachModalProps {
     onClose: () => void;
     userId: string;
     initialSelectedLeads?: string[];
+<<<<<<< HEAD
     /** When opened from Contacts, IDs are business_clients — not CRM leads */
     recipientSource?: 'leads' | 'clients';
+=======
+>>>>>>> origin/main
 }
 
 const TONES = [
@@ -40,7 +43,11 @@ const TONES = [
     { id: 'marketing', label: 'Creative', description: 'Persuasive & Bold' },
 ];
 
+<<<<<<< HEAD
 const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [], recipientSource = 'leads' }) => {
+=======
+const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, userId, initialSelectedLeads = [] }) => {
+>>>>>>> origin/main
     const { currentTenant } = useTenant();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [selectedLeads, setSelectedLeads] = useState<string[]>(initialSelectedLeads);
@@ -54,7 +61,11 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const [fetchingAccount, setFetchingAccount] = useState(false);
     const [integrations, setIntegrations] = useState<IntegrationConfig[]>([]);
     const [selectedIntegrationId, setSelectedIntegrationId] = useState<string>('');
+<<<<<<< HEAD
     const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'microsoft'>('microsoft');
+=======
+    const [selectedProvider, setSelectedProvider] = useState<'sendgrid' | 'resend' | 'brevo' | 'zoho' | 'gmail'>('zoho');
+>>>>>>> origin/main
 
     useEffect(() => {
         if (isOpen) {
@@ -64,7 +75,11 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 setSelectedLeads(initialSelectedLeads.slice(0, 20));
             }
         }
+<<<<<<< HEAD
     }, [isOpen, userId, initialSelectedLeads, recipientSource, currentTenant?.id]);
+=======
+    }, [isOpen, userId, initialSelectedLeads]);
+>>>>>>> origin/main
 
     const fetchAccountInfo = async () => {
         setFetchingAccount(true);
@@ -76,17 +91,28 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 // Also fetch integrations for this user
                 const { integrations: userIntegrations } = await integrationsService.getUserIntegrations(user.id);
                 const emailIntegrations = userIntegrations.filter(i => 
+<<<<<<< HEAD
                     ['sendgrid', 'resend', 'brevo', 'zoho', 'microsoft'].includes(i.type) && i.enabled
+=======
+                    ['sendgrid', 'resend', 'brevo', 'zoho', 'gmail'].includes(i.type) && i.enabled
+>>>>>>> origin/main
                 );
                 setIntegrations(emailIntegrations);
                 
                 if (emailIntegrations.length > 0) {
+<<<<<<< HEAD
                     const microsoftInt = emailIntegrations.find(i => i.type === 'microsoft');
+=======
+>>>>>>> origin/main
                     const zohoInt = emailIntegrations.find(i => i.type === 'zoho');
                     const brevoInt = emailIntegrations.find(i => i.type === 'brevo');
                     const resendInt = emailIntegrations.find(i => i.type === 'resend');
                     const sendgridInt = emailIntegrations.find(i => i.type === 'sendgrid');
+<<<<<<< HEAD
                     const defaultInt = microsoftInt || zohoInt || brevoInt || resendInt || sendgridInt || emailIntegrations[0];
+=======
+                    const defaultInt = zohoInt || brevoInt || resendInt || sendgridInt || emailIntegrations[0];
+>>>>>>> origin/main
                     setSelectedIntegrationId(defaultInt.id);
                     setSelectedProvider(defaultInt.type as any);
                 }
@@ -101,6 +127,7 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
     const fetchLeads = async () => {
         setLoading(true);
         try {
+<<<<<<< HEAD
             if (recipientSource === 'clients' && currentTenant?.id) {
                 const { clients, error } = await businessClientService.getClients(currentTenant.id, 1, 100);
                 if (error) throw new Error(error);
@@ -119,6 +146,11 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                 if (error) throw new Error(error);
                 setLeads(fetchedLeads || []);
             }
+=======
+            const { leads: fetchedLeads, error } = await leadService.getLeads();
+            if (error) throw new Error(error);
+            setLeads(fetchedLeads || []);
+>>>>>>> origin/main
         } catch (err: any) {
             toast.error('Failed to load recipients: ' + err.message);
         } finally {
@@ -555,4 +587,5 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
 };
 
 export default AIOutreachModal;
+
 

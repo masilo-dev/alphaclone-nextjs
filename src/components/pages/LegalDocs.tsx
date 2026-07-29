@@ -3,8 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Shield, FileText, Cookie, ChevronDown, ChevronRight, ExternalLink, Mail, Lock, Eye, Database, AlertTriangle, Clock, Users } from 'lucide-react';
+<<<<<<< HEAD
 import MarketingShell from '@/components/marketing/system/MarketingShell';
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
+=======
+import PublicNavigation from '@/components/PublicNavigation';
+>>>>>>> origin/main
 
 // ---------------------------------------------------------------------------
 // Shared Layout
@@ -32,6 +36,7 @@ function LegalLayout({
                </div>
                <span className="text-[var(--marketing-accent-hover)] text-sm font-semibold tracking-wide">Legal</span>
             </div>
+<<<<<<< HEAD
             <h1 className="text-3xl md:text-4xl font-bold text-[var(--marketing-text-primary)] mb-3">{title}</h1>
             <p className="text-[var(--marketing-text-secondary)] mb-2">{subtitle}</p>
             <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-[var(--marketing-border)]">
@@ -41,16 +46,35 @@ function LegalLayout({
                <span className="text-xs text-[var(--marketing-text-muted)]">•</span>
                <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-[var(--marketing-accent-hover)] hover:underline flex items-center gap-1">
                   <Mail className="w-3 h-3" aria-hidden="true" /> legal@alphaclonesystems.com
+=======
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{title}</h1>
+            <p className="text-slate-400 mb-2">{subtitle}</p>
+            <div className="flex flex-wrap gap-4 mb-12 pb-8 border-b border-slate-800">
+               <span className="text-xs text-slate-500">Last updated: {lastUpdated}</span>
+               <span className="text-xs text-slate-500">•</span>
+               <span className="text-xs text-slate-500">AlphaClone Systems LLC</span>
+               <span className="text-xs text-slate-500">•</span>
+               <a href="mailto:legal@alphaclonesystems.com" className="text-xs text-teal-400 hover:underline flex items-center gap-1">
+                  <Mail className="w-3 h-3" /> legal@alphaclonesystems.com
+>>>>>>> origin/main
                </a>
             </div>
             <div className="prose-legal space-y-12">
                {children}
             </div>
+<<<<<<< HEAD
             <div className="mt-16 pt-8 border-t border-[var(--marketing-border)] flex flex-wrap gap-4 text-xs text-[var(--marketing-text-muted)]">
                <Link href="/privacy-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Privacy Policy</Link>
                <Link href="/terms-of-service" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Terms of Service</Link>
                <Link href="/cookie-policy" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Cookie Policy</Link>
                <a href="mailto:legal@alphaclonesystems.com" className="hover:text-[var(--marketing-accent-hover)] transition-colors">Contact Legal</a>
+=======
+            <div className="mt-16 pt-8 border-t border-slate-800 flex flex-wrap gap-4 text-xs text-slate-500">
+               <Link href="/privacy-policy" className="hover:text-teal-400 transition-colors">Privacy Policy</Link>
+               <Link href="/terms-of-service" className="hover:text-teal-400 transition-colors">Terms of Service</Link>
+               <Link href="/cookie-policy" className="hover:text-teal-400 transition-colors">Cookie Policy</Link>
+               <a href="mailto:legal@alphaclonesystems.com" className="hover:text-teal-400 transition-colors">Contact Legal</a>
+>>>>>>> origin/main
             </div>
          </div>
       </MarketingShell>
@@ -127,9 +151,13 @@ export function PrivacyPolicy() {
                The data controller responsible for your personal information is:
             </p>
             <div className="mt-3 p-4 bg-white/[0.04] backdrop-blur-sm rounded-xl border border-slate-800 text-sm not-italic">
+<<<<<<< HEAD
                <p><strong className="text-white">{COMPANY_LEGAL.legalName}</strong></p>
                <p className="text-slate-300">{formatLegalAddress()}</p>
                <p className="text-slate-400">{COMPANY_LEGAL.jurisdiction} · Filing ID {COMPANY_LEGAL.filingId}</p>
+=======
+               <p><strong className="text-white">AlphaClone Systems LLC</strong></p>
+>>>>>>> origin/main
                <p>Email: <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
                <p>Data Protection Officer (DPO): <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                <p>Website: <a href="https://alphaclonesystems.com" className="text-teal-400 hover:underline">https://alphaclonesystems.com</a></p>
@@ -249,7 +277,11 @@ export function PrivacyPolicy() {
                         { p: 'Stripe, Inc. (US)', pu: 'Payment processing', d: 'Email, billing address, Stripe customer ID' },
                         { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in', d: 'Google account OAuth token, email actions only' },
                         { p: 'Cloudflare, Inc. (US)', pu: 'Bot protection & security (Turnstile)', d: 'IP address, browser metadata, telemetry' },
+<<<<<<< HEAD
                         { p: 'Railway Corp. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
+=======
+                        { p: 'Vercel, Inc. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
+>>>>>>> origin/main
                         { p: 'Resend / SendGrid', pu: 'Transactional email delivery', d: 'Email address, email content (transactional only)' },
                         { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
                      ].map((row, i) => (
@@ -429,7 +461,11 @@ export function TermsOfService() {
                <p>You retain full ownership of all data, content, and intellectual property you upload, create, or store within the Platform ("Your Data"). AlphaClone claims no ownership of Your Data. By using the Platform, you grant AlphaClone a limited, non-exclusive, royalty-free license to store, process, and display Your Data solely for the purpose of providing the service to you.</p>
             </Sub>
             <Sub title="6.2 Platform IP">
+<<<<<<< HEAD
                <p>The AlphaClone Platform, including its software, design, trademarks, logos, documentation, and all associated intellectual property, is owned by Alphaclone Systems, LLC and is protected by copyright, trademark, and other applicable laws. You may not use our trademarks or branding without prior written consent.</p>
+=======
+               <p>The AlphaClone Platform, including its software, design, trademarks, logos, documentation, and all associated intellectual property, is owned by AlphaClone Systems LLC and is protected by copyright, trademark, and other applicable laws. You may not use our trademarks or branding without prior written consent.</p>
+>>>>>>> origin/main
             </Sub>
          </Section>
 
@@ -734,6 +770,7 @@ export function SLA() {
     return (
         <LegalLayout
             title="Service Level Agreement (SLA)"
+<<<<<<< HEAD
             subtitle="Our uptime commitment, support response targets, and service credit terms for AlphaClone Business OS customers."
             lastUpdated="June 2, 2026"
             icon={Clock}
@@ -854,6 +891,22 @@ export function SLA() {
 
             <Section id="contact-sla" title="7. Contact">
                 <p>For SLA queries or credit claims: <a href="mailto:support@alphaclonesystems.com" className="text-teal-400 hover:underline">support@alphaclonesystems.com</a></p>
+=======
+            subtitle="Our commitment to service availability and support response times."
+            lastUpdated="April 30, 2026"
+            icon={Clock}
+            color="indigo"
+        >
+            <Section id="availability" title="1. Service Availability">
+                <p>AlphaClone Systems targets a 99.9% uptime for all core platform services, including CRM, Billing, and API access.</p>
+            </Section>
+            <Section id="support" title="2. Support Response Times">
+                <BulletList items={[
+                    'P0 (Critical): 4 hours',
+                    'P1 (High): 12 hours',
+                    'P2 (Normal): 48 hours',
+                ]} />
+>>>>>>> origin/main
             </Section>
         </LegalLayout>
     );
@@ -863,6 +916,7 @@ export function DPA() {
     return (
         <LegalLayout
             title="Data Processing Agreement (DPA)"
+<<<<<<< HEAD
             subtitle="This DPA governs AlphaClone's processing of personal data on behalf of business customers in compliance with GDPR, POPIA, and applicable data protection law."
             lastUpdated="June 2, 2026"
             icon={Users}
@@ -1000,11 +1054,24 @@ export function DPA() {
                     <p><strong className="text-white">Privacy &amp; DPA:</strong> <a href="mailto:privacy@alphaclonesystems.com" className="text-teal-400 hover:underline">privacy@alphaclonesystems.com</a></p>
                     <p><strong className="text-white">Legal:</strong> <a href="mailto:legal@alphaclonesystems.com" className="text-teal-400 hover:underline">legal@alphaclonesystems.com</a></p>
                 </div>
+=======
+            subtitle="Governance for the processing of personal data on behalf of our customers."
+            lastUpdated="April 30, 2026"
+            icon={Users}
+            color="blue"
+        >
+            <Section id="roles" title="1. Roles & Responsibilities">
+                <p>AlphaClone acts as a <strong>Data Processor</strong> for the Customer\'s business data, and as a <strong>Data Controller</strong> for account administration data.</p>
+            </Section>
+            <Section id="subprocessors" title="2. Sub-processors">
+                <p>Our sub-processors include Supabase, Stripe, Cloudflare, and Vercel. All data is processed in accordance with GDPR and relevant international standards.</p>
+>>>>>>> origin/main
             </Section>
         </LegalLayout>
     );
 }
 
+<<<<<<< HEAD
 // ---------------------------------------------------------------------------
 // PRIVACY CHOICES (CCPA / Do Not Sell)
 // ---------------------------------------------------------------------------
@@ -1077,3 +1144,5 @@ export function PrivacyChoices() {
         </LegalLayout>
     );
 }
+=======
+>>>>>>> origin/main

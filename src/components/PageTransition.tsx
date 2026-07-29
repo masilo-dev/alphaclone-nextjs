@@ -44,6 +44,7 @@ const dashboardVariants: Variants = {
 };
 
 export default function PageTransition({ children }: PageTransitionProps) {
+<<<<<<< HEAD
   const pathname = usePathname() ?? '/';
   const reduceMotion = useReducedMotion();
   const isDashboard = pathname.startsWith('/dashboard');
@@ -53,12 +54,20 @@ export default function PageTransition({ children }: PageTransitionProps) {
     : isDashboard
       ? dashboardVariants
       : pageVariants;
+=======
+  const pathname = usePathname();
+  const transitionKey = pathname?.startsWith('/dashboard') ? '/dashboard' : pathname;
+>>>>>>> origin/main
 
   return (
     <AnimatePresence mode="sync" initial={false}>
       <motion.div
         key={transitionKey}
+<<<<<<< HEAD
         initial="initial"
+=======
+        initial={false}
+>>>>>>> origin/main
         animate="animate"
         exit="exit"
         variants={variants}

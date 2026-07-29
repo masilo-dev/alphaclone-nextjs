@@ -33,6 +33,7 @@ function firstEmailFromMixed(value: unknown): string {
     return '';
 }
 
+<<<<<<< HEAD
 function extractProjectThreadMarker(...values: Array<string | null | undefined>): string | null {
     const pattern = /\bAC-PROJ:([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i;
     for (const value of values) {
@@ -52,6 +53,8 @@ function displayNameFromEmail(email: string): string {
     return localPart ? localPart.replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) : trimmed;
 }
 
+=======
+>>>>>>> origin/main
 async function parseWebhookBody(req: NextRequest): Promise<{ raw: unknown; items: Record<string, unknown>[] }> {
     const contentType = req.headers.get('content-type') || '';
     if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
@@ -149,7 +152,12 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                     to: message.to,
                     subject: message.subject,
                     bodyPreview: shortBody,
+<<<<<<< HEAD
                     // Do not persist full email bodies in activity logs (PII minimization)
+=======
+                    bodyText: message.text,
+                    bodyHtml: message.html,
+>>>>>>> origin/main
                     messageId: message.messageId,
                     integrationId: integration.id,
                     receivedAt: new Date().toISOString(),
@@ -172,6 +180,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                 metadata: {
                     provider,
                     integrationId: integration.id,
+<<<<<<< HEAD
                     projectId: extractProjectThreadMarker(message.subject, message.text, message.html),
                 },
             });
@@ -201,6 +210,10 @@ export async function POST(req: NextRequest, context: { params: Promise<{ provid
                 }
             }
 
+=======
+                },
+            });
+>>>>>>> origin/main
             await admin.from('notifications').insert({
                 user_id: integration.user_id,
                 type: 'message',

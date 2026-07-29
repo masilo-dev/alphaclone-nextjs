@@ -28,6 +28,7 @@ import {
     FileSpreadsheet,
     Grid3X3,
     CheckCircle2,
+<<<<<<< HEAD
         Clock,
     Send,
     DollarSign,
@@ -42,6 +43,14 @@ import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import EmptyState, { EmptyStateFromPreset } from '@/components/ui/EmptyState';
 import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
+=======
+    Sparkles,
+    Clock,
+    Send
+} from 'lucide-react';
+import AIOutreachModal from './AIOutreachModal';
+import { Button, Input, Modal, Badge, Dropdown, Card } from '../../ui/UIComponents';
+>>>>>>> origin/main
 import { useDropzone } from 'react-dropzone';
 import { supabase } from '../../../lib/supabase';
 import { startClientVideoCall } from '@/services/instantMeetingService';
@@ -53,17 +62,62 @@ import { LayoutGrid, List } from 'lucide-react';
 import { CommunicationModal } from '../crm/CommunicationModal';
 import { launchFunnelService } from '@/services/launchFunnelService';
 import { ModuleIntelligenceCard } from '../ModuleIntelligenceCard';
+<<<<<<< HEAD
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { formatDistanceToNow } from 'date-fns';
 import { BatchOutreachFAB } from './BatchOutreachFAB';
 import { BatchOutreachPanel } from './BatchOutreachPanel';
 import { CRMNav } from '../crm/CRMNav';
+=======
+import { formatDistanceToNow } from 'date-fns';
+import { BatchOutreachFAB } from './BatchOutreachFAB';
+import { BatchOutreachPanel } from './BatchOutreachPanel';
+>>>>>>> origin/main
 
 const KanbanBoard = lazy(() => import('../crm/KanbanBoard'));
 const DealsTab = lazy(() => import('../DealsTab'));
 const ContactsList = lazy(() => import('../crm/ContactsList'));
 
+<<<<<<< HEAD
 type ContactDirectoryView = 'sales' | 'email';
+=======
+const CRM_NAV_LINKS: { href: string; label: string }[] = [
+    { href: '/dashboard/crm', label: 'Overview' },
+    { href: '/dashboard/deals', label: 'Deals' },
+    { href: '/dashboard/leads', label: 'Leads' },
+    { href: '/dashboard/contacts', label: 'Contacts' },
+];
+
+function isCrmNavActive(pathname: string, href: string): boolean {
+    if (href === '/dashboard/contacts') {
+        return pathname === '/dashboard/contacts' || pathname === '/dashboard/business/clients';
+    }
+    return pathname === href;
+}
+
+function CRMNav({ pathname }: { pathname: string }) {
+    return (
+        <nav
+            aria-label="CRM sections"
+            className="flex flex-nowrap gap-1.5 sm:gap-2 mb-2 p-1 bg-slate-900/80 border border-slate-800 rounded-xl overflow-x-auto overscroll-x-contain [scrollbar-width:thin]"
+        >
+            {CRM_NAV_LINKS.map((link) => (
+                <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`shrink-0 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap ${
+                        isCrmNavActive(pathname, link.href)
+                            ? 'bg-teal-600 text-white'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    }`}
+                >
+                    {link.label}
+                </Link>
+            ))}
+        </nav>
+    );
+}
+>>>>>>> origin/main
 
 interface ClientsPageProps {
     user: User;
@@ -97,19 +151,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     const [newNoteTitle, setNewNoteTitle] = useState('');
     const [newNoteDescription, setNewNoteDescription] = useState('');
     const [noteSubmitting, setNoteSubmitting] = useState(false);
-    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
-    const [showOutreachModal, setShowOutreachModal] = useState(false);
-    const [showOutreachPanel, setShowOutreachPanel] = useState(false);
-    const [page, setPage] = useState(1);
-    const [showArchived, setShowArchived] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
-
-    const searchParams = useSearchParams();
-    const stageParam = searchParams?.get('stage');
-    const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
-    const directoryParam = searchParams?.get('directory');
-    const PAGE_SIZE = 500;
+<<<<<<< HEAD
+=======
 
     const loadClientTimeline = useCallback(async (clientId: string) => {
         setTimelineLoading(true);
@@ -161,6 +204,78 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+>>>>>>> origin/main
+    const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+    const [showOutreachModal, setShowOutreachModal] = useState(false);
+    const [showOutreachPanel, setShowOutreachPanel] = useState(false);
+    const [page, setPage] = useState(1);
+    const [showArchived, setShowArchived] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+<<<<<<< HEAD
+    const [directoryView, setDirectoryView] = useState<ContactDirectoryView>('sales');
+=======
+    const PAGE_SIZE = 500;
+>>>>>>> origin/main
+
+    const searchParams = useSearchParams();
+    const stageParam = searchParams?.get('stage');
+    const contactParam = searchParams?.get('contact') ?? searchParams?.get('contactId');
+    const directoryParam = searchParams?.get('directory');
+    const PAGE_SIZE = 500;
+
+<<<<<<< HEAD
+    const loadClientTimeline = useCallback(async (clientId: string) => {
+        setTimelineLoading(true);
+        try {
+            const { timeline } = await clientActivityService.getClientTimeline(clientId);
+            setClientTimeline(timeline);
+        } catch (err) {
+            console.error('Failed to load client timeline:', err);
+        } finally {
+            setTimelineLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (selectedClient?.id) {
+            void loadClientTimeline(selectedClient.id);
+            setActiveTab('timeline'); // Reset tab on change
+        } else {
+            setClientTimeline(null);
+        }
+    }, [selectedClient, loadClientTimeline]);
+
+    const handleAddNote = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedClient?.id || !newNoteTitle.trim()) return;
+
+        setNoteSubmitting(true);
+        try {
+            const { activity, error } = await clientActivityService.addClientNote(
+                selectedClient.id,
+                newNoteTitle.trim(),
+                newNoteDescription.trim(),
+                user.id
+            );
+
+            if (error) {
+                toast.error(`Failed to add note: ${error}`);
+            } else {
+                toast.success('Note added successfully!');
+                setNewNoteTitle('');
+                setNewNoteDescription('');
+                void loadClientTimeline(selectedClient.id);
+            }
+        } catch (err) {
+            console.error('Note add error:', err);
+            toast.error('An error occurred.');
+        } finally {
+            setNoteSubmitting(false);
+        }
+    };
+
+=======
+>>>>>>> origin/main
     const loadClients = useCallback(async (isInitial = true) => {
         if (!currentTenant) return;
         if (isInitial) setLoading(true);
@@ -224,10 +339,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     }, [searchParams, pathname, router]);
 
     useEffect(() => {
+<<<<<<< HEAD
         if (pathname === '/dashboard/crm/unified-contacts') {
             const base = pathname.includes('business') ? '/dashboard/business/clients' : '/dashboard/contacts';
             router.replace(`${base}?directory=email`, { scroll: false });
             return;
+=======
+        filterClients();
+    }, [clients, selectedStage]);
+
+    const filterClients = () => {
+        let filtered = clients;
+
+        // Search and Archiving are now handled server-side in loadClients
+        if (selectedStage !== 'all') {
+            filtered = filtered.filter(c => c.salesStage === selectedStage);
+>>>>>>> origin/main
         }
         if (directoryParam === 'email') setDirectoryView('email');
         else if (directoryParam === 'sales') setDirectoryView('sales');
@@ -424,6 +551,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
             Description: cleanExportText(c.description || ''),
             Created: new Date(c.createdAt).toLocaleDateString(),
         }));
+<<<<<<< HEAD
         const toCsvValue = (value: unknown) => {
             const raw = value == null ? '' : String(value);
             const escaped = raw.replace(/"/g, '""');
@@ -444,11 +572,47 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         const a = document.createElement('a');
         a.href = url;
         a.download = `alphaclone-contacts-${Date.now()}.csv`;
+=======
+        const ExcelJS = (await import('exceljs')).default;
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('Contacts');
+        const headers = Object.keys(rows[0] || {});
+        sheet.columns = headers.map((key) => ({ header: key, key }));
+        for (const row of rows) sheet.addRow(row);
+        sheet.getRow(1).font = { bold: true };
+        sheet.views = [{ state: 'frozen', ySplit: 1 }];
+        sheet.autoFilter = {
+            from: { row: 1, column: 1 },
+            to: { row: 1, column: headers.length },
+        };
+        sheet.getColumn('Description').alignment = { wrapText: true, vertical: 'top' };
+        sheet.columns?.forEach((col) => {
+            if (!col) return;
+            const header = String(col.header || '');
+            if (header === 'Description') col.width = 55;
+            else if (header === 'Name') col.width = 22;
+            else if (header === 'Email') col.width = 28;
+            else if (header === 'Website') col.width = 26;
+            else if (header === 'Location') col.width = 18;
+            else col.width = 14;
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alphaclone-contacts-${Date.now()}.xlsx`;
+>>>>>>> origin/main
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+<<<<<<< HEAD
         toast.success(`Exported ${filteredClients.length} contacts to CSV`);
+=======
+        toast.success(`Exported ${filteredClients.length} contacts to Excel`);
+>>>>>>> origin/main
 
         // Audit Trail
         if (currentTenant) {
@@ -493,6 +657,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         }
     };
 
+<<<<<<< HEAD
     const toggleClientSelection = (clientId: string) => {
         setSelectedClientIds((prev) => {
             if (prev.includes(clientId)) return prev.filter((id) => id !== clientId);
@@ -545,6 +710,8 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
         </div>
     );
 
+=======
+>>>>>>> origin/main
     const handleLoadMore = () => {
         void loadClients(false);
     };
@@ -719,16 +886,24 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     return (
         <div className="space-y-4 sm:space-y-6 w-full min-w-0 ac-scroll-full ac-enterprise-module">
             <CRMNav pathname={pathname} />
+<<<<<<< HEAD
             {directorySwitcher}
             <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
             <ModuleStatCards stats={contactStats} />
+=======
+            <ModuleIntelligenceCard moduleKey="customerSuccess" title="Customer Success Intelligence" />
+>>>>>>> origin/main
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                     <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] tracking-tight">Contacts</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                         <Badge variant="blue">{totalCount || clients.length} total</Badge>
+<<<<<<< HEAD
                         <p className="text-slate-500 text-xs font-bold uppercase tracking-wide">Pipeline</p>
+=======
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">CRM</p>
+>>>>>>> origin/main
                     </div>
                 </div>
                 <div className="flex sm:flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide w-full sm:w-auto pb-2 sm:pb-0">
@@ -786,6 +961,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         </button>
                     </div>
                     {selectedClientIds.length > 0 && (
+<<<<<<< HEAD
                         <>
                         <Button
                             variant="outline"
@@ -829,6 +1005,16 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             Outreach ({selectedClientIds.length})
                         </Button>
                         </>
+=======
+                        <Button
+                            variant="primary"
+                            onClick={() => setShowOutreachModal(true)}
+                            icon={<Sparkles className="w-4 h-4" />}
+                            className="bg-teal-600 hover:bg-teal-500 shadow-lg shadow-teal-500/20"
+                        >
+                            Outreach ({selectedClientIds.length})
+                        </Button>
+>>>>>>> origin/main
                     )}
                 </div>
             </div>
@@ -846,7 +1032,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             />
                         </div>
                         <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)}
+<<<<<<< HEAD
                             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-md focus:outline-none focus:border-[var(--brand-blue-500)]">
+=======
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-md focus:outline-none focus:border-teal-500">
+>>>>>>> origin/main
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -944,7 +1134,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                         <select
                             value={selectedStage}
                             onChange={(e) => setSelectedStage(e.target.value)}
+<<<<<<< HEAD
                             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-[var(--brand-blue-500)] transition-all text-md"
+=======
+                            className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-teal-500 transition-all text-md"
+>>>>>>> origin/main
                         >
                             <option value="all">All Stages</option>
                             <option value="lead">Lead</option>
@@ -972,8 +1166,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         onCreateInvoice={(c) => { setSelectedClientForInvoice(c); setShowInvoiceModal(true); }}
                                         onSendEmail={(c) => { setSelectedClientForCommunication(c); setShowCommunicationModal(true); }}
                                         showArchived={showArchived}
+<<<<<<< HEAD
                                         isSelected={selectedClientIds.includes(client.id)}
                                         onToggleSelect={toggleClientSelection}
+=======
+>>>>>>> origin/main
                                     />
                             );
                         })}
@@ -1012,7 +1209,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         onClick={() => setSelectedStage(stage.value)}
                                         className={`h-8 px-3 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
                                             selectedStage === stage.value
+<<<<<<< HEAD
                                                 ? 'bg-[var(--brand-blue-600)] text-white border-[var(--brand-blue-600)] shadow-sm shadow-[var(--brand-blue-600)]/10'
+=======
+                                                ? 'bg-teal-600 text-white border-teal-600 shadow-sm shadow-teal-600/10'
+>>>>>>> origin/main
                                                 : 'bg-slate-900 text-slate-400 border-slate-850 hover:text-white hover:bg-slate-800'
                                         }`}
                                     >
@@ -1035,12 +1236,20 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         }
                                     }
                                 }}
+<<<<<<< HEAD
                                 className="text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-[var(--brand-blue-400)] transition-colors"
+=======
+                                className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-teal-400 transition-colors"
+>>>>>>> origin/main
                             >
                                 {selectedClientIds.length > 0 ? 'Deselect All' : `Select All (Max 500)`}
                             </button>
                             {selectedClientIds.length >= 500 && (
+<<<<<<< HEAD
                                 <span className="text-[10px] font-semibold text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
+=======
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-tighter leading-tight max-w-[80px] text-right">Batch Limit Reached</span>
+>>>>>>> origin/main
                             )}
                         </div>
 
@@ -1048,7 +1257,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                             {filteredClients.map(client => (
                                 <div
                                     key={client.id}
+<<<<<<< HEAD
                                     className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-[var(--brand-blue-500)]/10 border-[var(--brand-blue-500)] shadow-sm shadow-[var(--brand-blue-500)]/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+=======
+                                    className={`group p-3 rounded-xl cursor-pointer transition-all border flex items-center gap-3 ${selectedClient?.id === client.id ? 'bg-teal-500/10 border-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-800 hover:border-slate-600'}`}
+>>>>>>> origin/main
                                     onClick={() => setSelectedClient(client)}
                                 >
                                     {/* ... checkbox and avatar ... */}
@@ -1068,7 +1281,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                     setSelectedClientIds(selectedClientIds.filter(id => id !== client.id));
                                                 }
                                             }}
+<<<<<<< HEAD
                                             className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-[var(--brand-blue-600)] focus:ring-[var(--brand-blue-500)]/20"
+=======
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-teal-600 focus:ring-teal-500/20"
+>>>>>>> origin/main
                                         />
                                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center font-semibold text-slate-350 text-xs shrink-0">
                                             {(client.name || '?').charAt(0)}
@@ -1077,7 +1294,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     <div className="flex-1 min-w-0">
                                         <h3 className="font-bold text-white text-sm truncate">{client.name}</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
+<<<<<<< HEAD
                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-[var(--brand-blue-400)] uppercase">
+=======
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight bg-slate-950 border border-slate-850 text-teal-400 uppercase">
+>>>>>>> origin/main
                                                 {client.salesStage}
                                             </span>
                                         </div>
@@ -1092,7 +1313,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         size="sm"
                                         onClick={handleLoadMore}
                                         isLoading={loading}
+<<<<<<< HEAD
                                         className="text-[var(--brand-blue-500)] hover:text-[var(--brand-blue-400)] font-bold uppercase tracking-wide text-xs"
+=======
+                                        className="text-teal-500 hover:text-teal-400 font-bold uppercase tracking-widest text-xs"
+>>>>>>> origin/main
                                     >
                                         Load More Contacts
                                     </Button>
@@ -1102,11 +1327,19 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                     </div>
 
                     {/* Right Pane: Details */}
+<<<<<<< HEAD
                     <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col ac-workspace-panel rounded-lg overflow-hidden`}>
                         {selectedClient ? (
                             <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
                                 <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
                                     <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-[var(--brand-blue-400)] text-sm font-medium">
+=======
+                    <div className={`flex-1 min-h-0 min-w-0 ${!selectedClient ? 'hidden lg:flex' : 'flex'} flex-col bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden`}>
+                        {selectedClient ? (
+                            <div className="flex flex-col h-full max-h-[min(85dvh,800px)] lg:max-h-none overflow-hidden animate-in fade-in duration-300">
+                                <div className="lg:hidden flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                                    <button onClick={() => setSelectedClient(null)} className="flex items-center gap-2 text-teal-400 text-sm font-medium">
+>>>>>>> origin/main
                                         <ChevronLeft className="w-5 h-5" /> Back
                                     </button>
                                     <Badge variant={selectedClient.salesStage === 'customer' ? 'success' : selectedClient.salesStage === 'lost' ? 'error' : 'blue'}>
@@ -1115,6 +1348,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="p-6 flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+<<<<<<< HEAD
                                     <RecordHeader
                                         moduleId="crm"
                                         className="mb-4"
@@ -1163,6 +1397,28 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             </>
                                         }
                                     />
+=======
+                                    <div className="flex justify-between items-start gap-4 mb-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-teal-500 to-violet-600 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-teal-500/10">
+                                                {(selectedClient.name || '?').charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-bold text-white leading-tight">{selectedClient.name}</h2>
+                                                {selectedClient.industry && <p className="text-slate-400 text-sm mt-0.5">{selectedClient.industry}</p>}
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Dropdown
+                                                trigger={<Button size="sm" variant="ghost" className="!p-2 hover:bg-slate-800 rounded-xl" icon={<MoreVertical className="w-5 h-5 text-slate-400" />} />}
+                                                items={[
+                                                    { label: 'Edit', icon: <Edit className="w-4 h-4"/>, onClick: () => { setEditingClient(selectedClient); setShowEditModal(true); } },
+                                                    { label: showArchived ? 'Unarchive' : 'Archive', icon: showArchived ? <History className="w-4 h-4"/> : <Trash2 className="w-4 h-4"/>, onClick: () => handleArchiveClient(selectedClient.id), variant: showArchived ? 'default' : 'danger' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+>>>>>>> origin/main
 
                                     {/* Tabs Header */}
                                     <div className="flex border-b border-slate-800 mb-4 overflow-x-auto [scrollbar-width:none]">
@@ -1170,7 +1426,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('timeline')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'timeline'
+<<<<<<< HEAD
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+=======
+                                                    ? 'border-teal-500 text-teal-400'
+>>>>>>> origin/main
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1180,7 +1440,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('notes')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'notes'
+<<<<<<< HEAD
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+=======
+                                                    ? 'border-teal-500 text-teal-400'
+>>>>>>> origin/main
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1190,7 +1454,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('invoices')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'invoices'
+<<<<<<< HEAD
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+=======
+                                                    ? 'border-teal-500 text-teal-400'
+>>>>>>> origin/main
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1200,7 +1468,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                             onClick={() => setActiveTab('properties')}
                                             className={`px-4 py-2 border-b-2 text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
                                                 activeTab === 'properties'
+<<<<<<< HEAD
                                                     ? 'border-[var(--brand-blue-500)] text-[var(--brand-blue-400)]'
+=======
+                                                    ? 'border-teal-500 text-teal-400'
+>>>>>>> origin/main
                                                     : 'border-transparent text-slate-400 hover:text-slate-200'
                                             }`}
                                         >
@@ -1210,17 +1482,69 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
 
                                     {/* Tabs Content */}
                                     <div className="flex-1 min-h-0 overflow-y-auto pr-1 custom-scrollbar mb-6">
+<<<<<<< HEAD
                                         {activeTab === 'timeline' && selectedClient?.id && (
                                             <CustomerTimeline
                                                 clientId={selectedClient.id}
                                                 onOpenComms={() => router.push('/dashboard/comms')}
                                             />
+=======
+                                        {activeTab === 'timeline' && (
+                                            <div className="space-y-4">
+                                                {timelineLoading ? (
+                                                    <div className="flex justify-center items-center py-12">
+                                                        <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    </div>
+                                                ) : !clientTimeline?.activities || clientTimeline.activities.length === 0 ? (
+                                                    <div className="text-center py-12 text-slate-500 text-sm">
+                                                        No timeline activity or communications found for this client.
+                                                    </div>
+                                                ) : (
+                                                    <div className="relative pl-6 border-l-2 border-slate-800 space-y-6 py-2">
+                                                        {clientTimeline.activities.map((act: any) => {
+                                                            let typeColor = 'bg-slate-800 text-slate-400 border-slate-700';
+                                                            if (act.activity_type === 'message') typeColor = 'bg-indigo-950 text-indigo-400 border-indigo-900';
+                                                            else if (act.activity_type === 'payment') typeColor = 'bg-emerald-950 text-emerald-400 border-emerald-900';
+                                                            else if (act.activity_type === 'invoice') typeColor = 'bg-amber-950 text-amber-400 border-amber-900';
+                                                            else if (act.activity_type === 'contract') typeColor = 'bg-teal-950 text-teal-400 border-teal-900';
+                                                            else if (act.activity_type === 'note') typeColor = 'bg-violet-950 text-violet-400 border-violet-900';
+                                                            else if (act.activity_type === 'meeting' || act.activity_type === 'call') typeColor = 'bg-cyan-950 text-cyan-400 border-cyan-900';
+
+                                                            return (
+                                                                <div key={act.id} className="relative group">
+                                                                    {/* Marker */}
+                                                                    <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 ${typeColor} flex items-center justify-center transition-transform group-hover:scale-125`} />
+                                                                    
+                                                                    <div>
+                                                                        <div className="flex items-center justify-between gap-4">
+                                                                            <h4 className="text-sm font-bold text-slate-200">{act.title}</h4>
+                                                                            <span className="text-[10px] text-slate-500 whitespace-nowrap bg-slate-950 border border-slate-850 px-2 py-0.5 rounded-full font-mono">
+                                                                                {new Date(act.created_at).toLocaleDateString()}
+                                                                            </span>
+                                                                        </div>
+                                                                        {act.description && (
+                                                                            <p className="text-xs text-slate-400 mt-1 whitespace-pre-wrap leading-relaxed bg-slate-950/40 p-2.5 rounded-xl border border-slate-805/30 group-hover:border-slate-805/65 transition-colors">
+                                                                                {act.description}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+>>>>>>> origin/main
                                         )}
 
                                         {activeTab === 'notes' && (
                                             <div className="space-y-4">
                                                 {/* Add Note Form */}
+<<<<<<< HEAD
                                                 <form onSubmit={handleAddNote} className="ac-workspace-panel rounded-lg p-4 space-y-3">
+=======
+                                                <form onSubmit={handleAddNote} className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+>>>>>>> origin/main
                                                     <h3 className="text-xs font-bold text-white uppercase tracking-wider">Add Activity Note</h3>
                                                     <div>
                                                         <Input
@@ -1228,7 +1552,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Note Title (e.g. Call feedback, Meeting summary)"
                                                             value={newNoteTitle}
                                                             onChange={(e) => setNewNoteTitle(e.target.value)}
+<<<<<<< HEAD
                                                             className="text-white placeholder-slate-500 text-sm"
+=======
+                                                            className="!bg-slate-900 border-slate-800 text-white placeholder-slate-500 text-sm"
+>>>>>>> origin/main
                                                             required
                                                         />
                                                     </div>
@@ -1237,7 +1565,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             placeholder="Detailed notes of what you discussed, client sentiment, or action items..."
                                                             value={newNoteDescription}
                                                             onChange={(e) => setNewNoteDescription(e.target.value)}
+<<<<<<< HEAD
                                                             className="w-full bg-[var(--ws-toolbar)] border border-[var(--ws-border)] text-white placeholder-slate-500 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--brand-blue-500)] min-h-[80px]"
+=======
+                                                            className="w-full bg-slate-900 border border-slate-800 text-white placeholder-slate-500 rounded-xl p-3 text-sm focus:outline-none focus:border-teal-500 min-h-[80px]"
+>>>>>>> origin/main
                                                             required
                                                         />
                                                     </div>
@@ -1246,7 +1578,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             type="submit"
                                                             size="sm"
                                                             isLoading={noteSubmitting}
+<<<<<<< HEAD
                                                             className="text-white"
+=======
+                                                            className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-white"
+>>>>>>> origin/main
                                                             icon={<Send className="w-3.5 h-3.5" />}
                                                         >
                                                             Add Note
@@ -1257,6 +1593,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 {/* Notes Feed */}
                                                 <div className="space-y-3 mt-4">
                                                     {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').length === 0 ? (
+<<<<<<< HEAD
                                                         <EmptyState
                                                             icon={FileText}
                                                             title="No notes yet"
@@ -1268,6 +1605,14 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                             <div key={note.id} className="ac-workspace-panel rounded-lg p-3">
                                                                 <div className="flex justify-between items-start gap-2 mb-1">
                                                                     <h4 className="text-xs font-bold text-[var(--brand-blue-400)]">{note.title}</h4>
+=======
+                                                        <p className="text-center py-6 text-xs text-slate-500">No notes written yet. Add one above!</p>
+                                                    ) : (
+                                                        clientTimeline?.activities?.filter((a: any) => a.activity_type === 'note').map((note: any) => (
+                                                            <div key={note.id} className="bg-slate-950/40 border border-slate-805 p-3 rounded-2xl">
+                                                                <div className="flex justify-between items-start gap-2 mb-1">
+                                                                    <h4 className="text-xs font-bold text-teal-400">{note.title}</h4>
+>>>>>>> origin/main
                                                                     <span className="text-[10px] text-slate-500 font-mono">
                                                                         {new Date(note.created_at).toLocaleDateString()}
                                                                     </span>
@@ -1283,18 +1628,28 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'invoices' && (
                                             <div className="space-y-3">
                                                 {clientTimeline?.activities?.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').length === 0 ? (
+<<<<<<< HEAD
                                                     <EmptyState
                                                         icon={Receipt}
                                                         title="No billing records yet"
                                                         description="Invoices and payment updates for this contact will appear here."
                                                         className="py-12"
                                                     />
+=======
+                                                    <div className="text-center py-12 text-slate-500 text-sm">
+                                                        No billing records or invoices found.
+                                                    </div>
+>>>>>>> origin/main
                                                 ) : (
                                                     clientTimeline.activities.filter((a: any) => a.activity_type === 'invoice' || a.activity_type === 'payment').map((inv: any) => {
                                                         const status = inv.metadata?.status || 'paid';
                                                         const isPaid = status === 'paid';
                                                         return (
+<<<<<<< HEAD
                                                             <div key={inv.id} className="ac-workspace-panel rounded-lg p-4 flex justify-between items-center gap-4">
+=======
+                                                            <div key={inv.id} className="bg-slate-950/80 border border-slate-850 p-4 rounded-2xl flex justify-between items-center gap-4">
+>>>>>>> origin/main
                                                                 <div>
                                                                     <div className="flex items-center gap-2">
                                                                         <Receipt className={`w-4 h-4 ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`} />
@@ -1309,6 +1664,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                     )}
                                                                 </div>
                                                                 {inv.metadata?.invoice_id && (
+<<<<<<< HEAD
                                                                     <div className="flex gap-2">
                                                                         <Button
                                                                             variant="ghost"
@@ -1331,6 +1687,18 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                                             Download
                                                                         </Button>
                                                                     </div>
+=======
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="sm"
+                                                                        className="text-teal-400 hover:text-teal-300"
+                                                                        onClick={() => {
+                                                                            window.open(`/api/billing/invoices/${inv.metadata.invoice_id}/download`, '_blank');
+                                                                        }}
+                                                                    >
+                                                                        Download
+                                                                    </Button>
+>>>>>>> origin/main
                                                                 )}
                                                             </div>
                                                         );
@@ -1342,6 +1710,7 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                         {activeTab === 'properties' && (
                                             <div className="space-y-4">
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<<<<<<< HEAD
                                                     <div className="ac-workspace-panel rounded-lg p-4">
                                                         <p className="text-xs text-slate-400 mb-1">Email</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
@@ -1366,17 +1735,38 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                         <p className="text-xs text-slate-400 mb-1">Phone</p>
                                                         <div className="flex items-center gap-2 text-white text-sm">
                                                             <Phone className="w-4 h-4 text-[var(--brand-blue-500)]" />
+=======
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <p className="text-xs text-slate-400 mb-1">Email</p>
+                                                        <div className="flex items-center gap-2 text-white text-sm">
+                                                            <Mail className="w-4 h-4 text-teal-500" />
+                                                            <span className="truncate">{selectedClient.email || 'N/A'}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+                                                        <p className="text-xs text-slate-400 mb-1">Phone</p>
+                                                        <div className="flex items-center gap-2 text-white text-sm">
+                                                            <Phone className="w-4 h-4 text-teal-500" />
+>>>>>>> origin/main
                                                             <span className="truncate">{selectedClient.phone || 'N/A'}</span>
                                                         </div>
                                                     </div>
                                                     {selectedClient.industry && (
+<<<<<<< HEAD
                                                         <div className="ac-workspace-panel rounded-lg p-4">
+=======
+                                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+>>>>>>> origin/main
                                                             <p className="text-xs text-slate-400 mb-1">Industry</p>
                                                             <p className="text-white text-sm font-semibold">{selectedClient.industry}</p>
                                                         </div>
                                                     )}
                                                     {selectedClient.location && (
+<<<<<<< HEAD
                                                         <div className="ac-workspace-panel rounded-lg p-4">
+=======
+                                                        <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+>>>>>>> origin/main
                                                             <p className="text-xs text-slate-400 mb-1">Location</p>
                                                             <p className="text-white text-sm font-semibold">{selectedClient.location}</p>
                                                         </div>
@@ -1384,14 +1774,22 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                                 </div>
 
                                                 {selectedClient.description && (
+<<<<<<< HEAD
                                                     <div className="ac-workspace-panel rounded-lg p-4">
+=======
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+>>>>>>> origin/main
                                                         <p className="text-xs text-slate-400 mb-2">Description</p>
                                                         <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{selectedClient.description}</p>
                                                     </div>
                                                 )}
 
                                                 {selectedClient.customFields && Object.keys(selectedClient.customFields).length > 0 && (
+<<<<<<< HEAD
                                                     <div className="ac-workspace-panel rounded-lg p-4">
+=======
+                                                    <div className="bg-slate-950/80 border border-slate-805 p-4 rounded-2xl">
+>>>>>>> origin/main
                                                         <p className="text-xs text-slate-400 mb-3">Custom Fields</p>
                                                         <div className="space-y-2">
                                                             {Object.entries(selectedClient.customFields).map(([key, val]) => (
@@ -1408,7 +1806,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                                     </div>
 
                                     {/* Quick Actions Footer */}
+<<<<<<< HEAD
                                     <div className="mt-auto bg-[var(--ws-toolbar)] pt-6 border-t border-[var(--ws-border)]">
+=======
+                                    <div className="mt-auto pt-6 border-t border-slate-800 bg-slate-900/50">
+>>>>>>> origin/main
                                         <h3 className="text-sm font-bold text-slate-400 mb-4 uppercase tracking-wider">Quick Actions</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             <Button variant="secondary" size="sm" onClick={() => { setSelectedClientForProposal(selectedClient); setShowProposalModal(true); }} icon={<FilePlus className="w-4 h-4" />}>Proposal</Button>
@@ -1518,7 +1920,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 onClose={() => setShowOutreachModal(false)}
                 userId={user.id}
                 initialSelectedLeads={selectedClientIds}
+<<<<<<< HEAD
                 recipientSource="clients"
+=======
+>>>>>>> origin/main
             />
 
             {/* Batch Outreach FAB and Panel */}
@@ -1532,7 +1937,10 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
                 isOpen={showOutreachPanel}
                 onClose={() => setShowOutreachPanel(false)}
                 selectedIds={selectedClientIds}
+<<<<<<< HEAD
                 recipientSource="clients"
+=======
+>>>>>>> origin/main
                 onSuccess={() => {
                     setSelectedClientIds([]);
                     loadClients(true);
@@ -1542,7 +1950,11 @@ const ClientsPage: React.FC<ClientsPageProps> = ({ user }) => {
     );
 };
 
+<<<<<<< HEAD
 const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived, isSelected, onToggleSelect }: {
+=======
+const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCreateInvoice, onSendEmail, showArchived }: {
+>>>>>>> origin/main
     client: BusinessClient;
     onEdit: (c: BusinessClient) => void;
     onDelete: (id: string) => void;
@@ -1551,8 +1963,11 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
     onCreateInvoice: (c: BusinessClient) => void;
     onSendEmail: (c: BusinessClient) => void;
     showArchived?: boolean;
+<<<<<<< HEAD
     isSelected?: boolean;
     onToggleSelect?: (id: string) => void;
+=======
+>>>>>>> origin/main
 }) => {
     const stageVariants = {
         lead: 'blue',
@@ -1665,7 +2080,11 @@ const ClientCard = ({ client, onEdit, onDelete, onCall, onCreateProposal, onCrea
                     </div>
                 )}
                 {client.metadata?.last_contacted_at && (
+<<<<<<< HEAD
                     <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--brand-blue-500)]/70 mt-3">
+=======
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-500/70 mt-3">
+>>>>>>> origin/main
                         <MessageSquare className="w-3 h-3" />
                         <span>Last Contacted: {formatDistanceToNow(new Date(client.metadata.last_contacted_at), { addSuffix: true })}</span>
                     </div>
@@ -1751,7 +2170,11 @@ const AddClientModal = ({ onClose, onAdd }: any) => {
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
+<<<<<<< HEAD
                             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all font-medium"
+=======
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all font-medium"
+>>>>>>> origin/main
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -1847,7 +2270,11 @@ const EditClientModal = ({ client, onClose, onSave }: { client: BusinessClient; 
                         <select
                             value={formData.salesStage}
                             onChange={(e) => setFormData({ ...formData, salesStage: e.target.value as any })}
+<<<<<<< HEAD
                             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+=======
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+>>>>>>> origin/main
                         >
                             <option value="lead">Lead</option>
                             <option value="prospect">Prospect</option>
@@ -2064,7 +2491,11 @@ const CreateProposalModal = ({ client, user, onClose, onCreated }: { client: Bus
                         <select
                             value={formData.category}
                             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+<<<<<<< HEAD
                             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-[var(--brand-blue-500)]/50 transition-all"
+=======
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-md text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+>>>>>>> origin/main
                         >
                             <option value="Web">Web Development</option>
                             <option value="Mobile">Mobile App</option>
@@ -2223,3 +2654,4 @@ const CreateClientInvoiceModal = ({ client, onClose, onCreated }: { client: Busi
 };
 
 export default ClientsPage;
+

@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadFileToAnthropic, listUploadedFiles, deleteUploadedFile, callClaudeWithFile } from '@/services/ai/filesApiService';
+<<<<<<< HEAD
 import { requireAuthenticatedUser } from '@/lib/apiAuth';
+=======
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+<<<<<<< HEAD
 function errorStatus(err: any): number {
   return typeof err?.status === 'number' ? err.status : 500;
 }
@@ -13,6 +17,11 @@ function errorStatus(err: any): number {
 export async function POST(req: NextRequest) {
   try {
     await requireAuthenticatedUser();
+=======
+/** POST /api/ai/files — Upload a file or call Claude with an existing file */
+export async function POST(req: NextRequest) {
+  try {
+>>>>>>> origin/main
     const contentType = req.headers.get('content-type') || '';
 
     // Handle file upload (multipart form)
@@ -53,25 +62,39 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, content });
   } catch (err: any) {
+<<<<<<< HEAD
     return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
+=======
+    return NextResponse.json({ error: err.message }, { status: 500 });
+>>>>>>> origin/main
   }
 }
 
 /** GET /api/ai/files — List uploaded files */
 export async function GET() {
   try {
+<<<<<<< HEAD
     await requireAuthenticatedUser();
     const files = await listUploadedFiles();
     return NextResponse.json({ files });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
+=======
+    const files = await listUploadedFiles();
+    return NextResponse.json({ files });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+>>>>>>> origin/main
   }
 }
 
 /** DELETE /api/ai/files?file_id=xxx — Delete an uploaded file */
 export async function DELETE(req: NextRequest) {
   try {
+<<<<<<< HEAD
     await requireAuthenticatedUser();
+=======
+>>>>>>> origin/main
     const { searchParams } = new URL(req.url);
     const fileId = searchParams.get('file_id');
 
@@ -82,6 +105,10 @@ export async function DELETE(req: NextRequest) {
     await deleteUploadedFile(fileId);
     return NextResponse.json({ success: true, deleted: fileId });
   } catch (err: any) {
+<<<<<<< HEAD
     return NextResponse.json({ error: err.message }, { status: errorStatus(err) });
+=======
+    return NextResponse.json({ error: err.message }, { status: 500 });
+>>>>>>> origin/main
   }
 }

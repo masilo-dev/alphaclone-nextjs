@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+<<<<<<< HEAD
 import { getPublicAppUrl } from '@/lib/server/appUrl';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
@@ -44,6 +45,10 @@ async function subscribePhoneToWebhook(
     return { success: false, error: err?.message || 'Unknown error' };
   }
 }
+=======
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+>>>>>>> origin/main
 
 export async function GET(request: NextRequest) {
   try {
@@ -54,7 +59,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId is required' }, { status: 400 });
     }
 
+<<<<<<< HEAD
     const { admin: supabase } = await requireTenantAccess(tenantId);
+=======
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { data, error } = await supabase
       .from('whatsapp_integrations')
@@ -66,6 +76,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+<<<<<<< HEAD
     // Mask access token for safety — only last 4 chars shown
     const integrations = (data || []).map((item: any) => ({
       ...item,
@@ -75,6 +86,83 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ success: true, integrations });
+=======
+    // Enrich integrations with real-time Green API details
+    const enrichedIntegrations = await Promise.all((data || []).map(async (item: any) => {
+      const apiToken = item.metadata?.apiTokenInstance;
+      if (apiToken && item.waba_id) {
+        try {
+          // Fetch settings for phone number (wid) and current webhook
+          const settingsUrl = `https://api.green-api.com/waInstance${item.waba_id}/getSettings/${apiToken}`;
+          const settingsResp = await fetch(settingsUrl, { signal: AbortSignal.timeout(1500) });
+          let phoneNumber = null;
+          let country = null;
+          let currentWebhookUrl = '';
+
+          if (settingsResp.ok) {
+            const settingsData = await settingsResp.json();
+            if (settingsData) {
+              if (settingsData.wid) {
+                phoneNumber = settingsData.wid.split('@')[0];
+              }
+              country = settingsData.countryTelegram || null;
+              currentWebhookUrl = settingsData.webhookUrl || '';
+            }
+          }
+
+          // Target Webhook URL
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://alphaclonesystems.com';
+          const targetWebhookUrl = `${baseUrl}/api/webhooks/whatsapp`;
+
+          // Self-heal: If webhook url is missing or incorrect on Green API instance, fix it programmatically
+          if (currentWebhookUrl !== targetWebhookUrl) {
+            try {
+              const setSettingsUrl = `https://api.green-api.com/waInstance${item.waba_id}/setSettings/${apiToken}`;
+              const setSettingsResp = await fetch(setSettingsUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  webhookUrl: targetWebhookUrl,
+                  incomingWebhook: 'yes',
+                  stateWebhook: 'yes'
+                }),
+                signal: AbortSignal.timeout(1500)
+              });
+              if (setSettingsResp.ok) {
+                console.log(`[Self-Heal Webhook] Automatically registered Green API Webhook URL for instance ${item.waba_id} -> ${targetWebhookUrl}`);
+              }
+            } catch (err) {
+              console.error(`Failed to self-heal Green API Webhook for ${item.waba_id}:`, err);
+            }
+          }
+
+          // Fetch state (authorized, etc.)
+          const stateUrl = `https://api.green-api.com/waInstance${item.waba_id}/getStateInstance/${apiToken}`;
+          const stateResp = await fetch(stateUrl, { signal: AbortSignal.timeout(1500) });
+          let state = 'unknown';
+
+          if (stateResp.ok) {
+            const stateData = await stateResp.json();
+            if (stateData && stateData.stateInstance) {
+              state = stateData.stateInstance;
+            }
+          }
+
+          return {
+            ...item,
+            phone_number: phoneNumber,
+            state: state,
+            country: country
+          };
+        } catch (err) {
+          console.error(`Failed to fetch Green API details for ${item.waba_id}:`, err);
+        }
+      }
+      return item;
+    }));
+
+    return NextResponse.json({ success: true, integrations: enrichedIntegrations });
+>>>>>>> origin/main
   } catch (error) {
     return routeErrorResponse(error, 'Failed to fetch WhatsApp integrations', request);
   }
@@ -83,6 +171,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+<<<<<<< HEAD
     const { tenantId, wabaId, phoneNumberId, accessToken, alias, provider } = body;
     const selectedProvider = String(provider || 'meta').toLowerCase() === 'zernio' ? 'zernio' : 'meta';
 
@@ -190,12 +279,66 @@ export async function POST(request: NextRequest) {
       .from('whatsapp_integrations')
       .select('*')
       .eq('id', upsertResult.integrationId)
+=======
+    const { tenantId, wabaId, apiToken, alias } = body;
+
+    if (!tenantId || !wabaId || !apiToken) {
+      return NextResponse.json({ error: 'tenantId, wabaId, and apiToken are required' }, { status: 400 });
+    }
+
+    const tenantCtx = await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
+
+    // Construct the absolute Webhook URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://alphaclonesystems.com';
+    const webhookUrl = `${baseUrl}/api/webhooks/whatsapp`;
+
+    // 1. Programmatically register webhook URL in Green API settings
+    try {
+      const setSettingsUrl = `https://api.green-api.com/waInstance${wabaId}/setSettings/${apiToken}`;
+      const setSettingsResp = await fetch(setSettingsUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          webhookUrl: webhookUrl,
+          incomingWebhook: 'yes',
+          stateWebhook: 'yes'
+        }),
+        signal: AbortSignal.timeout(3000)
+      });
+
+      if (!setSettingsResp.ok) {
+        console.warn(`Green API Webhook setSettings failed for instance ${wabaId}:`, await setSettingsResp.text());
+      } else {
+        console.log(`✓ Programmatically registered Green API Webhook URL: ${webhookUrl}`);
+      }
+    } catch (webhookErr) {
+      console.error('Failed to configure Green API webhook url automatically:', webhookErr);
+    }
+
+    // 2. Insert into database
+    const { data, error } = await supabase
+      .from('whatsapp_integrations')
+      .insert({
+        tenant_id: tenantId,
+        user_id: tenantCtx.user.id,
+        waba_id: wabaId,
+        is_active: true,
+        metadata: {
+          apiTokenInstance: apiToken,
+          alias: alias || 'WhatsApp API',
+          webhookUrl: webhookUrl
+        }
+      })
+      .select()
+>>>>>>> origin/main
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+<<<<<<< HEAD
     return NextResponse.json({
       success: true,
       integration: data,
@@ -204,6 +347,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     return routeErrorResponse(error, 'Failed to save WhatsApp integration', request);
+=======
+    return NextResponse.json({ success: true, integration: data });
+  } catch (error) {
+    return routeErrorResponse(error, 'Failed to add WhatsApp integration', request);
+>>>>>>> origin/main
   }
 }
 
@@ -217,7 +365,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'tenantId and id are required' }, { status: 400 });
     }
 
+<<<<<<< HEAD
     const { admin: supabase } = await requireTenantAccess(tenantId);
+=======
+    await requireTenantAccess(tenantId);
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { error } = await supabase
       .from('whatsapp_integrations')

@@ -14,10 +14,16 @@ export const metadata: Metadata = {
         'solo founder business software',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/who-we-serve' },
+<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Who AlphaClone Serves | Client Work in One Workspace',
         description:
             'See which team types use AlphaClone to connect leads, delivery, contracts, and billing — without tool sprawl.',
+=======
+    openGraph: {
+        title: 'Who AlphaClone Serves | Unified Business OS for High-Performance Teams',
+        description: 'Agencies, startups, consultants, remote teams — AlphaClone eliminates your operational friction with one unified architecture.',
+>>>>>>> origin/main
         url: 'https://alphaclonesystems.com/who-we-serve',
         type: 'website',
     },

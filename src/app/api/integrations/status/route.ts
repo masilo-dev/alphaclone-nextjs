@@ -118,11 +118,14 @@ async function checkAllIntegrations(tenantId: string, userId: string, supabase: 
       name: 'Zoho',
       type: 'zoho',
       checkFunction: checkZohoIntegration
+<<<<<<< HEAD
     },
     {
       name: 'Microsoft 365',
       type: 'microsoft',
       checkFunction: checkMicrosoftIntegration
+=======
+>>>>>>> origin/main
     }
   ];
 
@@ -982,30 +985,45 @@ async function checkZohoIntegration(_tenantId: string, supabase: any, userId: st
   const actions = [];
   let percentage = 0;
 
+<<<<<<< HEAD
   if (hasRefreshToken) percentage += 30;
+=======
+  if (hasRefreshToken) percentage += 40;
+>>>>>>> origin/main
   else {
     issues.push('Refresh token missing');
     actions.push('Reconnect Zoho account');
   }
 
+<<<<<<< HEAD
   if (hasMailHost) percentage += 25;
+=======
+  if (hasMailHost) percentage += 30;
+>>>>>>> origin/main
   else {
     issues.push('Mail API host missing');
     actions.push('Reconnect Zoho account');
   }
 
+<<<<<<< HEAD
   if (hasAccountsServer) percentage += 25;
+=======
+  if (hasAccountsServer) percentage += 30;
+>>>>>>> origin/main
   else {
     issues.push('Accounts server missing');
     actions.push('Reconnect Zoho account');
   }
 
+<<<<<<< HEAD
   if (getIntegrationEncryptionSecret()) percentage += 20;
   else {
     issues.push('ZOHO_ENCRYPTION_SECRET / ENCRYPTION_SECRET not configured');
     actions.push('Set encryption secret (32 chars)');
   }
 
+=======
+>>>>>>> origin/main
   return {
     status: percentage === 100 ? 'working' : 'needs_attention',
     percentage,
@@ -1016,6 +1034,7 @@ async function checkZohoIntegration(_tenantId: string, supabase: any, userId: st
   };
 }
 
+<<<<<<< HEAD
 async function checkMicrosoftIntegration(_tenantId: string, supabase: any, userId: string) {
   const { data: connection, error } = await supabase
     .from('microsoft_connections')
@@ -1067,6 +1086,8 @@ async function checkMicrosoftIntegration(_tenantId: string, supabase: any, userI
   };
 }
 
+=======
+>>>>>>> origin/main
 function calculateOverallStatus(integrations: any[]) {
   const totalIntegrations = integrations.length;
   const workingIntegrations = integrations.filter(i => i.status === 'working').length;

@@ -4,8 +4,12 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { chartOfAccountsService, ChartOfAccount } from '../../../services/accounting/chartOfAccountsService';
 import { journalEntryService } from '../../../services/accounting/journalEntryService';
+<<<<<<< HEAD
 import { DetailDrawer } from '../../ui/DetailDrawer';
 import { Input, Button } from '../../ui/UIComponents';
+=======
+import { Modal, Input, Button } from '../../ui/UIComponents';
+>>>>>>> origin/main
 import { Plus, Trash2, CheckCircle2, AlertCircle, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 
 interface JournalEntryModalProps {
@@ -145,7 +149,11 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     };
 
     const totalAmount = formData.lines.reduce((sum, line) => sum + (line.amount || 0), 0);
+<<<<<<< HEAD
     const isValid = totalAmount > 0 && formData.description.trim() && formData.lines.every(l => l.accountId && l.accountId !== 'ADD_NEW') && selectedAssetAccountId && selectedAssetAccountId !== 'ADD_NEW_ASSET';
+=======
+    const isValid = totalAmount > 0 && formData.lines.every(l => l.accountId && l.accountId !== 'ADD_NEW') && selectedAssetAccountId && selectedAssetAccountId !== 'ADD_NEW_ASSET';
+>>>>>>> origin/main
 
     const handleCreateAssetAccount = async () => {
         if (!newAssetAccountName) return;
@@ -207,6 +215,7 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
     };
 
     return (
+<<<<<<< HEAD
         <DetailDrawer
             open={isOpen}
             onOpenChange={(open) => { if (!open) onClose(); }}
@@ -215,6 +224,18 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
             size="wide"
         >
             <div className="space-y-6 pb-6">
+=======
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
+            title="Add transaction"
+            maxWidth="max-w-2xl"
+        >
+            <div className="space-y-6">
+                <div>
+                    <p className="text-slate-400 text-sm mb-6">Record money coming in or going out of your business ledger.</p>
+                    
+>>>>>>> origin/main
                     {/* Transaction Type Toggle */}
                     <div className="grid grid-cols-2 gap-4 mb-8">
                         <button
@@ -278,7 +299,10 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         placeholder="e.g., Monthly office rent, Client payment for web design"
+<<<<<<< HEAD
                         validate={(v) => !v.trim() ? 'Description is required' : undefined}
+=======
+>>>>>>> origin/main
                     />
 
                     <div className="mt-4">
@@ -315,6 +339,10 @@ export function JournalEntryModal({ isOpen, onClose, onSuccess, accounts }: Jour
                             </div>
                         )}
                     </div>
+<<<<<<< HEAD
+=======
+                </div>
+>>>>>>> origin/main
 
                 {/* Entry Lines */}
                 <div className="space-y-4">

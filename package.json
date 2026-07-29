@@ -16,9 +16,12 @@
     "guard:design-system": "node --import tsx scripts/design-system-guard.mjs",
     "validate:prod-guards": "npm run guard:design-system && node --import tsx --test tests/unit/metrics-and-canonical-routes.test.mjs",
     "test:e2e": "playwright test",
+<<<<<<< HEAD
     "bonnie:worker": "tsx src/bonnie/worker.ts",
     "leads:worker": "tsx src/workers/lead-discovery-worker.ts",
     "bonnie:test": "node --import tsx --test tests/unit/bonnie-*.test.mjs",
+=======
+>>>>>>> origin/main
     "postinstall": "node scripts/postinstall.mjs",
     "setup:verify": "node scripts/verify-setup.js",
     "validate:production-env": "node scripts/validate-production-env.mjs",
@@ -82,10 +85,13 @@
     "@mantine/hooks": "^7.17.8",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@pdf-lib/fontkit": "^1.1.1",
+<<<<<<< HEAD
     "@radix-ui/react-accordion": "^1.2.15",
     "@radix-ui/react-dialog": "^1.1.18",
     "@radix-ui/react-separator": "^1.1.11",
     "@radix-ui/react-tabs": "^1.1.16",
+=======
+>>>>>>> origin/main
     "@sendgrid/mail": "^8.1.6",
     "@sentry/nextjs": "^10.38.0",
     "@serwist/next": "9.5.12",
@@ -112,6 +118,11 @@
     "@upstash/qstash": "^2.10.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.36.2",
+<<<<<<< HEAD
+=======
+    "@vercel/analytics": "^1.6.1",
+    "@vercel/functions": "^3.5.0",
+>>>>>>> origin/main
     "@xyflow/react": "^12.10.2",
     "@zernio/node": "^0.2.201",
     "ai": "^6.0.0",
@@ -121,19 +132,28 @@
     "canvas-confetti": "^1.9.4",
     "cheerio": "^1.2.0",
     "chromium-bidi": "1.3.0",
+<<<<<<< HEAD
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cross-env": "^10.1.0",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
     "deep-chat-react": "^2.4.2",
+=======
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+>>>>>>> origin/main
     "docx": "^9.6.1",
     "dompurify": "^3.3.1",
     "dotenv": "^17.2.3",
     "embla-carousel-react": "^8.6.0",
     "emoji-picker-react": "^4.16.1",
     "exceljs": "^4.4.0",
+<<<<<<< HEAD
     "framer-motion": "^12.40.0",
+=======
+    "framer-motion": "^12.38.0",
+>>>>>>> origin/main
     "fuse.js": "^7.3.0",
     "got": "^15.0.5",
     "html-docx-js-typescript": "^0.1.5",
@@ -150,10 +170,17 @@
     "lucide-react": "^0.562.0",
     "mammoth": "^1.11.0",
     "moment": "^2.30.1",
+<<<<<<< HEAD
     "next": "16.2.12",
     "next-themes": "^0.4.6",
     "node-html-parser": "^7.1.0",
     "nodemailer": "9.0.3",
+=======
+    "next": "^16.1.6",
+    "next-pwa": "^5.6.0",
+    "node-html-parser": "^7.1.0",
+    "nodemailer": "^8.0.7",
+>>>>>>> origin/main
     "openai": "^6.18.0",
     "otplib": "^13.2.1",
     "papaparse": "^5.5.3",
@@ -186,7 +213,10 @@
     "resend": "^6.7.0",
     "robots-txt-guard": "^1.0.2",
     "sanitize-html": "^2.17.4",
+<<<<<<< HEAD
     "server-only": "^0.0.1",
+=======
+>>>>>>> origin/main
     "serwist": "^9.5.6",
     "sonner": "^2.0.7",
     "stripe": "^20.2.0",
@@ -194,8 +224,13 @@
     "uuid": "^13.0.2",
     "web-push": "^3.6.7",
     "web-vitals": "^5.1.0",
+<<<<<<< HEAD
     "workflow": "4.6.2",
     "zod": "^4.4.3"
+=======
+    "workflow": "^4.2.4",
+    "zod": "^4.3.5"
+>>>>>>> origin/main
   },
   "devDependencies": {
     "@playwright/test": "^1.58.1",
@@ -219,6 +254,7 @@
     "typescript": "^5.9.3",
     "ws": "^8.19.0"
   },
+<<<<<<< HEAD
   "overrides": {
     "devalue": "5.8.1",
     "quill": "2.0.2",
@@ -226,6 +262,8 @@
     "sharp": "0.35.3",
     "undici": "7.28.0"
   },
+=======
+>>>>>>> origin/main
   "browser": {
     "fs": false,
     "path": false,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { processContent } from '@/services/engine/ProcessingEngine';
+<<<<<<< HEAD
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { runInBackground } from '@/lib/server/backgroundTask';
 import { getPublicAppUrl } from '@/lib/server/appUrl';
@@ -9,6 +10,9 @@ import { z } from 'zod';
 import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '@/lib/server/dailyResourceQuota';
 
 const schema = z.object({ source: z.string().trim().min(1).max(100), raw_content: z.string().max(500_000).default(''), author_name: z.string().max(300).nullable().optional(), author_contact: z.string().max(500).nullable().optional(), url: z.string().url().max(5000).nullable().optional(), tenant_id: z.string().uuid(), metadata: z.record(z.string(), z.unknown()).default({}) });
+=======
+import { waitUntil } from '@vercel/functions';
+>>>>>>> origin/main
 
 /**
  * INGESTION ENGINE endpoint
@@ -121,9 +125,15 @@ export async function POST(req: NextRequest) {
                 author_name,
             };
 
+<<<<<<< HEAD
             // Fire workflow execution in background after response
             runInBackground(
                 fetch(`${getPublicAppUrl()}/api/engine/execute`, {
+=======
+            // Fire workflow execution in background reliably via waitUntil
+            waitUntil(
+                fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/engine/execute`, {
+>>>>>>> origin/main
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-internal-api-key': process.env.INTERNAL_API_KEY || '' },
                     body: JSON.stringify({

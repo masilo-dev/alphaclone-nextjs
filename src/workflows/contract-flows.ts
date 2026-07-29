@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { start } from 'workflow/api';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { invoiceLifecycleWorkflow } from './invoice-lifecycle';
@@ -197,11 +198,55 @@ async function createDefaultTasksStep(projectId: string, tenantId: string) {
 async function sendWelcomePackageStep(projectId: string, tenantId: string) {
   "use step";
   console.log(`[contract-flows] Welcome package queued for project ${projectId} (tenant ${tenantId})`);
+=======
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+
+/**
+ * Contract Signed Workflow
+ * Triggered when a contract status changes to 'signed'.
+ */
+export async function contractSignedWorkflow({ tenantId, payload }: { tenantId: string, payload: any }) {
+  "use workflow";
+  
+  const { contractId } = payload;
+
+  // 1. Kickoff Project Automation
+  const project = await kickoffProjectStep(contractId, tenantId);
+
+  // 2. Notify Client (Welcome Package)
+  if (project) {
+    await sendWelcomePackageStep(project.id, tenantId);
+  }
+
+  // 3. Mark Deal as Closed Won (if not already)
+  await syncDealStatusStep(contractId, tenantId);
+}
+
+async function kickoffProjectStep(contractId: string, tenantId: string) {
+  "use step";
+  const supabase = createSupabaseAdminClient();
+  const { data: contract } = await supabase.from('contracts').select('*').eq('id', contractId).single();
+  
+  const { data: project } = await supabase.from('projects').insert({
+    tenant_id: tenantId,
+    name: `Project: ${contract?.title || 'Signed Project'}`,
+    contract_id: contractId,
+    status: 'active'
+  }).select().single();
+  
+  return project;
+}
+
+async function sendWelcomePackageStep(projectId: string, tenantId: string) {
+  "use step";
+  console.log(`[Automation] Sending welcome package for project ${projectId}`);
+>>>>>>> origin/main
 }
 
 async function syncDealStatusStep(contractId: string, tenantId: string) {
   "use step";
   const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
   await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
   const { data: contract } = await supabase.from('contracts').select('metadata, project_id, client_id, deal_id').eq('id', contractId).single();
   const dealId = contract ? resolveContractDealId(contract) : null;
@@ -218,6 +263,14 @@ async function syncDealStatusStep(contractId: string, tenantId: string) {
     const { data: project } = await supabase.from('projects').select('deal_id').eq('id', contract.project_id).single();
     if (project?.deal_id) {
       await closeDealFromContractSign(supabase, tenantId, { dealId: project.deal_id });
+=======
+  const { data: contract } = await supabase.from('contracts').select('project_id').eq('id', contractId).single();
+  
+  if (contract?.project_id) {
+    const { data: project } = await supabase.from('projects').select('deal_id').eq('id', contract.project_id).single();
+    if (project?.deal_id) {
+       await supabase.from('deals').update({ stage: 'closed_won' }).eq('id', project.deal_id);
+>>>>>>> origin/main
     }
   }
 }

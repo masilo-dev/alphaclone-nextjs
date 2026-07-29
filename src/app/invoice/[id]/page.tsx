@@ -2,11 +2,18 @@
 
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+<<<<<<< HEAD
 import { useParams, useSearchParams } from 'next/navigation';
 import { Card, Button } from '@/components/ui/UIComponents';
 import { FileText, CreditCard, Download, ShieldCheck, CheckCircle2, Building2 } from 'lucide-react';
 import InvoiceStatusPipeline, { InvoiceStatus } from '@/components/invoice/InvoiceStatusPipeline';
 import type { TenantBranding } from '@/lib/tenantBranding';
+=======
+import { useParams } from 'next/navigation';
+import { businessInvoiceService, BusinessInvoice } from '@/services/businessInvoiceService';
+import { Card, Button, Badge } from '@/components/ui/UIComponents';
+import { FileText, CreditCard, Calendar, Download, ShieldCheck, CheckCircle2 } from 'lucide-react';
+>>>>>>> origin/main
 
 export default function PublicInvoicePage() {
     const params = useParams();

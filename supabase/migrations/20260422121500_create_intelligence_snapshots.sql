@@ -17,7 +17,10 @@ create index if not exists idx_intelligence_snapshots_tenant_created
 alter table public.intelligence_snapshots enable row level security;
 
 drop policy if exists "Users can view tenant intelligence snapshots" on public.intelligence_snapshots;
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "Users can view tenant intelligence snapshots" ON public.intelligence_snapshots;
+=======
+>>>>>>> origin/main
 create policy "Users can view tenant intelligence snapshots"
   on public.intelligence_snapshots
   for select
@@ -31,7 +34,10 @@ create policy "Users can view tenant intelligence snapshots"
   );
 
 drop policy if exists "Users can insert tenant intelligence snapshots" on public.intelligence_snapshots;
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "Users can insert tenant intelligence snapshots" ON public.intelligence_snapshots;
+=======
+>>>>>>> origin/main
 create policy "Users can insert tenant intelligence snapshots"
   on public.intelligence_snapshots
   for insert

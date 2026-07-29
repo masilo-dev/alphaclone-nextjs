@@ -5,6 +5,7 @@ import { requireTenantAccess } from '@/lib/apiAuth';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { integrationActionSchema } from '@/schemas/validation';
+<<<<<<< HEAD
 import { upsertSlackIntegration, getSlackIntegrationWithSecrets } from '@/services/slack/slackIntegrationService';
 import {
   getFacebookIntegrationWithToken,
@@ -12,6 +13,8 @@ import {
 } from '@/services/facebook/facebookIntegrationService';
 import { getValidHubSpotAccessToken } from '@/services/hubspot/hubspotIntegrationService';
 import { getValidGoogleAccessToken } from '@/services/google/googleAccessTokenService';
+=======
+>>>>>>> origin/main
 
 export async function POST(req: NextRequest) {
   const authClient = await createSupabaseServerClient();

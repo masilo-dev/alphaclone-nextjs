@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
+<<<<<<< HEAD
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
+=======
+>>>>>>> origin/main
 import { facebookService } from '@/services/facebookService';
 
 export const runtime = 'nodejs';
@@ -98,9 +101,17 @@ export async function GET(req: NextRequest) {
   try {
     const fields = [
       'id', 'message', 'story', 'full_picture', 'permalink_url',
+<<<<<<< HEAD
       'created_time',
       'reactions.summary(true)',
       'comments.summary(true)',
+=======
+      'created_time', 'type',
+      'insights.metric(post_impressions,post_impressions_unique,post_engaged_users,post_clicks)',
+      'likes.summary(true)',
+      'reactions.summary(true)',
+      'comments.summary(true).limit(5){id,message,created_time,from,like_count,comments.limit(3){id,message,created_time,from}}',
+>>>>>>> origin/main
       'shares',
     ].join(',');
 
@@ -141,7 +152,11 @@ export async function GET(req: NextRequest) {
         full_picture:   p.full_picture || null,
         permalink_url:  p.permalink_url || null,
         post_type:      p.type || 'post',
+<<<<<<< HEAD
         likes_count:    p.reactions?.summary?.total_count || 0,
+=======
+        likes_count:    p.likes?.summary?.total_count || p.reactions?.summary?.total_count || 0,
+>>>>>>> origin/main
         comments_count: p.comments?.summary?.total_count || 0,
         shares_count:   p.shares?.count || 0,
         metadata:       { insights: p.insights || {} },

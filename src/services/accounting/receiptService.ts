@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 import { tenantService } from '../tenancy/TenantService';
+=======
+import { supabase } from '../../lib/supabase';
+import { tenantService } from '../tenancy/TenantService';
+import { journalEntryService } from './journalEntryService';
+>>>>>>> origin/main
 
 export type ReceiptStatus = 'pending' | 'paid' | 'void';
 
@@ -22,6 +28,7 @@ export interface BusinessReceipt {
     updatedAt: string;
 }
 
+<<<<<<< HEAD
 export interface CreateSalesReceiptInput {
     receiptNumber: string;
     receiptDate: string;
@@ -36,6 +43,8 @@ export interface CreateSalesReceiptInput {
     receivedBy?: string;
 }
 
+=======
+>>>>>>> origin/main
 export const receiptService = {
     getTenantId(): string {
         const tenantId = tenantService.getCurrentTenantId();
@@ -46,10 +55,22 @@ export const receiptService = {
     async getReceipts(): Promise<{ receipts: BusinessReceipt[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+<<<<<<< HEAD
             const response = await fetch(`/api/accounting/receipts?tenantId=${encodeURIComponent(tenantId)}`);
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Expense receipts could not be loaded');
             return { receipts: (payload.receipts || []).map(this.mapReceipt), error: null };
+=======
+            const { data, error } = await supabase
+                .from('business_receipts')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('receipt_date', { ascending: false });
+
+            if (error) throw error;
+
+            return { receipts: (data || []).map(this.mapReceipt), error: null };
+>>>>>>> origin/main
         } catch (err: any) {
             console.error('Error fetching receipts:', err);
             return { receipts: [], error: err.message };
@@ -59,16 +80,42 @@ export const receiptService = {
     async createReceipt(receipt: Partial<BusinessReceipt>): Promise<{ receipt: BusinessReceipt | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
+<<<<<<< HEAD
             const response = await fetch('/api/accounting/receipts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tenantId, receiptDate: receipt.receiptDate || new Date().toISOString().slice(0, 10), description: receipt.description, amount: receipt.amount, category: receipt.category, vendor: receipt.vendor, status: receipt.status || 'pending', paymentMethod: receipt.paymentMethod, accountId: receipt.accountId, assetAccountId: receipt.assetAccountId, imageUrl: receipt.imageUrl, rawAiData: receipt.rawAiData || {} }) });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.receipt) throw new Error(payload.error || 'Receipt could not be created');
             return { receipt: this.mapReceipt(payload.receipt), error: null };
+=======
+            const { data, error } = await supabase
+                .from('business_receipts')
+                .insert({
+                    tenant_id: tenantId,
+                    receipt_date: receipt.receiptDate || new Date().toISOString().split('T')[0],
+                    description: receipt.description,
+                    amount: receipt.amount,
+                    category: receipt.category,
+                    vendor: receipt.vendor,
+                    status: receipt.status || 'pending',
+                    payment_method: receipt.paymentMethod,
+                    account_id: receipt.accountId,
+                    asset_account_id: receipt.assetAccountId,
+                    image_url: receipt.imageUrl,
+                    raw_ai_data: receipt.rawAiData
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            return { receipt: this.mapReceipt(data), error: null };
+>>>>>>> origin/main
         } catch (err: any) {
             console.error('Error creating receipt:', err);
             return { receipt: null, error: err.message };
         }
     },
 
+<<<<<<< HEAD
     async createSalesReceipt(input: CreateSalesReceiptInput): Promise<{ receipt: any | null; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
@@ -82,11 +129,32 @@ export const receiptService = {
             return { receipt: payload.receipt, error: null };
         } catch (error) {
             return { receipt: null, error: error instanceof Error ? error.message : 'Sales receipt could not be finalized' };
+=======
+    async updateReceipt(id: string, updates: Partial<BusinessReceipt>): Promise<{ receipt: BusinessReceipt | null; error: string | null }> {
+        try {
+            const { data, error } = await supabase
+                .from('business_receipts')
+                .update({
+                    ...updates,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            return { receipt: this.mapReceipt(data), error: null };
+        } catch (err: any) {
+            console.error('Error updating receipt:', err);
+            return { receipt: null, error: err.message };
+>>>>>>> origin/main
         }
     },
 
     async markAsPaid(receiptId: string, assetAccountId: string): Promise<{ success: boolean; error: string | null }> {
         try {
+<<<<<<< HEAD
             const tenantId = this.getTenantId();
             const response = await fetch(`/api/accounting/receipts/${encodeURIComponent(receiptId)}`, {
                 method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -94,6 +162,48 @@ export const receiptService = {
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.receipt) throw new Error(payload.error || 'Expense receipt could not be paid');
+=======
+            const { receipt, error: fetchError } = await this.getReceiptById(receiptId);
+            if (fetchError || !receipt) throw new Error(fetchError || 'Receipt not found');
+
+            if (receipt.status === 'paid') return { success: true, error: null };
+
+            // Create journal entry
+            const { entry, error: jeError } = await journalEntryService.createEntry({
+                entryDate: receipt.receiptDate,
+                description: `Paid: ${receipt.description}`,
+                reference: receipt.vendor || 'Receipt',
+                lines: [
+                    { 
+                        accountId: receipt.accountId || '', // Expense account
+                        debitAmount: receipt.amount, 
+                        creditAmount: 0, 
+                        description: receipt.description 
+                    },
+                    { 
+                        accountId: assetAccountId, // Cash/Bank account
+                        debitAmount: 0, 
+                        creditAmount: receipt.amount, 
+                        description: 'Payment for receipt' 
+                    }
+                ]
+            });
+
+            if (jeError) throw new Error(jeError);
+
+            if (entry) {
+                await journalEntryService.postEntry(entry.id);
+                
+                // Update receipt
+                await this.updateReceipt(receiptId, {
+                    status: 'paid',
+                    paidAt: new Date().toISOString(),
+                    journalEntryId: entry.id,
+                    assetAccountId: assetAccountId
+                });
+            }
+
+>>>>>>> origin/main
             return { success: true, error: null };
         } catch (err: any) {
             console.error('Error marking receipt as paid:', err);
@@ -103,11 +213,22 @@ export const receiptService = {
 
     async getReceiptById(id: string): Promise<{ receipt: BusinessReceipt | null; error: string | null }> {
         try {
+<<<<<<< HEAD
             const tenantId = this.getTenantId();
             const response = await fetch(`/api/accounting/receipts/${encodeURIComponent(id)}?tenantId=${encodeURIComponent(tenantId)}`);
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.receipt) throw new Error(payload.error || 'Expense receipt could not be loaded');
             return { receipt: this.mapReceipt(payload.receipt), error: null };
+=======
+            const { data, error } = await supabase
+                .from('business_receipts')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            return { receipt: this.mapReceipt(data), error: null };
+>>>>>>> origin/main
         } catch (err: any) {
             return { receipt: null, error: err.message };
         }

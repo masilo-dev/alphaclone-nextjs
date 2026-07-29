@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
@@ -10,16 +11,30 @@ const REDIRECT_URI = OAUTH_CALLBACKS.x;
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
+=======
+import { NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+
+const X_CLIENT_ID = process.env.X_CLIENT_ID;
+const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/callback/x`;
+
+export async function GET() {
+>>>>>>> origin/main
     if (!X_CLIENT_ID) {
         return NextResponse.json({ error: 'X_CLIENT_ID not configured' }, { status: 500 });
     }
 
     const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+<<<<<<< HEAD
     const tenantId = req.nextUrl.searchParams.get('tenantId')?.trim() || '';
     let resolvedTenantId = tenantId;
 
@@ -61,10 +76,19 @@ export async function GET(req: NextRequest) {
     // Keep the grant as small as possible for review and user trust.
     // DM scopes are intentionally omitted because the current integration flow
     // only needs posting, reading public data, and refresh token access.
+=======
+    // PKCE implementation
+    // For simplicity in this implementation, we use a random state
+    const state = Math.random().toString(36).substring(7);
+    const codeChallenge = 'challenge'; // In production, generate a real PKCE challenge
+    
+    // Scopes required for read, write, and direct messages
+>>>>>>> origin/main
     const scopes = [
         'tweet.read',
         'tweet.write',
         'users.read',
+<<<<<<< HEAD
         'offline.access',
     ].join(' ');
 
@@ -76,6 +100,21 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.set('state', stateNonce);
     authUrl.searchParams.set('code_challenge', codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
+=======
+        'direct_messages.read',
+        'direct_messages.write',
+        'offline.access' // For refresh token
+    ].join(' ');
+
+    const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
+    authUrl.searchParams.append('response_type', 'code');
+    authUrl.searchParams.append('client_id', X_CLIENT_ID);
+    authUrl.searchParams.append('redirect_uri', REDIRECT_URI);
+    authUrl.searchParams.append('scope', scopes);
+    authUrl.searchParams.append('state', state);
+    authUrl.searchParams.append('code_challenge', codeChallenge);
+    authUrl.searchParams.append('code_challenge_method', 'plain');
+>>>>>>> origin/main
 
     return NextResponse.redirect(authUrl.toString());
 }

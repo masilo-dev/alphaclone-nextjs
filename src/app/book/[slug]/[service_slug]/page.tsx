@@ -142,7 +142,11 @@ export default function BookingPage() {
                 selectedSlot.start,
                 selectedSlot.end,
                 { name: formData.name, email: formData.email, phone: formData.phone, notes: formData.notes },
+<<<<<<< HEAD
                 { turnstileToken: turnstileToken || null, meetingTypeName: service.name }
+=======
+                { turnstileToken: null }
+>>>>>>> origin/main
             );
 
             if (bookingError) throw new Error(bookingError);
@@ -456,6 +460,7 @@ export default function BookingPage() {
                                                     </div>
                                                 </div>
 
+<<<<<<< HEAD
                                                 {turnstileEnabled && (
                                                     <TurnstileWidget
                                                         key={turnstileNonce}
@@ -475,6 +480,12 @@ export default function BookingPage() {
                                                 <button
                                                     type="submit"
                                                     disabled={submitting || (turnstileEnabled && !turnstileToken)}
+=======
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={submitting}
+>>>>>>> origin/main
                                                     className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-950 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                                                 >
                                                     {submitting ? 'Confirming...' : 'Confirm Booking'}

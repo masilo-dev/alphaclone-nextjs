@@ -29,7 +29,12 @@ export async function GET(req: NextRequest) {
 
         const stateNonce = stateRecord.id;
         const clientId = ENV.GOOGLE_CLIENT_ID;
+<<<<<<< HEAD
         const redirectUri = OAUTH_CALLBACKS.googleCalendar;
+=======
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+        const redirectUri = `${appUrl}/api/auth/google/calendar/callback`;
+>>>>>>> origin/main
 
         const scopes = [
             'https://www.googleapis.com/auth/calendar',

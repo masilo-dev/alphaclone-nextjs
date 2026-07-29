@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
+<<<<<<< HEAD
 const PROJECT_TABLE = 'business_projects';
 
 async function queryProjects(supabase: ReturnType<typeof createSupabaseAdminClient>, tenantId: string, status?: string) {
@@ -18,6 +19,8 @@ async function queryProjects(supabase: ReturnType<typeof createSupabaseAdminClie
   return data;
 }
 
+=======
+>>>>>>> origin/main
 // 1. get_projects
 registerTool('projects', {
   name: 'get_projects',
@@ -36,13 +39,29 @@ registerTool('projects', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     return queryProjects(supabase, args.tenant_id, args.status);
+=======
+    let query = supabase
+      .from('projects')
+      .select('*')
+      .eq('tenant_id', args.tenant_id);
+
+    if (args.status) {
+      query = query.eq('status', args.status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+>>>>>>> origin/main
   },
 });
 
 // 2. create_project
 registerTool('projects', {
   name: 'create_project',
+<<<<<<< HEAD
   description: 'Create a new project linked to an optional client.',
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
@@ -51,21 +70,35 @@ registerTool('projects', {
     status: z.string().optional().default('active'),
     description: z.string().optional(),
     due_date: z.string().optional(),
+=======
+  description: 'Create a new project.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid(),
+    name: z.string(),
+    status: z.string().optional().default('active'),
+    description: z.string().optional(),
+>>>>>>> origin/main
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
       name: { type: 'string' },
+<<<<<<< HEAD
       client_id: { type: 'string', format: 'uuid' },
       status: { type: 'string', default: 'active' },
       description: { type: 'string' },
       due_date: { type: 'string', format: 'date-time' },
+=======
+      status: { type: 'string', default: 'active' },
+      description: { type: 'string' },
+>>>>>>> origin/main
     },
     required: ['tenant_id', 'name'],
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     const row = {
       tenant_id: args.tenant_id,
       name: args.name,
@@ -90,6 +123,20 @@ registerTool('projects', {
       if (fbError) throw fbError;
       return fbData;
     }
+=======
+    const { data, error } = await supabase
+      .from('projects')
+      .insert({
+        tenant_id: args.tenant_id,
+        name: args.name,
+        status: args.status,
+        description: args.description || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+>>>>>>> origin/main
     return data;
   },
 });
@@ -105,8 +152,11 @@ registerTool('projects', {
       name: z.string().optional(),
       status: z.string().optional(),
       description: z.string().optional(),
+<<<<<<< HEAD
       client_id: z.string().uuid().optional(),
       due_date: z.string().optional(),
+=======
+>>>>>>> origin/main
     }),
   }),
   jsonSchema: {
@@ -120,8 +170,11 @@ registerTool('projects', {
           name: { type: 'string' },
           status: { type: 'string' },
           description: { type: 'string' },
+<<<<<<< HEAD
           client_id: { type: 'string', format: 'uuid' },
           due_date: { type: 'string', format: 'date-time' },
+=======
+>>>>>>> origin/main
         },
       },
     },
@@ -130,7 +183,11 @@ registerTool('projects', {
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
+<<<<<<< HEAD
       .from(PROJECT_TABLE)
+=======
+      .from('projects')
+>>>>>>> origin/main
       .update({
         ...args.fields,
         updated_at: new Date().toISOString(),
@@ -140,6 +197,7 @@ registerTool('projects', {
       .select()
       .single();
 
+<<<<<<< HEAD
     if (error) {
       const { data: fbData, error: fbError } = await supabase
         .from('projects')
@@ -154,6 +212,9 @@ registerTool('projects', {
       if (fbError) throw fbError;
       return fbData;
     }
+=======
+    if (error) throw error;
+>>>>>>> origin/main
     return data;
   },
 });
@@ -228,6 +289,7 @@ registerTool('projects', {
       .single();
 
     if (error) throw error;
+<<<<<<< HEAD
 
     if (data?.related_to_project) {
       try {
@@ -243,6 +305,8 @@ registerTool('projects', {
       }
     }
 
+=======
+>>>>>>> origin/main
     return data;
   },
 });
@@ -297,6 +361,7 @@ registerTool('projects', {
     return data;
   },
 });
+<<<<<<< HEAD
 
 // 7. get_project_details
 registerTool('projects', {
@@ -363,3 +428,5 @@ registerTool('projects', {
     };
   },
 });
+=======
+>>>>>>> origin/main

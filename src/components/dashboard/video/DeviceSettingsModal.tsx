@@ -72,7 +72,11 @@ export const DeviceSettingsModal: React.FC<DeviceSettingsModalProps> = ({
     };
 
     return (
+<<<<<<< HEAD
         <div className="fixed inset-0 z-[1110] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+=======
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+>>>>>>> origin/main
             <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/50">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">

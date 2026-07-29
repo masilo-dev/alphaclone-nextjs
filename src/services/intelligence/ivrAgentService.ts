@@ -62,7 +62,11 @@ Provide output STRICTLY in JSON format:
     let action = 'Route to general operator.';
 
     try {
+<<<<<<< HEAD
       const response = await generateText(prompt, 500, 'deepseek-chat', tenantId);
+=======
+      const response = await generateText(prompt, 500, 'claude-sonnet-4-6-20260217', tenantId);
+>>>>>>> origin/main
       const text = response.text || '';
       const start = text.indexOf('{');
       const end = text.lastIndexOf('}') + 1;

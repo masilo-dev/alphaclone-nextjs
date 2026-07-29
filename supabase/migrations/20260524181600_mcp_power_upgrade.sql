@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.workspace_files (
   id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id          UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
   user_id            UUID NULL REFERENCES auth.users(id) ON DELETE SET NULL,
+<<<<<<< HEAD
   uploaded_by        UUID NULL REFERENCES auth.users(id) ON DELETE SET NULL,
   anthropic_file_id  TEXT NULL,
   filename           TEXT NOT NULL,
@@ -81,6 +82,11 @@ CREATE TABLE IF NOT EXISTS public.workspace_files (
   file_type          TEXT NOT NULL,
   file_size          BIGINT NOT NULL DEFAULT 0,
   storage_url        TEXT NULL,
+=======
+  anthropic_file_id  TEXT NOT NULL,
+  filename           TEXT NOT NULL,
+  mime_type          TEXT NOT NULL,
+>>>>>>> origin/main
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

@@ -132,6 +132,7 @@ registerTool('documents', {
   },
 });
 
+<<<<<<< HEAD
 registerTool('documents', {
   name: 'document_qa',
   description:
@@ -252,6 +253,8 @@ registerTool('documents', {
   },
 });
 
+=======
+>>>>>>> origin/main
 // ── analyze_workspace_document_url ────────────────────────────────────────────
 registerTool('documents', {
   name: 'analyze_workspace_document_url',
@@ -313,6 +316,7 @@ registerTool('documents', {
     };
   },
 });
+<<<<<<< HEAD
 
 registerTool('documents', {
   name: 'document_url_qa',
@@ -371,3 +375,5 @@ registerTool('documents', {
     };
   },
 });
+=======
+>>>>>>> origin/main

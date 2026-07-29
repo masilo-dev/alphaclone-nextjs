@@ -20,6 +20,10 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { routeAIRequest } from '@/services/aiRouter';
 import { freePlacesService } from '@/services/freePlacesService';
+<<<<<<< HEAD
+=======
+import { ENV } from '@/config/env';
+>>>>>>> origin/main
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -117,9 +121,15 @@ export async function POST(req: Request) {
         if (!placesError && places && places.length > 0) {
             console.log(`[Lead Gen] Found ${places.length} real leads from free sources (capping at ${capBatch})`);
             leads = places.slice(0, capBatch).map((p) => ({
+<<<<<<< HEAD
                 id: crypto.randomUUID(),
                 ...p,
                 estimatedValue: null,
+=======
+                id: Math.random().toString(36).substring(2, 10),
+                ...p,
+                estimatedValue: Math.floor(Math.random() * (50000 - 5000 + 1)) + 5000,
+>>>>>>> origin/main
                 notes: `Real business found via ${p.source}. Matches "${industry}" in "${location}".`,
             }));
             source = 'Free Places Search';

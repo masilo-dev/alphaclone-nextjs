@@ -2,9 +2,13 @@ import { ZohoService } from './ZohoService';
 import { routeAIRequest } from '@/services/aiRouter';
 import { cleanAIJSONResponse } from '@/lib/utils';
 import { ensureFooter, normalizeEmailSubject } from '@/lib/email/emailComposition';
+<<<<<<< HEAD
 import { extractEmailAddress, formatMailFrom } from '@/lib/email/parseEmailHeader';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
 import { isAIProviderUnavailableError } from '@/lib/ai/providerHealth';
+=======
+import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
+>>>>>>> origin/main
 
 export interface ZohoMessage {
     messageId: string;
@@ -47,12 +51,23 @@ export interface ZohoAccount {
     status: string;
 }
 
+<<<<<<< HEAD
+=======
+function extractEmailAddress(input: string): string {
+    const value = String(input || '').trim();
+    const match = value.match(/<([^>]+)>/);
+    if (match?.[1]) return match[1].trim();
+    return value;
+}
+
+>>>>>>> origin/main
 function normalizeReplySubject(subject: string): string {
     const cleaned = normalizeEmailSubject(subject);
     if (!cleaned) return 'Re: Conversation';
     return /^re:/i.test(cleaned) ? cleaned : `Re: ${cleaned}`;
 }
 
+<<<<<<< HEAD
 function autoReplyCooldownDays(): number {
     const parsed = Number(process.env.EMAIL_AUTO_REPLY_COOLDOWN_DAYS || '7');
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 7;
@@ -62,6 +77,8 @@ function normalizeSenderEmail(email: string): string {
     return String(email || '').trim().toLowerCase();
 }
 
+=======
+>>>>>>> origin/main
 export class ZohoMailService extends ZohoService {
     private async ensureAccountId() {
         const accessToken = await this.getValidAccessToken();
@@ -189,6 +206,7 @@ export class ZohoMailService extends ZohoService {
         }
     }
 
+<<<<<<< HEAD
     async getAttachmentInfo(messageId: string, folderId: string) {
         const { base } = await this.getMailBase();
         const data = await this.callZohoAPI(`${base}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/attachmentinfo?includeInline=false`);
@@ -205,6 +223,8 @@ export class ZohoMailService extends ZohoService {
         return this.proxyImage(`/api/accounts/${encodeURIComponent(accountId)}/folders/${encodeURIComponent(folderId)}/messages/${encodeURIComponent(messageId)}/attachments/${encodeURIComponent(attachmentId)}`);
     }
 
+=======
+>>>>>>> origin/main
     async getFullMessagePayload(message: any, folderId?: string): Promise<ZohoFullMessage> {
         const resolvedFolderId = folderId || message.folderId || message.folder_id || '';
         const id = String(message.messageId || message.id || message.message_id || '');
@@ -225,11 +245,15 @@ export class ZohoMailService extends ZohoService {
             id,
             thread_id: String(message.threadId || message.thread_id || message.conversationId || id || '') || null,
             subject: String(message.subject || ''),
+<<<<<<< HEAD
             from: formatMailFrom({
                 name: String(message.sender || ''),
                 address: String(message.fromAddress || message.from || ''),
                 raw: String(message.sender || message.fromAddress || message.from || ''),
             }),
+=======
+            from: String(message.sender || message.fromAddress || message.from || ''),
+>>>>>>> origin/main
             to: String(message.toAddress || message.to || '').split(',').map((item) => item.trim()).filter(Boolean),
             cc: String(message.ccAddress || message.cc || '').split(',').map((item) => item.trim()).filter(Boolean),
             date: String(message.receivedTime || message.sentDateInGMT || message.date || message.createdTime || '') || null,
@@ -315,7 +339,11 @@ export class ZohoMailService extends ZohoService {
 
         // Log the outbound email in unified_messages for contact/CRM sync
         try {
+<<<<<<< HEAD
             const tenantId = this.tenantId;
+=======
+            const tenantId = await this.resolveTenantIdForIntegration();
+>>>>>>> origin/main
             if (tenantId) {
                 const supabase = this.getSupabaseClient();
                 const { contact_id, company_id } = await resolveContactByEmailAdmin(supabase, tenantId, toAddress);
@@ -344,6 +372,7 @@ export class ZohoMailService extends ZohoService {
         return result;
     }
 
+<<<<<<< HEAD
     async saveDraft(params: {
         fromAddress?: string;
         toAddress?: string;
@@ -378,6 +407,8 @@ export class ZohoMailService extends ZohoService {
         });
     }
 
+=======
+>>>>>>> origin/main
     async replyToMessage(params: {
         messageId: string;
         bodyHtml: string;
@@ -631,6 +662,43 @@ export class ZohoMailService extends ZohoService {
             } catch {
             }
 
+            try {
+                const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+                const { captureUnifiedMessageFromWebhook } = await import('@/services/intelligence/signalCaptureAdminService');
+                const admin = createSupabaseAdminClient();
+                const { data: zohoIntegration } = await admin
+                    .from('integrations')
+                    .select('tenant_id, id')
+                    .eq('user_id', this.userId)
+                    .eq('type', 'zoho')
+                    .eq('enabled', true)
+                    .order('updated_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (zohoIntegration?.tenant_id) {
+                    await captureUnifiedMessageFromWebhook({
+                        supabase: admin as any,
+                        tenantId: zohoIntegration.tenant_id,
+                        source: 'zoho',
+                        channel: 'email',
+                        direction: 'inbound',
+                        externalId: messageId,
+                        threadId: messageId,
+                        from: sender,
+                        to: `zoho:${this.userId}`,
+                        subject,
+                        text: content,
+                        html: null,
+                        receivedAt: new Date().toISOString(),
+                        metadata: {
+                            folderId,
+                            integrationId: zohoIntegration.id,
+                        },
+                    });
+                }
+            } catch {
+            }
+
             const triagePrompt = `
 Analyze for AlphaClone Systems:
 Subject: ${subject}
@@ -688,6 +756,7 @@ Rules:
                 }).select().single();
 
                 if (log) {
+<<<<<<< HEAD
                     try {
                         await this.saveDraft({
                             toAddress: normalizedSenderEmail,
@@ -725,6 +794,23 @@ Rules:
                             .update({ triage_status: 'scheduled' })
                             .eq('id', log.id);
                     }
+=======
+                    const { Client } = await import('@upstash/qstash');
+                    const qstash = new Client({ token: process.env.QSTASH_TOKEN || '' });
+                    await qstash.publishJSON({
+                        url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/zoho/process-reply`,
+                        body: {
+                            userId: this.userId,
+                            messageId,
+                            folderId,
+                            senderEmail: extractEmailAddress(sender),
+                            originalSubject: normalizeReplySubject(subject),
+                            replyText: ensureFooter(String(data.draft_reply || '').trim()),
+                            logId: log.id,
+                        },
+                        delay: 600 // 10 minute delay
+                    });
+>>>>>>> origin/main
                 }
             } else {
                 await supabase.from('zoho_auto_responder_logs').insert({

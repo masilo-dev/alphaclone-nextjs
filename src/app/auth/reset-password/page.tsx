@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input, Button } from '@/components/ui/UIComponents';
 import { LOGO_URL } from '@/constants';
+<<<<<<< HEAD
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
+=======
+import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+>>>>>>> origin/main
 import toast from 'react-hot-toast';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabase';
@@ -204,9 +208,15 @@ export default function ResetPasswordPage() {
                         <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-3 space-y-2">
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Security Requirements</p>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+<<<<<<< HEAD
                                 <div className={`flex items-center gap-2 text-xs ${password.length >= 12 ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${password.length >= 12 ? 'bg-teal-400' : 'bg-slate-500'}`} />
                                     12+ Characters
+=======
+                                <div className={`flex items-center gap-2 text-xs ${password.length >= 8 ? 'text-teal-400' : 'text-slate-500'}`}>
+                                    <div className={`w-1 h-1 rounded-full ${password.length >= 8 ? 'bg-teal-400' : 'bg-slate-500'}`} />
+                                    8+ Characters
+>>>>>>> origin/main
                                 </div>
                                 <div className={`flex items-center gap-2 text-xs ${/[A-Z]/.test(password) ? 'text-teal-400' : 'text-slate-500'}`}>
                                     <div className={`w-1 h-1 rounded-full ${/[A-Z]/.test(password) ? 'bg-teal-400' : 'bg-slate-500'}`} />

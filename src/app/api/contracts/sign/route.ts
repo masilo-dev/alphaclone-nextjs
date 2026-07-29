@@ -69,6 +69,68 @@ export async function GET(req: NextRequest) {
     }
 }
 
+function getClientIpAddress(req: NextRequest): string {
+    const forwarded = req.headers.get('x-forwarded-for');
+    if (forwarded) {
+        const firstIp = forwarded.split(',')[0]?.trim();
+        if (firstIp) return firstIp;
+    }
+
+    const realIp = req.headers.get('x-real-ip')?.trim();
+    if (realIp) return realIp;
+
+    return '127.0.0.1';
+}
+
+export async function GET(req: NextRequest) {
+    try {
+        const token = req.nextUrl.searchParams.get('token');
+        if (!token) {
+            return NextResponse.json({ error: 'Signing token is required' }, { status: 400 });
+        }
+
+        const admin = createSupabaseAdminClient();
+        const { data: signingToken, error: tokenError } = await admin
+            .from('contract_signing_tokens')
+            .select('tenant_id, contract_id, signer_email, signer_role, expires_at, used_at, revoked_at')
+            .eq('token', token)
+            .is('revoked_at', null)
+            .single();
+
+        if (tokenError || !signingToken) {
+            return NextResponse.json({ error: 'Invalid signing link' }, { status: 404 });
+        }
+        if (signingToken.used_at) {
+            return NextResponse.json({ error: 'This signing link has already been used' }, { status: 410 });
+        }
+        if (new Date(signingToken.expires_at).getTime() < Date.now()) {
+            return NextResponse.json({ error: 'This signing link has expired' }, { status: 410 });
+        }
+
+        const { data: contract, error: contractError } = await admin
+            .from('contracts')
+            .select('id, title, content, status, client_signed_at, tenant:tenants(name)')
+            .eq('id', signingToken.contract_id)
+            .eq('tenant_id', signingToken.tenant_id)
+            .single();
+
+        if (contractError || !contract) {
+            return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            token,
+            signer: { email: signingToken.signer_email, role: signingToken.signer_role },
+            tokenStatus: { expiresAt: signingToken.expires_at, serverTime: new Date().toISOString() },
+            contract,
+        });
+    } catch (error: any) {
+        console.error('Contract public fetch error:', error);
+        return clientErrorResponse(error, { request: req, scope: 'contracts/sign.GET' });
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
@@ -123,6 +185,7 @@ export async function POST(req: NextRequest) {
             });
         }
 
+<<<<<<< HEAD
         // EMIT AUTOMATION EVENT + notify owner
         if (updatedContract) {
             const origin = req.nextUrl.origin;
@@ -200,6 +263,17 @@ export async function POST(req: NextRequest) {
                     status: updatedContract.status,
                 }).catch((err) => console.error('Contract audit trail PDF failed:', err));
             }
+=======
+        // EMIT AUTOMATION EVENT
+        if (updatedContract && updatedContract.status === 'fully_signed') {
+            const { emitBusinessEvent } = await import('@/lib/automation/emit-event');
+            await emitBusinessEvent(updatedContract.tenant_id, 'contract_signed', {
+                contractId: updatedContract.id,
+                title: updatedContract.title,
+                clientId: updatedContract.client_id,
+                projectId: updatedContract.project_id
+            }).catch(err => console.error('Failed to emit contract_signed event:', err));
+>>>>>>> origin/main
         }
 
         return NextResponse.json({ success: true, contract: updatedContract });

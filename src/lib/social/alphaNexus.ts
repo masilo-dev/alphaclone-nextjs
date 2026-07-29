@@ -1,5 +1,8 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { generateText } from '@/services/unifiedAIService';
+=======
+>>>>>>> origin/main
 
 /**
  * AlphaClone Nexus Intelligence Core
@@ -20,6 +23,7 @@ export interface NexusResult {
     refinedContent?: string;
 }
 
+<<<<<<< HEAD
 function asResultRecord(value: unknown): Record<string, any> {
     return value && typeof value === 'object' ? value as Record<string, any> : {};
 }
@@ -35,6 +39,8 @@ function resultNeedsAction(value: unknown): boolean {
     );
 }
 
+=======
+>>>>>>> origin/main
 export class AlphaNexus {
     private tenantId: string;
     private admin = createSupabaseAdminClient();
@@ -107,9 +113,12 @@ export class AlphaNexus {
     }
 
     private async handleInvoiceChasing(_params: Record<string, unknown>) {
+<<<<<<< HEAD
         const { runInvoiceChasingBranches } = await import('@/lib/automation/workflowBranching');
         const branchResult = await runInvoiceChasingBranches(this.tenantId);
 
+=======
+>>>>>>> origin/main
         const now = new Date().toISOString().split('T')[0];
         const { data: overdue } = await this.admin
             .from('business_invoices')
@@ -133,8 +142,12 @@ export class AlphaNexus {
                 total: inv.total,
                 days_overdue: Math.floor((Date.now() - new Date(inv.due_date).getTime()) / 86400000),
             })),
+<<<<<<< HEAD
             branches_executed: branchResult.actions,
             message: `${overdue?.length ?? 0} overdue invoice(s) totalling $${total.toFixed(2)}. Branched actions: ${branchResult.actions.length}.`,
+=======
+            message: `${overdue?.length ?? 0} overdue invoice(s) totalling $${total.toFixed(2)}. Use send_invoice tool to send reminders.`,
+>>>>>>> origin/main
             action_required: (overdue?.length ?? 0) > 0,
         };
     }
@@ -242,6 +255,7 @@ export class AlphaNexus {
                                 });
 
                                 // Log to outreach table
+<<<<<<< HEAD
                                 try {
                                     await this.admin.from('lead_outreach_log').insert({
                                         tenant_id: this.tenantId,
@@ -256,6 +270,18 @@ export class AlphaNexus {
                                 } catch {
                                     /* non-fatal log error */
                                 }
+=======
+                                await this.admin.from('lead_outreach_log').insert({
+                                    tenant_id: this.tenantId,
+                                    user_id: userId,
+                                    lead_name: target.name,
+                                    lead_email: target.email,
+                                    subject: `Quick question about ${target.name}`,
+                                    body_html: emailHtml,
+                                    status: 'sent',
+                                    provider: providerConfig.provider,
+                                }).catch(() => {/* non-fatal log error */});
+>>>>>>> origin/main
 
                                 emailsSent++;
                             } catch (err: any) {
@@ -576,6 +602,7 @@ export class AlphaNexus {
             .eq('tenant_id', this.tenantId);
 
         return {
+<<<<<<< HEAD
             systemAction: 'Nexus reviewed the configured social watchlist.',
             suggestedLeads: (watchlist || []).map((item: any) => ({
                 ...item,
@@ -583,6 +610,13 @@ export class AlphaNexus {
                 suggestedAction: item.last_scraped_at
                     ? `Review the latest captured activity for ${item.name || item.platform || 'this source'} before engaging.`
                     : `Refresh ${item.name || item.platform || 'this source'} to collect current activity before engaging.`,
+=======
+            systemAction: 'Nexus Scanning: High-intent signals detected...',
+            suggestedLeads: (watchlist || []).map((item: any) => ({
+                ...item,
+                relevanceScore: Math.floor(Math.random() * 40) + 60,
+                suggestedAction: 'Engage with recent post about "AI agents"'
+>>>>>>> origin/main
             })).sort((a: any, b: any) => b.relevanceScore - a.relevanceScore)
         };
     }
@@ -592,6 +626,10 @@ export class AlphaNexus {
      * Triggers multiple Nexus systems based on a high-level business objective.
      */
     async strategicOrchestrator(objective: string) {
+<<<<<<< HEAD
+=======
+        const admin = this.admin;
+>>>>>>> origin/main
         const tenantId = this.tenantId;
 
         // In a real system, we might use LLM to decide which systems to trigger.
@@ -611,6 +649,7 @@ export class AlphaNexus {
         if (objLower.includes('brand') || objLower.includes('social') || objLower.includes('content')) {
             systemsToTrigger.push('content_synthesis', 'design_audit');
         }
+<<<<<<< HEAD
         if (objLower.includes('quote') || objLower.includes('proposal') || objLower.includes('contract')) {
             systemsToTrigger.push('contract_drafter');
         }
@@ -620,6 +659,8 @@ export class AlphaNexus {
         if (objLower.includes('client') || objLower.includes('customer')) {
             systemsToTrigger.push('onboarding_flow');
         }
+=======
+>>>>>>> origin/main
 
         // Default to a general health check if no keywords match
         if (systemsToTrigger.length === 0) {
@@ -635,6 +676,7 @@ export class AlphaNexus {
             }
         }
 
+<<<<<<< HEAD
         const executedSystems = Object.keys(results);
         const failedSystems = executedSystems.filter((system) => asResultRecord(results[system]).status === 'error');
         const actionRequiredSystems = executedSystems.filter((system) => resultNeedsAction(results[system]));
@@ -661,6 +703,14 @@ export class AlphaNexus {
                     ? `Nexus Orchestrator checked ${executedSystems.length} business systems for the objective: "${objective}".`
                     : `Nexus Orchestrator checked ${executedSystems.length} business systems for the objective: "${objective}", but follow-up is still required before this can be treated as fully complete.`,
             reliability_note: 'This result reflects verified system checks and queued work status. External networks such as Facebook, LinkedIn, and email providers can still delay visibility or insights after a successful local publish.',
+=======
+        return {
+            objective,
+            orchestration_status: 'complete',
+            timestamp: new Date().toISOString(),
+            executed_systems: results,
+            strategic_summary: `Nexus Orchestrator successfully aligned ${Object.keys(results).length} business systems with the objective: "${objective}".`
+>>>>>>> origin/main
         };
     }
 
@@ -681,6 +731,7 @@ export class AlphaNexus {
         };
     }
 
+<<<<<<< HEAD
     async evaluateInteraction(content: string, platform: string) {
         const prompt = `Evaluate this ${platform || 'social'} content for clarity, specificity, audience value, and call-to-action quality. Return JSON only: {"score":0-100,"feedback":"specific evidence-based feedback","refinedContent":"a revised version or null"}. Do not invent facts. Content: ${JSON.stringify(content)}`;
         const response = await generateText(prompt, 700, 'deepseek-chat', this.tenantId);
@@ -692,5 +743,17 @@ export class AlphaNexus {
         const score = Math.max(0, Math.min(100, Number(parsed.score)));
         if (!Number.isFinite(score) || typeof parsed.feedback !== 'string') throw new Error('Content evaluation returned invalid fields');
         return { success: score >= 80, score: Math.round(score), feedback: parsed.feedback, refinedContent: typeof parsed.refinedContent === 'string' ? parsed.refinedContent : undefined };
+=======
+    async evaluateInteraction(content: string, _platform: string) {
+        const score = Math.floor(Math.random() * 30) + 70;
+        return {
+            success: score > 80,
+            score,
+            feedback: score > 80
+                ? 'Optimal alignment with AlphaClone brand voice.'
+                : 'System suggests adding a more specific call to action.',
+            refinedContent: score < 85 ? `${content}\n\nWhat are your thoughts on this?` : undefined
+        };
+>>>>>>> origin/main
     }
 }

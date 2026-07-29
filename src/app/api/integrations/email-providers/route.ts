@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { integrationEmailProviderDeleteSchema, integrationEmailProviderSchema } from '@/schemas/validation';
+<<<<<<< HEAD
 import { maskIntegrationConfig } from '@/lib/security/productionGuard';
 import { encryptIntegrationConfig } from '@/lib/integration/integrationTokenCrypto';
+=======
+>>>>>>> origin/main
 
 type ProviderType = 'sendgrid' | 'resend' | 'brevo' | 'custom_smtp';
 
@@ -36,7 +39,11 @@ export async function GET(request: NextRequest) {
     }
 
     const tenantCtx = await requireTenantAccess(tenantId);
+<<<<<<< HEAD
     const supabase = tenantCtx.admin;
+=======
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { data, error } = await supabase
       .from('integrations')
@@ -55,7 +62,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       connected: !!data?.enabled,
+<<<<<<< HEAD
       config: maskIntegrationConfig((data?.config || null) as Record<string, unknown> | null),
+=======
+      config: data?.config || null,
+>>>>>>> origin/main
       webhookUrl: webhookToken ? getWebhookUrl(provider, webhookToken) : '',
     });
   } catch (error) {
@@ -87,7 +98,11 @@ export async function POST(request: NextRequest) {
     } = parsed.data as any;
 
     const tenantCtx = await requireTenantAccess(tenantId);
+<<<<<<< HEAD
     const supabase = tenantCtx.admin;
+=======
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { data: existing } = await supabase
       .from('integrations')
@@ -100,7 +115,17 @@ export async function POST(request: NextRequest) {
     const existingConfig = (existing?.config || {}) as Record<string, unknown>;
     const webhookToken = String(existingConfig.webhookToken || createWebhookToken());
 
+<<<<<<< HEAD
     const encryptedConfig = await encryptIntegrationConfig({
+=======
+    const payload = {
+      tenant_id: tenantId,
+      user_id: tenantCtx.user.id,
+      type: provider,
+      name: getProviderName(provider),
+      enabled: true,
+      config: {
+>>>>>>> origin/main
         ...existingConfig,
         apiKey,
         api_key: apiKey,
@@ -119,6 +144,7 @@ export async function POST(request: NextRequest) {
           imapUser,
           imapPass
         } : {})
+<<<<<<< HEAD
       });
 
     const payload = {
@@ -128,6 +154,9 @@ export async function POST(request: NextRequest) {
       name: getProviderName(provider),
       enabled: true,
       config: encryptedConfig,
+=======
+      },
+>>>>>>> origin/main
     };
 
     const firstTry = await supabase
@@ -164,7 +193,11 @@ export async function DELETE(request: NextRequest) {
     const provider = parsed.data.provider;
 
     const tenantCtx = await requireTenantAccess(tenantId);
+<<<<<<< HEAD
     const supabase = tenantCtx.admin;
+=======
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     const { error } = await supabase
       .from('integrations')

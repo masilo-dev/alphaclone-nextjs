@@ -5,7 +5,10 @@ import { fileUploadService } from './fileUploadService';
 import { UnifiedCRMService } from './crm/UnifiedCRMService';
 import { requestCrmBridgeSync } from '../lib/crm/crmBridgeClient';
 import { assertLeadStageTransition } from '../lib/stageProgression';
+<<<<<<< HEAD
 import { isTerminalLeadStage, normalizeLeadPipelineStage } from '../lib/crmPipelineStages';
+=======
+>>>>>>> origin/main
 import { intelligenceScoringService } from './intelligence/intelligenceScoringService';
 
 type LeadMetadata = Record<string, any>;
@@ -169,7 +172,11 @@ function normalizeLeadRecord(l: any): Lead {
         email: l.email,
         website: l.website,
         source: l.source,
+<<<<<<< HEAD
         stage: normalizeLeadPipelineStage(l.stage),
+=======
+        stage: l.stage,
+>>>>>>> origin/main
         value: l.value,
         notes: l.notes,
         created_at: l.created_at,
@@ -199,6 +206,7 @@ function normalizeLeadRecord(l: any): Lead {
     };
 }
 
+<<<<<<< HEAD
 function appendLeadStageMetadata(
     metadata: LeadMetadata,
     fromStage: string,
@@ -222,6 +230,8 @@ function appendLeadStageMetadata(
     return nextMeta;
 }
 
+=======
+>>>>>>> origin/main
 export const leadService = {
     /**
      * Get tenant ID with better error handling
@@ -279,9 +289,13 @@ export const leadService = {
 
             if (error) throw error;
 
+<<<<<<< HEAD
             const leads: Lead[] = (data || [])
                 .map(normalizeLeadRecord)
                 .filter((lead: Lead) => !isTerminalLeadStage(lead.stage));
+=======
+            const leads: Lead[] = (data || []).map(normalizeLeadRecord);
+>>>>>>> origin/main
 
             return { leads, error: null };
         } catch (err) {
@@ -531,6 +545,10 @@ export const leadService = {
         if (updates.sdrInsight !== undefined) dbPayload.sdr_insight = updates.sdrInsight;
         if (updates.socialLinks !== undefined) dbPayload.social_links = updates.socialLinks;
         if (updates.metadata !== undefined) dbPayload.metadata = updates.metadata;
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
         const shouldRecomputeIntelligence = [
             updates.industry,
             updates.email,
@@ -774,6 +792,7 @@ export const leadService = {
             const phoneCandidates = uniqueStrings([lead.phone]);
             const techStack = uniqueStrings(Array.isArray(lead.tech_stack) ? lead.tech_stack : []);
             const enrichmentSources: string[] = [];
+<<<<<<< HEAD
 
             if (lead.website) {
                 try {
@@ -938,6 +957,128 @@ Write in plain professional text. No markdown.`;
                 });
             }
 
+=======
+
+            if (lead.website) {
+                try {
+                    const response = await fetch('/api/scraper/deep-crawl', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: lead.website, usePlaywright: true })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('deep-crawl');
+                        uniqueStrings(data.emails || []).forEach((email) => {
+                            discoveredEmails.push({ email, source: 'deep-crawl', confidence: 78, verified: false });
+                        });
+                        if (data.phone) phoneCandidates.push(String(data.phone).trim());
+                        Object.assign(socialLinks, normalizeSocialLinks(data.social_links));
+                        verificationNotes.push(`Deep crawl found ${Array.isArray(data.emails) ? data.emails.length : 0} emails`);
+                    }
+                } catch (crawlError) {
+                    console.warn('[LeadService] Deep crawl skipped:', crawlError);
+                }
+            }
+
+            if (domain) {
+                try {
+                    const response = await fetch('/api/scraper/email-discovery', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            domain,
+                            company_name: lead.business_name,
+                            methods: ['dns', 'whois', 'github', 'website', 'linkedin'],
+                            verify: true
+                        })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('email-discovery');
+                        for (const item of Array.isArray(data.emails) ? data.emails : []) {
+                            const email = String(item?.email || '').trim();
+                            if (!email) continue;
+                            discoveredEmails.push({
+                                email,
+                                source: String(item?.source || 'email-discovery'),
+                                confidence: Number(item?.confidence || 0),
+                                verified: Boolean(item?.verified)
+                            });
+                        }
+                        verificationNotes.push(`Email discovery found ${Array.isArray(data.emails) ? data.emails.length : 0} candidates`);
+                    }
+                } catch (emailError) {
+                    console.warn('[LeadService] Email discovery skipped:', emailError);
+                }
+
+                try {
+                    const response = await fetch('/api/scraper/affordable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'enrich_lead',
+                            domain,
+                            tenant_id: this.getTenantId()
+                        })
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (response.ok && data?.success) {
+                        enrichmentSources.push('affordable-enrichment');
+                        uniqueStrings(data?.technology?.technologies || []).forEach((item) => techStack.push(item));
+                        for (const item of Array.isArray(data?.emails) ? data.emails : []) {
+                            const email = String(item?.email || '').trim();
+                            if (!email) continue;
+                            discoveredEmails.push({
+                                email,
+                                source: 'hunter',
+                                confidence: Number(item?.score || 0),
+                                verified: Boolean(item?.valid)
+                            });
+                        }
+                        if (data?.technology?.company_size) {
+                            verificationNotes.push(`BuiltWith company size: ${data.technology.company_size}`);
+                        }
+                    }
+                } catch (affordableError) {
+                    console.warn('[LeadService] Affordable enrichment skipped:', affordableError);
+                }
+            }
+
+            const rankedEmails = discoveredEmails
+                .filter((item) => item.email.includes('@'))
+                .sort((a, b) => {
+                    if (a.verified !== b.verified) return a.verified ? -1 : 1;
+                    return b.confidence - a.confidence;
+                });
+            const primaryEmail = uniqueStrings([lead.email, rankedEmails[0]?.email])[0] || undefined;
+            const primaryPhone = uniqueStrings([lead.phone, ...phoneCandidates])[0] || undefined;
+            const mergedMetadata = {
+                ...existingMetadata,
+                enrichment: {
+                    ...(coerceMetadata(existingMetadata.enrichment)),
+                    lastEnrichedAt: new Date().toISOString(),
+                    domain,
+                    sources: uniqueStrings([...(Array.isArray(existingMetadata.enrichment?.sources) ? existingMetadata.enrichment.sources : []), ...enrichmentSources]),
+                    discoveredEmails: rankedEmails.slice(0, 10),
+                    discoveredPhones: uniqueStrings(phoneCandidates).slice(0, 5),
+                    socialLinks,
+                    techStack: uniqueStrings(techStack).slice(0, 20),
+                }
+            };
+
+            const { enrichLeadData } = await import('./unifiedAIService');
+            const intelligence = await enrichLeadData({
+                businessName: lead.business_name || lead.name,
+                industry: lead.industry,
+                location: lead.location || lead.city,
+                website: lead.website,
+                knownEmails: uniqueStrings([lead.email, ...rankedEmails.map((item) => item.email)]).slice(0, 5),
+                socialLinks,
+                techStack: uniqueStrings(techStack).slice(0, 20)
+            });
+
+>>>>>>> origin/main
             const updatePayload: Record<string, unknown> = {
                 notes: intelligence,
                 email: primaryEmail,
@@ -1121,12 +1262,17 @@ Write in plain professional text. No markdown.`;
         tone: string;
         customContext: string;
         deliveryProvider?: string;
+<<<<<<< HEAD
         source?: 'leads' | 'clients';
     }): Promise<{ success: boolean; error: string | null; sent?: number; total?: number }> {
+=======
+    }): Promise<{ success: boolean; error: string | null }> {
+>>>>>>> origin/main
         try {
             const tenantId = this.getTenantId();
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Authentication required');
+<<<<<<< HEAD
             if (!options.leadIds.length) throw new Error('No recipients selected');
 
             type Recipient = { id: string; businessName: string; email?: string; industry?: string; phone?: string; website?: string; location?: string };
@@ -1261,6 +1407,41 @@ Write in plain professional text. No markdown.`;
             }
 
             return { success: true, error: null, sent, total: options.leadIds.length };
+=======
+
+            // 1. Fire-and-forget MCP call
+            // We use the same fetch pattern as deal intelligence to avoid blocking
+            void fetch('/api/mcp-server', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    method: 'call_tool',
+                    params: {
+                        name: 'send_batch_outreach',
+                        arguments: {
+                            tenant_id: tenantId,
+                            lead_ids: options.leadIds,
+                            tone: options.tone,
+                            custom_context: options.customContext,
+                            delivery_provider: options.deliveryProvider || 'sendgrid'
+                        }
+                    }
+                })
+            }).catch(err => console.error('[LeadService] Batch outreach background trigger failed:', err));
+
+            // 2. Update local metadata for visual feedback (last_contacted_at)
+            const now = new Date().toISOString();
+            await Promise.all(options.leadIds.map(id => 
+                this.getLeadById(id).then(({ lead }) => {
+                    if (lead) {
+                        const metadata = { ...lead.metadata, last_contacted_at: now };
+                        return this.updateLead(id, { metadata });
+                    }
+                })
+            ));
+
+            return { success: true, error: null };
+>>>>>>> origin/main
         } catch (err: any) {
             console.error('Error in sendBatchOutreach:', err);
             return { success: false, error: err.message };

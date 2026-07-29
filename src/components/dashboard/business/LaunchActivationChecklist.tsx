@@ -14,7 +14,11 @@ type ChecklistItem = {
 
 const CHECKLIST_ITEMS: ChecklistItem[] = [
   { id: 'integration_connected', label: 'Connect one channel', href: '/dashboard/business/social' },
+<<<<<<< HEAD
   { id: 'first_lead_found', label: 'Find first lead', href: '/dashboard/leads/campaigns' },
+=======
+  { id: 'first_lead_found', label: 'Find first lead', href: '/dashboard/sales-agent?tab=finder' },
+>>>>>>> origin/main
   { id: 'first_contact_captured', label: 'Capture first contact', href: '/dashboard/contacts' },
   { id: 'first_deal_created', label: 'Create first deal', href: '/dashboard/deals' },
   { id: 'first_post_scheduled', label: 'Schedule first post', href: '/dashboard/business/social' },

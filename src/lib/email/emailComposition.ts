@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { COMPANY_LEGAL, formatLegalAddress } from '@/lib/seo/siteEntity';
 
 const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [
@@ -35,6 +36,9 @@ const FOOTER_MARKERS = [
   'Unsubscribe',
   COMPANY_LEGAL.legalName,
 ];
+=======
+const DEFAULT_SYSTEM_FOOTER_LINES: string[] = [];
+>>>>>>> origin/main
 
 export function normalizeEmailSubject(subject: string): string {
   return String(subject || '').trim().replace(/\s+/g, ' ');
@@ -48,6 +52,7 @@ export function getSystemFooter(): string {
   return DEFAULT_SYSTEM_FOOTER_LINES.join('\n');
 }
 
+<<<<<<< HEAD
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -172,3 +177,14 @@ export function ensureFooter(content: string, ctx?: FooterContext): string {
 
   return `${body}\n\n${footer}`;
 }
+=======
+export function ensureFooter(content: string): string {
+  const body = String(content || '').trim();
+  const footer = getSystemFooter().trim();
+  if (!footer) return body;
+  if (!body) return footer;
+  if (body.includes(footer)) return body;
+  return `${body}\n\n${footer}`;
+}
+
+>>>>>>> origin/main

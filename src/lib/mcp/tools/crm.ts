@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { registerTool } from '../tool-registry';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { getUnifiedContacts } from '@/lib/crm/unifiedContacts';
 
 // Helper to split name into first/last
@@ -13,6 +14,8 @@ function splitName(fullName: string): { first_name: string; last_name: string } 
   const first_name = parts.join(' ');
   return { first_name, last_name };
 }
+=======
+>>>>>>> origin/main
 
 // 1. get_contacts
 registerTool('crm', {
@@ -36,12 +39,32 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     const contacts = await getUnifiedContacts(supabase, args.tenant_id, {
       limit: args.limit,
       search: args.search,
       status: args.status,
     });
     return contacts;
+=======
+    let query = supabase
+      .from('crm_contacts')
+      .select('*')
+      .eq('tenant_id', args.tenant_id)
+      .is('deleted_at', null)
+      .limit(args.limit);
+
+    if (args.status) {
+      query = query.eq('status', args.status);
+    }
+    if (args.search) {
+      query = query.or(`name.ilike.%${args.search}%,email.ilike.%${args.search}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+>>>>>>> origin/main
   },
 });
 
@@ -61,7 +84,11 @@ registerTool('crm', {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
+<<<<<<< HEAD
       name: { type: 'string', description: 'Full name (will be split into first_name and last_name)' },
+=======
+      name: { type: 'string' },
+>>>>>>> origin/main
       email: { type: 'string', format: 'email' },
       phone: { type: 'string' },
       company: { type: 'string' },
@@ -71,6 +98,7 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     const { first_name, last_name } = splitName(args.name);
     
     const { data, error } = await supabase
@@ -83,11 +111,23 @@ registerTool('crm', {
         phone: args.phone || null,
         // company field doesn't exist in contacts table - store in metadata if needed
         status: args.status || 'lead',
+=======
+    const { data, error } = await supabase
+      .from('crm_contacts')
+      .insert({
+        tenant_id: args.tenant_id,
+        name: args.name,
+        email: args.email,
+        phone: args.phone || null,
+        company: args.company || null,
+        status: args.status,
+>>>>>>> origin/main
       })
       .select()
       .single();
 
     if (error) throw error;
+<<<<<<< HEAD
 
     if (args.email) {
       const { error: syncErr } = await supabase.from('business_clients').insert({
@@ -105,6 +145,8 @@ registerTool('crm', {
       }
     }
 
+=======
+>>>>>>> origin/main
     return data;
   },
 });
@@ -132,7 +174,11 @@ registerTool('crm', {
       fields: {
         type: 'object',
         properties: {
+<<<<<<< HEAD
           name: { type: 'string', description: 'Full name (will be split into first_name and last_name)' },
+=======
+          name: { type: 'string' },
+>>>>>>> origin/main
           email: { type: 'string', format: 'email' },
           phone: { type: 'string' },
           company: { type: 'string' },
@@ -144,6 +190,7 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     
     // Build update object, handling name splitting
     const updateData: Record<string, unknown> = {
@@ -163,6 +210,14 @@ registerTool('crm', {
     const { data, error } = await supabase
       .from('contacts')
       .update(updateData)
+=======
+    const { data, error } = await supabase
+      .from('crm_contacts')
+      .update({
+        ...args.fields,
+        updated_at: new Date().toISOString(),
+      })
+>>>>>>> origin/main
       .eq('id', args.contact_id)
       .eq('tenant_id', args.tenant_id)
       .select()
@@ -173,10 +228,17 @@ registerTool('crm', {
   },
 });
 
+<<<<<<< HEAD
 // 4. delete_contact (soft delete — sets deleted_at + archives linked client)
 registerTool('crm', {
   name: 'delete_contact',
   description: 'Soft delete a contact (sets deleted_at and archives linked business client).',
+=======
+// 4. delete_contact
+registerTool('crm', {
+  name: 'delete_contact',
+  description: 'Soft delete a contact.',
+>>>>>>> origin/main
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     contact_id: z.string().uuid(),
@@ -191,6 +253,7 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     const { softDeleteContactById } = await import('@/lib/crm/softDeleteContact');
     const result = await softDeleteContactById(supabase, args.tenant_id, args.contact_id);
     if (result.error) throw new Error(result.error);
@@ -202,6 +265,27 @@ registerTool('crm', {
 registerTool('crm', {
   name: 'get_contact_activity',
   description: 'Retrieve activity logs for a specific contact (maps to contact interactions).',
+=======
+    const { data, error } = await supabase
+      .from('crm_contacts')
+      .update({
+        deleted_at: new Date().toISOString(),
+      })
+      .eq('id', args.contact_id)
+      .eq('tenant_id', args.tenant_id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, message: `Contact ${args.contact_id} soft deleted.` };
+  },
+});
+
+// 5. get_contact_activity
+registerTool('crm', {
+  name: 'get_contact_activity',
+  description: 'Retrieve activity logs for a specific contact.',
+>>>>>>> origin/main
   inputSchema: z.object({
     tenant_id: z.string().uuid(),
     contact_id: z.string().uuid(),
@@ -216,6 +300,7 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
 
     const { data: activities, error: actErr } = await supabase
       .from('activities')
@@ -281,6 +366,21 @@ registerTool('crm', {
 });
 
 // 6. log_contact_activity — persisted in activities table
+=======
+    const { data, error } = await supabase
+      .from('crm_activities')
+      .select('*')
+      .eq('contact_id', args.contact_id)
+      .eq('tenant_id', args.tenant_id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+});
+
+// 6. log_contact_activity
+>>>>>>> origin/main
 registerTool('crm', {
   name: 'log_contact_activity',
   description: 'Log an interaction (call, email, meeting, note) with a contact.',
@@ -302,6 +402,7 @@ registerTool('crm', {
   },
   handler: async (args) => {
     const supabase = createSupabaseAdminClient();
+<<<<<<< HEAD
     const { logCrmActivityAdmin } = await import('@/lib/crm/crmActivityServer');
 
     const { data: contact, error: contactError } = await supabase
@@ -484,10 +585,24 @@ registerTool('crm', {
       })
       .select('id, name, email')
       .single();
+=======
+    const { data, error } = await supabase
+      .from('crm_activities')
+      .insert({
+        tenant_id: args.tenant_id,
+        contact_id: args.contact_id,
+        type: args.type,
+        notes: args.notes || null,
+      })
+      .select()
+      .single();
+
+>>>>>>> origin/main
     if (error) throw error;
     return data;
   },
 });
+<<<<<<< HEAD
 
 registerTool('crm', {
   name: 'get_leads',
@@ -543,3 +658,5 @@ registerTool('crm', {
     });
   },
 });
+=======
+>>>>>>> origin/main

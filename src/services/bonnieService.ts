@@ -1,4 +1,8 @@
 import { supabase } from '../lib/supabase';
+<<<<<<< HEAD
+=======
+import { generateText } from './unifiedAIService';
+>>>>>>> origin/main
 
 export interface BonnieRule {
   tenant_id: string;
@@ -20,6 +24,7 @@ export interface BonnieLog {
   tool?: string;
 }
 
+<<<<<<< HEAD
 export interface BonnieNavIntent {
   route: string;
   label: string;
@@ -156,6 +161,8 @@ export interface BonnieInstructionResult {
     | 'provider_blocked';
 }
 
+=======
+>>>>>>> origin/main
 export const bonnieService = {
   /**
    * Fetch autonomous runner rules for a tenant
@@ -170,7 +177,20 @@ export const bonnieService = {
       return data.rules;
     } catch (error) {
       console.error('Error fetching Bonnie rules:', error);
+<<<<<<< HEAD
       throw error;
+=======
+      // Return default rules if error/missing
+      return {
+        tenant_id: tenantId,
+        enabled: true,
+        auto_send_enabled: false,
+        auto_send_confidence_threshold: 85,
+        high_risk_approval_required: true,
+        stale_deal_days: 7,
+        social_inactivity_days: 3,
+      };
+>>>>>>> origin/main
     }
   },
 
@@ -225,7 +245,11 @@ export const bonnieService = {
 
       const data = await response.json();
       if (!response.ok) {
+<<<<<<< HEAD
         return { success: false, error: humanizeBonnieError(String(data.error || 'Failed to trigger run'), response.status) };
+=======
+        return { success: false, error: data.error || 'Failed to trigger run' };
+>>>>>>> origin/main
       }
 
       return { success: true };
@@ -240,6 +264,7 @@ export const bonnieService = {
    */
   async getCombinedLogs(tenantId: string, limit: number = 30): Promise<BonnieLog[]> {
     try {
+<<<<<<< HEAD
       let bonnieLogs: any[] = [];
 
       if (bonnieLogsTableAvailable !== false) {
@@ -260,6 +285,22 @@ export const bonnieService = {
         }
       }
 
+=======
+      // 1. Fetch bonnie_logs
+      const { data: bonnieLogs, error: logsError } = await supabase
+        .from('bonnie_logs')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (logsError) {
+        // If table doesn't exist yet or config is missing, catch gracefully
+        console.warn('Could not load bonnie_logs directly (non-critical):', logsError.message);
+      }
+
+      // 2. Fetch autonomous_runner_actions
+>>>>>>> origin/main
       const { data: runnerActions, error: actionsError } = await supabase
         .from('autonomous_runner_actions')
         .select('id, action_key, status, details, created_at')
@@ -303,6 +344,7 @@ export const bonnieService = {
   },
 
   /**
+<<<<<<< HEAD
    * Direct instructions to Bonnie — full agentic loop via DeepSeek + real tool execution.
    */
   async sendInstruction(
@@ -496,4 +538,121 @@ export const bonnieService = {
       return { response: message, success: false };
     }
   },
+=======
+   * Direct instructions to Bonnie.
+   * Leverages unifiedAIService to parse instructions, determine tool execution,
+   * simulates the outcome, inserts log entries, and returns a natural language response.
+   */
+  async sendInstruction(tenantId: string, instruction: string): Promise<{ response: string; success: boolean }> {
+    try {
+      const prompt = `You are Bonnie, the internal, always-on AI execution assistant for AlphaClone.
+The user has given you a direct instruction: "${instruction}"
+
+Determine the appropriate actions/tools to execute based on this instruction. You have access to these simulated tool modules:
+1. "outreach_scan" - Scans for new leads, drafts outreach messages, and triggers campaigns.
+2. "invoice_audit" - Scans for overdue or stale invoices, drafts payment reminders.
+3. "deal_optimizer" - Audits sales deals, checks for stale conversations, suggests conversion strategies.
+4. "calendar_sync" - Analyzes calendar events, schedules prep tasks or follow-ups.
+5. "social_poster" - Generates and schedules social media content.
+
+You can choose to execute one or more tools, or none if the input is a general conversation.
+
+Return a JSON object with:
+- "response": A friendly, professional, high-competence natural language response telling the user what you've done or are doing in response to their instruction.
+- "actions": Array of tool executions. Each execution has:
+  - "tool": one of the five keys above (e.g., "invoice_audit")
+  - "status": "success" or "failed"
+  - "details": human-friendly details of what was done (e.g. "Found 2 overdue invoices, queued reminders").
+- "logs": Array of sequential log steps to write to the activity feed (e.g. ["Initiating invoice audit...", "Found invoice INV-003 overdue by 12 days.", "Drafted reminder email to client."]). Give 2-4 detailed logs per executed tool to make the feed look rich and alive.
+
+Strictly return ONLY valid JSON. No markdown, no extra explanation outside the JSON.
+Example output format:
+{
+  "response": "I've scanned all deals and identified 3 that were stale. I updated their follow-up tasks.",
+  "actions": [
+    { "tool": "deal_optimizer", "status": "success", "details": "Analyzed and scored 12 deals, updated 3 stale deals." }
+  ],
+  "logs": [
+    "Starting deal optimization scan...",
+    "Found 3 deals with no activity for 7+ days: TechCorp, PeakDev, ApexLtd.",
+    "Updating next-action suggestions and generating draft follow-up emails.",
+    "Deal scan completed successfully."
+  ]
+}`;
+
+      const { text, error } = await generateText(prompt, 1000);
+      if (error || !text) {
+        throw new Error(error || 'Empty response from AI engine');
+      }
+
+      // Parse JSON from response. Sometimes the model might wrap in ```json ... ```
+      let jsonText = text.trim();
+      if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```json/, '').replace(/```$/, '').trim();
+      }
+
+      const result = JSON.parse(jsonText);
+      const responseMessage = result.response || "Instruction processed.";
+
+      // 1. Insert logs to public.bonnie_logs
+      const logEntries = (result.logs || []).map((message: string) => ({
+        tenant_id: tenantId,
+        level: 'info',
+        message,
+      }));
+
+      // Append a final log acknowledging completion
+      if (logEntries.length === 0) {
+        logEntries.push({
+          tenant_id: tenantId,
+          level: 'info',
+          message: `Processed command: "${instruction}"`,
+        });
+      }
+
+      const { error: insertError } = await supabase
+        .from('bonnie_logs')
+        .insert(logEntries);
+
+      if (insertError) {
+        console.error('Failed to save Bonnie logs:', insertError);
+      }
+
+      // 2. Insert mock runs/actions if any actions were decided
+      if (result.actions && result.actions.length > 0) {
+        const { data: runData, error: runError } = await supabase
+          .from('autonomous_runner_runs')
+          .insert({
+            tenant_id: tenantId,
+            status: 'completed',
+            trigger_snapshot: { source: 'manual_chat', instruction },
+            summary: { actions_run: result.actions.length }
+          })
+          .select('id')
+          .single();
+
+        if (!runError && runData) {
+          const actionEntries = result.actions.map((act: any) => ({
+            run_id: runData.id,
+            tenant_id: tenantId,
+            action_key: act.tool,
+            status: act.status,
+            details: act.details,
+            payload: { instruction }
+          }));
+
+          await supabase.from('autonomous_runner_actions').insert(actionEntries);
+        }
+      }
+
+      return { response: responseMessage, success: true };
+    } catch (e: any) {
+      console.error('Error sending instruction to Bonnie:', e);
+      return {
+        response: `I received your request, but I encountered a parsing error: ${e.message}. Let me know if I should try again!`,
+        success: false,
+      };
+    }
+  }
+>>>>>>> origin/main
 };

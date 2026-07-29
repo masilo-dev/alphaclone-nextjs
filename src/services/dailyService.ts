@@ -50,6 +50,86 @@ class DailyService {
     getWrappedMeetingUrl(id: string): string {
         // Return exactly alphaclonesystems.com as requested by the user
         return `https://alphaclonesystems.com/meet/${id}`;
+<<<<<<< HEAD
+=======
+    }
+
+    /**
+     * Finds Daily.co URLs in text and replaces them with a branded version or placeholder.
+     */
+    maskMeetingLinks(text: string): string {
+        if (!text) return text;
+
+        // Match daily.co URLs
+        const dailyRegex = /https:\/\/[a-z0-9-]+\.daily\.co\/[a-z0-9-]+/gi;
+
+        return text.replace(dailyRegex, (url) => {
+            // We can't easily look up the DB ID synchronously here, 
+            // so we'll point to a general redirector or a "Coming Soon" placeholder if requested
+            // For now, let's use the branding requested.
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com';
+            return `${baseUrl}/meet/active`; // Placeholder redirector or just the domain
+        });
+    }
+
+    /**
+     * Create a new Daily.co room via backend API
+     */
+    async createRoom(options: {
+        title: string;
+        maxParticipants?: number;
+        enableScreenshare?: boolean;
+        enableChat?: boolean;
+        enableRecording?: boolean;
+        startTime?: Date;
+        duration?: number; // minutes
+    }): Promise<{ room: DailyRoom | null; error: string | null }> {
+        try {
+            // Generate a unique room name
+            const roomName = `room-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+            // Build properties object
+            const properties: Record<string, any> = {
+                enable_screenshare: options.enableScreenshare !== false,
+                enable_chat: options.enableChat !== false,
+                max_participants: options.maxParticipants || 10,
+            };
+
+            // Only include recording if enabled
+            if (options.enableRecording) {
+                properties.enable_recording = 'cloud';
+            }
+
+            // Only include nbf if startTime is provided
+            if (options.startTime) {
+                properties.nbf = Math.floor(options.startTime.getTime() / 1000);
+            }
+
+            // Only include exp if both duration and startTime are provided
+            if (options.duration && options.startTime) {
+                properties.exp = Math.floor((options.startTime.getTime() + options.duration * 60000) / 1000);
+            } else if (options.duration) {
+                // Set exp relative to now if start time not fixed
+                properties.exp = Math.floor((Date.now() + options.duration * 60000) / 1000);
+            }
+
+            const response = await fetch('/api/daily/create-room', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: roomName, properties })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                return { room: null, error: errorData.error || 'Failed to create room' };
+            }
+
+            const room = await response.json();
+            return { room, error: null };
+        } catch (err) {
+            return { room: null, error: err instanceof Error ? err.message : 'Failed to create room' };
+        }
+>>>>>>> origin/main
     }
 
     /**
@@ -96,14 +176,87 @@ class DailyService {
         try {
             const tenantId = data.tenantId || tenantService.getCurrentTenantId();
             if (!tenantId) throw new Error('No tenant context found');
+<<<<<<< HEAD
             const response = await fetch('/api/meetings/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tenantId,
                     hostId: data.hostId,
+=======
+
+            const { data: tenantData } = await supabase
+                .from('tenants')
+                .select('subscription_status, subscription_plan, slug')
+                .eq('id', tenantId)
+                .single();
+
+            const isSuperAdminTenant = tenantData?.slug === 'default' || tenantId === '51772ee6-dee8-4c42-81f7-0fee297e5b27';
+            const isUnlimitedUser = data.hostId === 'df841125-59ce-4e09-aa2d-5b746ec03d9b';
+
+            const plan = (tenantData?.subscription_plan as any) || 'free';
+            const { PLAN_PRICING } = await import('./tenancy/types');
+            const planFeatures = { ...PLAN_PRICING[plan as keyof typeof PLAN_PRICING].features }; // Clone features
+
+            // SUPER ADMIN or SPECIFIC BYPASS: No limits
+            if (isSuperAdminTenant || isUnlimitedUser) {
+                planFeatures.maxVideoMeetingsPerMonth = -1;
+                planFeatures.maxVideoMinutesPerMeeting = -1;
+            }
+
+            // 1. Enforce Video Teaser Limit for New Users
+            // For NEW users (created on or after Feb 13, 2026) on FREE plan:
+            // Cap at 2 videos total to tease subscription due to "high volume".
+            const NEW_USER_CUTOFF = new Date('2026-02-13T00:00:00Z');
+
+            if (plan === 'free' && !isSuperAdminTenant && !isUnlimitedUser) {
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('created_at')
+                    .eq('id', tenantId)
+                    .single();
+
+                const createdAt = new Date(tenant?.created_at || '');
+
+                if (createdAt >= NEW_USER_CUTOFF) {
+                    const { count } = await supabase
+                        .from('video_calls')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('host_id', data.hostId);
+
+                    if (count !== null && count >= 2) {
+                        return {
+                            call: null,
+                            error: 'LIMIT_EXCEEDED_TEASER'
+                        };
+                    }
+                }
+            }
+
+            // 2. Determine Duration Limit
+            const durationLimit = planFeatures.maxVideoMinutesPerMeeting === -1
+                ? (data.duration || 1440)
+                : Math.min(data.duration || 1440, planFeatures.maxVideoMinutesPerMeeting);
+
+            const roomName =
+                typeof crypto !== 'undefined' && 'randomUUID' in crypto
+                    ? `alphaclone-${crypto.randomUUID()}`
+                    : `alphaclone-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+            // Insert into database
+            const { data: dbData, error: dbError } = await supabase
+                .from('video_calls')
+                .insert({
+                    room_id: roomName,
+                    tenant_id: data.tenantId || tenantId,
+                    daily_room_url: null,
+                    daily_room_name: null,
+                    host_id: data.hostId,
+                    calendar_event_id: data.calendarEventId,
+>>>>>>> origin/main
                     title: data.title,
                     participants: data.participants || [],
+<<<<<<< HEAD
                     maxParticipants: data.maxParticipants || 10,
                     recordingEnabled: Boolean(data.recordingEnabled),
                     screenShareEnabled: data.screenShareEnabled !== false,
@@ -117,6 +270,27 @@ class DailyService {
             const payload = await response.json().catch(() => ({}));
             if (!response.ok || !payload.call) return { call: null, error: payload.error || 'Failed to create video call' };
             const dbData = payload.call;
+=======
+                    max_participants: data.maxParticipants || 10,
+                    recording_enabled: data.recordingEnabled || false,
+                    screen_share_enabled: data.screenShareEnabled !== false,
+                    chat_enabled: data.chatEnabled !== false,
+                    cancellation_policy_hours: data.cancellationPolicyHours || 3,
+                    allow_client_cancellation: data.allowClientCancellation !== false,
+                    is_public: data.isPublic || false,
+                    duration_limit_minutes: durationLimit,
+                    metadata: {
+                        provider: 'livekit',
+                        provider_room_name: roomName,
+                    },
+                })
+                .select()
+                .single();
+
+            if (dbError) {
+                return { call: null, error: dbError.message };
+            }
+>>>>>>> origin/main
 
             const call: VideoCall = {
                 ...dbData,

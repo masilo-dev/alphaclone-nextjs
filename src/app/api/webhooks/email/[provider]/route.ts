@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
+<<<<<<< HEAD
 import { syncSuppressionCleanup } from '@/lib/email/suppression';
+=======
+>>>>>>> origin/main
 
 type SupportedProvider = 'resend' | 'sendgrid' | 'brevo' | 'zoho' | 'gmail';
 
@@ -146,6 +149,7 @@ export async function POST(
 
     let processed = 0;
     let unmatched = 0;
+<<<<<<< HEAD
     const affectedCampaigns = new Set<string>(); // `${tenantId}:${campaignId}`
     for (const event of parsedEvents) {
       const eventTypeLower = event.eventType.toLowerCase();
@@ -269,6 +273,12 @@ export async function POST(
       let lookup = admin
         .from('lead_outreach_log')
         .select('id, tenant_id, user_id, lead_email')
+=======
+    for (const event of parsedEvents) {
+      let lookup = admin
+        .from('lead_outreach_log')
+        .select('id, tenant_id, user_id')
+>>>>>>> origin/main
         .eq('provider', event.provider)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -281,6 +291,7 @@ export async function POST(
         continue;
       }
 
+<<<<<<< HEAD
       await admin.from('email_webhook_events').insert({
         tenant_id: logRow.tenant_id,
         user_id: logRow.user_id,
@@ -292,6 +303,23 @@ export async function POST(
         payload: event.payload,
         processing_status: 'processed',
       });
+=======
+      const mappedStatus = mapDeliveryStatus(event.eventType);
+
+      await admin
+        .from('email_webhook_events')
+        .insert({
+          tenant_id: logRow.tenant_id,
+          user_id: logRow.user_id,
+          provider: event.provider,
+          event_type: event.eventType,
+          provider_message_id: event.providerMessageId,
+          tracking_id: event.trackingId,
+          event_timestamp: event.eventTimestamp,
+          payload: event.payload,
+          processing_status: 'processed',
+        });
+>>>>>>> origin/main
 
       const patch: Record<string, unknown> = {
         provider_event_status: mappedStatus,
@@ -300,6 +328,7 @@ export async function POST(
       if (mappedStatus === 'delivered' || mappedStatus === 'sent') patch.status = 'sent';
       if (mappedStatus === 'opened') patch.opened_at = event.eventTimestamp || new Date().toISOString();
       if (mappedStatus === 'clicked') patch.clicked_at = event.eventTimestamp || new Date().toISOString();
+<<<<<<< HEAD
       if (isBounceLike) {
         patch.status = 'bounced';
         patch.provider_event_status = 'bounced';
@@ -309,10 +338,14 @@ export async function POST(
         patch.provider_event_status = 'unsubscribed';
         patch.error_message = `Recipient unsubscribed (${event.eventType}).`;
       } else if (isFailureLike || mappedStatus === 'failed') {
+=======
+      if (mappedStatus === 'failed') {
+>>>>>>> origin/main
         patch.status = 'failed';
         patch.error_message = `Provider webhook reported failure (${event.eventType}).`;
       }
 
+<<<<<<< HEAD
       await admin.from('lead_outreach_log').update(patch).eq('tenant_id', logRow.tenant_id).eq('id', logRow.id);
 
       if (isBounceLike || eventTypeLower.includes('unsubscribe')) {
@@ -325,10 +358,18 @@ export async function POST(
           metadata: event.payload,
         });
       }
+=======
+      await admin
+        .from('lead_outreach_log')
+        .update(patch)
+        .eq('tenant_id', logRow.tenant_id)
+        .eq('id', logRow.id);
+>>>>>>> origin/main
 
       processed += 1;
     }
 
+<<<<<<< HEAD
     // 3) Roll up affected email campaign totals from campaign_recipients truth
     for (const key of affectedCampaigns) {
       const [tenantId, campaignId] = key.split(':');
@@ -362,6 +403,8 @@ export async function POST(
         .eq('id', campaignId);
     }
 
+=======
+>>>>>>> origin/main
     return NextResponse.json({
       success: true,
       provider,
@@ -374,3 +417,7 @@ export async function POST(
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main

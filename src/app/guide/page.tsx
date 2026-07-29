@@ -12,9 +12,15 @@ export const metadata: Metadata = {
         'small business software setup', 'AI business platform tutorial',
     ],
     alternates: { canonical: 'https://alphaclonesystems.com/guide' },
+<<<<<<< HEAD
     openGraph: { images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
         title: 'Platform Guide & Onboarding | AlphaClone Systems',
         description: 'Set up your business OS step by step. Follow the guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
+=======
+    openGraph: {
+        title: 'Platform Guide & Onboarding | AlphaClone Systems',
+        description: 'Set up your entire business OS in under 30 minutes. Step-by-step guide for CRM, invoicing, AI growth agent, Gmail, Calendly, and team management.',
+>>>>>>> origin/main
         url: 'https://alphaclonesystems.com/guide',
         type: 'article',
     },

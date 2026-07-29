@@ -9,7 +9,12 @@ export async function GET(req: NextRequest) {
     const code = searchParams.get('code');
     const stateNonce = searchParams.get('state');
 
+<<<<<<< HEAD
     const appUrl = PUBLIC_APP_ORIGIN;
+=======
+    // Use standardized appUrl
+    const appUrl = (ENV.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://alphaclonesystems.com').replace(/\/$/, '');
+>>>>>>> origin/main
 
     if (!code || !stateNonce) {
         return NextResponse.redirect(`${appUrl}/dashboard/settings?hubspot=error&reason=missing_params`);

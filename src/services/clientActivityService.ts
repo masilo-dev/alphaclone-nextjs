@@ -44,7 +44,11 @@ class ClientActivityService {
             }
 
             // Get all activities from various sources
+<<<<<<< HEAD
             const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes, crmActivities, portalEvents] = await Promise.all([
+=======
+            const [messages, unifiedMessages, emailLogs, meetings, contracts, payments, projects, files, notes] = await Promise.all([
+>>>>>>> origin/main
                 this.getClientMessages(clientId),
                 this.getClientUnifiedMessages(clientId, client.email),
                 this.getClientEmailLogs(clientId, client.email),
@@ -54,8 +58,11 @@ class ClientActivityService {
                 this.getClientProjects(clientId),
                 this.getClientFiles(clientId),
                 this.getClientNotes(clientId),
+<<<<<<< HEAD
                 this.getCrmUnifiedActivities(clientId, client.tenant_id),
                 this.getClientPortalEvents(clientId),
+=======
+>>>>>>> origin/main
             ]);
 
             // Combine all activities
@@ -69,8 +76,11 @@ class ClientActivityService {
                 ...projects,
                 ...files,
                 ...notes,
+<<<<<<< HEAD
                 ...crmActivities,
                 ...portalEvents,
+=======
+>>>>>>> origin/main
             ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
             // Calculate stats

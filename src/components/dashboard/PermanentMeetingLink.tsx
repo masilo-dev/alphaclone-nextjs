@@ -44,6 +44,21 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
             if (!currentTenant?.id) throw new Error('Select a workspace before loading its meeting room');
             setRoomData(prev => ({ ...prev, loading: true, error: null }));
 
+<<<<<<< HEAD
+=======
+            const prefs = await fetchDashboardPreferences(user.id);
+            const cached = prefs.permanentMeetingLink;
+            if (cached?.link && cached?.roomUrl) {
+                setRoomData({
+                    id: cached.roomId || '',
+                    link: cached.link,
+                    url: cached.roomUrl,
+                    loading: false,
+                    error: null,
+                });
+            }
+
+>>>>>>> origin/main
             // Call API to create/get permanent room
             const response = await fetch(`/api/tenant/${currentTenant.id}/meetings/permanent-room`, {
                 method: 'POST',
@@ -68,6 +83,19 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
                 error: null
             });
 
+<<<<<<< HEAD
+=======
+            await mergeDashboardPreferences(user.id, {
+                permanentMeetingLink: {
+                    roomName: data.name,
+                    roomId: data.id,
+                    roomUrl: data.url,
+                    link: shareLink,
+                    createdAt: new Date().toISOString(),
+                },
+            });
+
+>>>>>>> origin/main
         } catch (err) {
             console.error('Failed to initialize permanent room:', err);
             setRoomData({
@@ -79,7 +107,11 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
             });
             toast.error('Failed to load permanent meeting room');
         }
+<<<<<<< HEAD
     }, [currentTenant?.id]);
+=======
+    }, [user.id, user.name, currentTenant?.id]);
+>>>>>>> origin/main
 
     // Run initialization ONCE on mount
     useEffect(() => {
@@ -195,8 +227,13 @@ const PermanentMeetingLink: React.FC<PermanentMeetingLinkProps> = ({ onJoinRoom 
                 <div className="flex gap-2">
                     <AlertCircle className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-gray-300 space-y-1">
+<<<<<<< HEAD
                         <p><strong className="text-white">Guest Ready:</strong> No account required; guests join with your secure meeting code</p>
                         <p><strong className="text-white">Always Ready:</strong> The room stays available until an administrator rotates its code</p>
+=======
+                        <p><strong className="text-white">Zero Friction:</strong> No tokens, no login, just click and join</p>
+                        <p><strong className="text-white">Always Ready:</strong> Link never expires - perfect for booking automation</p>
+>>>>>>> origin/main
                         <p><strong className="text-white">Your Domain:</strong> Professional [alphaclonesystems.com/meet/...] branding</p>
                     </div>
                 </div>

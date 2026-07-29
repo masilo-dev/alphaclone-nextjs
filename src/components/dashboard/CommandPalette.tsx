@@ -111,8 +111,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         },
         {
             id: 'act-task',
+<<<<<<< HEAD
             title: 'Create task',
             description: 'Capture work quickly',
+=======
+            title: 'Create New Task',
+            description: 'Neural capture engine',
+>>>>>>> origin/main
             icon: Plus,
             category: 'Actions',
             shortcut: 'T',
@@ -120,8 +125,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         },
         {
             id: 'act-project',
+<<<<<<< HEAD
             title: 'Create project',
             description: 'Start delivery work',
+=======
+            title: 'Submit New Project',
+            description: 'Start a new consultation',
+>>>>>>> origin/main
             icon: Plus,
             category: 'Actions',
             shortcut: 'P',
@@ -132,6 +142,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         { id: 'int-help', title: 'Platform guide', description: 'Glossary and how-to', icon: FileText, category: 'Internal', action: () => go('/dashboard/help') },
         ];
 
+<<<<<<< HEAD
         if (canAccessSecurityDashboard(userRole)) {
             list.push({
                 id: 'int-security',
@@ -145,6 +156,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
         return list;
     }, [go, onCreateInvoice, onCreateTask, onCreateProject, userRole]);
+=======
+        // --- TASK SPECIFIC ACTIONS ---
+        { id: 'task-pri-urgent', title: 'Task: Set Priority to Urgent', description: 'Immediate operational attention', icon: AlertCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setPriority=urgent') },
+        { id: 'task-pri-high', title: 'Task: Set Priority to High', description: 'Strategic priority', icon: ArrowUpCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setPriority=high') },
+        { id: 'task-status-review', title: 'Task: Move to Review', description: 'Pending quality assurance', icon: Eye, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setStatus=review') },
+        { id: 'task-status-done', title: 'Task: Mark as Completed', description: 'Mission success', icon: CheckCircle, category: 'Actions', action: () => router.push('/dashboard?tab=tasks&setStatus=completed') },
+
+        // --- INTERNAL ---
+        { id: 'int-settings', title: 'Platform Settings', description: 'Identity & profile', icon: Settings, category: 'Internal', action: () => router.push('/dashboard?tab=settings') },
+        { id: 'int-security', title: 'Security Dashboard', description: 'Access & logs', icon: Shield, category: 'Internal', action: () => router.push('/dashboard?tab=settings&section=security') },
+    ], [router, onCreateInvoice, onCreateTask, onCreateProject]);
+>>>>>>> origin/main
 
     const filteredCommands = commands.filter(cmd =>
         cmd.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -415,3 +438,4 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 };
 
 export default CommandPalette;
+

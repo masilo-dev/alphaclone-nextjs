@@ -151,7 +151,11 @@ Provide your output as a single clean JSON array indicating only which pair IDs 
 ]`;
 
     try {
+<<<<<<< HEAD
       const { text } = await generateText(prompt, 1000, 'deepseek-chat', tenantId);
+=======
+      const { text } = await generateText(prompt, 1000, 'claude-sonnet-4-6-20260217', tenantId);
+>>>>>>> origin/main
       const jsonStart = text?.indexOf('[');
       const jsonEnd = (text?.lastIndexOf(']') ?? -1) + 1;
 

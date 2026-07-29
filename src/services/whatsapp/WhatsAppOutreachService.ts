@@ -1,5 +1,9 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { sendWhatsAppMessage, isWhatsAppConfigured } from '@/lib/whatsapp/sendWhatsApp';
+=======
+import { sendWhatsAppMessage } from '@/lib/whatsapp/sendWhatsApp';
+>>>>>>> origin/main
 import { aiService } from '../ai/aiService';
 
 export class WhatsAppOutreachService {
@@ -28,6 +32,7 @@ export class WhatsAppOutreachService {
       return;
     }
 
+<<<<<<< HEAD
     // 3. Check Zernio WhatsApp setup
     const waReady = await isWhatsAppConfigured(tenantId);
     if (!waReady) {
@@ -36,6 +41,30 @@ export class WhatsAppOutreachService {
 
     const phoneToContact = lead.phone.replace(/[^0-9]/g, '');
 
+=======
+    // 3. Check Green API setup
+    const { data: integration } = await supabase
+      .from('whatsapp_integrations')
+      .select('waba_id, metadata')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (!integration || !integration.metadata?.apiTokenInstance) {
+      return;
+    }
+
+    // Check Limits (Mock check)
+    const phoneToContact = lead.phone.replace(/[^0-9]/g, '');
+
+    // 4. Verify WhatsApp number
+    const isValid = await this.checkWhatsAppNumber(integration.waba_id, integration.metadata.apiTokenInstance, phoneToContact);
+    if (!isValid) {
+      console.log(`[WhatsAppOutreach] Number not on WhatsApp: ${phoneToContact}`);
+      return;
+    }
+
+>>>>>>> origin/main
     // 5. Generate Outreach Message
     const msg = await this.generateOutreachMessage(tenantId, lead, settings.persona_prompt);
     if (!msg) return;
@@ -70,6 +99,24 @@ export class WhatsAppOutreachService {
     }).eq('id', leadId);
   }
 
+<<<<<<< HEAD
+=======
+  async checkWhatsAppNumber(idInstance: string, apiToken: string, phone: string): Promise<boolean> {
+    const url = `https://api.green-api.com/waInstance${idInstance}/checkWhatsapp/${apiToken}`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber: phone })
+      });
+      const data = await res.json();
+      return data?.existsWhatsapp === true;
+    } catch {
+      return false;
+    }
+  }
+
+>>>>>>> origin/main
   async generateOutreachMessage(tenantId: string, lead: any, persona: string | null) {
     const systemPrompt = `
       ${persona || 'You are an AI assistant.'}
@@ -85,14 +132,36 @@ export class WhatsAppOutreachService {
     try {
       const res = await aiService.complete({
         prompt: `Lead Details: ${JSON.stringify(lead)}`,
+<<<<<<< HEAD
         systemPrompt
       });
 
+=======
+        systemPrompt,
+        provider: 'anthropic',
+        model: 'claude-3-5-sonnet-20240620'
+      });
+>>>>>>> origin/main
       return res.content?.trim();
     } catch {
       return null;
     }
   }
+<<<<<<< HEAD
+=======
+
+  async sendMessage(idInstance: string, apiToken: string, phone: string, text: string) {
+    const url = `https://api.green-api.com/waInstance${idInstance}/sendMessage/${apiToken}`;
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chatId: `${phone}@c.us`,
+        message: text
+      })
+    });
+  }
+>>>>>>> origin/main
 }
 
 export const whatsAppOutreachService = new WhatsAppOutreachService();

@@ -20,7 +20,10 @@ CREATE TABLE IF NOT EXISTS public.x_integrations (
 ALTER TABLE public.x_integrations ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "Users can view their own tenant x integrations" ON public.x_integrations;
+=======
+>>>>>>> origin/main
 CREATE POLICY "Users can view their own tenant x integrations"
     ON public.x_integrations FOR SELECT
     TO authenticated
@@ -31,7 +34,10 @@ CREATE POLICY "Users can view their own tenant x integrations"
         )
     );
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "Users can manage their own tenant x integrations" ON public.x_integrations;
+=======
+>>>>>>> origin/main
 CREATE POLICY "Users can manage their own tenant x integrations"
     ON public.x_integrations FOR ALL
     TO authenticated
@@ -57,7 +63,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+<<<<<<< HEAD
 DROP TRIGGER IF EXISTS update_x_integrations_updated_at ON public.x_integrations;
+=======
+>>>>>>> origin/main
 CREATE TRIGGER update_x_integrations_updated_at
     BEFORE UPDATE ON public.x_integrations
     FOR EACH ROW

@@ -2,14 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { start } from 'workflow/api';
 import { leadFindingWorkflow } from '@/workflows/lead-finding';
+<<<<<<< HEAD
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+=======
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+>>>>>>> origin/main
 import { operationFailed, OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { freePlacesService } from '@/services/freePlacesService';
 import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadsManagementSchema } from '@/schemas/validation';
+<<<<<<< HEAD
 import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
 import { z } from 'zod';
 import { normalizePlatformRole } from '@/lib/platformAdmin';
+=======
+>>>>>>> origin/main
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +25,7 @@ export async function POST(req: NextRequest) {
     const parsed = leadsManagementSchema.safeParse(payload);
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+<<<<<<< HEAD
     }
     const { tenantId, action, config } = parsed.data;
 
@@ -35,7 +44,10 @@ export async function POST(req: NextRequest) {
     }
     if (isAdminAction && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
       return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
+=======
+>>>>>>> origin/main
     }
+    const { tenantId, action, config } = parsed.data;
 
     const validated = validateActionConfig(action, config);
     if (!validated.success) {

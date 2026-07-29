@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
+<<<<<<< HEAD
 import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 const testProviderSchema = z.object({
   tenantId: z.string().uuid(),
   provider: z.enum(['sendgrid', 'resend', 'brevo', 'zoho', 'microsoft']),
+=======
+import { gmailServerService } from '@/services/server/gmailServerService';
+
+const testProviderSchema = z.object({
+  tenantId: z.string().uuid(),
+  provider: z.enum(['sendgrid', 'resend', 'brevo', 'zoho', 'gmail']),
+>>>>>>> origin/main
   to: z.string().email(),
   subject: z.string().min(1).max(250).optional(),
   message: z.string().min(1).max(5000).optional(),
@@ -20,6 +28,30 @@ function getConfigString(config: Record<string, unknown>, ...keys: string[]) {
   return '';
 }
 
+<<<<<<< HEAD
+=======
+function encodeGmailRawMessage(params: {
+  to: string;
+  subject: string;
+  content: string;
+  fromEmail: string;
+  fromName: string;
+}) {
+  const utf8Subject = `=?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`;
+  const message = [
+    `From: ${params.fromName} <${params.fromEmail}>`,
+    `To: ${params.to}`,
+    `Subject: ${utf8Subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset="UTF-8"',
+    '',
+    params.content,
+  ].join('\n');
+
+  return Buffer.from(message).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+>>>>>>> origin/main
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -41,7 +73,11 @@ export async function POST(request: NextRequest) {
     const supabase = createAdminSupabaseClientOrThrow();
 
     if (provider === 'zoho') {
+<<<<<<< HEAD
       const zoho = new ZohoMailService(tenantCtx.user.id, tenantId);
+=======
+      const zoho = new ZohoMailService(tenantCtx.user.id);
+>>>>>>> origin/main
       await zoho.sendEmail({
         toAddress: to,
         subject,
@@ -50,15 +86,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }
 
+<<<<<<< HEAD
     if (provider === 'microsoft') {
       await microsoftServerService.sendEmail(tenantCtx.user.id, {
         to: [to],
         subject,
         html: `<p>${message}</p>`,
+=======
+    if (provider === 'gmail') {
+      const raw = encodeGmailRawMessage({
+        to,
+        subject,
+        content: message,
+        fromEmail: tenantCtx.user.email || 'noreply@alphaclonesystems.com',
+        fromName: String(tenantCtx.user.user_metadata?.full_name || 'AlphaClone Systems'),
+      });
+      await gmailServerService.proxyRequest(tenantCtx.user.id, 'messages/send', {
+        method: 'POST',
+        body: JSON.stringify({ raw }),
+>>>>>>> origin/main
       });
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }
 
+<<<<<<< HEAD
     const { data: integrations, error } = await supabase
       .from('integrations')
       .select('config, enabled, tenant_id, user_id')
@@ -70,6 +121,16 @@ export async function POST(request: NextRequest) {
       ?? (integrations || []).find((row: any) => String(row.user_id || '') === tenantCtx.user.id)
       ?? (integrations || [])[0]
       ?? null;
+=======
+    const { data: integration, error } = await supabase
+      .from('integrations')
+      .select('config, enabled')
+      .eq('tenant_id', tenantId)
+      .eq('user_id', tenantCtx.user.id)
+      .eq('type', provider)
+      .eq('enabled', true)
+      .maybeSingle();
+>>>>>>> origin/main
 
     if (error || !integration) {
       return NextResponse.json(

@@ -1,11 +1,17 @@
+<<<<<<< HEAD
 import { timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { isProduction } from '@/lib/security/productionGuard';
+=======
+import { NextResponse } from 'next/server';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+>>>>>>> origin/main
 
 const supabaseAdmin = createSupabaseAdminClient();
 
 export async function POST(req: Request) {
+<<<<<<< HEAD
     if (isProduction()) {
         const expected = process.env.DAILY_WEBHOOK_SECRET;
         if (!expected) {
@@ -26,6 +32,8 @@ export async function POST(req: Request) {
         }
     }
 
+=======
+>>>>>>> origin/main
     try {
         const body = await req.json();
 

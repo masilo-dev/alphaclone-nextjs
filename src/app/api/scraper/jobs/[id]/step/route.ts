@@ -19,7 +19,10 @@ function parseJsonObject(value: unknown): Record<string, any> {
 
 function leadIdentityKey(lead: LeadResult): string {
   return [
+<<<<<<< HEAD
     (lead.source_id || '').trim().toLowerCase(),
+=======
+>>>>>>> origin/main
     (lead.business_name || '').trim().toLowerCase(),
     (lead.website || '').trim().toLowerCase(),
     (lead.phone || '').replace(/\D/g, ''),
@@ -109,7 +112,11 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       .select('*')
       .single();
 
+<<<<<<< HEAD
     const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads : []);
+=======
+    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads.map(({ source, ...rest }) => rest) : []);
+>>>>>>> origin/main
     const sanitizeStats = (stats: any) => {
       if (!stats || typeof stats !== 'object') return {};
       const sanitized: Record<string, number> = {};

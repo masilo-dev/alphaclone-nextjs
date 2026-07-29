@@ -40,6 +40,7 @@ export default function CustomEmailIntegration() {
         setStatus('loading');
         try {
             const res = await fetch(`/api/integrations/email-providers?tenantId=${encodeURIComponent(currentTenant.id)}&provider=custom_smtp`);
+<<<<<<< HEAD
             if (!res.ok) {
                 // If API doesn't exist, just show idle state
                 console.warn('Email providers API not available, showing idle state');
@@ -47,6 +48,10 @@ export default function CustomEmailIntegration() {
                 return;
             }
             const data = await res.json();
+=======
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to load SMTP status');
+>>>>>>> origin/main
 
             if (data.connected) {
                 setStatus('connected');
@@ -67,7 +72,11 @@ export default function CustomEmailIntegration() {
             }
         } catch (err) {
             console.error('Error checking Custom SMTP status:', err);
+<<<<<<< HEAD
             setStatus('idle'); // Default to idle instead of error for solo owners
+=======
+            setStatus('error');
+>>>>>>> origin/main
         }
     };
 
@@ -156,7 +165,11 @@ export default function CustomEmailIntegration() {
 
     if (status === 'loading') {
         return (
+<<<<<<< HEAD
             <div className="ac-workspace-panel rounded-lg p-8 text-center">
+=======
+            <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 text-center">
+>>>>>>> origin/main
                 <Loader2 className="w-6 h-6 animate-spin text-teal-400 mx-auto mb-3" />
                 <p className="text-sm text-slate-400">Verifying SMTP connection...</p>
             </div>
@@ -167,6 +180,7 @@ export default function CustomEmailIntegration() {
         <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+<<<<<<< HEAD
             className="ac-workspace-panel rounded-lg overflow-hidden"
         >
             <div className="p-6 border-b border-white/5 flex items-center justify-between">
@@ -176,6 +190,16 @@ export default function CustomEmailIntegration() {
                     </div>
                     <div>
                         <div className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1">Email Provider</div>
+=======
+            className="rounded-2xl border border-white/5 bg-slate-900/60 overflow-hidden"
+        >
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+                        <Server className="w-6 h-6 text-teal-400" />
+                    </div>
+                    <div>
+>>>>>>> origin/main
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-white">Custom SMTP / IMAP</h2>
                             {status === 'connected' && (
@@ -212,7 +236,11 @@ export default function CustomEmailIntegration() {
                                     required
                                     value={config.fromEmail}
                                     onChange={(e) => setConfig({ ...config, fromEmail: e.target.value })}
+<<<<<<< HEAD
                                     className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                                 />
                             </div>
                             <div>
@@ -221,7 +249,11 @@ export default function CustomEmailIntegration() {
                                     type="text"
                                     value={config.fromName}
                                     onChange={(e) => setConfig({ ...config, fromName: e.target.value })}
+<<<<<<< HEAD
                                     className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                                 />
                             </div>
                         </div>
@@ -239,7 +271,11 @@ export default function CustomEmailIntegration() {
                                 value={config.smtpHost}
                                 onChange={(e) => setConfig({ ...config, smtpHost: e.target.value })}
                                 placeholder="smtp.example.com"
+<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -250,7 +286,11 @@ export default function CustomEmailIntegration() {
                                     value={config.smtpPort}
                                     onChange={(e) => setConfig({ ...config, smtpPort: e.target.value })}
                                     placeholder="465 or 587"
+<<<<<<< HEAD
                                     className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                                 />
                             </div>
                         </div>
@@ -260,7 +300,11 @@ export default function CustomEmailIntegration() {
                                 type="text"
                                 value={config.smtpUser}
                                 onChange={(e) => setConfig({ ...config, smtpUser: e.target.value })}
+<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                             />
                         </div>
                         <div>
@@ -269,7 +313,11 @@ export default function CustomEmailIntegration() {
                                 type="password"
                                 value={config.smtpPass}
                                 onChange={(e) => setConfig({ ...config, smtpPass: e.target.value })}
+<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                             />
                         </div>
                     </div>
@@ -285,7 +333,11 @@ export default function CustomEmailIntegration() {
                                 value={config.imapHost}
                                 onChange={(e) => setConfig({ ...config, imapHost: e.target.value })}
                                 placeholder="imap.example.com"
+<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                             />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -296,7 +348,11 @@ export default function CustomEmailIntegration() {
                                     value={config.imapPort}
                                     onChange={(e) => setConfig({ ...config, imapPort: e.target.value })}
                                     placeholder="993"
+<<<<<<< HEAD
                                     className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                    className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                                 />
                             </div>
                         </div>
@@ -306,7 +362,11 @@ export default function CustomEmailIntegration() {
                                 type="text"
                                 value={config.imapUser}
                                 onChange={(e) => setConfig({ ...config, imapUser: e.target.value })}
+<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                             />
                         </div>
                         <div>
@@ -315,7 +375,11 @@ export default function CustomEmailIntegration() {
                                 type="password"
                                 value={config.imapPass}
                                 onChange={(e) => setConfig({ ...config, imapPass: e.target.value })}
+<<<<<<< HEAD
                                 className="w-full rounded-lg border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+=======
+                                className="w-full rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none focus:border-teal-500/40"
+>>>>>>> origin/main
                             />
                         </div>
                     </div>

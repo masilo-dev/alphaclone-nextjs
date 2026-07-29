@@ -1,7 +1,10 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '../../config/env';
+<<<<<<< HEAD
 import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
+=======
+>>>>>>> origin/main
 
 export async function validateMCPAuth(req: NextApiRequest, res: NextApiResponse) {
   const authHeader = req.headers['authorization'];
@@ -25,9 +28,19 @@ export async function validateMCPAuth(req: NextApiRequest, res: NextApiResponse)
 
   const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
+<<<<<<< HEAD
   const keyData = await lookupMcpApiKey(supabaseAdmin, api_key, { requireActive: true });
 
   if (!keyData) {
+=======
+  const { data: keyData, error: keyError } = await supabaseAdmin
+    .from('mcp_api_keys')
+    .select('tenant_id, user_id')
+    .eq('api_key', api_key)
+    .single();
+
+  if (keyError || !keyData) {
+>>>>>>> origin/main
     res.status(401).json({ error: 'Unauthorized' });
     return null;
   }

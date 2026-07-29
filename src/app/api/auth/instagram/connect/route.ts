@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+<<<<<<< HEAD
 import { encodeOAuthState } from '@/lib/oauth/oauthState';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
 import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
+=======
+import { createSupabaseServerClient } from '@/lib/supabase-server';
+>>>>>>> origin/main
 
 /**
  * Instagram Business OAuth connect.
@@ -39,6 +43,7 @@ export async function GET(req: NextRequest) {
     }
 
     const appId = process.env.FACEBOOK_APP_ID;
+<<<<<<< HEAD
     const appUrl = PUBLIC_APP_ORIGIN;
 
     if (!appId) {
@@ -48,6 +53,19 @@ export async function GET(req: NextRequest) {
     }
 
     const redirectUri = OAUTH_CALLBACKS.instagram;
+=======
+    const appUrl = (
+      process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'
+    ).replace(/\/$/, '');
+
+    if (!appId) {
+      return NextResponse.redirect(
+        `${appUrl}/dashboard/social?ig_error=app_not_configured`,
+      );
+    }
+
+    const redirectUri = `${appUrl}/api/auth/instagram/callback`;
+>>>>>>> origin/main
 
     // Instagram Business API scopes (via Facebook Graph API)
     const scopes = [
@@ -60,11 +78,21 @@ export async function GET(req: NextRequest) {
       'instagram_manage_insights',
     ].join(',');
 
+<<<<<<< HEAD
     const state = encodeOAuthState({
       userId: user.id,
       tenantId: tenantIdParam,
       ts: Date.now(),
     });
+=======
+    const state = Buffer.from(
+      JSON.stringify({
+        userId: user.id,
+        tenantId: tenantIdParam,
+        ts: Date.now(),
+      }),
+    ).toString('base64url');
+>>>>>>> origin/main
 
     const authUrl = new URL('https://www.facebook.com/v19.0/dialog/oauth');
     authUrl.searchParams.set('client_id', appId);

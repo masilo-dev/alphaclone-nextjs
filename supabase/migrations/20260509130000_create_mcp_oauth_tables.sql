@@ -26,7 +26,10 @@ CREATE INDEX IF NOT EXISTS idx_mcp_api_keys_api_key  ON mcp_api_keys(api_key);
 
 ALTER TABLE mcp_api_keys ENABLE ROW LEVEL SECURITY;
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_members_manage_api_keys" ON mcp_api_keys;
+=======
+>>>>>>> origin/main
 CREATE POLICY "tenant_members_manage_api_keys" ON mcp_api_keys
   FOR ALL USING (
     EXISTS (
@@ -140,7 +143,10 @@ CREATE INDEX IF NOT EXISTS idx_mcp_oauth_tokens_expires  ON mcp_oauth_tokens(exp
 
 ALTER TABLE mcp_oauth_tokens ENABLE ROW LEVEL SECURITY;
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_members_view_own_tokens" ON mcp_oauth_tokens;
+=======
+>>>>>>> origin/main
 CREATE POLICY "tenant_members_view_own_tokens" ON mcp_oauth_tokens
   FOR SELECT USING (user_id = auth.uid());
 

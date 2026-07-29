@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { ENV } from '@/config/env';
+<<<<<<< HEAD
 import {
   buildAuthorizePageUrl,
   isRedirectUriAllowed,
@@ -12,6 +13,8 @@ import { lookupMcpApiKey } from '@/lib/security/mcpApiKeyLookup';
 import { getMcpPublicBaseUrl } from '@/lib/mcpWellKnown';
 import { PUBLIC_MCP_RESOURCE } from '@/lib/config/public-origin';
 import { ensurePlatformMcpOAuthClient } from '@/lib/mcp/ensureOAuthClient';
+=======
+>>>>>>> origin/main
 
 /**
  * MCP OAuth2 Authorization Endpoint — Dual-Mode
@@ -280,8 +283,12 @@ function serveConsentPage(params: {
 async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const { searchParams } = new URL(req.url);
   const responseType        = searchParams.get('response_type') ?? 'code';
+<<<<<<< HEAD
   const rawClientId         = searchParams.get('client_id') ?? '';
   const clientId            = normalizeMcpClientId(rawClientId) ?? rawClientId;
+=======
+  const clientId            = searchParams.get('client_id') ?? '';
+>>>>>>> origin/main
   const redirectUri         = searchParams.get('redirect_uri') ?? '';
   const state               = searchParams.get('state');
   const codeChallenge       = searchParams.get('code_challenge');
@@ -295,12 +302,21 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     return oauthError(redirectUri, 'invalid_request', 'client_id and redirect_uri are required', state);
   }
 
+<<<<<<< HEAD
+=======
+  // No API key → serve the HTML consent form (browser OAuth flow)
+  if (!apiKey) {
+    return serveConsentPage({ responseType, clientId, redirectUri, state, codeChallenge, codeChallengeMethod, scope });
+  }
+
+>>>>>>> origin/main
   if (!ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) {
     return oauthError(redirectUri, 'server_error', 'Server configuration error', state);
   }
 
   const supabase = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
 
+<<<<<<< HEAD
   let { data: client } = await supabase
     .from('mcp_oauth_clients')
     .select('client_id, redirect_uris, is_public')
@@ -363,6 +379,16 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
   const keyData = await lookupMcpApiKey(supabase, apiKey, { requireActive: true });
 
   if (!keyData) {
+=======
+  // Validate API key → resolve tenant + user
+  const { data: keyData, error: keyError } = await supabase
+    .from('mcp_api_keys')
+    .select('tenant_id, user_id')
+    .eq('api_key', apiKey)
+    .single();
+
+  if (keyError || !keyData) {
+>>>>>>> origin/main
     console.warn('[MCP Authorize] Invalid API key presented');
     // If browser form, re-render with error instead of redirecting with access_denied
     return serveConsentPage({
@@ -371,11 +397,37 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     });
   }
 
+<<<<<<< HEAD
+=======
+  // Validate client_id (skip strict check for public/well-known clients)
+  const { data: client } = await supabase
+    .from('mcp_oauth_clients')
+    .select('client_id, redirect_uris, is_public')
+    .eq('client_id', clientId)
+    .maybeSingle();
+
+  // For unknown clients, allow if is_public OR if client_id matches redirect_uri domain pattern
+  if (client) {
+    const allowedRedirects: string[] = client.redirect_uris || [];
+    if (!allowedRedirects.includes(redirectUri)) {
+      console.warn('[MCP Authorize] redirect_uri mismatch. Got:', redirectUri, 'Allowed:', allowedRedirects);
+      return oauthError(null, 'invalid_request', 'redirect_uri is not registered for this client', state);
+    }
+  }
+  // If client not found in DB, proceed anyway — the API key already proved identity
+
+>>>>>>> origin/main
   // Generate single-use auth code
   const code = `ac_${crypto.randomUUID().replace(/-/g, '')}`;
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
+<<<<<<< HEAD
   const codeRow: Record<string, unknown> = {
+=======
+  const { error: insertError } = await supabase
+    .from('mcp_oauth_codes')
+    .insert({
+>>>>>>> origin/main
       code,
       client_id: clientId,
       user_id: keyData.user_id,
@@ -386,6 +438,7 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
       code_challenge: codeChallenge || null,
       code_challenge_method: codeChallenge ? codeChallengeMethod : null,
       used: false,
+<<<<<<< HEAD
       resource: PUBLIC_MCP_RESOURCE,
     };
 
@@ -394,6 +447,9 @@ async function handleAuthorize(req: NextRequest, apiKey: string | null) {
     const { resource: _r, ...legacy } = codeRow;
     ({ error: insertError } = await supabase.from('mcp_oauth_codes').insert(legacy));
   }
+=======
+    });
+>>>>>>> origin/main
 
   if (insertError) {
     console.error('[MCP Authorize] Failed to store auth code:', insertError);

@@ -40,6 +40,7 @@ const SOURCE_ICONS: Record<string, L.Icon> = {
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
   }),
+<<<<<<< HEAD
   wikidata: L.icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
@@ -50,6 +51,8 @@ const SOURCE_ICONS: Record<string, L.Icon> = {
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
   }),
+=======
+>>>>>>> origin/main
   default: DefaultIcon,
 };
 
@@ -117,17 +120,24 @@ interface LeadMapViewProps {
   zoom?:    number;
   previewCenter?: [number, number] | null;
   previewRadiusKm?: number;
+<<<<<<< HEAD
   initialStyle?: 'detailed' | 'satellite' | 'hybrid' | 'dark';
+=======
+>>>>>>> origin/main
 }
 
 const SOURCE_LABEL: Record<string, string> = {
   yelp: 'Yelp',
   here: 'HERE Maps',
   osm:  'OpenStreetMap',
+<<<<<<< HEAD
   google: 'Free places',
   wikidata: 'Wikidata',
   browser: 'Web scrape',
   firecrawl: 'Web crawl',
+=======
+  google: 'Google Places',
+>>>>>>> origin/main
 };
 
 export default function LeadMapView({
@@ -136,7 +146,10 @@ export default function LeadMapView({
   zoom = 11,
   previewCenter = null,
   previewRadiusKm = 25,
+<<<<<<< HEAD
   initialStyle = 'detailed',
+=======
+>>>>>>> origin/main
 }: LeadMapViewProps) {
   const mapLeads = useMemo(() => {
     const normalizeText = (value?: string) => (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -177,7 +190,11 @@ export default function LeadMapView({
     return deduped;
   }, [leads]);
   const pinnable = mapLeads;
+<<<<<<< HEAD
   const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'hybrid' | 'dark'>(initialStyle);
+=======
+  const [mapStyle, setMapStyle] = useState<'detailed' | 'satellite' | 'hybrid' | 'dark'>('detailed');
+>>>>>>> origin/main
   const [zoomLevel, setZoomLevel] = useState<number>(zoom);
   const [showRoute, setShowRoute] = useState<boolean>(true);
   const [showHeat, setShowHeat] = useState<boolean>(false);
@@ -319,6 +336,7 @@ export default function LeadMapView({
         <div className="flex items-center gap-1 mb-1">
           <button
             type="button"
+<<<<<<< HEAD
             onClick={() => setMapStyle('satellite')}
             className={`px-1.5 py-0.5 rounded border ${mapStyle === 'satellite' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
           >
@@ -337,6 +355,12 @@ export default function LeadMapView({
             className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
           >
             Streets
+=======
+            onClick={() => setMapStyle('detailed')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'detailed' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Detail
+>>>>>>> origin/main
           </button>
           <button
             type="button"
@@ -347,6 +371,23 @@ export default function LeadMapView({
           </button>
           <button
             type="button"
+<<<<<<< HEAD
+=======
+            onClick={() => setMapStyle('satellite')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'satellite' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Satellite
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapStyle('hybrid')}
+            className={`px-1.5 py-0.5 rounded border ${mapStyle === 'hybrid' ? 'border-teal-500/60 text-teal-300' : 'border-slate-700 text-slate-400'}`}
+          >
+            Hybrid
+          </button>
+          <button
+            type="button"
+>>>>>>> origin/main
             onClick={() => setShowRoute((prev) => !prev)}
             className={`px-1.5 py-0.5 rounded border ${showRoute ? 'border-cyan-500/60 text-cyan-300' : 'border-slate-700 text-slate-400'}`}
           >
@@ -506,6 +547,7 @@ export default function LeadMapView({
                   </a>
                 )}
                 {lead.lat != null && lead.lng != null && (
+<<<<<<< HEAD
                   <div className="flex flex-wrap gap-2 pt-1">
                     <a
                       href={getBuildingViewUrl(lead.lat, lead.lng)}
@@ -549,6 +591,17 @@ export default function LeadMapView({
                       Pano
                     </a>
                   </div>
+=======
+                  <a
+                    href={getBuildingViewUrl(lead.lat, lead.lng)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 hover:text-slate-900 underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    Building view
+                  </a>
+>>>>>>> origin/main
                 )}
                 <button
                   type="button"

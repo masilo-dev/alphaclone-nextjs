@@ -1064,9 +1064,41 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                             ) : null}
                         </div>
                     </div>
+<<<<<<< HEAD
                 ) : null}
                 {renderEmailModal()}
                 {renderActivityModal()}
+=======
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                        {viewMode === 'editor' && (
+                            <>
+                                <button
+                                    onClick={() => handleDownloadAsPDF(false)}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs sm:text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
+                                >
+                                    <Download className="w-3.5 h-3.5" />
+                                    Save as PDF
+                                </button>
+                                <button
+                                    onClick={handleSaveEdits}
+                                    disabled={isSaving}
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs sm:text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                                >
+                                    {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                    Save Changes
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={() => handleDownload(selectedFile)}
+                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-xs font-bold transition-all border border-white/5"
+                        >
+                            <Download className="w-4 h-4" /> Download
+                        </button>
+                    </div>
+                </div>
+>>>>>>> origin/main
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-slate-950">
@@ -1151,6 +1183,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     // ── LIST MODE ─────────────────────────────────────────────────────────────
     return (
         <>
+<<<<<<< HEAD
             <EnterpriseModuleChrome
                 moduleKey="documents"
                 meta={{
@@ -1173,6 +1206,57 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder={viewTrash ? 'Search trash…' : 'Search documents…'}
                                     icon={<Search className="w-4 h-4" aria-hidden="true" />}
+=======
+            <div className="space-y-4 p-4 sm:p-6" style={{ touchAction: 'pan-y' }}>
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                        <FolderOpen className="w-5 h-5 text-teal-400" />
+                        Document Hub
+                    </h2>
+                    <p className="text-slate-400 text-xs sm:text-sm mt-0.5">Upload, view, and edit your PDF and Word documents</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <button
+                        onClick={() => { setViewTrash(!viewTrash); }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-900 text-slate-500 hover:text-white border border-white/5'}`}
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        {viewTrash ? 'Exit Trash' : 'Trash'}
+                    </button>
+
+                    {viewTrash ? (
+                        <button
+                            onClick={handleEmptyTrash}
+                            className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 text-white transition-all flex items-center gap-2"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" /> Empty Trash
+                        </button>
+                    ) : (
+                        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                            <button
+                                onClick={() => setViewMode('designer')}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-violet-500/20 group"
+                            >
+                                <ScanLine className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                <span className="hidden sm:inline">AI Designer</span>
+                            </button>
+
+                            <label className="cursor-pointer">
+                                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors border border-white/5">
+                                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                                    <span className="hidden sm:inline">Upload</span>
+                                </div>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    onChange={handleUpload}
+                                    disabled={isUploading}
+>>>>>>> origin/main
                                 />
                             </div>
                             <div className="flex flex-wrap items-center gap-2 lg:justify-end">
@@ -1195,6 +1279,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     </div>
                                 ) : null}
 
+<<<<<<< HEAD
                                 <div className="relative">
                                     <select
                                         value={sortMode}
@@ -1211,6 +1296,129 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                                     </select>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
                                         <ChevronLeft className="w-4 h-4 -rotate-90" />
+=======
+                            <button
+                                onClick={handleCreateDocument}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-bold transition-colors border border-blue-500/30"
+                            >
+                                <Type className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Write Doc</span>
+                            </button>
+
+                            <button
+                                onClick={handleCreateQuote}
+                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 text-xs font-bold transition-colors border border-purple-500/30"
+                            >
+                                <Quote className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">Create Quote</span>
+                            </button>
+
+                            <label className="cursor-pointer">
+                                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-colors shadow-lg shadow-teal-500/20">
+                                    <ScanLine className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Scan</span>
+                                </div>
+                                <input
+                                    ref={scanInputRef}
+                                    type="file"
+                                    className="hidden"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleScan}
+                                    disabled={isLoading}
+                                />
+                            </label>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Storage bar */}
+            {!viewTrash && (
+                <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-slate-400 font-medium">Storage Used</span>
+                        <span className="text-xs text-slate-300 font-bold">{formatBytes(storageUsed)} / 100 MB</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                            className={`h-full rounded-full transition-all ${storagePercent > 80 ? 'bg-red-500' : storagePercent > 60 ? 'bg-amber-500' : 'bg-teal-500'}`}
+                            style={{ width: `${storagePercent}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Filter and Search */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                    <input
+                        type="text"
+                        placeholder={viewTrash ? 'Search trash...' : 'Search documents...'}
+                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                {!viewTrash && (
+                    <div className="relative shrink-0">
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <select
+                            value={documentFilter}
+                            onChange={(e) => setDocumentFilter(e.target.value)}
+                            className="w-full sm:w-40 bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-8 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all appearance-none cursor-pointer"
+                        >
+                            <option value="all">All Files</option>
+                            <option value="pdf">PDFs</option>
+                            <option value="word">Word Docs</option>
+                            <option value="image">Images</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                            <ChevronLeft className="w-4 h-4 -rotate-90" />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* File list */}
+            {isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
+                </div>
+            ) : filteredFiles.length === 0 ? (
+                <div className="text-center py-20">
+                    <FolderOpen className="w-14 h-14 text-slate-700 mx-auto mb-4" />
+                    <p className="text-slate-400 font-medium">
+                        {viewTrash ? 'Trash is empty' : searchQuery ? 'No documents match your search' : 'No documents yet'}
+                    </p>
+                    {!viewTrash && !searchQuery && (
+                        <p className="text-slate-600 text-sm mt-1">Upload a PDF or Word document to get started</p>
+                    )}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-3">
+                    {filteredFiles.map(file => (
+                        <div
+                            key={file.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900 border border-white/5 rounded-xl hover:border-teal-500/20 transition-all group"
+                        >
+                            {/* File info */}
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div className="p-2.5 bg-slate-800 rounded-lg shrink-0">
+                                    {getFileIcon(file.file_type)}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-white font-medium text-sm truncate">{file.original_filename}</p>
+                                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                                        <span className="text-xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
+                                            {getFileLabel(file.file_type)}
+                                        </span>
+                                        <span className="text-xs text-slate-500">{formatBytes(file.file_size)}</span>
+                                        <span className="text-xs text-slate-600">
+                                            {format(new Date(file.created_at), 'MMM d, yyyy')}
+                                        </span>
+>>>>>>> origin/main
                                     </div>
                                 </div>
 
@@ -1764,3 +1972,4 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 };
 
 export default DocumentHub;
+

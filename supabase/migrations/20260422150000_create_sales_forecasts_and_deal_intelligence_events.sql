@@ -23,7 +23,10 @@ create index if not exists idx_sales_forecasts_owner_period on public.sales_fore
 
 alter table public.sales_forecasts enable row level security;
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.sales_forecasts;
+=======
+>>>>>>> origin/main
 create policy "tenant_isolation_policy" on public.sales_forecasts
 as permissive for all
 to public
@@ -50,7 +53,10 @@ create index if not exists idx_deal_intel_events_type on public.deal_intelligenc
 
 alter table public.deal_intelligence_events enable row level security;
 
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "tenant_isolation_policy" ON public.deal_intelligence_events;
+=======
+>>>>>>> origin/main
 create policy "tenant_isolation_policy" on public.deal_intelligence_events
 as permissive for all
 to public

@@ -1,6 +1,11 @@
 'use client';
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square } from 'lucide-react';
+=======
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles } from 'lucide-react';
+>>>>>>> origin/main
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -15,6 +20,7 @@ import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
 import { SignaturePad } from './SignaturePad';
 import { ContractAuditLog } from './ContractAuditLog';
+<<<<<<< HEAD
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
 import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
@@ -26,6 +32,8 @@ import {
     resolveDocumentThemeId,
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+=======
+>>>>>>> origin/main
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -35,7 +43,10 @@ import {
 } from '../../services/universalServiceCatalog';
 import { generateEmailDraft } from '../../services/unifiedAIService';
 import { contractLifecycleService } from '../../services/contractLifecycleService';
+<<<<<<< HEAD
 import { EU_JURISDICTIONS } from '../../config/euJurisdictions';
+=======
+>>>>>>> origin/main
 
 interface ContractDashboardProps {
     user: UserType;
@@ -149,21 +160,29 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         const [loadingContracts, setLoadingContracts] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer'>('new');
+<<<<<<< HEAD
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
     const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
     const [listQuery, setListQuery] = useState('');
     const [listStatusFilter, setListStatusFilter] = useState<'all' | 'draft' | 'sent' | 'client_signed' | 'fully_signed' | 'rejected'>('all');
     const [listSort, setListSort] = useState<'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'value_desc' | 'value_asc'>('newest');
+=======
+>>>>>>> origin/main
     
     // AI Lawyer Chat States
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
         { role: 'assistant', content: 'Hello! I am your AI Legal Assistant. You can ask me to review clauses, draft custom sections, explain legal terms, or evaluate potential risks. Select a contract below to analyze it specifically, or just start typing.' }
     ]);
     const [selectedContractIdForChat, setSelectedContractIdForChat] = useState<string>('');
+<<<<<<< HEAD
     const [selectedClientIdForLawyer, setSelectedClientIdForLawyer] = useState<string>('');
     const [chatInput, setChatInput] = useState('');
     const [isLawyerResponding, setIsLawyerResponding] = useState(false);
     const [isSavingLawyerPdf, setIsSavingLawyerPdf] = useState(false);
+=======
+    const [chatInput, setChatInput] = useState('');
+    const [isLawyerResponding, setIsLawyerResponding] = useState(false);
+>>>>>>> origin/main
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -197,6 +216,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 }
             }
 
+<<<<<<< HEAD
             let clientContext = '';
             if (selectedClientIdForLawyer && clients.length > 0) {
                 const client = clients.find((c) => c.id === selectedClientIdForLawyer);
@@ -210,6 +230,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 : '';
 
             const prompt = `You are an expert professional contract lawyer specializing in EU/EEA and international commercial agreements. Provide clean, professional, legally sound analysis and explanations. When drafting clauses, use the client's name and jurisdiction when known. Format responses in markdown suitable for a professional PDF export.\n\n${jurisdictionHint}${clientContext}${contractContext}User Question: ${textToSend}`;
+=======
+            const prompt = `You are an expert professional contract lawyer. Provide clean, professional, legally sound analysis and explanations. Format your responses beautifully in markdown.\n\n${contractContext}User Question: ${textToSend}`;
+>>>>>>> origin/main
 
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
@@ -218,6 +241,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     prompt,
                     maxTokens: 1500,
                     stream: true,
+<<<<<<< HEAD
                     ...(currentTenant?.id ? { tenantId: currentTenant.id } : {}),
                 }),
             });
@@ -241,6 +265,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 }
                 throw new Error(serverMsg || 'Failed to get lawyer response');
             }
+=======
+                }),
+            });
+
+            if (!res.ok) throw new Error('Failed to get lawyer response');
+>>>>>>> origin/main
 
             const reader = res.body?.getReader();
             if (!reader) throw new Error('No reader available');
@@ -265,6 +295,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
 
                 if (doneReading) break;
             }
+<<<<<<< HEAD
 
             // Guard against a completed-but-empty stream so users never see endless loading dots.
             if (!accumulated.trim()) {
@@ -285,6 +316,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 const next = [...prev];
                 if (next.length > 0) {
                     next[next.length - 1] = { role: 'assistant', content: friendly };
+=======
+        } catch (err: any) {
+            console.error(err);
+            setChatMessages(prev => {
+                const next = [...prev];
+                if (next.length > 0) {
+                    next[next.length - 1] = { role: 'assistant', content: 'Sorry, I encountered an error while processing your request. Please try again.' };
+>>>>>>> origin/main
                 }
                 return next;
             });
@@ -293,6 +332,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
+<<<<<<< HEAD
     const stripMarkdownFence = (content: string) =>
         content.replace(/```(?:markdown|md)?\s*|```/g, '').trim();
 
@@ -343,6 +383,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
+=======
+>>>>>>> origin/main
     const [signatureName, setSignatureName] = useState('');
     const [signatureData, setSignatureData] = useState('');
     const [signatureDate] = useState(format(new Date(), 'MMMM d, yyyy'));
@@ -352,8 +394,12 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [sendingContract, setSendingContract] = useState(false);
     const [aiDraftingSend, setAiDraftingSend] = useState(false);
     const [aiSendInstructions, setAiSendInstructions] = useState('');
+<<<<<<< HEAD
     const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '', provider: 'auto' as string });
     const [resendForSignature, setResendForSignature] = useState(false);
+=======
+    const [sendForm, setSendForm] = useState({ recipientEmail: '', subject: '', message: '' });
+>>>>>>> origin/main
     const [isEditing, setIsEditing] = useState(false);
     const [editedHtml, setEditedHtml] = useState('');
     const [previewTab, setPreviewTab] = useState<'document' | 'audit'>('document');
@@ -546,7 +592,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (error) throw new Error(String(error));
             toast.success('Contract saved successfully!');
             if (contract?.id) setContractId(contract.id);
+<<<<<<< HEAD
             showActionNextSteps(isSigned ? 'contract_signed' : 'contract_saved', (path) => router.push(path));
+=======
+            showActionNextSteps('contract_saved', (path) => router.push(path));
+>>>>>>> origin/main
             setSavedContracts(prev => [contract, ...prev]);
             setStep('saved');
             setIsEditing(false);
@@ -574,6 +624,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         }
     };
 
+<<<<<<< HEAD
     const resolveContractClientContact = (contract?: any | null) => {
         const meta = (contract?.metadata || {}) as Record<string, unknown>;
         const linkedClient =
@@ -651,6 +702,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         if (!targetEmail) {
             toast.error('No client email on this contract yet — pick the client or type their email before sending.');
         }
+=======
+    const openSendContractModal = () => {
+        const targetEmail = form.clientEmail || '';
+        setSendForm({
+            recipientEmail: targetEmail,
+            subject: `Contract: ${form.projectName || 'Service Agreement'}`,
+            message: `Hello,\n\nPlease review and sign the attached contract for ${form.projectName || 'our engagement'}.\n\nBest regards,\n${form.providerName || user.name}`,
+        });
+        setAiSendInstructions(
+            `Write a professional contract delivery email for ${form.clientName || 'the client'} about ${form.projectName || 'our engagement'}. Keep it concise and clear.`
+        );
+        setShowSendModal(true);
+>>>>>>> origin/main
     };
 
     const handleAiDraftSendMessage = async () => {
@@ -689,7 +753,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             const res = await fetch('/api/contracts/management', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+<<<<<<< HEAD
                     body: JSON.stringify({
+=======
+                body: JSON.stringify({
+>>>>>>> origin/main
                     tenantId: currentTenant.id,
                     action: 'send_contract',
                     config: {
@@ -699,8 +767,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         message: sendForm.message,
                         format: 'pdf',
                         userId: user.id,
+<<<<<<< HEAD
                         provider: sendForm.provider !== 'auto' ? sendForm.provider : undefined,
                         resendForSignature,
+=======
+>>>>>>> origin/main
                     },
                 }),
             });
@@ -708,9 +779,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             if (!res.ok || !payload?.success) {
                 throw new Error(payload?.error || 'Failed to send contract');
             }
+<<<<<<< HEAD
             toast.success(resendForSignature ? 'Signature request resent' : 'Contract sent successfully');
             setShowSendModal(false);
             setResendForSignature(false);
+=======
+            toast.success('Contract sent successfully');
+            setShowSendModal(false);
+>>>>>>> origin/main
         } catch (error: any) {
             toast.error(error?.message || 'Failed to send contract');
         } finally {
@@ -889,7 +965,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     <button
                         type="button"
                         onClick={() => setActiveView('lawyer')}
+<<<<<<< HEAD
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+=======
+                        className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+>>>>>>> origin/main
                     >
                         AI Lawyer
                     </button>
@@ -995,6 +1075,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
                             <p>No saved contracts yet. Generate your first one.</p>
                         </div>
+<<<<<<< HEAD
                     ) : listContracts.length === 0 ? (
                         <div className="text-center py-14 sm:py-16 text-slate-500 text-xs px-4">
                             <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
@@ -1008,6 +1089,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             </button>
                         </div>
                     ) : listContracts.map((c: any) => {
+=======
+                    ) : savedContracts.map((c: any) => {
+>>>>>>> origin/main
                         const statusBadgeStyles = {
                             fully_signed: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
                             client_signed: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
@@ -1022,6 +1106,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             return format(date, 'MMM d, yyyy');
                         };
 
+<<<<<<< HEAD
                         const contextItems = [
                             {
                                 label: 'View',
@@ -1101,6 +1186,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             ? <CheckSquare className="w-4 h-4 text-teal-400" />
                                             : <Square className="w-4 h-4" />}
                                     </button>
+=======
+                        return (
+                            <div key={c.id} className="bg-slate-900/60 border border-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all">
+                                <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
+>>>>>>> origin/main
                                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-teal-500/10 flex items-center justify-center shrink-0">
                                         <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
                                     </div>
@@ -1117,6 +1207,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             Created: <span className="text-slate-300">{c.created_at ? format(new Date(c.created_at), 'MMM d, yyyy') : 'Recent'}</span>
                                             <span className="mx-1.5">·</span>
                                             Expiry: <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Expires {getExpiry()}</span>
+<<<<<<< HEAD
                                             {(() => {
                                                 const contact = resolveContractClientContact(c);
                                                 if (!contact.email && contact.name === 'the client') return null;
@@ -1134,6 +1225,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+=======
+                                        </p>
+                                    </div>
+                                </div>
+>>>>>>> origin/main
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1144,6 +1240,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setSignatureData(c.admin_signature || '');
                                         setSignatureName(c.admin_signature ? 'Administrator' : '');
                                         setIsSigned(!!c.admin_signature);
+<<<<<<< HEAD
                                         setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
 
                                         const contact = resolveContractClientContact(c);
@@ -1163,6 +1260,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                                 prev.totalAmount ||
                                                 (c.payment_amount != null ? String(c.payment_amount) : prev.totalAmount),
                                         }));
+=======
+>>>>>>> origin/main
 
                                         // Use proxied URL if available
                                         if (c.document_url) {
@@ -1174,6 +1273,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         setPreviewTab('document');
                                         setActiveView('new');
                                     }}
+<<<<<<< HEAD
                                     className="w-full sm:w-auto justify-center px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"
                                 >
                                     <Eye className="w-3.5 h-3.5 text-teal-400" /> View
@@ -1200,6 +1300,13 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 </div>
                             </div>
                             </CustomContextMenu>
+=======
+                                    className="w-full sm:w-auto justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shrink-0 border border-white/5 hover:border-white/10"
+                                >
+                                    <Eye className="w-4 h-4 text-teal-400" /> View
+                                </button>
+                            </div>
+>>>>>>> origin/main
                         );
                     })}
                 </div>
@@ -1471,15 +1578,26 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             {/* Action Bar */}
                             <div className="flex flex-wrap gap-3 items-center justify-between bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
                                 <div className="flex gap-2 flex-wrap">
+<<<<<<< HEAD
                                     <button onClick={() => setStep('form')} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
                                         <RotateCcw className="w-3.5 h-3.5" /> Edit Parameters
+=======
+                                    <button onClick={() => setStep('form')} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
+                                        <RotateCcw className="w-4 h-4" /> Edit Parameters
+>>>>>>> origin/main
                                     </button>
                                     {!isSigned && (
                                         <button
                                             onClick={() => setIsEditing(!isEditing)}
+<<<<<<< HEAD
                                             className={`inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all ${isEditing ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'}`}
                                         >
                                             <Edit3 className="w-3.5 h-3.5" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
+=======
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isEditing ? 'bg-teal-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                                        >
+                                            <Edit3 className="w-4 h-4" /> {isEditing ? 'Save Refinements' : 'Refine Text'}
+>>>>>>> origin/main
                                         </button>
                                     )}
                                     {(isSigned || step === 'saved') && (
@@ -1490,32 +1608,59 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                             <button onClick={() => openSendContractModal()} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-300 transition-all hover:bg-slate-700 hover:text-white">
                                                 <FileText className="w-3.5 h-3.5" /> Send Contract
                                             </button>
+<<<<<<< HEAD
                                         </>
                                     )}
                                     {step !== 'saved' && (
                                         <button onClick={saveContract} disabled={isSaving} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-teal-600 px-3 text-[11px] font-bold text-white transition-all hover:bg-teal-500 disabled:opacity-60">
                                             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+=======
+                                            <button onClick={openSendContractModal} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition-all">
+                                                <FileText className="w-4 h-4" /> Send Contract
+                                            </button>
+                                        </>
+                                    )}
+                                    {step !== 'saved' && (
+                                        <button onClick={saveContract} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-bold transition-all disabled:opacity-60">
+                                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+>>>>>>> origin/main
                                             Save Contract
                                         </button>
                                     )}
                                 </div>
+<<<<<<< HEAD
                                 <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); setDocumentTheme('executive'); }} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-800 px-3 text-[11px] font-bold text-slate-400 transition-all hover:bg-slate-700 hover:text-white">
                                     <RotateCcw className="w-3.5 h-3.5" /> New Contract
+=======
+                                <button onClick={() => { setStep('form'); setGeneratedContract(''); setContractId(''); setIsSigned(false); setSignatureName(''); setSignatureData(''); setIsEditing(false); setPreviewTab('document'); }} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-sm transition-all">
+                                    <RotateCcw className="w-4 h-4" /> New Contract
+>>>>>>> origin/main
                                 </button>
                             </div>
 
                             {/* Tab Selection */}
                             {contractId && (
+<<<<<<< HEAD
                                 <div className="inline-flex gap-1 rounded-full border border-white/5 bg-slate-900/60 p-1 mb-6">
                                     <button
                                         onClick={() => setPreviewTab('document')}
                                         className={`h-8 px-3 rounded-full text-[11px] font-bold transition-all ${previewTab === 'document' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+=======
+                                <div className="flex gap-4 mb-6 border-b border-slate-800">
+                                    <button
+                                        onClick={() => setPreviewTab('document')}
+                                        className={`pb-3 text-sm font-bold transition-all border-b-2 ${previewTab === 'document' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+>>>>>>> origin/main
                                     >
                                         Contract Document
                                     </button>
                                     <button
                                         onClick={() => setPreviewTab('audit')}
+<<<<<<< HEAD
                                         className={`h-8 px-3 rounded-full text-[11px] font-bold transition-all ${previewTab === 'audit' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+=======
+                                        className={`pb-3 text-sm font-bold transition-all border-b-2 ${previewTab === 'audit' ? 'border-teal-500 text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+>>>>>>> origin/main
                                     >
                                         Audit Trail & Compliance
                                     </button>
@@ -1568,6 +1713,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             )}
 
                             <p className="text-slate-500 text-xs">
+<<<<<<< HEAD
                                 {isEditing
                                     ? 'Editing mode enabled. Your changes will be saved to the final contract.'
                                     : 'Pick a brand theme below — preview and PDF export use the same colorful design as quotes and invoices.'}
@@ -1620,6 +1766,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 />
                             </div>
 
+=======
+                                {isEditing ? 'Editing mode enabled. Your changes will be saved to the final contract.' : 'On-screen preview uses responsive layout. The PDF export uses standard A4 typography and adds a title block and signature area.'}
+                            </p>
+
+>>>>>>> origin/main
                             {/* Contract Document */}
                             <div className="bg-white text-gray-900 rounded-2xl shadow-2xl overflow-hidden min-h-[600px]">
                                 <div className="p-8 md:p-12 font-serif leading-relaxed" style={{ fontFamily: "'Times New Roman', Georgia, serif" }}>
@@ -1674,7 +1825,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {activeView === 'lawyer' && (
+<<<<<<< HEAD
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-auto lg:h-[calc(100vh-280px)] min-h-0 lg:min-h-[500px] mb-8">
+=======
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-280px)] min-h-[500px] mb-8">
+>>>>>>> origin/main
                     {/* Left Sidebar: Context and Quick Actions */}
                     <div className="lg:col-span-1 flex flex-col gap-4">
                         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
@@ -1704,6 +1859,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     <span>AI will reference selected contract content</span>
                                 </div>
                             )}
+<<<<<<< HEAD
 
                             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">Client from CRM</label>
                             <select
@@ -1733,6 +1889,8 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     </option>
                                 ))}
                             </select>
+=======
+>>>>>>> origin/main
                         </div>
 
                         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col gap-2.5">
@@ -1815,6 +1973,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                         }`}
                                     >
                                         {msg.content ? (
+<<<<<<< HEAD
                                             <>
                                                 <div className="prose prose-invert prose-xs max-w-none space-y-1.5 break-words whitespace-pre-wrap">
                                                     {msg.content}
@@ -1852,6 +2011,11 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                                     </div>
                                                 )}
                                             </>
+=======
+                                            <div className="prose prose-invert prose-xs max-w-none space-y-1.5 break-words whitespace-pre-wrap">
+                                                {msg.content}
+                                            </div>
+>>>>>>> origin/main
                                         ) : (
                                             <div className="flex items-center gap-1.5 py-1">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -1898,6 +2062,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {showSendModal && (
+<<<<<<< HEAD
                 <div className="fixed inset-0 z-[1100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
                     <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-h-[calc(100vh-2rem)] flex flex-col">
@@ -1990,10 +2155,52 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                         </div>
 
                         <div className="px-5 sm:px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+=======
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
+                    <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <h3 className="text-lg font-semibold text-white">Send Contract by Email</h3>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
+                            <input
+                                className={inputCls}
+                                value={sendForm.recipientEmail}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                                placeholder="client@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
+                            <input
+                                className={inputCls}
+                                value={sendForm.subject}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
+                            <textarea
+                                className={`${inputCls} min-h-[90px]`}
+                                value={aiSendInstructions}
+                                onChange={(e) => setAiSendInstructions(e.target.value)}
+                                placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                            <textarea
+                                className={`${inputCls} min-h-[140px]`}
+                                value={sendForm.message}
+                                onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between">
+>>>>>>> origin/main
                             <button
                                 type="button"
                                 onClick={handleAiDraftSendMessage}
                                 disabled={aiDraftingSend}
+<<<<<<< HEAD
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm w-full sm:w-auto"
                             >
                                 {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
@@ -2013,6 +2220,18 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold w-full sm:w-auto disabled:opacity-50"
                                 >
                                     {sendingContract ? 'Sending...' : resendForSignature ? 'Resend for signature' : 'Send Contract'}
+=======
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm"
+                            >
+                                {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <button type="button" onClick={() => setShowSendModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm">
+                                    Cancel
+                                </button>
+                                <button type="button" onClick={handleSendContract} disabled={sendingContract} className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold">
+                                    {sendingContract ? 'Sending...' : 'Send Contract'}
+>>>>>>> origin/main
                                 </button>
                             </div>
                         </div>
@@ -2615,3 +2834,4 @@ function buildTemplateContract(
 }
 
 export default ContractDashboard;
+

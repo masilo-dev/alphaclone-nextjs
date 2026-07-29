@@ -363,6 +363,7 @@ export default function EnhancedInvoiceModal({
 
       if (!finalInvoice) throw new Error("Failed to retrieve invoice information");
 
+<<<<<<< HEAD
       // Trigger durable invoice lifecycle (PDF -> send -> reminders -> overdue)
       // Prefer authenticated API — does not require MCP/AI availability.
       try {
@@ -379,6 +380,19 @@ export default function EnhancedInvoiceModal({
       } catch (dispatchError: any) {
         console.error('Invoice lifecycle Error:', dispatchError);
         toast.error(`Invoice saved, but lifecycle automation failed: ${dispatchError.message}`, { id: toastId });
+=======
+      // Trigger MCP dispatch
+      try {
+        const { callMcpTool } = await import('@/services/mcp/toolCaller');
+        await callMcpTool('send_invoice', {
+          invoice_id: finalInvoice.id,
+          recipient_email: formData.clientEmail
+        });
+        toast.success("Invoice sent successfully with PDF attachment!", { id: toastId });
+      } catch (dispatchError: any) {
+        console.error('MCP Dispatch Error:', dispatchError);
+        toast.error(`Invoice saved, but email dispatch failed: ${dispatchError.message}`, { id: toastId });
+>>>>>>> origin/main
       }
 
       onSuccess?.(finalInvoice);
@@ -646,11 +660,16 @@ export default function EnhancedInvoiceModal({
             ${item.amount.toFixed(2)}
           </div>
           <button
+<<<<<<< HEAD
             onClick={async () => {
+=======
+            onClick={() => {
+>>>>>>> origin/main
               if (!item.description) {
                 toast.error("Add a description first");
                 return;
               }
+<<<<<<< HEAD
               try {
                 await addService({
                   name: item.description,
@@ -663,6 +682,15 @@ export default function EnhancedInvoiceModal({
                 const message = err instanceof Error ? err.message : 'Failed to save service';
                 toast.error(message);
               }
+=======
+              addService({
+                name: item.description,
+                description: '',
+                defaultPrice: item.rate,
+                unit: 'flat'
+              });
+              toast.success("Saved to catalog");
+>>>>>>> origin/main
             }}
             className="p-2 text-slate-500 hover:text-teal-400 hover:bg-teal-400/10 rounded-lg transition-all"
             title="Save as Service"
@@ -699,7 +727,11 @@ export default function EnhancedInvoiceModal({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
+<<<<<<< HEAD
             className="fixed inset-0 z-[10050] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+=======
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+>>>>>>> origin/main
           >
             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
               <div className="flex justify-between items-center mb-6">

@@ -398,3 +398,4 @@ const SimpleVideoMeeting: React.FC<SimpleVideoMeetingProps> = ({ user, onJoinRoo
 };
 
 export default SimpleVideoMeeting;
+

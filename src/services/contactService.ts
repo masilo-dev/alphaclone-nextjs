@@ -272,6 +272,7 @@ export const contactService = {
 
             if (error) throw error;
 
+<<<<<<< HEAD
             const payload =
                 typeof data === 'string'
                     ? (JSON.parse(data) as { contact_id?: string; client_id?: string })
@@ -281,6 +282,13 @@ export const contactService = {
                 contactId: payload?.contact_id || null,
                 clientId: payload?.client_id || undefined,
                 error: null,
+=======
+            // RPC now returns a JSONB object with contact_id and client_id
+            return { 
+                contactId: data?.contact_id || null, 
+                clientId: data?.client_id || null,
+                error: null 
+>>>>>>> origin/main
             };
         } catch (err: any) {
             console.error('Error converting lead to contact:', JSON.stringify(err, null, 2), err);

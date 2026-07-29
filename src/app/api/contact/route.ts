@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 import { contactSchema } from '@/schemas/validation';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
+<<<<<<< HEAD
 import { rateLimitMiddleware, rateLimitConfigs } from '@/lib/rateLimit';
 import { isTurnstileEnforced, readClientIp, readTurnstileToken, verifyTurnstileToken } from '@/lib/verifyTurnstile';
+=======
+>>>>>>> origin/main
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +17,7 @@ export async function POST(request: NextRequest) {
         { error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 }
       );
+<<<<<<< HEAD
     }
     const { name, email, subject, message, company } = parsed.data;
     const limited = await rateLimitMiddleware(
@@ -32,7 +36,10 @@ export async function POST(request: NextRequest) {
       if (!ok) {
         return NextResponse.json({ error: 'Security verification failed. Please try again.' }, { status: 403 });
       }
+=======
+>>>>>>> origin/main
     }
+    const { name, email, subject, message, company } = parsed.data;
 
     const supabase = createAdminSupabaseClientOrThrow();
     const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();
@@ -65,6 +72,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+<<<<<<< HEAD
+=======
+    const salesInbox = process.env.CONTACT_SALES_INBOX_EMAIL?.trim();
+    const tenantId = process.env.CONTACT_TENANT_ID?.trim();
+>>>>>>> origin/main
     if (salesInbox && tenantId) {
       try {
         await sendEmailServer({
@@ -74,9 +86,12 @@ export async function POST(request: NextRequest) {
           subject: `Website contact: ${subject || 'General inquiry'}`,
           text: `From: ${name} <${email}>\nCompany: ${company || '—'}\n\n${message}`,
           templateName: 'websiteContact',
+<<<<<<< HEAD
           // Internal notification — must bypass the CRM recipient gate or it is
           // silently blocked when the sales inbox isn't a lead/contact record.
           isPlatformNotification: true,
+=======
+>>>>>>> origin/main
         });
       } catch (notifyErr) {
         console.error('Contact form sales notification failed:', notifyErr);

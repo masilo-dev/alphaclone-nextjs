@@ -61,7 +61,11 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarTab, setSidebarTab] = useState<'chats' | 'contacts'>('chats');
     const [selectedCRMContact, setSelectedCRMContact] = useState<{ id: string; name: string; email?: string; phone?: string } | null>(null);
+<<<<<<< HEAD
     const [activeChannel, setActiveChannel] = useState<'all' | 'email' | 'chat'>('all');
+=======
+    const [activeChannel, setActiveChannel] = useState<'all' | 'email' | 'whatsapp' | 'sms' | 'internal'>('all');
+>>>>>>> origin/main
     const [isAIGenerating, setIsAIGenerating] = useState(false);
     const { currentTenant } = useTenant();
     const { clients: crmClients, isLoading: isLoadingCRM } = useClients(currentTenant?.id, { limit: 100 });
@@ -396,8 +400,12 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             if (selectedCRMContact) {
                 const filtered = unifiedMessages.filter(m => {
                     if (activeChannel === 'all') return true;
+<<<<<<< HEAD
                     if (activeChannel === 'email') return m.source === 'email';
                     return m.source === 'whatsapp' || m.source === 'sms' || m.source === 'internal';
+=======
+                    return m.source === activeChannel;
+>>>>>>> origin/main
                 });
                 return filtered.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
             }
@@ -634,6 +642,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
     const isRecipientTyping = isAdmin
         ? (selectedClient ? typingUsers.has(selectedClient.id) : false)
         : (adminUser ? typingUsers.has(adminUser.id) : false);
+<<<<<<< HEAD
 
     const messageStats = useMemo<ModuleStat[]>(() => {
         const unread = filteredMessages.filter(m => !m.readAt && m.senderId !== user.id).length;
@@ -673,6 +682,8 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
             },
         ];
     }, [filteredMessages, user.id, clients.length, crmClients.length, isAdmin]);
+=======
+>>>>>>> origin/main
 
     return (
         <div
@@ -864,6 +875,7 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                             <h3 className="text-white font-bold text-sm">{selectedCRMContact.name}</h3>
                                             <p className="text-xs text-slate-400">{selectedCRMContact.email || 'CRM Contact'}</p>
                                         </div>
+<<<<<<< HEAD
                                         <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-teal-500/20 text-teal-400 border border-teal-500/30 font-semibold">All channels</span>
                                     </div>
                                     <div className="flex gap-1 pb-0 overflow-x-auto">
@@ -877,11 +889,26 @@ const MessagesTab: React.FC<MessagesTabProps> = ({
                                                 onClick={() => setActiveChannel(id)}
                                                 className={`px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
                                                     activeChannel === id
+=======
+                                        <span className="ml-auto text-[10px] px-2 py-1 rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30 font-semibold">OMNICHANNEL</span>
+                                    </div>
+                                    <div className="flex gap-1 pb-0 overflow-x-auto">
+                                        {(['all', 'email', 'whatsapp', 'sms', 'internal'] as const).map(ch => (
+                                            <button
+                                                key={ch}
+                                                onClick={() => setActiveChannel(ch)}
+                                                className={`px-3 py-1.5 text-xs font-medium rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+                                                    activeChannel === ch
+>>>>>>> origin/main
                                                         ? 'text-teal-400 border-teal-400 bg-teal-500/10'
                                                         : 'text-slate-400 border-transparent hover:text-white hover:bg-slate-800'
                                                 }`}
                                             >
+<<<<<<< HEAD
                                                 {label}
+=======
+                                                {ch === 'all' ? '🌐 All' : ch === 'email' ? '✉️ Email' : ch === 'whatsapp' ? '💬 WhatsApp' : ch === 'sms' ? '📱 SMS' : '🔒 Internal'}
+>>>>>>> origin/main
                                             </button>
                                         ))}
                                     </div>

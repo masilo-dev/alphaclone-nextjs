@@ -43,7 +43,10 @@ create index if not exists idx_email_webhook_events_provider_message
 alter table public.email_webhook_events enable row level security;
 
 drop policy if exists "email_webhook_events_tenant_isolation_select" on public.email_webhook_events;
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "email_webhook_events_tenant_isolation_select" ON public.email_webhook_events;
+=======
+>>>>>>> origin/main
 create policy "email_webhook_events_tenant_isolation_select"
   on public.email_webhook_events
   for select
@@ -56,7 +59,10 @@ create policy "email_webhook_events_tenant_isolation_select"
   );
 
 drop policy if exists "email_webhook_events_tenant_isolation_write" on public.email_webhook_events;
+<<<<<<< HEAD
 DROP POLICY IF EXISTS "email_webhook_events_tenant_isolation_write" ON public.email_webhook_events;
+=======
+>>>>>>> origin/main
 create policy "email_webhook_events_tenant_isolation_write"
   on public.email_webhook_events
   for all

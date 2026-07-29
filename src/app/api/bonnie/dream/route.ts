@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+<<<<<<< HEAD
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+=======
+>>>>>>> origin/main
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -8,6 +11,7 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+<<<<<<< HEAD
     const tenantId = body.tenant_id || body.tenantId;
     const auto_apply = body.auto_apply ?? false;
 
@@ -16,12 +20,25 @@ export async function POST(req: NextRequest) {
     }
 
     const { admin: supabase } = await requireTenantAccess(tenantId);
+=======
+    const { tenant_id, auto_apply = false } = body;
+
+    if (!tenant_id) {
+      return NextResponse.json({ error: 'tenant_id is required' }, { status: 400 });
+    }
+
+    const supabase = createSupabaseAdminClient();
+>>>>>>> origin/main
 
     // 1. Fetch last 50 mcp_sessions for the tenant
     const { data: sessions, error: sessErr } = await supabase
       .from('mcp_sessions')
       .select('id, tool_name, success, error_message, duration_ms, created_at')
+<<<<<<< HEAD
       .eq('tenant_id', tenantId)
+=======
+      .eq('tenant_id', tenant_id)
+>>>>>>> origin/main
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -29,11 +46,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Failed to fetch sessions: ${sessErr.message}` }, { status: 500 });
     }
 
+<<<<<<< HEAD
     let patternsExtracted: any[] = [];
     let memoryUpdates: any[] = [];
 
     try {
       const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
+=======
+    const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+    let patternsExtracted: any[] = [];
+    let memoryUpdates: any[] = [];
+
+    if (ANTHROPIC_API_KEY) {
+      try {
+        const dreamPrompt = `You are reviewing past AI agent session logs for a SaaS business platform.
+>>>>>>> origin/main
 Analyze the following session data and extract:
 1. Common failure patterns (tools that often fail, error themes)
 2. Performance insights (slow tools, high success rate tools)
@@ -48,6 +75,7 @@ Return ONLY valid JSON with:
 - "memory_updates": array of { category, insight, action_recommendation }
 - "summary": one-sentence summary`;
 
+<<<<<<< HEAD
       const { routeAIRequest } = await import('@/services/aiRouter');
       const aiResponse = await routeAIRequest({
         prompt: dreamPrompt,
@@ -61,6 +89,39 @@ Return ONLY valid JSON with:
       memoryUpdates = parsed.memory_updates || [];
     } catch (e) {
       console.warn('[bonnie/dream] Dreaming endpoint failed, synthesizing from data:', e);
+=======
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+            'anthropic-beta': 'managed-agents-2026-04-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 2048,
+            messages: [{ role: 'user', content: dreamPrompt }],
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const rawText = data.content?.[0]?.text || '{}';
+          const cleanText = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+          const parsed = JSON.parse(cleanText);
+          patternsExtracted = parsed.patterns_extracted || [];
+          memoryUpdates = parsed.memory_updates || [];
+        } else {
+          throw new Error(`Anthropic API returned status ${res.status}`);
+        }
+      } catch (e) {
+        console.warn('[bonnie/dream] Dreaming endpoint failed, synthesizing from data:', e);
+        runFallbackSynthesis();
+      }
+    } else {
+      console.warn('[bonnie/dream] ANTHROPIC_API_KEY missing, using fallback synthesis');
+>>>>>>> origin/main
       runFallbackSynthesis();
     }
 
@@ -81,7 +142,11 @@ Return ONLY valid JSON with:
     const { data: dreamSession, error: insertErr } = await supabase
       .from('bonnie_dream_sessions')
       .insert({
+<<<<<<< HEAD
         tenant_id: tenantId,
+=======
+        tenant_id,
+>>>>>>> origin/main
         reviewed_sessions: sessions || [],
         patterns_extracted: patternsExtracted,
         memory_updates: memoryUpdates,
@@ -102,9 +167,15 @@ Return ONLY valid JSON with:
           await supabase
             .from('tasks')
             .insert({
+<<<<<<< HEAD
               tenant_id: tenantId,
               title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
               description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop analysis during idle hours.`,
+=======
+              tenant_id,
+              title: `[AI Self-Evolution] ${update.category || 'Optimization'}: ${update.insight}`,
+              description: `Recommendation: ${update.action_recommendation || 'Review tool and workflow patterns.'}\n\nGenerated automatically by Bonnie's Dream Loop simulation during idle hours.`,
+>>>>>>> origin/main
               priority: 'medium',
               status: 'todo',
               created_at: new Date().toISOString(),
@@ -126,7 +197,13 @@ Return ONLY valid JSON with:
       memory_updates_count: memoryUpdates.length,
       auto_applied: auto_apply,
     });
+<<<<<<< HEAD
   } catch (err: unknown) {
     return routeErrorResponse(err, 'Bonnie dream failed', req);
+=======
+  } catch (err: any) {
+    console.error('[bonnie/dream] Error:', err);
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+>>>>>>> origin/main
   }
 }

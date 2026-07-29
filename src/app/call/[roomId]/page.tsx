@@ -41,6 +41,7 @@ export default function CallPage() {
                     return;
                 }
 
+<<<<<<< HEAD
                 if (provider === 'teams') {
                     if (!joinUrl) {
                         setError('Teams join link missing. Start a new meeting from the dashboard.');
@@ -49,6 +50,9 @@ export default function CallPage() {
                     }
                     setTeamsJoinUrl(joinUrl);
                 }
+=======
+                setLoading(false);
+>>>>>>> origin/main
 
                 setLoading(false);
             } catch (err) {

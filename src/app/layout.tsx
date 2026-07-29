@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
+<<<<<<< HEAD
 import Script from "next/script";
 
+=======
+>>>>>>> origin/main
 import "@fontsource-variable/inter";
 import "@fontsource/space-grotesk";
 import "./globals.css";
@@ -17,12 +20,18 @@ import { ConsentAwareAnalytics } from "@/components/common/ConsentAwareAnalytics
 import NativeInteractions from "@/components/common/NativeInteractions";
 import PageTransition from "@/components/PageTransition";
 import { WebVitals } from "@/components/common/WebVitals";
+<<<<<<< HEAD
 import { SITE_URL } from "@/lib/siteUrl";
 import { buildOrganizationEntitySchema, buildSiteNavigationSchema } from "@/lib/seo/siteEntity";
+=======
+import PrismBackground from "@/components/common/PrismBackground";
+import { SITE_URL } from "@/lib/siteUrl";
+>>>>>>> origin/main
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
+<<<<<<< HEAD
     default: "AlphaClone — AI Business OS for Founders | $15/month",
     template: "%s | AlphaClone Systems",
   },
@@ -31,6 +40,16 @@ export const metadata: Metadata = {
   keywords: [
     "AI business operating system",
     "AlphaClone",
+=======
+    default: "Alphaclone — AI Business OS for Founders | $15/month",
+    template: "%s | AlphaClone Systems",
+  },
+  description:
+    "Run your entire business from one AI platform. CRM, invoicing, contracts, social media, and meetings in plain English. Replace 10+ tools for $15 per month.",
+  keywords: [
+    "AI business operating system",
+    "Alphaclone",
+>>>>>>> origin/main
     "AlphaClone Systems",
     "AI CRM for founders",
     "small business CRM automated",
@@ -62,6 +81,7 @@ export const metadata: Metadata = {
   publisher: "AlphaClone Systems",
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   alternates: { canonical: SITE_URL },
+<<<<<<< HEAD
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
     other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
@@ -72,6 +92,12 @@ export const metadata: Metadata = {
     title: "AlphaClone — AI Business OS for Founders",
     description:
       "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
+=======
+  openGraph: {
+    title: "Alphaclone — AI Business OS for Founders",
+    description:
+      "Replace 10+ tools with one AI platform. CRM, invoicing, contracts, social media, and meetings for $15 per month.",
+>>>>>>> origin/main
     type: "website",
     url: SITE_URL,
     siteName: "AlphaClone Systems",
@@ -80,9 +106,15 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+<<<<<<< HEAD
     title: "AlphaClone — AI Business OS for Founders",
     description:
       "CRM, invoicing, contracts, social media workflows, and meetings in one AI-assisted workspace. Starter plans begin at $15 per month.",
+=======
+    title: "Alphaclone — AI Business OS for Founders",
+    description:
+      "Replace 10+ tools with one AI platform. CRM, invoicing, contracts, social media, and meetings. $15 per month.",
+>>>>>>> origin/main
     creator: "@AlphaCloneSys",
     images: ["/twitter-image"],
   },
@@ -101,21 +133,30 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+<<<<<<< HEAD
   maximumScale: 5,
   userScalable: true,
   viewportFit: "cover",
+=======
+  maximumScale: 1,
+  userScalable: false,
+>>>>>>> origin/main
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f1f5f9" },
     { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
 };
 
+<<<<<<< HEAD
 /**
  * SoftwareApplication schema — primary entity signal for AI Overview extraction.
  * Includes featureList, priceSpecification, and disambiguatingDescription to
  * permanently separate AlphaClone Systems (software company, Wyoming LLC, filing ID 2026-002002581)
  * from unrelated financial indexes or ETFs that share the "AlphaClone" word.
  */
+=======
+
+>>>>>>> origin/main
 const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -130,9 +171,14 @@ const organizationSchema = {
     "AlphaClone Systems LLC is an independent software development company registered in Wyoming, USA (Filing ID: 2026-002002581). It provides an AI-powered business operating system for solo founders, consultants, and service agencies. AlphaClone Systems is not affiliated with, and should not be confused with, any financial fund, ETF, or investment index that uses the word AlphaClone.",
   operatingSystem: "All",
   applicationCategory: "BusinessApplication",
+<<<<<<< HEAD
   applicationSubCategory: "CRM, Invoicing, Project Management, AI Automation",
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
+=======
+  url: SITE_URL,
+  logo: `${SITE_URL}/favicon.ico`,
+>>>>>>> origin/main
   description:
     "AlphaClone Systems consolidates CRM, client management, automated billing, project tracking, contract lifecycle, and social media distribution into one AI-assisted workspace. Starting at $15/month, it reduces administrative overhead for service businesses by unifying fragmented software ecosystems into a single operational backbone.",
   featureList: [
@@ -151,6 +197,7 @@ const organizationSchema = {
     "@type": "Offer",
     price: "15.00",
     priceCurrency: "USD",
+<<<<<<< HEAD
     priceValidUntil: "2027-01-01",
     priceSpecification: {
       "@type": "PriceSpecification",
@@ -164,10 +211,16 @@ const organizationSchema = {
     description: "Full access to CRM, invoicing, project management, contracts, and social media tools. 14-day free trial available.",
     url: `${SITE_URL}/pricing`,
     availability: "https://schema.org/InStock",
+=======
+    lowPrice: "15",
+    highPrice: "80",
+    offerCount: "3",
+>>>>>>> origin/main
   },
   publisher: {
     "@type": "Organization",
     name: "AlphaClone Systems",
+<<<<<<< HEAD
     legalName: "AlphaClone Systems, LLC",
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
@@ -176,6 +229,10 @@ const organizationSchema = {
       "https://www.facebook.com/100089899181752",
       "https://twitter.com/AlphaCloneSys",
     ],
+=======
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.ico`,
+>>>>>>> origin/main
   },
 };
 
@@ -187,13 +244,35 @@ const websiteSchema = {
   description: "Unified business operating platform for service businesses.",
   potentialAction: {
     "@type": "SearchAction",
+<<<<<<< HEAD
     target: `${SITE_URL}/search?q={search_term_string}`,
+=======
+    target: `${SITE_URL}/docs?query={search_term_string}`,
+>>>>>>> origin/main
     "query-input": "required name=search_term_string",
   },
 };
 
+<<<<<<< HEAD
 const navigationSchema = buildSiteNavigationSchema();
 const organizationEntitySchema = buildOrganizationEntitySchema();
+=======
+const navigationSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Primary Site Navigation",
+  itemListElement: [
+    { "@type": "SiteNavigationElement", position: 1, name: "About", url: `${SITE_URL}/about` },
+    { "@type": "SiteNavigationElement", position: 2, name: "Documentation", url: `${SITE_URL}/docs` },
+    { "@type": "SiteNavigationElement", position: 3, name: "Pricing", url: `${SITE_URL}/pricing` },
+    { "@type": "SiteNavigationElement", position: 4, name: "Contact", url: `${SITE_URL}/contact` },
+    { "@type": "SiteNavigationElement", position: 5, name: "Login", url: `${SITE_URL}/login` },
+    { "@type": "SiteNavigationElement", position: 6, name: "Start Free Trial", url: `${SITE_URL}/register` },
+  ],
+};
+
+import Script from "next/script";
+>>>>>>> origin/main
 
 export default function RootLayout({
   children,
@@ -206,6 +285,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://challenges.cloudflare.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
+<<<<<<< HEAD
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
         <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
         {/* PWA Meta Tags - already defined in metadata/viewport exports */}
@@ -221,6 +301,12 @@ export default function RootLayout({
           overscrollBehavior: 'none',
           touchAction: 'manipulation',
         }}
+=======
+        <Script src="/lockdown-install.js?v=5" strategy="afterInteractive" />
+      </head>
+      <body
+        className="antialiased text-base subpixel-antialiased font-sans"
+>>>>>>> origin/main
       >
         <script
           type="application/ld+json"

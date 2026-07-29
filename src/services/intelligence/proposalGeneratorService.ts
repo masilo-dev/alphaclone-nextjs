@@ -43,6 +43,7 @@ Maintain a confident, value-driven tone emphasizing ROI and operational efficien
 
     // Executive Summary
     const execPrompt = `${systemPrompt}\n\nDraft a 2-paragraph Executive Summary for deal "${deal.name}" with client "${clientName}". The contact is ${contactName}.`;
+<<<<<<< HEAD
     const execResponse = await generateText(execPrompt, 600, 'deepseek-chat', tenantId);
     
     // Proposed Solution
@@ -52,6 +53,17 @@ Maintain a confident, value-driven tone emphasizing ROI and operational efficien
     // Investment Summary
     const invPrompt = `${systemPrompt}\n\nDraft a brief Investment Summary for the estimated value of ${value}. Explain that this covers full licensing, deployment, and onboarding support.`;
     const invResponse = await generateText(invPrompt, 400, 'deepseek-chat', tenantId);
+=======
+    const execResponse = await generateText(execPrompt, 600, 'claude-sonnet-4-6-20260217', tenantId);
+    
+    // Proposed Solution
+    const solPrompt = `${systemPrompt}\n\nDraft a 3-paragraph Proposed Solution outlining the core implementation and strategic advantages for deal "${deal.name}".`;
+    const solResponse = await generateText(solPrompt, 800, 'claude-sonnet-4-6-20260217', tenantId);
+
+    // Investment Summary
+    const invPrompt = `${systemPrompt}\n\nDraft a brief Investment Summary for the estimated value of ${value}. Explain that this covers full licensing, deployment, and onboarding support.`;
+    const invResponse = await generateText(invPrompt, 400, 'claude-sonnet-4-6-20260217', tenantId);
+>>>>>>> origin/main
 
     return {
       deal_id: dealId,

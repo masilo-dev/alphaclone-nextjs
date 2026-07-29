@@ -73,7 +73,11 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Validation failed', code: 'VALIDATION_ERROR', details: parsed.error.flatten() }, { status: 400 });
     }
+<<<<<<< HEAD
     const { tenantId, niche, location, sortBy, usePlaywright, radiusKm, sources, useApollo } = parsed.data;
+=======
+    const { tenantId, niche, location, sortBy, usePlaywright, radiusKm } = parsed.data;
+>>>>>>> origin/main
 
     const { data: membership } = await supabase
       .from('tenant_users')
@@ -118,7 +122,11 @@ export async function POST(req: NextRequest) {
     }
     if (error) return clientErrorResponse(error, { request: req, scope: 'scraper/jobs/create.POST' });
     
+<<<<<<< HEAD
     const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads : []);
+=======
+    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads.map(({ source, ...rest }) => rest) : []);
+>>>>>>> origin/main
     const sanitizedJob = {
       ...job,
       source_stats: {},
