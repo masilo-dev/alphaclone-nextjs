@@ -4,13 +4,14 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AlphaIcon } from '@/components/marketing/icons';
+import type { AlphaIconName } from '@/components/marketing/icons';
 
 interface WorkflowStep {
   id: string;
   step: string;
   title: string;
   desc: string;
-  icon: string;
+  icon: AlphaIconName;
   color: string;
 }
 
@@ -20,7 +21,7 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     step: '01',
     title: 'New Lead Ingestion',
     desc: 'Capture leads automatically from web forms, social ads, or email outreach into CRM.',
-    icon: 'user',
+    icon: 'leads',
     color: 'from-blue-500 to-cyan-400',
   },
   {
@@ -28,7 +29,7 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     step: '02',
     title: 'AI Proposal Generation',
     desc: 'Generate customized proposals with smart pricing and terms in seconds using Bonnie AI.',
-    icon: 'document',
+    icon: 'documents',
     color: 'from-teal-500 to-emerald-400',
   },
   {
@@ -44,7 +45,7 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     step: '04',
     title: 'Instant Invoice & Tax',
     desc: 'Convert won deals directly into compliant invoices sent via preferred email providers.',
-    icon: 'dollar',
+    icon: 'invoicing',
     color: 'from-purple-500 to-indigo-400',
   },
   {
@@ -52,7 +53,7 @@ const WORKFLOW_STEPS: WorkflowStep[] = [
     step: '05',
     title: 'Reconciled Payment',
     desc: 'Receive payments, update P&L snapshot, and notify team automatically.',
-    icon: 'chart',
+    icon: 'reports',
     color: 'from-emerald-500 to-teal-400',
   },
 ];

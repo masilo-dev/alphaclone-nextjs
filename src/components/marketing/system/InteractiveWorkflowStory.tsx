@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AlphaIcon } from '@/components/marketing/icons';
+import type { AlphaIconName } from '@/components/marketing/icons';
 import { ArrowRight, CheckCircle2, ShieldCheck, Zap, Layers, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
@@ -13,7 +14,7 @@ interface WorkflowNode {
   description: string;
   trigger: string;
   automatedResult: string;
-  icon: string;
+  icon: AlphaIconName;
   accent: string;
   previewSnippet: {
     badge: string;
