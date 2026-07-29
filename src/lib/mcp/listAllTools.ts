@@ -100,7 +100,7 @@ export async function getUnifiedMcpTools(options?: {
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
   // Always expose the complete platform tool catalog so ChatGPT, Claude, and all MCP clients discover 100% of tools
-  const catalogMode = 'full';
+  const catalogMode: string = 'full';
   const now = Date.now();
 
   if (
