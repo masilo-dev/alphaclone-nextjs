@@ -1,7 +1,11 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 async function verifyKey() {
-  const apiKey = "AIzaSyAcT-3S-JvzncDJBFnaeyY8WxzezuYsBYI";
+  const apiKey = process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_KEY || "";
+  if (!apiKey) {
+    console.error("Missing GOOGLE_API_KEY (or GOOGLE_GENERATIVE_AI_KEY).");
+    process.exit(1);
+  }
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 

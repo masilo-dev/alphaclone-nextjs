@@ -42,6 +42,16 @@ export async function POST(req: NextRequest) {
       requirements: input.requirements, exclusions: input.exclusions, result_limit: input.resultLimit,
       status: input.runNow ? 'queued' : 'draft',
     }).select().single();
+    if (error && isUnavailableSchema(error)) {
+      return NextResponse.json(
+        {
+          error: 'Lead Finder is still being provisioned for this workspace.',
+          available: false,
+          notice: 'Apply the Lead Finder migration and refresh. If this is production, ensure Supabase schema cache has been updated.',
+        },
+        { status: 503 }
+      );
+    }
     if (error) throw error;
     if (input.runNow) {
       const { error: jobError } = await admin.from('lead_search_jobs').insert({
@@ -50,6 +60,16 @@ export async function POST(req: NextRequest) {
         idempotency_key: `lead.search.start:${search.id}`,
         metadata: { sources: input.sources },
       });
+      if (jobError && isUnavailableSchema(jobError)) {
+        return NextResponse.json(
+          {
+            error: 'Lead Finder queue is not available yet for this workspace.',
+            available: false,
+            notice: 'Apply the Lead Finder migration that creates lead_search_jobs and the claim_lead_search_jobs function.',
+          },
+          { status: 503 }
+        );
+      }
       if (jobError) throw jobError;
     }
     await admin.from('lead_audit_logs').insert({

@@ -18,6 +18,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import BonnieApprovalCard from './BonnieApprovalCard';
 import AgentPlanViewer, { AgentPlanStep } from './AgentPlanViewer';
 import ExecutionTimelineEvent, { ExecutionTimelineEventProps } from './ExecutionTimelineEvent';
@@ -235,8 +236,10 @@ export default function BonnieChatPanel({
   // Agent plan steps surfaced from stream phases
   const [planSteps, setPlanSteps] = useState<AgentPlanStep[]>([]);
   const [timelineEvents, setTimelineEvents] = useState<ExecutionTimelineEventProps[]>([]);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -496,7 +499,6 @@ export default function BonnieChatPanel({
     if (!externalPrompt?.trim()) return;
     void handleSend(externalPrompt);
     onExternalPromptConsumed?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalPrompt]);
 
   const stopGeneration = () => {
@@ -507,6 +509,47 @@ export default function BonnieChatPanel({
     clearHistory();
     setPlanSteps([]);
     setTimelineEvents([]);
+  };
+
+  const handleAttachFile = () => {
+    if (!tenantId) {
+      toast.error('Select a workspace first');
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const handleAttachmentSelected = async (file: File) => {
+    if (!tenantId) {
+      toast.error('Select a workspace first');
+      return;
+    }
+    if (uploadingAttachment) return;
+    setUploadingAttachment(true);
+    const toastId = toast.loading('Uploading file...');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('entityType', 'bonnie_chat');
+      const res = await fetch(`/api/tenant/${encodeURIComponent(tenantId)}/files`, {
+        method: 'POST',
+        body: form,
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.success === false) {
+        throw new Error(data?.error || 'Upload failed');
+      }
+      const url = String(data?.proxiedUrl || data?.url || '').trim();
+      const line = url ? `Attached file: ${file.name} ${url}` : `Attached file: ${file.name}`;
+      setInput((prev) => (prev ? `${prev}\n${line}` : line));
+      toast.success('File attached', { id: toastId });
+      inputRef.current?.focus();
+    } catch (err: any) {
+      toast.error(err?.message || 'Upload failed', { id: toastId });
+    } finally {
+      setUploadingAttachment(false);
+    }
   };
 
   const phaseLabel =
@@ -742,14 +785,25 @@ export default function BonnieChatPanel({
           Platform guide & glossary
         </Link>
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleAttachmentSelected(file);
+              e.target.value = '';
+            }}
+          />
           <button
             type="button"
-            disabled
-            title="Attachments coming next"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-900 text-slate-500 opacity-60"
-            aria-label="Attach file (coming soon)"
+            onClick={handleAttachFile}
+            disabled={disabled || sending || uploadingAttachment || !tenantId}
+            title="Attach file"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-700 bg-slate-900 text-slate-300 transition-colors hover:border-teal-500/50 hover:text-teal-300 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Attach file"
           >
-            <Paperclip className="h-4 w-4" />
+            {uploadingAttachment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
           </button>
           <textarea
             ref={inputRef}

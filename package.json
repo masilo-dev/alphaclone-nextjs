@@ -11,7 +11,7 @@
     "build:prod": "rm -rf app && next build",
     "start": "node scripts/validate-production-env.mjs --warn-only && NODE_OPTIONS=\"${NODE_OPTIONS:---max-old-space-size=2048}\" next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint",
-    "typecheck": "cross-env NODE_OPTIONS=--max-old-space-size=7168 tsc --noEmit",
+    "typecheck": "rm -rf .next/types .next/dev/types && cross-env NODE_OPTIONS=--max-old-space-size=7168 tsc --noEmit",
     "test": "node --import tsx --test tests/unit/*.test.mjs",
     "guard:design-system": "node --import tsx scripts/design-system-guard.mjs",
     "validate:prod-guards": "npm run guard:design-system && node --import tsx --test tests/unit/metrics-and-canonical-routes.test.mjs",

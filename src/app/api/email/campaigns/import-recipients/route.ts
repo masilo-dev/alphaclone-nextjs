@@ -14,11 +14,70 @@ function normalizeHeader(value: string): string {
 }
 
 function parseCsv(text: string): Array<Record<string, string>> {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length === 0) return [];
-  const headers = (lines[0] || '').split(',').map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const cells = line.split(',');
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let inQuotes = false;
+
+  const pushCell = () => {
+    currentRow.push(currentCell);
+    currentCell = '';
+  };
+  const pushRow = () => {
+    pushCell();
+    const hasContent = currentRow.some((cell) => cell.trim().length > 0);
+    if (hasContent) rows.push(currentRow);
+    currentRow = [];
+  };
+
+  const normalized = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for (let i = 0; i < normalized.length; i += 1) {
+    const char = normalized[i];
+
+    if (inQuotes) {
+      if (char === '"') {
+        const next = normalized[i + 1];
+        if (next === '"') {
+          currentCell += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        currentCell += char;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = true;
+      continue;
+    }
+
+    if (char === ',') {
+      pushCell();
+      continue;
+    }
+
+    if (char === '\n') {
+      pushRow();
+      continue;
+    }
+
+    currentCell += char;
+  }
+
+  if (inQuotes) {
+    inQuotes = false;
+  }
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    pushRow();
+  }
+
+  if (rows.length === 0) return [];
+  const headers = (rows[0] || []).map((h) => String(h || '').trim()).filter(Boolean);
+  if (headers.length === 0) return [];
+  return rows.slice(1).map((cells) => {
     const row: Record<string, string> = {};
     headers.forEach((header, index) => {
       row[header] = String(cells[index] || '').trim();

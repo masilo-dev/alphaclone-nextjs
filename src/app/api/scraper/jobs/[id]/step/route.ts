@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       .select('*')
       .single();
 
-    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads.map(({ source, ...rest }) => rest) : []);
+    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads : []);
     const sanitizeStats = (stats: any) => {
       if (!stats || typeof stats !== 'object') return {};
       const sanitized: Record<string, number> = {};

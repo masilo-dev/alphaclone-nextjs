@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess } from '@/lib/apiAuth';
+import { requireTenantRole } from '@/lib/apiAuth';
 import { leadScoringService } from '@/services/enhancedLeadFinderServices';
+import { z } from 'zod';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,11 +10,11 @@ export async function POST(req: NextRequest) {
     const tenantId = String(body.tenantId || '').trim();
     const leadId = String(body.leadId || '').trim();
 
-    if (!tenantId || !leadId) {
+    if (!tenantId || !leadId || !z.string().uuid().safeParse(tenantId).success || !z.string().uuid().safeParse(leadId).success) {
       return NextResponse.json({ success: false, error: 'tenantId and leadId are required' }, { status: 400 });
     }
 
-    const { admin } = await requireTenantAccess(tenantId);
+    const { admin } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
 
     const { data: lead, error } = await admin
       .from('leads')

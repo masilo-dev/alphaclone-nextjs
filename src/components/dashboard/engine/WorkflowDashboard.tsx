@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { EnterprisePageHeader } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
@@ -211,6 +212,7 @@ const EMPTY_FORM = {
 
 export default function WorkflowDashboard() {
     const { currentTenant: tenant } = useTenant();
+    const { confirm } = useConfirmDialog();
     const [workflows, setWorkflows] = useState<WorkflowDef[]>([]);
     const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
     const [loading, setLoading] = useState(true);
@@ -258,7 +260,14 @@ export default function WorkflowDashboard() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this workflow?')) return;
+        const ok = await confirm({
+            title: 'Delete workflow?',
+            description: 'This will remove the workflow definition. Execution history remains in your activity logs.',
+            confirmLabel: 'Delete workflow',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
         if (!tenant?.id) return;
         const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/workflows?workflowId=${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (response.ok) {

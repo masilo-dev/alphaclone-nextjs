@@ -15,7 +15,8 @@ const initial: Preferences = {
 };
 
 export function PreferenceCentre() {
-  const token = useSearchParams().get('token') || '';
+  const searchParams = useSearchParams();
+  const token = searchParams?.get('token') || '';
   const [email, setEmail] = useState('');
   const [values, setValues] = useState(initial);
   const [state, setState] = useState<'loading' | 'ready' | 'saving' | 'saved' | 'error'>('loading');

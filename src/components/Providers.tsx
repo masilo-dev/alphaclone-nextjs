@@ -10,6 +10,7 @@ import { BackgroundTaskProvider } from '@/contexts/BackgroundTaskContext';
 import { BonnieDrawerProvider } from '@/contexts/BonnieDrawerContext';
 import { ToastProvider } from '@/components/Toast';
 import { SuccessFeedbackProvider } from '@/components/ui/SuccessFeedback';
+import { ConfirmDialogProvider } from '@/components/ui/ConfirmDialog';
 import { GlobalErrorBoundary } from '@/components/GlobalErrorBoundary';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -52,22 +53,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
             <SuccessFeedbackProvider>
-              <AuthProvider>
-                <ThemeProvider>
-                  <LanguageProvider>
-                    <UserPreferencesBootstrap />
-                    <ServiceWorkerBootstrap />
-                    <TenantProvider>
-                      <BackgroundTaskProvider>
-                        <BonnieDrawerProvider>
-                          {children}
-                          <BonnieDrawer />
-                        </BonnieDrawerProvider>
-                      </BackgroundTaskProvider>
-                    </TenantProvider>
-                  </LanguageProvider>
-                </ThemeProvider>
-              </AuthProvider>
+              <ConfirmDialogProvider>
+                <AuthProvider>
+                  <ThemeProvider>
+                    <LanguageProvider>
+                      <UserPreferencesBootstrap />
+                      <ServiceWorkerBootstrap />
+                      <TenantProvider>
+                        <BackgroundTaskProvider>
+                          <BonnieDrawerProvider>
+                            {children}
+                            <BonnieDrawer />
+                          </BonnieDrawerProvider>
+                        </BackgroundTaskProvider>
+                      </TenantProvider>
+                    </LanguageProvider>
+                  </ThemeProvider>
+                </AuthProvider>
+              </ConfirmDialogProvider>
             </SuccessFeedbackProvider>
           </ToastProvider>
         </QueryClientProvider>

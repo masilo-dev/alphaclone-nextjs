@@ -185,7 +185,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   galleryItems,
   setGalleryItems
 }) => {
-  const location = usePathname();
+  const location = usePathname() ?? '';
   const router = useRouter();
   const searchParams = useSearchParams();
   const { currentTenant, getDashboardStats, error: tenantError } = useTenant();

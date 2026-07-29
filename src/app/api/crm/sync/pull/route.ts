@@ -5,7 +5,7 @@ import { OPERATION_FAILED_MESSAGE } from '@/lib/api/operationResult';
 import { hubspotService } from '@/services/hubspotService';
 import { ZohoCRMService } from '@/services/zoho/ZohoCRMService';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import { requireTenantAccess } from '@/lib/apiAuth';
+import { requireTenantRole } from '@/lib/apiAuth';
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServerClient();
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   try {
     const userId = user.id;
     const { tenantId } = await req.json();
-    await requireTenantAccess(String(tenantId || ''), req);
+    await requireTenantRole(String(tenantId || ''), ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
 
     const supabaseAdmin = createSupabaseAdminClient();
     const { data: integrations, error } = await supabaseAdmin

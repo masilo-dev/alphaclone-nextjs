@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Archive, Loader2, RotateCcw, Trash2 } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 type DeletedRecord = {
@@ -15,6 +16,7 @@ type DeletedRecord = {
 
 export default function DeletedRecordsSection() {
   const { currentTenant } = useTenant();
+  const { confirm } = useConfirmDialog();
   const [records, setRecords] = useState<DeletedRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState<string | null>(null);
@@ -40,8 +42,15 @@ export default function DeletedRecordsSection() {
 
   const handleAction = async (record: DeletedRecord, action: 'restore' | 'purge') => {
     if (!currentTenant?.id) return;
-    if (action === 'purge' && !confirm(`Permanently delete ${record.name}? This cannot be undone.`)) {
-      return;
+    if (action === 'purge') {
+      const ok = await confirm({
+        title: 'Permanently delete record?',
+        description: `Delete ${record.name}? This cannot be undone.`,
+        confirmLabel: 'Delete permanently',
+        cancelLabel: 'Cancel',
+        variant: 'danger',
+      });
+      if (!ok) return;
     }
     setActing(`${action}-${record.id}`);
     try {

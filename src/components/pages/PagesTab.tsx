@@ -10,6 +10,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 
 // BlockNote is loaded client-side only to avoid SSR issues
@@ -39,6 +40,7 @@ const ICONS = ['📄', '📝', '📋', '📌', '🗂️', '💡', '🎯', '📊'
 export default function PagesTab() {
     const { user } = useAuth();
     const { currentTenant: tenant } = useTenant();
+    const { confirm } = useConfirmDialog();
     const [pages, setPages] = useState<Page[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -96,7 +98,14 @@ export default function PagesTab() {
     };
 
     const deletePage = async (id: string) => {
-        if (!confirm('Delete this page and all sub-pages?')) return;
+        const ok = await confirm({
+            title: 'Delete page?',
+            description: 'Delete this page and all sub-pages? This cannot be undone.',
+            confirmLabel: 'Delete',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
         // Cascade deletes sub-pages via DB foreign key
         if (!tenant?.id) return;
         const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/pages?pageId=${encodeURIComponent(id)}`, { method: 'DELETE' });

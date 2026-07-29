@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 export function PrivacyRequestStatus() {
-  const token = useSearchParams().get('token') || '';
+  const searchParams = useSearchParams();
+  const token = searchParams?.get('token') || '';
   const [record, setRecord] = useState<Record<string, string | null> | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {

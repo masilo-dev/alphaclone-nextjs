@@ -40,6 +40,8 @@ export default function ScraperCampaignsPage() {
   const [active, setActive] = useState<(typeof nav)[number]>('Discover');
   const [advanced, setAdvanced] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [available, setAvailable] = useState(true);
+  const [availabilityNotice, setAvailabilityNotice] = useState<string | null>(null);
   const [searches, setSearches] = useState<SearchRecord[]>([]);
   const [selectedSearch, setSelectedSearch] = useState<SearchRecord | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -55,8 +57,12 @@ export default function ScraperCampaignsPage() {
     const res = await fetch(`/api/leads/searches?workspaceId=${encodeURIComponent(tenant.id)}`);
     const body = await res.json();
     if (res.ok) {
-      setSearches(body.searches);
+      setAvailable(Boolean(body.available ?? true));
+      setAvailabilityNotice(body.notice || null);
+      setSearches(body.searches || []);
       setSelectedSearch(current => current ? body.searches.find((s: SearchRecord) => s.id === current.id) || current : body.searches[0] || null);
+    } else {
+      toast.error(body?.error || 'Lead Finder could not be loaded');
     }
   }, [tenant?.id]);
 
@@ -64,7 +70,9 @@ export default function ScraperCampaignsPage() {
     if (!tenant?.id || !selectedSearch?.id) return;
     const res = await fetch(`/api/leads/searches/${selectedSearch.id}/results?workspaceId=${encodeURIComponent(tenant.id)}&limit=50`);
     const body = await res.json();
-    if (res.ok) setCandidates(body.candidates);
+    if (res.ok) {
+      setCandidates(body.candidates || []);
+    }
   }, [tenant?.id, selectedSearch?.id]);
 
   useEffect(() => { void loadSearches(); }, [loadSearches]);
@@ -77,6 +85,10 @@ export default function ScraperCampaignsPage() {
 
   const createSearch = async (event: FormEvent) => {
     event.preventDefault();
+    if (!available) {
+      toast.error(availabilityNotice || 'Lead Finder is not ready for this workspace yet.');
+      return;
+    }
     if (!tenant?.id || (!form.keywords.trim() && !form.location.trim())) {
       toast.error('Add business keywords or a location.');
       return;
@@ -101,7 +113,13 @@ export default function ScraperCampaignsPage() {
         }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Search could not be started');
+      if (!res.ok) {
+        if (res.status === 503 && body?.available === false) {
+          setAvailable(false);
+          setAvailabilityNotice(body.notice || body.error || 'Lead Finder is not ready yet.');
+        }
+        throw new Error(body.error || 'Search could not be started');
+      }
       toast.success('Search queued. You can leave this page while workers continue.');
       setSelectedSearch(body.search); setActive('Results'); await loadSearches();
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Search could not be started'); }
@@ -129,6 +147,31 @@ export default function ScraperCampaignsPage() {
             <button className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`} onClick={() => setActive('Discover')}><Search size={16}/>New search</button>
           </div>
         </header>
+
+        {!available ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-200">Lead Finder is still being prepared for this workspace.</p>
+            <p className="mt-1 text-sm text-amber-100/80">
+              {availabilityNotice || 'Database tables for lead search are not available yet. Apply migrations and refresh.'}
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                className={`${buttonClass} border border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15`}
+                onClick={() => void loadSearches()}
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                className={`${buttonClass} border border-[var(--ws-border)] bg-[var(--ws-surface)]`}
+                onClick={() => setActive('Activity')}
+              >
+                View history
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <nav className="my-4 flex gap-1 overflow-x-auto border-b border-[var(--ws-border)]" aria-label="Lead Finder sections">
           {nav.map(item => <button key={item} onClick={() => setActive(item)} aria-current={active === item ? 'page' : undefined}
@@ -175,7 +218,7 @@ export default function ScraperCampaignsPage() {
               </div>}
               <div className="mt-6 flex flex-col-reverse gap-3 border-t border-[var(--ws-border)] pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-[var(--ws-text-secondary)]">OpenStreetMap: 2 requests/min · max 500 records/day. Searches persist if you leave.</p>
-                <button disabled={submitting} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
+                <button disabled={submitting || !available} className={`${buttonClass} bg-teal-500 text-slate-950 hover:bg-teal-400`}>{submitting ? 'Queuing…' : 'Find businesses'}<ArrowRight size={16}/></button>
               </div>
             </form>
             <aside className="space-y-4">

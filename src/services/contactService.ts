@@ -69,9 +69,33 @@ export const contactService = {
         ownerId?: string;
         status?: string;
         search?: string;
-    }): Promise<{ contacts: ContactWithCompany[]; error: string | null }> {
+        page?: number;
+        limit?: number;
+        sort?: 'created_at' | 'name';
+        direction?: 'asc' | 'desc';
+    }): Promise<{ contacts: ContactWithCompany[]; error: string | null; pagination?: { page: number; limit: number; total: number; pages: number } }> {
         try {
             const tenantId = this.getTenantId();
+
+            const params = new URLSearchParams();
+            if (filters?.search) params.set('search', filters.search);
+            if (filters?.status) params.set('status', filters.status);
+            if (filters?.page) params.set('page', String(filters.page));
+            if (filters?.limit) params.set('limit', String(filters.limit));
+            if (filters?.sort) params.set('sort', filters.sort);
+            if (filters?.direction) params.set('direction', filters.direction);
+
+            const url = `/api/tenant/${encodeURIComponent(tenantId)}/contacts${params.toString() ? `?${params.toString()}` : ''}`;
+            const response = await fetch(url, { credentials: 'include' });
+            const payload = await response.json().catch(() => ({}));
+
+            if (response.ok && Array.isArray(payload.contacts)) {
+                return {
+                    contacts: (payload.contacts || []).map(this.mapContact),
+                    error: null,
+                    pagination: payload.pagination || undefined,
+                };
+            }
 
             let query = supabase
                 .from('contacts')
@@ -82,27 +106,16 @@ export const contactService = {
                 .eq('tenant_id', tenantId)
                 .is('deleted_at', null);
 
-            // Apply filters
-            if (filters?.companyId) {
-                query = query.eq('company_id', filters.companyId);
-            }
-            if (filters?.ownerId) {
-                query = query.eq('owner_id', filters.ownerId);
-            }
-            if (filters?.status) {
-                query = query.eq('status', filters.status);
-            }
+            if (filters?.companyId) query = query.eq('company_id', filters.companyId);
+            if (filters?.ownerId) query = query.eq('owner_id', filters.ownerId);
+            if (filters?.status) query = query.eq('status', filters.status);
             if (filters?.search) {
-                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+                query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%,phone.ilike.%${filters.search}%`);
             }
 
             const { data, error } = await query.order('created_at', { ascending: false });
-
             if (error) throw error;
-
-            const contacts = (data || []).map(this.mapContact);
-
-            return { contacts, error: null };
+            return { contacts: (data || []).map(this.mapContact), error: null };
         } catch (err: any) {
             console.error('Error fetching contacts:', err);
             return { contacts: [], error: err.message };

@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     }
     if (error) return clientErrorResponse(error, { request: req, scope: 'scraper/jobs/create.POST' });
     
-    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads.map(({ source, ...rest }) => rest) : []);
+    const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads : []);
     const sanitizedJob = {
       ...job,
       source_stats: {},

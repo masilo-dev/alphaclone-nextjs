@@ -528,20 +528,21 @@ export default function OmniLeadFinder() {
     const timeout = setTimeout(async () => {
       try {
         setGeocodeLoading(true);
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
-          { headers: { Accept: 'application/json' } }
-        );
-        const data = await response.json();
-        const first = Array.isArray(data) ? data[0] : null;
+        const response = await fetch('/api/location/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, limit: 1 }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        const first = Array.isArray(payload?.items) ? payload.items[0] : null;
         if (!first) {
           setGeocodePreview(null);
           return;
         }
         setGeocodePreview({
           lat: Number(first.lat),
-          lng: Number(first.lon),
-          displayName: String(first.display_name || query),
+          lng: Number(first.lng),
+          displayName: String(first.displayName || query),
           type: String(first.type || ''),
         });
       } catch {
@@ -561,13 +562,14 @@ export default function OmniLeadFinder() {
     const timeout = setTimeout(async () => {
       try {
         const q = `${specificCity.trim()}, ${location.trim()}`;
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(q)}&limit=5`,
-          { headers: { Accept: 'application/json' } }
-        );
-        const data = await response.json();
-        const suggestions = (Array.isArray(data) ? data : [])
-          .map((item: any) => String(item.display_name || ''))
+        const response = await fetch('/api/location/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, limit: 5 }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        const suggestions: string[] = (Array.isArray(payload?.items) ? payload.items : [])
+          .map((item: any) => String(item.displayName || ''))
           .filter(Boolean);
         setCitySuggestions(Array.from(new Set(suggestions)).slice(0, 5));
       } catch {

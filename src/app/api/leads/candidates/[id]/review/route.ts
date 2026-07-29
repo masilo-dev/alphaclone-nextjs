@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 type Context = { params: Promise<{ id: string }> };
 const inputSchema = z.object({
   workspaceId: z.string().uuid(), decision: z.enum(['accepted', 'rejected']),
@@ -9,7 +9,7 @@ const inputSchema = z.object({
 export async function POST(req: NextRequest, context: Context) {
   try {
     const { id } = await context.params; const input = inputSchema.parse(await req.json());
-    const { user, admin } = await requireTenantAccess(input.workspaceId, req);
+    const { user, admin } = await requireTenantRole(input.workspaceId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
     const now = new Date().toISOString();
     const update = input.decision === 'accepted'
       ? { review_status: 'accepted', accepted_at: now, rejected_at: null, rejection_reason: null }

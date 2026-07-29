@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Search, Filter, Plus, Mail, Phone, Building2, MoreHorizontal,
     User, Edit, Trash2, RefreshCw, Download, X, CheckCircle,
     XCircle, Calendar, Tag, ExternalLink, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { contactService, type ContactWithCompany } from '@/services/contactService';
-import { tenantService } from '@/services/tenancy/TenantService';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { useAuth } from '@/contexts/AuthContext';
 import { BulkTeamMessageModal } from '@/components/dashboard/crm/BulkTeamMessageModal';
 import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
@@ -31,97 +29,56 @@ const STATUS_CONFIG: Record<ContactStatus, { label: string; color: string; bgCol
 export default function ContactsList({ onEditContact, onCreateContact }: ContactsListProps) {
     const { user } = useAuth();
     const [contacts, setContacts] = useState<ContactWithCompany[]>([]);
-    const [filteredContacts, setFilteredContacts] = useState<ContactWithCompany[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<ContactStatus | 'all'>('all');
-    const [selectedContact, setSelectedContact] = useState<ContactWithCompany | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
-    const [sortField, setSortField] = useState<'createdAt' | 'name' | 'company'>('createdAt');
+    const [sortField, setSortField] = useState<'createdAt' | 'name'>('createdAt');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
     const [bulkDeleting, setBulkDeleting] = useState(false);
     const [showBulkMessage, setShowBulkMessage] = useState(false);
-    const listRef = useRef<HTMLDivElement>(null);
-    const [visibleCount, setVisibleCount] = useState(40);
-    const loadMoreContacts = useCallback(() => setVisibleCount((c) => c + 30), []);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
+    const [total, setTotal] = useState(0);
+    const [pages, setPages] = useState(1);
+    const [exporting, setExporting] = useState(false);
 
     const loadContacts = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
-            const tenantId = tenantService.getCurrentTenantId();
-            if (!tenantId) {
-                setError('No tenant selected');
-                return;
-            }
-            const { contacts: data, error: err } = await contactService.getContacts({
+            const { contacts: data, error: err, pagination } = await contactService.getContacts({
                 search: searchQuery || undefined,
                 status: statusFilter !== 'all' ? statusFilter : undefined,
+                page,
+                limit: pageSize,
+                sort: sortField === 'createdAt' ? 'created_at' : 'name',
+                direction: sortDirection,
             });
             if (err) throw new Error(err);
             setContacts(data);
+            setTotal(pagination?.total ?? data.length);
+            setPages(pagination?.pages ?? 1);
         } catch (err) {
             console.error('Failed to load contacts:', err);
             setError(err instanceof Error ? err.message : 'Failed to load contacts');
         } finally {
             setLoading(false);
         }
-    }, [searchQuery, statusFilter]);
+    }, [page, pageSize, searchQuery, sortDirection, sortField, statusFilter]);
 
     useEffect(() => {
         loadContacts();
     }, [loadContacts]);
 
     useEffect(() => {
-        let filtered = [...contacts];
-
-        // Search filter (local if not already filtered by API)
-        if (searchQuery && !contacts.some(c => 
-            c.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            c.email.toLowerCase().includes(searchQuery.toLowerCase())
-        )) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(contact =>
-                contact.firstName.toLowerCase().includes(query) ||
-                contact.lastName.toLowerCase().includes(query) ||
-                contact.email.toLowerCase().includes(query) ||
-                contact.company?.name.toLowerCase().includes(query)
-            );
-        }
-
-        // Sort
-        filtered.sort((a, b) => {
-            let comparison = 0;
-            switch (sortField) {
-                case 'createdAt':
-                    comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                    break;
-                case 'name':
-                    comparison = `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-                    break;
-                case 'company':
-                    comparison = (a.company?.name || '').localeCompare(b.company?.name || '');
-                    break;
-            }
-            return sortDirection === 'asc' ? comparison : -comparison;
-        });
-
-        setFilteredContacts(filtered);
-    }, [contacts, searchQuery, statusFilter, sortField, sortDirection]);
-
-    useEffect(() => {
         setSelectedIds([]);
-        setVisibleCount(40);
-    }, [searchQuery, statusFilter]);
-
-    useInfiniteScroll(listRef, loadMoreContacts, {
-        enabled: filteredContacts.length > visibleCount,
-    });
+        setPage(1);
+    }, [searchQuery, statusFilter, sortField, sortDirection, pageSize]);
 
     const handleDeleteContact = async (contactId: string) => {
         try {
@@ -144,10 +101,11 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
             setBulkDeleting(true);
             const { error: err } = await contactService.bulkDeleteContacts(selectedIds);
             if (err) throw new Error(err);
-            setContacts(prev => prev.filter(c => !selectedIds.includes(c.id)));
+            setContacts((prev) => prev.filter((c) => !selectedIds.includes(c.id)));
             setSelectedIds([]);
             setShowBulkDeleteConfirm(false);
             setError(null);
+            void loadContacts();
         } catch (err) {
             console.error('Failed to bulk delete contacts:', err);
             setError(err instanceof Error ? err.message : 'Failed to delete contacts');
@@ -157,7 +115,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     };
 
     const allVisibleSelected =
-        filteredContacts.length > 0 && filteredContacts.every(c => selectedIds.includes(c.id));
+        contacts.length > 0 && contacts.every((c) => selectedIds.includes(c.id));
 
     const selectedEmails = normalizeRecipientEmails(
         contacts.filter((c) => selectedIds.includes(c.id)).map((c) => c.email)
@@ -171,26 +129,56 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
         setShowBulkMessage(true);
     };
 
-    const handleExportCSV = () => {
+    const handleExportCSV = async () => {
+        if (exporting) return;
+        setExporting(true);
+        const toastId = toast.loading('Preparing export...');
         const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Company', 'Status', 'Created At'];
-        const rows = filteredContacts.map(c => [
-            c.firstName,
-            c.lastName,
-            c.email,
-            c.phone || '',
-            c.company?.name || '',
-            c.status,
-            new Date(c.createdAt).toLocaleDateString(),
-        ]);
+        const rows: string[][] = [];
+        const MAX_EXPORT = 1000;
+        const batchLimit = 200;
+        const maxPages = Math.ceil(MAX_EXPORT / batchLimit);
+        try {
+            for (let p = 1; p <= Math.max(1, Math.min(pages, maxPages)); p += 1) {
+                const res = await contactService.getContacts({
+                    search: searchQuery || undefined,
+                    status: statusFilter !== 'all' ? statusFilter : undefined,
+                    page: p,
+                    limit: batchLimit,
+                    sort: sortField === 'createdAt' ? 'created_at' : 'name',
+                    direction: sortDirection,
+                });
+                if (res.error) throw new Error(res.error);
+                for (const c of res.contacts) {
+                    rows.push([
+                        c.firstName,
+                        c.lastName,
+                        c.email,
+                        c.phone || '',
+                        c.company?.name || '',
+                        c.status,
+                        new Date(c.createdAt).toLocaleDateString(),
+                    ]);
+                    if (rows.length >= MAX_EXPORT) break;
+                }
+                if (rows.length >= MAX_EXPORT) break;
+                if (res.contacts.length < batchLimit) break;
+            }
 
-        const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${cell}"`).join(','))].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
+            const csv = [headers.join(','), ...rows.map((r) => r.map((cell) => `"${cell}"`).join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `contacts-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success(rows.length >= MAX_EXPORT ? `Exported first ${MAX_EXPORT} contacts` : `Exported ${rows.length} contacts`, { id: toastId });
+        } catch (err: any) {
+            toast.error(err?.message || 'Export failed', { id: toastId });
+        } finally {
+            setExporting(false);
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -207,8 +195,6 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
             </div>
         );
     }
-
-    const visibleContacts = filteredContacts.slice(0, visibleCount);
 
     return (
         <div className="space-y-6">
@@ -239,11 +225,11 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                     )}
                     <button
                         onClick={handleExportCSV}
-                        disabled={filteredContacts.length === 0}
+                        disabled={total === 0 || exporting}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
                     >
                         <Download className="w-4 h-4" />
-                        Export
+                        {exporting ? 'Exporting…' : 'Export'}
                     </button>
                     <button
                         onClick={onCreateContact}
@@ -284,7 +270,6 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                 >
                     <option value="createdAt">Sort by Date</option>
                     <option value="name">Sort by Name</option>
-                    <option value="company">Sort by Company</option>
                 </select>
                 <button
                     onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
@@ -313,7 +298,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
             )}
 
             {/* Contacts List */}
-            {filteredContacts.length === 0 ? (
+            {total === 0 ? (
                 <div className="text-center py-16 bg-slate-800/50 rounded-lg border border-slate-700">
                     <User className="w-12 h-12 mx-auto text-slate-600 mb-4" />
                     <p className="text-slate-400">
@@ -331,7 +316,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                     </button>
                 </div>
             ) : (
-                <div ref={listRef} className="space-y-3 ac-scroll-full">
+                <div className="space-y-3">
                     <div className="flex items-center justify-between px-1">
                         <button
                             type="button"
@@ -339,13 +324,13 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                 if (allVisibleSelected) {
                                     setSelectedIds([]);
                                 } else {
-                                    setSelectedIds(filteredContacts.map(c => c.id));
+                                    setSelectedIds(contacts.map((c) => c.id));
                                 }
                             }}
                             className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white"
                         >
                             {allVisibleSelected ? <CheckCircle className="w-4 h-4 text-teal-400" /> : <div className="w-4 h-4 border border-slate-500 rounded" />}
-                            {allVisibleSelected ? 'Deselect all' : `Select all (${filteredContacts.length})`}
+                            {allVisibleSelected ? 'Deselect page' : `Select page (${contacts.length})`}
                         </button>
                         {selectedIds.length > 0 && (
                             <button
@@ -357,7 +342,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                             </button>
                         )}
                     </div>
-                    {visibleContacts.map((contact) => {
+                    {contacts.map((contact) => {
                         const status = STATUS_CONFIG[contact.status] || STATUS_CONFIG.active;
                         const isSelected = selectedIds.includes(contact.id);
                         return (
@@ -449,15 +434,43 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                             </div>
                         );
                     })}
-                    {filteredContacts.length > visibleCount && (
-                        <button
-                            type="button"
-                            onClick={loadMoreContacts}
-                            className="w-full py-3 text-sm text-slate-400 hover:text-white bg-slate-800/50 border border-slate-700 rounded-lg transition-colors"
-                        >
-                            Showing {visibleCount} of {filteredContacts.length} — scroll or tap to load more
-                        </button>
-                    )}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+                        <p className="text-xs text-slate-500">
+                            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={String(pageSize)}
+                                onChange={(e) => setPageSize(Number(e.target.value))}
+                                className="px-3 py-2 bg-slate-900 border border-white/5 rounded-lg text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                                aria-label="Contacts per page"
+                            >
+                                <option value="10">10 / page</option>
+                                <option value="25">25 / page</option>
+                                <option value="50">50 / page</option>
+                                <option value="100">100 / page</option>
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                disabled={page <= 1}
+                                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+                            <span className="text-sm text-slate-400 font-semibold">
+                                Page {page} / {pages}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setPage((p) => Math.min(pages, p + 1))}
+                                disabled={page >= pages}
+                                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

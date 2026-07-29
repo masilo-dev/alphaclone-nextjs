@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Flex,
@@ -49,11 +49,13 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const contextPath = searchParams.get('from') || pathname || '';
+  const resolvedPathname = pathname || resolveBonnieDashboardRoute(pathname, user?.role);
+  const contextPath = searchParams?.get('from') || resolvedPathname || '';
   const activeModule = resolveBonnieModuleFromPath(contextPath);
   const moduleHint = BONNIE_MODULE_HINTS[activeModule];
   const isPopout = variant === 'popout';
   const tenantId = currentTenant?.id;
+  const conversationParam = searchParams?.get('conversation') ?? null;
 
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
   const {
@@ -94,6 +96,27 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) || null,
     [conversations, activeConversationId]
+  );
+
+  useEffect(() => {
+    if (!conversationParam) return;
+    if (activeConversationId) return;
+    const exists = conversations.some((c) => c.id === conversationParam);
+    if (exists) {
+      setActiveConversationId(conversationParam);
+      setShowWelcome(false);
+    }
+  }, [activeConversationId, conversationParam, conversations]);
+
+  const replaceConversationParam = useCallback(
+    (nextConversationId: string | null) => {
+      const next = new URLSearchParams(searchParams?.toString() ?? '');
+      if (nextConversationId) next.set('conversation', nextConversationId);
+      else next.delete('conversation');
+      const qs = next.toString();
+      router.replace(qs ? `${resolvedPathname}?${qs}` : resolvedPathname);
+    },
+    [resolvedPathname, router, searchParams]
   );
 
   const suggestions: BonnieSuggestion[] = useMemo(
@@ -238,12 +261,13 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
     try {
       const created = await createConversation('New conversation', activeModule);
       setActiveConversationId(created.id);
+      replaceConversationParam(created.id);
       setShowWelcome(true);
       setExternalPrompt(null);
     } catch (err: any) {
       toast.error(err?.message || 'Could not start a new chat');
     }
-  }, [createConversation, activeModule]);
+  }, [createConversation, activeModule, replaceConversationParam]);
 
   const runChase = useCallback(() => {
     setGoalsChasing(true);
@@ -296,6 +320,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
         onNewChat={() => void handleNewChat()}
         onSelect={(id) => {
           setActiveConversationId(id);
+          replaceConversationParam(id);
           setShowWelcome(false);
         }}
         onRename={(id, title) => void patchConversation(id, { title })}
@@ -308,6 +333,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
           void deleteConversation(id).then(() => {
             if (activeConversationId === id) {
               setActiveConversationId(null);
+              replaceConversationParam(null);
               setShowWelcome(true);
             }
           })
@@ -373,7 +399,21 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
               variant="ghost"
               color="gray.400"
               icon={<Share2 size={16} />}
-              onClick={() => toast('Share links coming soon')}
+              onClick={async () => {
+                if (!activeConversationId) {
+                  toast.error('Select a conversation to share');
+                  return;
+                }
+                const next = new URLSearchParams(searchParams?.toString() ?? '');
+                next.set('conversation', activeConversationId);
+                const shareUrl = `${window.location.origin}${resolvedPathname}?${next.toString()}`;
+                try {
+                  await navigator.clipboard.writeText(shareUrl);
+                  toast.success('Share link copied');
+                } catch {
+                  window.prompt('Copy share link', shareUrl);
+                }
+              }}
               borderRadius="md"
               minW={11}
               minH={11}

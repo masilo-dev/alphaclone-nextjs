@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { reconcileTenantCrm, syncCrmEntity } from '@/lib/crm/crmBridgeServer';
 
 const entitySchema = z.object({
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { tenantId } = parsed.data;
-    const { admin } = await requireTenantAccess(tenantId);
+    const { admin } = await requireTenantRole(tenantId, ['owner', 'admin', 'tenant_admin', 'super_admin'], req);
     if ('action' in parsed.data && parsed.data.action === 'reconcile') {
       const summary = await reconcileTenantCrm(admin, tenantId);
       return NextResponse.json({ success: true, ...summary });

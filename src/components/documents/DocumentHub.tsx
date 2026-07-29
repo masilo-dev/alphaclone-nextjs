@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     Upload, Search, Trash2, FolderOpen, FileText, File as FileIcon, X,
-    Download, Eye, Loader2, Plus, RotateCcw, Edit3, Save,
-    ChevronLeft, AlertTriangle, FileCheck, AlertCircle, CheckCircle2,
+    Download, Eye, Loader2, RotateCcw, Edit3,
+    ChevronLeft,
     Filter,
     Printer,
     Share2,
     ScanLine,
-    Image as ImageIcon,
     Type,
     FileQuestion,
     Quote,
@@ -19,12 +18,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import mammoth from 'mammoth';
 import { fileUploadService } from '../../services/fileUploadService';
 import { DocumentViewer } from '../contracts/DocumentViewer';
-import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
 import { validateEmailField } from '@/lib/email/isValidEmail';
-import { generateText } from '../../services/unifiedAIService';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { EnterpriseModuleChrome } from '@/components/dashboard/responsive/EnterpriseModuleChrome';
+import { PageHeader } from '@/components/dashboard/responsive/PageHeader';
+import { BulkActions, SelectableItem } from '@/components/BulkActions';
+import { ListItemSkeleton } from '@/components/ui/Skeleton';
+import { Input, Button, Modal } from '@/components/ui/UIComponents';
+import { WORKSPACE, ENTERPRISE } from '@/constants/design';
+import CustomContextMenu from '@/components/common/CustomContextMenu';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import DOMPurify from 'dompurify';
 import { notificationService } from '../../services/dashboardService';
@@ -52,13 +58,6 @@ interface DocumentHubProps {
 
 type ViewMode = 'list' | 'viewer' | 'editor' | 'image' | 'designer';
 
-interface Slide {
-    id: string;
-    title: string;
-    content: string;
-    image?: string;
-}
-
 interface HubFile {
     id: string;
     original_filename: string;
@@ -70,6 +69,15 @@ interface HubFile {
     entity_type?: string;
     annotations?: any[];
 }
+
+type DocumentActivityItem = {
+    id: string;
+    createdAt: string;
+    title: string;
+    description?: string;
+    fileId?: string;
+    source: 'system' | 'session';
+};
 
 const BYTES_TO_MB = 1024 * 1024;
 
@@ -98,14 +106,17 @@ function getFileLabel(fileType: string): string {
 
 const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const { currentTenant } = useTenant();
+    const { confirm } = useConfirmDialog();
     const [files, setFiles] = useState<HubFile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [documentFilter, setDocumentFilter] = useState<string>('all');
+    const [sortMode, setSortMode] = useState<'newest' | 'oldest' | 'name_asc' | 'name_desc' | 'size_asc' | 'size_desc'>('newest');
     const [viewTrash, setViewTrash] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [selectedFile, setSelectedFile] = useState<HubFile | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [fileUrl, setFileUrl] = useState<string | null>(null);
     const [aiPrompt, setAiPrompt] = useState('');
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -119,8 +130,31 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     const [emailSubject, setEmailSubject] = useState('');
     const [emailMessage, setEmailMessage] = useState('');
     const [isEmailing, setIsEmailing] = useState(false);
+    const [activityOpen, setActivityOpen] = useState(false);
+    const [activityLoading, setActivityLoading] = useState(false);
+    const [systemActivityItems, setSystemActivityItems] = useState<DocumentActivityItem[]>([]);
+    const [activityItems, setActivityItems] = useState<DocumentActivityItem[]>([]);
+    const activityCounterRef = useRef(0);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(25);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const scanInputRef = useRef<HTMLInputElement>(null);
+
+    const recordActivity = useCallback((input: Omit<DocumentActivityItem, 'id' | 'createdAt' | 'source'> & { fileId?: string }) => {
+        activityCounterRef.current += 1;
+        const now = new Date().toISOString();
+        setActivityItems((prev) => [
+            {
+                id: `session-${activityCounterRef.current}`,
+                createdAt: now,
+                title: input.title,
+                description: input.description,
+                fileId: input.fileId,
+                source: 'session',
+            },
+            ...prev,
+        ]);
+    }, []);
 
     const openEmailModal = useCallback((file: HubFile) => {
         setEmailFile(file);
@@ -164,6 +198,11 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                 throw new Error(data?.error || 'Failed to send');
             }
             toast.success('Document sent', { id: toastId });
+            recordActivity({
+                title: 'Emailed',
+                description: `Sent "${emailFile.original_filename}" to ${recipient}.`,
+                fileId: emailFile.id,
+            });
             setEmailFile(null);
         } catch (err: any) {
             console.error('Email document error:', err);
@@ -171,7 +210,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         } finally {
             setIsEmailing(false);
         }
-    }, [emailFile, emailTo, emailSubject, emailMessage, currentTenant?.id]);
+    }, [emailFile, emailTo, emailSubject, emailMessage, currentTenant?.id, recordActivity]);
 
     const loadFiles = useCallback(async () => {
         if (!currentTenant?.id) {
@@ -200,6 +239,15 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         loadFiles();
         loadStorageUsage();
     }, [loadFiles, loadStorageUsage]);
+
+    useEffect(() => {
+        setSelectedIds(new Set());
+        setPage(1);
+    }, [viewTrash, files]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [searchQuery, documentFilter, sortMode, pageSize]);
 
     const handleScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -327,6 +375,10 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     read: false,
                     link: '/dashboard/documents'
                 });
+                recordActivity({
+                    title: 'Uploaded',
+                    description: `Uploaded "${file.name}".`,
+                });
 
                 loadFiles();
                 loadStorageUsage();
@@ -370,6 +422,11 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             const blob = await fetchResponse.blob();
             await googleDriveService.uploadFile(authUser.id, blob, file.original_filename);
             toast.success('Successfully saved to Google Drive!', { id: toastId });
+            recordActivity({
+                title: 'Saved to Drive',
+                description: `Saved "${file.original_filename}" to Google Drive.`,
+                fileId: file.id,
+            });
         } catch (error: any) {
             console.error('Drive upload error:', error);
             toast.error(error.message || 'Failed to save to Google Drive', { id: toastId });
@@ -426,6 +483,11 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const result = await fileUploadService.deleteFile(fileId);
         if (result.success) {
             toast.success('Moved to trash');
+            recordActivity({
+                title: 'Moved to trash',
+                description: 'File moved to trash.',
+                fileId,
+            });
             loadFiles();
         } else {
             toast.error(result.error || 'Failed to delete');
@@ -436,17 +498,36 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const result = await fileUploadService.restoreFile(fileId);
         if (result.success) {
             toast.success('File restored');
+            recordActivity({
+                title: 'Restored',
+                description: 'File restored from trash.',
+                fileId,
+            });
             loadFiles();
         } else {
             toast.error(result.error || 'Failed to restore');
         }
     };
 
-    const handlePermanentDelete = async (fileId: string) => {
-        if (!window.confirm('Permanently delete this file? This cannot be undone.')) return;
+    const handlePermanentDelete = async (fileId: string, opts?: { skipConfirm?: boolean }) => {
+        if (!opts?.skipConfirm) {
+            const ok = await confirm({
+                title: 'Permanently delete file?',
+                description: 'This cannot be undone.',
+                confirmLabel: 'Delete permanently',
+                cancelLabel: 'Cancel',
+                variant: 'danger',
+            });
+            if (!ok) return;
+        }
         const result = await fileUploadService.permanentDeleteFile(fileId);
         if (result.success) {
             toast.success('File permanently deleted');
+            recordActivity({
+                title: 'Deleted permanently',
+                description: 'File permanently deleted.',
+                fileId,
+            });
             loadFiles();
             loadStorageUsage();
         } else {
@@ -456,7 +537,14 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
 
     const handleEmptyTrash = async () => {
         if (!currentTenant?.id) return;
-        if (!window.confirm('Empty entire trash? This cannot be undone.')) return;
+        const ok = await confirm({
+            title: 'Empty trash?',
+            description: 'Permanently delete everything in trash. This cannot be undone.',
+            confirmLabel: 'Empty trash',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
         await fileUploadService.emptyTrash(currentTenant.id);
         toast.success('Trash emptied');
         loadFiles();
@@ -484,8 +572,14 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         const hasAnnotations = file.annotations && file.annotations.length > 0;
 
         if (hasAnnotations && file.file_type === 'application/pdf') {
-            const confirmFlatten = window.confirm('This document has signatures or notes. Would you like to download it with these saved annotations?');
-            if (confirmFlatten) {
+            const ok = await confirm({
+                title: 'Download with annotations?',
+                description: 'This document has signatures or notes. Download with these saved annotations included?',
+                confirmLabel: 'Download annotated',
+                cancelLabel: 'Download original',
+                variant: 'primary',
+            });
+            if (ok) {
                 return handleDownloadAsPDF(true);
             }
         }
@@ -509,6 +603,11 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
+            recordActivity({
+                title: 'Downloaded',
+                description: `Downloaded "${file.original_filename}".`,
+                fileId: file.id,
+            });
         } catch (error) {
             console.error('Error downloading file:', error);
             toast.error('Failed to download file');
@@ -611,7 +710,9 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         try {
             const html2pdf = (await import('html2pdf.js')).default;
             let element: HTMLElement | null = null;
-            element = document.getElementById('editor-pdf-content');
+            element = flattenViewer
+                ? (document.querySelector('.document-viewer-container') as HTMLElement)
+                : document.getElementById('editor-pdf-content');
 
             if (!element) {
                 element = document.querySelector('.document-viewer-container') as HTMLElement;
@@ -666,135 +767,261 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
         return matchesSearch && matchesFilter;
     });
 
+    const sortedFiles = useMemo(() => {
+        const next = [...filteredFiles];
+        switch (sortMode) {
+            case 'oldest':
+                next.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                break;
+            case 'name_asc':
+                next.sort((a, b) => a.original_filename.localeCompare(b.original_filename));
+                break;
+            case 'name_desc':
+                next.sort((a, b) => b.original_filename.localeCompare(a.original_filename));
+                break;
+            case 'size_asc':
+                next.sort((a, b) => (a.file_size || 0) - (b.file_size || 0));
+                break;
+            case 'size_desc':
+                next.sort((a, b) => (b.file_size || 0) - (a.file_size || 0));
+                break;
+            case 'newest':
+            default:
+                next.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                break;
+        }
+        return next;
+    }, [filteredFiles, sortMode]);
+
+    const toggleSelectedId = useCallback((id: string) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    }, []);
+
+    const pagination = useMemo(() => {
+        const totalItems = sortedFiles.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+        const safePage = Math.min(Math.max(1, page), totalPages);
+        const pageStart = (safePage - 1) * pageSize;
+        const pagedFiles = sortedFiles.slice(pageStart, pageStart + pageSize);
+        return { totalItems, totalPages, safePage, pageStart, pagedFiles };
+    }, [page, pageSize, sortedFiles]);
+
+    useEffect(() => {
+        if (!activityOpen) return;
+        if (!currentTenant?.id) return;
+        if (!selectedFile?.id) return;
+        if (selectedFile.id.startsWith('new-')) {
+            setSystemActivityItems([]);
+            return;
+        }
+
+        let cancelled = false;
+        setActivityLoading(true);
+
+        notificationService
+            .getNotifications(user.id, currentTenant.id, 200)
+            .then(({ notifications }) => {
+                if (cancelled) return;
+                const fileName = selectedFile.original_filename;
+                const items: DocumentActivityItem[] = notifications
+                    .filter((n) => n.link === '/dashboard/documents' || n.title.toLowerCase().includes('document'))
+                    .filter((n) => (n.message ? n.message.includes(fileName) : true))
+                    .slice(0, 50)
+                    .map((n) => ({
+                        id: n.id,
+                        createdAt: n.created_at,
+                        title: n.title,
+                        description: n.message,
+                        fileId: selectedFile.id,
+                        source: 'system',
+                    }));
+                setSystemActivityItems(items);
+            })
+            .finally(() => {
+                if (cancelled) return;
+                setActivityLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activityOpen, currentTenant?.id, selectedFile?.id, selectedFile?.original_filename, user.id]);
+
     const storagePercent = Math.min((storageUsed / (100 * BYTES_TO_MB)) * 100, 100);
 
     const renderEmailModal = () => {
         if (!emailFile) return null;
         return (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/90 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-                <form
-                    onSubmit={handleEmailDocument}
-                    className="w-full max-w-lg bg-slate-900 border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-                >
-                    <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-400 flex items-center justify-center shrink-0">
-                                <Mail className="w-5 h-5" />
-                            </div>
-                            <div className="min-w-0">
-                                <h3 className="text-white font-bold text-base">Email Document</h3>
-                                <p className="text-slate-500 text-xs truncate">{emailFile.original_filename} will be attached</p>
-                            </div>
-                        </div>
-                        <button type="button" onClick={() => setEmailFile(null)} className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors shrink-0">
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                    <div className="p-5 sm:p-6 space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">To</label>
-                            <input
-                                type="email"
-                                required
-                                value={emailTo}
-                                onChange={(e) => setEmailTo(e.target.value)}
-                                placeholder="client@example.com"
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Subject</label>
-                            <input
-                                type="text"
-                                value={emailSubject}
-                                onChange={(e) => setEmailSubject(e.target.value)}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Message</label>
-                            <textarea
-                                value={emailMessage}
-                                onChange={(e) => setEmailMessage(e.target.value)}
-                                rows={5}
-                                className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none resize-none"
-                            />
-                        </div>
-                    </div>
-                    <div className="p-5 sm:p-6 border-t border-white/5 flex items-center justify-end gap-3">
-                        <button type="button" onClick={() => setEmailFile(null)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-sm font-bold hover:bg-slate-700 transition-colors">
+            <Modal
+                isOpen
+                onClose={() => setEmailFile(null)}
+                title="Email document"
+                maxWidth="max-w-lg"
+            >
+                <form onSubmit={handleEmailDocument} className="flex flex-col gap-4">
+                    <p className="text-xs text-[var(--text-muted)]">
+                        {emailFile.original_filename} will be attached
+                    </p>
+                    <Input
+                        label="To"
+                        type="email"
+                        required
+                        value={emailTo}
+                        onChange={(e) => setEmailTo(e.target.value)}
+                        placeholder="client@example.com"
+                        validate={(value) => validateEmailField(value) || undefined}
+                    />
+                    <Input
+                        label="Subject"
+                        type="text"
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                    />
+                    <Input
+                        label="Message"
+                        textarea
+                        value={emailMessage}
+                        onChange={(e) => setEmailMessage(e.target.value)}
+                    />
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3 pt-1">
+                        <Button type="button" variant="outline" onClick={() => setEmailFile(null)}>
                             Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                             type="submit"
-                            disabled={isEmailing}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-sm font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                            isLoading={isEmailing}
+                            icon={<Send className="w-4 h-4" aria-hidden="true" />}
                         >
-                            {isEmailing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             Send
-                        </button>
+                        </Button>
                     </div>
                 </form>
-            </div>
+            </Modal>
+        );
+    };
+
+    const renderActivityModal = () => {
+        if (!activityOpen || !selectedFile) return null;
+        const merged = [...activityItems, ...systemActivityItems]
+            .filter((item) => !item.fileId || item.fileId === selectedFile.id)
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        return (
+            <Modal
+                isOpen
+                onClose={() => setActivityOpen(false)}
+                title="Document activity"
+                maxWidth="max-w-xl"
+            >
+                {activityLoading ? (
+                    <div className="space-y-3">
+                        <div className="h-5 w-1/3 rounded bg-[color-mix(in_srgb,var(--ws-border)_35%,transparent)] ac-skeleton-pulse" />
+                        <div className="h-5 w-2/3 rounded bg-[color-mix(in_srgb,var(--ws-border)_35%,transparent)] ac-skeleton-pulse" />
+                        <div className="h-5 w-1/2 rounded bg-[color-mix(in_srgb,var(--ws-border)_35%,transparent)] ac-skeleton-pulse" />
+                    </div>
+                ) : merged.length === 0 ? (
+                    <div className="text-sm text-[var(--text-secondary)]">
+                        No activity is available for this file yet.
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {merged.map((item) => (
+                            <div key={item.id} className="ac-workspace-panel p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-[var(--ws-text-primary)]">
+                                            {item.title}
+                                        </p>
+                                        {item.description ? (
+                                            <p className="mt-1 text-xs text-[var(--ws-text-secondary)]">
+                                                {item.description}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                    <div className="text-[11px] text-[var(--ws-text-muted)] whitespace-nowrap">
+                                        {format(new Date(item.createdAt), 'MMM d, HH:mm')}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Modal>
         );
     };
 
     // ── VIEWER / EDITOR MODE ──────────────────────────────────────────────────
     if (viewMode !== 'list' && selectedFile) {
         const isPdf = selectedFile.file_type === 'application/pdf';
+        const printTarget = fileUrl || (selectedFile.storage_path ? fileUploadService.getProxiedUrl('uploads', selectedFile.storage_path) : '');
+        const viewerDescription = `${getFileLabel(selectedFile.file_type)} · ${formatBytes(selectedFile.file_size)} · ${format(new Date(selectedFile.created_at), 'MMM d, yyyy')}`;
         return (
-            <div className="fixed inset-0 z-[1100] flex flex-col bg-slate-950 animate-in fade-in duration-200">
-                {/* Toolbar */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-white/10 bg-slate-900 shrink-0 shadow-2xl gap-3">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                        <button
-                            onClick={() => { setViewMode('list'); setSelectedFile(null); setFileUrl(null); }}
-                            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all text-xs sm:text-sm font-bold shrink-0"
-                        >
-                            <ChevronLeft className="w-4 h-4" /> <span className="hidden sm:inline">Close Viewer</span><span className="sm:hidden">Back</span>
-                        </button>
-                        <div className="w-px h-6 bg-white/10 hidden sm:block" />
-                        <div className="min-w-0">
-                            <span className="text-white font-bold text-xs sm:text-sm block truncate max-w-[150px] sm:max-w-xs">{selectedFile.original_filename}</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                        {viewMode === 'editor' && (
-                            <>
-                                <button
-                                    onClick={() => handleDownloadAsPDF(false)}
-                                    disabled={isSaving}
-                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs sm:text-xs font-bold transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50"
-                                >
-                                    <Download className="w-3.5 h-3.5" />
-                                    Save as PDF
-                                </button>
-                                <button
-                                    onClick={handleSaveEdits}
-                                    disabled={isSaving}
-                                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs sm:text-xs font-bold transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
-                                >
-                                    {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                                    Save Changes
-                                </button>
-                            </>
-                        )}
-                        <button
-                            onClick={() => handleDownload(selectedFile)}
-                            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-xs font-bold transition-all border border-white/5"
-                        >
-                            <Download className="w-4 h-4" /> Download
-                        </button>
-                        {selectedFile.storage_path && (
-                            <button
-                                onClick={() => openEmailModal(selectedFile)}
-                                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs sm:text-xs font-bold transition-all border border-white/5"
-                            >
-                                <Mail className="w-4 h-4" /> Email
-                            </button>
-                        )}
-                    </div>
-                </div>
+            <div className="fixed inset-0 z-[1100] flex flex-col bg-[var(--ws-canvas)] animate-in fade-in duration-200">
+                <PageHeader
+                    moduleLabel="Deliver"
+                    title={selectedFile.original_filename}
+                    description={viewerDescription}
+                    onBack={() => { setViewMode('list'); setSelectedFile(null); setFileUrl(null); setActivityOpen(false); }}
+                    primaryAction={
+                        viewMode === 'editor'
+                            ? {
+                                label: 'Save changes',
+                                onClick: handleSaveEdits,
+                                variant: 'primary',
+                                disabled: isSaving,
+                                loading: isSaving,
+                            }
+                            : undefined
+                    }
+                    secondaryActions={[
+                        ...(viewMode === 'editor'
+                            ? [{
+                                label: 'Save as PDF',
+                                onClick: () => handleDownloadAsPDF(false),
+                                variant: 'secondary' as const,
+                                disabled: isSaving,
+                            }]
+                            : []),
+                        {
+                            label: 'Download',
+                            onClick: () => handleDownload(selectedFile),
+                            variant: 'secondary' as const,
+                        },
+                        ...(selectedFile.storage_path
+                            ? [{
+                                label: 'Email',
+                                onClick: () => openEmailModal(selectedFile),
+                                variant: 'secondary' as const,
+                            }]
+                            : []),
+                        ...(selectedFile.storage_path
+                            ? [{
+                                label: 'Save to Drive',
+                                onClick: () => handleSaveToDrive(selectedFile),
+                                variant: 'secondary' as const,
+                                disabled: !authUser,
+                                loading: isSavingToDrive === selectedFile.id,
+                            }]
+                            : []),
+                        ...(printTarget
+                            ? [{
+                                label: 'Print',
+                                onClick: () => handlePrint(printTarget),
+                                variant: 'secondary' as const,
+                            }]
+                            : []),
+                        {
+                            label: 'Activity',
+                            onClick: () => setActivityOpen(true),
+                            variant: 'secondary' as const,
+                        },
+                    ]}
+                />
                 {selectedFile ? (
                     <div className="px-4 py-2 border-b border-white/5 bg-slate-950/80">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
@@ -839,6 +1066,7 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
                     </div>
                 ) : null}
                 {renderEmailModal()}
+                {renderActivityModal()}
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-slate-950">
@@ -923,262 +1151,533 @@ const DocumentHub: React.FC<DocumentHubProps> = ({ user }) => {
     // ── LIST MODE ─────────────────────────────────────────────────────────────
     return (
         <>
-            <div className="space-y-4 p-4 sm:p-6" style={{ touchAction: 'pan-y' }}>
-            <TemplateLibrary />
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                    <h2 className="text-lg sm:text-xl font-semibold text-[var(--ws-text-primary)] flex items-center gap-2">
-                        <FolderOpen className="w-5 h-5 text-[#C98219]" />
-                        Documents
-                    </h2>
-                    <p className="text-[var(--ws-text-muted)] text-xs sm:text-sm mt-0.5">Upload, view, and edit your PDF and Word documents</p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={() => { setViewTrash(!viewTrash); }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewTrash ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-slate-900 text-slate-500 hover:text-white border border-white/5'}`}
+            <EnterpriseModuleChrome
+                moduleKey="documents"
+                meta={{
+                    title: viewTrash ? 'Document trash' : 'Documents',
+                    description: viewTrash
+                        ? 'Restore or permanently delete files in the trash.'
+                        : 'Upload, sign, and organize files across your workspace.',
+                }}
+                toolbar={
+                    <div
+                        className={cn(
+                            'sticky top-0 z-20 border-b border-[var(--ws-border)] bg-[var(--ws-toolbar)]',
+                            'px-4 md:px-6 py-3',
+                        )}
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        {viewTrash ? 'Exit Trash' : 'Trash'}
-                    </button>
-
-                    {viewTrash ? (
-                        <button
-                            onClick={handleEmptyTrash}
-                            className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 text-white transition-all flex items-center gap-2"
-                        >
-                            <Trash2 className="w-3.5 h-3.5" /> Empty Trash
-                        </button>
-                    ) : (
-                        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                            <button
-                                onClick={() => setViewMode('designer')}
-                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-violet-500/20 group"
-                            >
-                                <ScanLine className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                                <span className="hidden sm:inline">AI Designer</span>
-                            </button>
-
-                            <label className="cursor-pointer">
-                                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors border border-white/5">
-                                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                                    <span className="hidden sm:inline">Upload</span>
-                                </div>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    className="hidden"
-                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                    onChange={handleUpload}
-                                    disabled={isUploading}
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0 flex-1">
+                                <Input
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder={viewTrash ? 'Search trash…' : 'Search documents…'}
+                                    icon={<Search className="w-4 h-4" aria-hidden="true" />}
                                 />
-                            </label>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                                {!viewTrash ? (
+                                    <div className="relative">
+                                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" aria-hidden="true" />
+                                        <select
+                                            value={documentFilter}
+                                            onChange={(e) => setDocumentFilter(e.target.value)}
+                                            className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] pl-10 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        >
+                                            <option value="all">All files</option>
+                                            <option value="pdf">PDFs</option>
+                                            <option value="word">Word docs</option>
+                                            <option value="image">Images</option>
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
+                                            <ChevronLeft className="w-4 h-4 -rotate-90" />
+                                        </div>
+                                    </div>
+                                ) : null}
 
-                            <button
-                                onClick={handleCreateDocument}
-                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 text-xs font-bold transition-colors border border-blue-500/30"
-                            >
-                                <Type className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Write Doc</span>
-                            </button>
-
-                            <button
-                                onClick={handleCreateQuote}
-                                className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 text-xs font-bold transition-colors border border-purple-500/30"
-                            >
-                                <Quote className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Create Quote</span>
-                            </button>
-
-                            <label className="cursor-pointer">
-                                <div className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-colors shadow-lg shadow-teal-500/20">
-                                    <ScanLine className="w-3.5 h-3.5" />
-                                    <span className="hidden sm:inline">Scan</span>
-                                </div>
-                                <input
-                                    ref={scanInputRef}
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*"
-                                    capture="environment"
-                                    onChange={handleScan}
-                                    disabled={isLoading}
-                                />
-                            </label>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Storage bar */}
-            {!viewTrash && (
-                <div className="bg-slate-900 border border-white/5 rounded-xl p-4">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-slate-400 font-medium">Storage Used</span>
-                        <span className="text-xs text-slate-300 font-bold">{formatBytes(storageUsed)} / 100 MB</span>
-                    </div>
-                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                            className={`h-full rounded-full transition-all ${storagePercent > 80 ? 'bg-red-500' : storagePercent > 60 ? 'bg-amber-500' : 'bg-teal-500'}`}
-                            style={{ width: `${storagePercent}%` }}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Filter and Search */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input
-                        type="text"
-                        placeholder={viewTrash ? 'Search trash...' : 'Search documents...'}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all"
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                {!viewTrash && (
-                    <div className="relative shrink-0">
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <select
-                            value={documentFilter}
-                            onChange={(e) => setDocumentFilter(e.target.value)}
-                            className="w-full sm:w-40 bg-slate-900/50 border border-white/10 rounded-xl py-2.5 pl-10 pr-8 text-sm text-white focus:ring-2 focus:ring-teal-500/30 outline-none transition-all appearance-none cursor-pointer"
-                        >
-                            <option value="all">All Files</option>
-                            <option value="pdf">PDFs</option>
-                            <option value="word">Word Docs</option>
-                            <option value="image">Images</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                            <ChevronLeft className="w-4 h-4 -rotate-90" />
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* File list */}
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-6 h-6 animate-spin text-teal-400" />
-                </div>
-            ) : filteredFiles.length === 0 ? (
-                <div className="text-center py-20">
-                    <FolderOpen className="w-14 h-14 text-slate-700 mx-auto mb-4" />
-                    <p className="text-slate-400 font-medium">
-                        {viewTrash ? 'Trash is empty' : searchQuery ? 'No documents match your search' : 'No documents yet'}
-                    </p>
-                    {!viewTrash && !searchQuery && (
-                        <p className="text-slate-600 text-sm mt-1">Upload a PDF or Word document to get started</p>
-                    )}
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 gap-3">
-                    {filteredFiles.map(file => (
-                        <div
-                            key={file.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-slate-900 border border-white/5 rounded-xl hover:border-teal-500/20 transition-all group"
-                        >
-                            {/* File info */}
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="p-2.5 bg-slate-800 rounded-lg shrink-0">
-                                    {getFileIcon(file.file_type)}
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-white font-medium text-sm truncate">{file.original_filename}</p>
-                                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                                        <span className="text-xs font-black uppercase tracking-widest px-1.5 py-0.5 rounded bg-slate-800 text-slate-500">
-                                            {getFileLabel(file.file_type)}
-                                        </span>
-                                        <span className="text-xs text-slate-500">{formatBytes(file.file_size)}</span>
-                                        <span className="text-xs text-slate-600">
-                                            {format(new Date(file.created_at), 'MMM d, yyyy')}
-                                        </span>
+                                <div className="relative">
+                                    <select
+                                        value={sortMode}
+                                        onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        aria-label="Sort documents"
+                                    >
+                                        <option value="newest">Newest</option>
+                                        <option value="oldest">Oldest</option>
+                                        <option value="name_asc">Name A–Z</option>
+                                        <option value="name_desc">Name Z–A</option>
+                                        <option value="size_desc">Largest</option>
+                                        <option value="size_asc">Smallest</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
+                                        <ChevronLeft className="w-4 h-4 -rotate-90" />
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Action buttons */}
-                            <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t border-slate-800/50 sm:border-t-0 shrink-0 opacity-100 transition-opacity">
+                                <div className="relative">
+                                    <select
+                                        value={String(pageSize)}
+                                        onChange={(e) => setPageSize(Number(e.target.value))}
+                                        className="min-h-11 rounded-[10px] bg-[var(--surface-primary)] border border-[var(--border-default)] text-sm text-[var(--text-primary)] px-3 pr-9 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
+                                        aria-label="Items per page"
+                                    >
+                                        <option value="10">10 / page</option>
+                                        <option value="25">25 / page</option>
+                                        <option value="50">50 / page</option>
+                                        <option value="100">100 / page</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]" aria-hidden="true">
+                                        <ChevronLeft className="w-4 h-4 -rotate-90" />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setViewTrash((v) => !v)}
+                                    className={cn(
+                                        WORKSPACE.action.secondary,
+                                        ENTERPRISE.touchTarget,
+                                        'inline-flex items-center gap-2 px-3',
+                                        viewTrash && 'border-red-500/40 text-red-300 hover:bg-red-500/10',
+                                    )}
+                                >
+                                    <Trash2 className="w-4 h-4" aria-hidden="true" />
+                                    {viewTrash ? 'Exit trash' : 'Trash'}
+                                </button>
+
                                 {viewTrash ? (
-                                    <>
-                                        <button
-                                            onClick={() => handleRestore(file.id)}
-                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-teal-500/20 text-slate-400 hover:text-teal-400 transition-colors text-sm sm:text-xs font-bold border border-transparent"
-                                        >
-                                            <RotateCcw className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Restore
-                                        </button>
-                                        <button
-                                            onClick={() => handlePermanentDelete(file.id)}
-                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors text-sm sm:text-xs font-bold border border-transparent"
-                                        >
-                                            <X className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Delete
-                                        </button>
-                                    </>
+                                    <button
+                                        type="button"
+                                        onClick={handleEmptyTrash}
+                                        className={cn(
+                                            'ac-workspace-action-btn border border-red-500/40 text-red-300 hover:bg-red-500/10',
+                                            ENTERPRISE.touchTarget,
+                                            'inline-flex items-center gap-2 px-3',
+                                        )}
+                                    >
+                                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                                        Empty trash
+                                    </button>
                                 ) : (
                                     <>
                                         <button
-                                            onClick={() => handleOpenFile(file)}
-                                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 hover:text-teal-300 transition-colors text-sm sm:text-xs font-bold border border-teal-500/20"
-                                        >
-                                            {file.file_type.includes('image') ? (
-                                                <><Eye className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> View Image</>
-                                            ) : file.file_type === 'application/pdf' ? (
-                                                <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open / Sign</>
-                                            ) : (
-                                                <><Edit3 className="w-4 h-4 sm:w-3.5 sm:h-3.5" /> Open Editor</>
+                                            type="button"
+                                            onClick={() => setViewMode('designer')}
+                                            className={cn(
+                                                WORKSPACE.action.bonnie,
+                                                ENTERPRISE.touchTarget,
+                                                'inline-flex items-center gap-2 px-3',
                                             )}
-                                        </button>
-                                        <button
-                                            onClick={() => handleDownload(file)}
-                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
-                                            title="Download"
                                         >
-                                            <Download className="w-5 h-5 sm:w-4 sm:h-4" />
+                                            <ScanLine className="w-4 h-4" aria-hidden="true" />
+                                            AI designer
                                         </button>
+
+                                        <label className={cn(WORKSPACE.action.secondary, ENTERPRISE.touchTarget, 'inline-flex items-center gap-2 px-3 cursor-pointer')}>
+                                            {isUploading ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                                            ) : (
+                                                <Upload className="w-4 h-4" aria-hidden="true" />
+                                            )}
+                                            Upload
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                className="hidden"
+                                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                                onChange={handleUpload}
+                                                disabled={isUploading}
+                                            />
+                                        </label>
+
                                         <button
-                                            onClick={() => {
-                                                const proxiedUrl = fileUploadService.getProxiedUrl('uploads', file.storage_path);
-                                                handlePrint(proxiedUrl);
-                                            }}
-                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
-                                            title="Print"
+                                            type="button"
+                                            onClick={handleCreateDocument}
+                                            className={cn(WORKSPACE.action.secondary, ENTERPRISE.touchTarget, 'inline-flex items-center gap-2 px-3')}
                                         >
-                                            <Printer className="w-5 h-5 sm:w-4 sm:h-4" />
+                                            <Type className="w-4 h-4" aria-hidden="true" />
+                                            Write doc
                                         </button>
+
                                         <button
-                                            onClick={() => openEmailModal(file)}
-                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
-                                            title="Email document"
+                                            type="button"
+                                            onClick={handleCreateQuote}
+                                            className={cn(WORKSPACE.action.secondary, ENTERPRISE.touchTarget, 'inline-flex items-center gap-2 px-3')}
                                         >
-                                            <Mail className="w-5 h-5 sm:w-4 sm:h-4" />
+                                            <Quote className="w-4 h-4" aria-hidden="true" />
+                                            Quote
                                         </button>
-                                        <button
-                                            onClick={() => handleSaveToDrive(file)}
-                                            disabled={isSavingToDrive === file.id}
-                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent flex justify-center items-center"
-                                            title="Save to Google Drive"
-                                        >
-                                            {isSavingToDrive === file.id ? <Loader2 className="w-5 h-5 sm:w-4 sm:h-4 animate-spin" /> : <Share2 className="w-5 h-5 sm:w-4 sm:h-4" />}
-                                        </button>
-                                        <button
-                                            onClick={() => handleSoftDelete(file.id)}
-                                            className="p-2 sm:p-2 sm:py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors border border-transparent flex justify-center items-center"
-                                            title="Move to trash"
-                                        >
-                                            <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
-                                        </button>
+
+                                        <label className={cn(WORKSPACE.action.secondary, ENTERPRISE.touchTarget, 'inline-flex items-center gap-2 px-3 cursor-pointer')}>
+                                            <ScanLine className="w-4 h-4" aria-hidden="true" />
+                                            Scan
+                                            <input
+                                                ref={scanInputRef}
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                capture="environment"
+                                                onChange={handleScan}
+                                                disabled={isLoading}
+                                            />
+                                        </label>
                                     </>
                                 )}
                             </div>
                         </div>
-                    ))}
+                    </div>
+                }
+                stats={
+                    !viewTrash ? (
+                        <div className="px-4 md:px-6">
+                            <div className="ac-workspace-panel p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs text-[var(--ws-text-muted)] font-medium">Storage used</span>
+                                    <span className="text-xs text-[var(--ws-text-secondary)] font-semibold">
+                                        {formatBytes(storageUsed)} / 100 MB
+                                    </span>
+                                </div>
+                                <div className="h-1.5 bg-[color-mix(in_srgb,var(--ws-border)_40%,transparent)] rounded-full overflow-hidden">
+                                    <div
+                                        className={cn(
+                                            'h-full rounded-full transition-all',
+                                            storagePercent > 80
+                                                ? 'bg-[var(--danger)]'
+                                                : storagePercent > 60
+                                                    ? 'bg-[var(--warning)]'
+                                                    : 'bg-[var(--success)]',
+                                        )}
+                                        style={{ width: `${storagePercent}%` }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ) : null
+                }
+            >
+                <div className="px-4 md:px-6 pb-6 space-y-4" style={{ touchAction: 'pan-y' }}>
+                    <TemplateLibrary />
+
+                    <BulkActions
+                        items={sortedFiles}
+                        selectedIds={selectedIds}
+                        onSelectionChange={setSelectedIds}
+                        actions={
+                            viewTrash
+                                ? [
+                                    {
+                                        label: 'Restore',
+                                        icon: <RotateCcw className="w-4 h-4" aria-hidden="true" />,
+                                        onClick: async (selected) => {
+                                            for (const item of selected) {
+                                                await handleRestore(item.id);
+                                            }
+                                        },
+                                    },
+                                    {
+                                        label: 'Delete',
+                                        icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
+                                        variant: 'danger',
+                                        onClick: async (selected) => {
+                                            const ok = await confirm({
+                                                title: 'Permanently delete selected files?',
+                                                description: `Delete ${selected.length} file(s)? This cannot be undone.`,
+                                                confirmLabel: 'Delete permanently',
+                                                cancelLabel: 'Cancel',
+                                                variant: 'danger',
+                                            });
+                                            if (!ok) return;
+                                            for (const item of selected) {
+                                                await handlePermanentDelete(item.id);
+                                            }
+                                        },
+                                    },
+                                ]
+                                : [
+                                    {
+                                        label: 'Download',
+                                        icon: <Download className="w-4 h-4" aria-hidden="true" />,
+                                        onClick: async (selected) => {
+                                            const toastId = toast.loading(`Downloading ${selected.length} file(s)...`);
+                                            try {
+                                                for (const item of selected) await handleDownload(item);
+                                                toast.success('Downloads started', { id: toastId });
+                                            } catch {
+                                                toast.error('Download failed', { id: toastId });
+                                            }
+                                        },
+                                    },
+                                    {
+                                        label: 'Move to trash',
+                                        icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
+                                        variant: 'danger',
+                                        onClick: async (selected) => {
+                                            const toastId = toast.loading(`Moving ${selected.length} file(s) to trash...`);
+                                            try {
+                                                for (const item of selected) await handleSoftDelete(item.id);
+                                                toast.success('Moved to trash', { id: toastId });
+                                            } catch {
+                                                toast.error('Move to trash failed', { id: toastId });
+                                            }
+                                        },
+                                    },
+                                ]
+                        }
+                    />
+
+                    {isLoading ? (
+                        <ListItemSkeleton count={6} />
+                    ) : sortedFiles.length === 0 ? (
+                        <div className="ac-workspace-panel p-10 text-center">
+                            <FolderOpen className="w-14 h-14 text-[var(--ws-text-muted)] mx-auto mb-4" aria-hidden="true" />
+                            <p className="text-sm font-medium text-[var(--ws-text-secondary)]">
+                                {viewTrash
+                                    ? 'Trash is empty.'
+                                    : searchQuery
+                                        ? 'No documents match your search.'
+                                        : 'No documents yet.'}
+                            </p>
+                            {!viewTrash && !searchQuery ? (
+                                <p className="text-xs text-[var(--ws-text-muted)] mt-1">
+                                    Upload a PDF, Word doc, or image to get started.
+                                </p>
+                            ) : null}
+                            {!viewTrash && !searchQuery ? (
+                                <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2">
+                                    <Button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        icon={<Upload className="w-4 h-4" aria-hidden="true" />}
+                                    >
+                                        Upload
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => scanInputRef.current?.click()}
+                                        icon={<ScanLine className="w-4 h-4" aria-hidden="true" />}
+                                    >
+                                        Scan
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleCreateDocument}
+                                        icon={<Type className="w-4 h-4" aria-hidden="true" />}
+                                    >
+                                        Write doc
+                                    </Button>
+                                </div>
+                            ) : null}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 gap-3">
+                            {pagination.pagedFiles.map((file) => {
+                                const isSelected = selectedIds.has(file.id);
+                                const contextItems = viewTrash
+                                    ? [
+                                        { label: 'Restore', icon: <RotateCcw className="w-4 h-4" aria-hidden="true" />, onClick: () => handleRestore(file.id) },
+                                        { label: 'Delete permanently', icon: <Trash2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handlePermanentDelete(file.id), destructive: true },
+                                    ]
+                                    : [
+                                        { label: 'Open', icon: <Edit3 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleOpenFile(file) },
+                                        { label: 'Download', icon: <Download className="w-4 h-4" aria-hidden="true" />, onClick: () => handleDownload(file) },
+                                        { label: 'Print', icon: <Printer className="w-4 h-4" aria-hidden="true" />, onClick: () => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path)) },
+                                        { label: 'Email', icon: <Mail className="w-4 h-4" aria-hidden="true" />, onClick: () => openEmailModal(file) },
+                                        { label: 'Save to Drive', icon: <Share2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleSaveToDrive(file) },
+                                        { label: 'Move to trash', icon: <Trash2 className="w-4 h-4" aria-hidden="true" />, onClick: () => handleSoftDelete(file.id), destructive: true },
+                                    ];
+
+                                return (
+                                    <SelectableItem
+                                        key={file.id}
+                                        id={file.id}
+                                        isSelected={isSelected}
+                                        onToggle={toggleSelectedId}
+                                        className="group"
+                                    >
+                                        <CustomContextMenu items={contextItems}>
+                                            <div
+                                                className={cn(
+                                                    'ac-workspace-panel p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+                                                    isSelected && 'ring-2 ring-[var(--focus-ring)]',
+                                                )}
+                                            >
+                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    <div className="p-2.5 rounded-lg shrink-0 bg-[color-mix(in_srgb,var(--ws-border)_35%,transparent)]">
+                                                        {getFileIcon(file.file_type)}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-[var(--ws-text-primary)] truncate">
+                                                            {file.original_filename}
+                                                        </p>
+                                                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full border border-[var(--ws-border)] text-[var(--ws-text-muted)]">
+                                                                {getFileLabel(file.file_type)}
+                                                            </span>
+                                                            <span className="text-xs text-[var(--ws-text-muted)]">
+                                                                {formatBytes(file.file_size)}
+                                                            </span>
+                                                            <span className="text-xs text-[var(--ws-text-muted)]">
+                                                                {format(new Date(file.created_at), 'MMM d, yyyy')}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 w-full sm:w-auto pt-3 sm:pt-0 border-t border-[color-mix(in_srgb,var(--ws-border)_60%,transparent)] sm:border-t-0">
+                                                    {viewTrash ? (
+                                                        <>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                onClick={() => handleRestore(file.id)}
+                                                                icon={<RotateCcw className="w-4 h-4" aria-hidden="true" />}
+                                                            >
+                                                                Restore
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="danger"
+                                                                size="sm"
+                                                                onClick={() => handlePermanentDelete(file.id)}
+                                                                icon={<Trash2 className="w-4 h-4" aria-hidden="true" />}
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                onClick={() => handleOpenFile(file)}
+                                                                icon={
+                                                                    file.file_type.includes('image') ? (
+                                                                        <Eye className="w-4 h-4" aria-hidden="true" />
+                                                                    ) : (
+                                                                        <Edit3 className="w-4 h-4" aria-hidden="true" />
+                                                                    )
+                                                                }
+                                                            >
+                                                                Open
+                                                            </Button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDownload(file)}
+                                                                className={cn(
+                                                                    WORKSPACE.action.secondary,
+                                                                    ENTERPRISE.touchTarget,
+                                                                    'inline-flex items-center justify-center px-3',
+                                                                )}
+                                                                aria-label="Download"
+                                                            >
+                                                                <Download className="w-4 h-4" aria-hidden="true" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handlePrint(fileUploadService.getProxiedUrl('uploads', file.storage_path))}
+                                                                className={cn(
+                                                                    WORKSPACE.action.secondary,
+                                                                    ENTERPRISE.touchTarget,
+                                                                    'inline-flex items-center justify-center px-3',
+                                                                )}
+                                                                aria-label="Print"
+                                                            >
+                                                                <Printer className="w-4 h-4" aria-hidden="true" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openEmailModal(file)}
+                                                                className={cn(
+                                                                    WORKSPACE.action.secondary,
+                                                                    ENTERPRISE.touchTarget,
+                                                                    'inline-flex items-center justify-center px-3',
+                                                                )}
+                                                                aria-label="Email document"
+                                                            >
+                                                                <Mail className="w-4 h-4" aria-hidden="true" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSaveToDrive(file)}
+                                                                disabled={isSavingToDrive === file.id}
+                                                                className={cn(
+                                                                    WORKSPACE.action.secondary,
+                                                                    ENTERPRISE.touchTarget,
+                                                                    'inline-flex items-center justify-center px-3 disabled:opacity-50',
+                                                                )}
+                                                                aria-label="Save to Google Drive"
+                                                            >
+                                                                {isSavingToDrive === file.id ? (
+                                                                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                                                                ) : (
+                                                                    <Share2 className="w-4 h-4" aria-hidden="true" />
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSoftDelete(file.id)}
+                                                                className={cn(
+                                                                    'ac-workspace-action-btn border border-red-500/40 text-red-300 hover:bg-red-500/10',
+                                                                    ENTERPRISE.touchTarget,
+                                                                    'inline-flex items-center justify-center px-3',
+                                                                )}
+                                                                aria-label="Move to trash"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" aria-hidden="true" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </CustomContextMenu>
+                                    </SelectableItem>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {!isLoading && sortedFiles.length > 0 ? (
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-2">
+                            <p className="text-xs text-[var(--ws-text-muted)]">
+                                Showing {Math.min(pagination.pageStart + 1, pagination.totalItems)}–
+                                {Math.min(pagination.pageStart + pageSize, pagination.totalItems)} of {pagination.totalItems}
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                    disabled={pagination.safePage <= 1}
+                                    className={cn(
+                                        WORKSPACE.action.secondary,
+                                        ENTERPRISE.touchTarget,
+                                        'inline-flex items-center justify-center px-3 disabled:opacity-50 disabled:cursor-not-allowed',
+                                    )}
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-xs font-semibold text-[var(--ws-text-secondary)]">
+                                    Page {pagination.safePage} / {pagination.totalPages}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                                    disabled={pagination.safePage >= pagination.totalPages}
+                                    className={cn(
+                                        WORKSPACE.action.secondary,
+                                        ENTERPRISE.touchTarget,
+                                        'inline-flex items-center justify-center px-3 disabled:opacity-50 disabled:cursor-not-allowed',
+                                    )}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
-            )}
-        </div>
+            </EnterpriseModuleChrome>
         
         {/* AI Designer Interface */}
         {viewMode === 'designer' && (

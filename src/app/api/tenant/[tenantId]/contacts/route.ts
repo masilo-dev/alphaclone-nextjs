@@ -3,6 +3,15 @@ import { z } from 'zod';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 
+const listSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  search: z.string().trim().max(200).optional(),
+  status: z.enum(['active', 'inactive', 'unsubscribed', 'bounced']).optional(),
+  sort: z.enum(['created_at', 'name']).optional().default('created_at'),
+  direction: z.enum(['asc', 'desc']).optional().default('desc'),
+});
+
 const nullableUuid = z.union([z.string().uuid(), z.null(), z.literal('')]).optional();
 const nullableText = (max: number) => z.union([z.string().trim().max(max), z.null()]).optional();
 const contactFields = z.object({
@@ -71,6 +80,64 @@ async function assertReferences(admin: ReturnType<typeof createSupabaseAdminClie
   }
 }
 
+export async function GET(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
+  try {
+    const { tenantId } = await context.params;
+    await requireTenantAccess(tenantId, req);
+    const parsed = listSchema.safeParse({
+      page: req.nextUrl.searchParams.get('page') || undefined,
+      limit: req.nextUrl.searchParams.get('limit') || undefined,
+      search: req.nextUrl.searchParams.get('search') || undefined,
+      status: req.nextUrl.searchParams.get('status') || undefined,
+      sort: req.nextUrl.searchParams.get('sort') || undefined,
+      direction: req.nextUrl.searchParams.get('direction') || undefined,
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid query', fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+    }
+    const { page, limit, search, status, sort, direction } = parsed.data;
+    const admin = createSupabaseAdminClient();
+
+    let query = admin
+      .from('contacts')
+      .select('*, company:companies(id, name, industry, website)', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .is('deleted_at', null);
+
+    if (status) query = query.eq('status', status);
+    if (search) {
+      query = query.or(
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`
+      );
+    }
+
+    if (sort === 'created_at') {
+      query = query.order('created_at', { ascending: direction === 'asc' });
+    } else if (sort === 'name') {
+      query = query.order('first_name', { ascending: direction === 'asc' }).order('last_name', { ascending: direction === 'asc' });
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    const { data, error, count } = await query.range(from, to);
+    if (error) throw error;
+
+    const total = count || 0;
+    const pages = Math.max(1, Math.ceil(total / limit));
+    return NextResponse.json({
+      contacts: data || [],
+      pagination: {
+        page,
+        limit,
+        total,
+        pages,
+      },
+    });
+  } catch (error) {
+    return routeErrorResponse(error, 'Contacts could not be loaded', req);
+  }
+}
+
 export async function POST(req: NextRequest, context: { params: Promise<{ tenantId: string }> }) {
   try {
     const { tenantId } = await context.params;
@@ -108,6 +175,30 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     const { contactId, ...value } = parsed.data;
     const admin = createSupabaseAdminClient();
     await assertReferences(admin, tenantId, value.companyId || null, value.ownerId || null);
+
+    const { data: current, error: currentError } = await admin
+      .from('contacts')
+      .select('id, first_name, last_name, email, phone, mobile')
+      .eq('tenant_id', tenantId)
+      .eq('id', contactId)
+      .is('deleted_at', null)
+      .maybeSingle();
+    if (currentError) throw currentError;
+    if (!current) return NextResponse.json({ error: 'Contact not found' }, { status: 404 });
+
+    const nextFirstName = value.firstName !== undefined ? (value.firstName?.trim() || null) : (current as any).first_name;
+    const nextLastName = value.lastName !== undefined ? (value.lastName?.trim() || null) : (current as any).last_name;
+    const nextEmail =
+      value.email !== undefined
+        ? (value.email === '' ? null : value.email)
+        : (current as any).email;
+    const nextPhone = value.phone !== undefined ? (value.phone?.trim() || null) : (current as any).phone;
+    const nextMobile = value.mobile !== undefined ? (value.mobile?.trim() || null) : (current as any).mobile;
+
+    if (!(nextFirstName || nextLastName) || !(nextEmail || nextPhone || nextMobile)) {
+      return NextResponse.json({ error: 'A name and an email or phone number are required' }, { status: 400 });
+    }
+
     const updates = { ...toRow(value), updated_by: user.id, updated_at: new Date().toISOString() };
     const { data, error } = await admin.from('contacts').update(updates).eq('tenant_id', tenantId).eq('id', contactId).is('deleted_at', null).select('*').maybeSingle();
     if (error) throw error;

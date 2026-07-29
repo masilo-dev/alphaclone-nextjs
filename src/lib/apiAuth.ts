@@ -5,6 +5,7 @@ import { clientErrorResponse } from './api/clientErrorResponse';
 import { RouteAuthError } from './api/routeAuthError';
 import { ENV } from '@/config/env';
 import { isPlatformAdminRole } from '@/lib/platformAdmin';
+import { normalizePlatformRole } from '@/lib/platformAdmin';
 
 export { RouteAuthError };
 
@@ -145,7 +146,9 @@ export async function requireTenantAccess(tenantId: string, req?: Request) {
 
 export async function requireTenantRole(tenantId: string, allowedRoles: string[], req?: Request) {
     const access = await requireTenantAccess(tenantId, req);
-    if (!allowedRoles.includes(access.membership.role)) {
+    const normalizedRole = normalizePlatformRole(access.membership.role);
+    const allowed = new Set(allowedRoles.map((r) => normalizePlatformRole(r)));
+    if (!allowed.has(normalizedRole)) {
         throw new RouteAuthError(403, 'Insufficient workspace permissions', 'FORBIDDEN');
     }
     return access;

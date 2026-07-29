@@ -8,6 +8,8 @@ import { freePlacesService } from '@/services/freePlacesService';
 import { fetchSerpLeadsViaBrowser, hasRemoteBrowserConfigured } from '@/lib/scraper/browserSerpLeads';
 import { leadsManagementSchema } from '@/schemas/validation';
 import { getFacebookIntegration, getFacebookTokens } from '@/services/facebook/facebookIntegrationService';
+import { z } from 'zod';
+import { normalizePlatformRole } from '@/lib/platformAdmin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,7 +20,29 @@ export async function POST(req: NextRequest) {
     }
     const { tenantId, action, config } = parsed.data;
 
-    const { admin: supabase } = await requireTenantAccess(tenantId);
+    const access = await requireTenantAccess(tenantId, req);
+    const supabase = access.admin;
+    const role = normalizePlatformRole(access.membership.role);
+
+    const isReadOnly = action === 'get_leads';
+    const isAdminAction =
+      action === 'find_leads' ||
+      action === 'delete_lead' ||
+      action === 'convert_lead';
+
+    if (!isReadOnly && ['client', 'visitor'].includes(role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (isAdminAction && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
+      return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
+    }
+
+    const validated = validateActionConfig(action, config);
+    if (!validated.success) {
+      return NextResponse.json({ error: 'Validation failed', details: validated.error.flatten() }, { status: 400 });
+    }
+    const validatedConfig = validated.data;
+
     const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
     if (tenantContextError) {
       console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
@@ -26,19 +50,22 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'find_leads':
-        return NextResponse.json(await findLeads(tenantId, config, supabase));
+        return NextResponse.json(await findLeads(tenantId, validatedConfig, supabase));
       case 'save_lead':
-        return NextResponse.json(await saveLead(tenantId, config, supabase));
+        return NextResponse.json(await saveLead(tenantId, validatedConfig, supabase));
       case 'update_lead':
-        return NextResponse.json(await updateLead(tenantId, config, supabase));
+        return NextResponse.json(await updateLead(tenantId, validatedConfig, supabase));
       case 'get_leads':
-        return NextResponse.json(await getLeads(tenantId, config, supabase));
+        return NextResponse.json(await getLeads(tenantId, validatedConfig, supabase));
       case 'convert_lead':
-        return NextResponse.json(await convertLead(tenantId, config, supabase));
+        return NextResponse.json(await convertLead(tenantId, validatedConfig, supabase));
       case 'delete_lead':
-        return NextResponse.json(await deleteLead(tenantId, config, supabase));
+        return NextResponse.json(await deleteLead(tenantId, validatedConfig, supabase));
       case 'bulk_actions':
-        return NextResponse.json(await bulkLeadsActions(tenantId, config, supabase));
+        if (!['owner', 'admin', 'tenant_admin', 'super_admin', 'member'].includes(role)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+        return NextResponse.json(await bulkLeadsActions(tenantId, validatedConfig, supabase, role));
       default:
         return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
     }
@@ -46,6 +73,113 @@ export async function POST(req: NextRequest) {
     console.error('Lead management error:', error);
     return routeErrorResponse(error, undefined, req);
   }
+}
+
+const leadIdSchema = z.string().uuid();
+
+const findLeadsSchema = z.object({
+  location: z.string().trim().min(1).max(200),
+  businessType: z.string().trim().min(1).max(200),
+  radius: z.coerce.number().min(1).max(50).optional().default(5),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(50),
+  sources: z.array(z.enum(['all', 'openstreetmap', 'facebook', 'linkedin', 'google'])).optional().default(['all']),
+  filters: z.record(z.string(), z.unknown()).optional().default({}),
+});
+
+const saveLeadSchema = z.object({
+  leadData: z.object({
+    id: z.string().trim().min(1).max(500),
+    name: z.string().trim().min(1).max(500),
+    email: z.string().trim().email().max(320).optional().nullable(),
+    phone: z.string().trim().max(100).optional().nullable(),
+    address: z.string().trim().max(500).optional().nullable(),
+    location: z.string().trim().max(500).optional().nullable(),
+    website: z.string().trim().max(2000).optional().nullable(),
+    type: z.string().trim().max(200).optional().nullable(),
+    category: z.string().trim().max(200).optional().nullable(),
+    metadata: z.record(z.string(), z.unknown()).optional().default({}),
+    foundAt: z.string().optional(),
+  }),
+  source: z.string().trim().min(1).max(200),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+const updateLeadSchema = z.object({
+  leadId: leadIdSchema,
+  updates: z.record(z.string(), z.unknown()).default({}),
+});
+
+const getLeadsSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(200).optional().default(20),
+  status: z.string().trim().max(80).optional(),
+  source: z.string().trim().max(120).optional(),
+  priority: z.string().trim().max(80).optional(),
+  dateRange: z
+    .object({
+      start: z.string().min(1),
+      end: z.string().min(1),
+    })
+    .optional(),
+  search: z.string().trim().max(200).optional(),
+});
+
+const convertLeadSchema = z.object({
+  leadId: leadIdSchema,
+  conversionType: z.string().trim().max(80).optional(),
+  dealData: z
+    .object({
+      name: z.string().trim().max(500).optional(),
+      value: z.coerce.number().min(0).optional(),
+      stage: z.string().trim().max(80).optional(),
+      expectedCloseDate: z.string().optional(),
+      probability: z.coerce.number().min(0).max(100).optional(),
+    })
+    .optional(),
+});
+
+const deleteLeadSchema = z.object({
+  leadId: leadIdSchema,
+});
+
+const bulkActionsSchema = z
+  .object({
+    leadIds: z.array(leadIdSchema).min(1).max(200),
+    action: z.enum(['update_status', 'update_priority', 'assign_to_user', 'add_tag', 'delete']),
+    data: z.record(z.string(), z.unknown()).default({}),
+  })
+  .superRefine((value, ctx) => {
+    if (value.action === 'update_status') {
+      if (typeof value.data.status !== 'string' || !String(value.data.status).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'status is required' });
+      }
+    }
+    if (value.action === 'update_priority') {
+      if (typeof value.data.priority !== 'string' || !String(value.data.priority).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'priority is required' });
+      }
+    }
+    if (value.action === 'assign_to_user') {
+      if (typeof value.data.userId !== 'string' || !String(value.data.userId).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'userId is required' });
+      }
+    }
+    if (value.action === 'add_tag') {
+      if (typeof value.data.tag !== 'string' || !String(value.data.tag).trim()) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'tag is required' });
+      }
+    }
+  });
+
+function validateActionConfig(action: string, config: unknown) {
+  if (action === 'find_leads') return findLeadsSchema.safeParse(config);
+  if (action === 'save_lead') return saveLeadSchema.safeParse(config);
+  if (action === 'update_lead') return updateLeadSchema.safeParse(config);
+  if (action === 'get_leads') return getLeadsSchema.safeParse(config);
+  if (action === 'convert_lead') return convertLeadSchema.safeParse(config);
+  if (action === 'delete_lead') return deleteLeadSchema.safeParse(config);
+  if (action === 'bulk_actions') return bulkActionsSchema.safeParse(config);
+  return z.record(z.string(), z.unknown()).safeParse(config);
 }
 
 async function findLeads(tenantId: string, config: any, supabase: any) {
@@ -307,12 +441,14 @@ async function saveLead(tenantId: string, config: any, supabase: any) {
     const { leadData, source, metadata } = config;
 
     // Check if lead already exists
-    const { data: existingLead } = await supabase
+    const { data: existingLead, error: existingError } = await supabase
       .from('leads')
       .select('id')
       .eq('tenant_id', tenantId)
       .eq('external_id', leadData.id)
-      .single();
+      .maybeSingle();
+
+    if (existingError) throw existingError;
 
     if (existingLead) {
       return { success: false, error: 'Lead already exists' };
@@ -429,7 +565,7 @@ async function getLeads(tenantId: string, config: any, supabase: any) {
     }
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+      query = query.or(`business_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
     }
 
     const { data: leads, error, count } = await query
@@ -513,12 +649,18 @@ async function deleteLead(tenantId: string, config: any, supabase: any) {
   try {
     const { leadId } = config;
 
-    const { error } = await supabase
-      .from('leads')
-      .delete()
-      .eq('id', leadId)
-      .eq('tenant_id', tenantId);
+    try {
+      const { data, error } = await supabase.rpc('delete_tenant_lead', { p_lead_id: leadId });
+      if (error) throw error;
+      if (data && typeof data === 'object' && data.ok === true) {
+        return { success: true, message: 'Lead deleted successfully' };
+      }
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      if (!/function|does not exist|delete_tenant_lead/i.test(msg)) throw err;
+    }
 
+    const { error } = await supabase.from('leads').delete().eq('id', leadId).eq('tenant_id', tenantId);
     if (error) throw error;
 
     return {
@@ -530,13 +672,24 @@ async function deleteLead(tenantId: string, config: any, supabase: any) {
   }
 }
 
-async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
+async function bulkLeadsActions(tenantId: string, config: any, supabase: any, role: string) {
   try {
     const { leadIds, action, data } = config;
 
-    const results = [];
+    if (!Array.isArray(leadIds)) {
+      return { success: false, error: 'leadIds must be an array' };
+    }
+    if (leadIds.length > 200) {
+      return { success: false, error: 'Too many leads selected' };
+    }
+    if ((action === 'delete' || action === 'assign_to_user') && !['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
+      return { success: false, error: 'Insufficient workspace permissions' };
+    }
 
-    for (const leadId of leadIds) {
+    const results = [];
+    const uniqueIds: string[] = Array.from(new Set(leadIds.map((value: unknown) => String(value).trim()).filter(Boolean)));
+
+    for (const leadId of uniqueIds) {
       try {
         let result;
 
@@ -550,9 +703,15 @@ async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
           case 'assign_to_user':
             result = await updateLead(tenantId, { leadId, updates: { assigned_to: data.userId } }, supabase);
             break;
-          case 'add_tag':
-            result = await addLeadTag(tenantId, leadId, data.tag, supabase);
+          case 'add_tag': {
+            const tag: string = typeof (data as any)?.tag === 'string' ? String((data as any).tag).trim() : '';
+            if (!tag) {
+              result = { success: false, error: 'Tag is required' };
+              break;
+            }
+            result = await addLeadTag(tenantId, leadId, tag, supabase);
             break;
+          }
           case 'delete':
             result = await deleteLead(tenantId, { leadId }, supabase);
             break;
@@ -570,7 +729,7 @@ async function bulkLeadsActions(tenantId: string, config: any, supabase: any) {
     return {
       success: true,
       data: results,
-      message: `Bulk action completed for ${leadIds.length} leads`
+      message: `Bulk action completed for ${uniqueIds.length} leads`
     };
   } catch (error: any) {
     return operationFailed('leads/management', error);

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
@@ -18,6 +18,9 @@ import { ContractAuditLog } from './ContractAuditLog';
 import { DocumentThemePicker } from '@/components/documents/DocumentThemePicker';
 import { DocumentQualityPanel } from '@/components/documents/DocumentQualityPanel';
 import { DocumentPreview } from '@/components/documents/DocumentPreview';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { BulkActions } from '@/components/BulkActions';
+import CustomContextMenu from '@/components/common/CustomContextMenu';
 import {
     buildContractDocumentInput,
     resolveDocumentThemeId,
@@ -135,6 +138,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'GHS'];
 const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const router = useRouter();
     const { currentTenant } = useTenant();
+    const { confirm: confirmDialog } = useConfirmDialog();
     const [projectTypeOptions, setProjectTypeOptions] = useState<string[]>(() => getContractProjectTypeOptions());
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [step, setStep] = useState<'form' | 'preview' | 'sign' | 'saved'>('form');
@@ -147,6 +151,9 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer'>('new');
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
     const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
+    const [listQuery, setListQuery] = useState('');
+    const [listStatusFilter, setListStatusFilter] = useState<'all' | 'draft' | 'sent' | 'client_signed' | 'fully_signed' | 'rejected'>('all');
+    const [listSort, setListSort] = useState<'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'value_desc' | 'value_asc'>('newest');
     
     // AI Lawyer Chat States
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
@@ -729,18 +736,88 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
         });
     };
 
-    const handleBulkDeleteContracts = async () => {
-        const ids = [...selectedContractIds];
-        if (!ids.length) return;
-        if (!confirm(`Delete ${ids.length} draft contract(s)? This cannot be undone.`)) return;
+    const parseContractValue = (c: any) => {
+        if (typeof c.value === 'number') return c.value;
+        const raw = c.value ?? c.payment_amount ?? c.total_amount ?? 0;
+        const num = typeof raw === 'number' ? raw : parseFloat(String(raw));
+        return Number.isFinite(num) ? num : 0;
+    };
 
+    const listContracts = useMemo(() => {
+        const q = listQuery.trim().toLowerCase();
+        const base = savedContracts.filter((c) => {
+            if (listStatusFilter !== 'all' && c.status !== listStatusFilter) return false;
+            if (!q) return true;
+            const contact = resolveContractClientContact(c);
+            const hay = [
+                String(c.title || ''),
+                String(c.status || ''),
+                String(c.currency || ''),
+                String(contact.name || ''),
+                String(contact.email || ''),
+            ]
+                .join(' ')
+                .toLowerCase();
+            return hay.includes(q);
+        });
+
+        const sorted = [...base];
+        sorted.sort((a, b) => {
+            const aCreated = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const bCreated = b.created_at ? new Date(b.created_at).getTime() : 0;
+            const aTitle = String(a.title || '');
+            const bTitle = String(b.title || '');
+            const aVal = parseContractValue(a);
+            const bVal = parseContractValue(b);
+            switch (listSort) {
+                case 'oldest':
+                    return aCreated - bCreated;
+                case 'title_asc':
+                    return aTitle.localeCompare(bTitle);
+                case 'title_desc':
+                    return bTitle.localeCompare(aTitle);
+                case 'value_asc':
+                    return aVal - bVal;
+                case 'value_desc':
+                    return bVal - aVal;
+                case 'newest':
+                default:
+                    return bCreated - aCreated;
+            }
+        });
+
+        return sorted;
+    }, [listQuery, listSort, listStatusFilter, savedContracts]);
+
+    const handleBulkDeleteContracts = async (
+        idsOverride?: string[] | React.MouseEvent<HTMLButtonElement>
+    ) => {
+        if (idsOverride && !Array.isArray(idsOverride)) {
+            idsOverride.preventDefault();
+        }
+        const ids = Array.isArray(idsOverride) ? idsOverride : [...selectedContractIds];
+        if (!ids.length) return;
+        const ok = await confirmDialog({
+            title: 'Delete draft contracts?',
+            description: `Delete ${ids.length} draft contract(s)? This cannot be undone.`,
+            confirmLabel: 'Delete drafts',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
+
+        const deleteSet = new Set(ids);
         setBulkDeletingContracts(true);
         const toastId = toast.loading(`Deleting ${ids.length} contract(s)...`);
         try {
             const { error, count, skipped } = await contractService.bulkDeleteContracts(ids);
             if (error) throw new Error(String(error));
-            setSavedContracts((prev) => prev.filter((c) => !selectedContractIds.has(c.id)));
-            setSelectedContractIds(new Set());
+            setSavedContracts((prev) => prev.filter((c) => !deleteSet.has(c.id)));
+            setSelectedContractIds((prev) => {
+                const next = new Set(prev);
+                ids.forEach((id) => next.delete(id));
+                return next;
+            });
             if (skipped > 0) {
                 toast.success(`Deleted ${count} draft(s). ${skipped} signed contract(s) were skipped.`, { id: toastId });
             } else {
@@ -750,6 +827,38 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             toast.error(err instanceof Error ? err.message : 'Bulk delete failed', { id: toastId });
         } finally {
             setBulkDeletingContracts(false);
+        }
+    };
+
+    const handleDeleteSingleDraft = async (contractIdToDelete: string) => {
+        const target = savedContracts.find((c) => c.id === contractIdToDelete);
+        if (!target) return;
+        if (target.status !== 'draft') {
+            toast.error('Only draft contracts can be deleted.');
+            return;
+        }
+        const ok = await confirmDialog({
+            title: 'Delete draft contract?',
+            description: `Delete "${target.title || 'Draft contract'}"? This cannot be undone.`,
+            confirmLabel: 'Delete draft',
+            cancelLabel: 'Cancel',
+            variant: 'danger',
+        });
+        if (!ok) return;
+
+        const toastId = toast.loading('Deleting draft...');
+        try {
+            const { error } = await contractService.bulkDeleteContracts([contractIdToDelete]);
+            if (error) throw new Error(String(error));
+            setSavedContracts((prev) => prev.filter((c) => c.id !== contractIdToDelete));
+            setSelectedContractIds((prev) => {
+                const next = new Set(prev);
+                next.delete(contractIdToDelete);
+                return next;
+            });
+            toast.success('Draft deleted', { id: toastId });
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Delete failed', { id: toastId });
         }
     };
 
@@ -803,33 +912,82 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             {/* Saved Contracts List */}
             {activeView === 'list' && (
                 <div className="space-y-2 sm:space-y-3">
-                    {draftContracts.length > 0 && (
-                        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                            <p className="text-xs text-slate-500">
-                                Select draft contracts to remove. Signed contracts are kept for compliance.
-                            </p>
-                            {selectedContractIds.size > 0 && (
-                                <div className="flex items-center gap-1.5 rounded-full border border-white/5 bg-slate-900/60 p-1 shadow-inner">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedContractIds(new Set())}
-                                        className="h-7 px-3 rounded-full text-[11px] font-bold text-slate-500 border border-white/10 transition-colors hover:text-slate-300"
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="flex-1 min-w-0">
+                                <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5">
+                                    Search
+                                </label>
+                                <input
+                                    className={inputCls}
+                                    value={listQuery}
+                                    onChange={(e) => setListQuery(e.target.value)}
+                                    placeholder="Search by title, client, email, status…"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-end sm:justify-end sm:gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5">
+                                        Status
+                                    </label>
+                                    <select
+                                        className={inputCls}
+                                        value={listStatusFilter}
+                                        onChange={(e) => setListStatusFilter(e.target.value as any)}
                                     >
-                                        Clear
-                                    </button>
-                                    <button
-                                        type="button"
-                                        disabled={bulkDeletingContracts}
-                                        onClick={handleBulkDeleteContracts}
-                                        className="h-7 px-3 rounded-full text-[11px] font-bold text-rose-300 border border-rose-500/30 flex items-center gap-1.5 transition-colors hover:text-rose-200 disabled:opacity-50"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                        {bulkDeletingContracts ? 'Deleting…' : `Delete (${selectedContractIds.size})`}
-                                    </button>
+                                        <option value="all">All</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="sent">Sent</option>
+                                        <option value="client_signed">Client signed</option>
+                                        <option value="fully_signed">Fully signed</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
                                 </div>
-                            )}
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1.5">
+                                        Sort
+                                    </label>
+                                    <select
+                                        className={inputCls}
+                                        value={listSort}
+                                        onChange={(e) => setListSort(e.target.value as any)}
+                                    >
+                                        <option value="newest">Newest</option>
+                                        <option value="oldest">Oldest</option>
+                                        <option value="title_asc">Title A–Z</option>
+                                        <option value="title_desc">Title Z–A</option>
+                                        <option value="value_desc">Value high–low</option>
+                                        <option value="value_asc">Value low–high</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-                    )}
+                        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-xs text-slate-500">
+                                Tip: select drafts to delete. Signed contracts remain for compliance.
+                            </p>
+                            <p className="text-xs text-slate-500">
+                                Showing <span className="text-slate-300 font-semibold">{listContracts.length}</span> of{' '}
+                                <span className="text-slate-300 font-semibold">{savedContracts.length}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <BulkActions
+                        items={listContracts.filter((c) => c.status === 'draft')}
+                        selectedIds={selectedContractIds}
+                        onSelectionChange={setSelectedContractIds}
+                        actions={[
+                            {
+                                label: 'Delete drafts',
+                                icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
+                                variant: 'danger',
+                                onClick: async (selected) => {
+                                    await handleBulkDeleteContracts(selected.map((s) => s.id));
+                                },
+                            },
+                        ]}
+                    />
                     {loadingContracts ? (
                         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-teal-400 animate-spin" /></div>
                     ) : savedContracts.length === 0 ? (
@@ -837,7 +995,19 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
                             <p>No saved contracts yet. Generate your first one.</p>
                         </div>
-                    ) : savedContracts.map((c: any) => {
+                    ) : listContracts.length === 0 ? (
+                        <div className="text-center py-14 sm:py-16 text-slate-500 text-xs px-4">
+                            <FileText className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 opacity-30" />
+                            <p>No contracts match your filters.</p>
+                            <button
+                                type="button"
+                                onClick={() => { setListQuery(''); setListStatusFilter('all'); setListSort('newest'); }}
+                                className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold border border-white/5"
+                            >
+                                Reset filters
+                            </button>
+                        </div>
+                    ) : listContracts.map((c: any) => {
                         const statusBadgeStyles = {
                             fully_signed: 'text-teal-400 bg-teal-500/10 border-teal-500/20',
                             client_signed: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
@@ -852,8 +1022,72 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                             return format(date, 'MMM d, yyyy');
                         };
 
+                        const contextItems = [
+                            {
+                                label: 'View',
+                                icon: <Eye className="w-4 h-4" aria-hidden="true" />,
+                                onClick: () => {
+                                    const html = c.content.startsWith('<') ? c.content : contractToHTML(c.content);
+                                    setEditedHtml(html);
+                                    setGeneratedContract(c.content);
+                                    setContractId(c.id);
+                                    setSignatureData(c.admin_signature || '');
+                                    setSignatureName(c.admin_signature ? 'Administrator' : '');
+                                    setIsSigned(!!c.admin_signature);
+                                    setDocumentTheme(resolveDocumentThemeId(c.metadata || {}));
+
+                                    const contact = resolveContractClientContact(c);
+                                    const linked = c.client_id
+                                        ? clients.find((cl) => cl.id === c.client_id)
+                                        : undefined;
+                                    setForm((prev) => ({
+                                        ...prev,
+                                        clientId: c.client_id || prev.clientId,
+                                        clientName: contact.name !== 'the client' ? contact.name : prev.clientName,
+                                        clientEmail: contact.email || prev.clientEmail,
+                                        clientCompany: linked?.name || prev.clientCompany,
+                                        clientPhone: linked?.phone || prev.clientPhone,
+                                        clientAddress: linked?.location || prev.clientAddress,
+                                        projectName: prev.projectName || String(c.title || '').split('—')[0]?.trim() || prev.projectName,
+                                        totalAmount:
+                                            prev.totalAmount ||
+                                            (c.payment_amount != null ? String(c.payment_amount) : prev.totalAmount),
+                                    }));
+
+                                    if (c.document_url) {
+                                        c.document_url = fileUploadService.convertToProxiedUrl(c.document_url);
+                                    }
+
+                                    setStep('preview');
+                                    setIsEditing(false);
+                                    setPreviewTab('document');
+                                    setActiveView('new');
+                                },
+                            },
+                            ...(c.status !== 'fully_signed' && c.status !== 'rejected'
+                                ? [{
+                                    label: c.status === 'draft' ? 'Send to client' : 'Resend for signature',
+                                    icon: <Send className="w-4 h-4" aria-hidden="true" />,
+                                    onClick: () =>
+                                        openSendContractModal({
+                                            resend: c.status !== 'draft',
+                                            contract: c,
+                                        }),
+                                }]
+                                : []),
+                            ...(c.status === 'draft'
+                                ? [{
+                                    label: 'Delete draft',
+                                    icon: <Trash2 className="w-4 h-4" aria-hidden="true" />,
+                                    onClick: () => handleDeleteSingleDraft(c.id),
+                                    destructive: true,
+                                }]
+                                : []),
+                        ];
+
                         return (
-                            <div key={c.id} className={`bg-slate-900/60 border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all ${
+                            <CustomContextMenu key={c.id} items={contextItems}>
+                            <div className={`bg-slate-900/60 border rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-teal-500/30 transition-all ${
                                 selectedContractIds.has(c.id) ? 'border-teal-500/40' : 'border-white/5'
                             }`}>
                                 <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0">
@@ -965,6 +1199,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                 ) : null}
                                 </div>
                             </div>
+                            </CustomContextMenu>
                         );
                     })}
                 </div>
@@ -1663,99 +1898,120 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
             )}
 
             {showSendModal && (
-                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[1100] flex items-start sm:items-center justify-center p-4 overflow-y-auto">
                     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowSendModal(false)} />
-                    <div className="relative w-full max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-                        <h3 className="text-lg font-semibold text-white">
-                            {resendForSignature ? 'Resend contract for signature' : 'Send Contract by Email'}
-                        </h3>
-                        {resendForSignature ? (
-                            <p className="text-sm text-amber-300/90">
-                                The recipient will get an urgent subject line explaining their project cannot proceed until the contract is signed.
-                            </p>
-                        ) : null}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
-                            <input
-                                className={inputCls}
-                                value={sendForm.recipientEmail}
-                                onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
-                                placeholder="client@example.com"
-                            />
-                            <p className="text-[11px] text-slate-500 mt-1.5">
-                                Auto-filled from the client this contract is for
-                                {sendForm.recipientEmail ? ` (${sendForm.recipientEmail})` : ' — add their email on the client record if empty'}.
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
-                            <input
-                                className={inputCls}
-                                value={sendForm.subject}
-                                onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                                {[
-                                    { value: 'auto', label: 'Auto', icon: '🔄', desc: 'Best available' },
-                                    { value: 'zoho', label: 'Zoho Mail', icon: '📧', desc: 'Zoho' },
-                                    { value: 'gmail', label: 'Gmail', icon: '✉️', desc: 'Google' },
-                                    { value: 'brevo', label: 'Brevo', icon: '📨', desc: 'Brevo' },
-                                    { value: 'sendgrid', label: 'SendGrid', icon: '📬', desc: 'SendGrid' },
-                                    { value: 'resend', label: 'Resend', icon: '🚀', desc: 'Resend' },
-                                ].map(opt => (
-                                    <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() => setSendForm(prev => ({ ...prev, provider: opt.value }))}
-                                        className={`flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-2 py-2 text-[11px] font-medium transition-all ${
-                                            sendForm.provider === opt.value
-                                                ? 'bg-teal-600/20 border-teal-500 text-teal-300'
-                                                : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
-                                        }`}
-                                    >
-                                        <span className="text-sm sm:text-base">{opt.icon}</span>
-                                        <span>{opt.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                            {sendForm.provider !== 'auto' && (
-                                <p className="text-xs text-slate-500 mt-1.5">Will attempt <span className="text-teal-400 font-medium">{sendForm.provider}</span> first, then fall back to other configured services if unavailable.</p>
+                    <div className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-h-[calc(100vh-2rem)] flex flex-col">
+                        <div className="px-5 sm:px-6 py-4 border-b border-slate-800">
+                            <h3 className="text-lg font-semibold text-white">
+                                {resendForSignature ? 'Resend contract for signature' : 'Send Contract by Email'}
+                            </h3>
+                            {resendForSignature ? (
+                                <p className="text-sm text-amber-300/90 mt-1.5">
+                                    The recipient will get an urgent subject line explaining their project cannot proceed until the contract is signed.
+                                </p>
+                            ) : (
+                                <p className="text-sm text-slate-400 mt-1.5">
+                                    Send the signing link with a clear subject and message. The entire form is scrollable.
+                                </p>
                             )}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
-                            <textarea
-                                className={`${inputCls} min-h-[90px]`}
-                                value={aiSendInstructions}
-                                onChange={(e) => setAiSendInstructions(e.target.value)}
-                                placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
-                            />
+
+                        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Recipient Email</label>
+                                <input
+                                    className={inputCls}
+                                    value={sendForm.recipientEmail}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, recipientEmail: e.target.value }))}
+                                    placeholder="client@example.com"
+                                />
+                                <p className="text-[11px] text-slate-500 mt-1.5">
+                                    Auto-filled from the client this contract is for
+                                    {sendForm.recipientEmail ? ` (${sendForm.recipientEmail})` : ' — add their email on the client record if empty'}.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Subject</label>
+                                <input
+                                    className={inputCls}
+                                    value={sendForm.subject}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, subject: e.target.value }))}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Send via</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {[
+                                        { value: 'auto', label: 'Auto', icon: '🔄' },
+                                        { value: 'zoho', label: 'Zoho Mail', icon: '📧' },
+                                        { value: 'gmail', label: 'Gmail', icon: '✉️' },
+                                        { value: 'brevo', label: 'Brevo', icon: '📨' },
+                                        { value: 'sendgrid', label: 'SendGrid', icon: '📬' },
+                                        { value: 'resend', label: 'Resend', icon: '🚀' },
+                                    ].map(opt => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setSendForm(prev => ({ ...prev, provider: opt.value }))}
+                                            className={`flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-2 py-2 text-[11px] font-medium transition-all ${
+                                                sendForm.provider === opt.value
+                                                    ? 'bg-teal-600/20 border-teal-500 text-teal-300'
+                                                    : 'bg-slate-800/60 border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'
+                                            }`}
+                                        >
+                                            <span className="text-sm sm:text-base">{opt.icon}</span>
+                                            <span>{opt.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                {sendForm.provider !== 'auto' && (
+                                    <p className="text-xs text-slate-500 mt-1.5">
+                                        Will attempt <span className="text-teal-400 font-medium">{sendForm.provider}</span> first, then fall back to other configured services if unavailable.
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">AI Instructions (What to write)</label>
+                                <textarea
+                                    className={`${inputCls} min-h-[110px]`}
+                                    value={aiSendInstructions}
+                                    onChange={(e) => setAiSendInstructions(e.target.value)}
+                                    placeholder="Example: Write a friendly follow-up, mention delivery timeline and ask them to sign by Friday."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
+                                <textarea
+                                    className={`${inputCls} min-h-[180px]`}
+                                    value={sendForm.message}
+                                    onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
-                            <textarea
-                                className={`${inputCls} min-h-[140px]`}
-                                value={sendForm.message}
-                                onChange={(e) => setSendForm(prev => ({ ...prev, message: e.target.value }))}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between">
+
+                        <div className="px-5 sm:px-6 py-4 border-t border-slate-800 bg-slate-900/80 backdrop-blur flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <button
                                 type="button"
                                 onClick={handleAiDraftSendMessage}
                                 disabled={aiDraftingSend}
-                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm"
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm w-full sm:w-auto"
                             >
                                 {aiDraftingSend ? 'Drafting...' : 'AI Draft Message'}
                             </button>
-                            <div className="flex items-center gap-2">
-                                <button type="button" onClick={() => setShowSendModal(false)} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm">
+                            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSendModal(false)}
+                                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm w-full sm:w-auto"
+                                >
                                     Cancel
                                 </button>
-                                <button type="button" onClick={handleSendContract} disabled={sendingContract} className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold">
+                                <button
+                                    type="button"
+                                    onClick={handleSendContract}
+                                    disabled={sendingContract}
+                                    className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-sm font-semibold w-full sm:w-auto disabled:opacity-50"
+                                >
                                     {sendingContract ? 'Sending...' : resendForSignature ? 'Resend for signature' : 'Send Contract'}
                                 </button>
                             </div>

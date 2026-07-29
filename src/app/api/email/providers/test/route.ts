@@ -59,14 +59,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, provider, message: `Test email sent to ${to}` });
     }
 
-    const { data: integration, error } = await supabase
+    const { data: integrations, error } = await supabase
       .from('integrations')
-      .select('config, enabled')
+      .select('config, enabled, tenant_id, user_id')
       .eq('tenant_id', tenantId)
-      .eq('user_id', tenantCtx.user.id)
       .eq('type', provider)
-      .eq('enabled', true)
-      .maybeSingle();
+      .eq('enabled', true);
+
+    const integration = (integrations || []).find((row: any) => row.user_id === null)
+      ?? (integrations || []).find((row: any) => String(row.user_id || '') === tenantCtx.user.id)
+      ?? (integrations || [])[0]
+      ?? null;
 
     if (error || !integration) {
       return NextResponse.json(

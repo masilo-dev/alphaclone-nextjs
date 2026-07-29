@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { logCrmActivityAdmin } from '@/lib/crm/crmActivityServer';
 import { logDealStageActivity } from '@/lib/crm/crmBridgeServer';
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const payload = parsed.data;
-    const { user, admin } = await requireTenantAccess(payload.tenantId);
+    const { user, admin } = await requireTenantRole(payload.tenantId, ['owner', 'admin', 'tenant_admin', 'member', 'super_admin'], req);
 
     if (payload.type === 'stage_change' && payload.dealId && payload.fromStage && payload.toStage) {
       await logDealStageActivity(admin, {

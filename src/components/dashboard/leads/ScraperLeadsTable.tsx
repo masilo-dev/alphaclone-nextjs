@@ -89,6 +89,11 @@ export default function ScraperLeadsTable({
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+  const [total, setTotal] = useState(0);
+  const [pages, setPages] = useState(1);
+  const [exporting, setExporting] = useState(false);
 
   const loadLeads = useCallback(async () => {
     if (!tenant?.id) return;
@@ -105,6 +110,8 @@ export default function ScraperLeadsTable({
       if (grade) params.set('grade', grade);
       if (hasEmailOnly) params.set('hasEmail', 'true');
       if (locationFilter) params.set('location', locationFilter);
+      params.set('page', String(page));
+      params.set('limit', String(pageSize));
 
       const res = await fetch(`/api/scraper-leads?${params}`);
       const data = await res.json();
@@ -113,6 +120,8 @@ export default function ScraperLeadsTable({
       setLeads(next);
       onLeadsChange?.(next);
       setSelectedIds(new Set());
+      setTotal(data.pagination?.total ?? next.length);
+      setPages(data.pagination?.pages ?? 1);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to load leads');
     } finally {
@@ -127,11 +136,18 @@ export default function ScraperLeadsTable({
     locationFilter,
     showAllWhenNoCampaign,
     onLeadsChange,
+    page,
+    pageSize,
   ]);
 
   useEffect(() => {
     loadLeads();
   }, [loadLeads, refreshToken]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setPage(1);
+  }, [campaignId, minScore, grade, hasEmailOnly, locationFilter, pageSize]);
 
   const allSelected = leads.length > 0 && selectedIds.size === leads.length;
   const selectedLeads = useMemo(
@@ -217,6 +233,54 @@ export default function ScraperLeadsTable({
     }
   };
 
+  const handleExportAll = async () => {
+    if (!tenant?.id || exporting) return;
+    setExporting(true);
+    const toastId = toast.loading('Preparing export...');
+    const headers = ['name', 'email', 'phone', 'company', 'title', 'score', 'grade', 'status', 'source'];
+    const rows: string[] = [];
+    const MAX_EXPORT = 1000;
+    const batchLimit = 200;
+    try {
+      const maxPages = Math.max(1, Math.ceil(Math.max(total, leads.length) / batchLimit));
+      for (let p = 1; p <= Math.min(maxPages, Math.ceil(MAX_EXPORT / batchLimit)); p += 1) {
+        const params = new URLSearchParams({ tenantId: tenant.id, page: String(p), limit: String(batchLimit) });
+        if (campaignId) params.set('campaignId', campaignId);
+        if (minScore) params.set('minScore', minScore);
+        if (grade) params.set('grade', grade);
+        if (hasEmailOnly) params.set('hasEmail', 'true');
+        if (locationFilter) params.set('location', locationFilter);
+        const res = await fetch(`/api/scraper-leads?${params}`);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Export failed');
+        const batch = (data.leads || []) as ScraperLead[];
+        for (const l of batch) {
+          rows.push(
+            [l.name, l.email, l.phone, l.company, l.title, l.score, l.grade, l.status, l.source]
+              .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
+              .join(',')
+          );
+          if (rows.length >= MAX_EXPORT) break;
+        }
+        if (rows.length >= MAX_EXPORT) break;
+        if (batch.length < batchLimit) break;
+      }
+
+      const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prospects-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(rows.length >= MAX_EXPORT ? `Exported first ${MAX_EXPORT} leads` : `Exported ${rows.length} leads`, { id: toastId });
+    } catch (err: any) {
+      toast.error(err?.message || 'Export failed', { id: toastId });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden min-h-0 flex flex-col">
       {selectedIds.size > 0 && (
@@ -269,14 +333,23 @@ export default function ScraperLeadsTable({
           <h3 className="text-white font-semibold flex items-center gap-2">
             <Filter className="w-4 h-4 text-teal-400" />
             Prospects
-            {leads.length > 0 && (
-              <span className="text-xs font-normal text-slate-500">({leads.length})</span>
+            {total > 0 && (
+              <span className="text-xs font-normal text-slate-500">({total})</span>
             )}
             {locationFilter && (
               <span className="text-xs font-normal text-teal-400/90">· {locationFilter}</span>
             )}
           </h3>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleExportAll()}
+              disabled={exporting || total === 0}
+              className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 disabled:opacity-50"
+              aria-label="Export leads"
+            >
+              <Download className="w-4 h-4" />
+            </button>
             <select
               className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-sm text-white"
               value={grade}
@@ -374,12 +447,52 @@ export default function ScraperLeadsTable({
               ))}
             </tbody>
           </table>
-          {leads.length === 0 && !loading && (
+          {total === 0 && !loading && (
             <p className="text-center text-slate-500 py-10 text-sm">
-              No prospects yet. Run a search or click &quot;Find leads for me&quot;.
+              {campaignId ? 'No leads match these filters.' : showAllWhenNoCampaign ? 'No leads yet.' : 'Run a search to see leads here.'}
             </p>
           )}
         </div>
+
+        {total > 0 && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1 text-xs text-slate-500">
+            <p>
+              Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of {total}
+            </p>
+            <div className="flex items-center gap-2">
+              <select
+                value={String(pageSize)}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-sm text-white"
+                aria-label="Leads per page"
+              >
+                <option value="25">25 / page</option>
+                <option value="50">50 / page</option>
+                <option value="100">100 / page</option>
+                <option value="200">200 / page</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-slate-400 font-semibold">
+                Page {page} / {pages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(pages, p + 1))}
+                disabled={page >= pages}
+                className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-sm hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
+import { PlatformTenantError, resolveActiveTenantForUser } from '@/lib/tenant/platformTenant';
 
 function normalizePhoneForStorage(phone: unknown, defaultCountryCode = '1'): string | null {
   if (phone == null) return null;
@@ -39,15 +40,20 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's tenant
-    const { data: tenantUser, error: tenantError } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (tenantError || !tenantUser) {
-      return NextResponse.json({ error: 'No tenant access' }, { status: 403 });
+    let tenantId: string;
+    try {
+      const hintedTenantId =
+        req.headers.get('x-tenant-id')?.trim() ||
+        req.nextUrl.searchParams.get('tenantId')?.trim() ||
+        null;
+      const resolved = await resolveActiveTenantForUser({ userId: user.id, hintedTenantId });
+      tenantId = resolved.tenantId;
+    } catch (err) {
+      if (err instanceof PlatformTenantError) {
+        const status = err.code === 'TENANT_REQUIRED' ? 400 : err.code === 'NOT_A_MEMBER' ? 403 : 403;
+        return NextResponse.json({ error: err.message }, { status });
+      }
+      throw err;
     }
 
     // Get lead with tenant isolation
@@ -59,7 +65,7 @@ export async function GET(
         deals(id, name, stage, value)
       `)
       .eq('id', id)
-      .eq('tenant_id', tenantUser.tenant_id)
+      .eq('tenant_id', tenantId)
       .single();
 
     if (leadError) {
@@ -112,15 +118,25 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's tenant
-    const { data: tenantUser, error: tenantError } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (tenantError || !tenantUser) {
-      return NextResponse.json({ error: 'No tenant access' }, { status: 403 });
+    let tenantId: string;
+    let role: string;
+    try {
+      const hintedTenantId =
+        req.headers.get('x-tenant-id')?.trim() ||
+        req.nextUrl.searchParams.get('tenantId')?.trim() ||
+        null;
+      const resolved = await resolveActiveTenantForUser({ userId: user.id, hintedTenantId });
+      tenantId = resolved.tenantId;
+      role = String(resolved.membership.role || '').toLowerCase();
+    } catch (err) {
+      if (err instanceof PlatformTenantError) {
+        const status = err.code === 'TENANT_REQUIRED' ? 400 : err.code === 'NOT_A_MEMBER' ? 403 : 403;
+        return NextResponse.json({ error: err.message }, { status });
+      }
+      throw err;
+    }
+    if (role === 'client' || role === 'visitor') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Build update payload
@@ -142,7 +158,7 @@ export async function PATCH(
         .from('leads')
         .select('stage')
         .eq('id', id)
-        .eq('tenant_id', tenantUser.tenant_id)
+        .eq('tenant_id', tenantId)
         .single();
 
       if (currentLead) {
@@ -164,7 +180,7 @@ export async function PATCH(
       .from('leads')
       .update(updateData)
       .eq('id', id)
-      .eq('tenant_id', tenantUser.tenant_id)
+      .eq('tenant_id', tenantId)
       .select()
       .single();
 
@@ -219,15 +235,25 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's tenant
-    const { data: tenantUser, error: tenantError } = await supabase
-      .from('tenant_users')
-      .select('tenant_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (tenantError || !tenantUser) {
-      return NextResponse.json({ error: 'No tenant access' }, { status: 403 });
+    let tenantId: string;
+    let role: string;
+    try {
+      const hintedTenantId =
+        req.headers.get('x-tenant-id')?.trim() ||
+        req.nextUrl.searchParams.get('tenantId')?.trim() ||
+        null;
+      const resolved = await resolveActiveTenantForUser({ userId: user.id, hintedTenantId });
+      tenantId = resolved.tenantId;
+      role = String(resolved.membership.role || '').toLowerCase();
+    } catch (err) {
+      if (err instanceof PlatformTenantError) {
+        const status = err.code === 'TENANT_REQUIRED' ? 400 : err.code === 'NOT_A_MEMBER' ? 403 : 403;
+        return NextResponse.json({ error: err.message }, { status });
+      }
+      throw err;
+    }
+    if (!['owner', 'admin', 'tenant_admin', 'super_admin'].includes(role)) {
+      return NextResponse.json({ error: 'Insufficient workspace permissions' }, { status: 403 });
     }
 
     // Delete lead (tenant isolated)
@@ -235,7 +261,7 @@ export async function DELETE(
       .from('leads')
       .delete()
       .eq('id', id)
-      .eq('tenant_id', tenantUser.tenant_id);
+      .eq('tenant_id', tenantId);
 
     if (deleteError) {
       console.error('[API] Lead delete error:', deleteError);
