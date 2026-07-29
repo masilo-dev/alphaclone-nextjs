@@ -400,46 +400,92 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
       {messages.length > 0 && (
         <ModuleStatCards stats={inboxStats} />
       )}
-    <div className="flex min-h-[480px] border border-slate-800 rounded-3xl ac-scroll-full bg-slate-950/60 backdrop-blur-md" role="region" aria-label="All channels inbox">
-      {/* 1. Left Message List Section */}
-      <div className="w-1/3 border-r border-slate-800 flex flex-col bg-slate-900/20">
-        {/* Filters Header */}
-        <div className="p-4 border-b border-slate-800 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <Inbox className="w-5 h-5 text-teal-400" />
-              Unified Inbox
-            </h3>
-            <span className="text-xs bg-teal-500/15 text-teal-400 px-2.5 py-0.5 rounded-full font-semibold">
-              {messages.filter(m => m.needs_response).length} Pending
+    <div className="flex h-[680px] max-h-[calc(100vh-12rem)] border border-slate-800 rounded-3xl overflow-hidden bg-slate-950/60 backdrop-blur-md" role="region" aria-label="All channels inbox">
+      {/* 1. Channel & Folder Navigation Sidebar */}
+      <div className="w-48 lg:w-52 border-r border-slate-800 flex flex-col bg-slate-900/40 p-3 shrink-0 select-none overflow-y-auto">
+        <div className="flex items-center justify-between mb-3 px-2 pt-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Inboxes</span>
+          <span className="text-[10px] bg-teal-500/15 text-teal-400 px-2 py-0.5 rounded-full font-semibold">
+            {messages.filter(m => m.needs_response).length} Pending
+          </span>
+        </div>
+
+        <nav className="space-y-1 text-xs">
+          <button
+            onClick={() => { setFilterSource('all'); setFilterPriority('all'); }}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
+              filterSource === 'all' && filterPriority === 'all'
+                ? 'bg-teal-500/15 text-teal-300 font-semibold border border-teal-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Inbox className="w-4 h-4 text-teal-400" />
+              All Inboxes
             </span>
-          </div>
+            <span className="text-[10px] text-slate-500 font-mono">{messages.length}</span>
+          </button>
 
-          <div className="flex gap-2">
-            <select
-              value={filterSource}
-              onChange={e => setFilterSource(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-teal-500"
-            >
-              <option value="all">All Channels</option>
-              <option value="zoho">Zoho Mail</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="facebook">Facebook</option>
-              <option value="instagram">Instagram</option>
-            </select>
+          <div className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-wider font-semibold text-slate-500">Channels</div>
 
-            <select
-              value={filterPriority}
-              onChange={e => setFilterPriority(e.target.value)}
-              className="flex-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-teal-500"
-            >
-              <option value="all">All Priorities</option>
-              <option value="urgent">Urgent</option>
-              <option value="high">High</option>
-              <option value="normal">Normal</option>
-              <option value="low">Low</option>
-            </select>
-          </div>
+          {[
+            { id: 'zoho', name: 'Zoho Mail', Icon: Mail, color: 'text-emerald-400' },
+            { id: 'whatsapp', name: 'WhatsApp', Icon: MessageCircle, color: 'text-green-400' },
+            { id: 'facebook', name: 'Facebook', Icon: MessageSquare, color: 'text-blue-400' },
+            { id: 'instagram', name: 'Instagram', Icon: MessageCircle, color: 'text-pink-400' },
+          ].map(ch => {
+            const count = messages.filter(m => m.source === ch.id).length;
+            const Icon = ch.Icon;
+            return (
+              <button
+                key={ch.id}
+                onClick={() => setFilterSource(ch.id)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
+                  filterSource === ch.id
+                    ? 'bg-teal-500/15 text-teal-300 font-semibold border border-teal-500/20'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <Icon className={`w-3.5 h-3.5 ${ch.color}`} />
+                  {ch.name}
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">{count}</span>
+              </button>
+            );
+          })}
+
+          <div className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-wider font-semibold text-slate-500">Filters</div>
+
+          <button
+            onClick={() => setFilterPriority(filterPriority === 'urgent' ? 'all' : 'urgent')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
+              filterPriority === 'urgent'
+                ? 'bg-rose-500/15 text-rose-300 font-semibold border border-rose-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+              High Priority
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {messages.filter(m => m.priority === 'urgent' || m.priority === 'high').length}
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      {/* 2. Middle Message List Section */}
+      <div className="w-72 lg:w-80 border-r border-slate-800 flex flex-col bg-slate-900/20 shrink-0">
+        {/* Header & Filter Controls */}
+        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+          <span className="text-xs font-semibold text-slate-300 capitalize">
+            {filterSource === 'all' ? 'All Conversations' : `${filterSource} Messages`}
+          </span>
+          <span className="text-[10px] text-slate-500 font-mono">
+            {filteredMessages.length} items
+          </span>
         </div>
 
         {/* Scrollable Message List */}
@@ -515,8 +561,8 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
         </div>
       </div>
 
-      {/* 2. Right Detail & Intelligence Panel */}
-      <div className="flex-1 flex flex-col bg-slate-900/10">
+      {/* 3. Right Detail & Intelligence Panel */}
+      <div className="flex-1 flex flex-col bg-slate-900/10 min-w-0 overflow-y-auto">
         {selectedMessage ? (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Thread Header */}

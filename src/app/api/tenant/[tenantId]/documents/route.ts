@@ -46,19 +46,25 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     }
 
     let query = admin.from('documents')
-      .select('id,title,name,description,document_number,document_type,status,owner_user_id,version,mime_type,size_bytes,storage_path,approval_status,signature_status,expiry_date,archived_at,deleted_at,metadata,created_at,updated_at', { count: 'exact' })
+      .select(
+        'id,title,name,description,document_type,status,owner_user_id,mime_type,size_bytes,storage_path,expiry_date,archived_at,deleted_at,metadata,created_at,updated_at',
+        { count: 'exact' },
+      )
       .eq('tenant_id', tenantId)
       .is('deleted_at', null);
     if (ids) query = query.in('id', ids);
     if (q) {
       const escaped = q.replace(/[%_,()]/g, ' ').trim();
-      query = query.or(`name.ilike.%${escaped}%,title.ilike.%${escaped}%,description.ilike.%${escaped}%,document_number.ilike.%${escaped}%`);
+      query = query.or(`name.ilike.%${escaped}%,title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
     }
     if (status) query = query.eq('status', status);
     if (type) query = query.eq('document_type', type);
     const from = (page - 1) * limit;
     const { data, error, count } = await query.order('updated_at', { ascending: false }).range(from, from + limit - 1);
-    if (error) throw error;
+    if (error) {
+      console.error('[documents] GET query failed', { tenantId, error: error.message, code: error.code, details: error.details });
+      throw error;
+    }
 
     return NextResponse.json({ documents: data || [], total: count || 0, page, limit });
   } catch (error) {

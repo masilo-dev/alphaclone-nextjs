@@ -109,6 +109,37 @@ export async function POST(req: NextRequest) {
     }
     await logInvoiceEvent({ invoiceId: invoice.id, tenantId: value.tenantId, eventType: 'created', eventData: { status: invoice.status, total: invoice.total }, performedBy: user.id }).catch((error) => console.error('[invoices] create audit failed', error));
     quotaReservation = null;
+
+    // Auto-save invoice as a document record so it appears in the Documents hub
+    void (async () => {
+      try {
+        const { data: doc, error: docErr } = await admin.from('documents').insert({
+          tenant_id: value.tenantId,
+          title: `Invoice ${invoice.invoice_number || invoice.id}`,
+          name: `Invoice ${invoice.invoice_number || invoice.id}`,
+          document_type: 'invoice',
+          status: invoice.status === 'sent' ? 'active' : 'draft',
+          owner_user_id: user.id,
+          uploaded_by: user.id,
+          metadata: {
+            invoice_id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            total: invoice.total,
+            source: 'invoice_auto_save',
+          },
+        }).select('id').single();
+        if (docErr) { console.error('[invoices] document auto-save failed', docErr.message); return; }
+        const rels: Array<Record<string, unknown>> = [
+          { tenant_id: value.tenantId, document_id: doc.id, entity_type: 'invoice', entity_id: invoice.id, relationship_type: 'belongs_to', is_primary: true, created_by: user.id },
+        ];
+        if (value.clientId) rels.push({ tenant_id: value.tenantId, document_id: doc.id, entity_type: 'customer', entity_id: value.clientId, relationship_type: 'billing_document', created_by: user.id });
+        if (value.projectId) rels.push({ tenant_id: value.tenantId, document_id: doc.id, entity_type: 'project', entity_id: value.projectId, relationship_type: 'project_file', created_by: user.id });
+        await admin.from('document_relationships').insert(rels).catch((e: Error) => console.error('[invoices] document_relationships insert failed', e.message));
+      } catch (e: unknown) {
+        console.error('[invoices] document auto-save unexpected error', e instanceof Error ? e.message : e);
+      }
+    })();
+
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
     if (quotaReservation) await releaseDailyResourceQuota(quotaReservation.tenantId, quotaReservation.userId, 'invoices');

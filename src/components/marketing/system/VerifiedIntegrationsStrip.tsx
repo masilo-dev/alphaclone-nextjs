@@ -4,7 +4,6 @@ import { VERIFIED_PARTNERS, type VerifiedPartner } from '@/config/verifiedPartne
 const FEATURED_PARTNER_IDS = [
   'facebook',
   'instagram',
-  'whatsapp',
   'linkedin',
   'stripe',
   'google',
