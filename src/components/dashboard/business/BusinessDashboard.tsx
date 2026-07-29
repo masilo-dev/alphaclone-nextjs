@@ -510,7 +510,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/billing/manage':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
-                        <BonnieModulePageShell>
+                        <BonnieModulePageShell showBonnieDock={false}>
                             <EnhancedBillingPage user={user} />
                         </BonnieModulePageShell>
                     </React.Suspense>
@@ -773,7 +773,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/social-command':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
-                        <BonnieModulePageShell>
+                        <BonnieModulePageShell showBonnieDock={false}>
                             <SocialCommandCenter />
                         </BonnieModulePageShell>
                     </React.Suspense>

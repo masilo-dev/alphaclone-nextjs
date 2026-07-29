@@ -22,6 +22,7 @@ import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 import { TabSkeleton } from '@/components/ui/TabSkeleton';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface ExpenseCategory {
     id: string;
@@ -94,6 +95,7 @@ const EMPTY_FORM = {
 
 export default function ExpenseTrackerTab() {
     const { currentTenant: tenant } = useTenant();
+    const { confirm: confirmDialog } = useConfirmDialog();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
     const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -303,12 +305,28 @@ export default function ExpenseTrackerTab() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Delete this expense?')) return;
+        const ok = await confirmDialog({
+            title: 'Delete expense?',
+            description: 'This permanently deletes the expense record. This cannot be undone.',
+            confirmLabel: 'Delete expense',
+            variant: 'danger',
+        });
+        if (!ok) return;
         if (!tenant?.id) return;
-        const response = await fetch(`/api/finance/expenses?tenantId=${encodeURIComponent(tenant.id)}&expenseId=${encodeURIComponent(id)}`, { method: 'DELETE' });
-        if (response.ok) {
-            toast.success('Deleted');
+        const toastId = toast.loading('Deleting expense...');
+        try {
+            const response = await fetch(
+                `/api/finance/expenses?tenantId=${encodeURIComponent(tenant.id)}&expenseId=${encodeURIComponent(id)}`,
+                { method: 'DELETE' }
+            );
+            if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                throw new Error(payload.error || 'Delete failed');
+            }
+            toast.success('Deleted', { id: toastId });
             setExpenses(prev => prev.filter(e => e.id !== id));
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Delete failed', { id: toastId });
         }
     };
 

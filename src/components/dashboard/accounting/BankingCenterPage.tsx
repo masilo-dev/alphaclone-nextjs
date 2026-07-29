@@ -13,7 +13,7 @@ import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
 import { DetailDrawer } from '@/components/ui/DetailDrawer';
 import { EnterpriseDataTable, type EnterpriseColumn } from '@/components/ui/EnterpriseDataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { Input } from '@/components/ui/UIComponents';
+import { Button, Input } from '@/components/ui/UIComponents';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import toast from 'react-hot-toast';
 
@@ -149,13 +149,14 @@ export default function BankingCenterPage() {
       id: 'actions',
       header: '',
       accessor: (a) => (
-        <button
+        <Button
           type="button"
+          size="sm"
+          variant="primary"
           onClick={(e) => { e.stopPropagation(); void startReconciliation(a.id); }}
-          className="px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-bold hover:bg-teal-500"
         >
           Reconcile
-        </button>
+        </Button>
       ),
     },
   ], []);
@@ -200,22 +201,25 @@ export default function BankingCenterPage() {
         )}
         toolbar={(
           <div className="flex items-center gap-2 px-1 py-2">
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant="primary"
+              icon={<Plus className="w-4 h-4" />}
               onClick={() => setShowAddDrawer(true)}
-              className="h-9 px-3 rounded-xl bg-teal-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-teal-500"
             >
-              <Plus className="w-4 h-4" />
               Add Bank Account
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="sm"
+              variant="outline"
+              icon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
               onClick={load}
-              className="p-2 rounded-xl border border-white/5 text-slate-400 hover:text-teal-400"
-              title="Refresh"
+              disabled={loading}
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+              Refresh
+            </Button>
           </div>
         )}
         stats={!loading ? (
@@ -312,20 +316,22 @@ export default function BankingCenterPage() {
             placeholder="0.00"
           />
           <div className="flex gap-2 pt-2">
-            <button
+            <Button
               type="button"
               onClick={() => setShowAddDrawer(false)}
-              className="flex-1 min-h-11 rounded-xl border border-white/10 text-slate-300 text-sm font-medium"
+              variant="outline"
+              className="flex-1"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={saving}
-              className="flex-1 min-h-11 rounded-xl bg-teal-600 text-white text-sm font-bold disabled:opacity-50"
+              variant="primary"
+              isLoading={saving}
+              className="flex-1"
             >
-              {saving ? 'Saving…' : 'Add account'}
-            </button>
+              Add account
+            </Button>
           </div>
         </form>
       </DetailDrawer>

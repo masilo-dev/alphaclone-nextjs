@@ -29,6 +29,7 @@ import {
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 import { BacklitSurface } from '@/components/ui/os/BacklitSurface';
+import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -74,14 +75,21 @@ export function OperatingSystemHome() {
   const { brief } = useBonnieMorningBrief(currentTenant?.id);
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!currentTenant?.id || !user?.id) return;
+    if (!currentTenant?.id || !user?.id) {
+      setLoading(false);
+      return;
+    }
     let active = true;
     setLoading(true);
+    setLoadError(null);
     void getDashboardStats(currentTenant.id, user.id)
       .then((r) => {
-        if (active) setStats((r.stats as Record<string, unknown>) ?? null);
+        if (!active) return;
+        setStats((r.stats as Record<string, unknown>) ?? null);
+        setLoadError(r.error ?? null);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -91,6 +99,16 @@ export function OperatingSystemHome() {
     };
   }, [currentTenant?.id, user?.id, getDashboardStats]);
 
+  const retry = async () => {
+    if (!currentTenant?.id || !user?.id) return;
+    setLoading(true);
+    setLoadError(null);
+    const r = await getDashboardStats(currentTenant.id, user.id, true);
+    setStats((r.stats as Record<string, unknown>) ?? null);
+    setLoadError(r.error ?? null);
+    setLoading(false);
+  };
+
   const firstName =
     user?.name?.split(' ')[0] ||
     user?.email?.split('@')[0] ||
@@ -99,19 +117,79 @@ export function OperatingSystemHome() {
   const greeting = greetingForHour(new Date().getHours());
   const todayLabel = format(new Date(), 'EEEE, d MMMM yyyy');
 
+  if (!currentTenant?.id) {
+    return (
+      <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="os-home">
+        <StatePanel
+          kind="empty"
+          title="Select a workspace to load your dashboard"
+          description="Choose a workspace from the top bar so AlphaClone can load your KPIs and activity."
+          actions={[
+            { label: 'Open workspace settings', href: '/dashboard/business/settings', primary: true },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  if (!loading && loadError) {
+    const kind =
+      /forbidden/i.test(loadError) || /unauthorized/i.test(loadError)
+        ? 'permission'
+        : /failed to fetch/i.test(loadError) || /network/i.test(loadError)
+          ? 'network'
+          : 'error';
+    return (
+      <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="os-home">
+        <StatePanel
+          kind={kind}
+          title="Workspace dashboard data is not loading"
+          description={loadError}
+          actions={[
+            { label: 'Retry', onClick: () => void retry(), primary: true },
+            { label: 'Open CRM', href: '/dashboard/crm' },
+          ]}
+        />
+      </div>
+    );
+  }
+
   const revenue = Number(stats?.revenue ?? stats?.totalRevenue ?? 0);
   const revenuePrev = Number(stats?.revenuePrev ?? stats?.previousRevenue ?? 0);
-  const leads = Number(stats?.newLeads ?? stats?.leads ?? stats?.leadsCount ?? 0);
+  const leads = Number(
+    stats?.newLeads ??
+      stats?.leads ??
+      stats?.leadsCount ??
+      stats?.newLeads24h ??
+      stats?.totalLeads ??
+      0
+  );
   const leadsPrev = Number(stats?.leadsPrev ?? stats?.previousLeads ?? 0);
-  const dealsWon = Number(stats?.dealsWon ?? stats?.closedWon ?? stats?.dealsClosed ?? 0);
+  const dealsWon = Number(
+    stats?.dealsWon ??
+      stats?.closedWon ??
+      stats?.dealsClosed ??
+      stats?.dealsWonCount ??
+      stats?.wonDeals ??
+      0
+  );
   const dealsWonPrev = Number(stats?.dealsWonPrev ?? stats?.previousDealsWon ?? 0);
   const outstanding = Number(
-    stats?.outstanding ?? stats?.outstandingInvoices ?? stats?.outstandingAmount ?? 0
+    stats?.outstanding ??
+      stats?.outstandingInvoices ??
+      stats?.outstandingAmount ??
+      stats?.pendingRevenue ??
+      stats?.pendingAmount ??
+      0
   );
   const outstandingPrev = Number(stats?.outstandingPrev ?? 0);
-  const tasksCompleted = Number(stats?.tasksCompleted ?? 0);
+  const tasksCompleted = Number(stats?.tasksCompleted ?? stats?.completedTasks ?? 0);
   const tasksCompletedPrev = Number(stats?.tasksCompletedPrev ?? 0);
-  const openTasks = Number(stats?.openTasks ?? stats?.open_tasks ?? 0);
+  const openTasks = Number(
+    stats?.openTasks ??
+      stats?.open_tasks ??
+      Math.max(0, Number(stats?.totalTasks ?? 0) - Number(stats?.completedTasks ?? stats?.tasksCompleted ?? 0))
+  );
   const overdueInvoices = Number(stats?.overdueInvoices ?? stats?.overdue_invoices ?? 0);
 
   const attentionItems: AttentionItem[] = useMemo(() => {
@@ -195,7 +273,7 @@ export function OperatingSystemHome() {
         ...m,
         summary:
           m.id === 'crm'
-            ? `${Number(stats?.activeCustomers ?? stats?.contacts ?? 0)} contacts`
+            ? `${Number(stats?.activeCustomers ?? stats?.contacts ?? stats?.clientCount ?? 0)} contacts`
             : m.id === 'leads'
               ? `${leads} new`
               : m.id === 'pipeline'

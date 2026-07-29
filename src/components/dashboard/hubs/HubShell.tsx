@@ -135,7 +135,7 @@ export default function HubShell({
       </div>
 
       <div className="flex-1 min-h-0 ac-scroll-full px-4 py-4 md:py-5 ac-safe-bottom">
-        <BonnieModulePageShell>{children}</BonnieModulePageShell>
+        <BonnieModulePageShell showBonnieDock={false}>{children}</BonnieModulePageShell>
       </div>
     </div>
   );

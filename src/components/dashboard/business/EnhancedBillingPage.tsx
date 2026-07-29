@@ -15,7 +15,7 @@ import { businessClientService } from '../../../services/businessClientService';
 import { useAuth } from '../../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import EnhancedInvoiceModal from '../EnhancedInvoiceModal';
-import { Button, Card } from '../../ui/UIComponents';
+import { Button, Card, Input, Modal } from '../../ui/UIComponents';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { CommunicationModal } from '../crm/CommunicationModal';
@@ -23,6 +23,7 @@ import type { EmailRecipient } from '../crm/emailRecipient';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -33,6 +34,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const searchParams = useSearchParams();
     const { currentTenant } = useTenant();
     const { isMobile, isTablet, isDesktop } = useBreakpoint();
+    const { confirm: confirmDialog } = useConfirmDialog();
     
     const [invoices, setInvoices] = useState<BusinessInvoice[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,6 +59,11 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
     const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
     const [bulkDeletingInvoices, setBulkDeletingInvoices] = useState(false);
+    const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
+    const [recordPaymentInvoice, setRecordPaymentInvoice] = useState<BusinessInvoice | null>(null);
+    const [recordPaymentAmount, setRecordPaymentAmount] = useState('');
+    const [recordPaymentError, setRecordPaymentError] = useState<string | null>(null);
+    const [recordPaymentSubmitting, setRecordPaymentSubmitting] = useState(false);
 
     const toggleInvoiceSelection = (inv: BusinessInvoice) => {
         setSelectedInvoiceIds((prev) => {
@@ -86,7 +93,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const handleBulkDeleteInvoices = async () => {
         const ids = [...selectedInvoiceIds];
         if (!ids.length) return;
-        if (!confirm(`Delete ${ids.length} draft invoice(s)? This cannot be undone.`)) return;
+        const ok = await confirmDialog({
+            title: 'Delete draft invoices?',
+            description: `Delete ${ids.length} selected invoice(s). Only draft invoices can be deleted; non-drafts will be skipped. This cannot be undone.`,
+            confirmLabel: 'Delete drafts',
+            variant: 'danger',
+        });
+        if (!ok) return;
 
         setBulkDeletingInvoices(true);
         const toastId = toast.loading(`Deleting ${ids.length} invoice(s)...`);
@@ -106,6 +119,22 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         } finally {
             setBulkDeletingInvoices(false);
         }
+    };
+
+    const openRecordPayment = (invoice: BusinessInvoice) => {
+        setRecordPaymentInvoice(invoice);
+        setRecordPaymentAmount('');
+        setRecordPaymentError(null);
+        setRecordPaymentSubmitting(false);
+        setRecordPaymentOpen(true);
+    };
+
+    const closeRecordPayment = () => {
+        setRecordPaymentOpen(false);
+        setRecordPaymentInvoice(null);
+        setRecordPaymentAmount('');
+        setRecordPaymentError(null);
+        setRecordPaymentSubmitting(false);
     };
 
     useEffect(() => {
@@ -572,7 +601,18 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     {currentTenant?.id && (
                                         <button
                                             onClick={async () => {
-                                                const enabled = confirm('Enable automatic follow-ups for this invoice?\n\nOK = enable\nCancel = disable');
+                                                if (!selectedInvoiceForOptions) return;
+                                                const currentEnabled = selectedInvoiceForOptions.autoFollowupEnabled !== false;
+                                                const nextEnabled = !currentEnabled;
+                                                const ok = await confirmDialog({
+                                                    title: nextEnabled ? 'Enable auto follow-ups?' : 'Disable auto follow-ups?',
+                                                    description: nextEnabled
+                                                        ? 'AlphaClone will send reminder emails until the invoice is paid.'
+                                                        : 'Stops future reminder emails for this invoice. Manual follow-ups will still be available.',
+                                                    confirmLabel: nextEnabled ? 'Enable' : 'Disable',
+                                                    variant: nextEnabled ? 'primary' : 'danger',
+                                                });
+                                                if (!ok) return;
                                                 const toastId = toast.loading('Updating follow-up settings...');
                                                 try {
                                                     const res = await fetch(`/api/invoices/${selectedInvoiceForOptions.id}/followup-settings`, {
@@ -580,13 +620,13 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                         headers: { 'Content-Type': 'application/json' },
                                                         body: JSON.stringify({
                                                             tenantId: currentTenant.id,
-                                                            autoFollowupEnabled: enabled,
+                                                            autoFollowupEnabled: nextEnabled,
                                                         }),
                                                     });
                                                     const data = await res.json().catch(() => ({}));
                                                     if (!res.ok) throw new Error(data.error || 'Failed to update follow-ups');
                                                     toast.success(
-                                                        enabled ? 'Auto follow-ups enabled for this invoice.' : 'Auto follow-ups disabled for this invoice.',
+                                                        nextEnabled ? 'Auto follow-ups enabled for this invoice.' : 'Auto follow-ups disabled for this invoice.',
                                                         { id: toastId }
                                                     );
                                                     setIsOptionsOpen(false);
@@ -599,7 +639,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                         >
                                             <span className="flex items-center gap-2.5">
                                                 <CheckCircle className="w-4 h-4 text-teal-400" />
-                                                <span>Toggle Auto Follow-ups</span>
+                                                <span>{selectedInvoiceForOptions.autoFollowupEnabled !== false ? 'Disable Auto Follow-ups' : 'Enable Auto Follow-ups'}</span>
                                             </span>
                                             <span className="text-[10px] text-slate-500 font-mono">REMINDERS</span>
                                         </button>
@@ -683,26 +723,9 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
                                             <button
                                                 onClick={async () => {
-                                                    const raw = prompt('Record a payment amount (deposit/partial). Example: 250');
-                                                    if (!raw) return;
-                                                    const amount = Number(String(raw).replace(/[^0-9.]/g, ''));
-                                                    const toastId = toast.loading('Recording payment...');
-                                                    const { error, status, amountPaid } = await businessInvoiceService.recordPayment(
-                                                        selectedInvoiceForOptions.id,
-                                                        amount
-                                                    );
-                                                    if (error) {
-                                                        toast.error(error, { id: toastId });
-                                                        return;
-                                                    }
-                                                    toast.success(
-                                                        status === 'paid'
-                                                            ? 'Payment recorded — invoice is now paid.'
-                                                            : `Deposit recorded — total paid now ${Number(amountPaid || 0).toFixed(2)}.`,
-                                                        { id: toastId }
-                                                    );
+                                                    if (!selectedInvoiceForOptions) return;
                                                     setIsOptionsOpen(false);
-                                                    void loadInvoices();
+                                                    openRecordPayment(selectedInvoiceForOptions);
                                                 }}
                                                 className="w-full flex items-center justify-between p-3.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-2xl transition-all text-left text-sm text-blue-200"
                                             >
@@ -811,6 +834,65 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     onSent={() => setEmailCompose(null)}
                 />
             )}
+
+            <Modal
+                isOpen={recordPaymentOpen}
+                onClose={closeRecordPayment}
+                title={recordPaymentInvoice ? `Record payment — ${recordPaymentInvoice.invoiceNumber}` : 'Record payment'}
+                maxWidth="max-w-lg"
+            >
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!recordPaymentInvoice) return;
+                        const amount = Number(String(recordPaymentAmount || '').replace(/[^0-9.]/g, ''));
+                        if (!Number.isFinite(amount) || amount <= 0) {
+                            setRecordPaymentError('Enter a valid amount greater than zero.');
+                            return;
+                        }
+
+                        setRecordPaymentSubmitting(true);
+                        setRecordPaymentError(null);
+                        const toastId = toast.loading('Recording payment...');
+                        try {
+                            const { error, status, amountPaid } = await businessInvoiceService.recordPayment(recordPaymentInvoice.id, amount);
+                            if (error) throw new Error(error);
+                            toast.success(
+                                status === 'paid'
+                                    ? 'Payment recorded — invoice is now paid.'
+                                    : `Deposit recorded — total paid now ${Number(amountPaid || 0).toFixed(2)}.`,
+                                { id: toastId }
+                            );
+                            closeRecordPayment();
+                            void loadInvoices();
+                        } catch (err) {
+                            toast.error(err instanceof Error ? err.message : 'Failed to record payment', { id: toastId });
+                            setRecordPaymentSubmitting(false);
+                        }
+                    }}
+                    className="flex flex-col gap-4"
+                >
+                    <Input
+                        label="Payment amount"
+                        value={recordPaymentAmount}
+                        onChange={(e) => {
+                            setRecordPaymentAmount(e.target.value);
+                            if (recordPaymentError) setRecordPaymentError(null);
+                        }}
+                        placeholder="250.00"
+                        inputMode="decimal"
+                        error={recordPaymentError || undefined}
+                    />
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+                        <Button type="button" variant="outline" onClick={closeRecordPayment}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" variant="primary" isLoading={recordPaymentSubmitting} disabled={!recordPaymentInvoice}>
+                            Record payment
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
                 </>
             )}
         </div>

@@ -413,7 +413,7 @@ export default function DeepDeskView() {
   const slaLive = selectedTicket ? formatSla(selectedTicket) : null;
 
   return (
-    <BonnieModulePageShell>
+    <BonnieModulePageShell showBonnieDock={false}>
       <Flex
         direction="column"
         minH={0}

@@ -25,6 +25,7 @@ interface BusinessHomeProps {
 const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   const { currentTenant, getDashboardStats } = useTenant();
   const [stats, setStats] = useState<Record<string, unknown> | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(() => isSetupChecklistDismissed(user.id));
   const [showMoreContext, setShowMoreContext] = useState(false);
 
@@ -32,7 +33,9 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
     if (!currentTenant?.id || !user.id) return;
     let active = true;
     void getDashboardStats(currentTenant.id, user.id).then((result) => {
-      if (active) setStats((result.stats as Record<string, unknown>) ?? null);
+      if (!active) return;
+      setStats((result.stats as Record<string, unknown>) ?? null);
+      setStatsError(result.error ?? null);
     });
     return () => {
       active = false;
@@ -40,7 +43,7 @@ const BusinessHome: React.FC<BusinessHomeProps> = ({ user }) => {
   }, [currentTenant?.id, user.id, getDashboardStats]);
 
   const showSetup =
-    !dismissed && (isNewWorkspaceStats(stats) || stats === null);
+    !dismissed && !statsError && (isNewWorkspaceStats(stats) || stats === null);
 
   return (
     <div className="space-y-5 ac-scroll-full pb-24 ac-safe-bottom" data-tour="business-home">

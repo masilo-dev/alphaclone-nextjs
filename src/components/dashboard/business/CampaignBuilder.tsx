@@ -983,7 +983,7 @@ Voice & rules:
 
     if (loading) {
         return (
-            <BonnieModulePageShell>
+            <BonnieModulePageShell showBonnieDock={false}>
                 <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
                     <div className="flex flex-1 items-center justify-center p-8 text-slate-400 text-center">
                         <div>
@@ -997,7 +997,7 @@ Voice & rules:
     }
 
     return (
-        <BonnieModulePageShell>
+        <BonnieModulePageShell showBonnieDock={false}>
         <div className="flex flex-col bg-slate-950 rounded-2xl md:rounded-3xl border border-white/5 overflow-hidden backdrop-blur-sm relative min-h-[calc(100dvh-140px)]">
 
             {recoveryBanner.length > 0 && (
