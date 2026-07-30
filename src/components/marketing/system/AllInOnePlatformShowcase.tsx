@@ -85,10 +85,9 @@ const CUSTOMER_SCENARIOS = [
 export default function AllInOnePlatformShowcase() {
   const [activeStep, setActiveStep] = useState<number>(0);
   const [activeScenario, setActiveScenario] = useState<string>('agency');
-  const [isZoomed, setIsZoomed] = useState<boolean>(false);
 
   return (
-    <div className="w-full my-12 text-slate-100">
+    <div className="w-full my-12 text-slate-100 select-none">
       {/* Header Banner */}
       <div className="text-center max-w-4xl mx-auto px-4 mb-8">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs sm:text-sm font-medium mb-4">
@@ -109,9 +108,9 @@ export default function AllInOnePlatformShowcase() {
         </p>
       </div>
 
-      {/* Main Image Showcase Card */}
+      {/* Main Image Showcase Card with Protected Display */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="relative group rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/80 shadow-2xl shadow-teal-950/40 backdrop-blur-md">
+        <div className="relative rounded-2xl overflow-hidden border border-slate-700/60 bg-slate-900/80 shadow-2xl shadow-teal-950/40 backdrop-blur-md">
           {/* Top Bar Decoration */}
           <div className="flex items-center justify-between px-4 py-3 bg-slate-950/70 border-b border-slate-800 text-xs text-slate-400">
             <div className="flex items-center gap-2">
@@ -121,34 +120,33 @@ export default function AllInOnePlatformShowcase() {
               <span className="ml-2 font-mono text-[11px] text-slate-400 hidden sm:inline">alphaclone-workspace.app</span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+              <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium text-xs">
                 489 Platform Tools Active
               </span>
-              <button
-                onClick={() => setIsZoomed(true)}
-                className="hover:text-white transition-colors flex items-center gap-1 text-[11px] bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-700"
-              >
-                🔍 Expand Diagram
-              </button>
             </div>
           </div>
 
-          {/* Interactive Image Container */}
-          <div className="relative w-full aspect-[16/10] bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer" onClick={() => setIsZoomed(true)}>
+          {/* Protected Static Image Display Area */}
+          <div
+            className="relative w-full aspect-[16/10] bg-slate-950 flex items-center justify-center overflow-hidden"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+          >
             <Image
               src="/images/alphaclone-all-in-one-mcp-platform.png"
               alt="AlphaClone All In One Intelligent Platform Architecture"
               fill
               priority
               sizes="(max-width: 1200px) 100vw, 1200px"
-              className="object-contain hover:scale-[1.01] transition-transform duration-300"
+              className="object-contain pointer-events-none select-none"
+              draggable={false}
             />
-            {/* Hover overlay hint */}
-            <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <span className="bg-slate-900/90 text-white font-medium px-4 py-2 rounded-xl border border-teal-500/50 shadow-xl backdrop-blur-md text-sm flex items-center gap-2">
-                <span>🔍 Click to View Full High-Res Architecture</span>
-              </span>
-            </div>
+            {/* Transparent overlay preventing right-click, saving, downloading, and click actions */}
+            <div
+              className="absolute inset-0 z-20 bg-transparent"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
+            />
           </div>
 
           {/* Feature Strip Footer */}
@@ -283,35 +281,6 @@ export default function AllInOnePlatformShowcase() {
           ))}
         </div>
       </div>
-
-      {/* Lightbox Modal when Zoomed */}
-      {isZoomed && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md p-4 sm:p-8 flex items-center justify-center overflow-auto animate-fadeIn"
-          onClick={() => setIsZoomed(false)}
-        >
-          <div className="relative max-w-7xl w-full max-h-[90vh] bg-slate-900 rounded-2xl border border-slate-700 p-2 sm:p-4 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between pb-3 px-2 border-b border-slate-800 mb-2">
-              <span className="text-sm font-bold text-white">AlphaClone Platform Architecture & MCP Ecosystem</span>
-              <button
-                onClick={() => setIsZoomed(false)}
-                className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-lg text-xs font-bold border border-slate-700"
-              >
-                ✕ Close Preview
-              </button>
-            </div>
-            <div className="relative w-full h-[75vh]">
-              <Image
-                src="/images/alphaclone-all-in-one-mcp-platform.png"
-                alt="Full Architecture Diagram"
-                fill
-                priority
-                className="object-contain"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

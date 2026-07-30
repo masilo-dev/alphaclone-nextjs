@@ -83,9 +83,9 @@ export default function MarketingHomePage() {
 
       <SectionConnector variant="fade" />
 
-      {/* Visual Storytelling: Lead to Cash Workflow */}
-      <MarketingSection id="workflow-story" atmosphere="platform">
-        <InteractiveWorkflowStory />
+      {/* Platform Showcase — Architecture Diagram & Showcase Image First */}
+      <MarketingSection atmosphere="platform">
+        <AllInOnePlatformShowcase />
       </MarketingSection>
 
       <SectionConnector variant="fade" />
@@ -105,9 +105,9 @@ export default function MarketingHomePage() {
 
       <SectionConnector variant="fade" />
 
-      {/* Platform Showcase — Architecture Diagram & MCP Engine */}
-      <MarketingSection atmosphere="platform">
-        <AllInOnePlatformShowcase />
+      {/* Visual Storytelling: Lead to Cash Workflow */}
+      <MarketingSection id="workflow-story" atmosphere="platform">
+        <InteractiveWorkflowStory />
       </MarketingSection>
 
       <SectionConnector />
@@ -321,4 +321,3 @@ export default function MarketingHomePage() {
     </MarketingShell>
   );
 }
-
