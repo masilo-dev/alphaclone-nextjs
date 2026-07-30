@@ -928,6 +928,86 @@ VALUES
   ('deals', 'stage_changed', 'crm', 'update_health_score', '{}', 'Deal Stage Changed → Update Health Score', 'When a deal moves stage, recalculate the contact relationship health score')
 ON CONFLICT DO NOTHING;
 
+-- Documents Master Table
+CREATE TABLE IF NOT EXISTS public.documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  title TEXT,
+  name TEXT NOT NULL DEFAULT 'Untitled Document',
+  description TEXT,
+  document_type TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  owner_user_id UUID,
+  uploaded_by UUID,
+  mime_type TEXT DEFAULT 'application/octet-stream',
+  size_bytes BIGINT,
+  storage_path TEXT,
+  expiry_date DATE,
+  archived_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  content TEXT,
+  version INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_documents_tenant_updated
+  ON public.documents (tenant_id, updated_at DESC)
+  WHERE deleted_at IS NULL;
+
+ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Tenant members can manage documents" ON public.documents;
+CREATE POLICY "Tenant members can manage documents" ON public.documents
+  FOR ALL TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
+
+-- Document Relationships
+CREATE TABLE IF NOT EXISTS public.document_relationships (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  document_id UUID NOT NULL REFERENCES public.documents(id) ON DELETE CASCADE,
+  entity_type TEXT NOT NULL,
+  entity_id UUID NOT NULL,
+  relationship_type TEXT NOT NULL DEFAULT 'attachment',
+  is_primary BOOLEAN NOT NULL DEFAULT false,
+  created_by UUID,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_relationships_entity
+  ON public.document_relationships (tenant_id, entity_type, entity_id);
+
+ALTER TABLE public.document_relationships ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Tenant members can manage document relationships" ON public.document_relationships;
+CREATE POLICY "Tenant members can manage document relationships" ON public.document_relationships
+  FOR ALL TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
+
+-- Document Activity Log
+CREATE TABLE IF NOT EXISTS public.document_activity (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  document_id UUID NOT NULL,
+  actor_user_id UUID,
+  action TEXT NOT NULL,
+  old_values JSONB DEFAULT '{}'::jsonb,
+  new_values JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_activity_doc
+  ON public.document_activity (document_id, created_at DESC);
+
+ALTER TABLE public.document_activity ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Tenant members can view document activity" ON public.document_activity;
+CREATE POLICY "Tenant members can view document activity" ON public.document_activity
+  FOR SELECT TO authenticated
+  USING (tenant_id IN (SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid()));
+
 NOTIFY pgrst, 'reload schema';
 
 COMMIT;

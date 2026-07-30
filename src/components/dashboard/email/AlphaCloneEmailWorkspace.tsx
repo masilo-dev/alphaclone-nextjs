@@ -552,7 +552,7 @@ export default function AlphaCloneEmailWorkspace() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-[850px] w-full bg-[#0B1220] text-slate-100 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+    <div className="flex flex-col h-full min-h-0 w-full bg-[#0B1220] text-slate-100 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
       
       {/* ------------------------------------------------------------- */}
       {/* TOP HEADER: UNIVERSAL SEARCH & SYSTEM ENGINE CONTROL */}
@@ -1146,7 +1146,7 @@ export default function AlphaCloneEmailWorkspace() {
           {/* --------------------------------------------------------- */}
           {/* RIGHT PANEL: THREADED CONVERSATION VIEW & CRM TIMELINE */}
           {/* --------------------------------------------------------- */}
-          <div className="flex-1 flex flex-col bg-[#080E1A] min-h-0 overflow-y-auto">
+          <div className="flex-1 flex flex-col bg-[#080E1A] min-h-0 overflow-hidden">
             {selectedThread ? (
               <div className="flex-1 flex flex-col min-h-0">
                 
@@ -1191,10 +1191,10 @@ export default function AlphaCloneEmailWorkspace() {
                 </div>
 
                 {/* Main Thread Content & Context Sidebar */}
-                <div className="flex-1 flex flex-col xl:flex-row min-h-0 overflow-y-auto">
+                <div className="flex-1 flex flex-col xl:flex-row min-h-0 overflow-hidden">
                   
                   {/* Messages Timeline */}
-                  <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+                  <div className="flex-1 p-6 space-y-6 overflow-y-auto min-h-0">
                     
                     {/* Bonnie AI Summary Banner */}
                     <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 to-teal-950/40 border border-emerald-500/30 space-y-2">

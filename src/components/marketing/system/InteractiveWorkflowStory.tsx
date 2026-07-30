@@ -65,7 +65,7 @@ const FLOW_NODES: WorkflowNode[] = [
         { label: 'Milestones', value: '2 Phase Delivery ($12k / $12k)' },
         { label: 'Timeline', value: 'Aug 15 - Sep 15' },
       ],
-      codeOrNote: '⚡ Bonnie AI: Auto-populated custom SLA clause based on client request.',
+      codeOrNote: 'Bonnie AI: Auto-populated custom SLA clause based on client request.',
     },
   },
   {
@@ -86,7 +86,7 @@ const FLOW_NODES: WorkflowNode[] = [
         { label: 'Timestamp', value: 'Jul 29, 2026 — 14:32 UTC' },
         { label: 'Status', value: 'Legally Executed & Archived' },
       ],
-      codeOrNote: '🔒 Audit Hash: 0x8f4b...39e1 stored securely in workspace document hub.',
+      codeOrNote: 'Audit Hash: 0x8f4b...39e1 stored securely in workspace document hub.',
     },
   },
   {
@@ -128,7 +128,7 @@ const FLOW_NODES: WorkflowNode[] = [
         { label: 'Net P&L Ledger', value: '+$12,000 Revenue Reconciled' },
         { label: 'Tax Status', value: 'Compliant & Archived' },
       ],
-      codeOrNote: '💰 Financial Snapshot: Monthly target +18% ahead of forecast.',
+      codeOrNote: 'Financial Snapshot: Monthly target +18% ahead of forecast.',
     },
   },
   {
@@ -149,7 +149,7 @@ const FLOW_NODES: WorkflowNode[] = [
         { label: 'Lifetime Value', value: '$48,000.00' },
         { label: 'Next Action', value: 'Annual Maintenance Proposal Drafted' },
       ],
-      codeOrNote: '🌟 Automated check-in email queued for client review.',
+      codeOrNote: 'Automated check-in email queued for client review.',
     },
   },
 ];
@@ -265,7 +265,11 @@ export default function InteractiveWorkflowStory() {
 
             {/* Right Live UI Preview Box */}
             <div className="lg:col-span-6">
-              <div className="rounded-xl border border-slate-700/80 bg-slate-950 p-5 shadow-xl relative overflow-hidden">
+              <div
+                className="rounded-xl border border-slate-700/80 bg-slate-950 p-5 shadow-xl relative overflow-hidden select-none"
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              >
                 {/* Visual Header */}
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
                   <div className="flex items-center gap-2">

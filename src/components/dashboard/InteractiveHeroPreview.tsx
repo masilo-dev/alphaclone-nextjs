@@ -54,7 +54,9 @@ const InteractiveHeroPreview = () => {
     return (
         <div
             onMouseMove={handleMouseMove}
-            className="relative w-full max-w-4xl mx-auto h-[500px] perspective-1000 hidden md:block"
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+            className="relative w-full max-w-4xl mx-auto h-[500px] perspective-1000 hidden md:block select-none"
         >
             {/* Main Dashboard Frame */}
             <motion.div

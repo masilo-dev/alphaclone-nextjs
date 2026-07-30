@@ -288,11 +288,16 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
   color: var(--foreground);
   scroll-behavior: smooth;
   @apply text-base antialiased;
   overflow-x: clip;
+}
+
+@media (min-width: 1024px) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 /* Dashboard light theme: main shell surfaces (inner widgets keep their own styles) */
@@ -2132,3 +2137,21 @@ html.light .ac-business-main .bg-slate-900 {
     transition: none !important;
   }
 }
+
+/* Mobile rendering performance optimization for >95 Lighthouse/PageSpeed score */
+@media (max-width: 767px) {
+  .mkt-section:not(:first-of-type) {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 400px;
+  }
+  
+  /* Reduce heavy filter/backdrop work on mobile GPUs */
+  .mkt-surface,
+  .mkt-surface-elevated,
+  .glass-card,
+  .dashboard-panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
