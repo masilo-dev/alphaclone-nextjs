@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Inbox, Send, FileEdit, MessageSquare, AlertCircle, Mail } from 'lucide-react';
 import type { User } from '@/types';
-import { ModulePageLayout } from '@/components/ui/ModulePageLayout';
-import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import { cn } from '@/lib/utils';
 import UnifiedInbox from '@/components/dashboard/business/UnifiedInbox';
 import UnifiedInboxTab from '@/components/dashboard/business/UnifiedInboxTab';
@@ -39,52 +37,45 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
   };
 
   return (
-    <ModulePageLayout className="h-full min-h-0">
-      <div className="flex flex-col h-full min-h-0">
-        <div className="px-3 md:px-5 pt-3 pb-2 border-b border-white/5">
-          <h2 className="text-sm font-semibold text-[var(--ws-text-primary)]">{HUMAN_LABELS.channelsHub}</h2>
-          <p className="text-[12px] text-[var(--ws-text-secondary)] mt-0.5">
-            Inbox, outreaches, and conversations — pick contacts from your workspace and send cleanly.
-          </p>
-          <div className="flex gap-1 mt-3 overflow-x-auto ac-scroll-x pb-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium whitespace-nowrap transition-colors min-h-9',
-                  activeTab === tab.id
-                    ? 'bg-teal-500/15 text-teal-300 border border-teal-500/30'
-                    : 'text-[var(--ws-text-secondary)] hover:bg-white/5 border border-transparent'
-                )}
-              >
-                <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 min-h-0 overflow-hidden">
-          {activeTab === 'outreaches' ? (
-            <EmailOutreachComposer />
-          ) : activeTab === 'channels' || activeTab === 'needs-reply' ? (
-            <div className="h-full p-3 md:p-5">
-              <UnifiedInboxTab needsReplyOnly={activeTab === 'needs-reply'} />
-            </div>
-          ) : (
-            <div className="h-full p-3 md:p-5">
-              <UnifiedInbox
-                defaultTab="mailbox"
-                initialFolder={folderMap[activeTab] || 'inbox'}
-                hideTabSwitcher
-              />
-            </div>
-          )}
-        </div>
+    <div className="flex flex-col h-full min-h-0">
+      {/* ── Single compact header: tab row only, no duplicate heading ── */}
+      <div className="flex items-center gap-1 px-3 md:px-4 pt-2 pb-0 border-b border-white/5 overflow-x-auto ac-scroll-x shrink-0">
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium whitespace-nowrap transition-colors border-b-2 -mb-px rounded-none',
+              activeTab === tab.id
+                ? 'border-teal-400 text-teal-300'
+                : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:border-white/20'
+            )}
+          >
+            <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
+            {tab.label}
+          </button>
+        ))}
       </div>
-    </ModulePageLayout>
+
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {activeTab === 'outreaches' ? (
+          <EmailOutreachComposer />
+        ) : activeTab === 'channels' || activeTab === 'needs-reply' ? (
+          <div className="h-full p-3 md:p-5">
+            <UnifiedInboxTab needsReplyOnly={activeTab === 'needs-reply'} />
+          </div>
+        ) : (
+          <div className="h-full p-3 md:p-5">
+            <UnifiedInbox
+              defaultTab="mailbox"
+              initialFolder={folderMap[activeTab] || 'inbox'}
+              hideTabSwitcher
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

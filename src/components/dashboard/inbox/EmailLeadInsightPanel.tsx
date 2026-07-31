@@ -10,6 +10,7 @@ type EmailLeadInsightPanelProps = {
   from: string | null | undefined;
   subject?: string | null;
   compact?: boolean;
+  collapsible?: boolean;
 };
 
 function matchLabel(m: EmailContextMatch): string {
@@ -31,8 +32,10 @@ export default function EmailLeadInsightPanel({
   from,
   subject,
   compact = false,
+  collapsible = false,
 }: EmailLeadInsightPanelProps) {
   const { currentTenant } = useTenant();
+  const [open, setOpen] = React.useState(!collapsible);
   const { result, loading, error } = useEmailLeadAutoSearch(
     from,
     subject,
@@ -44,16 +47,30 @@ export default function EmailLeadInsightPanel({
   return (
     <div
       className={`rounded-xl border border-teal-500/20 bg-teal-500/5 ${
-        compact ? 'p-3' : 'p-4 mb-4'
+        compact ? 'p-3' : 'p-3 mb-2'
       }`}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="w-4 h-4 text-teal-400 shrink-0" />
-        <p className="text-xs font-bold uppercase tracking-wide text-teal-300">
-          Auto lead search
-        </p>
-        {loading && <Loader2 className="w-3.5 h-3.5 animate-spin text-teal-400 ml-auto" />}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+          <p className="text-[11px] font-bold uppercase tracking-wide text-teal-300">
+            Auto lead search
+          </p>
+          {loading && <Loader2 className="w-3 h-3 animate-spin text-teal-400" />}
+        </div>
+        {collapsible && (
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            className="text-[10px] font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1"
+          >
+            {open ? 'Hide insights' : 'Show insights'}
+          </button>
+        )}
       </div>
+
+      {open && (
+        <div className="mt-2.5 pt-2 border-t border-teal-500/10">
 
       {error && <p className="text-xs text-amber-400 mb-2">{error}</p>}
 
@@ -104,6 +121,8 @@ export default function EmailLeadInsightPanel({
             ))}
           </div>
         </>
+      )}
+        </div>
       )}
     </div>
   );

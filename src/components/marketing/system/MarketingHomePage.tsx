@@ -18,10 +18,12 @@ import { MarketingContainer, MarketingSection } from './LayoutPrimitives';
 import MarketingShell from './MarketingShell';
 import VerifiedIntegrationsStrip from './VerifiedIntegrationsStrip';
 import AllInOnePlatformShowcase from './AllInOnePlatformShowcase';
-import InteractiveWorkflowStory from './InteractiveWorkflowStory';
-import DifferentiationMatrix from './DifferentiationMatrix';
-import BonnieAiSection from './BonnieAiSection';
-import StackSavingsCalculator from './StackSavingsCalculator';
+import {
+  InteractiveWorkflowStory,
+  DifferentiationMatrix,
+  BonnieAiSection,
+  StackSavingsCalculator,
+} from './LazyBelowFold';
 import {
   CurvedDotField,
   HeroDataWaves,

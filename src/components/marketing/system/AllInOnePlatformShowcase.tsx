@@ -231,7 +231,7 @@ export default function AllInOnePlatformShowcase() {
             </div>
             <Link
               href="/auth/login?register=true&plan=starter"
-              className="shrink-0 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium text-xs sm:text-sm transition-colors shadow-md shadow-teal-900/40"
+              className="shrink-0 px-4 py-2 rounded-lg bg-teal-700 hover:bg-teal-600 text-white font-semibold text-xs sm:text-sm transition-colors shadow-md shadow-teal-900/40"
             >
               Test This Workflow Free →
             </Link>
@@ -269,12 +269,18 @@ export default function AllInOnePlatformShowcase() {
                   {sc.metric}
                 </span>
               </div>
-              <div className="mb-4">
-                <p className="text-xs text-rose-300 font-semibold mb-1">❌ Old Frustrating Way:</p>
+              <div className="mb-3">
+                <p className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold mb-1 uppercase tracking-wider">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                  Old Way:
+                </p>
                 <p className="text-xs text-slate-400 leading-relaxed">{sc.challenge}</p>
               </div>
               <div>
-                <p className="text-xs text-emerald-400 font-semibold mb-1">✅ The AlphaClone Way:</p>
+                <p className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold mb-1 uppercase tracking-wider">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M1.5 5l2.5 2.5L8.5 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  AlphaClone Way:
+                </p>
                 <p className="text-xs text-slate-200 leading-relaxed font-medium">{sc.solution}</p>
               </div>
             </div>

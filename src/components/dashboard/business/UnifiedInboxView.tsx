@@ -664,63 +664,56 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
   return (
     <>
-      <div className="mb-3">
-        <AiDraftReviewBanner
-          onOpenDraft={(draft) => {
-            openCompose({
-              to: draft.fromEmail || draft.from || '',
-              subject: draft.subject?.match(/^Re:/i) ? draft.subject : `Re: ${draft.subject || ''}`,
-              body: draft.body || '',
-            });
-          }}
-        />
-      </div>
       <div
         className="flex h-[min(88dvh,820px)] min-h-[480px] ac-workspace-panel overflow-hidden"
         role="region"
         aria-label="Email mailbox"
       >
-        {/* Sidebar list */}
+        {/* Sidebar list — 30% width */}
         <div
           className={`${
             selectedId ? 'hidden md:flex' : 'flex'
-          } w-full md:w-[340px] lg:w-[380px] flex-col border-r border-white/5 bg-slate-950/50 shrink-0`}
+          } w-full md:w-[300px] lg:w-[320px] flex-col border-r border-white/5 bg-slate-950/50 shrink-0`}
         >
-          <div className="p-3 border-b border-white/5 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <h3 className="text-sm font-bold text-white">Mail</h3>
-                <p className="text-[10px] text-slate-500">
-                  {active.loading ? 'Loading…' : `${filteredEmails.length} message${filteredEmails.length === 1 ? '' : 's'}`}
-                </p>
-              </div>
+          <div className="p-2.5 border-b border-white/5 space-y-2">
+            {/* AI draft slim notice — non-intrusive */}
+            <AiDraftReviewBanner
+              onOpenDraft={(draft) => {
+                openCompose({
+                  to: draft.fromEmail || draft.from || '',
+                  subject: draft.subject?.match(/^Re:/i) ? draft.subject : `Re: ${draft.subject || ''}`,
+                  body: draft.body || '',
+                });
+              }}
+            />
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openNewEmail}
+                disabled={!providerConnected}
+                aria-label="Compose new email"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-3 py-2 text-xs font-bold text-white"
+              >
+                <PenSquare className="w-3.5 h-3.5" />
+                Compose
+              </button>
               <button
                 type="button"
                 onClick={refresh}
-                className="rounded-lg border border-white/10 p-2 text-slate-400 hover:text-white"
+                className="rounded-lg border border-white/10 p-2 text-slate-400 hover:text-white shrink-0"
                 aria-label="Refresh mailbox"
                 title="Refresh"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={openNewEmail}
-              disabled={!providerConnected}
-              aria-label="Compose new email"
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2.5 text-sm font-bold text-white"
-            >
-              <PenSquare className="w-4 h-4" />
-              Compose
-            </button>
-
             <Link
               href="/dashboard/business/campaigns"
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white"
+              className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:text-white"
             >
-              <Users className="w-3.5 h-3.5" />
+              <Users className="w-3 h-3" />
               Bulk send (campaigns)
             </Link>
 
@@ -877,37 +870,41 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   type="button"
                   role="listitem"
                   onClick={() => handleSelectEmail(email)}
-                  className={`w-full text-left p-3 transition-colors ${
+                  className={`w-full text-left px-3 py-2.5 transition-colors ${
                     selectedEmail?.id === email.id && folder !== 'drafts'
                       ? 'bg-teal-500/10 border-l-2 border-l-teal-500'
                       : 'hover:bg-white/5 border-l-2 border-l-transparent'
-                  } ${email.isRead === false ? 'bg-white/[0.02]' : ''}`}
+                  } ${email.isRead === false ? 'bg-white/[0.025]' : ''}`}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="flex items-baseline justify-between gap-1.5 mb-0.5">
                     <p
-                      className={`text-sm truncate ${
-                        email.isRead === false ? 'font-bold text-white' : 'font-semibold text-white'
+                      className={`text-xs truncate ${
+                        email.isRead === false ? 'font-bold text-white' : 'font-medium text-slate-300'
                       }`}
                     >
                       {folder === 'sent' || folder === 'drafts'
                         ? email.subject || '(no subject)'
                         : (email.from || '').split('<')[0].trim() || email.from || 'Unknown'}
                     </p>
-                    <span className="text-[10px] text-slate-500 shrink-0">
+                    <span className="text-[10px] text-slate-600 shrink-0">
                       {new Date(email.receivedAt).toLocaleDateString(undefined, {
                         month: 'short',
                         day: 'numeric',
                       })}
                     </span>
                   </div>
-                  <p className="text-xs font-medium text-slate-300 truncate">
+                  <p className={`text-[11px] truncate mb-0.5 ${
+                    email.isRead === false ? 'font-semibold text-slate-200' : 'font-normal text-slate-400'
+                  }`}>
                     {folder === 'sent' || folder === 'drafts'
                       ? (email.to || []).join(', ') || email.from || 'Draft'
                       : email.subject || '(no subject)'}
                   </p>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{email.snippet}</p>
+                  {email.snippet && (
+                    <p className="text-[11px] text-slate-500 truncate">{email.snippet}</p>
+                  )}
                   {(labelMap[`${provider}:${email.id}`] || email.labels || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
+                    <div className="flex flex-wrap gap-1 mt-1">
                       {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
                         <span
                           key={lab}
@@ -919,7 +916,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     </div>
                   )}
                   {folder === 'drafts' && (
-                    <span className="inline-block mt-1 text-[10px] font-bold uppercase text-amber-400">
+                    <span className="inline-block mt-0.5 text-[10px] font-bold uppercase text-amber-400">
                       Tap to edit draft
                     </span>
                   )}
@@ -929,88 +926,98 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           </div>
         </div>
 
-        {/* Read & reply */}
+        {/* Read & reply — 70% width, flex-1 */}
         <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
           {selectedEmail && folder !== 'drafts' ? (
             <>
-              <div className="flex items-center gap-2 p-3 md:p-4 border-b border-white/5 shrink-0 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedId(null);
-                    setThreadMessages([]);
-                  }}
-                  className="md:hidden p-2 -ml-1 text-slate-400 hover:text-white"
-                  aria-label="Back to list"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <span
-                    className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border mr-1.5 ${classificationColors[emailClassification]}`}
+              {/* ── Thread header: subject + meta ── */}
+              <div className="px-4 pt-3 pb-2 border-b border-white/5 shrink-0">
+                <div className="flex items-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedId(null);
+                      setThreadMessages([]);
+                    }}
+                    className="md:hidden p-1 -ml-1 text-slate-400 hover:text-white shrink-0 mt-0.5"
+                    aria-label="Back to list"
                   >
-                    {emailClassification === 'Unverified' && <AlertTriangle className="w-3 h-3" />}
-                    {emailClassification}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                      provider === 'microsoft'
-                        ? 'bg-blue-500/15 text-blue-300'
-                        : 'bg-teal-500/15 text-teal-300'
-                    }`}
-                  >
-                    {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
-                  </span>
-                  <h3 className="text-base font-semibold text-white truncate mt-1">
-                    {selectedEmail.subject || '(no subject)'}
-                  </h3>
-                  <p className="text-xs text-slate-400 truncate">{selectedEmail.from}</p>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {INBOX_LABEL_OPTIONS.map((opt) => {
-                      const key = `${provider}:${selectedEmail.id}`;
-                      const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
-                          className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border transition-colors ${
-                            assigned
-                              ? 'bg-teal-500/20 text-teal-200 border-teal-500/40'
-                              : 'bg-transparent text-slate-500 border-white/10 hover:border-teal-500/30 hover:text-slate-300'
-                          }`}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {senderKnown === false && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>
-                      <button
-                        type="button"
-                        onClick={handleCreateContactFromSender}
-                        disabled={creatingContact}
-                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-1 rounded-lg bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 disabled:opacity-50"
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    {/* Subject */}
+                    <h3 className="text-sm font-semibold text-white leading-snug mb-0.5">
+                      {selectedEmail.subject || '(no subject)'}
+                    </h3>
+                    {/* From + provider badge */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs text-slate-400 truncate">{selectedEmail.from}</p>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
+                          provider === 'microsoft'
+                            ? 'bg-blue-500/15 text-blue-300'
+                            : 'bg-teal-500/15 text-teal-300'
+                        }`}
                       >
-                        {creatingContact ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <UserPlus className="w-3 h-3" />
-                        )}
-                        Create Contact
-                      </button>
+                        {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
+                      </span>
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border shrink-0 ${classificationColors[emailClassification]}`}
+                      >
+                        {emailClassification === 'Unverified' && <AlertTriangle className="w-2.5 h-2.5" />}
+                        {emailClassification}
+                      </span>
                     </div>
-                  )}
+                    {/* Label pills — below subject, not competing with actions */}
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {INBOX_LABEL_OPTIONS.map((opt) => {
+                        const key = `${provider}:${selectedEmail.id}`;
+                        const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
+                            className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border transition-colors ${
+                              assigned
+                                ? 'bg-teal-500/20 text-teal-200 border-teal-500/40'
+                                : 'bg-transparent text-slate-600 border-white/8 hover:border-teal-500/30 hover:text-slate-400'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {senderKnown === false && (
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>
+                        <button
+                          type="button"
+                          onClick={handleCreateContactFromSender}
+                          disabled={creatingContact}
+                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 disabled:opacity-50"
+                        >
+                          {creatingContact ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-3 h-3" />
+                          )}
+                          Create Contact
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+
+                {/* ── Primary action row: Reply / Fwd / Delete — clear, above body ── */}
+                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
                   <button
                     type="button"
                     onClick={() => openReply(false)}
                     disabled={!providerConnected}
-                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 disabled:opacity-40"
-                    title="Reply with provider picker (Brevo, Zoho, Outlook, etc.)"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
+                    title="Reply with provider picker"
                   >
                     <Reply className="w-3.5 h-3.5" />
                     Reply
@@ -1019,43 +1026,45 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     type="button"
                     onClick={() => openReply(true)}
                     disabled={!providerConnected}
-                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
                   >
                     <ReplyAll className="w-3.5 h-3.5" />
-                    All
+                    Reply all
                   </button>
                   <button
                     type="button"
                     onClick={openForward}
                     disabled={!providerConnected}
-                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-2.5 py-1.5 text-[10px] font-bold text-slate-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
                   >
                     <Forward className="w-3.5 h-3.5" />
-                    Fwd
+                    Forward
                   </button>
                   <button
                     type="button"
                     onClick={handleDelete}
                     disabled={deleting}
-                    className="inline-flex items-center gap-1 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1.5 text-[10px] font-bold text-rose-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 disabled:opacity-40"
                   >
                     {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Delete
                   </button>
                   {selectedEmail.webLink && (
                     <a
                       href={selectedEmail.webLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 px-2 py-1.5"
+                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 px-2 py-1.5 ml-auto"
                     >
-                      Open in Outlook
+                      Open in Outlook ↗
                     </a>
                   )}
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-8">
-                <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} />
+              {/* ── Lead insight: collapsed/dismissible, not inline above body ── */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-6">
+                <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />
 
                 {threadLoading ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">

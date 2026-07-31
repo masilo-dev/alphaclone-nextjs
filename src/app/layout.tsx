@@ -1,12 +1,24 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { Inter, Space_Grotesk } from "next/font/google";
 
-import "@fontsource-variable/inter";
-import "@fontsource/space-grotesk";
 import "./globals.css";
 import "@/styles/marketing-system.css";
 import "@/styles/accessibility.css";
 import { Providers } from "@/components/Providers";
+
+// Self-hosted via next/font — no external network request on the critical path
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter-next",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-space-grotesk-next",
+});
 
 import { PWAProvider } from "@/contexts/PWAContext";
 import { PwaPushBootstrap } from "@/components/pwa/PwaPushBootstrap";
@@ -201,9 +213,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
-        <link rel="preconnect" href="https://challenges.cloudflare.com" />
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com" />
         <link rel="help" href="/llms.txt" type="text/plain" title="AlphaClone Systems LLM Context Reference" />
         <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap" />
