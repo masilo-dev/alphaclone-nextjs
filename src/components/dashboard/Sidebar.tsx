@@ -165,12 +165,12 @@ const Sidebar = React.memo<SidebarProps>(({
             {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+                    className="ac-mobile-sidebar-overlay fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
-            <aside className={`
+            <aside data-open={sidebarOpen ? 'true' : 'false'} className={`ac-responsive-sidebar
                 fixed md:relative z-[60] h-full ac-workspace-sidebar border-r
                 flex flex-col transition-all duration-200 overflow-hidden will-change-transform
                 ${sidebarOpen ? 'translate-x-0 w-[240px] pb-safe md:pb-0' : '-translate-x-full md:translate-x-0 w-0 md:w-12'}
@@ -188,7 +188,7 @@ const Sidebar = React.memo<SidebarProps>(({
                 </div>
 
                 {sidebarOpen && (
-                    <div className="md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
+                    <div className="ac-pwa-touch-only md:hidden px-3 pb-3 border-b border-slate-800 shrink-0">
                         <label htmlFor="ac-sidebar-jump" className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
                             {t('Jump to page')}
                         </label>

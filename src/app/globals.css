@@ -1449,6 +1449,42 @@ html.pwa-standalone .pwa-page-title {
   box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.35);
 }
 
+/* Installed touch PWAs must not inherit Tailwind's tablet/desktop shell at
+   iPad viewport widths. Keyboard/mouse iPads keep the normal responsive shell. */
+@media (pointer: coarse) and (max-width: 1366px) {
+  html.pwa-standalone .ac-responsive-sidebar {
+    position: fixed !important;
+    width: 240px !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  html.pwa-standalone .ac-responsive-sidebar[data-open="false"] {
+    width: 0 !important;
+    transform: translateX(-100%) !important;
+  }
+
+  html.pwa-standalone .ac-responsive-sidebar[data-open="true"] {
+    transform: translateX(0) !important;
+  }
+
+  html.pwa-standalone .ac-mobile-sidebar-overlay,
+  html.pwa-standalone .ac-responsive-bottom-nav,
+  html.pwa-standalone .ac-responsive-more-sheet,
+  html.pwa-standalone .ac-pwa-touch-only {
+    display: block !important;
+  }
+
+  html.pwa-standalone .ac-business-scroll,
+  html.pwa-standalone .ac-dashboard-main {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.ac-page-transition {
+  min-height: inherit;
+  transform-origin: 50% 12%;
+}
+
 .native-tap {
   min-height: 44px;
   touch-action: manipulation;
@@ -2154,4 +2190,3 @@ html.light .ac-business-main .bg-slate-900 {
     -webkit-backdrop-filter: none !important;
   }
 }
-

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
 import { syncSuppressionCleanup } from '@/lib/email/suppression';
+import { campaignHealth } from '@/lib/outreach/outreachIntelligence';
 
 type SupportedProvider = 'resend' | 'sendgrid' | 'brevo' | 'zoho' | 'gmail';
 
@@ -258,6 +259,34 @@ export async function POST(
             eventId: event.providerMessageId || event.trackingId || undefined,
             metadata: event.payload,
           });
+
+          const safetyEventType = eventTypeLower.includes('spam')
+            ? 'complained'
+            : eventTypeLower.includes('unsubscribe')
+              ? 'unsubscribed'
+              : 'bounced';
+          const safetyEvent = {
+            tenant_id: matchedCampaignRecipient.tenant_id,
+            campaign_id: matchedCampaignRecipient.campaign_id,
+            channel: 'email',
+            event_type: safetyEventType,
+            provider: event.provider,
+            provider_event_id: event.providerMessageId || event.trackingId || null,
+            occurred_at: nowIso,
+            metadata: {
+              recipient_id: matchedCampaignRecipient.id,
+              recipient_email: matchedCampaignRecipient.email,
+              provider_event_type: event.eventType,
+            },
+          };
+          if (safetyEvent.provider_event_id) {
+            await admin.from('outreach_events').upsert(safetyEvent, {
+              onConflict: 'tenant_id,provider,provider_event_id',
+              ignoreDuplicates: true,
+            });
+          } else {
+            await admin.from('outreach_events').insert(safetyEvent);
+          }
         }
 
         processed += 1;
@@ -342,12 +371,37 @@ export async function POST(
         return count || 0;
       };
 
-      const totalSent = await countByStatus('sent');
-      const totalDelivered = await countByStatus('delivered');
-      const totalOpened = await countByStatus('opened');
-      const totalClicked = await countByStatus('clicked');
-      const totalBounced = await countByStatus('bounced');
-      const totalUnsubscribed = await countByStatus('unsubscribed');
+      const [currentlySent, totalDelivered, totalOpened, totalClicked, totalBounced, totalUnsubscribed, totalFailed] =
+        await Promise.all([
+          countByStatus('sent'),
+          countByStatus('delivered'),
+          countByStatus('opened'),
+          countByStatus('clicked'),
+          countByStatus('bounced'),
+          countByStatus('unsubscribed'),
+          countByStatus('failed'),
+        ]);
+      const totalSent =
+        currentlySent + totalDelivered + totalOpened + totalClicked + totalBounced + totalUnsubscribed + totalFailed;
+      const { count: complaintCount } = await admin
+        .from('outreach_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenantId)
+        .eq('campaign_id', campaignId)
+        .eq('event_type', 'complained');
+      const health = campaignHealth({
+        sent: totalSent,
+        bounced: totalBounced,
+        complained: complaintCount || 0,
+        unsubscribed: totalUnsubscribed,
+      });
+
+      const { data: campaign } = await admin
+        .from('email_campaigns')
+        .select('metadata,status')
+        .eq('tenant_id', tenantId)
+        .eq('id', campaignId)
+        .maybeSingle();
 
       await admin
         .from('email_campaigns')
@@ -358,7 +412,16 @@ export async function POST(
           total_clicked: totalClicked,
           total_bounced: totalBounced,
           total_unsubscribed: totalUnsubscribed,
+          ...(health.shouldPause && ['running', 'sending', 'scheduled'].includes(String(campaign?.status))
+            ? { status: 'paused' }
+            : {}),
+          metadata: {
+            ...(campaign?.metadata || {}),
+            deliverability_health: health,
+            ...(health.shouldPause ? { auto_paused: true, auto_paused_at: new Date().toISOString() } : {}),
+          },
         })
+        .eq('tenant_id', tenantId)
         .eq('id', campaignId);
     }
 

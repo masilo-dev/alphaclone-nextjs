@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Building2, Loader2, Search, Sparkles, User } from 'lucide-react';
 import { useEmailLeadAutoSearch } from '@/hooks/useEmailLeadAutoSearch';
@@ -35,7 +36,7 @@ export default function EmailLeadInsightPanel({
   collapsible = false,
 }: EmailLeadInsightPanelProps) {
   const { currentTenant } = useTenant();
-  const [open, setOpen] = React.useState(!collapsible);
+  const [open, setOpen] = useState(!collapsible);
   const { result, loading, error } = useEmailLeadAutoSearch(
     from,
     subject,

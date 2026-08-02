@@ -67,7 +67,10 @@ const nextConfig: NextConfig = {
   experimental: {
     scrollRestoration: true,
     webpackMemoryOptimizations: true,
-    webpackBuildWorker: true,
+    // This project has a substantial custom webpack hook. The isolated build
+    // worker repeatedly stalls during application compilation; compile in the
+    // main build process so failures and progress remain observable.
+    webpackBuildWorker: false,
     optimizePackageImports: [
       '@heroicons/react',
       '@tremor/react',

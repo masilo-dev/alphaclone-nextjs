@@ -42,7 +42,7 @@ async function processInvoiceOverdueReminders() {
 
             await admin
                 .from('business_invoices')
-                .update({ status: 'overdue', updated_at: nowIso })
+                .update({ status: 'overdue', lifecycle_status: 'overdue', updated_at: nowIso })
                 .eq('id', invoice.id);
             await logInvoiceEvent({
                 invoiceId: invoice.id,
@@ -59,10 +59,30 @@ async function processInvoiceOverdueReminders() {
         // ============================================================
         const { data: activeInvoices, error: activeError } = await admin
             .from('business_invoices')
-            .select('id, tenant_id, client_id, invoice_number, status, due_date, sent_at, viewed_at, reminder_count, last_reminder_at, total_amount, currency, auto_followup_enabled')
+            .select('id, tenant_id, client_id, invoice_number, status, due_date, sent_at, viewed_at, reminder_count, last_reminder_at, total_amount, total, balance_due, currency, auto_followup_enabled')
             .in('status', ['sent', 'viewed', 'overdue'])
             .neq('auto_followup_enabled', false);
         if (activeError) throw activeError;
+
+        const clientIds = [...new Set((activeInvoices || []).map((invoice) => invoice.client_id).filter(Boolean))];
+        const paymentHistoryByClient = new Map<string, number[]>();
+        if (clientIds.length) {
+            const { data: paidHistory, error: historyError } = await admin
+                .from('business_invoices')
+                .select('tenant_id,client_id,due_date,paid_at')
+                .in('client_id', clientIds)
+                .eq('status', 'paid')
+                .not('paid_at', 'is', null)
+                .not('due_date', 'is', null)
+                .order('paid_at', { ascending: false })
+                .limit(5000);
+            if (historyError) throw historyError;
+            for (const row of paidHistory || []) {
+                const daysLate = Math.max(-30, Math.min(120, Math.round((new Date(row.paid_at).getTime() - new Date(row.due_date).getTime()) / 86400000)));
+                const historyKey = `${row.tenant_id}:${row.client_id}`;
+                paymentHistoryByClient.set(historyKey, [...(paymentHistoryByClient.get(historyKey) || []), daysLate]);
+            }
+        }
 
         for (const invoice of activeInvoices || []) {
             const guard = await guardCronTenantRow(invoice, 'business_invoices', {
@@ -79,6 +99,13 @@ async function processInvoiceOverdueReminders() {
             const hoursSinceViewed = invoice.viewed_at
                 ? Math.floor((Date.now() - new Date(invoice.viewed_at).getTime()) / 3600000)
                 : null;
+            const history = paymentHistoryByClient.get(`${invoice.tenant_id}:${invoice.client_id}`) || [];
+            const averageDaysLate = history.length
+                ? history.reduce((sum, value) => sum + value, 0) / history.length
+                : 0;
+            // Give historically slow-but-reliable customers a bounded grace period,
+            // while clients who normally pay on time follow the standard cadence.
+            const historyGraceDays = Math.max(0, Math.min(7, Math.round(averageDaysLate / 2)));
 
             // Determine which reminder to send
             let reminderType: string | null = null;
@@ -95,19 +122,19 @@ async function processInvoiceOverdueReminders() {
                 reminderType = 'sent_not_opened';
                 emailVariant = 'not_opened';
                 emailSubject = `Re: Invoice ${invoice.invoice_number} — Did you receive this?`;
-            } else if (daysOverdue >= 14) {
+            } else if (daysOverdue >= 14 + historyGraceDays) {
                 reminderType = 'overdue_14';
                 emailVariant = 'overdue';
                 emailSubject = `Final Notice: Invoice ${invoice.invoice_number} Is Overdue`;
-            } else if (daysOverdue >= 7) {
+            } else if (daysOverdue >= 7 + historyGraceDays) {
                 reminderType = 'overdue_7';
                 emailVariant = 'overdue';
                 emailSubject = `Urgent: Invoice ${invoice.invoice_number} — Payment Required`;
-            } else if (daysOverdue >= 3) {
+            } else if (daysOverdue >= 3 + historyGraceDays) {
                 reminderType = 'overdue_3';
                 emailVariant = 'overdue';
                 emailSubject = `Overdue Notice: Invoice ${invoice.invoice_number}`;
-            } else if (daysOverdue >= 1) {
+            } else if (daysOverdue >= 1 + historyGraceDays) {
                 reminderType = 'overdue_1';
                 emailVariant = 'overdue';
                 emailSubject = `Invoice ${invoice.invoice_number} is Past Due`;
@@ -143,7 +170,7 @@ async function processInvoiceOverdueReminders() {
                         recipientEmail,
                         tenantId: invoice.tenant_id,
                         invoiceNumber: invoice.invoice_number,
-                        amount: invoice.total_amount || 0,
+                        amount: invoice.balance_due ?? invoice.total_amount ?? invoice.total ?? 0,
                         currency: invoice.currency || 'USD',
                         dueDate: invoice.due_date,
                         actionUrl,
@@ -198,6 +225,7 @@ async function processInvoiceOverdueReminders() {
                             daysOverdue,
                             hoursSinceSent,
                             hoursSinceViewed,
+                            customerHistory: { samples: history.length, averageDaysLate, graceDays: historyGraceDays },
                         },
                         performedBy: 'system',
                     });

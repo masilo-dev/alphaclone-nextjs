@@ -17,6 +17,7 @@ import { BarChart3, Bot, Briefcase, CheckSquare, ChevronRight, Cpu, FileText, Ma
 import { CrmSyncToolbar } from '../crm/CrmSyncToolbar';
 import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
 import { CHART_COLORS } from '@/constants/brand';
+import { OutreachLifecyclePanel } from '@/components/dashboard/outreach/OutreachLifecyclePanel';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -316,6 +317,7 @@ export function OutreachDashboard() {
         chartTitle="Emails sent"
         chartSubtitle="Last 14 days"
       />
+      <OutreachLifecyclePanel />
     </ModuleOverviewChrome>
   );
 }

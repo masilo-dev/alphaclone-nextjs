@@ -27,14 +27,14 @@ export async function POST(req: NextRequest) {
     const { user, admin } = await requireTenantAccess(tenantId, req);
     const { data: invoice, error } = await admin
       .from('business_invoices')
-      .select('id,status')
+      .select('id,status,lifecycle_status')
       .eq('id', invoiceId)
       .eq('tenant_id', tenantId)
       .maybeSingle();
     if (error) throw error;
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-    if (invoice.status !== 'draft') {
-      return NextResponse.json({ error: `Only draft invoices can be sent. This invoice is ${invoice.status}.` }, { status: 409 });
+    if (!['draft', 'approved'].includes(String(invoice.lifecycle_status || invoice.status))) {
+      return NextResponse.json({ error: `Only draft or approved invoices can be sent. This invoice is ${invoice.lifecycle_status || invoice.status}.` }, { status: 409 });
     }
 
     await consumeDailyResourceQuota(tenantId, user.id, 'invoices');

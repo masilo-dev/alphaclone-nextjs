@@ -28,14 +28,14 @@ export default function PublicInvoicePage() {
         if (invoiceId) {
             loadInvoice();
         }
-    }, [invoiceId]);
+    }, [invoiceId, publicToken]);
 
     // Fire read receipt silently on mount (web portal view)
     useEffect(() => {
-        if (invoiceId) {
-            fetch(`/api/invoices/${invoiceId}/view`).catch(() => {});
+        if (invoiceId && publicToken) {
+            fetch(`/api/invoices/${invoiceId}/view?token=${encodeURIComponent(publicToken)}`).catch(() => {});
         }
-    }, [invoiceId]);
+    }, [invoiceId, publicToken]);
 
     useEffect(() => {
         if (paymentResult === 'success') {
@@ -45,10 +45,9 @@ export default function PublicInvoicePage() {
 
     const loadInvoice = async () => {
         try {
-            const qs = publicToken
-                ? `token=${encodeURIComponent(publicToken)}`
-                : `id=${encodeURIComponent(invoiceId)}`;
-            const response = await fetch(`/api/invoices/public?${qs}`, { cache: 'no-store' });
+            const qs = new URLSearchParams({ id: invoiceId });
+            if (publicToken) qs.set('token', publicToken);
+            const response = await fetch(`/api/invoices/public?${qs.toString()}`, { cache: 'no-store' });
             const payload = await response.json();
             if (!response.ok || !payload.invoice) {
                 setError(payload.error || 'Invoice not found');

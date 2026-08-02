@@ -134,11 +134,11 @@ async function sendInvoiceEmail(input: InvoiceLifecycleInput) {
       invoice_id: input.invoiceId,
       tenant_id: input.tenantId,
       sent_at: now,
-      delivered_at: now,
+      delivered_at: null,
       sent_to_email: email,
       email_provider: result.provider,
       provider_msg_id: result.emailId || null,
-      delivery_status: 'DELIVERED',
+      delivery_status: 'PENDING',
     }))
   );
   if (deliveryError) throw deliveryError;
@@ -152,10 +152,10 @@ async function markInvoiceSent(input: InvoiceLifecycleInput) {
   const now = new Date().toISOString();
   const { data: invoice, error } = await admin
     .from('business_invoices')
-    .update({ status: 'sent', sent_at: now, is_public: true, updated_at: now })
+    .update({ status: 'sent', lifecycle_status: 'sent', sent_at: now, is_public: true, updated_at: now })
     .eq('tenant_id', input.tenantId)
     .eq('id', input.invoiceId)
-    .in('status', ['draft', 'sent'])
+    .in('status', ['draft', 'approved', 'sent'])
     .select('id,invoice_number,status')
     .maybeSingle();
   if (error) throw error;
@@ -173,7 +173,7 @@ async function markInvoiceSent(input: InvoiceLifecycleInput) {
     return;
   }
 
-  const [auditResult, eventResult] = await Promise.allSettled([
+  const [auditResult, eventResult, lifecycleResult] = await Promise.allSettled([
     logInvoiceEvent({
       invoiceId: input.invoiceId,
       tenantId: input.tenantId,
@@ -186,9 +186,20 @@ async function markInvoiceSent(input: InvoiceLifecycleInput) {
       event_type: 'invoice_sent',
       payload: { invoiceId: input.invoiceId, invoiceNumber: invoice.invoice_number, actorUserId: input.actorUserId || null },
     }).then(({ error: eventError }: { error: Error | null }) => { if (eventError) throw eventError; }),
+    admin.from('invoice_lifecycle_events').insert({
+      tenant_id: input.tenantId,
+      invoice_id: input.invoiceId,
+      event_type: 'status_sent',
+      from_status: 'draft',
+      to_status: 'sent',
+      actor_user_id: input.actorUserId || null,
+      source: 'invoice_lifecycle_workflow',
+      evidence: { delivery_state: 'provider_accepted_unverified' },
+    }).then(({ error: lifecycleError }: { error: Error | null }) => { if (lifecycleError) throw lifecycleError; }),
   ]);
   if (auditResult.status === 'rejected') console.error('[invoice-lifecycle] sent audit failed', auditResult.reason);
   if (eventResult.status === 'rejected') console.error('[invoice-lifecycle] sent event failed', eventResult.reason);
+  if (lifecycleResult.status === 'rejected') console.error('[invoice-lifecycle] lifecycle event failed', lifecycleResult.reason);
 }
 
 async function checkPaymentStatus(invoiceId: string, tenantId: string) {
@@ -241,7 +252,7 @@ async function escalateOverdue(invoiceId: string, tenantId: string, actorUserId?
   const now = new Date().toISOString();
   const { data: updated, error: statusError } = await admin
     .from('business_invoices')
-    .update({ status: 'overdue', updated_at: now })
+    .update({ status: 'overdue', lifecycle_status: 'overdue', updated_at: now })
     .eq('tenant_id', tenantId)
     .eq('id', invoiceId)
     .in('status', ['sent', 'viewed', 'partially_paid'])

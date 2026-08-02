@@ -239,7 +239,8 @@ export async function generateFromRecurringProfile(
       invoice_number: invoiceNumber,
       issue_date: issueDate.toISOString().slice(0, 10),
       due_date: dueDate.toISOString().slice(0, 10),
-      status: profile.autoSend ? 'sent' : 'draft',
+      status: 'draft',
+      lifecycle_status: 'draft',
       subtotal,
       tax_rate: profile.taxRate,
       tax,
@@ -247,8 +248,12 @@ export async function generateFromRecurringProfile(
       total,
       is_public: true,
       recurring_config_id: profile.id,
-      sent_at: profile.autoSend ? new Date().toISOString() : null,
-      metadata: { public_token: publicToken, recurring_profile_id: profile.id },
+      sent_at: null,
+      metadata: {
+        public_token: publicToken,
+        recurring_profile_id: profile.id,
+        recurring_send_pending: profile.autoSend,
+      },
       notes: profile.description || `Recurring invoice (${profile.frequency})`,
     })
     .select('id')
@@ -272,10 +277,27 @@ export async function generateFromRecurringProfile(
     .update({ last_generated: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', profile.id);
 
+  if (profile.autoSend && !profile.clientEmail) {
+    await admin
+      .from('business_invoices')
+      .update({
+        metadata: {
+          public_token: publicToken,
+          recurring_profile_id: profile.id,
+          recurring_send_pending: true,
+          recurring_send_error: 'Client email is missing',
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('tenant_id', profile.tenantId)
+      .eq('id', invoice.id);
+    throw new Error('Recurring invoice was created as a draft because the client email is missing');
+  }
+
   if (profile.autoSend && profile.clientEmail) {
     const payUrl = await getPublicInvoicePaymentUrl(admin, invoice.id, profile.tenantId);
     const { data: tenant } = await admin.from('tenants').select('name').eq('id', profile.tenantId).single();
-    await sendEmailServer({
+    const sendResult = await sendEmailServer({
       tenantId: profile.tenantId,
       to: profile.clientEmail,
       subject: `Invoice ${invoiceNumber}`,
@@ -292,6 +314,68 @@ export async function generateFromRecurringProfile(
       }),
       skipFooter: true,
     });
+    if (!sendResult.success) {
+      await admin
+        .from('business_invoices')
+        .update({
+          metadata: {
+            public_token: publicToken,
+            recurring_profile_id: profile.id,
+            recurring_send_pending: true,
+            recurring_send_error: sendResult.error || 'Provider rejected recurring invoice email',
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('tenant_id', profile.tenantId)
+        .eq('id', invoice.id);
+      throw new Error(sendResult.error || 'Recurring invoice email was not accepted by the provider');
+    }
+
+    const sentAt = new Date().toISOString();
+    const providerMessageId = sendResult.emailId || `recurring-invoice:${invoice.id}:${Date.now()}`;
+    const [invoiceUpdate, deliveryLog, lifecycleEvent] = await Promise.all([
+      admin
+        .from('business_invoices')
+        .update({
+          status: 'sent',
+          lifecycle_status: 'sent',
+          sent_at: sentAt,
+          metadata: {
+            public_token: publicToken,
+            recurring_profile_id: profile.id,
+            recurring_send_pending: false,
+          },
+          updated_at: sentAt,
+        })
+        .eq('tenant_id', profile.tenantId)
+        .eq('id', invoice.id),
+      admin.from('invoice_delivery_log').insert({
+        tenant_id: profile.tenantId,
+        invoice_id: invoice.id,
+        sent_to_email: profile.clientEmail,
+        sent_at: sentAt,
+        delivered_at: null,
+        email_provider: sendResult.provider || 'email',
+        provider_msg_id: providerMessageId,
+        delivery_status: 'PENDING',
+      }),
+      admin.from('invoice_lifecycle_events').insert({
+        tenant_id: profile.tenantId,
+        invoice_id: invoice.id,
+        event_type: 'status_sent',
+        from_status: 'draft',
+        to_status: 'sent',
+        source: 'recurring_invoice_service',
+        evidence: {
+          provider_accepted: true,
+          delivery_verified: false,
+          provider_message_id: providerMessageId,
+        },
+      }),
+    ]);
+    if (invoiceUpdate.error) throw invoiceUpdate.error;
+    if (deliveryLog.error) throw deliveryLog.error;
+    if (lifecycleEvent.error) throw lifecycleEvent.error;
   }
 
   return { invoiceId: invoice.id };

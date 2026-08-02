@@ -26,6 +26,7 @@ import {
     resolveDocumentThemeId,
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
+import { ContractLifecycleDrawer } from '@/components/contracts/ContractLifecycleDrawer';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -154,6 +155,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [listQuery, setListQuery] = useState('');
     const [listStatusFilter, setListStatusFilter] = useState<'all' | 'draft' | 'sent' | 'client_signed' | 'fully_signed' | 'rejected'>('all');
     const [listSort, setListSort] = useState<'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'value_desc' | 'value_asc'>('newest');
+    const [lifecycleContractId, setLifecycleContractId] = useState<string | null>(null);
     
     // AI Lawyer Chat States
     const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
@@ -1134,6 +1136,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                                     </div>
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                <button type="button" onClick={() => setLifecycleContractId(c.id)} className="w-full sm:w-auto justify-center px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 border border-white/5 hover:border-white/10"><Scale className="w-3.5 h-3.5 text-violet-300" /> Lifecycle</button>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -2019,6 +2022,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     </div>
                 </div>
             )}
+            <ContractLifecycleDrawer contractId={lifecycleContractId} tenantId={currentTenant?.id} open={Boolean(lifecycleContractId)} onOpenChange={(open) => !open && setLifecycleContractId(null)} />
         </div>
     );
 };

@@ -433,7 +433,8 @@ export const bonnieService = {
         }
 
         if (event === 'phase' && data.phase) {
-          options.onPhase?.(String(data.phase));
+          const { phase, ...meta } = data;
+          options.onPhase?.(String(phase), meta);
         }
         if (event === 'tools' && Array.isArray(data.tools)) {
           const tools = data.tools as BonnieToolExecuted[];

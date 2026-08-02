@@ -22,9 +22,45 @@ import { classifyError, backoffWithJitter } from './utils';
 import { openIntervention } from './interventionService';
 import { startChaseForTask } from './chasingService';
 import { verifyTaskSideEffect } from './verificationService';
+import { runBonnieWithOpenAIAgents } from '@/lib/bonnie/bonnieOpenAIAgentsRunner';
+import type { BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
+import { createHash } from 'crypto';
 
 function workerId() {
   return `bonnie-worker-${process.pid}-${Date.now()}`;
+}
+
+function moduleForTask(task: Record<string, any>): BonnieModuleId {
+  const text = `${task.assigned_agent_id || ''} ${task.title || ''} ${JSON.stringify(task.structured_input || {})}`.toLowerCase();
+  if (/contract|agreement|signature|renewal/.test(text)) return 'contracts';
+  if (/document|file|ocr|vault/.test(text)) return 'general';
+  if (/invoice|payment|finance|revenue|collection/.test(text)) return 'accounting';
+  if (/campaign|outreach|lead|crm|email|whatsapp|sms/.test(text)) return 'crm';
+  return 'general';
+}
+
+function taskInstruction(task: Record<string, any>): string {
+  const input = task.structured_input || {};
+  return [
+    `Complete this durable background task: ${task.title}.`,
+    `Task type: ${task.task_type || 'generic'}. Assigned specialist: ${task.assigned_agent_id || 'general'}.`,
+    `Authoritative task input: ${JSON.stringify(input)}.`,
+    'Use real workspace tools. Do not simulate or claim success from planning alone.',
+    'For every write, read the affected record back and verify the requested state before reporting completion.',
+  ].join('\n');
+}
+
+async function approvalState(tenantId: string, taskId: string) {
+  const admin = createSupabaseAdminClient();
+  const { data } = await admin
+    .from('agent_approvals')
+    .select('id, status, data_version')
+    .eq('tenant_id', tenantId)
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data || null;
 }
 
 async function executeTaskStages(params: {
@@ -83,32 +119,51 @@ async function executeTaskStages(params: {
       Boolean((task.approval_policy as any)?.required)) &&
     startStage === 'start'
   ) {
-    await createApprovalForTask({
-      tenantId,
-      taskId: task.id,
-      runId: task.run_id,
-      proposedAction: {
-        title: task.title,
-        agent: task.assigned_agent_id,
-        input: task.structured_input,
-      },
-      dataVersion: String(task.version),
-    });
-    await transitionTask({
-      tenantId,
-      taskId: task.id,
-      to: 'WAITING_FOR_APPROVAL',
-      trigger: 'approval_required',
-      actorType: 'worker',
-      actorId: worker,
-      relatedAttemptId: attemptId,
-      patch: { worker_id: null, lease_token: null, lease_expires_at: null },
-    });
-    await admin
-      .from('agent_task_attempts')
-      .update({ status: 'completed', ended_at: new Date().toISOString(), output: { waiting: 'approval' } })
-      .eq('id', attemptId);
-    return { status: 'WAITING_FOR_APPROVAL' as const };
+    const existingApproval = await approvalState(tenantId, task.id);
+    if (existingApproval?.status === 'approved') {
+      intermediate.approvalId = existingApproval.id;
+      intermediate.approvalVerified = true;
+    } else {
+      if (existingApproval?.status === 'pending') {
+        await transitionTask({
+          tenantId,
+          taskId: task.id,
+          to: 'WAITING_FOR_APPROVAL',
+          trigger: 'approval_still_pending',
+          actorType: 'worker',
+          actorId: worker,
+          relatedAttemptId: attemptId,
+          patch: { worker_id: null, lease_token: null, lease_expires_at: null },
+        });
+        return { status: 'WAITING_FOR_APPROVAL' as const };
+      }
+      await createApprovalForTask({
+        tenantId,
+        taskId: task.id,
+        runId: task.run_id,
+        proposedAction: {
+          title: task.title,
+          agent: task.assigned_agent_id,
+          input: task.structured_input,
+        },
+        dataVersion: String(task.version),
+      });
+      await transitionTask({
+        tenantId,
+        taskId: task.id,
+        to: 'WAITING_FOR_APPROVAL',
+        trigger: 'approval_required',
+        actorType: 'worker',
+        actorId: worker,
+        relatedAttemptId: attemptId,
+        patch: { worker_id: null, lease_token: null, lease_expires_at: null },
+      });
+      await admin
+        .from('agent_task_attempts')
+        .update({ status: 'completed', ended_at: new Date().toISOString(), output: { waiting: 'approval' } })
+        .eq('id', attemptId);
+      return { status: 'WAITING_FOR_APPROVAL' as const };
+    }
   }
 
   for (let i = startIdx; i < stages.length; i++) {
@@ -165,43 +220,84 @@ async function executeTaskStages(params: {
           .eq('id', attemptId);
         return { status: 'EXECUTION_UNCERTAIN' as const };
       } else {
-        // Safe simulated specialist work (no external side effects in foundation worker).
-        // Real tool calls go through recordToolExecution + policy in later hardening.
-        const toolExecId = await recordToolExecution({
-          tenantId,
-          taskId: task.id,
-          attemptId,
-          toolName: `runtime.${task.task_type}`,
-          idempotencyKey: key,
-          fencingToken,
-          args: task.structured_input || {},
-          status: 'completed',
-          result: {
-            ok: true,
-            summary: `Completed ${task.title}`,
-            agent: task.assigned_agent_id,
-          },
-        });
+        const { data: run } = await admin
+          .from('agent_runs')
+          .select('user_id')
+          .eq('tenant_id', tenantId)
+          .eq('id', task.run_id)
+          .maybeSingle();
+        if (!run?.user_id) throw new Error('Durable task has no accountable user');
 
-        const providerRef = `sim_${task.id}_${attemptId}`;
-        await saveExternalReference({
+        const agentResult = await runBonnieWithOpenAIAgents({
           tenantId,
-          taskId: task.id,
-          attemptId,
-          toolExecutionId: toolExecId,
-          provider: 'bonnie_runtime',
-          referenceType: 'simulation',
-          referenceId: providerRef,
+          userId: run.user_id,
+          instruction: taskInstruction(task),
+          moduleId: moduleForTask(task),
+          workflowId: task.run_id,
+          conversationId: `durable-task:${task.id}`,
+          policyAlreadyApproved: Boolean(intermediate.approvalVerified),
         });
+        if (agentResult.executionStatus === 'queued_for_approval') {
+          throw new Error('Tool policy requested an additional approval');
+        }
+        if (agentResult.executionStatus !== 'executed') {
+          throw new Error(`Agent execution was not verified: ${agentResult.response}`);
+        }
 
+        const successful = agentResult.toolResults.filter((result) => result.success && !result.approvalRequired);
+        const requiresToolEvidence = ['specialist', 'communicate'].includes(String(task.task_type));
+        if (requiresToolEvidence && successful.length === 0) {
+          throw new Error('Specialist task produced no successful tool evidence');
+        }
+
+        const toolExecutionIds: string[] = [];
+        for (const result of agentResult.toolResults) {
+          const toolExecId = await recordToolExecution({
+            tenantId,
+            taskId: task.id,
+            attemptId,
+            toolName: result.tool,
+            idempotencyKey: key,
+            fencingToken,
+            args: task.structured_input || {},
+            status: result.success && !result.approvalRequired ? 'completed' : 'failed',
+            result: { summary: result.summary, details: result.details || null },
+            errorMessage: result.success ? null : result.summary,
+          });
+          if (!toolExecId) continue;
+          toolExecutionIds.push(toolExecId);
+          if (result.success && !result.approvalRequired) {
+            const evidenceHash = createHash('sha256')
+              .update(`${task.id}:${result.tool}:${result.summary}:${result.details || ''}`)
+              .digest('hex');
+            await saveExternalReference({
+              tenantId,
+              taskId: task.id,
+              attemptId,
+              toolExecutionId: toolExecId,
+              provider: result.tool,
+              referenceType: 'verified_tool_result',
+              referenceId: evidenceHash,
+              payload: { summary: result.summary, details: result.details || null },
+            });
+          }
+        }
+
+        const executionResult = {
+          ok: true,
+          response: agentResult.response,
+          executionStatus: agentResult.executionStatus,
+          toolExecutionIds,
+          successfulToolCount: successful.length,
+        };
+        const providerRef = toolExecutionIds[0] || null;
         await completeIdempotentAction({
           tenantId,
           key,
-          result: { ok: true, providerRef },
+          result: executionResult,
           providerReference: providerRef,
         });
-
-        intermediate.result = { ok: true, providerRef, toolExecId };
+        intermediate.result = executionResult;
       }
     }
 
@@ -210,14 +306,13 @@ async function executeTaskStages(params: {
     }
 
     if (stage === 'verify') {
-      const side = await verifyTaskSideEffect({
-        tenantId,
-        taskId: task.id,
-        expectedProvider: 'bonnie_runtime',
-      });
+      const side = await verifyTaskSideEffect({ tenantId, taskId: task.id });
       intermediate.verified = side.ok;
       intermediate.verifyDetail = side.detail;
       intermediate.verifiedAt = new Date().toISOString();
+      if (['specialist', 'communicate'].includes(String(task.task_type)) && !side.ok) {
+        throw new Error(`Task verification failed: ${side.detail}`);
+      }
     }
 
     await saveCheckpoint({

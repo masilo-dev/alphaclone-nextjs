@@ -617,6 +617,16 @@ export class ZohoMailService extends ZohoService {
                             integrationId: zohoIntegration.id,
                         },
                     });
+                    const { recordInboundOutreachReply } = await import('@/lib/outreach/recordInboundOutreachReply');
+                    await recordInboundOutreachReply({
+                        admin,
+                        tenantId: zohoIntegration.tenant_id,
+                        channel: 'email',
+                        sender: normalizedSenderEmail || sender,
+                        text: content,
+                        provider: 'zoho',
+                        providerEventId: messageId,
+                    }).catch((replyError) => console.error('[zoho-inbound] outreach reply capture failed', replyError));
 
                     try {
                         const { searchEmailContext } = await import('@/lib/scraper/emailLeadAutoSearch');

@@ -217,6 +217,33 @@ function rejectLocalAiPaths(value: string | undefined, field: string) {
 }
 
 registerTool('social-publishing', {
+  name: 'create_social_post_with_ai_image',
+  description: 'Generate an image with OpenAI, upload it permanently, create or publish an image post, then return the provider receipt and live URL. Publishing is approval-controlled by Bonnie policy.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(), prompt: z.string().min(3).max(20_000), caption: z.string().min(1).max(20_000),
+    size: z.enum(['1024x1024','1536x1024','1024x1536']).optional().default('1024x1024'),
+    platform: z.enum(['facebook','linkedin']), identity_type: z.enum(['facebook_page','linkedin_person','linkedin_organization']).optional(),
+    identity_id: z.string().optional(), publish_now: z.boolean().optional().default(false), scheduled_at: z.string().datetime().optional(), alt_text: z.string().max(2000).optional(),
+  }),
+  jsonSchema: { type: 'object', properties: { prompt: { type: 'string' }, caption: { type: 'string' }, size: { type: 'string', enum: ['1024x1024','1536x1024','1024x1536'] }, platform: { type: 'string', enum: ['facebook','linkedin'] }, identity_type: { type: 'string', enum: ['facebook_page','linkedin_person','linkedin_organization'] }, identity_id: { type: 'string' }, publish_now: { type: 'boolean' }, scheduled_at: { type: 'string', format: 'date-time' }, alt_text: { type: 'string' } }, required: ['prompt','caption','platform'] },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, args.publish_now ? 'social:publish' : 'social:write');
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('OPENAI_API_KEY is not configured');
+    const model = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2';
+    const response = await fetch('https://api.openai.com/v1/images/generations', { method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model, prompt: args.prompt, n: 1, size: args.size, quality: 'high', output_format: 'png' }) });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload?.error?.message || `OpenAI image generation failed (${response.status})`);
+    const base64 = payload?.data?.[0]?.b64_json;
+    if (!base64) throw new Error('OpenAI did not return image bytes');
+    const asset = await uploadSocialMedia({ tenantId, userId, filename: `bonnie-${crypto.randomUUID()}.png`, mimeType: 'image/png', contentBase64: base64, altText: args.alt_text });
+    const { executeTool } = await import('../tool-registry');
+    const post = await executeTool(tenantId, userId, 'create_social_post', { tenant_id: tenantId, platform: args.platform, platforms: [args.platform], identity_type: args.identity_type, identity_id: args.identity_id, caption: args.caption, media_asset_ids: [asset.media_asset_id], publish_now: args.publish_now, scheduled_at: args.scheduled_at });
+    return { generated: true, model, revised_prompt: payload?.data?.[0]?.revised_prompt || null, media_id: asset.media_asset_id, media_url: asset.public_url, post, verification: { image_stored: Boolean(asset.public_url), post_action_returned: Boolean(post) } };
+  },
+});
+
+registerTool('social-publishing', {
   name: 'upload_media',
   description:
     'Upload AI images with content_base64 (+filename, mime_type). No /mnt/data paths. Returns media_url + media_id for publish_post.media_urls. ' +

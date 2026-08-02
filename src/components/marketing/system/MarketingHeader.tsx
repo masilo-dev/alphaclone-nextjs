@@ -161,7 +161,7 @@ export default function MarketingHeader() {
       <a href="#main-content" className="mkt-skip-link">
         Skip to main content
       </a>
-      <header className={`mkt-header${isScrolled || activeDropdown ? ' is-scrolled' : ''}`}>
+      <header className={`mkt-header${isScrolled || activeDropdown ? ' is-scrolled' : ''}${mobileOpen ? ' is-open' : ''}`}>
         <div className="mkt-container">
           <div className="mkt-header-bar">
             <Logo />
@@ -249,7 +249,7 @@ export default function MarketingHeader() {
                 <SheetContent
                   side="right"
                   showCloseButton={false}
-                  className="mkt-mobile-sheet w-[min(100vw,22rem)] overflow-y-auto border-[var(--border-subtle)] bg-[var(--background-root)]"
+                  className="mkt-mobile-sheet h-[100dvh] w-[min(100vw,22rem)] overscroll-contain overflow-y-auto border-[var(--border-subtle)] bg-[var(--background-root)] pb-[max(1rem,env(safe-area-inset-bottom))]"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <Logo />
@@ -262,25 +262,21 @@ export default function MarketingHeader() {
                     <SheetTitle className="text-[var(--text-primary)]">Menu</SheetTitle>
                   </SheetHeader>
 
-                  <div className="grid gap-2">
-                    <Link
-                      href={TRIAL_HREF}
-                      onClick={() => setMobileOpen(false)}
-                      className="mkt-btn mkt-btn-primary w-full"
-                    >
-                      {CTA_LABELS.primary}
-                    </Link>
-                    <Link
-                      href={LOGIN_HREF}
-                      onClick={() => setMobileOpen(false)}
-                      data-login-trigger
-                      className="mkt-btn mkt-btn-ghost w-full border border-[var(--border-subtle)]"
-                    >
-                      {CTA_LABELS.tertiaryLogin}
-                    </Link>
-                  </div>
-
-                  <nav className="grid gap-4 pt-2" aria-label="Mobile navigation">
+                  <nav className="grid gap-2 pt-2" aria-label="Mobile navigation">
+                    <details className="group rounded-xl border border-cyan-500/30 bg-cyan-500/[0.06]" open>
+                      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-3 text-sm font-semibold text-white">
+                        Account
+                        <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                      </summary>
+                      <div className="grid gap-2 border-t border-cyan-500/20 p-3">
+                        <Link href={LOGIN_HREF} onClick={() => setMobileOpen(false)} data-login-trigger className="mkt-btn mkt-btn-secondary w-full">
+                          {CTA_LABELS.tertiaryLogin}
+                        </Link>
+                        <Link href={TRIAL_HREF} onClick={() => setMobileOpen(false)} className="mkt-btn mkt-btn-primary w-full">
+                          {CTA_LABELS.primary}
+                        </Link>
+                      </div>
+                    </details>
                     <Link
                       href="/pricing"
                       onClick={() => setMobileOpen(false)}
@@ -289,9 +285,12 @@ export default function MarketingHeader() {
                       Pricing
                     </Link>
                     {DROPDOWNS.map((section) => (
-                      <div key={section.key}>
-                        <p className="mkt-mobile-section-label">{section.label}</p>
-                        <div className="mt-2 grid gap-1">
+                      <details key={section.key} className="group rounded-xl border border-[var(--border-subtle)] bg-white/[0.02]">
+                        <summary className="mkt-mobile-section-label flex min-h-12 cursor-pointer list-none items-center justify-between px-3">
+                          {section.label}
+                          <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                        </summary>
+                        <div className="grid gap-1 border-t border-[var(--border-subtle)] p-2">
                           {section.links.map((item) => (
                             <Link
                               key={item.path}
@@ -307,7 +306,7 @@ export default function MarketingHeader() {
                           ))}
 
                         </div>
-                      </div>
+                      </details>
                     ))}
                   </nav>
                 </SheetContent>

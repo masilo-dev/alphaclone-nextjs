@@ -56,6 +56,45 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
         }
 
+        const now = new Date().toISOString();
+        const signerEmail = String(signingToken.signer_email || '').trim().toLowerCase();
+        const { data: party } = await admin
+            .from('contract_parties')
+            .select('id, signing_order')
+            .eq('tenant_id', signingToken.tenant_id)
+            .eq('contract_id', signingToken.contract_id)
+            .contains('party_snapshot', { email: signerEmail })
+            .maybeSingle();
+
+        await Promise.all([
+            admin.from('contract_signature_events').insert({
+                tenant_id: signingToken.tenant_id,
+                contract_id: signingToken.contract_id,
+                party_id: party?.id || null,
+                event_type: 'viewed',
+                signer_email: signerEmail,
+                signing_order: party?.signing_order || null,
+                provider: 'bonnie_esign',
+                ip_address: getClientIpAddress(req),
+                user_agent: req.headers.get('user-agent') || 'unknown',
+                evidence: { token_expires_at: signingToken.expires_at },
+                occurred_at: now,
+            }),
+            admin.from('contract_audit_trail').insert({
+                tenant_id: signingToken.tenant_id,
+                contract_id: signingToken.contract_id,
+                action: 'contract_viewed',
+                actor_role: signingToken.signer_role,
+                actor_email: signerEmail,
+                ip_address: getClientIpAddress(req),
+                user_agent: req.headers.get('user-agent') || 'unknown',
+            }),
+            admin.from('contracts').update({
+                viewed_at: contract.client_signed_at ? undefined : now,
+                lifecycle_status: ['draft', 'review', 'sent'].includes(String(contract.status)) ? 'viewed' : undefined,
+            }).eq('id', signingToken.contract_id).eq('tenant_id', signingToken.tenant_id),
+        ]);
+
         return NextResponse.json({
             success: true,
             token,
@@ -140,6 +179,18 @@ export async function POST(req: NextRequest) {
                 normalizedSignerName ||
                 String(updatedContract.client_name || updatedContract.signer_name || 'Signer').trim();
             const fullySigned = updatedContract.status === 'fully_signed';
+
+            if (!fullySigned) {
+                const { sendOrderedContractSignatureReminders } = await import(
+                    '@/services/contractSignatureReminderService'
+                );
+                await sendOrderedContractSignatureReminders({
+                    tenantId: updatedContract.tenant_id,
+                    contractId: updatedContract.id,
+                    actorUserId: updatedContract.created_by || undefined,
+                    force: true,
+                }).catch((err) => console.error('Next ordered signer notification failed:', err));
+            }
 
             if (
                 signerEmailForMail &&

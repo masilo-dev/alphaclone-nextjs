@@ -1,16 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { start } from 'workflow/api';
-import { contractLifecycleWorkflow } from '@/workflows/contract-lifecycle';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
-import { operationFailed } from '@/lib/api/operationResult';
-import { BrowserManager } from '@/lib/scraper/browserManager';
-import { requireTenantAccess } from '@/lib/apiAuth';
-import { sendEmailServer } from '@/lib/email/sendEmailServer';
-import { contractEmailTemplates } from '@/lib/email/contractEmailTemplates';
-import { generateThemedContractPdfBuffer } from '@/lib/documents/themedDocumentPdf';
-import { randomBytes } from 'crypto';
-import { AppUrls } from '@/lib/urls';
+import { NextRequest, NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase-admin";
+import { start } from "workflow/api";
+import { contractLifecycleWorkflow } from "@/workflows/contract-lifecycle";
+import { clientErrorResponse } from "@/lib/api/clientErrorResponse";
+import { operationFailed } from "@/lib/api/operationResult";
+import { BrowserManager } from "@/lib/scraper/browserManager";
+import { requireTenantAccess } from "@/lib/apiAuth";
+import { sendEmailServer } from "@/lib/email/sendEmailServer";
+import { contractEmailTemplates } from "@/lib/email/contractEmailTemplates";
+import { generateThemedContractPdfBuffer } from "@/lib/documents/themedDocumentPdf";
+import { randomBytes } from "crypto";
+import { AppUrls } from "@/lib/urls";
+import { validateContract } from "@/lib/documents/documentValidationEngine";
 import {
   AlignmentType,
   Document,
@@ -20,56 +21,96 @@ import {
   PageNumber,
   Paragraph,
   TextRun,
-} from 'docx';
+} from "docx";
 
 export async function POST(req: NextRequest) {
   try {
     const { tenantId, action, config } = await req.json();
 
     if (!tenantId || !action) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required parameters" },
+        { status: 400 },
+      );
     }
     const { user, admin: supabase } = await requireTenantAccess(tenantId);
     try {
-      const { error: tenantContextError } = await supabase.rpc('set_tenant_context', { tenant_id: tenantId });
+      const { error: tenantContextError } = await supabase.rpc(
+        "set_tenant_context",
+        { tenant_id: tenantId },
+      );
       if (tenantContextError) {
-        console.warn('[api] set_tenant_context unavailable:', tenantContextError.message);
+        console.warn(
+          "[api] set_tenant_context unavailable:",
+          tenantContextError.message,
+        );
       }
     } catch (contextError) {
-      console.warn('[contracts/management] set_tenant_context unavailable:', contextError);
+      console.warn(
+        "[contracts/management] set_tenant_context unavailable:",
+        contextError,
+      );
     }
 
     switch (action) {
-      case 'create_contract':
-        return NextResponse.json(await createContract(tenantId, config, supabase));
-      case 'update_contract':
-        return NextResponse.json(await updateContract(tenantId, config, supabase));
-      case 'get_contracts':
-        return NextResponse.json(await getContracts(tenantId, config, supabase));
-      case 'download_contract':
-        return NextResponse.json(await downloadContract(tenantId, config, supabase));
-      case 'send_contract':
-        return NextResponse.json(await sendContract(tenantId, config, supabase, user.id));
-      case 'delete_contract':
-        return NextResponse.json(await deleteContract(tenantId, config, supabase));
-      case 'get_templates':
+      case "create_contract":
+        return NextResponse.json(
+          await createContract(tenantId, config, supabase),
+        );
+      case "update_contract":
+        return NextResponse.json(
+          await updateContract(tenantId, config, supabase),
+        );
+      case "get_contracts":
+        return NextResponse.json(
+          await getContracts(tenantId, config, supabase),
+        );
+      case "download_contract":
+        return NextResponse.json(
+          await downloadContract(tenantId, config, supabase),
+        );
+      case "send_contract":
+        return NextResponse.json(
+          await sendContract(tenantId, config, supabase, user.id),
+        );
+      case "delete_contract":
+        return NextResponse.json(
+          await deleteContract(tenantId, config, supabase),
+        );
+      case "get_templates":
         return NextResponse.json(await getTemplates(tenantId, supabase));
-      case 'create_template':
-        return NextResponse.json(await createTemplate(tenantId, config, supabase, user.id));
-      case 'get_contract_versions':
-        return NextResponse.json(await getContractVersions(tenantId, config, supabase));
-      case 'create_contract_version':
-        return NextResponse.json(await createContractVersion(tenantId, config, supabase, user.id));
-      case 'request_contract_approval':
-        return NextResponse.json(await requestContractApproval(tenantId, config, supabase, user.id));
-      case 'review_contract_approval':
-        return NextResponse.json(await reviewContractApproval(tenantId, config, supabase));
+      case "create_template":
+        return NextResponse.json(
+          await createTemplate(tenantId, config, supabase, user.id),
+        );
+      case "get_contract_versions":
+        return NextResponse.json(
+          await getContractVersions(tenantId, config, supabase),
+        );
+      case "create_contract_version":
+        return NextResponse.json(
+          await createContractVersion(tenantId, config, supabase, user.id),
+        );
+      case "request_contract_approval":
+        return NextResponse.json(
+          await requestContractApproval(tenantId, config, supabase, user.id),
+        );
+      case "review_contract_approval":
+        return NextResponse.json(
+          await reviewContractApproval(tenantId, config, supabase),
+        );
       default:
-        return NextResponse.json({ error: 'Unsupported action' }, { status: 400 });
+        return NextResponse.json(
+          { error: "Unsupported action" },
+          { status: 400 },
+        );
     }
   } catch (error: unknown) {
-    console.error('Contract management error:', error);
-    return clientErrorResponse(error, { request: req, scope: 'contracts/management.POST' });
+    console.error("Contract management error:", error);
+    return clientErrorResponse(error, {
+      request: req,
+      scope: "contracts/management.POST",
+    });
   }
 }
 
@@ -85,7 +126,7 @@ async function createContract(tenantId: string, config: any, supabase: any) {
       pages = 2,
       fontSize = 12,
       lineSpacing = 1.2,
-      template = 'standard'
+      template = "standard",
     } = config;
 
     // Generate AI-powered contract content
@@ -98,12 +139,12 @@ async function createContract(tenantId: string, config: any, supabase: any) {
       pages,
       fontSize,
       lineSpacing,
-      template
+      template,
     });
 
     // Save contract to database
     const { data: contract, error } = await supabase
-      .from('contracts')
+      .from("contracts")
       .insert({
         tenant_id: tenantId,
         title: title || `${type} Agreement`,
@@ -117,26 +158,27 @@ async function createContract(tenantId: string, config: any, supabase: any) {
         font_size: fontSize,
         line_spacing: lineSpacing,
         template: template,
-        status: 'draft',
-        created_at: new Date().toISOString()
+        status: "draft",
+        created_at: new Date().toISOString(),
       })
       .select()
       .single();
 
     if (error) throw error;
 
-    const { notifyContractCreated } = await import('@/services/contractNotificationService');
-    await notifyContractCreated(tenantId, contract.id, contract.title).catch((err) =>
-      console.error('[createContract] notify failed:', err)
+    const { notifyContractCreated } =
+      await import("@/services/contractNotificationService");
+    await notifyContractCreated(tenantId, contract.id, contract.title).catch(
+      (err) => console.error("[createContract] notify failed:", err),
     );
 
     return {
       success: true,
       data: contract,
-      message: 'Contract created successfully'
+      message: "Contract created successfully",
     };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
@@ -146,13 +188,13 @@ async function updateContract(tenantId: string, config: any, supabase: any) {
 
     // Update contract
     const { data: contract, error } = await supabase
-      .from('contracts')
+      .from("contracts")
       .update({
         ...updates,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', contractId)
-      .eq('tenant_id', tenantId)
+      .eq("id", contractId)
+      .eq("tenant_id", tenantId)
       .select()
       .single();
 
@@ -161,10 +203,10 @@ async function updateContract(tenantId: string, config: any, supabase: any) {
     return {
       success: true,
       data: contract,
-      message: 'Contract updated successfully'
+      message: "Contract updated successfully",
     };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
@@ -173,20 +215,24 @@ async function getContracts(tenantId: string, config: any, supabase: any) {
     const { page = 1, limit = 10, status, type } = config;
 
     let query = supabase
-      .from('contracts')
-      .select('*', { count: 'exact' })
-      .eq('tenant_id', tenantId);
+      .from("contracts")
+      .select("*", { count: "exact" })
+      .eq("tenant_id", tenantId);
 
     if (status) {
-      query = query.eq('status', status);
+      query = query.eq("status", status);
     }
 
     if (type) {
-      query = query.eq('type', type);
+      query = query.eq("type", type);
     }
 
-    const { data: contracts, error, count } = await query
-      .order('created_at', { ascending: false })
+    const {
+      data: contracts,
+      error,
+      count,
+    } = await query
+      .order("created_at", { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
     if (error) throw error;
@@ -199,45 +245,53 @@ async function getContracts(tenantId: string, config: any, supabase: any) {
           page,
           limit,
           total: count || 0,
-          pages: Math.ceil((count || 0) / limit)
-        }
-      }
+          pages: Math.ceil((count || 0) / limit),
+        },
+      },
     };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
 async function downloadContract(tenantId: string, config: any, supabase: any) {
   try {
-    const { contractId, format = 'pdf', optimize = true } = config;
+    const { contractId, format = "pdf", optimize = true } = config;
 
     const { data: contract, error } = await supabase
-      .from('contracts')
-      .select('*, tenant:tenants(name, logo_url, settings)')
-      .eq('id', contractId)
-      .eq('tenant_id', tenantId)
+      .from("contracts")
+      .select("*, tenant:tenants(name, logo_url, settings)")
+      .eq("id", contractId)
+      .eq("tenant_id", tenantId)
       .single();
 
     if (error || !contract) {
-      return { success: false, error: 'Contract not found' };
+      return { success: false, error: "Contract not found" };
     }
 
     let pdfBuffer: Buffer;
-    if (format === 'pdf') {
+    if (format === "pdf") {
       let client: { name?: string; email?: string } | undefined;
       if (contract.client_id) {
         const { data: clientRow } = await supabase
-          .from('business_clients')
-          .select('name, email')
-          .eq('id', contract.client_id)
+          .from("business_clients")
+          .select("name, email")
+          .eq("id", contract.client_id)
           .maybeSingle();
-        if (clientRow) client = { name: clientRow.name, email: clientRow.email };
+        if (clientRow)
+          client = { name: clientRow.name, email: clientRow.email };
       }
       try {
-        pdfBuffer = await generateThemedContractPdfBuffer(contract, contract.tenant, client);
+        pdfBuffer = await generateThemedContractPdfBuffer(
+          contract,
+          contract.tenant,
+          client,
+        );
       } catch (themeError) {
-        console.warn('[contracts/management] Themed PDF failed, falling back:', themeError);
+        console.warn(
+          "[contracts/management] Themed PDF failed, falling back:",
+          themeError,
+        );
         pdfBuffer = await generateOptimizedContractPDF({
           content: contract.content,
           fontSize: contract.font_size || 12,
@@ -245,7 +299,7 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
           targetPages: contract.pages || 2,
           format: format,
           optimize: optimize,
-          template: contract.template || 'standard'
+          template: contract.template || "standard",
         });
       }
     } else {
@@ -256,34 +310,35 @@ async function downloadContract(tenantId: string, config: any, supabase: any) {
         targetPages: contract.pages || 2,
         format: format,
         optimize: optimize,
-        template: contract.template || 'standard'
+        template: contract.template || "standard",
       });
     }
 
     await supabase
-      .from('contracts')
-      .update({ 
+      .from("contracts")
+      .update({
         download_count: (contract.download_count || 0) + 1,
-        last_downloaded: new Date().toISOString()
+        last_downloaded: new Date().toISOString(),
       })
-      .eq('id', contractId);
+      .eq("id", contractId);
 
     return {
       success: true,
       data: {
-        filename: `${contract.title.replace(/[^a-zA-Z0-9]/g, '_')}.${format}`,
-        bufferBase64: pdfBuffer.toString('base64'),
-        mimeType: format === 'docx'
-          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          : 'application/pdf',
+        filename: `${contract.title.replace(/[^a-zA-Z0-9]/g, "_")}.${format}`,
+        bufferBase64: pdfBuffer.toString("base64"),
+        mimeType:
+          format === "docx"
+            ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            : "application/pdf",
         size: pdfBuffer.length,
         pages: contract.pages,
-        optimized: optimize
+        optimized: optimize,
       },
-      message: 'Contract downloaded successfully'
+      message: "Contract downloaded successfully",
     };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
@@ -293,83 +348,192 @@ async function deleteContract(tenantId: string, config: any, supabase: any) {
 
     // Delete contract
     const { error } = await supabase
-      .from('contracts')
+      .from("contracts")
       .delete()
-      .eq('id', contractId)
-      .eq('tenant_id', tenantId);
+      .eq("id", contractId)
+      .eq("tenant_id", tenantId);
 
     if (error) throw error;
 
     return {
       success: true,
-      message: 'Contract deleted successfully'
+      message: "Contract deleted successfully",
     };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
-export async function sendContract(tenantId: string, config: any, supabase: any, actorUserId: string) {
+export async function sendContract(
+  tenantId: string,
+  config: any,
+  supabase: any,
+  actorUserId: string,
+) {
   try {
-    const { contractId, recipients, subject, message, format = 'pdf', provider, resendForSignature = false } = config;
+    const {
+      contractId,
+      recipients,
+      subject,
+      message,
+      format = "pdf",
+      provider,
+      resendForSignature = false,
+    } = config;
     if (!contractId) {
-      return { success: false, error: 'contractId is required' };
+      return { success: false, error: "contractId is required" };
     }
 
     const { data: contract, error } = await supabase
-      .from('contracts')
-      .select('*')
-      .eq('id', contractId)
-      .eq('tenant_id', tenantId)
+      .from("contracts")
+      .select("*")
+      .eq("id", contractId)
+      .eq("tenant_id", tenantId)
       .single();
 
     if (error || !contract) {
-      return { success: false, error: 'Contract not found' };
+      return { success: false, error: "Contract not found" };
     }
 
     const isResend = Boolean(resendForSignature);
-    if (isResend && contract.status === 'fully_signed') {
-      return { success: false, error: 'Contract is already fully signed' };
+    if (isResend && contract.status === "fully_signed") {
+      return { success: false, error: "Contract is already fully signed" };
+    }
+
+    const metadata = (contract.metadata || {}) as Record<string, unknown>;
+    const validation = validateContract({
+      text: String(contract.content || ""),
+      clientName:
+        String(contract.client_name || metadata.client_name || "").trim() ||
+        undefined,
+      clientEmail:
+        String(contract.client_email || metadata.client_email || "").trim() ||
+        undefined,
+      clientAddress:
+        String(
+          contract.client_address || metadata.client_address || "",
+        ).trim() || undefined,
+      jurisdiction:
+        String(contract.jurisdiction || contract.governing_law || "").trim() ||
+        undefined,
+      hasSignatureBlock: /signature|signed\s+by|\/s\//i.test(
+        String(contract.content || ""),
+      ),
+      isDraft: contract.status === "draft",
+      hasSignaturesFilled: Boolean(
+        contract.client_signature || contract.admin_signature,
+      ),
+      documentVersion:
+        contract.current_version_id ||
+        String(metadata.version || "").trim() ||
+        null,
+      pageCount: Number(contract.pages || 0) || null,
+      hasPageNumbers: metadata.has_page_numbers === true,
+    });
+    const reviewedAt = new Date().toISOString();
+    await supabase
+      .from("contracts")
+      .update({
+        last_risk_review_at: reviewedAt,
+        risk_findings: validation.findings,
+        metadata: {
+          ...metadata,
+          last_pre_send_validation: {
+            score: validation.score,
+            can_send: validation.can_send,
+            reviewed_at: reviewedAt,
+          },
+        },
+      })
+      .eq("tenant_id", tenantId)
+      .eq("id", contractId);
+    await supabase
+      .from("contract_lifecycle_events")
+      .insert({
+        tenant_id: tenantId,
+        contract_id: contractId,
+        from_status: contract.lifecycle_status || contract.status,
+        to_status: contract.lifecycle_status || contract.status,
+        reason: validation.can_send
+          ? "Pre-send validation passed"
+          : "Pre-send validation blocked delivery",
+        actor_user_id: actorUserId,
+        source: "pre_send_validation",
+        evidence: { score: validation.score, findings: validation.findings },
+      });
+    if (!validation.can_send) {
+      return {
+        success: false,
+        error: `Contract failed pre-send legal checks: ${validation.findings
+          .filter((finding) => finding.severity === "critical")
+          .map((finding) => finding.message)
+          .join(" ")}`,
+        validation,
+      };
     }
 
     const explicitRecipient = Array.isArray(recipients)
-      ? String(recipients[0] || '').trim().toLowerCase()
-      : String(recipients || '').trim().toLowerCase();
+      ? String(recipients[0] || "")
+          .trim()
+          .toLowerCase()
+      : String(recipients || "")
+          .trim()
+          .toLowerCase();
 
-    let recipientEmail = explicitRecipient.includes('@') ? explicitRecipient : '';
+    let recipientEmail = explicitRecipient.includes("@")
+      ? explicitRecipient
+      : "";
     if (!recipientEmail) {
       const meta = (contract.metadata || {}) as Record<string, unknown>;
-      const metaEmail = String(meta.client_email || meta.clientEmail || meta.signer_email || '').trim().toLowerCase();
-      if (metaEmail.includes('@')) recipientEmail = metaEmail;
+      const metaEmail = String(
+        meta.client_email || meta.clientEmail || meta.signer_email || "",
+      )
+        .trim()
+        .toLowerCase();
+      if (metaEmail.includes("@")) recipientEmail = metaEmail;
     }
     if (!recipientEmail && contract.client_id) {
       const { data: businessClient } = await supabase
-        .from('business_clients')
-        .select('email, emails, name')
-        .eq('id', contract.client_id)
-        .eq('tenant_id', tenantId)
+        .from("business_clients")
+        .select("email, emails, name")
+        .eq("id", contract.client_id)
+        .eq("tenant_id", tenantId)
         .maybeSingle();
-      const clientEmail = String(businessClient?.email || '').trim().toLowerCase();
-      if (clientEmail.includes('@')) {
+      const clientEmail = String(businessClient?.email || "")
+        .trim()
+        .toLowerCase();
+      if (clientEmail.includes("@")) {
         recipientEmail = clientEmail;
-      } else if (Array.isArray(businessClient?.emails) && businessClient.emails.length > 0) {
-        const first = String(businessClient.emails[0] || '').trim().toLowerCase();
-        if (first.includes('@')) recipientEmail = first;
+      } else if (
+        Array.isArray(businessClient?.emails) &&
+        businessClient.emails.length > 0
+      ) {
+        const first = String(businessClient.emails[0] || "")
+          .trim()
+          .toLowerCase();
+        if (first.includes("@")) recipientEmail = first;
       }
 
       if (!recipientEmail) {
         const { data: contact } = await supabase
-          .from('contacts')
-          .select('email, emails')
-          .eq('id', contract.client_id)
-          .eq('tenant_id', tenantId)
+          .from("contacts")
+          .select("email, emails")
+          .eq("id", contract.client_id)
+          .eq("tenant_id", tenantId)
           .maybeSingle();
-        const contactEmail = String(contact?.email || '').trim().toLowerCase();
-        if (contactEmail.includes('@')) {
+        const contactEmail = String(contact?.email || "")
+          .trim()
+          .toLowerCase();
+        if (contactEmail.includes("@")) {
           recipientEmail = contactEmail;
-        } else if (Array.isArray(contact?.emails) && contact.emails.length > 0) {
-          const first = String(contact.emails[0] || '').trim().toLowerCase();
-          if (first.includes('@')) recipientEmail = first;
+        } else if (
+          Array.isArray(contact?.emails) &&
+          contact.emails.length > 0
+        ) {
+          const first = String(contact.emails[0] || "")
+            .trim()
+            .toLowerCase();
+          if (first.includes("@")) recipientEmail = first;
         }
       }
     }
@@ -377,64 +541,112 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
     if (!recipientEmail) {
       return {
         success: false,
-        error: 'No client email found for this contract. Add an email on the client record or enter a recipient.',
+        error:
+          "No client email found for this contract. Add an email on the client record or enter a recipient.",
       };
     }
 
-    const resolvedRecipients =
-      Array.isArray(recipients) && recipients.length > 0 && explicitRecipient.includes('@')
-        ? recipients
-        : [recipientEmail];
+    const { data: existingParties, error: existingPartiesError } = await supabase
+      .from("contract_parties")
+      .select("id,signing_order,signature_status,party_snapshot")
+      .eq("tenant_id", tenantId)
+      .eq("contract_id", contractId);
+    if (existingPartiesError) return { success: false, error: "Failed to resolve contract signer" };
+    let signingParty = (existingParties || []).find((party: any) => String(party.party_snapshot?.email || '').trim().toLowerCase() === recipientEmail);
+    if (!signingParty) {
+      const { data: lastParty } = await supabase
+        .from("contract_parties")
+        .select("signing_order")
+        .eq("tenant_id", tenantId)
+        .eq("contract_id", contractId)
+        .order("signing_order", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const { data: createdParty, error: partyError } = await supabase
+        .from("contract_parties")
+        .insert({
+          tenant_id: tenantId,
+          contract_id: contractId,
+          party_snapshot: { email: recipientEmail, name: contract.client_name || recipientEmail },
+          role: "client",
+          signing_order: Number(lastParty?.signing_order || 0) + 1,
+          signature_required: true,
+          signature_status: "not_requested",
+        })
+        .select("id,signing_order,signature_status,party_snapshot")
+        .single();
+      if (partyError) return { success: false, error: "Failed to create contract signer" };
+      signingParty = createdParty;
+    }
+    const blockedByEarlierSigner = (existingParties || []).some((party: any) =>
+      party.id !== signingParty.id &&
+      Number.isFinite(Number(party.signing_order)) &&
+      Number(party.signing_order) < Number(signingParty.signing_order || Number.MAX_SAFE_INTEGER) &&
+      String(party.signature_status || '').toLowerCase() !== 'signed'
+    );
+    if (blockedByEarlierSigner) {
+      return { success: false, error: 'An earlier signer must sign first. Use “Remind next” to contact the next eligible signer in order.' };
+    }
 
-    const token = randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date(
+      Date.now() + 14 * 24 * 60 * 60 * 1000,
+    ).toISOString();
     const { error: tokenError } = await supabase
-      .from('contract_signing_tokens')
+      .from("contract_signing_tokens")
       .insert({
         tenant_id: tenantId,
         contract_id: contractId,
         token,
         signer_email: recipientEmail,
-        signer_role: 'client',
+        signer_role: "client",
         expires_at: expiresAt,
         created_by: actorUserId,
         metadata: {
-          source: 'contracts_management_send',
+          source: "contracts_management_send",
+          party_id: signingParty.id,
           createdAt: new Date().toISOString(),
         },
       });
 
     if (tokenError) {
-      return { success: false, error: 'Failed to create signing link' };
+      return { success: false, error: "Failed to create signing link" };
     }
 
     const signingUrl = AppUrls.signContract(token);
 
-    const generated = await downloadContract(tenantId, { contractId, format, optimize: true }, supabase);
+    const generated = await downloadContract(
+      tenantId,
+      { contractId, format, optimize: true },
+      supabase,
+    );
     if (!generated?.success || !generated?.data?.bufferBase64) {
-      return { success: false, error: 'Failed to generate contract document' };
+      return { success: false, error: "Failed to generate contract document" };
     }
 
     const { data: tenantData } = await supabase
-      .from('tenants')
-      .select('name')
-      .eq('id', tenantId)
+      .from("tenants")
+      .select("name")
+      .eq("id", tenantId)
       .single();
 
-    const tenantName = tenantData?.name || 'AlphaClone Systems';
+    const tenantName = tenantData?.name || "AlphaClone Systems";
     const urgencySubject = `Action required: Sign contract — ${contract.title} (your process is on hold)`;
     const urgencyMessage =
       message ||
       `We still need your signature on "${contract.title}". Until this contract is signed, we cannot move your project forward. Please review and sign using the secure link below as soon as possible.`;
     const emailResult = await sendEmailServer({
-      to: resolvedRecipients,
-      subject: subject || (isResend ? urgencySubject : `Contract: ${contract.title}`),
+      // A signing token is identity-bound. Never broadcast one signer's token
+      // to a recipient list; later signers receive their own ordered token.
+      to: recipientEmail,
+      subject:
+        subject || (isResend ? urgencySubject : `Contract: ${contract.title}`),
       text: `${isResend ? urgencyMessage : message || `Please review and sign the attached contract: ${contract.title}`}\n\nSign securely here: ${signingUrl}\n\nThis link expires in 14 days and is tied to ${recipientEmail}.`,
       html: contractEmailTemplates.signatureRequest({
         recipientEmail,
         tenantId,
         contractTitle: contract.title,
-        contractType: contract.type || 'Service Agreement',
+        contractType: contract.type || "Service Agreement",
         signingUrl,
         workspaceName: tenantName,
         customMessage: isResend ? urgencyMessage : message || undefined,
@@ -442,77 +654,113 @@ export async function sendContract(tenantId: string, config: any, supabase: any,
       tenantId,
       userId: actorUserId || undefined,
       fromName: tenantName,
-      preferredProvider: provider as any || undefined,
+      preferredProvider: (provider as any) || undefined,
       skipFooter: true,
-      attachments: [{
-        filename: generated.data.filename || `${String(contract.title || 'contract').replace(/\s+/g, '_')}.${format}`,
-        content: generated.data.bufferBase64,
-        contentType: generated.data.mimeType || (format === 'docx'
-          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-          : 'application/pdf'),
-      }],
+      attachments: [
+        {
+          filename:
+            generated.data.filename ||
+            `${String(contract.title || "contract").replace(/\s+/g, "_")}.${format}`,
+          content: generated.data.bufferBase64,
+          contentType:
+            generated.data.mimeType ||
+            (format === "docx"
+              ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              : "application/pdf"),
+        },
+      ],
     } as any);
 
     if (!emailResult.success) {
-      return { success: false, error: emailResult.error || 'Failed to send contract email' };
+      return {
+        success: false,
+        error: emailResult.error || "Failed to send contract email",
+      };
     }
 
-    await supabase
-      .from('contracts')
-      .update({ status: contract.status === 'draft' ? 'sent' : contract.status, updated_at: new Date().toISOString() })
-      .eq('id', contractId)
-      .eq('tenant_id', tenantId);
-
-    const { runId } = await start(contractLifecycleWorkflow, [{ contractId, tenantId }]);
-
     const sentAt = new Date().toISOString();
-    const { notifyContractSent } = await import('@/services/contractNotificationService');
-    await notifyContractSent(tenantId, contractId, contract.title, recipientEmail, actorUserId).catch(
-      (err) => console.error('[sendContract] notify failed:', err)
-    );
+    const providerReceipt = emailResult.emailId || `contract-send:${contractId}:${Date.now()}`;
+    const fromLifecycle = String(contract.lifecycle_status || contract.status || "draft");
+    const [contractUpdate, partyUpdate, signatureEvidence, lifecycleEvidence] = await Promise.all([
+      supabase.from("contracts").update({ status: "sent", lifecycle_status: "sent", updated_at: sentAt }).eq("id", contractId).eq("tenant_id", tenantId),
+      supabase.from("contract_parties").update({ signature_status: "requested" }).eq("tenant_id", tenantId).eq("id", signingParty.id),
+      supabase.from("contract_signature_events").insert({
+        tenant_id: tenantId, contract_id: contractId, party_id: signingParty.id,
+        event_type: "requested", signer_email: recipientEmail, signing_order: signingParty.signing_order || null,
+        provider: emailResult.provider || "email", provider_event_id: providerReceipt,
+        evidence: { provider_accepted: true, delivery_verified: false, signing_url_created: true, token_expires_at: expiresAt, recipient: recipientEmail },
+      }),
+      supabase.from("contract_lifecycle_events").insert({
+        tenant_id: tenantId, contract_id: contractId, from_status: fromLifecycle, to_status: "sent",
+        reason: isResend ? "Contract resent for signature" : "Contract sent for signature",
+        actor_user_id: actorUserId, source: "contracts_management_send",
+        evidence: { provider: emailResult.provider || null, provider_event_id: providerReceipt, recipient: recipientEmail },
+      }),
+    ]);
+    const writeError = [contractUpdate, partyUpdate, signatureEvidence, lifecycleEvidence].find((result) => result.error)?.error;
+    if (writeError) return { success: false, error: `Contract was delivered but lifecycle evidence could not be recorded: ${writeError.message}` };
+
+    const { runId } = await start(contractLifecycleWorkflow, [
+      { contractId, tenantId },
+    ]);
+
+    const { notifyContractSent } =
+      await import("@/services/contractNotificationService");
+    await notifyContractSent(
+      tenantId,
+      contractId,
+      contract.title,
+      recipientEmail,
+      actorUserId,
+    ).catch((err) => console.error("[sendContract] notify failed:", err));
 
     return {
       success: true,
       sent: true,
       sent_to: recipientEmail,
       sent_at: sentAt,
-      message: 'Contract sent successfully',
+      message: "Contract sent successfully",
       signingUrl,
-      runId
+      runId,
     };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
 async function getTemplates(tenantId: string, supabase: any) {
   try {
     const { data, error } = await supabase
-      .from('contract_templates')
-      .select('*')
+      .from("contract_templates")
+      .select("*")
       .or(`tenant_id.eq.${tenantId},tenant_id.is.null`)
-      .eq('is_active', true)
-      .order('is_default', { ascending: false })
-      .order('name', { ascending: true });
+      .eq("is_active", true)
+      .order("is_default", { ascending: false })
+      .order("name", { ascending: true });
 
     if (error) throw error;
     return { success: true, data: { templates: data || [] } };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
-async function createTemplate(tenantId: string, config: any, supabase: any, userId: string) {
+async function createTemplate(
+  tenantId: string,
+  config: any,
+  supabase: any,
+  userId: string,
+) {
   try {
     const { data, error } = await supabase
-      .from('contract_templates')
+      .from("contract_templates")
       .insert({
         tenant_id: tenantId,
         name: config.name,
-        category: config.category || 'service',
+        category: config.category || "service",
         description: config.description,
-        content: config.content || '',
-        output_format: config.outputFormat || 'html',
+        content: config.content || "",
+        output_format: config.outputFormat || "html",
         approval_required: config.approvalRequired ?? false,
         is_active: config.isActive ?? true,
         is_default: config.isDefault ?? false,
@@ -521,48 +769,61 @@ async function createTemplate(tenantId: string, config: any, supabase: any, user
         updated_by: userId,
         metadata: config.metadata || {},
       })
-      .select('*')
+      .select("*")
       .single();
 
     if (error) throw error;
-    return { success: true, data, message: 'Contract template created successfully' };
+    return {
+      success: true,
+      data,
+      message: "Contract template created successfully",
+    };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
-async function getContractVersions(tenantId: string, config: any, supabase: any) {
+async function getContractVersions(
+  tenantId: string,
+  config: any,
+  supabase: any,
+) {
   try {
     const { contractId } = config;
     const { data, error } = await supabase
-      .from('contract_versions')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('contract_id', contractId)
-      .order('version_number', { ascending: false });
+      .from("contract_versions")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("contract_id", contractId)
+      .order("version_number", { ascending: false });
 
     if (error) throw error;
     return { success: true, data: { versions: data || [] } };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
-async function createContractVersion(tenantId: string, config: any, supabase: any, userId: string) {
+async function createContractVersion(
+  tenantId: string,
+  config: any,
+  supabase: any,
+  userId: string,
+) {
   try {
-    const { contractId, content, changeSummary, status = 'draft' } = config;
+    const { contractId, content, changeSummary, status = "draft" } = config;
     const { data: latest } = await supabase
-      .from('contract_versions')
-      .select('version_number')
-      .eq('tenant_id', tenantId)
-      .eq('contract_id', contractId)
-      .order('version_number', { ascending: false })
+      .from("contract_versions")
+      .select("version_number")
+      .eq("tenant_id", tenantId)
+      .eq("contract_id", contractId)
+      .order("version_number", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     const versionNumber = Number(latest?.version_number || 0) + 1;
     const { data, error } = await supabase
-      .from('contract_versions')
+      .from("contract_versions")
       .insert({
         tenant_id: tenantId,
         contract_id: contractId,
@@ -573,20 +834,29 @@ async function createContractVersion(tenantId: string, config: any, supabase: an
         created_by: userId,
         metadata: config.metadata || {},
       })
-      .select('*')
+      .select("*")
       .single();
 
     if (error) throw error;
-    return { success: true, data, message: 'Contract version created successfully' };
+    return {
+      success: true,
+      data,
+      message: "Contract version created successfully",
+    };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
-async function requestContractApproval(tenantId: string, config: any, supabase: any, userId: string) {
+async function requestContractApproval(
+  tenantId: string,
+  config: any,
+  supabase: any,
+  userId: string,
+) {
   try {
     const { data, error } = await supabase
-      .from('contract_approvals')
+      .from("contract_approvals")
       .insert({
         tenant_id: tenantId,
         contract_id: config.contractId,
@@ -595,86 +865,106 @@ async function requestContractApproval(tenantId: string, config: any, supabase: 
         approver_id: config.approverId || null,
         request_note: config.requestNote,
         due_at: config.dueAt || null,
-        status: 'pending',
+        status: "pending",
         metadata: config.metadata || {},
       })
-      .select('*')
+      .select("*")
       .single();
 
     if (error) throw error;
 
     if (config.contractVersionId) {
       await supabase
-        .from('contract_versions')
-        .update({ status: 'approval_pending' })
-        .eq('id', config.contractVersionId)
-        .eq('tenant_id', tenantId);
+        .from("contract_versions")
+        .update({ status: "approval_pending" })
+        .eq("id", config.contractVersionId)
+        .eq("tenant_id", tenantId);
     }
 
-    return { success: true, data, message: 'Approval requested successfully' };
+    return { success: true, data, message: "Approval requested successfully" };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
-async function reviewContractApproval(tenantId: string, config: any, supabase: any) {
+async function reviewContractApproval(
+  tenantId: string,
+  config: any,
+  supabase: any,
+) {
   try {
-    const status = config.status === 'approved' ? 'approved' : config.status === 'cancelled' ? 'cancelled' : 'rejected';
+    const status =
+      config.status === "approved"
+        ? "approved"
+        : config.status === "cancelled"
+          ? "cancelled"
+          : "rejected";
     const { data, error } = await supabase
-      .from('contract_approvals')
+      .from("contract_approvals")
       .update({
         status,
         decision_note: config.decisionNote,
         decided_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', config.approvalId)
-      .eq('tenant_id', tenantId)
-      .select('*')
+      .eq("id", config.approvalId)
+      .eq("tenant_id", tenantId)
+      .select("*")
       .single();
 
     if (error) throw error;
 
     if (data?.contract_version_id) {
       await supabase
-        .from('contract_versions')
-        .update({ status: status === 'approved' ? 'approved' : 'rejected' })
-        .eq('id', data.contract_version_id)
-        .eq('tenant_id', tenantId);
+        .from("contract_versions")
+        .update({ status: status === "approved" ? "approved" : "rejected" })
+        .eq("id", data.contract_version_id)
+        .eq("tenant_id", tenantId);
     }
 
-    return { success: true, data, message: 'Approval reviewed successfully' };
+    return { success: true, data, message: "Approval reviewed successfully" };
   } catch (error: any) {
-    return operationFailed('contracts/management', error);
+    return operationFailed("contracts/management", error);
   }
 }
 
 async function generateAIContractContent(params: any) {
-  const { type, parties, terms, duration, payment, pages, fontSize, lineSpacing, template } = params;
-  
-  let content = '';
-  
+  const {
+    type,
+    parties,
+    terms,
+    duration,
+    payment,
+    pages,
+    fontSize,
+    lineSpacing,
+    template,
+  } = params;
+
+  let content = "";
+
   // Template-based content generation
   switch (template) {
-    case 'professional':
+    case "professional":
       content = generateProfessionalContract(params);
       break;
-    case 'simple':
+    case "simple":
       content = generateSimpleContract(params);
       break;
-    case 'detailed':
+    case "detailed":
       content = generateDetailedContract(params);
       break;
     default:
       content = generateStandardContract(params);
   }
-  
+
   return content;
 }
 
 function generateStandardContract(params: any) {
-  const { type, parties, terms, duration, payment, fontSize, lineSpacing } = params;
-  
+  const { type, parties, terms, duration, payment, fontSize, lineSpacing } =
+    params;
+
   const content = `
     <div style="font-family: 'Noto Sans', 'Noto Sans KR', 'Noto Sans JP', 'Noto Sans SC', 'Noto Naskh Arabic', Arial, sans-serif; font-size: ${fontSize}px; line-height: ${lineSpacing}; max-width: 800px; margin: 0 auto; padding: 40px;">
       
@@ -687,25 +977,33 @@ function generateStandardContract(params: any) {
       <!-- Parties -->
       <div style="margin-bottom: 30px;">
         <h2 style="font-size: ${fontSize + 4}px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">PARTIES</h2>
-        ${parties.map((party: any, index: number) => `
+        ${parties
+          .map(
+            (party: any, index: number) => `
           <div style="margin-bottom: 15px;">
             <p style="margin: 0; font-weight: bold;">${index + 1}. ${party.name}</p>
             <p style="margin: 5px 0; color: #666;">${party.address}</p>
-            ${party.email ? `<p style="margin: 5px 0; color: #666;">Email: ${party.email}</p>` : ''}
-            ${party.phone ? `<p style="margin: 5px 0; color: #666;">Phone: ${party.phone}</p>` : ''}
+            ${party.email ? `<p style="margin: 5px 0; color: #666;">Email: ${party.email}</p>` : ""}
+            ${party.phone ? `<p style="margin: 5px 0; color: #666;">Phone: ${party.phone}</p>` : ""}
           </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
       
       <!-- Terms -->
       <div style="margin-bottom: 30px;">
         <h2 style="font-size: ${fontSize + 4}px; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">TERMS AND CONDITIONS</h2>
-        ${terms.map((term: any, index: number) => `
+        ${terms
+          .map(
+            (term: any, index: number) => `
           <div style="margin-bottom: 20px;">
             <p style="margin: 0; font-weight: bold; color: #333;">${index + 1}. ${term.title}</p>
             <p style="margin: 10px 0; color: #666; line-height: ${lineSpacing};">${term.description}</p>
           </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
       </div>
       
       <!-- Duration -->
@@ -729,13 +1027,13 @@ function generateStandardContract(params: any) {
           <div style="width: 45%;">
             <p style="margin: 0; font-weight: bold;">Party 1 Signature</p>
             <div style="border-bottom: 1px solid #333; margin: 20px 0; height: 40px;"></div>
-            <p style="margin: 5px 0; color: #666;">Name: ${parties[0]?.name || ''}</p>
+            <p style="margin: 5px 0; color: #666;">Name: ${parties[0]?.name || ""}</p>
             <p style="margin: 5px 0; color: #666;">Date: _______________</p>
           </div>
           <div style="width: 45%;">
             <p style="margin: 0; font-weight: bold;">Party 2 Signature</p>
             <div style="border-bottom: 1px solid #333; margin: 20px 0; height: 40px;"></div>
-            <p style="margin: 5px 0; color: #666;">Name: ${parties[1]?.name || ''}</p>
+            <p style="margin: 5px 0; color: #666;">Name: ${parties[1]?.name || ""}</p>
             <p style="margin: 5px 0; color: #666;">Date: _______________</p>
           </div>
         </div>
@@ -762,7 +1060,11 @@ function generateDetailedContract(params: any) {
   return generateStandardContract(params);
 }
 
-function wrapContractHtmlDocument(content: string, fontSize: number, lineSpacing: number): string {
+function wrapContractHtmlDocument(
+  content: string,
+  fontSize: number,
+  lineSpacing: number,
+): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -801,50 +1103,79 @@ ${content}
 }
 
 async function generateOptimizedContractPDF(params: any) {
-  const { content, fontSize, lineSpacing, targetPages, format, optimize, template } = params;
-  
-  if (format === 'pdf') {
-    const optimizedContent = optimizeContentForPDF(content, targetPages, fontSize, lineSpacing, optimize);
+  const {
+    content,
+    fontSize,
+    lineSpacing,
+    targetPages,
+    format,
+    optimize,
+    template,
+  } = params;
+
+  if (format === "pdf") {
+    const optimizedContent = optimizeContentForPDF(
+      content,
+      targetPages,
+      fontSize,
+      lineSpacing,
+      optimize,
+    );
     return renderContractPdfBuffer(optimizedContent);
-  } else if (format === 'docx') {
+  } else if (format === "docx") {
     return generateDOCXFromContent(content, targetPages, fontSize, lineSpacing);
   } else {
-    return generateOptimizedContractPDF({ ...params, format: 'pdf' });
+    return generateOptimizedContractPDF({ ...params, format: "pdf" });
   }
 }
 
-function optimizeContentForPDF(content: string, targetPages: number, fontSize: number, lineSpacing: number, optimize: boolean) {
+function optimizeContentForPDF(
+  content: string,
+  targetPages: number,
+  fontSize: number,
+  lineSpacing: number,
+  optimize: boolean,
+) {
   const normalizedContent = normalizeLegalContractText(content);
-  const printableHtml = ensurePrintableContractHtml(normalizedContent, fontSize, lineSpacing);
+  const printableHtml = ensurePrintableContractHtml(
+    normalizedContent,
+    fontSize,
+    lineSpacing,
+  );
   if (!optimize) return printableHtml;
-  
+
   // Calculate optimal content distribution
   const contentLength = printableHtml.length;
   const charactersPerPage = Math.floor(contentLength / targetPages);
-  
+
   // Adjust spacing and font size for optimal layout
   const adjustedFontSize = fontSize * (targetPages <= 2 ? 1.1 : 1);
   const adjustedLineSpacing = lineSpacing * (targetPages <= 2 ? 1.1 : 1);
-  
+
   // Apply optimizations
   let optimizedContent = printableHtml
     .replace(/font-size:\s*\d+px/g, `font-size: ${adjustedFontSize}px`)
     .replace(/line-height:\s*[\d.]+/g, `line-height: ${adjustedLineSpacing}`);
-  
+
   return optimizedContent;
 }
 
-function ensurePrintableContractHtml(content: string, fontSize: number, lineSpacing: number): string {
-  const raw = String(content || '');
-  const hasHtmlTag = /<\/?(html|head|body|div|section|article|p|h1|h2|h3|table)\b/i.test(raw);
+function ensurePrintableContractHtml(
+  content: string,
+  fontSize: number,
+  lineSpacing: number,
+): string {
+  const raw = String(content || "");
+  const hasHtmlTag =
+    /<\/?(html|head|body|div|section|article|p|h1|h2|h3|table)\b/i.test(raw);
   if (hasHtmlTag) return raw;
 
   const normalized = raw
-    .replace(/\r\n/g, '\n')
-    .replace(/\t/g, ' ')
-    .replace(/\u00a0/g, ' ')
-    .replace(/\s+(?=\d+\.\s*[A-Z][A-Z\s/&'":\-]{3,})/g, '\n\n')
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\r\n/g, "\n")
+    .replace(/\t/g, " ")
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+(?=\d+\.\s*[A-Z][A-Z\s/&'":\-]{3,})/g, "\n\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 
   const blocks = normalized
@@ -860,7 +1191,7 @@ function ensurePrintableContractHtml(content: string, fontSize: number, lineSpac
       }
       return `<p>${escaped}</p>`;
     })
-    .join('\n');
+    .join("\n");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -901,28 +1232,32 @@ ${body}
 }
 
 function normalizeLegalContractText(content: string): string {
-  const raw = String(content || '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\u00a0/g, ' ')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
+  const raw = String(content || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
-  if (!raw) return '';
+  if (!raw) return "";
 
-  const lines = raw.split('\n').map((line) => line.trim()).filter(Boolean);
+  const lines = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
   const output: string[] = [];
   let sectionCounter = 0;
   let clauseCounter = 0;
 
-  const headingPattern = /^((section|article)\s+)?(\d+(\.\d+)*)?[\)\.\-:]?\s*([A-Z][A-Z0-9\s/&'":,\-()]{3,})$/i;
+  const headingPattern =
+    /^((section|article)\s+)?(\d+(\.\d+)*)?[\)\.\-:]?\s*([A-Z][A-Z0-9\s/&'":,\-()]{3,})$/i;
 
   for (const line of lines) {
     const isHeading = headingPattern.test(line) || /^#{1,3}\s+/.test(line);
     if (isHeading) {
       const headingText = line
-        .replace(/^#{1,3}\s+/, '')
-        .replace(/^(section|article)\s+/i, '')
-        .replace(/^\d+(\.\d+)*[\)\.\-:]?\s*/, '')
+        .replace(/^#{1,3}\s+/, "")
+        .replace(/^(section|article)\s+/i, "")
+        .replace(/^\d+(\.\d+)*[\)\.\-:]?\s*/, "")
         .trim()
         .toUpperCase();
       sectionCounter += 1;
@@ -933,39 +1268,39 @@ function normalizeLegalContractText(content: string): string {
 
     if (sectionCounter === 0) {
       sectionCounter = 1;
-      output.push('1.0 GENERAL TERMS');
+      output.push("1.0 GENERAL TERMS");
       clauseCounter = 0;
     }
     clauseCounter += 1;
     output.push(`${sectionCounter}.${clauseCounter} ${line}`);
   }
 
-  return output.join('\n\n');
+  return output.join("\n\n");
 }
 
 function escapeHtml(input: string): string {
   return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 async function renderContractPdfBuffer(html: string): Promise<Buffer> {
   const { page, close } = await BrowserManager.createPage();
   try {
-    await page.setContent(html, { waitUntil: 'networkidle', timeout: 30000 });
-    await page.emulateMedia({ media: 'print' });
+    await page.setContent(html, { waitUntil: "networkidle", timeout: 30000 });
+    await page.emulateMedia({ media: "print" });
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
     const pdf = await page.pdf({
-      format: 'Letter',
+      format: "Letter",
       printBackground: true,
       preferCSSPageSize: true,
       displayHeaderFooter: true,
-      headerTemplate: '<div></div>',
+      headerTemplate: "<div></div>",
       footerTemplate: `
         <div style="width:100%;font-size:9px;color:#64748b;padding:0 20px;">
           <span style="float:left;">AlphaClone Systems Contract</span>
@@ -973,10 +1308,10 @@ async function renderContractPdfBuffer(html: string): Promise<Buffer> {
         </div>
       `,
       margin: {
-        top: '25.4mm',
-        right: '25.4mm',
-        bottom: '25.4mm',
-        left: '25.4mm',
+        top: "25.4mm",
+        right: "25.4mm",
+        bottom: "25.4mm",
+        left: "25.4mm",
       },
     });
     return Buffer.from(pdf);
@@ -986,27 +1321,36 @@ async function renderContractPdfBuffer(html: string): Promise<Buffer> {
 }
 
 function normalizeTextBlocks(content: string): string[] {
-  const plain = String(content || '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\r\n/g, '\n')
-    .replace(/\u00a0/g, ' ')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
+  const plain = String(content || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
-  return plain.split('\n').map((line) => line.trim()).filter(Boolean);
+  return plain
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
-async function generateDOCXFromContent(content: string, _pages: number, fontSize: number, lineSpacing: number) {
+async function generateDOCXFromContent(
+  content: string,
+  _pages: number,
+  fontSize: number,
+  lineSpacing: number,
+) {
   const normalizedContent = normalizeLegalContractText(content);
   const blocks = normalizeTextBlocks(normalizedContent);
   const paragraphSpacing = Math.round((lineSpacing - 1) * 240);
   const baseSize = Math.max(20, Math.round((fontSize / 12) * 24));
 
   const children = blocks.map((line) => {
-    const isPrimaryHeading = /^(\d+(\.\d+)*)\s+[A-Z][A-Z0-9\s/&'":,\-()]{3,}$/.test(line);
+    const isPrimaryHeading =
+      /^(\d+(\.\d+)*)\s+[A-Z][A-Z0-9\s/&'":,\-()]{3,}$/.test(line);
     const isHashHeading = /^#{1,3}\s+/.test(line);
     if (isPrimaryHeading || isHashHeading) {
-      const headingText = line.replace(/^#{1,3}\s+/, '');
+      const headingText = line.replace(/^#{1,3}\s+/, "");
       return new Paragraph({
         heading: HeadingLevel.HEADING_2,
         spacing: { before: 240, after: 120 },
@@ -1023,30 +1367,35 @@ async function generateDOCXFromContent(content: string, _pages: number, fontSize
 
   const doc = new Document({
     styles: {
-      default: { document: { run: { font: 'Arial', size: baseSize } } },
+      default: { document: { run: { font: "Arial", size: baseSize } } },
     },
-    sections: [{
-      properties: {
-        page: {
-          size: { width: 12240, height: 15840 },
-          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: 12240, height: 15840 },
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+          },
         },
+        footers: {
+          default: new Footer({
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun("Page "),
+                  new TextRun({ children: [PageNumber.CURRENT] }),
+                ],
+              }),
+            ],
+          }),
+        },
+        children:
+          children.length > 0
+            ? children
+            : [new Paragraph("Contract content unavailable.")],
       },
-      footers: {
-        default: new Footer({
-          children: [
-            new Paragraph({
-              alignment: AlignmentType.CENTER,
-              children: [
-                new TextRun('Page '),
-                new TextRun({ children: [PageNumber.CURRENT] }),
-              ],
-            }),
-          ],
-        }),
-      },
-      children: children.length > 0 ? children : [new Paragraph('Contract content unavailable.')],
-    }],
+    ],
   });
 
   return Buffer.from(await Packer.toBuffer(doc));

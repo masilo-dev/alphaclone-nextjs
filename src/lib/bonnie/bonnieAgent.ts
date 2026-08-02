@@ -27,6 +27,7 @@ export type BonnieAgentInput = {
   moduleContext?: BonnieModuleId;
   pathname?: string;
   onStreamToken?: (token: string) => void;
+  onActivity?: (phase: 'reading' | 'planning' | 'executing' | 'verifying' | 'awaiting_approval', meta?: Record<string, unknown>) => void;
   /** Optional: ID of an existing bonnie_workflows row to update instead of creating a new one */
   workflowId?: string;
   /** Optional: ID of the bonnie_conversations row this agent call belongs to */
@@ -489,7 +490,7 @@ function resolveModuleId(
 }
 
 export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAgentResult> {
-  const { tenantId, userId, instruction, history = [], pathname, moduleContext, onStreamToken, conversationId } = input;
+  const { tenantId, userId, instruction, history = [], pathname, moduleContext, onStreamToken, onActivity, conversationId } = input;
   const moduleId = resolveModuleId(moduleContext, pathname);
 
   // Create a server-side workflow record to track this execution
@@ -507,7 +508,9 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
   let model = 'deepseek-chat';
   const provider = process.env.DEEPSEEK_API_KEY ? 'bonnie-deepseek' : 'fallback';
 
+  onActivity?.('reading', { module: moduleId, source: 'workspace_context' });
   const { snapshot, warmResults } = await warmBonnieWorkspaceContext(tenantId, userId, moduleId);
+  onActivity?.('planning', { module: moduleId, contextTools: warmResults.length });
   const conversationMode = detectConversationMode(instruction);
 
   if (conversationMode === 'briefing') {
@@ -519,7 +522,9 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
 
   if (conversationMode === 'autopilot') {
     void wfUpdate({ status: 'running' });
+    onActivity?.('executing', { mode: 'autopilot' });
     const result = await runAutopilotMode(tenantId, userId, moduleId);
+    onActivity?.('verifying', { mode: 'autopilot', tools: result.toolResults.map((item) => ({ tool: item.tool, success: item.success })) });
     const hasPending = result.toolResults.some((r) => r.approvalRequired);
     const es = hasPending ? 'queued_for_approval' : 'executed';
     void wfUpdate({ status: hasPending ? 'waiting_for_approval' : 'completed', finalResponse: result.response, executionStatus: es, completedAt: !hasPending });
@@ -530,6 +535,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     void wfUpdate({ status: 'running' });
     const { executeBonnieToolCalls } = await import('@/lib/bonnie/bonnieToolExecutor');
     const suggested = suggestToolsForQuestion(instruction, moduleId).slice(0, 2);
+    onActivity?.('executing', { mode: 'query', tools: suggested });
     const queryTools = await executeBonnieToolCalls(
       tenantId,
       userId,
@@ -537,6 +543,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
       instruction
     );
     const allQueryResults = [...warmResults, ...queryTools];
+    onActivity?.('verifying', { mode: 'query', tools: allQueryResults.map((item) => ({ tool: item.tool, success: item.success })) });
     try {
       const { text, model: chatModel } = await conversationalReply(
         `${instruction}\n\nData retrieved:\n${allQueryResults.map((r) => `${r.tool}: ${r.summary}`).join('\n')}`,
@@ -718,6 +725,56 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     }
   }
 
+  // OpenAI Agents SDK orchestrates the standard multi-turn tool loop while
+  // DeepSeek remains the underlying model. Fall back to the proven legacy
+  // ReAct loop on provider/compatibility errors so Bonnie remains available.
+  if (process.env.BONNIE_AGENT_RUNTIME !== 'legacy' && process.env.DEEPSEEK_API_KEY) {
+    try {
+      const { runBonnieWithOpenAIAgents } = await import('@/lib/bonnie/bonnieOpenAIAgentsRunner');
+      const sdkResult = await runBonnieWithOpenAIAgents({
+        tenantId,
+        userId,
+        instruction,
+        history,
+        moduleId,
+        workflowId: workflowId ?? undefined,
+        conversationId: conversationId ?? undefined,
+        onStreamToken,
+      });
+      const response = sanitizeBonnieResponse(sdkResult.response);
+      await persistBonnieLogs(tenantId, sdkResult.logs).catch(() => undefined);
+      await persistRunnerActions(tenantId, instruction, sdkResult.toolResults).catch(() => undefined);
+      const sdkSucceeded = sdkResult.executionStatus === 'executed';
+      void wfUpdate({
+        status:
+          sdkResult.executionStatus === 'queued_for_approval'
+            ? 'waiting_for_approval'
+            : sdkSucceeded
+              ? 'completed'
+              : 'failed',
+        finalResponse: response,
+        executionStatus: sdkResult.executionStatus,
+        toolResults: sdkResult.toolResults,
+        logs: sdkResult.logs,
+        rounds: sdkResult.rounds,
+        completedAt: sdkResult.executionStatus !== 'queued_for_approval',
+      });
+      return {
+        response,
+        success: sdkSucceeded || sdkResult.executionStatus === 'queued_for_approval',
+        provider: 'openai-agents-deepseek',
+        model: process.env.DEEPSEEK_AGENT_MODEL || 'deepseek-chat',
+        toolResults: sdkResult.toolResults,
+        logs: sdkResult.logs,
+        rounds: sdkResult.rounds,
+        executionStatus: sdkResult.executionStatus,
+        workflowId: workflowId ?? undefined,
+      };
+    } catch (err: unknown) {
+      allLogs.push(`OpenAI Agents SDK fallback to legacy ReAct: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
   for (let round = 0; round < MAX_AGENT_ROUNDS; round++) {
     let plan: BonniePlan;
     try {
@@ -777,6 +834,8 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     rounds += 1;
     allLogs.push(`Round ${rounds}: planning ${toolCalls.length} tool(s)`);
 
+    onActivity?.('executing', { round: rounds, tools: toolCalls.map((call) => call.tool) });
+
     const toolResults = await (
       await import('@/lib/bonnie/bonnieToolExecutor')
     ).executeBonnieToolCalls(tenantId, userId, toolCalls, instruction, {
@@ -785,6 +844,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
     });
 
     allToolResults.push(...toolResults);
+    onActivity?.('verifying', { round: rounds, tools: toolResults.map((result) => ({ tool: result.tool, success: result.success })) });
     allLogs.push(
       ...(plan.logs || []),
       ...toolResults.map((r) => `${r.success ? '✓' : '✗'} ${r.tool}: ${r.summary}`)
@@ -792,6 +852,7 @@ export async function runBonnieAgent(input: BonnieAgentInput): Promise<BonnieAge
 
     const pendingApprovals = toolResults.filter((r) => r.approvalRequired);
     if (pendingApprovals.length > 0) {
+      onActivity?.('awaiting_approval', { approvals: pendingApprovals.map((result) => ({ tool: result.tool, approvalId: result.approvalId })) });
       allLogs.push(
         `${pendingApprovals.length} action(s) queued for inline approval — continuing prep work if needed`
       );

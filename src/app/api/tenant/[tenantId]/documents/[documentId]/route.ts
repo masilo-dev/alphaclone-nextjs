@@ -17,11 +17,15 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
     const { tenantId, documentId } = await context.params;
     const ids = z.object({ tenantId: z.string().uuid(), documentId: z.string().uuid() }).parse({ tenantId, documentId });
     const { admin } = await requireTenantAccess(ids.tenantId, req);
-    const [documentResult, relationshipResult, activityResult, versionResult] = await Promise.all([
+    const [documentResult, relationshipResult, activityResult, versionResult, legacyVersionResult, intelligenceJobsResult, findingsResult, comparisonsResult] = await Promise.all([
       admin.from('documents').select('*').eq('tenant_id', ids.tenantId).eq('id', ids.documentId).is('deleted_at', null).maybeSingle(),
       admin.from('document_relationships').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId),
       admin.from('document_activity').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(100),
+      admin.from('document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('version_number', { ascending: false }).limit(100),
       admin.from('tenant_document_versions').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('version', { ascending: false }).limit(100),
+      admin.from('document_intelligence_jobs').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(50),
+      admin.from('document_findings').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(250),
+      admin.from('document_comparisons').select('*').eq('tenant_id', ids.tenantId).eq('document_id', ids.documentId).order('created_at', { ascending: false }).limit(25),
     ]);
     if (documentResult.error) throw documentResult.error;
     if (!documentResult.data) return NextResponse.json({ error: 'Document not found' }, { status: 404 });
@@ -30,6 +34,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ tenantI
       relationships: relationshipResult.data || [],
       activity: activityResult.data || [],
       versions: versionResult.data || [],
+      legacyVersions: legacyVersionResult.data || [],
+      intelligenceJobs: intelligenceJobsResult.data || [],
+      findings: findingsResult.data || [],
+      comparisons: comparisonsResult.data || [],
     });
   } catch (error) {
     return routeErrorResponse(error, 'Document could not be loaded', req);

@@ -73,3 +73,29 @@ test('bonnieAgent durable cutover is feature-flagged', () => {
   assert.match(src, /isDurableRuntimeEnabled/);
   assert.match(src, /createRunForObjective/);
 });
+
+test('durable worker executes real SDK tools and rejects evidence-free specialist work', () => {
+  const worker = fs.readFileSync(
+    path.join(root, 'src/lib/bonnie/runtime/workerService.ts'),
+    'utf8',
+  );
+  assert.match(worker, /runBonnieWithOpenAIAgents/);
+  assert.match(worker, /Specialist task produced no successful tool evidence/);
+  assert.match(worker, /verified_tool_result/);
+  assert.doesNotMatch(worker, /Safe simulated specialist work/);
+  assert.doesNotMatch(worker, /referenceType:\s*['"]simulation['"]/);
+});
+
+test('approved durable tasks reuse the exact approval instead of creating an approval loop', () => {
+  const worker = fs.readFileSync(
+    path.join(root, 'src/lib/bonnie/runtime/workerService.ts'),
+    'utf8',
+  );
+  const runner = fs.readFileSync(
+    path.join(root, 'src/lib/bonnie/bonnieOpenAIAgentsRunner.ts'),
+    'utf8',
+  );
+  assert.match(worker, /existingApproval\?\.status === ['"]approved['"]/);
+  assert.match(worker, /policyAlreadyApproved:\s*Boolean\(intermediate\.approvalVerified\)/);
+  assert.match(runner, /skipPolicy:\s*input\.policyAlreadyApproved === true/);
+});

@@ -34,6 +34,10 @@ export async function contractSignedWorkflow({ tenantId, payload }: { tenantId: 
 
   const project = await kickoffProjectStep(contractId, tenantId);
 
+  if (invoice?.id) {
+    await connectInvoiceToContractStep(contractId, invoice.id, project?.id || null, tenantId);
+  }
+
   if (project) {
     await createDefaultTasksStep(project.id, tenantId);
     await sendWelcomePackageStep(project.id, tenantId);
@@ -50,19 +54,30 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
   if (contractError) throw contractError;
   if (!contract) return null;
 
-  const { data: existingInvoice } = await supabase
+  let { data: existingInvoice } = await supabase
     .from('business_invoices')
     .select('id, project_id, status')
     .eq('tenant_id', tenantId)
-    .contains('metadata', { contract_id: contractId })
+    .eq('contract_id', contractId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (!existingInvoice) {
+    const legacy = await supabase
+      .from('business_invoices')
+      .select('id, project_id, status')
+      .eq('tenant_id', tenantId)
+      .contains('metadata', { contract_id: contractId })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    existingInvoice = legacy.data;
+  }
   if (existingInvoice?.id) {
     return { ...existingInvoice, shouldSend: false };
   }
 
-  const amount = Number(contract.payment_amount || 0);
+  const amount = Number(contract.value ?? contract.total_amount ?? contract.payment_amount ?? 0);
   if (!Number.isFinite(amount) || amount <= 0) return null;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const publicToken = crypto.randomUUID();
@@ -73,15 +88,19 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
       tenant_id: tenantId,
       client_id: contract.client_id || null,
       project_id: contract.project_id || null,
+      contract_id: contractId,
       invoice_number: `INV-${Date.now().toString(36).toUpperCase()}`,
       issue_date: new Date().toISOString().slice(0, 10),
       due_date: dueDate,
       status: 'draft',
+      lifecycle_status: 'draft',
       subtotal: amount,
       tax_rate: 0,
       tax: 0,
       discount_amount: 0,
       total: amount,
+      amount_paid: 0,
+      balance_due: amount,
       is_public: true,
       metadata: {
         public_token: publicToken,
@@ -110,6 +129,70 @@ async function generateInvoiceStep(contractId: string, tenantId: string) {
   }
 
   return invoice ? { ...invoice, shouldSend: true } : null;
+}
+
+async function connectInvoiceToContractStep(
+  contractId: string,
+  invoiceId: string,
+  projectId: string | null,
+  tenantId: string,
+) {
+  "use step";
+  const supabase = createSupabaseAdminClient();
+  const { data: invoice, error: invoiceError } = await supabase
+    .from('business_invoices')
+    .select('total,currency')
+    .eq('tenant_id', tenantId)
+    .eq('id', invoiceId)
+    .maybeSingle();
+  if (invoiceError) throw invoiceError;
+  await supabase.from('revenue_lifecycle_links').upsert({
+    tenant_id: tenantId,
+    source_type: 'contract',
+    source_id: contractId,
+    target_type: 'invoice',
+    target_id: invoiceId,
+    relationship: 'billed_by',
+  }, { onConflict: 'tenant_id,source_type,source_id,target_type,target_id,relationship' });
+  if (projectId) {
+    await Promise.all([
+      supabase.from('revenue_lifecycle_links').upsert({
+        tenant_id: tenantId, source_type: 'contract', source_id: contractId,
+        target_type: 'project', target_id: projectId, relationship: 'provisions',
+      }, { onConflict: 'tenant_id,source_type,source_id,target_type,target_id,relationship' }),
+      supabase.from('revenue_lifecycle_links').upsert({
+        tenant_id: tenantId, source_type: 'invoice', source_id: invoiceId,
+        target_type: 'project', target_id: projectId, relationship: 'funds',
+      }, { onConflict: 'tenant_id,source_type,source_id,target_type,target_id,relationship' }),
+    ]);
+  }
+  const { data: milestones, error: milestoneError } = await supabase
+    .from('contract_milestones')
+    .select('id,title,due_at')
+    .eq('tenant_id', tenantId)
+    .eq('contract_id', contractId)
+    .order('due_at');
+  if (milestoneError) throw milestoneError;
+  if (milestones?.length) {
+    const total = Number(invoice?.total || 0);
+    const share = Math.round((total / milestones.length) * 100) / 100;
+    const { error: scheduleError } = await supabase.from('invoice_payment_schedules').upsert(
+      milestones.map((milestone: { id: string; title: string; due_at: string }, index: number) => ({
+        tenant_id: tenantId,
+        invoice_id: invoiceId,
+        contract_id: contractId,
+        contract_milestone_id: milestone.id,
+        sequence_number: index + 1,
+        label: milestone.title,
+        amount: index === milestones.length - 1 ? Math.round((total - share * index) * 100) / 100 : share,
+        currency_code: invoice?.currency || 'USD',
+        due_date: String(milestone.due_at).slice(0, 10),
+        status: 'scheduled',
+      })),
+      { onConflict: 'tenant_id,invoice_id,sequence_number' },
+    );
+    if (scheduleError) throw scheduleError;
+  }
 }
 
 async function kickoffProjectStep(contractId: string, tenantId: string) {
@@ -169,7 +252,24 @@ async function kickoffProjectStep(contractId: string, tenantId: string) {
     .single();
 
   if (project) {
-    await supabase.from('contracts').update({ project_id: project.id }).eq('id', contractId);
+    const now = new Date().toISOString();
+    const activate = !contract.start_date || new Date(contract.start_date).getTime() <= Date.now();
+    await supabase.from('contracts').update({
+      project_id: project.id,
+      ...(activate ? { lifecycle_status: 'active', status: 'active', activated_at: now } : {}),
+      updated_at: now,
+    }).eq('tenant_id', tenantId).eq('id', contractId);
+    if (activate && !['active', 'expiring', 'renewed'].includes(String(contract.lifecycle_status || contract.status))) {
+      await supabase.from('contract_lifecycle_events').insert({
+        tenant_id: tenantId,
+        contract_id: contractId,
+        from_status: contract.lifecycle_status || contract.status || 'signed',
+        to_status: 'active',
+        source: 'contract_signed_workflow',
+        reason: 'Delivery project started from signed contract',
+        evidence: { project_id: project.id },
+      });
+    }
     if (dealId) {
       await supabase.from('deals').update({ project_id: project.id, updated_at: new Date().toISOString() }).eq('id', dealId);
     }

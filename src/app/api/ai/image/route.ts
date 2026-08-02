@@ -68,7 +68,7 @@ async function generateWithProvider(params: {
             prompt: prompt.trim(),
             n: 1,
             size,
-            ...(provider === 'openai' ? { quality: 'hd', style: 'vivid' } : {}),
+            ...(provider === 'openai' ? { quality: 'high', output_format: 'png' } : {}),
         }),
     });
 
@@ -82,7 +82,8 @@ async function generateWithProvider(params: {
         };
     }
 
-    const imageUrl = data?.data?.[0]?.url as string | undefined;
+    const imageBase64 = data?.data?.[0]?.b64_json as string | undefined;
+    const imageUrl = (data?.data?.[0]?.url as string | undefined) || (imageBase64 ? `data:image/png;base64,${imageBase64}` : undefined);
     const revisedPrompt = data?.data?.[0]?.revised_prompt as string | undefined;
     if (!imageUrl) {
         return { ok: false as const, status: 500, error: { error: 'No image returned' }, provider };

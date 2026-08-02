@@ -213,7 +213,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Sync sidebar on mount to avoid hydration mismatch
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setSidebarOpen(window.innerWidth >= 768);
+      const standalone = window.matchMedia('(display-mode: standalone)').matches ||
+        Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+      const touchDevice = window.matchMedia('(pointer: coarse)').matches;
+      // Installed iPhone/iPad PWAs should use the touch shell even when an
+      // iPad reports a desktop-sized CSS viewport.
+      setSidebarOpen(window.innerWidth >= 1024 && !(standalone && touchDevice));
     }
   }, []);
   const normalizeTabForRole = (tab: string) => {

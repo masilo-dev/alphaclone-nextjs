@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Bot, Cpu, Lock, CheckCircle2, ArrowRight, Terminal, Sparkles, Database } from 'lucide-react';
-import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
+import { Bot, Cpu, Lock, CheckCircle2, Terminal, Database, Loader2, Play } from 'lucide-react';
 
 interface AiExampleAction {
   id: string;
@@ -38,7 +37,21 @@ const AI_EXAMPLES: AiExampleAction[] = [
 
 export default function BonnieAiSection() {
   const [activeExampleIndex, setActiveExampleIndex] = useState<number>(0);
+  const [demoStage, setDemoStage] = useState<0 | 1 | 2 | 3>(0);
   const activeEx = AI_EXAMPLES[activeExampleIndex];
+
+  useEffect(() => {
+    if (demoStage === 0 || demoStage === 3) return;
+    const timer = window.setTimeout(() => {
+      setDemoStage((current) => (current < 3 ? ((current + 1) as 1 | 2 | 3) : current));
+    }, 850);
+    return () => window.clearTimeout(timer);
+  }, [demoStage]);
+
+  const selectExample = (index: number) => {
+    setActiveExampleIndex(index);
+    setDemoStage(0);
+  };
 
   return (
     <div className="w-full py-12">
@@ -107,7 +120,7 @@ export default function BonnieAiSection() {
               {AI_EXAMPLES.map((ex, idx) => (
                 <button
                   key={ex.id}
-                  onClick={() => setActiveExampleIndex(idx)}
+                  onClick={() => selectExample(idx)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     activeExampleIndex === idx
                       ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
@@ -120,10 +133,25 @@ export default function BonnieAiSection() {
             </div>
           </div>
 
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-3">
+            <p className="text-xs text-slate-300">
+              Product walkthrough using sample workspace data. Sign in to run Bonnie against your real records.
+            </p>
+            <button
+              type="button"
+              onClick={() => setDemoStage(1)}
+              disabled={demoStage > 0 && demoStage < 3}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-cyan-500 px-4 text-xs font-bold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-wait disabled:opacity-70"
+            >
+              {demoStage > 0 && demoStage < 3 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+              {demoStage === 0 ? 'Run the flow' : demoStage === 3 ? 'Run again' : 'Bonnie is working'}
+            </button>
+          </div>
+
           {/* Interactive Code/Prompt Console */}
           <div className="rounded-xl border border-slate-800 bg-slate-950 p-5 font-mono space-y-4">
             {/* User Input Prompt */}
-            <div className="space-y-1.5">
+            <div className={`space-y-1.5 transition-opacity ${demoStage >= 1 ? 'opacity-100' : 'opacity-45'}`}>
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <span className="flex items-center gap-1.5 text-teal-400">
                   <Terminal className="w-3.5 h-3.5" />
@@ -137,7 +165,7 @@ export default function BonnieAiSection() {
             </div>
 
             {/* MCP Execution Signal */}
-            <div className="space-y-1.5">
+            <div className={`space-y-1.5 transition-opacity ${demoStage >= 2 ? 'opacity-100' : 'opacity-30'}`}>
               <div className="flex items-center justify-between text-xs text-cyan-400">
                 <span className="flex items-center gap-1.5">
                   <Cpu className="w-3.5 h-3.5" />
@@ -151,7 +179,7 @@ export default function BonnieAiSection() {
             </div>
 
             {/* Workspace Result */}
-            <div className="space-y-1.5 pt-1">
+            <div className={`space-y-1.5 pt-1 transition-opacity ${demoStage >= 3 ? 'opacity-100' : 'opacity-30'}`}>
               <div className="flex items-center justify-between text-xs text-emerald-400">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />

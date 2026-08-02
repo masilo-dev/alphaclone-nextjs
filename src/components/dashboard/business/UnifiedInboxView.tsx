@@ -9,6 +9,8 @@ import {
   Forward,
   Loader2,
   Mail,
+  Maximize2,
+  Minimize2,
   PenSquare,
   RefreshCw,
   Reply,
@@ -126,6 +128,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [emailClassification, setEmailClassification] = useState<EmailClassification>('Direct');
   const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
   const [creatingContact, setCreatingContact] = useState(false);
+  const [readerExpanded, setReaderExpanded] = useState(false);
 
   const [threadMessages, setThreadMessages] = useState<UnifiedInboxMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -625,6 +628,15 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     window.location.href = '/api/auth/zoho/connect';
   };
 
+  useEffect(() => {
+    if (!readerExpanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setReaderExpanded(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [readerExpanded]);
+
   if (!statusChecked) {
     return (
       <div className="ac-workspace-panel rounded-lg p-8 text-center">
@@ -663,16 +675,16 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   }
 
   return (
-    <>
+    <div className={readerExpanded ? 'fixed inset-0 z-[80] bg-slate-950 p-0 sm:p-3' : 'relative h-full min-h-0'}>
       <div
-        className="flex h-[min(88dvh,820px)] min-h-[480px] ac-workspace-panel overflow-hidden"
+        className={`flex h-full ac-workspace-panel overflow-hidden ${readerExpanded ? 'min-h-0 rounded-none sm:rounded-xl' : 'min-h-[480px]'}`}
         role="region"
         aria-label="Email mailbox"
       >
         {/* Sidebar list — 30% width */}
         <div
           className={`${
-            selectedId ? 'hidden md:flex' : 'flex'
+            readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'
           } w-full md:w-[300px] lg:w-[320px] flex-col border-r border-white/5 bg-slate-950/50 shrink-0`}
         >
           <div className="p-2.5 border-b border-white/5 space-y-2">
@@ -1014,6 +1026,16 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
                   <button
                     type="button"
+                    onClick={() => setReaderExpanded((current) => !current)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-teal-500/20 bg-teal-500/10 hover:bg-teal-500/20 px-3 py-1.5 text-xs font-semibold text-teal-200"
+                    aria-label={readerExpanded ? 'Exit full-window email reader' : 'Open email in full window'}
+                    title={readerExpanded ? 'Exit full window (Esc)' : 'Full-window reader'}
+                  >
+                    {readerExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                    {readerExpanded ? 'Exit full window' : 'Full window'}
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => openReply(false)}
                     disabled={!providerConnected}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
@@ -1199,10 +1221,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           initialSubject={composeDraft.subject || ''}
           initialBody={composeDraft.body || ''}
           preferredProvider={composeDraft.preferredProvider}
+          presentation="dock"
           skipCrmGate
           entityType="direct"
         />
       )}
-    </>
+    </div>
   );
 }

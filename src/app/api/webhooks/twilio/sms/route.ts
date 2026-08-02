@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { isProduction } from '@/lib/security/productionGuard';
 import { captureUnifiedMessageFromWebhook } from '@/services/intelligence/signalCaptureAdminService';
 import { normalizePhoneNumber } from '@/services/engine/CommunicationEngine';
+import { recordInboundOutreachReply } from '@/lib/outreach/recordInboundOutreachReply';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,6 +102,8 @@ export async function POST(req: NextRequest) {
       receivedAt: new Date().toISOString(),
       metadata: { twilio: true },
     });
+    await recordInboundOutreachReply({ admin, tenantId: integration.tenant_id, channel: 'sms', sender: from, text: body, provider: 'twilio', providerEventId: sid || null })
+      .catch((replyError) => console.error('[twilio-sms] outreach reply capture failed', replyError));
 
     return NextResponse.json({ success: true, optOut: isStopKeyword });
   } catch {

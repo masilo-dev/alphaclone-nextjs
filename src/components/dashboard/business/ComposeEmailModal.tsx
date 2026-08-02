@@ -56,6 +56,8 @@ export type EmailComposerProps = {
     entityId?: string;
     attachments?: Array<{ id: string; name: string; size: number; data?: string }>;
     preferredProvider?: DeliveryEmailProvider;
+    /** Gmail-style composer docked inside the active workspace instead of a page takeover. */
+    presentation?: 'modal' | 'dock';
 };
 
 interface ComposeEmailModalProps extends EmailComposerProps {}
@@ -71,6 +73,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     entityType = 'direct',
     entityId,
     preferredProvider,
+    presentation = 'modal',
 }) => {
     const { currentTenant } = useTenant();
     const [to, setTo] = useState(initialTo);
@@ -500,20 +503,28 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
-                    />
+                <div className={presentation === 'dock'
+                    ? 'absolute inset-0 z-[110] pointer-events-none flex items-end justify-end p-2 md:p-4'
+                    : 'fixed inset-0 z-[110] flex items-center justify-center p-4'}>
+                    {presentation === 'modal' ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={onClose}
+                            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                        />
+                    ) : null}
 
                     <motion.div
                         initial={{ opacity: 0, scale: 0.98, y: 12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98, y: 12 }}
-                        className="relative w-full max-w-xl max-h-[min(82vh,640px)] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col z-[120]"
+                        className={`relative w-full bg-slate-900 border border-white/10 shadow-2xl overflow-hidden flex flex-col z-[120] ${
+                            presentation === 'dock'
+                                ? 'pointer-events-auto max-w-[560px] max-h-[calc(100%-0.5rem)] rounded-xl'
+                                : 'max-w-xl max-h-[min(82vh,640px)] rounded-2xl'
+                        }`}
                     >
                         {/* Header */}
                         <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between shrink-0">

@@ -57,8 +57,14 @@ test("unified tools/list exposes the compact full catalog for internal client", 
     clientLabel: "internal",
     userAgent: null,
   });
-  assert.ok(tools.length >= 79, `expected full platform catalog, got ${tools.length}`);
+  const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
+  initializeRegistry();
+  const registryNames = new Set(listTools(false).map((tool) => tool.name));
+  assert.ok(tools.length >= registryNames.size, `expected at least ${registryNames.size} tools, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
+  for (const name of registryNames) {
+    assert.ok(names.has(name), `tools/list omitted registered tool ${name}`);
+  }
   for (const required of [
     "search_tools",
     "load_module_tools",
@@ -78,7 +84,12 @@ test("Claude OAuth client gets compacted full catalog", async () => {
     clientLabel: "claude.ai",
     userAgent: "Claude-User",
   });
-  assert.ok(tools.length >= 79, `expected full platform catalog, got ${tools.length}`);
+  const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
+  initializeRegistry();
+  const registered = listTools(false);
+  assert.ok(tools.length >= registered.length, `expected at least ${registered.length} tools, got ${tools.length}`);
+  const discoveredNames = new Set(tools.map((tool) => tool.name));
+  for (const tool of registered) assert.ok(discoveredNames.has(tool.name), `ChatGPT catalog omitted ${tool.name}`);
   const names = new Set(tools.map((t) => t.name));
   for (const required of [
     "search_tools",
@@ -103,5 +114,7 @@ test("API-key path also gets the full catalog by default", async () => {
     forceRefresh: true,
     clientId: null,
   });
-  assert.ok(tools.length >= 79, `expected full platform default, got ${tools.length}`);
+  const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
+  initializeRegistry();
+  assert.ok(tools.length >= listTools(false).length, `full catalog omitted registered tools`);
 });

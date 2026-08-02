@@ -25,7 +25,7 @@ import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonni
 import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '@/lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
+import { bonnieService } from '@/services/bonnieService';
 import type { BonniePendingApprovalResponse } from '@/services/bonnieService';
 import { useBonnieApprovals } from '@/hooks/useBonnieApprovals';
 import { useBonnieConversations } from '@/hooks/useBonnieConversations';
@@ -56,6 +56,7 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const isPopout = variant === 'popout';
   const tenantId = currentTenant?.id;
   const conversationParam = searchParams?.get('conversation') ?? null;
+  const queuedPrompt = searchParams?.get('q')?.trim() || null;
 
   const { pendingCount, handleApproval, refresh: refreshApprovals } = useBonnieApprovals(tenantId);
   const {
@@ -107,6 +108,21 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       setShowWelcome(false);
     }
   }, [activeConversationId, conversationParam, conversations]);
+
+  // Prompts launched from the global Bonnie drawer must enter the real agent
+  // loop automatically. Consume the URL once so refresh/back cannot rerun work.
+  useEffect(() => {
+    if (!queuedPrompt || !tenantId) return;
+    setShowWelcome(false);
+    setWorkspaceView('chat');
+    setExternalPrompt(queuedPrompt);
+    const next = new URLSearchParams(searchParams?.toString() ?? '');
+    next.delete('q');
+    next.delete('mode');
+    next.delete('context');
+    const qs = next.toString();
+    router.replace(qs ? `${resolvedPathname}?${qs}` : resolvedPathname);
+  }, [queuedPrompt, resolvedPathname, router, searchParams, tenantId]);
 
   const replaceConversationParam = useCallback(
     (nextConversationId: string | null) => {
@@ -200,11 +216,6 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   ) => {
     if (!tenantId) return { text: 'Select a workspace first.', error: true };
     setShowWelcome(false);
-    const nav = resolveBonnieNavIntent(text, user?.role);
-    if (nav) {
-      router.push(nav.route);
-      return { text: `Opening ${nav.label} for you now.` };
-    }
     const res = await bonnieService.sendInstruction(tenantId, text, history, {
       pathname: contextPath || undefined,
       moduleContext: activeModule,

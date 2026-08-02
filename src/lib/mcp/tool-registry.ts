@@ -247,6 +247,7 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/sales-ops'), './tools/sales-ops');
   loadToolModule(() => require('./tools/calendar-ops'), './tools/calendar-ops');
   loadToolModule(() => require('./tools/documents-ops'), './tools/documents-ops');
+  loadToolModule(() => require('./tools/revenue-lifecycle'), './tools/revenue-lifecycle');
   loadToolModule(() => require('./tools/reports-ops'), './tools/reports-ops');
   loadToolModule(() => require('./tools/integrations-health'), './tools/integrations-health');
   loadToolModule(() => require('./tools/chatgpt-aliases'), './tools/chatgpt-aliases');

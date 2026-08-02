@@ -59,7 +59,7 @@ const BottomNav: React.FC<BottomNavProps> = ({
     <>
       <nav
         aria-label="Primary"
-        className="md:hidden fixed inset-x-0 bottom-0 z-50 ac-workspace-toolbar border-t border-[var(--ws-border)] native-bottom-bar"
+        className="ac-responsive-bottom-nav md:hidden fixed inset-x-0 bottom-0 z-50 ac-workspace-toolbar border-t border-[var(--ws-border)] native-bottom-bar"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 6px)' }}
       >
         <div className="flex justify-around items-stretch h-[56px] px-1">

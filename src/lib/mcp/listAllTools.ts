@@ -5,10 +5,7 @@ import {
   estimateToolsListBytes,
 } from '@/lib/mcp/compactToolSchema';
 import { SUPPLEMENTAL_MCP_TOOLS, type McpDiscoveryTool } from '@/lib/mcp/supplementalToolDefinitions';
-import {
-  CHATGPT_CONNECTOR_TOOL_NAMES,
-  resolveToolAnnotations,
-} from '@/lib/mcp/toolAnnotations';
+import { resolveToolAnnotations } from '@/lib/mcp/toolAnnotations';
 import { coreTools, DISCOVERY_CONTROL_TOOLS } from '@/lib/mcp/progressiveDiscovery';
 import { getToolCatalogModeForClient } from '@/lib/mcp/ensureOAuthClient';
 
@@ -16,10 +13,8 @@ export type UnifiedMcpTool = McpDiscoveryTool;
 
 let cachedFullTools: UnifiedMcpTool[] | null = null;
 let cachedCuratedTools: UnifiedMcpTool[] | null = null;
-let cachedConnectorTools: UnifiedMcpTool[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 60_000;
-const CONNECTOR_TOOL_SET = new Set<string>(CHATGPT_CONNECTOR_TOOL_NAMES);
 
 /** Optional discovery aliases (search/fetch) available to all clients. */
 const DISCOVERY_ALIAS_TOOLS: UnifiedMcpTool[] = [
@@ -107,11 +102,9 @@ export async function getUnifiedMcpTools(options?: {
     !options?.forceRefresh &&
     now - cacheTime < CACHE_TTL_MS &&
     cachedFullTools &&
-    cachedFullTools.length > 0 &&
-    (catalogMode !== 'connector' || (cachedConnectorTools && cachedConnectorTools.length > 0))
+    cachedFullTools.length > 0
   ) {
-    const cached =
-      catalogMode === 'connector' ? cachedConnectorTools! : cachedFullTools;
+    const cached = cachedFullTools;
     console.info(
       `[mcp.tools/list] cache hit catalog=${catalogMode} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
     );
@@ -175,8 +168,6 @@ export async function getUnifiedMcpTools(options?: {
   }
 
   cachedFullTools = prepareDiscoveryTools(annotated, sanitizeForClient);
-  cachedConnectorTools = cachedFullTools.filter((tool) => CONNECTOR_TOOL_SET.has(tool.name));
-
   cachedCuratedTools = coreTools(cachedFullTools, 32);
   for (const control of withAnnotations(DISCOVERY_CONTROL_TOOLS)) {
     if (!cachedCuratedTools.some((tool) => tool.name === control.name)) {
@@ -193,7 +184,7 @@ export async function getUnifiedMcpTools(options?: {
   cachedCuratedTools.sort((a, b) => a.name.localeCompare(b.name));
 
   cacheTime = now;
-  const result = catalogMode === 'connector' ? cachedConnectorTools : cachedFullTools;
+  const result = cachedFullTools;
   console.info(
     `[mcp.tools/list] returning catalog=${catalogMode} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
   );
@@ -211,7 +202,6 @@ export async function getUnifiedMcpToolCount(options?: {
 export function invalidateUnifiedMcpToolCache(): void {
   cachedFullTools = null;
   cachedCuratedTools = null;
-  cachedConnectorTools = null;
   cacheTime = 0;
 }
 

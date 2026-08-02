@@ -20,11 +20,13 @@ export async function GET(
 
     const admin = createSupabaseAdminClient();
     const now = new Date().toISOString();
+    const publicToken = String(req.nextUrl.searchParams.get('token') || '').trim();
+    if (!publicToken) return NextResponse.json({ error: 'Public invoice token required' }, { status: 401 });
 
     // Fetch invoice to get tenantId and current status
     const { data: invoice, error: fetchError } = await admin
       .from('business_invoices')
-      .select('id, tenant_id, status, view_count, viewed_at')
+      .select('id, tenant_id, status, lifecycle_status, view_count, viewed_at, is_public, metadata')
       .eq('id', invoiceId)
       .single();
 
@@ -34,6 +36,10 @@ export async function GET(
         status: 200,
         headers: { 'Content-Type': 'image/gif', 'Cache-Control': 'no-store' },
       });
+    }
+    const storedToken = String((invoice.metadata as Record<string, unknown> | null)?.public_token || '').trim();
+    if (!invoice.is_public || !storedToken || storedToken !== publicToken) {
+      return NextResponse.json({ error: 'Invalid invoice token' }, { status: 401 });
     }
 
     const ip =
@@ -62,6 +68,7 @@ export async function GET(
     // Transition status sent → viewed (only once)
     if (invoice.status === 'sent') {
       updatePayload.status = 'viewed';
+      updatePayload.lifecycle_status = 'viewed';
       updatePayload.viewed_at = now;
     } else if (!invoice.viewed_at) {
       updatePayload.viewed_at = now;
@@ -71,6 +78,13 @@ export async function GET(
       .from('business_invoices')
       .update(updatePayload)
       .eq('id', invoiceId);
+    if (invoice.status === 'sent') {
+      await admin.from('invoice_lifecycle_events').insert({
+        tenant_id: invoice.tenant_id, invoice_id: invoiceId, event_type: 'status_viewed',
+        from_status: invoice.lifecycle_status || invoice.status, to_status: 'viewed', source: 'public_invoice_view',
+        evidence: { ip_address: ip, user_agent: userAgent, source: 'page_load' },
+      });
+    }
 
     // Audit log
     await logInvoiceEvent({

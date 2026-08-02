@@ -11,6 +11,7 @@ import {
   MessageSquare,
   RefreshCw,
   ScrollText,
+  BarChart3,
 } from 'lucide-react';
 
 export type BonnieWorkspaceView =
@@ -21,7 +22,8 @@ export type BonnieWorkspaceView =
   | 'approvals'
   | 'interventions'
   | 'audit'
-  | 'results';
+  | 'results'
+  | 'analytics';
 
 const VIEWS: Array<{ id: BonnieWorkspaceView; label: string; icon: React.ElementType }> = [
   { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -32,6 +34,7 @@ const VIEWS: Array<{ id: BonnieWorkspaceView; label: string; icon: React.Element
   { id: 'interventions', label: 'Interventions', icon: Inbox },
   { id: 'audit', label: 'Audit', icon: ScrollText },
   { id: 'results', label: 'Results', icon: CheckSquare },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 type Props = {
@@ -56,6 +59,7 @@ export default function BonnieWorkspaceViews({
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
 
   const loadRuns = useCallback(async () => {
     const res = await fetch(`/api/bonnie/runtime/runs?tenantId=${encodeURIComponent(tenantId)}`, {
@@ -89,6 +93,12 @@ export default function BonnieWorkspaceViews({
     void (async () => {
       setLoading(true);
       try {
+        if (view === 'analytics') {
+          const response = await fetch(`/api/bonnie/analytics?tenantId=${encodeURIComponent(tenantId)}&days=30`, { credentials: 'include' });
+          const payload = await response.json().catch(() => null);
+          setAnalytics(payload);
+          return;
+        }
         const list = await loadRuns();
         const prefer = selectedRunId || list[0]?.id;
         if (prefer) await loadDetail(prefer);
@@ -437,6 +447,15 @@ export default function BonnieWorkspaceViews({
                     </li>
                   ))}
               </ul>
+            </div>
+          )}
+          {view === 'analytics' && analytics?.success && (
+            <div className="space-y-4">
+              <div><h3 className="text-sm font-semibold">Agent performance</h3><p className="text-xs text-slate-500">Last {analytics.periodDays} days · tenant-isolated execution evidence</p></div>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {[['Tool success', `${Math.round(analytics.tools.successRate * 100)}%`, `${analytics.tools.calls} calls`], ['Run success', `${Math.round(analytics.runs.successRate * 100)}%`, `${analytics.runs.completed}/${analytics.runs.total} completed`], ['Latency', `${analytics.tools.averageLatencyMs} ms`, `p95 ${analytics.tools.p95LatencyMs} ms`], ['Approvals', analytics.approvals.pending, `${analytics.approvals.decided} decided`]].map(([label,value,sub]) => <div key={String(label)} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p><p className="mt-1 text-xl font-black text-slate-900 dark:text-white">{value}</p><p className="text-[10px] text-slate-500">{sub}</p></div>)}
+              </div>
+              <div className="grid gap-3 lg:grid-cols-2"><section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"><h4 className="text-xs font-semibold">Tool reliability</h4><div className="mt-2 max-h-80 overflow-y-auto"><table className="w-full text-left text-[11px]"><thead className="text-slate-500"><tr><th className="pb-2">Tool</th><th>Calls</th><th>Success</th><th>Latency</th></tr></thead><tbody>{analytics.tools.performance.map((row: any) => <tr key={row.tool} className="border-t border-slate-100 dark:border-slate-900"><td className="max-w-44 truncate py-1.5">{row.tool}</td><td>{row.calls}</td><td className={row.successRate >= .9 ? 'text-teal-600' : 'text-amber-600'}>{Math.round(row.successRate*100)}%</td><td>{row.averageLatencyMs} ms</td></tr>)}</tbody></table></div></section><section className="rounded-xl border border-slate-200 p-3 dark:border-slate-800"><h4 className="text-xs font-semibold">Attributed revenue impact</h4><div className="mt-3 space-y-2">{Object.entries(analytics.revenueByCurrency).length ? Object.entries(analytics.revenueByCurrency).map(([currency, amount]) => <div key={currency} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-slate-900"><span className="text-xs text-slate-500">{currency}</span><span className="text-sm font-black text-teal-600">{Number(amount).toLocaleString()}</span></div>) : <p className="text-xs text-slate-500">Revenue attribution will appear when outreach creates deals, contracts or paid invoices.</p>}</div><div className="mt-4 rounded-lg border border-slate-200 p-3 text-xs dark:border-slate-800"><p className="font-semibold">Estimated model/tool cost</p><p className="mt-1 text-lg font-black">${Number(analytics.tools.estimatedCostUsd || 0).toFixed(4)}</p><p className="text-[10px] text-slate-500">Recorded cost metadata only; providers without cost telemetry show zero.</p></div></section></div>
             </div>
           )}
         </div>

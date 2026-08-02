@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { createAdminSupabaseClientOrThrow, routeErrorResponse } from '@/lib/apiAuth';
 import { ENV } from '@/config/env';
+import { recordInboundOutreachReply } from '@/lib/outreach/recordInboundOutreachReply';
 
 const CANONICAL_WEBHOOK = '/api/webhooks/facebook/whatsapp';
 
@@ -180,6 +181,9 @@ export async function POST(request: NextRequest) {
           })
           .select('id')
           .single();
+
+        await recordInboundOutreachReply({ admin, tenantId, channel: 'whatsapp', sender: fromPhone, text: messageBody, provider: 'meta-whatsapp', providerEventId: messageId || null })
+          .catch((replyError) => console.error('[whatsapp-inbound] outreach reply capture failed', replyError));
 
         // 3. Reuse the canonical open ticket for this client/channel or create it once.
         if (savedMessage) {

@@ -8,7 +8,7 @@ import { tenantService } from './tenancy/TenantService';
 
 export interface SearchResult {
   id: string;
-  type: 'contact' | 'company' | 'deal' | 'project' | 'task' | 'invoice' | 'campaign' | 'contract' | 'ticket' | 'message';
+  type: 'contact' | 'company' | 'deal' | 'project' | 'task' | 'invoice' | 'campaign' | 'contract' | 'document' | 'ticket' | 'message';
   title: string;
   subtitle: string;
   content: string;
@@ -42,7 +42,7 @@ export async function unifiedSearch(
     }
 
     const searchTerm = query.toLowerCase().trim();
-    const types = filters?.types || ['contact', 'company', 'deal', 'project', 'task', 'invoice'];
+    const types = filters?.types || ['contact', 'company', 'deal', 'project', 'task', 'invoice', 'campaign', 'contract', 'document'];
     const limit = filters?.limit || 50;
 
     // Parallel searches across all tables
@@ -68,6 +68,12 @@ export async function unifiedSearch(
     }
     if (types.includes('campaign')) {
       searchPromises.push(searchCampaigns(searchTerm, tenantId, limit));
+    }
+    if (types.includes('contract')) {
+      searchPromises.push(searchContracts(searchTerm, tenantId, limit));
+    }
+    if (types.includes('document')) {
+      searchPromises.push(searchDocuments(searchTerm, tenantId, limit));
     }
 
     const results = (await Promise.all(searchPromises)).flat();
@@ -265,6 +271,40 @@ async function searchCampaigns(term: string, tenantId: string, limit: number): P
   }));
 }
 
+interface ContractSearchRow { id: string; title: string; content: string | null; status: string; lifecycle_status?: string | null; updated_at: string }
+
+async function searchContracts(term: string, tenantId: string, limit: number): Promise<SearchResult[]> {
+  const { data } = await supabase.from('contracts')
+    .select('id, title, content, status, lifecycle_status, updated_at')
+    .eq('tenant_id', tenantId)
+    .or(`title.ilike.%${term}%,content.ilike.%${term}%`)
+    .limit(limit);
+  return (data || []).map((contract: ContractSearchRow) => ({
+    id: contract.id, type: 'contract', title: contract.title,
+    subtitle: String(contract.lifecycle_status || contract.status || 'draft').replaceAll('_', ' '),
+    content: contract.content?.replace(/<[^>]+>/g, ' ').slice(0, 220) || '',
+    metadata: { status: contract.status, lifecycleStatus: contract.lifecycle_status }, score: 0,
+    updatedAt: contract.updated_at, route: `/dashboard/business/contracts?contractId=${contract.id}`,
+  }));
+}
+
+interface DocumentSearchRow { id: string; name: string | null; title: string | null; summary: string | null; extracted_text: string | null; document_type: string | null; intelligence_status?: string | null; updated_at: string }
+
+async function searchDocuments(term: string, tenantId: string, limit: number): Promise<SearchResult[]> {
+  const { data } = await supabase.from('documents')
+    .select('id, name, title, summary, extracted_text, document_type, intelligence_status, updated_at')
+    .eq('tenant_id', tenantId).is('deleted_at', null)
+    .or(`name.ilike.%${term}%,title.ilike.%${term}%,summary.ilike.%${term}%,extracted_text.ilike.%${term}%`)
+    .limit(limit);
+  return (data || []).map((document: DocumentSearchRow) => ({
+    id: document.id, type: 'document', title: document.title || document.name || 'Document',
+    subtitle: document.document_type || 'Document',
+    content: document.summary || document.extracted_text?.slice(0, 220) || '',
+    metadata: { documentType: document.document_type, intelligenceStatus: document.intelligence_status }, score: 0,
+    updatedAt: document.updated_at, route: `/dashboard/business/documents?documentId=${document.id}`,
+  }));
+}
+
 /**
  * Calculate relevance score based on match quality
  * 120% feature - Smart ranking
@@ -302,6 +342,8 @@ function calculateRelevanceScore(result: SearchResult, term: string): number {
     task: 4,
     invoice: 4,
     campaign: 3,
+    contract: 7,
+    document: 6,
   };
   score += typePriority[result.type] || 0;
 

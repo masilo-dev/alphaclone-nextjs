@@ -399,18 +399,19 @@ export default function BonnieChatPanel({
             );
           },
           (phase, meta) => {
-            if (phase === 'executing') {
+            if (phase === 'executing' || phase === 'reading' || phase === 'verifying' || phase === 'awaiting_approval') {
               setAgentPhase('executing');
               const evId = `ev-${Date.now()}`;
+              const labels: Record<string, string> = { reading: 'Reading workspace data', executing: 'Executing tools', verifying: 'Verifying results', awaiting_approval: 'Awaiting approval' };
               setTimelineEvents((prev) => [
-                ...prev,
-                { id: evId, label: 'Executing tools', kind: 'phase', status: 'running' },
+                ...prev.map((event) => event.status === 'running' ? { ...event, status: 'done' as const } : event),
+                { id: evId, label: labels[phase] || 'Executing tools', kind: phase === 'awaiting_approval' ? 'approval' : 'phase', status: phase === 'awaiting_approval' ? 'approval_required' : 'running', payload: meta },
               ]);
             }
-            if (phase === 'thinking') {
+            if (phase === 'thinking' || phase === 'planning') {
               setAgentPhase('thinking');
               setTimelineEvents((prev) => [
-                ...prev,
+                ...prev.map((event) => event.status === 'running' ? { ...event, status: 'done' as const } : event),
                 { id: `ev-think-${Date.now()}`, label: 'Planning', kind: 'planning', status: 'running' },
               ]);
             }
@@ -422,9 +423,9 @@ export default function BonnieChatPanel({
         );
 
         window.clearTimeout(phaseTimer);
-        // Mark last timeline event done
+        // Mark all active timeline events done; approvals remain explicitly pending.
         setTimelineEvents((prev) =>
-          prev.map((e, i) => i === prev.length - 1 ? { ...e, status: 'done' as const } : e)
+          prev.map((event) => event.status === 'running' ? { ...event, status: 'done' as const } : event)
         );
         setMessages((prev) =>
           prev.map((m) =>

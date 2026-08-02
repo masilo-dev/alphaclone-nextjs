@@ -25,6 +25,7 @@ export async function generateContractAuditTrailPdf(
     .select(
       'action, actor_name, actor_email, actor_role, ip_address, user_agent, details, created_at'
     )
+    .eq('tenant_id', input.tenantId)
     .eq('contract_id', input.contractId)
     .order('created_at', { ascending: true });
 
@@ -102,6 +103,7 @@ export async function generateContractAuditTrailPdf(
   }
 
   await admin.from('contract_audit_trail').insert({
+    tenant_id: input.tenantId,
     contract_id: input.contractId,
     action: 'audit_trail_pdf_generated',
     actor_role: 'system',

@@ -32,7 +32,7 @@ export function MobileMoreSheet({ open, onClose, userRole, onNavigate }: MobileM
   };
 
   return (
-    <div className="md:hidden fixed inset-0 z-[1200] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
+    <div className="ac-responsive-more-sheet md:hidden fixed inset-0 z-[1200] flex flex-col" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
       <button
         type="button"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"

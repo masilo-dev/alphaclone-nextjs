@@ -24,6 +24,7 @@ import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { InvoiceLifecycleDrawer } from '@/components/dashboard/invoicing/InvoiceLifecycleDrawer';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -64,6 +65,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [recordPaymentAmount, setRecordPaymentAmount] = useState('');
     const [recordPaymentError, setRecordPaymentError] = useState<string | null>(null);
     const [recordPaymentSubmitting, setRecordPaymentSubmitting] = useState(false);
+    const [lifecycleInvoiceId, setLifecycleInvoiceId] = useState<string | null>(null);
 
     const toggleInvoiceSelection = (inv: BusinessInvoice) => {
         setSelectedInvoiceIds((prev) => {
@@ -545,6 +547,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-3">
+                                    <button onClick={() => { setLifecycleInvoiceId(selectedInvoiceForOptions.id); setIsOptionsOpen(false); }} className="w-full flex items-center justify-between p-3.5 bg-slate-900 hover:bg-slate-800 border border-white/5 rounded-2xl transition-all text-left text-sm text-slate-200"><span className="flex items-center gap-2.5"><Calendar className="w-4 h-4 text-sky-400" /><span>Payment Plan, Credits & Disputes</span></span><span className="text-[10px] text-slate-500 font-mono">LIFECYCLE</span></button>
                                     <button
                                         onClick={() => {
                                             setEditingInvoice(selectedInvoiceForOptions);
@@ -813,6 +816,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             </AnimatePresence>
 
             <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
+            <InvoiceLifecycleDrawer invoiceId={lifecycleInvoiceId} tenantId={currentTenant?.id} open={Boolean(lifecycleInvoiceId)} onOpenChange={(open) => !open && setLifecycleInvoiceId(null)} />
             <EnhancedInvoiceModal
                 isOpen={Boolean(editingInvoice)}
                 onClose={() => setEditingInvoice(null)}

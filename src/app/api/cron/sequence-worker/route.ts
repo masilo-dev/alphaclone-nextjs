@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { guardCronTenantRow } from '@/lib/tenant/cronTenantGuard';
 import { sendScheduledCampaignServer } from '@/lib/server/sendScheduledCampaignServer';
+import { processSequenceEnrollments } from '@/lib/outreach/processSequenceEnrollments';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export async function GET(req: NextRequest) {
     const now = new Date();
 
     try {
+        const lifecycleSequences = await processSequenceEnrollments(admin, 50);
         // 1. Find campaign recipients in 'waiting' status whose delay is over
         // We assume campaign_recipients has a 'next_step_at' column for drips
         const { data: waiting, error } = await admin
@@ -30,7 +32,7 @@ export async function GET(req: NextRequest) {
             .limit(50);
 
         if (error || !waiting?.length) {
-            return NextResponse.json({ success: true, processed: 0 });
+            return NextResponse.json({ success: true, processed: 0, lifecycleSequences });
         }
 
         let processed = 0;
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        return NextResponse.json({ success: true, processed });
+        return NextResponse.json({ success: true, processed, lifecycleSequences });
     } catch (err: any) {
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
     }

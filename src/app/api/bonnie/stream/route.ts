@@ -160,10 +160,10 @@ export async function POST(request: NextRequest) {
                 content: String(m.content),
               })),
             onStreamToken: (token) => push('token', { text: token }),
+            onActivity: (phase, meta) => push('phase', { phase, ...(meta || {}) }),
           });
 
           if (result.toolResults.length > 0) {
-            push('phase', { phase: 'executing' });
             push('tools', { tools: mapToolResultsForApi(result.toolResults) });
           }
 
