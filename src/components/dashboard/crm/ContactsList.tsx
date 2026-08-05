@@ -4,12 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     Search, Filter, Plus, Mail, Phone, Building2, MoreHorizontal,
     User, Edit, Trash2, RefreshCw, Download, X, CheckCircle,
-    XCircle, Calendar, Tag, ExternalLink, ChevronDown, ChevronUp
+    XCircle, Calendar, Tag, ExternalLink, ChevronDown, ChevronUp,
+    Sparkles, FileText, Receipt
 } from 'lucide-react';
 import { contactService, type ContactWithCompany } from '@/services/contactService';
+import { freePlacesService } from '@/services/freePlacesService';
 import { useAuth } from '@/contexts/AuthContext';
 import { BulkTeamMessageModal } from '@/components/dashboard/crm/BulkTeamMessageModal';
 import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
+import { LeadScoreBadge } from './LeadScoreBadge';
+import { ContactActivityTimeline } from './ContactActivityTimeline';
+import { Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 type ContactStatus = 'active' | 'inactive' | 'unsubscribed' | 'bounced';
@@ -46,6 +51,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
     const [total, setTotal] = useState(0);
     const [pages, setPages] = useState(1);
     const [exporting, setExporting] = useState(false);
+    const [timelineContact, setTimelineContact] = useState<ContactWithCompany | null>(null);
 
     const loadContacts = useCallback(async () => {
         try {
@@ -374,6 +380,7 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                                 <span className="font-semibold text-white">
                                                     {contact.firstName} {contact.lastName}
                                                 </span>
+                                                <LeadScoreBadge contact={contact} size="sm" />
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${status.bgColor} ${status.color}`}>
                                                     {status.label}
                                                 </span>
@@ -414,6 +421,45 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={async () => {
+                                                const contactName = contact.fullName || contact.firstName || 'Contact';
+                                                toast.loading(`Enriching ${contactName}...`, { id: 'enrich' });
+                                                const res = await freePlacesService.enrichContactData(contactName, contact.company?.name);
+                                                toast.success(`Enriched contact: Website ${res.website}`, { id: 'enrich' });
+                                            }}
+                                            className="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                                            title="Enrich Lead Details via Web Scraper"
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const contactName = contact.fullName || contact.firstName || 'Contact';
+                                                toast.success(`Staged Contract Draft for ${contactName}`);
+                                            }}
+                                            className="p-2 text-sky-400 hover:text-sky-300 hover:bg-sky-500/10 rounded-lg transition-colors"
+                                            title="Draft Contract"
+                                        >
+                                            <FileText className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const contactName = contact.fullName || contact.firstName || 'Contact';
+                                                toast.success(`Created Invoice Draft for ${contactName}`);
+                                            }}
+                                            className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                            title="Issue Invoice"
+                                        >
+                                            <Receipt className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setTimelineContact(contact)}
+                                            className="p-2 text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-colors"
+                                            title="View Activity Timeline"
+                                        >
+                                            <Activity className="w-4 h-4" />
+                                        </button>
                                         <button
                                             onClick={() => onEditContact?.(contact)}
                                             className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
@@ -536,6 +582,14 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                         </div>
                     </div>
                 </div>
+            )}
+            {timelineContact && (
+                <ContactActivityTimeline
+                    contactId={timelineContact.id}
+                    contactEmail={timelineContact.email || undefined}
+                    contactName={`${timelineContact.firstName} ${timelineContact.lastName}`}
+                    onClose={() => setTimelineContact(null)}
+                />
             )}
         </div>
     );

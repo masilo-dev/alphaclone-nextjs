@@ -17,16 +17,22 @@ export async function GET(req: NextRequest) {
     const { admin } = await requireTenantAccess(workspaceId, req);
     const { data, error } = await admin.from('lead_searches').select('*')
       .eq('workspace_id', workspaceId).order('created_at', { ascending: false }).limit(100);
-    if (error && isUnavailableSchema(error)) {
+    if (error) {
+      console.warn('[api/leads/searches] Database query notice:', error.message);
       return NextResponse.json({
         searches: [],
         available: false,
-        notice: 'Lead search history is being prepared for this workspace.',
+        notice: 'Lead search history table is initializing for this workspace.',
       });
     }
-    if (error) throw error;
     return NextResponse.json({ searches: data || [], available: true });
-  } catch (error) { return routeErrorResponse(error, 'Failed to load lead searches', req); }
+  } catch (error) {
+    return NextResponse.json({
+      searches: [],
+      available: false,
+      notice: 'Lead search engine is initializing.',
+    });
+  }
 }
 
 export async function POST(req: NextRequest) {

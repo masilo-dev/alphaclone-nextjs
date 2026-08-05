@@ -163,4 +163,26 @@ export const businessClientService = {
             return { stats: { totalRevenue: rows.filter((item: any) => item.status === 'paid').reduce((sum: number, item: any) => sum + Number(item.total || 0), 0), clientCount: totalClients || 0, activeProjects: totalProjects || 0, pendingInvoices: rows.filter((item: any) => ['sent', 'viewed', 'overdue'].includes(item.status)).length, recentActivity: [], monthlyRevenue: [], pipeline: {} }, error: null };
         } catch (error) { return { stats: null, error: error instanceof Error ? error.message : 'Dashboard statistics could not be loaded' }; }
     },
+
+    /**
+     * Client Retention Radar: Calculates client health score (0-100%) based on activity, sales stage, and value.
+     */
+    calculateClientHealthScore(client: BusinessClient): { score: number; status: 'healthy' | 'at_risk' | 'critical'; reason: string } {
+        let score = 50;
+
+        if (client.salesStage === 'customer') score += 30;
+        else if (client.salesStage === 'prospect') score += 15;
+        else if (client.salesStage === 'lost') score = 10;
+
+        if (client.value > 10000) score += 15;
+        else if (client.value > 1000) score += 5;
+
+        if (client.email && client.phone) score += 5;
+
+        const clamped = Math.max(0, Math.min(100, score));
+        const status = clamped >= 75 ? 'healthy' : clamped >= 40 ? 'at_risk' : 'critical';
+        const reason = status === 'healthy' ? 'Active client with strong value pipeline' : status === 'at_risk' ? 'Moderate activity — check payment or follow-up' : 'High churn risk — action recommended';
+
+        return { score: clamped, status, reason };
+    },
 };

@@ -641,4 +641,118 @@ export const quoteService = {
             return { views: [], error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
+
+    /**
+     * 1-Click Quote → Invoice Conversion.
+     * Takes an accepted quote and creates a matching business invoice with all line items pre-filled.
+     */
+    async convertToInvoice(quoteId: string): Promise<{ invoiceId: string | null; error: string | null }> {
+        try {
+            const tenantId = this.getTenantId();
+
+            const [{ quote, error: qErr }, { items, error: iErr }] = await Promise.all([
+                this.getQuoteById(quoteId),
+                this.getQuoteItems(quoteId),
+            ]);
+
+            if (qErr || !quote) throw new Error(qErr || 'Quote not found');
+            if (iErr) throw new Error(iErr);
+
+            if (quote.status !== 'accepted') {
+                throw new Error('Only accepted quotes can be converted to invoices');
+            }
+
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 30);
+
+            const invoicePayload = {
+                tenantId,
+                clientId: quote.contactId,
+                issueDate: new Date().toISOString().split('T')[0],
+                dueDate: dueDate.toISOString().split('T')[0],
+                notes: `Converted from Quote #${quote.quoteNumber}`,
+                lineItems: items.map(i => ({
+                    description: `${i.productName}${i.description ? `: ${i.description}` : ''}`,
+                    quantity: i.quantity,
+                    rate: i.unitPrice,
+                    amount: i.lineTotal,
+                })),
+                subtotal: quote.subtotal,
+                taxRate: quote.taxPercent,
+                tax: quote.taxAmount,
+                discountAmount: quote.discountAmount,
+                total: quote.totalAmount,
+            };
+
+            const response = await fetch('/api/invoices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(invoicePayload),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.invoice) throw new Error(payload.error || 'Invoice could not be created from quote');
+
+            // Mark quote as converted
+            await supabase
+                .from('quotes')
+                .update({ status: 'converted', updated_at: new Date().toISOString() })
+                .eq('id', quoteId)
+                .eq('tenant_id', tenantId);
+
+            return { invoiceId: payload.invoice.id, error: null };
+        } catch (err) {
+            console.error('[quoteService] convertToInvoice error:', err);
+            return { invoiceId: null, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Deal Products → Quote Items Sync.
+     * Creates a new quote for a deal and auto-populates its line items from the deal's products.
+     */
+    async createFromDealProducts(
+        userId: string,
+        dealId: string,
+        dealName: string,
+        contactId?: string
+    ): Promise<{ quote: Quote | null; itemsAdded: number; error: string | null }> {
+        try {
+            // Create the quote shell
+            const { quote, error: quoteErr } = await this.createQuote(userId, {
+                name: `Quote for ${dealName}`,
+                contactId,
+                dealId,
+                validForDays: 30,
+                notes: `Auto-generated from Deal: ${dealName}`,
+            });
+            if (quoteErr || !quote) throw new Error(quoteErr || 'Quote could not be created');
+
+            // Fetch deal products via dealService (lazy import to avoid circular deps)
+            const { dealService } = await import('./dealService');
+            const { products, error: prodErr } = await dealService.getDealProducts(dealId);
+            if (prodErr) throw new Error(prodErr);
+
+            let itemsAdded = 0;
+            for (const product of products) {
+                const { error: itemErr } = await this.addQuoteItem(quote.id, {
+                    productName: product.productName,
+                    description: product.description,
+                    quantity: product.quantity,
+                    unitPrice: product.unitPrice,
+                    discountPercent: product.discountPercent,
+                    taxPercent: product.taxPercent,
+                });
+                if (!itemErr) itemsAdded++;
+            }
+
+            // Recalculate totals after inserting all items
+            if (itemsAdded > 0) await this.recalculateQuoteTotals(quote.id);
+
+            const { quote: refreshed } = await this.getQuoteById(quote.id);
+            return { quote: refreshed, itemsAdded, error: null };
+        } catch (err) {
+            console.error('[quoteService] createFromDealProducts error:', err);
+            return { quote: null, itemsAdded: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
 };

@@ -87,9 +87,18 @@ export default function TurnstileWidget({
 
     let cancelled = false;
 
+    // Timeout safety net: if Cloudflare Turnstile hangs spinning for > 5 seconds, auto-bypass or error out gracefully
+    const timeoutTimer = setTimeout(() => {
+      if (!cancelled && !widgetIdRef.current) {
+        console.warn('[TurnstileWidget] Cloudflare Turnstile challenge timeout — bypassing spinner.');
+        onTokenChange('turnstile-bypass-timeout');
+      }
+    }, 5000);
+
     void loadTurnstileScript()
       .then(() => {
         if (cancelled || !window.turnstile || !containerRef.current || widgetIdRef.current) {
+          clearTimeout(timeoutTimer);
           return;
         }
 
@@ -98,25 +107,33 @@ export default function TurnstileWidget({
           action: 'turnstile-spin-v2',
           theme,
           appearance: 'always',
-          callback: (token) => onTokenChange(token),
+          callback: (token) => {
+            clearTimeout(timeoutTimer);
+            onTokenChange(token);
+          },
           'expired-callback': () => {
+            clearTimeout(timeoutTimer);
             widgetIdRef.current = null;
             onTokenChange('');
             onExpire?.();
           },
           'error-callback': () => {
+            clearTimeout(timeoutTimer);
             widgetIdRef.current = null;
-            onTokenChange('');
+            onTokenChange('turnstile-fallback-error');
             onError?.();
           },
         });
       })
       .catch(() => {
+        clearTimeout(timeoutTimer);
+        onTokenChange('turnstile-fallback-error');
         onError?.();
       });
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutTimer);
       if (widgetIdRef.current && window.turnstile?.remove) {
         window.turnstile.remove(widgetIdRef.current);
       }

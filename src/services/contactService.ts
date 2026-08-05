@@ -463,4 +463,82 @@ export const contactService = {
             };
         }
     },
+
+    /**
+     * Sanitizes strings against CSV Formula Injection (=, +, -, @) before generating downloadable reports.
+     */
+    sanitizeCsvValue(value: string | number | null | undefined): string {
+        if (value === null || value === undefined) return '';
+        const str = String(value);
+        if (/^[=+\-@\t\r]/.test(str)) {
+            return `'${str}`;
+        }
+        return str;
+    },
+
+    /**
+     * Exports given contacts to a sanitized CSV string.
+     */
+    exportContactsToCsv(contacts: ContactWithCompany[]): string {
+        const headers = ['Full Name', 'Email', 'Phone', 'Company', 'Title', 'Status', 'Created At'];
+        const rows = contacts.map(c => [
+            this.sanitizeCsvValue(c.fullName),
+            this.sanitizeCsvValue(c.email),
+            this.sanitizeCsvValue(c.phone),
+            this.sanitizeCsvValue(c.company?.name),
+            this.sanitizeCsvValue(c.title),
+            this.sanitizeCsvValue(c.status),
+            this.sanitizeCsvValue(c.createdAt),
+        ]);
+
+        return [headers.join(','), ...rows.map(r => r.map(val => `"${val.replace(/"/g, '""')}"`).join(','))].join('\n');
+    },
+
+    /**
+     * Duplicate Contact Detection — checks for existing contacts with matching email or full name.
+     * Call before createContact to surface potential duplicates for review.
+     */
+    async findDuplicates(tenantId: string, email?: string, firstName?: string, lastName?: string): Promise<{ duplicates: ContactWithCompany[]; error: string | null }> {
+        try {
+            if (!email && !firstName && !lastName) return { duplicates: [], error: null };
+
+            const filters: string[] = [];
+            if (email?.trim()) filters.push(`email.ilike.${email.trim()}`);
+            if (firstName?.trim() && lastName?.trim()) {
+                filters.push(`and(first_name.ilike.${firstName.trim()},last_name.ilike.${lastName.trim()})`);
+            }
+
+            if (!filters.length) return { duplicates: [], error: null };
+
+            const { data, error } = await supabase
+                .from('contacts')
+                .select('*, companies(id, name)')
+                .eq('tenant_id', tenantId)
+                .is('deleted_at', null)
+                .or(filters.join(','))
+                .limit(5);
+
+            if (error) throw error;
+
+            const duplicates: ContactWithCompany[] = (data || []).map((c: any) => ({
+                id: c.id,
+                tenantId: c.tenant_id,
+                firstName: c.first_name,
+                lastName: c.last_name,
+                fullName: `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+                email: c.email,
+                phone: c.phone,
+                title: c.title,
+                status: c.status,
+                company: c.companies ? { id: c.companies.id, name: c.companies.name } : undefined,
+                createdAt: c.created_at,
+                updatedAt: c.updated_at,
+            }));
+
+            return { duplicates, error: null };
+        } catch (err) {
+            console.error('[contactService] findDuplicates error:', err);
+            return { duplicates: [], error: err instanceof Error ? err.message : 'Duplicate check failed' };
+        }
+    },
 };

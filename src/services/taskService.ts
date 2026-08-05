@@ -951,4 +951,49 @@ export const taskService = {
             return { score: 0, status: 'critical', risks: [], recommendations: [], error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
+
+    /**
+     * Escalation engine: promotes all overdue non-completed tasks to high priority.
+     * Returns the count of tasks escalated.
+     */
+    async escalateOverdueTasks(userId?: string): Promise<{ escalated: number; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { escalated: 0, error: 'No active workspace' };
+
+            const { tasks, error } = await this.getOverdueTasks(userId);
+            if (error) throw new Error(error);
+
+            const toEscalate = tasks.filter(t => t.priority !== 'urgent' && t.priority !== 'high');
+            if (!toEscalate.length) return { escalated: 0, error: null };
+
+            const ids = toEscalate.map(t => t.id);
+
+            const { error: updateError } = await supabase
+                .from('tasks')
+                .update({ priority: 'high', metadata: { escalated: true, escalated_at: new Date().toISOString() } })
+                .eq('tenant_id', tenantId)
+                .in('id', ids)
+                .neq('status', 'completed')
+                .neq('status', 'cancelled');
+
+            if (updateError) throw updateError;
+
+            // Log one activity per escalated task (non-blocking)
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            const actorId = currentUser?.id || userId || 'system';
+            for (const task of toEscalate) {
+                activityService.logActivity(actorId, 'Task Escalated', {
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    reason: 'overdue_auto_escalation',
+                }, tenantId).catch(() => undefined);
+            }
+
+            return { escalated: toEscalate.length, error: null };
+        } catch (err) {
+            console.error('[taskService] escalateOverdueTasks error:', err);
+            return { escalated: 0, error: err instanceof Error ? err.message : 'Escalation failed' };
+        }
+    },
 };

@@ -71,6 +71,7 @@ export interface ExpenseFilters {
     from_date?: string;
     to_date?: string;
     billable?: boolean;
+    client_id?: string;
     search?: string;
 }
 
@@ -92,6 +93,7 @@ export const expenseService = {
         if (filters.from_date)   query = query.gte('date', filters.from_date);
         if (filters.to_date)     query = query.lte('date', filters.to_date);
         if (filters.billable !== undefined) query = query.eq('billable', filters.billable);
+        if (filters.client_id)   query = query.eq('client_id', filters.client_id);
 
         const { data, error } = await query;
         if (error) throw new Error(error.message);
@@ -312,5 +314,65 @@ export const expenseService = {
             .sort((a, b) => a.month.localeCompare(b.month));
 
         return { total, by_category, by_month, pending_count };
+    },
+
+    /**
+     * Expense → Billable Invoice Conversion.
+     * Collects all approved billable expenses for a client and stages them as a single invoice.
+     */
+    async createReimbursementInvoice(
+        tenantId: string,
+        clientId: string,
+        clientName: string
+    ): Promise<{ invoiceId: string | null; expenseCount: number; total: number; error: string | null }> {
+        try {
+            const expenses = await this.getExpenses(tenantId, { status: 'approved', billable: true, client_id: clientId });
+
+            const billable = expenses.filter(e => e.billable && e.client_id === clientId);
+            if (!billable.length) {
+                return { invoiceId: null, expenseCount: 0, total: 0, error: 'No approved billable expenses found for this client' };
+            }
+
+            const lineItems = billable.map(e => ({
+                description: `${e.category || 'Expense'}: ${e.description || e.vendor_name || 'Reimbursable expense'} (${e.date})`,
+                quantity: 1,
+                rate: Number(e.amount || 0),
+                amount: Number(e.amount || 0),
+            }));
+
+            const total = lineItems.reduce((sum, item) => sum + item.amount, 0);
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+
+            const response = await fetch('/api/invoices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    clientId,
+                    issueDate: new Date().toISOString().split('T')[0],
+                    dueDate: dueDate.toISOString().split('T')[0],
+                    notes: `Expense reimbursement invoice for ${clientName} — ${billable.length} item(s)`,
+                    lineItems,
+                    subtotal: total,
+                    taxRate: 0,
+                    tax: 0,
+                    discountAmount: 0,
+                    total,
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok || !payload.invoice) throw new Error(payload.error || 'Reimbursement invoice could not be created');
+
+            // Mark expenses as reimbursed
+            const { supabase } = await import('../../lib/supabase');
+            const ids = billable.map(e => e.id);
+            await supabase.from('expenses').update({ status: 'reimbursed' }).eq('tenant_id', tenantId).in('id', ids);
+
+            return { invoiceId: payload.invoice.id, expenseCount: billable.length, total, error: null };
+        } catch (err) {
+            console.error('[ExpenseService] createReimbursementInvoice error:', err);
+            return { invoiceId: null, expenseCount: 0, total: 0, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
     },
 };

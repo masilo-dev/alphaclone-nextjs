@@ -293,6 +293,30 @@ export default function WhatsAppIntegration() {
               )}
             </div>
 
+            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    1-Click Meta Automatic Connect
+                  </h4>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    Log in with your Meta account to connect your WhatsApp Business lines automatically without manual keys.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    if (!currentTenant?.id) return;
+                    window.location.href = `/api/auth/facebook/connect?tenant_id=${encodeURIComponent(currentTenant.id)}&return_to=${encodeURIComponent('/dashboard/business/whatsapp')}`;
+                  }}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 text-xs flex items-center gap-2"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Log in with Meta
+                </Button>
+              </div>
+            </div>
+
             <div className="space-y-4 border-t border-white/5 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button

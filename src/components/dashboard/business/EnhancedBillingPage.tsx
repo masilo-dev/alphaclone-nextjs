@@ -25,6 +25,8 @@ import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { InvoiceLifecycleDrawer } from '@/components/dashboard/invoicing/InvoiceLifecycleDrawer';
+import { InvoiceAgingReport } from '../invoicing/InvoiceAgingReport';
+import { OverdueReminderPanel } from '../invoicing/OverdueReminderPanel';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -241,7 +243,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         setRevenueData(sorted.length ? sorted : [{ date: 'Today', revenue: 0 }]);
     };
 
-    const [activeTab, setActiveTab] = useState<'invoices' | 'recurring' | 'services'>('invoices');
+    const [activeTab, setActiveTab] = useState<'invoices' | 'aging' | 'reminders' | 'recurring' | 'services'>('invoices');
 
     const filteredInvoices = invoices.filter(inv => {
         const matchesFilter = filter === 'all' || inv.status === filter;
@@ -304,6 +306,18 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     Billing
                   </button>
                   <button 
+                    onClick={() => setActiveTab('aging')}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'aging' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Aging Report
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('reminders')}
+                    className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'reminders' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Reminders
+                  </button>
+                  <button 
                     onClick={() => setActiveTab('recurring')}
                     className={`flex-1 sm:flex-none h-8 px-3 rounded-full font-black uppercase text-[11px] tracking-widest border transition-all ${activeTab === 'recurring' ? 'bg-[var(--ws-surface-primary)] border-[var(--ws-border)] text-[var(--ws-text-primary)] shadow-sm' : 'bg-transparent border-transparent text-slate-500 hover:text-slate-300'}`}
                   >
@@ -322,6 +336,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 <React.Suspense fallback={<div className="p-12 text-center text-slate-500">Loading Catalog...</div>}>
                     <ServicesCatalog />
                 </React.Suspense>
+            ) : activeTab === 'aging' ? (
+                <InvoiceAgingReport />
+            ) : activeTab === 'reminders' ? (
+                <OverdueReminderPanel />
             ) : activeTab === 'recurring' ? (
                 currentTenant?.id ? (
                     <RecurringInvoicesPanel

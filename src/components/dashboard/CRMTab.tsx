@@ -28,6 +28,11 @@ import { CommunicationModal } from './crm/CommunicationModal';
 import { LeadImportModal } from './crm/LeadImportModal';
 import { RevenueLeakagePanel } from './crm/RevenueLeakagePanel';
 import { ClientPulsePanel } from './platform-advantage/PlatformAdvantageHome';
+import { PipelineForecastPanel } from './crm/PipelineForecastPanel';
+import { OutreachSequencePanel } from './crm/OutreachSequencePanel';
+import { AIProposalGenerator } from './crm/AIProposalGenerator';
+import { EmbeddableFormGenerator } from './crm/EmbeddableFormGenerator';
+import { ClientChurnRadarPanel } from './crm/ClientChurnRadarPanel';
 import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
 import { showActionNextSteps } from '../common/showActionNextSteps';
@@ -53,7 +58,7 @@ import { ModuleFrame, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
-type SubView = 'leads' | 'clients' | 'contacts';
+type SubView = 'leads' | 'clients' | 'contacts' | 'forecast' | 'sequences' | 'proposals' | 'embed' | 'churn';
 
 interface Lead {
   id: string;
@@ -2206,6 +2211,11 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 { key: 'leads', label: t('Leads'), count: leads.length },
                 { key: 'clients', label: t('Customers'), count: activeClientsCount },
                 { key: 'contacts', label: t('Contacts'), count: clients.length },
+                { key: 'forecast', label: 'Forecast', count: 0 },
+                { key: 'sequences', label: 'Drip Sequences', count: 0 },
+                { key: 'proposals', label: 'AI Proposals', count: 0 },
+                { key: 'embed', label: 'Embed Form', count: 0 },
+                { key: 'churn', label: 'Churn Radar', count: 0 },
               ] as { key: SubView; label: string; count: number }[]).map(({ key, label, count }) => (
                 <button
                   key={key}
@@ -2216,7 +2226,7 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                   }}
                   className={`flex-1 py-3.5 text-xs font-bold capitalize transition-colors ${subView === key ? 'text-[var(--brand-blue-400)] border-b-2 border-[var(--brand-blue-400)]' : 'text-slate-500'}`}
                 >
-                  {label} ({count})
+                  {['forecast', 'sequences', 'proposals', 'embed', 'churn'].includes(key) ? label : `${label} (${count})`}
                 </button>
               ))}
             </div>
@@ -2375,7 +2385,27 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
         )}
       >
       <div ref={crmListRef} className={`ac-workspace-panel flex-1 ac-scroll-full overflow-hidden ${subView === 'leads' && leadsView === 'board' ? 'min-h-[420px]' : ''}`}>
-        {!loading && subView === 'leads' && leadsView === 'board' ? (
+        {subView === 'forecast' ? (
+          <div className="p-4 sm:p-6">
+            <PipelineForecastPanel />
+          </div>
+        ) : subView === 'sequences' ? (
+          <div className="p-4 sm:p-6">
+            <OutreachSequencePanel />
+          </div>
+        ) : subView === 'proposals' ? (
+          <div className="p-4 sm:p-6">
+            <AIProposalGenerator />
+          </div>
+        ) : subView === 'embed' ? (
+          <div className="p-4 sm:p-6 max-w-3xl">
+            <EmbeddableFormGenerator />
+          </div>
+        ) : subView === 'churn' ? (
+          <div className="p-4 sm:p-6">
+            <ClientChurnRadarPanel />
+          </div>
+        ) : !loading && subView === 'leads' && leadsView === 'board' ? (
             <LeadKanban
             leads={filteredKanbanLeads}
             onUpdate={handleStatusUpdate}

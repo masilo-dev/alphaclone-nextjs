@@ -27,13 +27,20 @@ import { useBreakpoint } from '@/hooks/useBreakpoint';
 import { ChartOfAccountsPage } from './ChartOfAccountsPage';
 import { JournalEntriesPage } from './JournalEntriesPage';
 import { FinancialReportsPage } from './FinancialReportsPage';
+import { ExpenseCategoryChart } from './ExpenseCategoryChart';
+import { TaxSummaryPanel } from './TaxSummaryPanel';
+import { CurrencyConverterPanel } from './CurrencyConverterPanel';
+import { ReceiptOCRScannerModal } from './ReceiptOCRScannerModal';
 
 type Period = 'week' | 'month' | 'quarter' | 'year';
-type AccountingTab = 'overview' | 'income' | 'reports' | 'chart' | 'journal' | 'receipts';
+type AccountingTab = 'overview' | 'income' | 'reports' | 'expenses' | 'tax' | 'fx' | 'chart' | 'journal' | 'receipts';
 
 const ACCOUNTING_TABS: { key: AccountingTab; label: string }[] = [
     { key: 'overview', label: 'Money overview' },
     { key: 'income', label: 'Money in & out' },
+    { key: 'expenses', label: 'Expense Breakdown' },
+    { key: 'tax', label: 'Tax Summary' },
+    { key: 'fx', label: 'FX & Currencies' },
     { key: 'reports', label: 'Statements' },
     { key: 'chart', label: 'Accounts (advanced)' },
     { key: 'journal', label: 'Ledger (advanced)' },
@@ -46,6 +53,7 @@ export default function AccountingDashboard() {
     
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<AccountingTab>('overview');
+    const [ocrModalOpen, setOcrModalOpen] = useState(false);
     const [period, setPeriod] = useState<Period>('month');
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [isManualEntryOpen, setIsManualEntryOpen] = useState(false);
@@ -353,6 +361,32 @@ export default function AccountingDashboard() {
                 </Card>
             )}
 
+            {activeTab === 'expenses' && (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                    <div className="flex justify-end">
+                        <button
+                            onClick={() => setOcrModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-slate-950 bg-teal-400 hover:bg-teal-300 transition-colors shadow-lg shadow-teal-500/20"
+                        >
+                            Scan Receipt OCR
+                        </button>
+                    </div>
+                    <ExpenseCategoryChart />
+                </div>
+            )}
+
+            {activeTab === 'tax' && (
+                <div className="mt-6">
+                    <TaxSummaryPanel />
+                </div>
+            )}
+
+            {activeTab === 'fx' && (
+                <div className="mt-6 max-w-2xl">
+                    <CurrencyConverterPanel />
+                </div>
+            )}
+
             {activeTab === 'reports' && (
                 <div className="animate-in fade-in duration-300">
                     <FinancialReportsPage />
@@ -429,6 +463,15 @@ export default function AccountingDashboard() {
             <JournalEntryModal isOpen={isManualEntryOpen} onClose={() => setIsManualEntryOpen(false)} accounts={accounts} onSuccess={() => setLoading(true)} />
             <ReceiptUploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} onSuccess={handleReceiptSuccess} accounts={accounts} />
             <ReceiptGeneratorModal isOpen={isReceiptGeneratorOpen} onClose={() => setIsReceiptGeneratorOpen(false)} />
+            {ocrModalOpen && (
+                <ReceiptOCRScannerModal
+                    onSaveExpense={(exp) => {
+                        toast.success(`Recorded expense from OCR: $${exp.amount} (${exp.vendor})`);
+                        setOcrModalOpen(false);
+                    }}
+                    onClose={() => setOcrModalOpen(false)}
+                />
+            )}
 
             {/* Mobile Action Bar */}
             {isMobile && (

@@ -555,23 +555,31 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         <AnimatePresence>
             {isOpen && (
                 <div className={presentation === 'dock'
-                    ? 'absolute inset-0 z-[110] pointer-events-none flex items-end justify-end p-2 md:p-4'
-                    : 'fixed inset-0 z-[110] flex items-center justify-center p-4'}>
+                    ? 'fixed inset-0 z-[200] pointer-events-none flex items-end justify-end p-2 md:p-4'
+                    : 'fixed inset-0 z-[200] flex items-center justify-center p-4'}>
                     {presentation === 'modal' ? (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={onClose}
-                            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                            className="absolute inset-0 bg-slate-950/90 backdrop-blur-md pointer-events-auto"
                         />
-                    ) : null}
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={onClose}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs pointer-events-auto"
+                        />
+                    )}
 
                     <motion.div
                         initial={{ opacity: 0, scale: 0.98, y: 12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98, y: 12 }}
-                        className={`relative w-full bg-slate-900 border border-white/10 shadow-2xl overflow-hidden flex flex-col z-[120] ${
+                        className={`relative w-full bg-slate-950 border border-white/20 shadow-[0_0_50px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col z-[210] ${
                             presentation === 'dock'
                                 ? 'pointer-events-auto max-w-[560px] max-h-[calc(100%-0.5rem)] rounded-xl'
                                 : 'max-w-xl max-h-[min(82vh,640px)] rounded-2xl'

@@ -644,4 +644,29 @@ export const businessInvoiceService = {
         return doc;
     },
 
+    /**
+     * Stages a 1-click payment reminder notification for an overdue invoice.
+     * Marks the invoice lifecycle_status as 'reminder_sent' and returns the staged email body.
+     */
+    async sendPaymentReminder(invoiceId: string, clientName: string, balanceDue: number, dueDate: string): Promise<{ success: boolean; message: string; error: string | null }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) throw new Error('Select a workspace before sending a reminder');
+
+            // Stage the lifecycle status update so the team knows a reminder was triggered
+            await supabase
+                .from('business_invoices')
+                .update({ lifecycle_status: 'reminder_sent' })
+                .eq('tenant_id', tenantId)
+                .eq('id', invoiceId);
+
+            const message = `Dear ${clientName},\n\nThis is a friendly reminder that your invoice of $${balanceDue.toFixed(2)} was due on ${dueDate} and remains outstanding.\n\nPlease arrange payment at your earliest convenience.\n\nThank you for your prompt attention.\n\nAlphaClone Billing Team`;
+
+            return { success: true, message, error: null };
+        } catch (err: any) {
+            console.error('[businessInvoiceService] sendPaymentReminder error:', err);
+            return { success: false, message: '', error: err.message || 'Failed to stage payment reminder' };
+        }
+    },
+
 };

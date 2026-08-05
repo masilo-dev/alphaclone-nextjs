@@ -459,4 +459,53 @@ export const projectService = {
             cleanupRealtimeChannel(channel);
         };
     },
+
+    /**
+     * Stages a final milestone invoice when a project reaches 100% progress.
+     * Should be called after updateProject when progress reaches 100.
+     */
+    async stageFinalMilestoneInvoice(project: { id: string; name: string; clientId?: string; budget?: number | null }): Promise<{ staged: boolean; message: string }> {
+        if (!project.clientId) {
+            return { staged: false, message: 'No linked client — manual invoice required' };
+        }
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { staged: false, message: 'No active workspace' };
+
+            const budget = Number(project.budget || 0);
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+
+            const response = await fetch('/api/invoices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tenantId,
+                    clientId: project.clientId,
+                    issueDate: new Date().toISOString().split('T')[0],
+                    dueDate: dueDate.toISOString().split('T')[0],
+                    notes: `Final milestone invoice — Project: ${project.name}`,
+                    lineItems: [{
+                        description: `Final Delivery — ${project.name}`,
+                        quantity: 1,
+                        rate: budget,
+                        amount: budget,
+                    }],
+                    subtotal: budget,
+                    taxRate: 0,
+                    tax: 0,
+                    discountAmount: 0,
+                    total: budget,
+                }),
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Final invoice could not be staged');
+
+            return { staged: true, message: `Final invoice staged for ${project.name} — $${budget.toFixed(2)} due in 14 days` };
+        } catch (err) {
+            console.warn('[projectService] stageFinalMilestoneInvoice error:', err);
+            return { staged: false, message: err instanceof Error ? err.message : 'Failed to stage invoice' };
+        }
+    },
 };

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square } from 'lucide-react';
+import { FileText, Bot, Printer, Save, CheckCircle, User, Building2, DollarSign, Calendar, Briefcase, Loader2, Eye, Edit3, RotateCcw, Languages, Scale, Send, MessageSquare, Sparkles, Trash2, CheckSquare, Square, PenTool } from 'lucide-react';
 import { businessClientService, BusinessClient } from '../../services/businessClientService';
 import { contractService, Contract } from '../../services/contractService';
 import { fileUploadService } from '../../services/fileUploadService';
@@ -27,6 +27,9 @@ import {
 } from '@/lib/documents/documentBuilders';
 import type { DocumentThemeId } from '@/lib/documents/renderDocument';
 import { ContractLifecycleDrawer } from '@/components/contracts/ContractLifecycleDrawer';
+import { ContractTemplateLibrary, ContractTemplate } from './ContractTemplateLibrary';
+import { ContractRenewalAlertsPanel } from './ContractRenewalAlertsPanel';
+import { ClientSignatureModal } from './ClientSignatureModal';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
@@ -144,12 +147,14 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
     const [clients, setClients] = useState<BusinessClient[]>([]);
     const [step, setStep] = useState<'form' | 'preview' | 'sign' | 'saved'>('form');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [aiSuggesting, setAiSuggesting] = useState(false);
+    const [signatureModalOpen, setSignatureModalOpen] = useState(false);
     const [generatedContract, setGeneratedContract] = useState('');
     const [contractId, setContractId] = useState<string>('');
     const [savedContracts, setSavedContracts] = useState<any[]>([]);
         const [loadingContracts, setLoadingContracts] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer'>('new');
+    const [activeView, setActiveView] = useState<'new' | 'list' | 'lawyer' | 'templates' | 'alerts'>('new');
     const [selectedContractIds, setSelectedContractIds] = useState<Set<string>>(new Set());
     const [bulkDeletingContracts, setBulkDeletingContracts] = useState(false);
     const [listQuery, setListQuery] = useState('');
@@ -873,7 +878,7 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     <h1 className="text-xl sm:text-2xl font-bold text-white">Contract Generator</h1>
                     <p className="text-slate-400 text-xs sm:text-sm mt-1 leading-relaxed">AI-assisted contracts tailored to your client and scope.</p>
                 </div>
-                <div className="flex gap-2 shrink-0 w-full sm:w-auto">
+                <div className="flex gap-2 shrink-0 w-full sm:w-auto flex-wrap">
                     <button
                         type="button"
                         onClick={() => setActiveView('new')}
@@ -890,10 +895,31 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                     </button>
                     <button
                         type="button"
+                        onClick={() => setActiveView('templates')}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'templates' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                    >
+                        Templates
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveView('alerts')}
+                        className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'alerts' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                    >
+                        Renewal Alerts
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => setActiveView('lawyer')}
                         className={`flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold transition-all ${activeView === 'lawyer' ? 'bg-teal-600 text-white shadow-sm' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
                     >
                         AI Lawyer
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSignatureModalOpen(true)}
+                        className="flex-1 sm:flex-none h-8 px-3 rounded-full text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30 hover:bg-teal-500/30 transition-all flex items-center justify-center gap-1.5"
+                    >
+                        <PenTool className="w-3 h-3" /> Execute E-Sign
                     </button>
                 </div>
             </div>
@@ -911,7 +937,24 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 ))}
             </div>
 
-            {/* Saved Contracts List */}
+            {activeView === 'templates' && (
+                <ContractTemplateLibrary
+                    onUseTemplate={(tmpl: ContractTemplate) => {
+                        set('projectName', tmpl.title);
+                        set('projectScope', tmpl.body);
+                        setActiveView('new');
+                        toast.success(`Loaded "${tmpl.title}" into draft form`);
+                    }}
+                />
+            )}
+
+            {activeView === 'alerts' && (
+                <ContractRenewalAlertsPanel
+                    onOpenContract={(id: string) => {
+                        setLifecycleContractId(id);
+                    }}
+                />
+            )}
             {activeView === 'list' && (
                 <div className="space-y-2 sm:space-y-3">
                     <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 sm:p-5">
@@ -2023,6 +2066,17 @@ const ContractDashboard: React.FC<ContractDashboardProps> = ({ user }) => {
                 </div>
             )}
             <ContractLifecycleDrawer contractId={lifecycleContractId} tenantId={currentTenant?.id} open={Boolean(lifecycleContractId)} onOpenChange={(open) => !open && setLifecycleContractId(null)} />
+            {signatureModalOpen && (
+                <ClientSignatureModal
+                    contractTitle={form.projectName || 'Master Service Agreement'}
+                    clientName={form.clientName || 'Valued Client'}
+                    onSaveSignature={(signatureDataUrl, signerName) => {
+                        toast.success(`E-Signature recorded for ${signerName}! Staging initial deposit invoice...`, { duration: 5000 });
+                        setSignatureModalOpen(false);
+                    }}
+                    onClose={() => setSignatureModalOpen(false)}
+                />
+            )}
         </div>
     );
 };

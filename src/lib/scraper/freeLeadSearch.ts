@@ -64,7 +64,9 @@ function hasContactInfo(r: Partial<LeadResult>): boolean {
 function isEnrichableCandidate(r: Partial<LeadResult>): boolean {
   if (hasPhoneOrEmailContact(r)) return true;
   const website = (r.website || '').trim();
-  return website.length > 0 && /^https?:\/\//i.test(website);
+  const address = (r.address || '').trim();
+  const name = (r.business_name || '').trim();
+  return (website.length > 0 && /^https?:\/\//i.test(website)) || address.length > 5 || name.length > 2;
 }
 
 function enrichWithContactFlag(

@@ -210,6 +210,7 @@ export interface DealService {
     ): Promise<{ winRate: number; totalWon: number; totalLost: number; error: string | null }>;
     getSalesForecast(months?: number): Promise<{ forecast: any[]; error: string | null }>;
     getWinLossTrends(months?: number): Promise<{ trends: any[]; error: string | null }>;
+    autoCreateStageTask(dealId: string, dealName: string, newStage: DealStage, ownerId: string): Promise<{ taskId: string | null; error: string | null }>;
 }
 
 export const dealService: DealService = {
@@ -985,6 +986,47 @@ export const dealService: DealService = {
             return { trends, error: null };
         } catch (err) {
             return { trends: [], error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+    },
+
+    /**
+     * Auto-creates a contextual follow-up task when a deal advances to a key stage.
+     * Call this after updateDeal when the stage changes.
+     */
+    async autoCreateStageTask(dealId: string, dealName: string, newStage: DealStage, ownerId: string): Promise<{ taskId: string | null; error: string | null }> {
+        const stageTaskMap: Partial<Record<DealStage, { title: string; priority: 'high' | 'medium' | 'low'; daysUntilDue: number }>> = {
+            proposal: { title: `Send proposal to ${dealName}`, priority: 'high', daysUntilDue: 2 },
+            negotiation: { title: `Follow up on negotiation — ${dealName}`, priority: 'high', daysUntilDue: 1 },
+            qualified: { title: `Schedule discovery call — ${dealName}`, priority: 'medium', daysUntilDue: 3 },
+        };
+
+        const taskConfig = stageTaskMap[newStage];
+        if (!taskConfig) return { taskId: null, error: null }; // No auto-task for this stage
+
+        try {
+            const tenantId = this.getTenantId();
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + taskConfig.daysUntilDue);
+
+            const response = await fetch(`/api/tenant/${tenantId}/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: taskConfig.title,
+                    priority: taskConfig.priority,
+                    dueDate: dueDate.toISOString().split('T')[0],
+                    relatedToDeal: dealId,
+                    assignedTo: ownerId,
+                    metadata: { autoCreated: true, trigger: `deal_stage_${newStage}`, dealId },
+                }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(payload.error || 'Auto-task could not be created');
+
+            return { taskId: payload.task?.id || null, error: null };
+        } catch (err) {
+            console.warn('[dealService] autoCreateStageTask non-critical error:', err);
+            return { taskId: null, error: err instanceof Error ? err.message : 'Unknown error' };
         }
     },
 };

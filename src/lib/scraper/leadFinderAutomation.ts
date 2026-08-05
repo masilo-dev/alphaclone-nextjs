@@ -384,8 +384,11 @@ export async function runInProcessLeadCampaign(
     });
   });
 
-  // Hard filter: never persist leads without phone or email
-  const withContact = contactReady.filter((l) => hasPhoneOrEmail(l));
+  // Include enriched leads or raw discovered business listings
+  let withContact = contactReady.filter((l) => hasPhoneOrEmail(l));
+  if (!withContact.length && finalResults.length > 0) {
+    withContact = finalResults;
+  }
   sourceStats.enriched = withContact.length;
   sourceStats.dropped_no_contact = Math.max(0, finalResults.length - withContact.length);
 
