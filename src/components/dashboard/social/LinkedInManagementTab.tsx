@@ -205,6 +205,9 @@ export default function LinkedInManagementTab() {
     logo_url: string | null;
   }>>([]);
   const [refreshingCompanyPages, setRefreshingCompanyPages] = useState(false);
+  const [pipelineMetrics, setPipelineMetrics] = useState<any>(null);
+  const [adsSummary, setAdsSummary] = useState<any>(null);
+  const [loadingPipeline, setLoadingPipeline] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!currentTenant?.id || !user?.id) return;
@@ -283,6 +286,20 @@ export default function LinkedInManagementTab() {
       );
     } else {
       setOrgIdentities([]);
+    }
+
+    setLoadingPipeline(true);
+    try {
+      const [adsRes, metricsRes] = await Promise.all([
+        fetch(`/api/linkedin/ads?tenantId=${encodeURIComponent(currentTenant.id)}`).then((r) => r.json()),
+        fetch(`/api/linkedin/pipeline-metrics?tenantId=${encodeURIComponent(currentTenant.id)}`).then((r) => r.json()),
+      ]);
+      if (adsRes && !adsRes.error) setAdsSummary(adsRes);
+      if (metricsRes && !metricsRes.error) setPipelineMetrics(metricsRes);
+    } catch (err) {
+      console.warn('[LinkedInManagementTab] Pipeline metrics load skipped:', err);
+    } finally {
+      setLoadingPipeline(false);
     }
 
     setLoading(false);
@@ -378,6 +395,25 @@ export default function LinkedInManagementTab() {
     () => normalizeLinkedInScopes(selectedIntegration?.scopes),
     [selectedIntegration?.scopes],
   );
+  const hasLeadGenScopeFlag = useMemo(() => {
+    return (
+      grantedLinkedInScopes.includes('r_ads_leadgen_automation') ||
+      grantedLinkedInScopes.includes('r_marketing_leadgen_automation')
+    );
+  }, [grantedLinkedInScopes]);
+  const hasAdsReportingScopeFlag = useMemo(() => {
+    return (
+      grantedLinkedInScopes.includes('r_ads') ||
+      grantedLinkedInScopes.includes('r_ads_reporting') ||
+      grantedLinkedInScopes.includes('rw_ads')
+    );
+  }, [grantedLinkedInScopes]);
+  const hasPersonalPublishingFlag = useMemo(() => {
+    return grantedLinkedInScopes.includes('w_member_social');
+  }, [grantedLinkedInScopes]);
+  const hasOrgPublishingFlag = useMemo(() => {
+    return grantedLinkedInScopes.includes('w_organization_social');
+  }, [grantedLinkedInScopes]);
   const hasOrganizationWriteScope = useMemo(() => {
     const scopes = integrations.find((row) => row.linkedin_member_id === selectedLinkedInMemberId)?.scopes || [];
     return normalizeScopes(scopes).includes('w_organization_social');
@@ -1174,6 +1210,142 @@ ${parentContext}Return only the comment text.`;
           </div>
         </div>
       )}
+
+      {/* ── Capability Status Grid & Lead Sync Reconnect Banner ──────────────── */}
+      {selectedIntegration?.is_active && !hasLeadGenScopeFlag && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
+          <div className="flex-1 space-y-1.5">
+            <p className="font-semibold text-white">Lead Sync: Permission Required</p>
+            <p className="text-xs leading-relaxed text-amber-200/80">
+              Your connected LinkedIn account is missing <code className="bg-slate-900/60 px-1 py-0.5 rounded text-amber-300">r_ads_leadgen_automation</code> / <code className="bg-slate-900/60 px-1 py-0.5 rounded text-amber-300">r_marketing_leadgen_automation</code>.
+              LinkedIn cannot automatically push Lead Gen form responses to AlphaClone until reconnected.
+            </p>
+            <button
+              type="button"
+              onClick={handleConnectLinkedIn}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-teal-500 transition-colors shadow-sm"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Reconnect LinkedIn (Upgrade Permissions)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Integration Capability Matrix ───────────────────────────────────── */}
+      {selectedIntegration?.is_active && (
+        <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">LinkedIn Capability Matrix</h3>
+            <span className="text-[11px] text-slate-500">Live OAuth Token Permissions</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+            <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">Personal Post</span>
+              <div className="mt-1.5">
+                <StandardStatusBadge variant={hasPersonalPublishingFlag ? 'success' : 'warning'}>
+                  {hasPersonalPublishingFlag ? 'Active' : 'Permission Required'}
+                </StandardStatusBadge>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">Company Post</span>
+              <div className="mt-1.5">
+                <StandardStatusBadge variant={hasOrgPublishingFlag ? 'success' : 'warning'}>
+                  {hasOrgPublishingFlag ? 'Active' : 'Permission Required'}
+                </StandardStatusBadge>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">Engagement</span>
+              <div className="mt-1.5">
+                <StandardStatusBadge variant={hasPersonalPublishingFlag || hasOrganizationReadScope ? 'success' : 'warning'}>
+                  {hasPersonalPublishingFlag || hasOrganizationReadScope ? 'Active' : 'Permission Required'}
+                </StandardStatusBadge>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between">
+              <span className="text-[11px] text-slate-400 font-medium">Lead Gen Sync</span>
+              <div className="mt-1.5">
+                <StandardStatusBadge variant={hasLeadGenScopeFlag ? 'success' : 'warning'}>
+                  {hasLeadGenScopeFlag ? 'Active' : 'Permission Required'}
+                </StandardStatusBadge>
+              </div>
+            </div>
+            <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/50 flex flex-col justify-between col-span-2 sm:col-span-1">
+              <span className="text-[11px] text-slate-400 font-medium">Ads Reporting</span>
+              <div className="mt-1.5">
+                <StandardStatusBadge variant={hasAdsReportingScopeFlag ? 'success' : 'warning'}>
+                  {hasAdsReportingScopeFlag ? 'Active' : 'Permission Required'}
+                </StandardStatusBadge>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── LinkedIn Revenue Acquisition Pipeline Metrics ───────────────────── */}
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-teal-500/20 backdrop-blur-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-teal-400" />
+            <h3 className="text-sm font-bold text-white tracking-tight">LinkedIn Customer Acquisition Pipeline & ROI</h3>
+          </div>
+          <span className="text-xs font-semibold text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/20">
+            Ad Spend → Lead → CRM → Revenue
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 pt-1">
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
+            <p className="text-[11px] font-semibold text-slate-400">Synced Leads</p>
+            <p className="text-lg font-extrabold text-white mt-1">
+              {pipelineMetrics?.totalLeads ?? 0}
+            </p>
+            <span className="text-[10px] text-teal-400">Strict Idempotency</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
+            <p className="text-[11px] font-semibold text-slate-400">Ad Spend</p>
+            <p className="text-lg font-extrabold text-white mt-1">
+              {pipelineMetrics?.formatted?.adSpend || '$0'}
+            </p>
+            <span className="text-[10px] text-slate-500">Read-Only Analytics</span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
+            <p className="text-[11px] font-semibold text-slate-400">Cost Per Lead (CPL)</p>
+            <p className="text-lg font-extrabold text-teal-300 mt-1">
+              {pipelineMetrics?.formatted?.costPerLead || 'Insufficient data'}
+            </p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
+            <p className="text-[11px] font-semibold text-slate-400">Customers Won</p>
+            <p className="text-lg font-extrabold text-white mt-1">
+              {pipelineMetrics?.totalCustomers ?? 0}
+            </p>
+            <span className="text-[10px] text-slate-400">
+              Conv: {pipelineMetrics?.formatted?.leadToCustomerRate || 'Insufficient data'}
+            </span>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60">
+            <p className="text-[11px] font-semibold text-slate-400">Attributed Revenue</p>
+            <p className="text-lg font-extrabold text-teal-400 mt-1">
+              {pipelineMetrics?.formatted?.totalRevenue || '$0'}
+            </p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-800/60 border border-slate-700/60 col-span-2 sm:col-span-1">
+            <p className="text-[11px] font-semibold text-slate-400">ROAS / CAC</p>
+            <p className="text-lg font-extrabold text-teal-300 mt-1">
+              {pipelineMetrics?.formatted?.roas !== 'Insufficient data' ? pipelineMetrics?.formatted?.roas : pipelineMetrics?.formatted?.cac}
+            </p>
+            <span className="text-[10px] text-slate-500">Pipeline Value: {pipelineMetrics?.formatted?.expectedPipelineValue || '$0'}</span>
+          </div>
+        </div>
+      </div>
 
       {/* ── Topbar ────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 backdrop-blur-sm">

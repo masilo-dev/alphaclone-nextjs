@@ -631,6 +631,60 @@ export function normalizeLinkedInScopes(raw: unknown): string[] {
   return [];
 }
 
+export interface LinkedInCapabilities {
+  personalPublishing: boolean;
+  organizationPublishing: boolean;
+  engagement: boolean;
+  leadSync: boolean;
+  adsReporting: boolean;
+}
+
+export function hasPersonalPublishingScope(rawScopes: unknown): boolean {
+  const scopes = normalizeLinkedInScopes(rawScopes);
+  return scopes.includes('w_member_social');
+}
+
+export function hasOrgPublishingScope(rawScopes: unknown): boolean {
+  const scopes = normalizeLinkedInScopes(rawScopes);
+  return scopes.includes('w_organization_social');
+}
+
+export function hasEngagementScope(rawScopes: unknown): boolean {
+  const scopes = normalizeLinkedInScopes(rawScopes);
+  return (
+    scopes.includes('w_member_social') ||
+    scopes.includes('r_organization_social') ||
+    scopes.includes('w_organization_social')
+  );
+}
+
+export function hasLeadSyncScope(rawScopes: unknown): boolean {
+  const scopes = normalizeLinkedInScopes(rawScopes);
+  return (
+    scopes.includes('r_ads_leadgen_automation') ||
+    scopes.includes('r_marketing_leadgen_automation')
+  );
+}
+
+export function hasAdsReportingScope(rawScopes: unknown): boolean {
+  const scopes = normalizeLinkedInScopes(rawScopes);
+  return (
+    scopes.includes('r_ads') ||
+    scopes.includes('r_ads_reporting') ||
+    scopes.includes('rw_ads')
+  );
+}
+
+export function getLinkedInCapabilities(rawScopes: unknown): LinkedInCapabilities {
+  return {
+    personalPublishing: hasPersonalPublishingScope(rawScopes),
+    organizationPublishing: hasOrgPublishingScope(rawScopes),
+    engagement: hasEngagementScope(rawScopes),
+    leadSync: hasLeadSyncScope(rawScopes),
+    adsReporting: hasAdsReportingScope(rawScopes),
+  };
+}
+
 export function extractCompanyPagesFromMetadata(raw: unknown): LinkedInCompanyPage[] {
   if (!raw || typeof raw !== 'object') return [];
   const maybePages = (raw as { company_pages?: unknown }).company_pages;

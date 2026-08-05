@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseLinkedInLeadResponse, syncLinkedInLeadToCrm } from '@/lib/linkedin/leadGenSync';
 import { DEFAULT_TENANT_ID } from '@/lib/tenant/defaultTenant';
+import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getLinkedInAccessToken } from '@/services/linkedin/linkedinIntegrationService';
+import { linkedInFetch } from '@/lib/linkedin/linkedinClient';
 
 /**
  * GET handler for LinkedIn Webhook URL Verification Challenge
@@ -32,15 +35,56 @@ export async function POST(req: NextRequest) {
     const tenantId = searchParams.get('tenantId') || DEFAULT_TENANT_ID;
 
     const payload = await req.json();
-
-    // Check if payload contains lead notifications
     const leadEvents = Array.isArray(payload) ? payload : [payload];
     const results = [];
+
+    // Retrieve active integration token if needed for API resolution
+    let cachedToken: string | null = null;
 
     for (const event of leadEvents) {
       if (!event || typeof event !== 'object') continue;
 
-      const parsedLead = parseLinkedInLeadResponse(event);
+      let eventData = { ...event };
+      const responseUrn = (event.leadFormResponseUrn || event.leadResponseUrn || event.responseUrn) as string | undefined;
+
+      // If payload is only a notification URN without answers, attempt to fetch full details via REST API
+      if (responseUrn && (!Array.isArray(event.answers) || event.answers.length === 0)) {
+        try {
+          if (!cachedToken) {
+            const admin = createSupabaseAdminClient();
+            const { data: activeRow } = await admin
+              .from('linkedin_integrations')
+              .select('*')
+              .eq('tenant_id', tenantId)
+              .eq('is_active', true)
+              .order('updated_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (activeRow) {
+              cachedToken = await getLinkedInAccessToken(admin, activeRow);
+            }
+          }
+
+          if (cachedToken) {
+            const encodedUrn = encodeURIComponent(responseUrn);
+            const res = await linkedInFetch(
+              `https://api.linkedin.com/v2/adFormResponses/${encodedUrn}`,
+              cachedToken,
+              { method: 'GET' }
+            );
+
+            if (res.ok) {
+              const fullDetails = await res.json();
+              eventData = { ...eventData, ...fullDetails };
+            }
+          }
+        } catch (fetchErr) {
+          console.warn('[LinkedInLeadWebhook] Could not fetch lead response details:', fetchErr);
+        }
+      }
+
+      const parsedLead = parseLinkedInLeadResponse(eventData);
       const syncResult = await syncLinkedInLeadToCrm(tenantId, parsedLead);
       results.push(syncResult);
     }

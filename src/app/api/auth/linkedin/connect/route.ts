@@ -12,7 +12,7 @@ const ALLOWED_LINKEDIN_RETURN = [
   '/dashboard/business/settings',
 ] as const;
 
-/** Full set of authorized LinkedIn scopes for profiles, pages, ads, events, leads, and verification */
+/** Full set of authorized LinkedIn scopes for profiles, pages, ads, lead sync, and verification */
 const LINKEDIN_REQUESTED_SCOPES = [
   'openid',
   'profile',
@@ -27,8 +27,8 @@ const LINKEDIN_REQUESTED_SCOPES = [
   'r_ads',
   'rw_ads',
   'r_ads_reporting',
-  'r_events',
-  'rw_events',
+  'r_ads_leadgen_automation',
+  'r_marketing_leadgen_automation',
   'r_1st_connections_size',
   'r_verify',
 ] as const;

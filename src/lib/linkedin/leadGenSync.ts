@@ -5,6 +5,10 @@ import { upsertCalendlyContact } from '@/lib/calendly/calendlyApiClient';
 export interface LinkedInLeadFormData {
   formId?: string;
   leadId?: string;
+  campaignId?: string;
+  campaignName?: string;
+  accountId?: string;
+  creativeId?: string;
   submittedAt?: string;
   email?: string;
   fullName?: string;
@@ -18,12 +22,23 @@ export interface LinkedInLeadFormData {
 }
 
 /**
-  Parse a LinkedIn Lead Gen Form response payload into normalized contact fields.
+ * Parse a LinkedIn Lead Gen Form response payload into normalized contact fields and attribution properties.
  */
 export function parseLinkedInLeadResponse(raw: Record<string, unknown>): LinkedInLeadFormData {
-  const formId = (raw.formId || raw.leadFormUrn || raw.form_id) as string | undefined;
-  const leadId = (raw.id || raw.leadFormResponseUrn || raw.response_id) as string | undefined;
-  const submittedAt = raw.submittedAt ? new Date(Number(raw.submittedAt)).toISOString() : new Date().toISOString();
+  const formId = (raw.formId || raw.leadFormUrn || raw.form_id || raw.formUrn) as string | undefined;
+  const leadId = (raw.id || raw.leadFormResponseUrn || raw.response_id || raw.responseUrn || raw.leadResponseUrn) as string | undefined;
+  const campaignId = (raw.campaignId || raw.campaign_id || raw.campaign) as string | undefined;
+  const campaignName = (raw.campaignName || raw.campaign_name) as string | undefined;
+  const accountId = (raw.accountId || raw.account_id || raw.account) as string | undefined;
+  const creativeId = (raw.creativeId || raw.creative_id || raw.creative) as string | undefined;
+
+  let submittedAt: string;
+  if (typeof raw.submittedAt === 'number' || typeof raw.submittedAt === 'string') {
+    const num = Number(raw.submittedAt);
+    submittedAt = Number.isFinite(num) && num > 0 ? new Date(num).toISOString() : String(raw.submittedAt);
+  } else {
+    submittedAt = new Date().toISOString();
+  }
 
   let email: string | undefined;
   let fullName: string | undefined;
@@ -34,12 +49,24 @@ export function parseLinkedInLeadResponse(raw: Record<string, unknown>): LinkedI
   let phoneNumber: string | undefined;
   const customAnswers: Record<string, string> = {};
 
-  const answers = Array.isArray(raw.answers) ? raw.answers : Array.isArray(raw.formResponse) ? raw.formResponse : [];
+  const answers = Array.isArray(raw.answers)
+    ? raw.answers
+    : Array.isArray(raw.formResponse)
+    ? raw.formResponse
+    : Array.isArray(raw.questionResponses)
+    ? raw.questionResponses
+    : [];
 
   for (const item of answers) {
     if (!item || typeof item !== 'object') continue;
-    const question = String(item.questionId || item.key || item.question || '').toLowerCase();
-    const value = String(item.value || item.answer || item.values?.[0] || '').trim();
+    const question = String(item.questionId || item.key || item.question || item.questionName || '').toLowerCase();
+    const value = String(
+      item.value ||
+        item.answer ||
+        (Array.isArray(item.values) ? item.values[0] : '') ||
+        (Array.isArray(item.answers) ? item.answers[0] : '') ||
+        ''
+    ).trim();
 
     if (!value) continue;
 
@@ -71,6 +98,10 @@ export function parseLinkedInLeadResponse(raw: Record<string, unknown>): LinkedI
   return {
     formId,
     leadId,
+    campaignId,
+    campaignName,
+    accountId,
+    creativeId,
     submittedAt,
     email,
     fullName,
@@ -86,28 +117,59 @@ export function parseLinkedInLeadResponse(raw: Record<string, unknown>): LinkedI
 
 /**
  * Ingest a parsed LinkedIn Lead into AlphaClone CRM leads table.
+ * Strictly idempotent: checks stable LinkedIn lead response identifier first, then email deduplication.
  */
 export async function syncLinkedInLeadToCrm(
   tenantId: string,
   parsedLead: LinkedInLeadFormData
-): Promise<{ success: boolean; leadId?: string; error?: string }> {
+): Promise<{ success: boolean; leadId?: string; deduplicated?: boolean; error?: string }> {
   try {
     const admin = createSupabaseAdminClient();
     const businessName = parsedLead.companyName || parsedLead.fullName || 'LinkedIn Lead';
 
-    const metadataPayload = {
-      linkedin_form_id: parsedLead.formId,
-      linkedin_lead_response_id: parsedLead.leadId,
+    const attributionMetadata = {
+      source: 'linkedin',
+      source_type: 'lead_gen_form',
+      linkedin_form_id: parsedLead.formId || 'UNKNOWN',
+      linkedin_lead_response_id: parsedLead.leadId || 'UNKNOWN',
+      linkedin_campaign_id: parsedLead.campaignId || 'UNKNOWN',
+      linkedin_campaign_name: parsedLead.campaignName || 'UNKNOWN',
+      linkedin_account_id: parsedLead.accountId || 'UNKNOWN',
+      linkedin_creative_id: parsedLead.creativeId || 'UNKNOWN',
       submitted_at: parsedLead.submittedAt,
-      job_title: parsedLead.jobTitle,
-      phone_number: parsedLead.phoneNumber,
+      job_title: parsedLead.jobTitle || null,
+      phone_number: parsedLead.phoneNumber || null,
       custom_answers: parsedLead.customAnswers,
       raw: parsedLead.rawResponse,
     };
 
-    // Deduplicate by email if present for tenant
+    // 1. Idempotency Check: Stable LinkedIn Lead Response Identifier
+    if (parsedLead.leadId && parsedLead.leadId !== 'UNKNOWN') {
+      const { data: existingByLeadId } = await admin
+        .from('leads')
+        .select('id, metadata')
+        .eq('tenant_id', tenantId)
+        .filter('metadata->>linkedin_lead_response_id', 'eq', parsedLead.leadId)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingByLeadId) {
+        const existingMeta = (existingByLeadId.metadata as Record<string, unknown>) || {};
+        await admin
+          .from('leads')
+          .update({
+            updated_at: new Date().toISOString(),
+            metadata: { ...existingMeta, ...attributionMetadata },
+          })
+          .eq('id', existingByLeadId.id);
+
+        return { success: true, leadId: existingByLeadId.id, deduplicated: true };
+      }
+    }
+
+    // 2. Secondary Deduplication Check: Contact Email Matching
     if (parsedLead.email) {
-      const { data: existing } = await admin
+      const { data: existingByEmail } = await admin
         .from('leads')
         .select('id, metadata')
         .eq('tenant_id', tenantId)
@@ -115,21 +177,22 @@ export async function syncLinkedInLeadToCrm(
         .limit(1)
         .maybeSingle();
 
-      if (existing) {
-        const { error: updateError } = await admin
+      if (existingByEmail) {
+        const existingMeta = (existingByEmail.metadata as Record<string, unknown>) || {};
+        await admin
           .from('leads')
           .update({
             updated_at: new Date().toISOString(),
             notes: `LinkedIn Lead Form submission synced on ${new Date().toLocaleDateString()}`,
-            metadata: { ...((existing.metadata as Record<string, unknown>) || {}), ...metadataPayload },
+            metadata: { ...existingMeta, ...attributionMetadata },
           })
-          .eq('id', existing.id);
+          .eq('id', existingByEmail.id);
 
-        if (updateError) throw updateError;
-        return { success: true, leadId: existing.id };
+        return { success: true, leadId: existingByEmail.id, deduplicated: true };
       }
     }
 
+    // 3. New CRM Lead Insertion
     const { data: inserted, error: insertError } = await admin
       .from('leads')
       .insert({
@@ -140,19 +203,18 @@ export async function syncLinkedInLeadToCrm(
         phone: parsedLead.phoneNumber || null,
         source: 'linkedin_lead_form',
         status: 'new',
-        notes: `Submitted LinkedIn Lead Gen Form (Form ID: ${parsedLead.formId || 'N/A'})`,
-        metadata: metadataPayload,
+        notes: `Submitted LinkedIn Lead Gen Form (Form ID: ${parsedLead.formId || 'UNKNOWN'})`,
+        metadata: attributionMetadata,
       })
       .select('id')
       .single();
 
     if (insertError) throw insertError;
 
-    // ── Bridge: push contact to Calendly for instant scheduling access ────────
+    // Bridge: Push contact to Calendly for scheduling if enabled
     if (parsedLead.email && parsedLead.fullName) {
       try {
-        const admin2 = createSupabaseAdminClient();
-        const calendlyConfig = await getCalendlyConfig(admin2, tenantId);
+        const calendlyConfig = await getCalendlyConfig(admin, tenantId);
         if (calendlyConfig?.enabled && calendlyConfig.accessToken) {
           await upsertCalendlyContact(tenantId, calendlyConfig, {
             name: parsedLead.fullName,
@@ -160,12 +222,11 @@ export async function syncLinkedInLeadToCrm(
           });
         }
       } catch (calendlyErr) {
-        // Non-blocking — never fail the CRM save because of Calendly
         console.warn('[LinkedInLeadGenSync] Calendly contact push skipped:', calendlyErr);
       }
     }
 
-    return { success: true, leadId: inserted.id };
+    return { success: true, leadId: inserted.id, deduplicated: false };
   } catch (err: any) {
     console.error('[LinkedInLeadGenSync] Error syncing lead:', err);
     return { success: false, error: err.message || 'Failed to sync lead' };
