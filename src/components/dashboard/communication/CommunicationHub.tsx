@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Inbox, Send, FileEdit, MessageSquare, AlertCircle, Mail } from 'lucide-react';
+import { Inbox, Send, FileEdit, MessageSquare, AlertCircle, Mail, Sparkles } from 'lucide-react';
 import type { User } from '@/types';
 import { cn } from '@/lib/utils';
 import UnifiedInbox from '@/components/dashboard/business/UnifiedInbox';
@@ -37,25 +37,39 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      {/* ── Single compact header: tab row only, no duplicate heading ── */}
-      <div className="flex items-center gap-1 px-3 md:px-4 pt-2 pb-0 border-b border-white/5 overflow-x-auto ac-scroll-x shrink-0">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium whitespace-nowrap transition-colors border-b-2 -mb-px rounded-none',
-              activeTab === tab.id
-                ? 'border-teal-400 text-teal-300'
-                : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:border-white/20'
-            )}
-          >
-            <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
-            {tab.label}
-          </button>
-        ))}
+    <div className="flex flex-col h-full min-h-0 bg-slate-950/60 backdrop-blur-xl">
+      {/* ── Glassmorphic executive header bar ── */}
+      <div className="flex items-center justify-between px-3 md:px-5 py-2.5 border-b border-white/10 bg-slate-900/60 backdrop-blur-md shrink-0 gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto ac-scroll-x py-0.5">
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'relative flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all duration-200 whitespace-nowrap',
+                  isActive
+                    ? 'bg-gradient-to-r from-teal-500/25 via-cyan-500/20 to-emerald-500/20 text-teal-200 border border-teal-500/40 shadow-[0_0_15px_rgba(20,184,166,0.2)]'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                )}
+              >
+                <Icon className={cn('w-3.5 h-3.5 transition-transform duration-200', isActive ? 'text-teal-300 scale-110' : 'text-slate-400')} aria-hidden="true" />
+                <span>{tab.label}</span>
+                {isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shadow-[0_0_6px_rgba(45,212,191,0.8)] animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 font-medium px-2.5 py-1 rounded-full bg-slate-900/80 border border-white/5 shrink-0">
+          <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+          <span className="text-[11px]">AI Workspace Active</span>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus } from 'lucide-react';
+import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus, Users } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';
@@ -42,6 +42,13 @@ function parseRecipientList(value: string): string[] {
         .map((entry) => entry.trim())
         .filter(Boolean);
 }
+
+export type ContactOption = {
+    id: string;
+    name: string;
+    email: string;
+    source: 'client' | 'lead' | 'contact';
+};
 
 export type EmailComposerProps = {
     isOpen: boolean;
@@ -91,6 +98,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [selectedTone, setSelectedTone] = useState('professional');
     const [from, setFrom] = useState('');
     const [clients, setClients] = useState<any[]>([]);
+    const [allContacts, setAllContacts] = useState<ContactOption[]>([]);
     const [availableProviders, setAvailableProviders] = useState<IntegrationConfig[]>([]);
     const [deliveryProvider, setDeliveryProvider] = useState<DeliveryEmailProvider>('auto');
     const [workspaceDefault, setWorkspaceDefault] = useState<DeliveryEmailProvider>('auto');
@@ -132,9 +140,39 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
     React.useEffect(() => {
         if (isOpen && currentTenant?.id) {
-            businessClientService.getClients(currentTenant.id).then(({ clients }) => {
-                setClients(clients || []);
-            });
+            // Load business_clients, leads, and CRM contacts for the contact picker
+            Promise.all([
+                businessClientService.getClients(currentTenant.id),
+                supabase.from('leads').select('id, name, email, emails').eq('tenant_id', currentTenant.id).limit(200),
+                supabase.from('contacts').select('id, first_name, last_name, email, emails').eq('tenant_id', currentTenant.id).is('deleted_at', null).limit(200),
+            ]).then(([{ clients: fetchedClients }, leadsRes, contactsRes]) => {
+                setClients(fetchedClients || []);
+
+                const list: ContactOption[] = [];
+                const seen = new Set<string>();
+
+                const push = (item: ContactOption) => {
+                    const em = item.email.trim().toLowerCase();
+                    if (!em.includes('@') || seen.has(em)) return;
+                    seen.add(em);
+                    list.push({ ...item, email: em });
+                };
+
+                for (const c of fetchedClients || []) {
+                    if (c.email) push({ id: c.id, name: c.name || 'Client', email: c.email, source: 'client' });
+                }
+                for (const l of leadsRes.data || []) {
+                    const em = String(l.email || (Array.isArray(l.emails) ? l.emails[0] : '') || '').trim();
+                    if (em) push({ id: l.id, name: l.name || 'Lead', email: em, source: 'lead' });
+                }
+                for (const cnt of contactsRes.data || []) {
+                    const em = String(cnt.email || (Array.isArray(cnt.emails) ? cnt.emails[0] : '') || '').trim();
+                    const fn = [cnt.first_name, cnt.last_name].filter(Boolean).join(' ') || 'Contact';
+                    if (em) push({ id: cnt.id, name: fn, email: em, source: 'contact' });
+                }
+
+                setAllContacts(list);
+            }).catch(() => {});
 
             // Fetch available email integrations (including Microsoft 365 via status API)
             Promise.all([
@@ -237,10 +275,23 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         };
     }, [isOpen, currentTenant?.id, userId, to, cc, bcc, subject, body, deliveryProvider]);
 
-    const filteredClients = clients.filter(c =>
-        c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredContacts = React.useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return allContacts;
+        return allContacts.filter(
+            (c) => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)
+        );
+    }, [allContacts, searchQuery]);
+
+    const toggleRecipientContact = (email: string) => {
+        const existing = parseRecipientList(to);
+        const lower = email.toLowerCase();
+        if (existing.some(e => e.toLowerCase() === lower)) {
+            setTo(existing.filter(e => e.toLowerCase() !== lower).join(', '));
+        } else {
+            setTo(existing.length > 0 ? `${existing.join(', ')}, ${email}` : email);
+        }
+    };
 
     const matchedClient = React.useMemo(() => {
         const normalized = parseRecipientList(to)[0]?.toLowerCase() || '';
@@ -616,7 +667,17 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 </div>
 
                                 <div className="relative" ref={dropdownRef}>
-                                    <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mb-1.5">To</label>
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">To</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowContactDropdown((prev) => !prev)}
+                                            className="text-[10px] font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1 bg-teal-500/10 hover:bg-teal-500/20 px-2 py-0.5 rounded-full transition-all"
+                                        >
+                                            <Users className="w-3 h-3" />
+                                            Select from contacts ({allContacts.length})
+                                        </button>
+                                    </div>
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -627,7 +688,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 setShowContactDropdown(true);
                                             }}
                                             onFocus={() => setShowContactDropdown(true)}
-                                            placeholder="email@client.com"
+                                            placeholder="Type email or click Select from contacts…"
                                             className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-3 py-2.5 pr-16 text-sm text-white focus:border-teal-500/40 outline-none"
                                         />
                                         <button 
@@ -670,33 +731,50 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                     </AnimatePresence>
                                     
                                     <AnimatePresence>
-                                        {showContactDropdown && (searchQuery.length > 0 || filteredClients.length > 0) && (
+                                        {showContactDropdown && (
                                             <motion.div
                                                 initial={{ opacity: 0, y: -6 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 exit={{ opacity: 0, y: -6 }}
-                                                className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[130] max-h-44 overflow-y-auto p-1.5"
+                                                className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-[130] max-h-56 overflow-y-auto p-1.5 space-y-0.5"
                                             >
-                                                {filteredClients.length > 0 ? (
-                                                    filteredClients.slice(0, 8).map(client => (
-                                                        <button
-                                                            key={client.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setTo(client.email);
-                                                                setShowContactDropdown(false);
-                                                            }}
-                                                            className="w-full text-left p-2.5 rounded-lg hover:bg-white/5 transition-all flex items-center justify-between"
-                                                        >
-                                                            <div className="min-w-0">
-                                                                <p className="text-sm font-medium text-slate-200 truncate">{client.name}</p>
-                                                                <p className="text-xs text-slate-500 truncate">{client.email}</p>
-                                                            </div>
-                                                            {to === client.email && <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />}
-                                                        </button>
-                                                    ))
+                                                <div className="p-1.5 border-b border-white/5 flex items-center justify-between">
+                                                    <p className="text-[10px] font-bold uppercase text-slate-400">Pick recipients ({filteredContacts.length})</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowContactDropdown(false)}
+                                                        className="text-[10px] text-slate-500 hover:text-white"
+                                                    >
+                                                        Close ✕
+                                                    </button>
+                                                </div>
+                                                {filteredContacts.length > 0 ? (
+                                                    filteredContacts.slice(0, 15).map(c => {
+                                                        const isSelected = toRecipients.some(tr => tr.toLowerCase() === c.email.toLowerCase());
+                                                        return (
+                                                            <button
+                                                                key={`${c.source}-${c.id}`}
+                                                                type="button"
+                                                                onClick={() => toggleRecipientContact(c.email)}
+                                                                className={`w-full text-left p-2 rounded-lg transition-all flex items-center justify-between ${
+                                                                    isSelected ? 'bg-teal-500/15 border border-teal-500/30' : 'hover:bg-white/5 border border-transparent'
+                                                                }`}
+                                                            >
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-xs font-semibold text-white truncate">{c.name}</span>
+                                                                        <span className="text-[9px] font-bold uppercase px-1 py-0.2 rounded bg-white/10 text-slate-400">
+                                                                            {c.source}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-[11px] text-slate-400 truncate">{c.email}</p>
+                                                                </div>
+                                                                {isSelected && <Check className="w-3.5 h-3.5 text-teal-400 shrink-0" />}
+                                                            </button>
+                                                        );
+                                                    })
                                                 ) : (
-                                                    <p className="p-3 text-center text-xs text-slate-600">No matches</p>
+                                                    <p className="p-3 text-center text-xs text-slate-500">No contacts or leads found</p>
                                                 )}
                                             </motion.div>
                                         )}

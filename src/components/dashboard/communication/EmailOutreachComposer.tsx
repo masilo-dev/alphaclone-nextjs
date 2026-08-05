@@ -36,6 +36,7 @@ export function EmailOutreachComposer() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [manualEmailsInput, setManualEmailsInput] = useState('');
   const [steps, setSteps] = useState<OutreachStep[]>([
     { id: '1', label: 'Outreach 1', subject: '', body: '' },
   ]);
@@ -132,7 +133,15 @@ export function EmailOutreachComposer() {
   }, [contacts, search]);
 
   const activeStep = steps.find((s) => s.id === activeStepId) || steps[0];
-  const recipients = normalizeRecipientEmails([...selectedEmails]);
+
+  const recipients = useMemo(() => {
+    const manualList = manualEmailsInput
+      .split(/[\s,;\n]+/)
+      .map((e) => e.trim().toLowerCase())
+      .filter((e) => e.includes('@'));
+    const combined = [...Array.from(selectedEmails), ...manualList];
+    return normalizeRecipientEmails(combined);
+  }, [selectedEmails, manualEmailsInput]);
 
   const toggleEmail = (email: string) => {
     setSelectedEmails((prev) => {
@@ -141,6 +150,14 @@ export function EmailOutreachComposer() {
       else next.add(email);
       return next;
     });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedEmails.size >= filtered.length && filtered.length > 0) {
+      setSelectedEmails(new Set());
+    } else {
+      setSelectedEmails(new Set(filtered.map((c) => c.email)));
+    }
   };
 
   const addStep = () => {
@@ -162,7 +179,7 @@ export function EmailOutreachComposer() {
 
   const openCompose = () => {
     if (recipients.length === 0) {
-      toast.error('Select at least one contact with an email.');
+      toast.error('Select at least one contact or enter a recipient email.');
       return;
     }
     if (!activeStep.subject.trim()) {
@@ -185,6 +202,15 @@ export function EmailOutreachComposer() {
               <p className="text-[11px] text-slate-500">{selectedEmails.size} selected</p>
             </div>
           </div>
+          {filtered.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleSelectAll}
+              className="text-[11px] font-bold text-teal-400 hover:text-teal-300 px-2 py-1 rounded bg-teal-500/10 hover:bg-teal-500/20"
+            >
+              {selectedEmails.size >= filtered.length ? 'Deselect all' : 'Select all'}
+            </button>
+          )}
         </div>
         <div className="p-2 border-b border-white/5">
           <input
@@ -279,6 +305,18 @@ export function EmailOutreachComposer() {
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
+              Direct Recipients (Optional Manual Emails)
+            </label>
+            <input
+              value={manualEmailsInput}
+              onChange={(e) => setManualEmailsInput(e.target.value)}
+              placeholder="Or type emails manually: e.g. john@acme.com, sarah@company.org"
+              className="w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 text-xs text-white outline-none focus:border-teal-500/40 placeholder:text-slate-600"
+            />
+          </div>
+
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
               Subject

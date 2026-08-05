@@ -38,8 +38,8 @@
   --surface-elevated: #FFFFFF;
   --surface-hover: #F3F5F7;
   --text-primary: #171923;
-  --text-secondary: #5F6472;
-  --text-muted: #747A88;
+  --text-secondary: #4A5061;
+  --text-muted: #6B717F;
   --text-inverse: #FFFFFF;
   --border-subtle: rgba(33, 36, 70, 0.09);
   --border-default: rgba(33, 36, 70, 0.14);
@@ -128,8 +128,8 @@
   --dashboard-surface-strong: rgba(21, 28, 37, 0.62);
   --dashboard-surface-soft: rgba(38, 47, 58, 0.5);
   --dashboard-border: rgba(148, 163, 184, 0.16);
-  --dashboard-text: #f5f5f5;
-  --dashboard-text-muted: #c0c0c0;
+  --dashboard-text: #ffffff;
+  --dashboard-text-muted: #d8dde8;
   --dashboard-mint: #adebb3;
   --dashboard-mint-strong: #3eb489;
   --dashboard-electric: #00f0ff;
@@ -152,9 +152,9 @@ html.dark {
   --surface-secondary: #1B1E2B;
   --surface-elevated: #202432;
   --surface-hover: #252936;
-  --text-primary: #F7F8FB;
-  --text-secondary: #B9BDCA;
-  --text-muted: #9095A5;
+  --text-primary: #ffffff;
+  --text-secondary: #d8dde8;
+  --text-muted: #a8b0c2;
   --text-inverse: #171923;
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-default: rgba(255, 255, 255, 0.10);
@@ -406,13 +406,11 @@ html.light .ac-business-scroll .text-slate-300 {
   color: #dbe6f4;
 }
 
-/* Improve readability for low-contrast dashboard helper text */
-.ac-dashboard-root .text-slate-400,
-.ac-business-root .text-slate-400,
-.ac-business-scroll .text-slate-400 {
-  color: #cbd5e1 !important;
-}
-
+/* ─── Unified Dark Dashboard Text Scale ─────────────────────────────────────
+   Single source of truth for all text colours inside .ac-dashboard-root
+   and .ac-business-root. Tailwind utility classes are promoted to this scale
+   so inline classes produce consistent, bright, readable results.
+──────────────────────────────────────────────────────────────────────────── */
 .ac-dashboard-root,
 .ac-business-root {
   color: var(--dashboard-text);
@@ -423,39 +421,61 @@ html.light .ac-business-scroll .text-slate-300 {
     linear-gradient(180deg, #0f172a 0%, #0b1220 58%, #020617 100%);
 }
 
+/* text-white / text-slate-50 → pure white */
 .ac-dashboard-root .text-white,
-.ac-business-root .text-white {
-  color: var(--dashboard-text) !important;
+.ac-business-root .text-white,
+.ac-dashboard-root .text-slate-50,
+.ac-business-root .text-slate-50 {
+  color: #ffffff !important;
 }
 
+/* text-slate-100 / text-slate-200 → near-white (primary body) */
+.ac-dashboard-root .text-slate-100,
+.ac-business-root .text-slate-100,
 .ac-dashboard-root .text-slate-200,
 .ac-business-root .text-slate-200 {
-  color: #e5e7eb !important;
+  color: #f0f2f7 !important;
 }
 
+/* text-slate-300 → secondary text */
 .ac-dashboard-root .text-slate-300,
 .ac-business-root .text-slate-300 {
-  color: #d1d5db !important;
+  color: #d8dde8 !important;
 }
 
+/* text-slate-400 → muted / helper text */
 .ac-dashboard-root .text-slate-400,
-.ac-business-root .text-slate-400 {
-  color: #d4deeb !important;
+.ac-business-root .text-slate-400,
+.ac-business-scroll .text-slate-400 {
+  color: #a8b0c2 !important;
 }
 
+/* text-slate-500 → disabled / de-emphasised */
 .ac-dashboard-root .text-slate-500,
 .ac-business-root .text-slate-500 {
-  color: #afbdd0 !important;
+  color: #8891a8 !important;
 }
 
+/* text-slate-600 → timestamps / metadata */
+.ac-dashboard-root .text-slate-600,
+.ac-business-root .text-slate-600 {
+  color: #6e7a96 !important;
+}
+
+/* Accent colours — kept vibrant against dark canvas */
 .ac-dashboard-root [class*="text-teal-"],
 .ac-business-root [class*="text-teal-"] {
-  color: #adebb3 !important;
+  color: #5eead4 !important;
+}
+
+.ac-dashboard-root [class*="text-cyan-"],
+.ac-business-root [class*="text-cyan-"] {
+  color: #67e8f9 !important;
 }
 
 .ac-dashboard-root [class*="text-blue-"],
 .ac-business-root [class*="text-blue-"] {
-  color: #7dd3fc !important;
+  color: #93c5fd !important;
 }
 
 .ac-dashboard-root [class*="text-violet-"],

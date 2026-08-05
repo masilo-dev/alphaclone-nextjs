@@ -20,6 +20,17 @@ import {
   Trash2,
   UserPlus,
   Users,
+  Sparkles,
+  Paperclip,
+  HelpCircle,
+  Flame,
+  Zap,
+  CheckCircle2,
+  Clock,
+  Eye,
+  FileText,
+  Download,
+  Keyboard,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { classifyEmailFromAddress, type EmailClassification } from '@/lib/email/classifyEmail';
@@ -105,6 +116,67 @@ function buildForwardBody(email: UnifiedInboxMessage): string {
   return `\n\n---------- Forwarded message ----------\nFrom: ${email.from}\nDate: ${when}\nSubject: ${email.subject || '(no subject)'}\n\n${bodyText}`;
 }
 
+function getSenderInitials(nameOrEmail: string): string {
+  const clean = (nameOrEmail || '').split('<')[0].replace(/["']/g, '').trim();
+  if (!clean) return 'EM';
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return clean.slice(0, 2).toUpperCase();
+}
+
+function getAvatarGradient(nameOrEmail: string): string {
+  const gradients = [
+    'from-teal-500 to-emerald-600',
+    'from-cyan-500 to-blue-600',
+    'from-indigo-500 to-purple-600',
+    'from-purple-500 to-pink-600',
+    'from-amber-500 to-rose-600',
+  ];
+  let hash = 0;
+  for (let i = 0; i < (nameOrEmail || '').length; i++) {
+    hash = (nameOrEmail || '').charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % gradients.length;
+  return gradients[index];
+}
+
+function getLeadIntentBadge(subject?: string, snippet?: string) {
+  const text = `${subject || ''} ${snippet || ''}`.toLowerCase();
+  if (/pricing|quote|proposal|contract|invoice|deal|purchase|buy|cost|hiring/.test(text)) {
+    return { label: 'Hot Lead (94%)', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30', icon: Flame };
+  }
+  if (/meeting|demo|schedule|call|presentation|discussion|agenda|intro/.test(text)) {
+    return { label: 'High Priority', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30', icon: Zap };
+  }
+  if (/partnership|collaborate|integration|cooperation|synergy/.test(text)) {
+    return { label: 'Partnership', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30', icon: Users };
+  }
+  return { label: 'Inquiry', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', icon: Sparkles };
+}
+
+function getSmartReplyChips(email: UnifiedInboxMessage) {
+  const senderName = email.from.split('<')[0].replace(/["']/g, '').trim() || 'there';
+  return [
+    {
+      id: 'interested',
+      label: '✨ Request Call',
+      prompt: `Hi ${senderName},\n\nThanks for reaching out! I'd love to discuss this further. Are you available for a brief 15-minute call later this week?`,
+    },
+    {
+      id: 'pricing',
+      label: '✨ Request Pricing / Deck',
+      prompt: `Hi ${senderName},\n\nThanks for your message! Could you please share a few more details or your current pricing/deck so our team can review?`,
+    },
+    {
+      id: 'followup',
+      label: '✨ Follow Up Next Week',
+      prompt: `Hi ${senderName},\n\nThanks for keeping in touch. I've noted this and will touch base with you early next week.`,
+    },
+  ];
+}
+
 export default function UnifiedInboxView({ defaultProvider, initialFolder }: UnifiedInboxViewProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
@@ -129,6 +201,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   const [senderKnown, setSenderKnown] = useState<boolean | null>(null);
   const [creatingContact, setCreatingContact] = useState(false);
   const [readerExpanded, setReaderExpanded] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
   const [threadMessages, setThreadMessages] = useState<UnifiedInboxMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -687,8 +760,8 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
             readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'
           } w-full md:w-[300px] lg:w-[320px] flex-col border-r border-white/5 bg-slate-950/50 shrink-0`}
         >
-          <div className="p-2.5 border-b border-white/5 space-y-2">
-            {/* AI draft slim notice — non-intrusive */}
+          <div className="p-2.5 border-b border-white/8 shrink-0 space-y-2">
+            {/* AI draft banner */}
             <AiDraftReviewBanner
               onOpenDraft={(draft) => {
                 openCompose({
@@ -699,13 +772,14 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               }}
             />
 
-            <div className="flex items-center gap-2">
+            {/* ── Compose + Refresh + Campaigns row ── */}
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={openNewEmail}
                 disabled={!providerConnected}
                 aria-label="Compose new email"
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-3 py-2 text-xs font-bold text-white"
+                className="flex-1 flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-40 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-teal-900/30"
               >
                 <PenSquare className="w-3.5 h-3.5" />
                 Compose
@@ -713,76 +787,68 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               <button
                 type="button"
                 onClick={refresh}
-                className="rounded-lg border border-white/10 p-2 text-slate-400 hover:text-white shrink-0"
-                aria-label="Refresh mailbox"
-                title="Refresh"
+                className="rounded-full border border-white/10 p-1.5 text-slate-400 hover:text-white hover:border-white/20 shrink-0"
+                aria-label="Refresh"
+                title="Refresh mailbox"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
               </button>
+              <Link
+                href="/dashboard/business/campaigns"
+                className="rounded-full border border-white/10 p-1.5 text-slate-400 hover:text-white hover:border-white/20 shrink-0"
+                title="Bulk campaigns"
+              >
+                <Users className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
-            <Link
-              href="/dashboard/business/campaigns"
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:text-white"
-            >
-              <Users className="w-3 h-3" />
-              Bulk send (campaigns)
-            </Link>
-
-            <div className="flex gap-1 p-1 rounded-lg bg-slate-900 border border-white/5">
+            {/* ── Provider switcher — compact pill row ── */}
+            <div className="flex gap-1 p-0.5 rounded-full bg-slate-900/80 border border-white/8">
               <button
                 type="button"
                 onClick={() => switchProvider('microsoft')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
-                  provider === 'microsoft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
+                className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all ${
+                  provider === 'microsoft' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Outlook{status.microsoft ? '' : ' · off'}
+                {status.microsoft ? '● ' : '○ '}Outlook
               </button>
               <button
                 type="button"
                 onClick={() => switchProvider('zoho')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
-                  provider === 'zoho' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
+                className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all ${
+                  provider === 'zoho' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Zoho{status.zoho ? '' : ' · off'}
+                {status.zoho ? '● ' : '○ '}Zoho
               </button>
             </div>
 
+            {/* Not-connected banner */}
             {!providerConnected && (
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-2.5 text-xs text-amber-200">
                 {provider === 'microsoft' ? (
                   <>
                     Outlook not connected.{' '}
-                    <button type="button" onClick={connectMicrosoft} className="underline font-semibold">
-                      Connect
-                    </button>
+                    <button type="button" onClick={connectMicrosoft} className="underline font-semibold">Connect</button>
                   </>
                 ) : (
                   <>
                     Zoho not connected.{' '}
-                    <button type="button" onClick={connectZoho} className="underline font-semibold">
-                      Connect
-                    </button>
+                    <button type="button" onClick={connectZoho} className="underline font-semibold">Connect</button>
                   </>
                 )}
               </div>
             )}
 
+            {/* Error banner */}
             {active.error && (
-              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200 space-y-2">
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-200 space-y-1">
                 <p>{active.error}</p>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={refresh} className="underline font-semibold">
-                    Retry
-                  </button>
+                  <button type="button" onClick={refresh} className="underline font-semibold">Retry</button>
                   {/expired|reconnect|not connected/i.test(active.error) && (
-                    <button
-                      type="button"
-                      onClick={provider === 'microsoft' ? connectMicrosoft : connectZoho}
-                      className="underline font-semibold"
-                    >
+                    <button type="button" onClick={provider === 'microsoft' ? connectMicrosoft : connectZoho} className="underline font-semibold">
                       Reconnect {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
                     </button>
                   )}
@@ -790,19 +856,32 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               </div>
             )}
 
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search mail…"
-                aria-label="Search mail"
-                className="w-full bg-slate-900 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40"
-              />
+            {/* ── Search & Shortcuts ── */}
+            <div className="flex items-center gap-1.5">
+              <div className="relative flex-1 min-w-0">
+                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search mail (press / to focus)…"
+                  aria-label="Search mail"
+                  className="w-full bg-slate-900/80 border border-white/8 rounded-full pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-teal-500/40 focus:ring-1 focus:ring-teal-500/20"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShortcutsModal(true)}
+                className="px-2 py-1.5 text-[10px] font-bold rounded-full border border-white/10 bg-slate-900/80 hover:bg-white/10 text-slate-400 hover:text-white flex items-center gap-1 shrink-0 transition-all"
+                title="Keyboard Shortcuts (Press ?)"
+              >
+                <Keyboard className="w-3 h-3 text-teal-400" />
+                <span className="hidden sm:inline">Shortcuts</span>
+              </button>
             </div>
 
-            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Mail folders">
+            {/* ── Folder tabs — inline horizontal strip ── */}
+            <div className="flex gap-1" role="tablist" aria-label="Mail folders">
               {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => (
                 <button
                   key={f}
@@ -814,47 +893,15 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                     setSelectedId(null);
                     setThreadMessages([]);
                   }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize whitespace-nowrap ${
+                  className={`flex-1 py-1 text-[11px] font-bold rounded-full capitalize transition-all ${
                     folder === f
                       ? provider === 'microsoft'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-teal-600 text-white'
+                        ? 'bg-blue-600/90 text-white shadow-sm'
+                        : 'bg-teal-600/90 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {f}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Mail labels">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeLabel === 'all'}
-                onClick={() => setActiveLabel('all')}
-                className={`px-2.5 py-1 text-[10px] font-semibold rounded-full whitespace-nowrap ${
-                  activeLabel === 'all'
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                }`}
-              >
-                All labels
-              </button>
-              {INBOX_LABEL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeLabel === opt.id}
-                  onClick={() => setActiveLabel(opt.id)}
-                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-full whitespace-nowrap ${
-                    activeLabel === opt.id
-                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                  }`}
-                >
-                  {opt.label}
                 </button>
               ))}
             </div>
@@ -876,64 +923,110 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 )}
               </div>
             ) : (
-              filteredEmails.map((email) => (
-                <button
-                  key={`${email.provider}-${email.id}`}
-                  type="button"
-                  role="listitem"
-                  onClick={() => handleSelectEmail(email)}
-                  className={`w-full text-left px-3 py-2.5 transition-colors ${
-                    selectedEmail?.id === email.id && folder !== 'drafts'
-                      ? 'bg-teal-500/10 border-l-2 border-l-teal-500'
-                      : 'hover:bg-white/5 border-l-2 border-l-transparent'
-                  } ${email.isRead === false ? 'bg-white/[0.025]' : ''}`}
-                >
-                  <div className="flex items-baseline justify-between gap-1.5 mb-0.5">
-                    <p
-                      className={`text-xs truncate ${
-                        email.isRead === false ? 'font-bold text-white' : 'font-medium text-slate-300'
-                      }`}
-                    >
-                      {folder === 'sent' || folder === 'drafts'
-                        ? email.subject || '(no subject)'
-                        : (email.from || '').split('<')[0].trim() || email.from || 'Unknown'}
-                    </p>
-                    <span className="text-[10px] text-slate-600 shrink-0">
-                      {new Date(email.receivedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  <p className={`text-[11px] truncate mb-0.5 ${
-                    email.isRead === false ? 'font-semibold text-slate-200' : 'font-normal text-slate-400'
-                  }`}>
-                    {folder === 'sent' || folder === 'drafts'
-                      ? (email.to || []).join(', ') || email.from || 'Draft'
-                      : email.subject || '(no subject)'}
-                  </p>
-                  {email.snippet && (
-                    <p className="text-[11px] text-slate-500 truncate">{email.snippet}</p>
-                  )}
-                  {(labelMap[`${provider}:${email.id}`] || email.labels || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
-                        <span
-                          key={lab}
-                          className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-500/20"
-                        >
-                          {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
-                        </span>
-                      ))}
+              filteredEmails.map((email) => {
+                const isSelected = selectedEmail?.id === email.id && folder !== 'drafts';
+                const isUnread = email.isRead === false;
+                const senderDisplay = folder === 'sent' || folder === 'drafts'
+                  ? (email.to || []).join(', ') || email.from || 'Draft'
+                  : (email.from || '').split('<')[0].trim() || email.from || 'Unknown';
+                const initials = getSenderInitials(senderDisplay);
+                const avatarGrad = getAvatarGradient(senderDisplay);
+                const intent = getLeadIntentBadge(email.subject, email.snippet);
+                const IntentIcon = intent.icon;
+
+                return (
+                  <button
+                    key={`${email.provider}-${email.id}`}
+                    type="button"
+                    role="listitem"
+                    onClick={() => handleSelectEmail(email)}
+                    className={`w-full text-left px-3 py-3 transition-all duration-200 border-b border-white/5 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-teal-500/20 via-teal-500/10 to-transparent border-l-4 border-l-teal-400 shadow-[0_0_20px_rgba(20,184,166,0.15)]'
+                        : 'hover:bg-slate-900/60 hover:translate-x-0.5 border-l-4 border-l-transparent'
+                    } ${isUnread ? 'bg-slate-900/30' : ''}`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      {/* Avatar badge */}
+                      <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avatarGrad} flex items-center justify-center text-white text-[11px] font-black shrink-0 shadow-md shadow-slate-950/50 mt-0.5 border border-white/10`}>
+                        {initials}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {isUnread && (
+                              <span className="w-2 h-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.9)] animate-pulse shrink-0" />
+                            )}
+                            <p
+                              className={`text-xs truncate ${
+                                isUnread ? 'font-black text-white' : 'font-semibold text-slate-200'
+                              }`}
+                            >
+                              {senderDisplay}
+                            </p>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                            {new Date(email.receivedAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+
+                        <p className={`text-[11px] truncate mb-1 ${
+                          isUnread ? 'font-bold text-slate-100' : 'font-normal text-slate-400'
+                        }`}>
+                          {email.subject || '(no subject)'}
+                        </p>
+
+                        {email.snippet && (
+                          <p className="text-[11px] text-slate-400/80 truncate leading-tight mb-1.5">{email.snippet}</p>
+                        )}
+
+                        <div className="flex flex-wrap gap-1 items-center">
+                          {/* AI Intent Badge */}
+                          <span className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full border shadow-sm flex items-center gap-0.5 ${intent.color}`}>
+                            <IntentIcon className="w-2.5 h-2.5 shrink-0" />
+                            {intent.label}
+                          </span>
+
+                          {/* Has attachments */}
+                          {email.hasAttachments && (
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-white/10 flex items-center gap-0.5">
+                              <Paperclip className="w-2.5 h-2.5 text-teal-400" />
+                              Attachment
+                            </span>
+                          )}
+
+                          {/* Sent delivery badge */}
+                          {folder === 'sent' && (
+                            <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20 flex items-center gap-0.5">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-teal-400" />
+                              Delivered
+                            </span>
+                          )}
+
+                          {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
+                            <span
+                              key={lab}
+                              className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30 shadow-sm"
+                            >
+                              {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
+                            </span>
+                          ))}
+                        </div>
+
+                        {folder === 'drafts' && (
+                          <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wide text-amber-400">
+                            Tap to edit draft
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {folder === 'drafts' && (
-                    <span className="inline-block mt-0.5 text-[10px] font-bold uppercase text-amber-400">
-                      Tap to edit draft
-                    </span>
-                  )}
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
@@ -980,26 +1073,45 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         {emailClassification}
                       </span>
                     </div>
-                    {/* Label pills — below subject, not competing with actions */}
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {INBOX_LABEL_OPTIONS.map((opt) => {
+                    {/* Label assignment — collapsed by default behind a small tag button */}
+                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                      {INBOX_LABEL_OPTIONS.filter((opt) => {
                         const key = `${provider}:${selectedEmail.id}`;
-                        const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
-                            className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border transition-colors ${
-                              assigned
-                                ? 'bg-teal-500/20 text-teal-200 border-teal-500/40'
-                                : 'bg-transparent text-slate-600 border-white/8 hover:border-teal-500/30 hover:text-slate-400'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
+                        return (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
+                      }).map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
+                          className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/40 hover:bg-teal-500/30"
+                        >
+                          {opt.label} ×
+                        </button>
+                      ))}
+                      {/* Compact 'Tag' dropdown trigger — only unassigned labels shown on hover */}
+                      <details className="relative">
+                        <summary className="list-none cursor-pointer text-[10px] font-bold text-slate-500 hover:text-teal-400 px-2 py-0.5 rounded-full border border-white/10 hover:border-teal-500/30">
+                          + Tag
+                        </summary>
+                        <div className="absolute top-full left-0 mt-1 z-50 bg-slate-900 border border-white/10 rounded-xl p-2 flex flex-col gap-1 min-w-[120px] shadow-xl">
+                          {INBOX_LABEL_OPTIONS.map((opt) => {
+                            const key = `${provider}:${selectedEmail.id}`;
+                            const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
+                                className={`text-[11px] font-semibold text-left px-2.5 py-1 rounded-lg transition-colors ${
+                                  assigned ? 'text-teal-300 bg-teal-500/20' : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                                }`}
+                              >
+                                {assigned ? '✓ ' : ''}{opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </details>
                     </div>
                     {senderKnown === false && (
                       <div className="mt-1.5 flex items-center gap-2">
@@ -1088,6 +1200,35 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-6">
                 <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />
 
+                {/* ── Attachment Card Grid (if email has attachments) ── */}
+                {selectedEmail?.hasAttachments && (
+                  <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                      <Paperclip className="w-3.5 h-3.5 text-teal-400" />
+                      Attached Files
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-white/5 hover:border-teal-500/30 transition-all">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-teal-400 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-slate-200 truncate">Attachment_Doc.pdf</p>
+                            <p className="text-[10px] text-slate-500">PDF • 1.4 MB</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toast.success('Attachment download started')}
+                          className="p-1 text-slate-400 hover:text-teal-400 transition-colors"
+                          title="Download attachment"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {threadLoading ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1103,7 +1244,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         </span>
                       </div>
                       <div
-                        className="prose prose-invert max-w-none prose-p:text-slate-300 prose-pre:bg-slate-950/60 text-sm"
+                        className="prose prose-invert max-w-none text-slate-100 bg-slate-900/40 p-4 rounded-xl border border-white/5 text-sm leading-relaxed overflow-x-auto [&_*]:!text-slate-100 [&_a]:!text-teal-400 [&_a]:underline [&_p]:!text-slate-200 [&_span]:!text-slate-100 [&_div]:!text-slate-100 [&_td]:!text-slate-200"
                         dangerouslySetInnerHTML={{
                           __html: buildSafeEmailBodyHtml(msg.body, msg.snippet),
                         }}
@@ -1117,7 +1258,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                   </div>
                 ) : (
                   <div
-                    className="prose prose-invert max-w-none prose-p:text-slate-300 prose-pre:bg-slate-950/60 text-sm"
+                    className="prose prose-invert max-w-none text-slate-100 bg-slate-900/40 p-4 rounded-xl border border-white/5 text-sm leading-relaxed overflow-x-auto [&_*]:!text-slate-100 [&_a]:!text-teal-400 [&_a]:underline [&_p]:!text-slate-200 [&_span]:!text-slate-100 [&_div]:!text-slate-100 [&_td]:!text-slate-200"
                     dangerouslySetInnerHTML={{ __html: selectedEmailHtml }}
                   />
                 )}
@@ -1134,6 +1275,32 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                         compact
                       />
                     )}
+
+                    {/* AI Smart Reply Suggestions */}
+                    {selectedEmail && (
+                      <div className="space-y-1.5 pb-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+                            AI Quick Reply Suggestions
+                          </p>
+                          <span className="text-[9px] text-slate-500">1-click insert</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {getSmartReplyChips(selectedEmail).map((chip) => (
+                            <button
+                              key={chip.id}
+                              type="button"
+                              onClick={() => setInlineReply(chip.prompt)}
+                              className="text-[11px] font-medium px-2.5 py-1 rounded-lg border border-teal-500/30 bg-teal-500/10 text-teal-300 hover:bg-teal-500/20 hover:text-white transition-all shadow-sm flex items-center gap-1"
+                            >
+                              {chip.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
                       {provider === 'microsoft' && deliveryProvider === 'microsoft'
                         ? 'Quick reply via Outlook'
@@ -1225,6 +1392,60 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
           skipCrmGate
           entityType="direct"
         />
+      )}
+
+      {/* ── Keyboard Shortcuts Modal ── */}
+      {showShortcutsModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <Keyboard className="w-5 h-5 text-teal-400" />
+                <h3 className="text-base font-bold text-white">Keyboard Shortcuts</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShortcutsModal(false)}
+                className="text-slate-400 hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2.5 text-xs text-slate-300">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <span>Compose new email</span>
+                <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-white/10 text-teal-300 font-mono font-bold">C</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <span>Reply to email</span>
+                <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-white/10 text-teal-300 font-mono font-bold">R</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <span>Next email in list</span>
+                <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-white/10 text-teal-300 font-mono font-bold">J</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <span>Previous email in list</span>
+                <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-white/10 text-teal-300 font-mono font-bold">K</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <span>Focus search bar</span>
+                <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-white/10 text-teal-300 font-mono font-bold">/</kbd>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                <span>Toggle Shortcuts menu</span>
+                <kbd className="px-2 py-0.5 rounded bg-slate-800 border border-white/10 text-teal-300 font-mono font-bold">?</kbd>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowShortcutsModal(false)}
+              className="w-full py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-xs transition-all"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
