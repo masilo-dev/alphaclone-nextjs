@@ -30,7 +30,6 @@ import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 import { BacklitSurface } from '@/components/ui/os/BacklitSurface';
 import { StatePanel } from '@/components/dashboard/responsive/StatePanel';
-import { FIRST_VALUE_MODULES, isNewWorkspaceStats } from '@/lib/activation/firstValue';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -269,9 +268,8 @@ export function OperatingSystemHome() {
   }, [stats, openTasks]);
 
   const modules: ModuleLauncherItem[] = useMemo(
-    () => {
-      const sourceModules = isNewWorkspaceStats(stats) ? FIRST_VALUE_MODULES : DEFAULT_MODULES;
-      return sourceModules.map((m) => ({
+    () =>
+      DEFAULT_MODULES.map((m) => ({
         ...m,
         summary:
           m.id === 'crm'
@@ -285,8 +283,7 @@ export function OperatingSystemHome() {
                   : m.id === 'tasks'
                     ? `${tasksCompleted} done`
                     : m.purpose,
-      }));
-    },
+      })),
     [stats, leads, dealsWon, outstanding, tasksCompleted]
   );
 
@@ -346,9 +343,7 @@ export function OperatingSystemHome() {
             {greeting}, {firstName}
           </h1>
           <p className="mt-1.5 text-sm text-[var(--ws-text-secondary)] max-w-2xl">
-            {isNewWorkspaceStats(stats)
-              ? `Start with one customer record, one money action, and one follow-up for ${businessName}.`
-              : `Here is what needs your attention across ${businessName} today.`}
+            Here is what needs your attention across {businessName} today.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -361,8 +356,8 @@ export function OperatingSystemHome() {
           >
             Customise
           </a>
-          <a href="/dashboard/crm/workspace?quickAdd=true" className={WORKSPACE.action.primary}>
-            Add client
+          <a href="/dashboard/crm" className={WORKSPACE.action.primary}>
+            Create
           </a>
         </div>
       </header>

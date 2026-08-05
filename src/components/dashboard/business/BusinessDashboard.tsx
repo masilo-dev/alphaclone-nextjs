@@ -25,7 +25,6 @@ import {
     MessageCircle,
     Plus,
     X,
-    Zap,
 } from 'lucide-react';
 import IncomingCallModal from '../video/IncomingCallModal';
 import { DashboardAccountMenu } from '../DashboardAccountMenu';
@@ -139,7 +138,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import BottomNav from '../BottomNav';
 import { TableSkeleton } from '@/components/ui/Skeleton';
 import { TabSkeleton } from '@/components/ui/TabSkeleton';
-import { TENANT_ADMIN_ACTIVATION_NAV_ITEMS, TENANT_ADMIN_NAV_ITEMS } from '@/constants';
+import { TENANT_ADMIN_NAV_ITEMS } from '@/constants';
 import { PLAN_PRICING } from '../../../services/tenancy/types';
 import { WidgetErrorBoundary } from '../WidgetErrorBoundary';
 import { EnterpriseTabWrapper, isEnterpriseFullBleedTab } from '@/components/ui/EnterpriseTabWrapper';
@@ -149,14 +148,12 @@ import EnhancedGlobalSearch from '../EnhancedGlobalSearch';
 import ProductTour from '../../onboarding/ProductTour';
 import OnboardingFlow from '../../onboarding/OnboardingFlow';
 import { BusinessWelcomeModal } from './BusinessWelcomeModal';
-import { hasCompletedCoreActivationSteps, isFirstValueRoute, isWorkspaceActivatedStats } from '@/lib/activation/firstValue';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
-import { launchFunnelService } from '@/services/launchFunnelService';
 
 /** Full-bleed tabs: no outer padding; child manages its own scroll (mail, projects, etc.). Social pages scroll with the main column like CRM. */
 const DASHBOARD_EDGE_TO_EDGE_TABS: string[] = [
@@ -201,7 +198,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     const [showBusinessWelcome, setShowBusinessWelcome] = useState(false);
     const [showOnboarding, setShowOnboarding] = useState(false);
     const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-    const [activationVersion, setActivationVersion] = useState(0);
     const hideBonnieWidget =
         route === '/dashboard/business/bonnie' ||
         route === '/dashboard/bonnie' ||
@@ -222,12 +218,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             // Keep sidebar expanded by default on tablet and desktop so navigation labels stay visible.
             setSidebarOpen(window.innerWidth >= 768);
         }
-    }, []);
-
-    React.useEffect(() => {
-        const onActivationUpdate = () => setActivationVersion((version) => version + 1);
-        window.addEventListener('ac-launch-funnel-updated', onActivationUpdate);
-        return () => window.removeEventListener('ac-launch-funnel-updated', onActivationUpdate);
     }, []);
 
     React.useEffect(() => {
@@ -447,12 +437,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
 
 
-    const workspaceActivated = useMemo(() => {
-        const activatedByStats = isWorkspaceActivatedStats(dashboardStats as Record<string, unknown> | null | undefined);
-        const activatedByLocalSteps = hasCompletedCoreActivationSteps(launchFunnelService.getCompletedSteps());
-        return activatedByStats || activatedByLocalSteps;
-    }, [dashboardStats, activationVersion]);
-
     // Map routes to display content (uses normalized route — not affected by language changes)
     const renderBusinessContent = (tab: string) => {
         // const plan = currentTenant?.subscription_plan || 'free';
@@ -480,38 +464,6 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
 
         const sharedRoute = renderSharedDashboardRoute(tab, user);
         if (sharedRoute) return sharedRoute;
-
-        if (!workspaceActivated && !isFirstValueRoute(tab)) {
-            return (
-                <div className="flex flex-col items-center justify-center min-h-[52vh] text-center p-6">
-                    <div className="w-16 h-16 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center mb-5">
-                        <Zap className="w-7 h-7 text-teal-300" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white tracking-tight mb-2">
-                        Finish first business value
-                    </h3>
-                    <p className="text-sm text-slate-400 max-w-lg mb-6">
-                        Add one client, create one money action, and send one follow-up before opening advanced modules.
-                    </p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('/dashboard/crm/workspace?quickAdd=true')}
-                            className="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold"
-                        >
-                            Add client
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('/dashboard/business/billing/manage?create=true')}
-                            className="px-4 py-2 rounded-lg border border-slate-700 text-slate-200 hover:bg-slate-800 text-sm font-semibold"
-                        >
-                            Create invoice
-                        </button>
-                    </div>
-                </div>
-            );
-        }
 
         if (tab === '/dashboard/business/documents' || tab.startsWith('/dashboard/business/documents/')) {
             const section = tab.slice('/dashboard/business/documents'.length).replace(/^\//, '').split('/')[0];
@@ -828,10 +780,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 );
 
             case '/dashboard/comms':
-                return <CommunicationHub user={user} showLocalTabs={false} />;
+                return <CommunicationHub user={user} />;
 
             case '/dashboard/mail':
-                return <CommunicationHub user={user} showLocalTabs={false} />;
+                return <CommunicationHub user={user} />;
 
             case '/dashboard/zoho/mail':
                 return (
@@ -943,19 +895,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         }
     };
 
-    const shouldShowActivationGate = !workspaceActivated && !isFirstValueRoute(route);
-
     const moduleContent = useMemo(
-        () => {
-            const content = renderBusinessContent(route);
-            return shouldShowActivationGate ? content : wrapRouteInHub(route, content);
-        },
-        [route, user.id, currentTenant?.id, dashboardStats, workspaceActivated, shouldShowActivationGate],
+        () => wrapRouteInHub(route, renderBusinessContent(route)),
+        [route, user.id, currentTenant?.id, dashboardStats],
     );
-
-    const navItems = useMemo(() => {
-        return workspaceActivated ? TENANT_ADMIN_NAV_ITEMS : TENANT_ADMIN_ACTIVATION_NAV_ITEMS;
-    }, [workspaceActivated]);
 
     // Get current page title
     const getPageTitle = () => {
@@ -1122,7 +1065,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 sidebarOpen={sidebarOpen}
                 setSidebarOpen={setSidebarOpen}
                 user={user}
-                navItems={navItems}
+                navItems={TENANT_ADMIN_NAV_ITEMS}
                 activeTab={route}
                 setActiveTab={setActiveTab}
                 unreadMessageCount={unreadMessageCount}

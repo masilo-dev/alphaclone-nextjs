@@ -2,20 +2,11 @@ import { activityService } from './activityService';
 
 export type LaunchFunnelStep =
   | 'signup_completed'
-  | 'first_client_added'
-  | 'first_invoice_started'
-  | 'first_revenue_action_sent'
   | 'integration_connected'
   | 'first_lead_found'
   | 'first_contact_captured'
   | 'first_deal_created'
   | 'first_post_scheduled';
-
-export const CORE_ACTIVATION_STEPS: LaunchFunnelStep[] = [
-  'first_client_added',
-  'first_invoice_started',
-  'first_revenue_action_sent',
-];
 
 const STORAGE_KEY = 'ac_launch_funnel_steps_v1';
 
@@ -33,7 +24,6 @@ function readSteps(): Record<LaunchFunnelStep, boolean> {
 function writeSteps(steps: Record<LaunchFunnelStep, boolean>): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(steps));
-  window.dispatchEvent(new CustomEvent('ac-launch-funnel-updated', { detail: steps }));
 }
 
 export const launchFunnelService = {
@@ -55,11 +45,6 @@ export const launchFunnelService = {
     const steps = readSteps();
     if (steps[step]) return;
     steps[step] = true;
-
-    if (step === 'first_contact_captured') {
-      steps.first_client_added = true;
-    }
-
     writeSteps(steps);
 
     if (userId) {
@@ -73,3 +58,4 @@ export const launchFunnelService = {
     }
   },
 };
+

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Modal, Button } from '@/components/ui/UIComponents';
-import { UserPlus, FileText, Send, ArrowRight } from 'lucide-react';
+import { UserPlus, FileText, Mail, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface BusinessWelcomeModalProps {
@@ -19,16 +19,16 @@ const FIRST_STEPS = [
     icon: UserPlus,
   },
   {
-    title: 'Create money action',
-    description: 'Billing → invoice or payment request',
+    title: 'Create an invoice',
+    description: 'Billing → new invoice',
     href: '/dashboard/business/billing/manage?create=true',
     icon: FileText,
   },
   {
-    title: 'Send follow-up',
-    description: 'Communication → next message',
-    href: '/dashboard/comms',
-    icon: Send,
+    title: 'Connect inbox',
+    description: 'Mail → connect email',
+    href: '/dashboard/mail',
+    icon: Mail,
   },
 ];
 
@@ -47,7 +47,7 @@ export function BusinessWelcomeModal({ isOpen, onClose, userName }: BusinessWelc
             Welcome, {firstName}
           </h3>
           <p className="text-sm text-slate-400 mt-2 max-w-md mx-auto">
-            Your 14-day trial is live. Start with one client, one revenue action, and one follow-up before exploring the rest.
+            Your 14-day trial is live. Here is exactly what to do next — most owners finish these three steps in under 10 minutes.
           </p>
         </div>
 
