@@ -8,7 +8,6 @@ import {
     Sparkles, FileText, Receipt
 } from 'lucide-react';
 import { contactService, type ContactWithCompany } from '@/services/contactService';
-import { freePlacesService } from '@/services/freePlacesService';
 import { useAuth } from '@/contexts/AuthContext';
 import { BulkTeamMessageModal } from '@/components/dashboard/crm/BulkTeamMessageModal';
 import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
@@ -425,8 +424,24 @@ export default function ContactsList({ onEditContact, onCreateContact }: Contact
                                             onClick={async () => {
                                                 const contactName = contact.fullName || contact.firstName || 'Contact';
                                                 toast.loading(`Enriching ${contactName}...`, { id: 'enrich' });
-                                                const res = await freePlacesService.enrichContactData(contactName, contact.company?.name);
-                                                toast.success(`Enriched contact: Website ${res.website}`, { id: 'enrich' });
+                                                try {
+                                                    const response = await fetch('/api/crm/contacts/enrich', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            name: contactName,
+                                                            company: contact.company?.name,
+                                                        }),
+                                                    });
+                                                    const data = await response.json();
+                                                    if (!response.ok) {
+                                                        throw new Error(data.error || 'Unable to enrich contact');
+                                                    }
+                                                    toast.success(`Enriched contact: Website ${data.enrichment?.website || 'not found'}`, { id: 'enrich' });
+                                                } catch (error) {
+                                                    const message = error instanceof Error ? error.message : 'Unable to enrich contact';
+                                                    toast.error(message, { id: 'enrich' });
+                                                }
                                             }}
                                             className="p-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-colors"
                                             title="Enrich Lead Details via Web Scraper"
