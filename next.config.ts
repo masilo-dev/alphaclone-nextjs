@@ -129,6 +129,10 @@ const nextConfig: NextConfig = {
         child_process: false,
         fs: false,
         tls: false,
+        // Prevent puppeteer-core / @puppeteer/browsers from leaking into
+        // the client bundle via transitive imports.
+        'puppeteer-core': false,
+        '@puppeteer/browsers': false,
       };
     }
     // Explicitly mark playwright-core and its sub-dependencies as external

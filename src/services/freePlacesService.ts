@@ -10,7 +10,9 @@
  * swapped in everywhere with no other changes required.
  */
 
-import { BrowserManager } from '@/lib/scraper/browserManager';
+// BrowserManager is server-only — imported dynamically inside async functions
+// to prevent the puppeteer-core/playwright-core static graph from being pulled
+// into client bundles.
 import { googlePlacesService as realGoogleService } from './googlePlacesService';
 
 
@@ -225,6 +227,7 @@ async function fetchGoogleMapsScrape(
   location: string,
   maxResults = 20
 ): Promise<MappedPlaceLead[]> {
+  const { BrowserManager } = await import('@/lib/scraper/browserManager');
   if (!BrowserManager.hasRemoteConfigured()) {
     // Try local Playwright if no remote browser
     return [];
@@ -457,7 +460,8 @@ export const freePlacesService = {
     }
 
     // ── Source 3: Google Maps Scrape (browser-based, no API cost) ─────────
-    if (allPlaces.length < maxResults && BrowserManager.hasRemoteConfigured()) {
+    const { BrowserManager: BM } = await import('@/lib/scraper/browserManager');
+    if (allPlaces.length < maxResults && BM.hasRemoteConfigured()) {
       try {
         const scrapedPlaces = await fetchGoogleMapsScrape(niche, location, maxResults - allPlaces.length);
         const existingNames = new Set(allPlaces.map(p => p.businessName.toLowerCase()));

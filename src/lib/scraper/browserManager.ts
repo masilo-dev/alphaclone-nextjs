@@ -1,7 +1,9 @@
+import 'server-only';
 import Browserbase from '@browserbasehq/sdk';
 import { isRailwayHost } from '@/config/railwayWorkload';
 import { chromium, Browser, Page } from 'playwright-core';
 import puppeteer, { Browser as PuppeteerBrowser, Page as PuppeteerPage } from 'puppeteer-core';
+
 
 /**
  * Universal Browser Manager for Lead Acquisition
