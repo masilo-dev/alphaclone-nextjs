@@ -677,532 +677,332 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   return (
     <div className={readerExpanded ? 'fixed inset-0 z-[80] bg-slate-950 p-0 sm:p-3' : 'relative h-full min-h-0'}>
       <div
-        className={`flex h-full ac-workspace-panel overflow-hidden ${readerExpanded ? 'min-h-0 rounded-none sm:rounded-xl' : 'min-h-[480px]'}`}
+        className={`flex h-full overflow-hidden bg-[#1e2129] ${readerExpanded ? 'rounded-none sm:rounded-xl' : 'rounded-xl border border-white/[0.06] min-h-[480px]'}`}
         role="region"
         aria-label="Email mailbox"
       >
-        {/* Sidebar list — 30% width */}
-        <div
-          className={`${
-            readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'
-          } w-full md:w-[300px] lg:w-[320px] flex-col border-r border-white/5 bg-slate-950/50 shrink-0`}
-        >
-          <div className="p-2.5 border-b border-white/5 space-y-2">
-            {/* AI draft slim notice — non-intrusive */}
-            <AiDraftReviewBanner
-              onOpenDraft={(draft) => {
-                openCompose({
-                  to: draft.fromEmail || draft.from || '',
-                  subject: draft.subject?.match(/^Re:/i) ? draft.subject : `Re: ${draft.subject || ''}`,
-                  body: draft.body || '',
-                });
-              }}
-            />
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={openNewEmail}
-                disabled={!providerConnected}
-                aria-label="Compose new email"
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-3 py-2 text-xs font-bold text-white"
-              >
-                <PenSquare className="w-3.5 h-3.5" />
-                Compose
+        {/* ── Left sidebar ─────────────────────────────────────── */}
+        <div className={`${readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'} w-full md:w-[260px] lg:w-[280px] flex-col bg-[#1a1d24] border-r border-white/[0.06] shrink-0`}>
+          {/* Top: Compose + refresh + provider toggle */}
+          <div className="px-3 pt-4 pb-2 space-y-2.5">
+            <AiDraftReviewBanner onOpenDraft={(draft) => { openCompose({ to: draft.fromEmail || draft.from || '', subject: draft.subject?.match(/^Re:/i) ? draft.subject : `Re: ${draft.subject || ''}`, body: draft.body || '' }); }} />
+            <div className="flex gap-2">
+              <button type="button" onClick={openNewEmail} disabled={!providerConnected}
+                className="flex-1 flex items-center gap-2 rounded-2xl bg-[#2a2f3d] hover:bg-[#333a4d] disabled:opacity-40 px-4 py-2.5 text-sm font-semibold text-white shadow transition-colors">
+                <PenSquare className="w-4 h-4 text-blue-400" /> Compose
               </button>
-              <button
-                type="button"
-                onClick={refresh}
-                className="rounded-lg border border-white/10 p-2 text-slate-400 hover:text-white shrink-0"
-                aria-label="Refresh mailbox"
-                title="Refresh"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
+              <button type="button" onClick={refresh} aria-label="Refresh"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                <RefreshCw className="w-4 h-4" />
               </button>
             </div>
-
-            <Link
-              href="/dashboard/business/campaigns"
-              className="w-full flex items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-slate-400 hover:text-white"
-            >
-              <Users className="w-3 h-3" />
-              Bulk send (campaigns)
-            </Link>
-
-            <div className="flex gap-1 p-1 rounded-lg bg-slate-900 border border-white/5">
-              <button
-                type="button"
-                onClick={() => switchProvider('microsoft')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
-                  provider === 'microsoft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Outlook{status.microsoft ? '' : ' · off'}
+            <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04]">
+              <button type="button" onClick={() => switchProvider('microsoft')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${provider === 'microsoft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                {status.microsoft ? '● ' : '○ '}Outlook
               </button>
-              <button
-                type="button"
-                onClick={() => switchProvider('zoho')}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg ${
-                  provider === 'zoho' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Zoho{status.zoho ? '' : ' · off'}
+              <button type="button" onClick={() => switchProvider('zoho')}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${provider === 'zoho' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>
+                {status.zoho ? '● ' : '○ '}Zoho
               </button>
-            </div>
-
-            {!providerConnected && (
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200">
-                {provider === 'microsoft' ? (
-                  <>
-                    Outlook not connected.{' '}
-                    <button type="button" onClick={connectMicrosoft} className="underline font-semibold">
-                      Connect
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Zoho not connected.{' '}
-                    <button type="button" onClick={connectZoho} className="underline font-semibold">
-                      Connect
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {active.error && (
-              <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200 space-y-2">
-                <p>{active.error}</p>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={refresh} className="underline font-semibold">
-                    Retry
-                  </button>
-                  {/expired|reconnect|not connected/i.test(active.error) && (
-                    <button
-                      type="button"
-                      onClick={provider === 'microsoft' ? connectMicrosoft : connectZoho}
-                      className="underline font-semibold"
-                    >
-                      Reconnect {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search mail…"
-                aria-label="Search mail"
-                className="w-full bg-slate-900 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40"
-              />
-            </div>
-
-            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Mail folders">
-              {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  role="tab"
-                  aria-selected={folder === f}
-                  onClick={() => {
-                    setFolder(f);
-                    setSelectedId(null);
-                    setThreadMessages([]);
-                  }}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg capitalize whitespace-nowrap ${
-                    folder === f
-                      ? provider === 'microsoft'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-teal-600 text-white'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Mail labels">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeLabel === 'all'}
-                onClick={() => setActiveLabel('all')}
-                className={`px-2.5 py-1 text-[10px] font-semibold rounded-full whitespace-nowrap ${
-                  activeLabel === 'all'
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                }`}
-              >
-                All labels
-              </button>
-              {INBOX_LABEL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeLabel === opt.id}
-                  onClick={() => setActiveLabel(opt.id)}
-                  className={`px-2.5 py-1 text-[10px] font-semibold rounded-full whitespace-nowrap ${
-                    activeLabel === opt.id
-                      ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                      : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-white/5" role="list" aria-label={`${folder} messages`}>
-            {active.loading ? (
-              <div className="p-6 flex flex-col items-center gap-2 text-slate-400">
-                <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
-                <span className="text-xs">Loading {folder}…</span>
-              </div>
-            ) : filteredEmails.length === 0 ? (
-              <div className="p-6 text-sm text-slate-500 text-center space-y-2">
-                <p>{providerConnected ? `No messages in ${folder}.` : 'Connect this account first.'}</p>
-                {providerConnected && folder !== 'drafts' && (
-                  <button type="button" onClick={openNewEmail} className="text-teal-400 text-xs font-semibold underline">
-                    Compose a new email
+          {/* Folder nav */}
+          <nav className="px-2 pb-1 space-y-0.5" aria-label="Mail folders">
+            {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => {
+              const FIcon = f === 'inbox' ? Mail : f === 'sent' ? Send : f === 'drafts' ? PenSquare : Trash2;
+              const isActive = folder === f;
+              return (
+                <button key={f} type="button"
+                  onClick={() => { setFolder(f); setSelectedId(null); setThreadMessages([]); }}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActive ? 'bg-blue-600/15 text-blue-300 font-semibold' : 'text-slate-400 hover:bg-white/[0.04] hover:text-white'}`}>
+                  <FIcon className={`w-4 h-4 ${isActive ? 'text-blue-400' : 'text-slate-500'}`} />
+                  <span className="capitalize">{f}</span>
+                </button>
+              );
+            })}
+            <Link href="/dashboard/business/campaigns"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-slate-500 hover:bg-white/[0.04] hover:text-white transition-colors">
+              <Users className="w-4 h-4" /><span>Bulk campaigns</span>
+            </Link>
+          </nav>
+
+          {/* Label chips */}
+          <div className="px-3 py-1.5 flex flex-wrap gap-1 border-t border-white/[0.04]">
+            <button type="button" onClick={() => setActiveLabel('all')}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded-full border transition-colors ${activeLabel === 'all' ? 'bg-blue-600/20 text-blue-300 border-blue-500/30' : 'text-slate-500 border-white/10 hover:text-slate-300'}`}>
+              All
+            </button>
+            {INBOX_LABEL_OPTIONS.map((opt) => (
+              <button key={opt.id} type="button" onClick={() => setActiveLabel(opt.id)}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-full border transition-colors ${activeLabel === opt.id ? 'bg-blue-600/20 text-blue-300 border-blue-500/30' : 'text-slate-500 border-white/10 hover:text-slate-300'}`}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Alerts */}
+          {!providerConnected && (
+            <div className="mx-3 mb-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
+              {provider === 'microsoft'
+                ? <><span>Outlook not connected. </span><button type="button" onClick={connectMicrosoft} className="underline font-bold">Connect</button></>
+                : <><span>Zoho not connected. </span><button type="button" onClick={connectZoho} className="underline font-bold">Connect</button></>}
+            </div>
+          )}
+          {active.error && (
+            <div className="mx-3 mb-2 rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-2 text-xs text-rose-300 space-y-1">
+              <p>{active.error}</p>
+              <div className="flex gap-3">
+                <button type="button" onClick={refresh} className="underline font-bold">Retry</button>
+                {/expired|reconnect|not connected/i.test(active.error) && (
+                  <button type="button" onClick={provider === 'microsoft' ? connectMicrosoft : connectZoho} className="underline font-bold">
+                    Reconnect {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Search */}
+          <div className="px-3 pb-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input type="search" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search mail…" aria-label="Search mail"
+                className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-8 pr-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 transition-colors" />
+            </div>
+          </div>
+
+          {/* Message list */}
+          <div className="flex-1 overflow-y-auto" role="list" aria-label={`${folder} messages`}>
+            {active.loading ? (
+              <div className="p-6 flex flex-col items-center gap-2 text-slate-500">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
+                <span className="text-xs">Loading {folder}…</span>
+              </div>
+            ) : filteredEmails.length === 0 ? (
+              <div className="p-6 text-xs text-slate-500 text-center space-y-2">
+                <p>{providerConnected ? `No messages in ${folder}.` : 'Connect this account first.'}</p>
+                {providerConnected && folder !== 'drafts' && (
+                  <button type="button" onClick={openNewEmail} className="text-blue-400 underline text-xs font-semibold">Compose a new email</button>
+                )}
+              </div>
             ) : (
-              filteredEmails.map((email) => (
-                <button
-                  key={`${email.provider}-${email.id}`}
-                  type="button"
-                  role="listitem"
-                  onClick={() => handleSelectEmail(email)}
-                  className={`w-full text-left px-3 py-2.5 transition-colors ${
-                    selectedEmail?.id === email.id && folder !== 'drafts'
-                      ? 'bg-teal-500/10 border-l-2 border-l-teal-500'
-                      : 'hover:bg-white/5 border-l-2 border-l-transparent'
-                  } ${email.isRead === false ? 'bg-white/[0.025]' : ''}`}
-                >
-                  <div className="flex items-baseline justify-between gap-1.5 mb-0.5">
-                    <p
-                      className={`text-xs truncate ${
-                        email.isRead === false ? 'font-bold text-white' : 'font-medium text-slate-300'
-                      }`}
-                    >
-                      {folder === 'sent' || folder === 'drafts'
-                        ? email.subject || '(no subject)'
-                        : (email.from || '').split('<')[0].trim() || email.from || 'Unknown'}
-                    </p>
-                    <span className="text-[10px] text-slate-600 shrink-0">
-                      {new Date(email.receivedAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
-                    </span>
-                  </div>
-                  <p className={`text-[11px] truncate mb-0.5 ${
-                    email.isRead === false ? 'font-semibold text-slate-200' : 'font-normal text-slate-400'
-                  }`}>
-                    {folder === 'sent' || folder === 'drafts'
-                      ? (email.to || []).join(', ') || email.from || 'Draft'
-                      : email.subject || '(no subject)'}
-                  </p>
-                  {email.snippet && (
-                    <p className="text-[11px] text-slate-500 truncate">{email.snippet}</p>
-                  )}
-                  {(labelMap[`${provider}:${email.id}`] || email.labels || []).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {(labelMap[`${provider}:${email.id}`] || email.labels || []).map((lab) => (
-                        <span
-                          key={lab}
-                          className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-500/20"
-                        >
-                          {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
-                        </span>
-                      ))}
+              filteredEmails.map((email) => {
+                const isSelected = selectedEmail?.id === email.id && folder !== 'drafts';
+                const isUnread = email.isRead === false;
+                const senderLabel = folder === 'sent' || folder === 'drafts'
+                  ? (email.to || []).join(', ') || 'Draft'
+                  : (email.from || '').split('<')[0].trim() || email.from || 'Unknown';
+                const initial = senderLabel.trim()[0]?.toUpperCase() || '?';
+                const avatarPalette = ['bg-blue-600','bg-violet-600','bg-rose-600','bg-amber-600','bg-teal-600','bg-indigo-600'];
+                const avatarBg = avatarPalette[initial.charCodeAt(0) % avatarPalette.length];
+                const rowLabels = labelMap[`${provider}:${email.id}`] || email.labels || [];
+                return (
+                  <button key={`${email.provider}-${email.id}`} type="button" role="listitem"
+                    onClick={() => handleSelectEmail(email)}
+                    className={`w-full text-left px-3 py-2.5 flex items-start gap-2.5 transition-all border-b border-white/[0.04] ${isSelected ? 'bg-blue-600/10 border-l-2 border-l-blue-500' : 'hover:bg-white/[0.03] border-l-2 border-l-transparent'} ${isUnread && !isSelected ? 'bg-white/[0.015]' : ''}`}>
+                    <div className={`w-8 h-8 rounded-full ${avatarBg} flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5`}>
+                      {initial}
                     </div>
-                  )}
-                  {folder === 'drafts' && (
-                    <span className="inline-block mt-0.5 text-[10px] font-bold uppercase text-amber-400">
-                      Tap to edit draft
-                    </span>
-                  )}
-                </button>
-              ))
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-1 mb-0.5">
+                        <p className={`text-xs truncate ${isUnread ? 'font-bold text-white' : 'font-medium text-slate-300'}`}>{senderLabel}</p>
+                        <span className="text-[10px] text-slate-600 shrink-0">
+                          {new Date(email.receivedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <p className={`text-[11px] truncate mb-0.5 ${isUnread ? 'font-semibold text-slate-200' : 'text-slate-400'}`}>
+                        {email.subject || '(no subject)'}
+                      </p>
+                      {email.snippet && <p className="text-[11px] text-slate-600 truncate">{email.snippet}</p>}
+                      {rowLabels.length > 0 && (
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {rowLabels.map((lab) => (
+                            <span key={lab} className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                              {INBOX_LABEL_OPTIONS.find((o) => o.id === lab)?.label || lab}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {folder === 'drafts' && <span className="text-[10px] font-bold text-amber-400">Draft — tap to edit</span>}
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
-        {/* Read & reply — 70% width, flex-1 */}
+        {/* ── Reading pane ────────────────────────────────────── */}
         <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
           {selectedEmail && folder !== 'drafts' ? (
             <>
-              {/* ── Thread header: subject + meta ── */}
-              <div className="px-4 pt-3 pb-2 border-b border-white/5 shrink-0">
-                <div className="flex items-start gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(null);
-                      setThreadMessages([]);
-                    }}
-                    className="md:hidden p-1 -ml-1 text-slate-400 hover:text-white shrink-0 mt-0.5"
-                    aria-label="Back to list"
-                  >
+              {/* Header */}
+              <div className="px-5 pt-4 pb-3 border-b border-white/[0.06] shrink-0">
+                <div className="flex items-start gap-2 mb-3">
+                  <button type="button" onClick={() => { setSelectedId(null); setThreadMessages([]); }}
+                    className="md:hidden p-1 -ml-1 text-slate-400 hover:text-white shrink-0 mt-1" aria-label="Back">
                     <ArrowLeft className="w-4 h-4" />
                   </button>
-                  <div className="flex-1 min-w-0">
-                    {/* Subject */}
-                    <h3 className="text-sm font-semibold text-white leading-snug mb-0.5">
-                      {selectedEmail.subject || '(no subject)'}
-                    </h3>
-                    {/* From + provider badge */}
+                  <h3 className="flex-1 text-base font-bold text-white leading-snug">{selectedEmail.subject || '(no subject)'}</h3>
+                  <button type="button" onClick={() => setReaderExpanded((c) => !c)}
+                    className="shrink-0 p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                    title={readerExpanded ? 'Exit full window (Esc)' : 'Full window'}>
+                    {readerExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Sender meta */}
+                <div className="flex items-center gap-3">
+                  {(() => {
+                    const s = (selectedEmail.from || '').split('<')[0].trim() || '?';
+                    const init = s[0]?.toUpperCase() || '?';
+                    const palette = ['bg-blue-600','bg-violet-600','bg-rose-600','bg-amber-600','bg-teal-600','bg-indigo-600'];
+                    return (
+                      <div className={`w-9 h-9 rounded-full ${palette[init.charCodeAt(0) % palette.length]} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+                        {init}
+                      </div>
+                    );
+                  })()}
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-xs text-slate-400 truncate">{selectedEmail.from}</p>
-                      <span
-                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
-                          provider === 'microsoft'
-                            ? 'bg-blue-500/15 text-blue-300'
-                            : 'bg-teal-500/15 text-teal-300'
-                        }`}
-                      >
+                      <p className="text-sm font-semibold text-white truncate">{selectedEmail.from}</p>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${provider === 'microsoft' ? 'bg-blue-500/15 text-blue-300' : 'bg-teal-500/15 text-teal-300'}`}>
                         {provider === 'microsoft' ? 'Outlook' : 'Zoho'}
                       </span>
-                      <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border shrink-0 ${classificationColors[emailClassification]}`}
-                      >
-                        {emailClassification === 'Unverified' && <AlertTriangle className="w-2.5 h-2.5" />}
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${classificationColors[emailClassification]}`}>
+                        {emailClassification === 'Unverified' && <AlertTriangle className="w-2.5 h-2.5 inline mr-0.5" />}
                         {emailClassification}
                       </span>
                     </div>
-                    {/* Label pills — below subject, not competing with actions */}
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {INBOX_LABEL_OPTIONS.map((opt) => {
-                        const key = `${provider}:${selectedEmail.id}`;
-                        const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
-                        return (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
-                            className={`text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border transition-colors ${
-                              assigned
-                                ? 'bg-teal-500/20 text-teal-200 border-teal-500/40'
-                                : 'bg-transparent text-slate-600 border-white/8 hover:border-teal-500/30 hover:text-slate-400'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {senderKnown === false && (
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>
-                        <button
-                          type="button"
-                          onClick={handleCreateContactFromSender}
-                          disabled={creatingContact}
-                          className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-lg bg-teal-600/20 text-teal-300 hover:bg-teal-600/30 disabled:opacity-50"
-                        >
-                          {creatingContact ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <UserPlus className="w-3 h-3" />
-                          )}
-                          Create Contact
-                        </button>
-                      </div>
-                    )}
+                    <p className="text-xs text-slate-500 mt-0.5">{new Date(selectedEmail.receivedAt).toLocaleString()}</p>
                   </div>
                 </div>
 
-                {/* ── Primary action row: Reply / Fwd / Delete — clear, above body ── */}
-                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setReaderExpanded((current) => !current)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-teal-500/20 bg-teal-500/10 hover:bg-teal-500/20 px-3 py-1.5 text-xs font-semibold text-teal-200"
-                    aria-label={readerExpanded ? 'Exit full-window email reader' : 'Open email in full window'}
-                    title={readerExpanded ? 'Exit full window (Esc)' : 'Full-window reader'}
-                  >
-                    {readerExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
-                    {readerExpanded ? 'Exit full window' : 'Full window'}
+                {/* Label toggle pills */}
+                <div className="flex flex-wrap gap-1 mt-3">
+                  {INBOX_LABEL_OPTIONS.map((opt) => {
+                    const key = `${provider}:${selectedEmail.id}`;
+                    const assigned = (labelMap[key] || selectedEmail.labels || []).includes(opt.id);
+                    return (
+                      <button key={opt.id} type="button" onClick={() => toggleMessageLabel(selectedEmail.id, opt.id)}
+                        className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border transition-colors ${assigned ? 'bg-blue-500/20 text-blue-200 border-blue-500/40' : 'text-slate-600 border-white/10 hover:border-blue-500/30 hover:text-slate-400'}`}>
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Unknown sender CTA */}
+                {senderKnown === false && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-[10px] text-amber-400 font-semibold">Unknown sender</span>
+                    <button type="button" onClick={handleCreateContactFromSender} disabled={creatingContact}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 disabled:opacity-50">
+                      {creatingContact ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
+                      Add to CRM
+                    </button>
+                  </div>
+                )}
+
+                {/* Action toolbar */}
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <button type="button" onClick={() => openReply(false)} disabled={!providerConnected}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40 transition-colors">
+                    <Reply className="w-3.5 h-3.5" /> Reply
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openReply(false)}
-                    disabled={!providerConnected}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
-                    title="Reply with provider picker"
-                  >
-                    <Reply className="w-3.5 h-3.5" />
-                    Reply
+                  <button type="button" onClick={() => openReply(true)} disabled={!providerConnected}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40 transition-colors">
+                    <ReplyAll className="w-3.5 h-3.5" /> Reply all
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openReply(true)}
-                    disabled={!providerConnected}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
-                  >
-                    <ReplyAll className="w-3.5 h-3.5" />
-                    Reply all
+                  <button type="button" onClick={openForward} disabled={!providerConnected}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40 transition-colors">
+                    <Forward className="w-3.5 h-3.5" /> Forward
                   </button>
-                  <button
-                    type="button"
-                    onClick={openForward}
-                    disabled={!providerConnected}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-900 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 disabled:opacity-40"
-                  >
-                    <Forward className="w-3.5 h-3.5" />
-                    Forward
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 disabled:opacity-40"
-                  >
-                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                    Delete
+                  <button type="button" onClick={handleDelete} disabled={deleting}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 disabled:opacity-40 transition-colors">
+                    {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />} Delete
                   </button>
                   {selectedEmail.webLink && (
-                    <a
-                      href={selectedEmail.webLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 px-2 py-1.5 ml-auto"
-                    >
+                    <a href={selectedEmail.webLink} target="_blank" rel="noopener noreferrer"
+                      className="ml-auto text-[10px] text-blue-400 hover:text-blue-300 font-bold">
                       Open in Outlook ↗
                     </a>
                   )}
                 </div>
               </div>
 
-              {/* ── Lead insight: collapsed/dismissible, not inline above body ── */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-6">
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
                 <EmailLeadInsightPanel from={selectedEmail.from} subject={selectedEmail.subject} collapsible />
-
                 {threadLoading ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading conversation…
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading conversation…
                   </div>
                 ) : displayMessages.length > 1 ? (
-                  displayMessages.map((msg) => (
-                    <div key={msg.id} className="border-b border-white/5 pb-6 last:border-0">
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <p className="text-sm font-semibold text-white">{msg.from}</p>
-                        <span className="text-[10px] text-slate-500">
-                          {new Date(msg.receivedAt).toLocaleString()}
-                        </span>
+                  displayMessages.map((msg) => {
+                    const init = (msg.from || '')[0]?.toUpperCase() || '?';
+                    const palette = ['bg-blue-600','bg-violet-600','bg-rose-600','bg-amber-600','bg-teal-600','bg-indigo-600'];
+                    return (
+                      <div key={msg.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={`w-7 h-7 rounded-full ${palette[init.charCodeAt(0) % palette.length]} flex items-center justify-center text-white text-xs font-bold`}>{init}</div>
+                          <p className="text-sm font-semibold text-white flex-1 truncate">{msg.from}</p>
+                          <span className="text-[10px] text-slate-500 shrink-0">{new Date(msg.receivedAt).toLocaleString()}</span>
+                        </div>
+                        <div className="prose prose-invert max-w-none prose-p:text-slate-300 text-sm"
+                          dangerouslySetInnerHTML={{ __html: buildSafeEmailBodyHtml(msg.body, msg.snippet) }} />
                       </div>
-                      <div
-                        className="prose prose-invert max-w-none prose-p:text-slate-300 prose-pre:bg-slate-950/60 text-sm"
-                        dangerouslySetInnerHTML={{
-                          __html: buildSafeEmailBodyHtml(msg.body, msg.snippet),
-                        }}
-                      />
-                    </div>
-                  ))
+                    );
+                  })
                 ) : loadingBody && provider === 'zoho' && !selectedEmail.body ? (
                   <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading message…
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading message…
                   </div>
                 ) : (
-                  <div
-                    className="prose prose-invert max-w-none prose-p:text-slate-300 prose-pre:bg-slate-950/60 text-sm"
-                    dangerouslySetInnerHTML={{ __html: selectedEmailHtml }}
-                  />
+                  <div className="prose prose-invert max-w-none prose-p:text-slate-300 text-sm"
+                    dangerouslySetInnerHTML={{ __html: selectedEmailHtml }} />
                 )}
               </div>
 
+              {/* Quick reply */}
               {folder !== 'sent' && folder !== 'trash' && (
-                <div className="p-4 border-t border-white/5 shrink-0">
-                  <div className="rounded-xl border border-white/10 bg-slate-950/80 p-3 space-y-3">
+                <div className="px-5 py-4 border-t border-white/[0.06] shrink-0">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-2">
                     {providerOptions.some((p) => p.connected) && (
-                      <EmailProviderSelector
-                        value={deliveryProvider}
-                        onChange={setDeliveryProvider}
-                        providers={providerOptions}
-                        compact
-                      />
+                      <EmailProviderSelector value={deliveryProvider} onChange={setDeliveryProvider} providers={providerOptions} compact />
                     )}
-                    <p className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                      {provider === 'microsoft' && deliveryProvider === 'microsoft'
-                        ? 'Quick reply via Outlook'
-                        : 'Quick reply — or open full compose to send'}
-                    </p>
-                    <textarea
-                      value={inlineReply}
-                      onChange={(e) => setInlineReply(e.target.value)}
-                      placeholder="Type your reply…"
-                      rows={3}
-                      aria-label="Quick reply message"
-                      className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 resize-y"
-                    />
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <p className="text-[10px] text-slate-500">
-                        Send via Brevo, SendGrid, Resend, Zoho, or Outlook — pick above or use Reply for full compose.
-                      </p>
-                      <div className="flex gap-2">
-                        {provider === 'microsoft' && deliveryProvider === 'microsoft' && (
-                          <button
-                            type="button"
-                            onClick={() => handleInlineReply(true)}
-                            disabled={sendingReply || !inlineReply.trim()}
-                            className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40"
-                          >
-                            <ReplyAll className="w-3.5 h-3.5" />
-                            Reply all
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (provider === 'microsoft' && deliveryProvider === 'microsoft') {
-                              void handleInlineReply(false);
-                              return;
-                            }
-                            openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!)}`);
-                          }}
-                          disabled={sendingReply || !inlineReply.trim()}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
-                        >
-                          {sendingReply ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Send className="w-3.5 h-3.5" />
-                          )}
-                          Send
+                    <textarea value={inlineReply} onChange={(e) => setInlineReply(e.target.value)}
+                      placeholder="Reply…" rows={3} aria-label="Quick reply"
+                      className="w-full bg-transparent text-sm text-white placeholder:text-slate-600 focus:outline-none resize-none" />
+                    <div className="flex items-center justify-end gap-2">
+                      {provider === 'microsoft' && deliveryProvider === 'microsoft' && (
+                        <button type="button" onClick={() => handleInlineReply(true)} disabled={sendingReply || !inlineReply.trim()}
+                          className="inline-flex items-center gap-1 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-40">
+                          <ReplyAll className="w-3.5 h-3.5" /> Reply all
                         </button>
-                      </div>
+                      )}
+                      <button type="button"
+                        onClick={() => { if (provider === 'microsoft' && deliveryProvider === 'microsoft') { void handleInlineReply(false); return; } openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!)}`); }}
+                        disabled={sendingReply || !inlineReply.trim()}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-bold text-white disabled:opacity-40 transition-colors">
+                        {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />} Send
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-slate-500">
-              <Send className="w-12 h-12 text-slate-700 mb-3" />
-              <p className="text-sm font-medium text-slate-400">Pick an email from the list</p>
-              <p className="text-xs mt-1 max-w-sm">
-                Read Outlook or Zoho mail here. Compose lets you send via Microsoft, Zoho, Brevo, SendGrid, or Resend — whichever you connected.
-              </p>
-              <button
-                type="button"
-                onClick={openNewEmail}
-                disabled={!providerConnected}
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-40 px-4 py-2 text-sm font-semibold text-white"
-              >
-                <PenSquare className="w-4 h-4" />
-                Compose
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+              <Mail className="w-14 h-14 text-slate-700 mb-4" />
+              <p className="text-sm font-semibold text-slate-400 mb-1">Select an email to read</p>
+              <p className="text-xs max-w-xs text-slate-600 mb-5">Read Outlook or Zoho mail. Compose sends via Microsoft, Zoho, Brevo, SendGrid, or Resend.</p>
+              <button type="button" onClick={openNewEmail} disabled={!providerConnected}
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 px-5 py-2.5 text-sm font-bold text-white transition-colors">
+                <PenSquare className="w-4 h-4" /> Compose
               </button>
             </div>
           )}
@@ -1210,22 +1010,16 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       </div>
 
       {composeOpen && user && (
-        <ComposeEmailModal
-          isOpen={composeOpen}
-          onClose={() => {
-            setComposeOpen(false);
-            refresh();
-          }}
+        <ComposeEmailModal isOpen={composeOpen}
+          onClose={() => { setComposeOpen(false); refresh(); }}
           userId={user.id}
           initialTo={composeDraft.to || ''}
           initialSubject={composeDraft.subject || ''}
           initialBody={composeDraft.body || ''}
           preferredProvider={composeDraft.preferredProvider}
-          presentation="dock"
-          skipCrmGate
-          entityType="direct"
-        />
+          presentation="dock" skipCrmGate entityType="direct" />
       )}
     </div>
   );
+
 }
