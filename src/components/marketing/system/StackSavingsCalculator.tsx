@@ -151,7 +151,7 @@ export default function StackSavingsCalculator() {
                   <span className="text-xs font-bold text-slate-400 uppercase">Current Stack Cost:</span>
                   <div className="text-right">
                     <span className="text-xl font-bold text-rose-400 font-mono">${currentMonthlyTotal} / mo</span>
-                    <p className="text-[10px] text-slate-400 font-medium">(${currentAnnualTotal.toLocaleString()} / year)</p>
+                    <p className="text-[10px] text-slate-500">(${currentAnnualTotal.toLocaleString()} / year)</p>
                   </div>
                 </div>
 
@@ -159,7 +159,7 @@ export default function StackSavingsCalculator() {
                   <span className="text-xs font-bold text-slate-400 uppercase">AlphaClone Unified Engine:</span>
                   <div className="text-right">
                     <span className="text-xl font-bold text-teal-400 font-mono">${alphaCloneMonthly} / mo</span>
-                    <p className="text-[10px] text-slate-400 font-medium">(${alphaCloneAnnual.toLocaleString()} / year)</p>
+                    <p className="text-[10px] text-slate-500">(${alphaCloneAnnual.toLocaleString()} / year)</p>
                   </div>
                 </div>
 

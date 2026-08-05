@@ -157,7 +157,7 @@ export default function BonnieAiSection() {
                   <Terminal className="w-3.5 h-3.5" />
                   <span>PLAIN-ENGLISH USER INSTRUCTION:</span>
                 </span>
-                <span className="text-[10px] text-slate-400 font-bold">OPERATOR PROMPT</span>
+                <span className="text-[10px] text-slate-500">OPERATOR PROMPT</span>
               </div>
               <p className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs sm:text-sm text-slate-100 leading-relaxed font-sans">
                 "{activeEx.prompt}"
@@ -171,7 +171,7 @@ export default function BonnieAiSection() {
                   <Cpu className="w-3.5 h-3.5" />
                   <span>MCP PROTOCOL TOOL INVOCATION:</span>
                 </span>
-                <span className="text-[10px] text-cyan-400 font-bold">SECURE DISPATCH</span>
+                <span className="text-[10px] text-cyan-500">SECURE DISPATCH</span>
               </div>
               <p className="p-2.5 rounded-lg bg-slate-900 border border-cyan-900/40 text-[11px] sm:text-xs text-cyan-300 font-mono">
                 → {activeEx.mcpToolCall}
@@ -185,7 +185,7 @@ export default function BonnieAiSection() {
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>EXECUTED WORKSPACE OUTCOME:</span>
                 </span>
-                <span className="text-[10px] text-emerald-400 font-bold">REAL-TIME UPDATED</span>
+                <span className="text-[10px] text-emerald-500">REAL-TIME UPDATED</span>
               </div>
               <p className="p-3 rounded-lg bg-emerald-950/20 border border-emerald-800/40 text-xs sm:text-sm text-emerald-200 leading-relaxed font-sans">
                 ✓ {activeEx.workspaceResult}
