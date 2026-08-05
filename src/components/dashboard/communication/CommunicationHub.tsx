@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Inbox, Send, FileEdit, MessageSquare, AlertCircle, Mail } from 'lucide-react';
 import type { User } from '@/types';
@@ -23,12 +23,15 @@ const TABS: { id: CommsTab; label: string; icon: React.ElementType }[] = [
 
 interface CommunicationHubProps {
   user: User;
+  showLocalTabs?: boolean;
 }
 
-export function CommunicationHub({ user: _user }: CommunicationHubProps) {
+export function CommunicationHub({ user: _user, showLocalTabs = true }: CommunicationHubProps) {
   const searchParams = useSearchParams();
-  const initialTab = (searchParams?.get('tab') as CommsTab) || 'inbox';
-  const [activeTab, setActiveTab] = useState<CommsTab>(initialTab);
+  const activeTab = useMemo(() => {
+    const requested = searchParams?.get('tab') as CommsTab | null;
+    return TABS.some((tab) => tab.id === requested) ? requested! : 'inbox';
+  }, [searchParams]);
 
   const folderMap: Record<string, InboxFolder> = {
     inbox: 'inbox',
@@ -38,25 +41,25 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      {/* ── Single compact header: tab row only, no duplicate heading ── */}
-      <div className="flex items-center gap-1 px-3 md:px-4 pt-2 pb-0 border-b border-white/5 overflow-x-auto ac-scroll-x shrink-0">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium whitespace-nowrap transition-colors border-b-2 -mb-px rounded-none',
-              activeTab === tab.id
-                ? 'border-teal-400 text-teal-300'
-                : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:border-white/20'
-            )}
-          >
-            <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {showLocalTabs ? (
+        <div className="flex items-center gap-1 px-3 md:px-4 pt-2 pb-0 border-b border-white/5 overflow-x-auto ac-scroll-x shrink-0">
+          {TABS.map((tab) => (
+            <a
+              key={tab.id}
+              href={tab.id === 'inbox' ? '/dashboard/comms' : `/dashboard/comms?tab=${tab.id}`}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium whitespace-nowrap transition-colors border-b-2 -mb-px rounded-none',
+                activeTab === tab.id
+                  ? 'border-teal-400 text-teal-300'
+                  : 'border-transparent text-[var(--ws-text-secondary)] hover:text-[var(--ws-text-primary)] hover:border-white/20'
+              )}
+            >
+              <tab.icon className="w-3.5 h-3.5" aria-hidden="true" />
+              {tab.label}
+            </a>
+          ))}
+        </div>
+      ) : null}
 
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'outreaches' ? (

@@ -5,6 +5,7 @@ import { CheckCircle2, Circle, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { launchFunnelService, LaunchFunnelStep } from '@/services/launchFunnelService';
+import { useTenant } from '@/contexts/TenantContext';
 
 type ChecklistItem = {
   id: LaunchFunnelStep;
@@ -13,15 +14,14 @@ type ChecklistItem = {
 };
 
 const CHECKLIST_ITEMS: ChecklistItem[] = [
-  { id: 'integration_connected', label: 'Connect one channel', href: '/dashboard/business/social' },
-  { id: 'first_lead_found', label: 'Find first lead', href: '/dashboard/leads/campaigns' },
-  { id: 'first_contact_captured', label: 'Capture first contact', href: '/dashboard/contacts' },
-  { id: 'first_deal_created', label: 'Create first deal', href: '/dashboard/deals' },
-  { id: 'first_post_scheduled', label: 'Schedule first post', href: '/dashboard/business/social' },
+  { id: 'first_client_added', label: 'Add first client', href: '/dashboard/crm/workspace?quickAdd=true' },
+  { id: 'first_invoice_started', label: 'Create first money action', href: '/dashboard/business/billing/manage?create=true' },
+  { id: 'first_revenue_action_sent', label: 'Send first follow-up', href: '/dashboard/comms' },
 ];
 
 export default function LaunchActivationChecklist() {
   const router = useRouter();
+  const { currentTenant } = useTenant();
   const [stepState, setStepState] = useState<Record<LaunchFunnelStep, boolean>>(
     launchFunnelService.getCompletedSteps()
   );
@@ -30,26 +30,31 @@ export default function LaunchActivationChecklist() {
     let cancelled = false;
     const syncFromDatabase = async () => {
       const updates: Partial<Record<LaunchFunnelStep, boolean>> = {};
+      const tenantId = currentTenant?.id;
       try {
-        const [socialRes, leadsRes, contactsRes, dealsRes] = await Promise.all([
-          supabase
-            .from('social_posts')
-            .select('id')
-            .eq('status', 'scheduled')
-            .limit(1),
-          supabase.from('leads').select('id').limit(1),
-          supabase.from('business_clients').select('id').limit(1),
-          supabase.from('deals').select('id').limit(1),
+        let clientsQuery = supabase.from('business_clients').select('id').limit(1);
+        let invoicesQuery = supabase.from('business_invoices').select('id,status').limit(1);
+        let activityQuery = supabase
+          .from('activity_logs')
+          .select('id')
+          .contains('metadata', { step: 'first_revenue_action_sent' })
+          .limit(1);
+
+        if (tenantId) {
+          clientsQuery = clientsQuery.eq('tenant_id', tenantId);
+          invoicesQuery = invoicesQuery.eq('tenant_id', tenantId);
+          activityQuery = activityQuery.eq('tenant_id', tenantId);
+        }
+
+        const [contactsRes, invoicesRes, messagesRes] = await Promise.all([
+          clientsQuery,
+          invoicesQuery,
+          activityQuery,
         ]);
 
-        if ((socialRes.data || []).length > 0) updates.first_post_scheduled = true;
-        if ((leadsRes.data || []).length > 0) updates.first_lead_found = true;
-        if ((contactsRes.data || []).length > 0) updates.first_contact_captured = true;
-        if ((dealsRes.data || []).length > 0) updates.first_deal_created = true;
-
-        const { data: fbRows } = await supabase.from('facebook_integrations').select('id').eq('is_active', true).limit(1);
-        const { data: liRows } = await supabase.from('linkedin_integrations').select('id').eq('is_active', true).limit(1);
-        if ((fbRows || []).length > 0 || (liRows || []).length > 0) updates.integration_connected = true;
+        if ((contactsRes.data || []).length > 0) updates.first_client_added = true;
+        if ((invoicesRes.data || []).length > 0) updates.first_invoice_started = true;
+        if ((messagesRes.data || []).length > 0) updates.first_revenue_action_sent = true;
       } catch {
         // Keep local completion state if database probes fail.
       }
@@ -83,7 +88,7 @@ export default function LaunchActivationChecklist() {
   return (
     <div className="mb-4 rounded-xl border border-teal-500/25 bg-teal-500/8 p-4">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-teal-300">First-session activation checklist</h3>
+        <h3 className="text-sm font-semibold text-teal-300">First business value checklist</h3>
         <span className="text-xs text-slate-300">
           {completion.done}/{completion.total} complete
         </span>

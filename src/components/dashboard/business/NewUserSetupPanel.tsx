@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, FileText, Linkedin, ChevronRight, X, CheckCircle2 } from 'lucide-react';
+import { UserPlus, FileText, Send, ChevronRight, X, CheckCircle2 } from 'lucide-react';
 import { WORKSPACE } from '@/constants/design';
 import { cn } from '@/lib/utils';
 import type { User } from '@/types';
+import { isNewWorkspaceStats } from '@/lib/activation/firstValue';
 
 const SETUP_STEPS = [
   {
@@ -19,18 +20,18 @@ const SETUP_STEPS = [
   {
     id: 'invoice',
     step: '2',
-    title: 'Send your first invoice',
-    description: 'Create a bill in under a minute — templates and tracking are already set up.',
+    title: 'Create the first money action',
+    description: 'Start an invoice or booking link so AlphaClone has a real business outcome to track.',
     href: '/dashboard/business/billing/manage?create=true',
     icon: FileText,
   },
   {
-    id: 'connect',
+    id: 'send',
     step: '3',
-    title: 'Connect email or LinkedIn',
-    description: 'Hook up inbox or social so outreach and replies stay in one workspace.',
-    href: '/dashboard/mail',
-    icon: Linkedin,
+    title: 'Send a follow-up',
+    description: 'Use the communication hub to send the next message and close the loop.',
+    href: '/dashboard/comms',
+    icon: Send,
   },
 ] as const;
 
@@ -55,10 +56,10 @@ export function NewUserSetupPanel({ user, onDismiss, className }: NewUserSetupPa
             Start here
           </p>
           <h2 className="text-[17px] font-semibold text-white tracking-tight mt-1">
-            Welcome, {firstName} — do these 3 things first
+            Welcome, {firstName} — get to first business value
           </h2>
           <p className="text-[13px] text-[var(--ws-text-secondary)] mt-1 max-w-xl">
-            Most new workspaces are productive in under 10 minutes. Pick a step below — we will take you to the right screen.
+            Do these three things before exploring the wider platform. They create a customer record, a revenue action, and a next follow-up.
           </p>
         </div>
         {onDismiss ? (
@@ -138,15 +139,4 @@ export function dismissSetupChecklist(userId: string): void {
   localStorage.setItem(`setup_checklist_dismissed_${userId}`, '1');
 }
 
-export function isNewWorkspaceStats(stats: Record<string, unknown> | null | undefined): boolean {
-  if (!stats) return false;
-  const values = [
-    stats.totalLeads,
-    stats.clientCount,
-    stats.activeProjects,
-    stats.totalTasks,
-    stats.unreadMessages,
-    stats.activeCampaigns,
-  ];
-  return values.every((value) => Number(value || 0) === 0);
-}
+export { isNewWorkspaceStats };

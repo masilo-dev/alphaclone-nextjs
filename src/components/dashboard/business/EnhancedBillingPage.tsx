@@ -25,6 +25,7 @@ import RecurringInvoicesPanel from '../invoicing/RecurringInvoicesPanel';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { InvoiceLifecycleDrawer } from '@/components/dashboard/invoicing/InvoiceLifecycleDrawer';
+import { launchFunnelService } from '@/services/launchFunnelService';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -89,6 +90,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         }
 
         const subject = recipients.length === 1 ? 'Invoice follow-up' : 'Invoices follow-up';
+        void launchFunnelService.completeStep('first_revenue_action_sent', user?.id, currentTenant?.id, {
+            source: 'bulk_invoice_follow_up',
+            recipientCount: recipients.length,
+        });
         router.push(buildMailComposeUrl(recipients, subject));
     };
 
@@ -199,6 +204,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
             return;
         }
         setIsOptionsOpen(false);
+        void launchFunnelService.completeStep('first_revenue_action_sent', user?.id, currentTenant?.id, {
+            source: 'invoice_compose',
+            invoiceId: inv.id,
+        });
         setEmailCompose({
             recipient,
             subject: `Invoice ${inv.invoiceNumber} from ${currentTenant?.name || 'AlphaClone'}`,
@@ -748,6 +757,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                                     toast.error(error, { id: toastId });
                                                     return;
                                                 }
+                                                void launchFunnelService.completeStep('first_revenue_action_sent', user?.id, currentTenant?.id, {
+                                                    source: 'invoice_status_marked_sent',
+                                                    invoiceId: selectedInvoiceForOptions.id,
+                                                });
                                                 toast.success('Invoice marked as unpaid', { id: toastId });
                                                 setIsOptionsOpen(false);
                                                 void loadInvoices();
@@ -815,7 +828,18 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 )}
             </AnimatePresence>
 
-            <EnhancedInvoiceModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} mode="create" onSuccess={loadInvoices} />
+            <EnhancedInvoiceModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                mode="create"
+                onSuccess={(invoice) => {
+                    void launchFunnelService.completeStep('first_invoice_started', user?.id, currentTenant?.id, {
+                        source: 'billing_manager',
+                        invoiceId: invoice?.id,
+                    });
+                    void loadInvoices();
+                }}
+            />
             <InvoiceLifecycleDrawer invoiceId={lifecycleInvoiceId} tenantId={currentTenant?.id} open={Boolean(lifecycleInvoiceId)} onOpenChange={(open) => !open && setLifecycleInvoiceId(null)} />
             <EnhancedInvoiceModal
                 isOpen={Boolean(editingInvoice)}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
 import ModuleJumpSelect from '../common/ModuleJumpSelect';
 import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
@@ -14,6 +14,7 @@ export interface HubTab {
   label: string;
   href: string;
   icon?: LucideIcon;
+  aliases?: string[];
 }
 
 interface HubShellProps {
@@ -46,10 +47,12 @@ export default function HubShell({
   moduleId,
 }: HubShellProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const identity = moduleId ? MODULE_IDENTITY[moduleId] : null;
   const accentColor = identity?.primary ?? LEGACY_ACCENT[accent];
   const ModuleIcon = moduleId ? MODULE_ICONS[moduleId] : null;
+  const currentHref = `${pathname || ''}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
 
   return (
     <div
@@ -103,11 +106,16 @@ export default function HubShell({
           aria-label={`${title} sections`}
         >
           {tabs.map((tab) => {
+            const tabHasQuery = tab.href.includes('?');
+            const activeHrefs = [tab.href, ...(tab.aliases || [])];
             const isActive =
               pathname != null &&
-              (pathname === tab.href ||
-                pathname.startsWith(`${tab.href}/`) ||
-                pathname.startsWith(`${tab.href}?`));
+              activeHrefs.some((href) => {
+                const hrefHasQuery = href.includes('?');
+                return hrefHasQuery
+                  ? currentHref === href || currentHref.startsWith(`${href}&`)
+                  : pathname === href || pathname.startsWith(`${href}/`);
+              });
             const Icon = tab.icon;
             return (
               <Link

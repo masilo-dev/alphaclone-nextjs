@@ -6,6 +6,7 @@ import {
   Briefcase,
   Settings,
   Users,
+  UserPlus,
   ShieldCheck,
   Video,
   Calendar,
@@ -243,6 +244,58 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     subItems: [
       { label: 'System settings', href: '/dashboard/business/settings', icon: Settings },
       { label: 'Integrations', href: '/dashboard/marketplace', icon: Globe },
+      { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
+    ],
+  },
+];
+
+// First-run navigation: keep new workspaces focused on the shortest path to value.
+export const TENANT_ADMIN_ACTIVATION_NAV_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/dashboard', icon: Zap },
+  {
+    label: 'Customers',
+    href: '#',
+    icon: Users,
+    subItems: [
+      { label: 'Customer workspace', href: '/dashboard/crm/workspace', icon: Users },
+      { label: 'Add contact', href: '/dashboard/crm/workspace?quickAdd=true', icon: UserPlus },
+      { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
+    ],
+  },
+  {
+    label: 'Money',
+    href: '#',
+    icon: DollarSign,
+    subItems: [
+      { label: 'Invoices', href: '/dashboard/business/billing/manage', icon: DollarSign },
+      { label: 'Create invoice', href: '/dashboard/business/billing/manage?create=true', icon: Receipt },
+      { label: 'Booking links', href: '/dashboard/business/booking', icon: Clock },
+    ],
+  },
+  {
+    label: 'Communication',
+    href: '#',
+    icon: MessageSquare,
+    subItems: [
+      { label: 'Communication hub', href: '/dashboard/comms', icon: Mail },
+      { label: 'Team messages', href: '/dashboard/business/messages', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Work',
+    href: '#',
+    icon: Briefcase,
+    subItems: [
+      { label: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+      { label: 'Projects', href: '/dashboard/business/projects', icon: Layers },
+    ],
+  },
+  {
+    label: 'Administration',
+    href: '#',
+    icon: Settings,
+    subItems: [
+      { label: 'System settings', href: '/dashboard/business/settings', icon: Settings },
       { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
     ],
   },
