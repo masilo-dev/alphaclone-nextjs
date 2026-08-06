@@ -32,6 +32,153 @@ export type CognitiveTriggerType =
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
+export type BusinessOutputAttribution =
+  | 'direct'
+  | 'influenced'
+  | 'estimated'
+  | 'unknown';
+
+export type BusinessMetricEstimate = {
+  value: number;
+  currency?: string;
+  unit?: 'money' | 'hours' | 'count' | 'percent';
+  attribution?: BusinessOutputAttribution;
+  confidence?: number;
+  source?: string;
+};
+
+export type ExpectedValueInput = {
+  potentialValue?: number | null;
+  probability?: number | null;
+  executionCost?: number | null;
+  riskAdjustment?: number | null;
+  currency?: string;
+};
+
+export type ExpectedValueResult = {
+  status: 'calculated' | 'insufficient_data';
+  expectedValue: number | null;
+  potentialValue: number | null;
+  probability: number | null;
+  executionCost: number;
+  riskAdjustment: number;
+  currency: string;
+  explanation: string;
+};
+
+export type ExecutionActionStatus =
+  | 'suggested'
+  | 'awaiting_approval'
+  | 'approved'
+  | 'executing'
+  | 'completed'
+  | 'failed'
+  | 'partially_completed'
+  | 'cancelled'
+  | 'rolled_back';
+
+export type VerificationStatus =
+  | 'not_started'
+  | 'pending'
+  | 'verified'
+  | 'failed'
+  | 'not_verifiable';
+
+export type AgentPermissionLevel =
+  | 'read'
+  | 'prepare'
+  | 'write'
+  | 'send'
+  | 'financial'
+  | 'admin';
+
+export type AgentAuthorityRule = {
+  permission: AgentPermissionLevel;
+  allowed: boolean;
+  requiresApproval?: boolean;
+  maxSpend?: number;
+  maxDiscountPercent?: number;
+  reason?: string;
+};
+
+export type BusinessExecutionAction = {
+  id: string;
+  title: string;
+  objective: string;
+  agentId?: string;
+  toolName?: string;
+  permissionLevel: AgentPermissionLevel;
+  riskLevel: RiskLevel;
+  estimatedCost?: BusinessMetricEstimate;
+  expectedOutcome?: string;
+  expectedValue?: ExpectedValueResult;
+  requiredApproval: boolean;
+  status: ExecutionActionStatus;
+  verificationStatus: VerificationStatus;
+  actualOutcome?: string;
+  evidence?: unknown[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type BusinessPrioritySignal = {
+  id: string;
+  title: string;
+  action: string;
+  potentialValue?: number | null;
+  probability?: number | null;
+  urgency?: number;
+  effort?: number;
+  risk?: RiskLevel;
+  strategicRelevance?: number;
+  customerImportance?: number;
+  executionCost?: number | null;
+  riskAdjustment?: number | null;
+  currency?: string;
+  requiresApproval?: boolean;
+  evidence?: string[];
+};
+
+export type BusinessPriorityRecommendation = BusinessPrioritySignal & {
+  expectedValue: ExpectedValueResult;
+  priorityScore: number;
+  recommended:
+    | 'execute'
+    | 'prepare_for_approval'
+    | 'wait_for_evidence'
+    | 'monitor';
+  reason: string;
+};
+
+export type BusinessOutputSummary = {
+  revenueInfluenced?: BusinessMetricEstimate;
+  revenueRecovered?: BusinessMetricEstimate;
+  pipelineInfluenced?: BusinessMetricEstimate;
+  manualTimeAvoided?: BusinessMetricEstimate;
+  executionCost?: BusinessMetricEstimate;
+  successfulActions: number;
+  failedActions: number;
+  humanInterventions: number;
+  estimatedNetValue?: BusinessMetricEstimate;
+};
+
+export type RequiresDecisionItem = {
+  id: string;
+  title: string;
+  reason: string;
+  value?: BusinessMetricEstimate;
+  recommendedAction: string;
+  riskLevel: RiskLevel;
+  approvalRequired: boolean;
+};
+
+export type ManagementByExceptionBrief = {
+  headline: string;
+  decisions: RequiresDecisionItem[];
+  routineActionsHandled: number;
+  output: BusinessOutputSummary;
+};
+
 export type MemoryScope = 'organization' | 'user' | 'department' | 'short_term' | 'long_term';
 
 export type DepartmentId =
