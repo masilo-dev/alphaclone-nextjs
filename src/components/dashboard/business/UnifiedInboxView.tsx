@@ -750,7 +750,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   return (
     <div className={readerExpanded ? 'fixed inset-0 z-[80] bg-slate-950 p-0 sm:p-3' : 'relative h-full min-h-0'}>
       <div
-        className={`flex h-full ac-workspace-panel overflow-hidden ${readerExpanded ? 'min-h-0 rounded-none sm:rounded-xl' : 'min-h-[480px]'}`}
+        className={`flex h-full ac-workspace-panel overflow-hidden ${readerExpanded ? 'min-h-0 rounded-none sm:rounded-xl' : 'min-h-0'}`}
         role="region"
         aria-label="Email mailbox"
       >
@@ -758,7 +758,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
         <div
           className={`${
             readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'
-          } w-full md:w-[300px] lg:w-[320px] flex-col border-r border-white/5 bg-slate-950/50 shrink-0`}
+          } w-full md:w-[300px] lg:w-[320px] flex-col h-full min-h-0 border-r border-white/5 bg-slate-950/50 shrink-0`}
         >
           <div className="p-2.5 border-b border-white/8 shrink-0 space-y-2">
             {/* AI draft banner */}
@@ -1032,7 +1032,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
         </div>
 
         {/* Read & reply — 70% width, flex-1 */}
-        <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0`}>
+        <div className={`${selectedId ? 'flex' : 'hidden md:flex'} flex-1 flex-col min-w-0 h-full min-h-0`}>
           {selectedEmail && folder !== 'drafts' ? (
             <>
               {/* ── Thread header: subject + meta ── */}

@@ -42,7 +42,7 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
         {activeTab === 'outreaches' ? (
           <EmailOutreachComposer />
         ) : activeTab === 'channels' || activeTab === 'needs-reply' ? (
-          <div className="h-full p-2 md:p-3">
+          <div className="h-full min-h-0">
             <UnifiedInboxTab needsReplyOnly={activeTab === 'needs-reply'} />
           </div>
         ) : (
@@ -50,6 +50,7 @@ export function CommunicationHub({ user: _user }: CommunicationHubProps) {
             <UnifiedInbox
               defaultTab="mailbox"
               initialFolder={folderMap[activeTab] || 'inbox'}
+              hideTabSwitcher
             />
           </div>
         )}

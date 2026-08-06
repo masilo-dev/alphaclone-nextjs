@@ -396,11 +396,13 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
   }
 
   return (
-    <div className="space-y-4 ac-scroll-full ac-enterprise-module">
+    <div className="flex flex-col h-full min-h-0 gap-3">
       {messages.length > 0 && (
-        <ModuleStatCards stats={inboxStats} />
+        <div className="flex-shrink-0">
+          <ModuleStatCards stats={inboxStats} />
+        </div>
       )}
-    <div className="flex h-[680px] max-h-[calc(100vh-12rem)] border border-slate-800 rounded-3xl overflow-hidden bg-slate-950/60 backdrop-blur-md" role="region" aria-label="All channels inbox">
+    <div className="flex flex-1 min-h-0 border border-slate-800 rounded-3xl overflow-hidden bg-slate-950/60 backdrop-blur-md" role="region" aria-label="All channels inbox">
       {/* 1. Channel & Folder Navigation Sidebar */}
       <div className="w-48 lg:w-52 border-r border-slate-800 flex flex-col bg-slate-900/40 p-3 shrink-0 select-none overflow-y-auto">
         <div className="flex items-center justify-between mb-3 px-2 pt-1">

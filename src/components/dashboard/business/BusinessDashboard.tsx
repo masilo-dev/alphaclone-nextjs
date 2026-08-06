@@ -788,7 +788,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/zoho/mail':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} />}>
-                        <div className="h-full p-3 md:p-5">
+                        <div className="h-full min-h-0">
                             <UnifiedInbox defaultProvider="zoho" />
                         </div>
                     </React.Suspense>
@@ -812,7 +812,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/unified-inbox':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={8} columns={4} />}>
-                        <div className="h-full p-3 md:p-5">
+                        <div className="h-full min-h-0">
                             <UnifiedInbox defaultTab="channels" />
                         </div>
                     </React.Suspense>

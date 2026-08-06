@@ -25,6 +25,7 @@ interface HubShellProps {
   /** @deprecated Prefer moduleId for Alphaclone OS identity */
   accent?: 'teal' | 'blue' | 'amber' | 'violet' | 'rose' | 'green';
   moduleId?: ModuleId;
+  fullHeight?: boolean;
 }
 
 const LEGACY_ACCENT: Record<NonNullable<HubShellProps['accent']>, string> = {
@@ -44,22 +45,32 @@ export default function HubShell({
   dataTour,
   accent = 'blue',
   moduleId,
+  fullHeight,
 }: HubShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const identity = moduleId ? MODULE_IDENTITY[moduleId] : null;
   const accentColor = identity?.primary ?? LEGACY_ACCENT[accent];
   const ModuleIcon = moduleId ? MODULE_ICONS[moduleId] : null;
+  const isFullHeight =
+    fullHeight ??
+    (moduleId === 'email' ||
+      pathname?.includes('/comms') ||
+      pathname?.includes('/mail') ||
+      pathname?.includes('/unified-inbox'));
 
   return (
     <div
-      className="flex flex-col min-h-0 ac-scroll-full ac-enterprise-module ac-module-frame"
+      className={cn(
+        'flex flex-col min-h-0 ac-enterprise-module ac-module-frame',
+        isFullHeight ? 'h-full overflow-hidden' : 'ac-scroll-full'
+      )}
       style={{ ['--module-accent' as string]: accentColor }}
       data-module={moduleId}
     >
       <div
         className={cn(
-          'flex-shrink-0 px-4 pt-4 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)]',
+          'flex-shrink-0 px-4 pt-3 pb-0 ac-workspace-toolbar border-b border-[var(--ws-border)]',
         )}
         {...(dataTour ? { 'data-tour': dataTour } : {})}
       >
@@ -98,7 +109,7 @@ export default function HubShell({
         />
 
         <div
-          className="flex gap-0 overflow-x-auto ios-scroll mt-3 -mx-1 px-1 border-b border-[var(--ws-border)]"
+          className="flex gap-0 overflow-x-auto ios-scroll mt-2 -mx-1 px-1 border-b border-[var(--ws-border)]"
           role="tablist"
           aria-label={`${title} sections`}
         >
@@ -134,7 +145,12 @@ export default function HubShell({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 ac-scroll-full px-4 py-4 md:py-5 ac-safe-bottom">
+      <div
+        className={cn(
+          'flex-1 min-h-0 ac-safe-bottom',
+          isFullHeight ? 'h-full overflow-hidden p-0' : 'ac-scroll-full px-4 py-4 md:py-5'
+        )}
+      >
         <BonnieModulePageShell showBonnieDock={false}>{children}</BonnieModulePageShell>
       </div>
     </div>
