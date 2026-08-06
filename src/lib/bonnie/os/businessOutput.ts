@@ -208,7 +208,7 @@ export function rankBusinessPriorities(signals: BusinessPrioritySignal[]): Busin
       const priorityScore = Math.round(
         valueScore + urgencyScore + strategicScore + customerScore - effortPenalty - riskPenalty(risk),
       );
-      const recommended =
+      const recommended: BusinessPriorityRecommendation['recommended'] =
         expectedValue.status === 'insufficient_data'
           ? 'wait_for_evidence'
           : signal.requiresApproval
