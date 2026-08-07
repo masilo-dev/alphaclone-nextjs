@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import Image from 'next/image';
 import { PhoneMissed, Phone } from 'lucide-react';
 import { missedCallsService, MissedCall } from '../../services/missedCallsService';
 import { Button, Modal } from '../ui/UIComponents';
+import { Avatar } from '@/components/ui/Avatar';
 import toast from 'react-hot-toast';
 
 interface MissedCallsNotificationProps {
@@ -128,15 +128,12 @@ const MissedCallsNotification: React.FC<MissedCallsNotificationProps> = ({
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3 flex-1">
-                                            <div className="relative w-10 h-10 flex-shrink-0">
-                                                <Image
-                                                    src={call.caller_avatar || '/default-avatar.png'}
-                                                    alt={call.caller_name || 'Unknown'}
-                                                    fill
-                                                    className="rounded-full object-cover"
-                                                    unoptimized
-                                                />
-                                            </div>
+                                            <Avatar
+                                                src={call.caller_avatar}
+                                                name={call.caller_name || 'Unknown'}
+                                                size={40}
+                                                className="flex-shrink-0"
+                                            />
                                             <div>
                                                 <p className="font-medium text-white">
                                                     {call.caller_name || 'Unknown'}

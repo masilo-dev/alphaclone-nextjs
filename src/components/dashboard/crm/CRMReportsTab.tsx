@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { Loader2, Download, Users, TrendingUp, BarChart3 } from 'lucide-react';
 import { dealService } from '@/services/dealService';
 import { leadService } from '@/services/leadService';
 import { StandardStatCard } from '@/components/ui/design-system';
 import { isLeadConverted, leadConversionRate } from '@/domain/metrics';
+import { WrapChart } from '@/lib/chartWrapper';
 
 const COLORS = ['#14b8a6', '#06b6d4', '#8b5cf6', '#f87171', '#64748b'];
 
@@ -95,20 +96,20 @@ export default function CRMReportsTab() {
 
       <div className="bg-slate-900 border border-white/5 rounded-lg p-4">
         <h3 className="text-sm font-bold text-white mb-4">Pipeline by Stage</h3>
-        <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={220}>
+        <WrapChart height={220}>
           <BarChart data={pipeline}>
             <XAxis dataKey="stage" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
             <Bar dataKey="totalValue" fill="#14b8a6" radius={[4, 4, 0, 0]} />
           </BarChart>
-        </ResponsiveContainer>
+        </WrapChart>
       </div>
 
       {winLoss.length > 0 && (
         <div className="bg-slate-900 border border-white/5 rounded-lg p-4">
           <h3 className="text-sm font-bold text-white mb-4">Win / Loss (closed deals)</h3>
-          <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={180}>
+          <WrapChart height={180}>
             <PieChart>
               <Pie data={winLoss} dataKey="count" nameKey="stage" cx="50%" cy="50%" outerRadius={70}>
                 {winLoss.map((_, i) => (
@@ -117,7 +118,7 @@ export default function CRMReportsTab() {
               </Pie>
               <Tooltip />
             </PieChart>
-          </ResponsiveContainer>
+          </WrapChart>
         </div>
       )}
 

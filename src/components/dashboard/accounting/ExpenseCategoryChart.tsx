@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
 import { TrendingDown, BarChart3, PieChart as PieIcon } from 'lucide-react';
+import { WrapChart } from '@/lib/chartWrapper';
 
 type CategoryTotal = { category: string; amount: number; percentage: number; color: string };
 
@@ -160,16 +161,16 @@ export function ExpenseCategoryChart() {
           {chartType === 'pie' ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
               <div className="min-h-[280px]">
-                <ResponsiveContainer width="100%" height={280} minWidth={0}>
+                <WrapChart height={280}>
                   <PieChart>
                     <Pie data={data} cx="50%" cy="50%" outerRadius={110} innerRadius={55} dataKey="amount" paddingAngle={2}>
-                      {data.map((entry, i) => (
+                      {data.map((entry) => (
                         <Cell key={entry.category} fill={entry.color} opacity={0.9} />
                       ))}
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
                   </PieChart>
-                </ResponsiveContainer>
+                </WrapChart>
               </div>
               <div className="space-y-2">
                 {data.map(item => (
@@ -188,19 +189,19 @@ export function ExpenseCategoryChart() {
             </div>
           ) : (
             <div className="min-h-[300px]">
-              <ResponsiveContainer width="100%" height={300} minWidth={0}>
+              <WrapChart height={300}>
                 <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="category" tick={{ fill: '#64748b', fontSize: 11 }} angle={-35} textAnchor="end" interval={0} />
                   <YAxis tick={{ fill: '#64748b', fontSize: 11 }} tickFormatter={(v: number) => `$${v >= 1000 ? `${Math.round(v / 1000)}k` : v}`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
-                    {data.map((entry, i) => (
+                    {data.map((entry) => (
                       <Cell key={entry.category} fill={entry.color} />
                     ))}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+              </WrapChart>
             </div>
           )}
         </div>
