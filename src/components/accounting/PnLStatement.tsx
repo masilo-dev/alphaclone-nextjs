@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +10,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, PieChart, Pie, Cell, Legend 
 } from 'recharts';
+import { ChartContainer } from '@/components/ui/ChartContainer';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
@@ -201,6 +201,7 @@ export default function PnLStatement() {
             </div>
           </div>
           <div className="h-64 w-full">
+            <ChartContainer className="h-full" minHeight={240}>
             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
               <BarChart data={data?.revenue.by_month || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
@@ -220,6 +221,7 @@ export default function PnLStatement() {
                 </defs>
               </BarChart>
             </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </div>
 
@@ -235,6 +237,7 @@ export default function PnLStatement() {
                 No categorized expenses for this period
               </div>
             ) : (
+              <ChartContainer className="h-full" minHeight={240}>
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
                 <PieChart>
                   <Pie
@@ -257,6 +260,7 @@ export default function PnLStatement() {
                   <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px' }} />
                 </PieChart>
               </ResponsiveContainer>
+              </ChartContainer>
             )}
           </div>
         </div>
@@ -335,7 +339,7 @@ export default function PnLStatement() {
                 <div className="flex flex-col justify-center items-center md:items-end space-y-2">
                   <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Operating Margin</p>
-                    <p className={`text-4xl font-black ${data?.profit_margin_percent && data.profit_margin_percent >= 20 ? 'text-teal-400' : 'text-amber-400'}`}>
+                    <p className={`text-4xl font-black ${data?.profit_margin_percent && data.profit_margin_percent >= 20 ? 'text-teal-400' : 'text-amber-400'`}>
                       {data?.profit_margin_percent || 0}%
                     </p>
                   </div>
