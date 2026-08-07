@@ -339,7 +339,7 @@ export default function PnLStatement() {
                 <div className="flex flex-col justify-center items-center md:items-end space-y-2">
                   <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Operating Margin</p>
-                    <p className={`text-4xl font-black ${data?.profit_margin_percent && data.profit_margin_percent >= 20 ? 'text-teal-400' : 'text-amber-400'`}>
+                    <p className={`text-4xl font-black ${data?.profit_margin_percent && data.profit_margin_percent >= 20 ? 'text-teal-400' : 'text-amber-400'}`}>
                       {data?.profit_margin_percent || 0}%
                     </p>
                   </div>

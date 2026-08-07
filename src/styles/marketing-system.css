@@ -2949,6 +2949,29 @@
   .mkt-organic-orb { opacity: 0.25; }
   .mkt-organic-orb.is-large { width: 23rem; }
   .mkt-fluid-transition { display: none; }
+
+  /* Compact card content padding on mobile */
+  .mkt-feature-card,
+  .mkt-price-card,
+  .mkt-outcome-card,
+  .mkt-stat-card {
+    padding: 0.85rem 1rem !important;
+    border-radius: 12px !important;
+  }
+
+  .mkt-feature-card h3,
+  .mkt-price-card h3,
+  .mkt-outcome-card h3 {
+    font-size: 0.95rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .mkt-feature-card p,
+  .mkt-price-card p,
+  .mkt-outcome-card p {
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
