@@ -3582,28 +3582,61 @@ class AlphaCloneMCPServer {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
+
+          // Flexible parameter extraction & normalization for ChatGPT / AI agent compatibility
+          const rawCaption = a.caption ?? a.content ?? a.text ?? a.message ?? a.post ?? a.description ?? a.prompt ?? '';
+
+          let rawMediaUrls: string[] = [];
+          if (Array.isArray(a.media_urls)) rawMediaUrls.push(...a.media_urls);
+          if (Array.isArray(a.image_urls)) rawMediaUrls.push(...a.image_urls);
+          if (typeof a.media_url === 'string' && a.media_url.trim()) rawMediaUrls.push(a.media_url.trim());
+          if (typeof a.image_url === 'string' && a.image_url.trim()) rawMediaUrls.push(a.image_url.trim());
+          if (typeof a.image === 'string' && a.image.trim()) rawMediaUrls.push(a.image.trim());
+          if (typeof a.file_url === 'string' && a.file_url.trim()) rawMediaUrls.push(a.file_url.trim());
+          if (typeof a.url === 'string' && a.url.trim()) rawMediaUrls.push(a.url.trim());
+          const media_urls = Array.from(new Set(rawMediaUrls.filter((u) => typeof u === 'string' && u.trim().startsWith('http'))));
+
+          let rawPlatforms: string[] = [];
+          if (Array.isArray(a.platforms)) rawPlatforms.push(...a.platforms);
+          if (typeof a.platforms === 'string' && a.platforms.trim()) rawPlatforms.push(a.platforms.trim());
+          if (typeof a.platform === 'string' && a.platform.trim()) rawPlatforms.push(a.platform.trim());
+          if (Array.isArray(a.platform)) rawPlatforms.push(...a.platform);
+          const platforms = rawPlatforms.length > 0 ? rawPlatforms : ['facebook'];
+
+          const publish_now = Boolean(a.publish_now);
+          let scheduled_at = typeof a.scheduled_at === 'string' && a.scheduled_at.trim()
+            ? a.scheduled_at.trim()
+            : new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
+          let rawBase64: any[] = [];
+          if (Array.isArray(a.media_base64_data)) rawBase64 = a.media_base64_data;
+          else if (Array.isArray(a.media_base64)) rawBase64 = a.media_base64;
+          else if (a.image_base64 || a.file_base64 || a.base64) {
+            const b64 = a.image_base64 || a.file_base64 || a.base64;
+            const mime = a.mime_type || a.image_mime_type || a.file_type || 'image/png';
+            const fname = a.file_name || a.filename || 'ai-image.png';
+            rawBase64 = [{ file_name: fname, file_type: mime, base64: b64 }];
+          }
+          const media_base64_data = rawBase64;
+
           const {
-            platforms = ['facebook'],
             page_id,
-            caption,
+            caption = rawCaption,
             link_url,
-            media_urls = [],
             media_asset_ids = [],
             hashtags = [],
-            publish_now = false,
-            scheduled_at,
             task_id,
             task_title,
             task_note,
             mark_task_done,
             executing_agent,
-            media_base64_data = [],
             auto_refine_with_context = true,
           } = a;
-          const postPrep = prepareSocialPostContent(cleanProfessionalContent(caption || ''), link_url);
+
+          const postPrep = prepareSocialPostContent(cleanProfessionalContent(String(caption || '')), link_url);
           const cleanCaption = postPrep.content;
           const postCtaWarning = postPrep.warning;
-          if (!cleanCaption) throw new Error('caption is required');
+          if (!cleanCaption) throw new Error('caption is required (or pass content, text, message, or description)');
           if (publish_now && !isSocialPublishEnabled()) {
             throw new Error('Publishing disabled');
           }
@@ -3699,12 +3732,7 @@ class AlphaCloneMCPServer {
             throw new Error(`Unsupported platforms: ${unsupported.join(', ')}. Allowed: facebook, linkedin, instagram, x, tiktok`);
           }
           const hasFacebook = normalizedPlatforms.includes('facebook');
-          if (!publish_now && (typeof scheduled_at !== 'string' || !scheduled_at.trim())) {
-            throw new Error('scheduled_at is required when publish_now is false');
-          }
-          if (publish_now && !hasFacebook) {
-            throw new Error('Immediate publish is currently supported only for Facebook. For LinkedIn/Instagram/X/TikTok, set publish_now=false to schedule/store.');
-          }
+          const hasLinkedIn = normalizedPlatforms.includes('linkedin');
 
           let resolvedPageId = typeof page_id === 'string' && page_id.trim() ? page_id.trim() : '';
           let integration: FacebookIntegrationIdentity | null = null;
@@ -3873,6 +3901,17 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw supabaseErrorToMcpClientError('create_social_post', error.message);
 
+          // Dynamic LinkedIn publishing execution
+          let linkedinPublishResult: any = null;
+          if (publish_now && hasLinkedIn && data?.id) {
+            try {
+              const { publishLinkedInPost } = await import('@/lib/linkedin/publishPost');
+              linkedinPublishResult = await publishLinkedInPost(data.id);
+            } catch (lErr: any) {
+              linkedinPublishResult = { ok: false, platform: 'linkedin', reason: lErr?.message || 'LinkedIn publish failed' };
+            }
+          }
+
           // C. Daily Multi-Agent CRM Activity Timeline Logger
           const detectedAgent = typeof executing_agent === 'string' && executing_agent.trim()
             ? executing_agent.trim().toLowerCase()
@@ -3881,7 +3920,8 @@ class AlphaCloneMCPServer {
           const agentDisplayNames: Record<string, string> = {
             claude: 'Claude 3.5 Sonnet',
             grok: 'Grok 3 (Social Agent)',
-            manus: 'Manus AI (Web Agent)'
+            manus: 'Manus AI (Web Agent)',
+            chatgpt: 'ChatGPT (OpenAI Agent)',
           };
           const agentName = agentDisplayNames[detectedAgent] || 'Claude 3.5 Sonnet';
 
@@ -3890,7 +3930,7 @@ class AlphaCloneMCPServer {
             .insert({
               tenant_id: tenant_id,
               title: `[${agentName}] Autonomous Social Post Dispatched`,
-              description: `AI Agent successfully executed the autonomous social media distribution matrix.\n\nPlatforms: ${normalizedPlatforms.join(', ').toUpperCase()}\nCaption: ${finalCaption}\nAssets: ${mergedMediaUrls.length} media attached.\nStatus: ${status.toUpperCase()}`,
+              description: `AI Agent successfully executed the autonomous social media distribution matrix.\n\nPlatforms: ${normalizedPlatforms.join(', ').toUpperCase()}\nCaption: ${finalCaption}\nAssets: ${mergedMediaUrls.length} media attached.\nStatus: ${status.toUpperCase()}${linkedinPublishResult ? `\nLinkedIn: ${linkedinPublishResult.ok ? 'PUBLISHED (' + linkedinPublishResult.postUrn + ')' : 'FAILED (' + linkedinPublishResult.reason + ')'}` : ''}`,
               priority: 'medium',
               status: 'completed',
               completed_at: new Date().toISOString(),
@@ -3899,11 +3939,12 @@ class AlphaCloneMCPServer {
                 agent: detectedAgent,
                 agent_name: agentName,
                 tool: 'create_social_post',
-                social_post_id: data?.id || null
+                social_post_id: data?.id || null,
+                linkedin_result: linkedinPublishResult,
               }
             });
 
-          const actionLabel = publish_now ? 'posted to Facebook' : `scheduled for ${String(scheduled_at)}`;
+          const actionLabel = publish_now ? 'dispatched' : `scheduled for ${String(scheduled_at)}`;
           const resolvedTaskNote = typeof task_note === 'string' && task_note.trim()
             ? task_note.trim()
             : `Social content ${actionLabel}. social_post_id=${data?.id || 'unknown'} platforms=${normalizedPlatforms.join(',')}`;
@@ -3939,10 +3980,12 @@ class AlphaCloneMCPServer {
                     ...data,
                     facebook_post_url: facebookPostUrl,
                     verified: publish_now && hasFacebook ? true : undefined,
+                    linkedin: linkedinPublishResult,
                   },
                   task: taskResult,
                   page: hasFacebook ? { page_id: resolvedPageId, page_name: integration?.page_name || null } : null,
                   facebook_post_url: facebookPostUrl,
+                  linkedin_result: linkedinPublishResult,
                   refinement: auto_refine_with_context !== false ? 'applied brand context' : 'skipped',
                   logged_run: { agent: detectedAgent, status: 'completed' },
                   has_cta: postPrep.has_cta,
@@ -7036,6 +7079,47 @@ Return ONLY a JSON array of 60 objects:
                 message: `Autonomous content creation complete. Post scheduled for ${publishTime} with ${imageStatus} image.`,
               }, null, 2),
             }],
+          };
+          break;
+        }
+
+        // ── generate_ai_image / generate_image ─────────────────────────────
+        case 'generate_ai_image':
+        case 'generate_image': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const userId = this.requireProfileUser(a);
+          const prompt = String(a.prompt || a.image_prompt || a.description || '').trim();
+          if (!prompt) throw new Error('prompt is required (e.g. prompt: "Professional B2B banner for AI automation")');
+          const image_provider = a.image_provider === 'xai' ? 'xai' : 'openai';
+          const size = (a.size as any) || '1024x1024';
+
+          let img = await aiGenerationService.generateImage(userId, 'admin', prompt, size, image_provider);
+          if (!img.success || !img.url) {
+            const altProvider = image_provider === 'openai' ? 'xai' : 'openai';
+            console.warn(`[MCP] generate_ai_image failed with ${image_provider}, retrying with ${altProvider}...`, img.error);
+            img = await aiGenerationService.generateImage(userId, 'admin', prompt, size, altProvider);
+          }
+
+          if (!img.success || !img.url) {
+            throw new Error(`Failed to generate AI image: ${img.error || 'Both AI image providers failed'}`);
+          }
+
+          result = {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  success: true,
+                  image_url: img.url,
+                  url: img.url,
+                  media_url: img.url,
+                  prompt,
+                  provider: image_provider,
+                  message: `AI image successfully generated and uploaded to sovereign CDN storage. Pass image_url (${img.url}) to create_social_post.`,
+                }, null, 2),
+              },
+            ],
           };
           break;
         }

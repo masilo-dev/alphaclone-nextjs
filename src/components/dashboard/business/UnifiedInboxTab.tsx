@@ -5,7 +5,7 @@ import {
   MessageSquare, Mail, MessageCircle, Phone, 
   Sparkles, Send, Trash2, CheckCircle2, AlertCircle, 
   Archive, Loader2, ArrowRight, CornerUpLeft, ShieldAlert,
-  Inbox, Brain, RefreshCw, Check, Star, CheckSquare
+  Inbox, Brain, RefreshCw, Check, Star, CheckSquare, Search
 } from 'lucide-react';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { supabase } from '@/lib/supabase';
@@ -74,6 +74,11 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
   >([]);
   const [savingDraft, setSavingDraft] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [filterStarredOnly, setFilterStarredOnly] = useState(false);
+
   const loadMessages = useCallback(async () => {
     if (!tenant?.id) return;
     setLoading(true);
@@ -98,6 +103,78 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
       setLoading(false);
     }
   }, [tenant?.id, selectedMessage]);
+
+  const toggleStar = (msgId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setStarredIds(prev => {
+      const next = new Set(prev);
+      if (next.has(msgId)) {
+        next.delete(msgId);
+        toast.success('Removed star');
+      } else {
+        next.add(msgId);
+        toast.success('Message starred');
+      }
+      return next;
+    });
+  };
+
+  const toggleSelect = (msgId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(msgId)) next.delete(msgId);
+      else next.add(msgId);
+      return next;
+    });
+  };
+
+  const handleBulkArchive = async () => {
+    if (selectedIds.size === 0) return;
+    const idsToArchive = Array.from(selectedIds);
+    try {
+      await Promise.all(
+        idsToArchive.map(id =>
+          fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/inbox/messages`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'archive', messageId: id })
+          })
+        )
+      );
+      setMessages(prev => prev.filter(m => !selectedIds.has(m.id)));
+      if (selectedMessage && selectedIds.has(selectedMessage.id)) {
+        setSelectedMessage(null);
+      }
+      setSelectedIds(new Set());
+      toast.success(`Archived ${idsToArchive.length} message(s)`);
+    } catch (err: any) {
+      toast.error('Failed to bulk archive: ' + err.message);
+    }
+  };
+
+  const handleBulkMarkRead = async () => {
+    if (selectedIds.size === 0) return;
+    const idsToRead = Array.from(selectedIds);
+    try {
+      setMessages(prev => prev.map(m => selectedIds.has(m.id) ? { ...m, read: true } : m));
+      await Promise.all(
+        idsToRead.map(id =>
+          fetch(`/api/tenant/${encodeURIComponent(tenant?.id || '')}/inbox/messages`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'read', messageId: id })
+          })
+        )
+      );
+      setSelectedIds(new Set());
+      toast.success(`Marked ${idsToRead.length} message(s) as read`);
+    } catch (err: any) {
+      toast.error('Failed to update messages: ' + err.message);
+    }
+  };
 
   useEffect(() => {
     loadMessages();
@@ -370,8 +447,26 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
     if (needsReplyOnly && !m.needs_response) return false;
     if (filterSource !== 'all' && m.source !== filterSource) return false;
     if (filterPriority !== 'all' && m.priority !== filterPriority) return false;
+    if (filterStarredOnly && !starredIds.has(m.id)) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = (m.from_name || '').toLowerCase().includes(q);
+      const matchEmail = (m.from_address || '').toLowerCase().includes(q);
+      const matchSubject = (m.subject || '').toLowerCase().includes(q);
+      const matchBody = (m.body || '').toLowerCase().includes(q);
+      if (!matchName && !matchEmail && !matchSubject && !matchBody) return false;
+    }
     return true;
   });
+
+  const selectedThreadMessages = useMemo(() => {
+    if (!selectedMessage) return [];
+    const threadKey = selectedMessage.thread_id || selectedMessage.from_address;
+    if (!threadKey) return [selectedMessage];
+    return messages
+      .filter(m => (m.thread_id && m.thread_id === selectedMessage.thread_id) || (m.from_address && m.from_address === selectedMessage.from_address))
+      .sort((a, b) => new Date(a.received_at || a.sent_at || 0).getTime() - new Date(b.received_at || b.sent_at || 0).getTime());
+  }, [selectedMessage, messages]);
 
   const inboxStats = useMemo<ModuleStat[]>(() => {
     const pending = messages.filter(m => m.needs_response).length;
@@ -475,19 +570,74 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
               {messages.filter(m => m.priority === 'urgent' || m.priority === 'high').length}
             </span>
           </button>
+
+          <button
+            onClick={() => setFilterStarredOnly(!filterStarredOnly)}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
+              filterStarredOnly
+                ? 'bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Star className={`w-3.5 h-3.5 ${filterStarredOnly ? 'text-amber-400 fill-amber-400' : 'text-amber-400'}`} />
+              Starred Messages
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {starredIds.size}
+            </span>
+          </button>
         </nav>
       </div>
 
       {/* 2. Middle Message List Section */}
       <div className="w-72 lg:w-80 border-r border-slate-800 flex flex-col bg-slate-900/20 shrink-0">
-        {/* Header & Filter Controls */}
-        <div className="p-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
-          <span className="text-xs font-semibold text-slate-300 capitalize">
-            {filterSource === 'all' ? 'All Conversations' : `${filterSource} Messages`}
-          </span>
-          <span className="text-[10px] text-slate-500 font-mono">
-            {filteredMessages.length} items
-          </span>
+        {/* Header & Filter Controls & Search */}
+        <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-900/40">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-300 capitalize">
+              {filterStarredOnly ? 'Starred Messages' : filterSource === 'all' ? 'All Conversations' : `${filterSource} Messages`}
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {filteredMessages.length} items
+            </span>
+          </div>
+
+          {/* Instant Search Bar */}
+          <div className="relative">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by sender, subject, text..."
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5 pointer-events-none" />
+          </div>
+
+          {/* Bulk Actions Bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center justify-between pt-1 text-xs bg-teal-500/10 border border-teal-500/20 p-1.5 rounded-lg">
+              <span className="text-[11px] font-semibold text-teal-300">
+                {selectedIds.size} selected
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleBulkMarkRead}
+                  className="px-2 py-0.5 bg-teal-500/20 hover:bg-teal-500/30 text-teal-200 text-[10px] font-bold rounded"
+                >
+                  Mark Read
+                </button>
+                <button
+                  onClick={handleBulkArchive}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded flex items-center gap-1"
+                >
+                  <Archive className="w-3 h-3" />
+                  Archive
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Scrollable Message List */}
@@ -503,7 +653,7 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
               <div
                 key={msg.id}
                 onClick={() => handleSelectMessage(msg)}
-                className={`p-4 cursor-pointer transition-all flex flex-col gap-2 relative ${
+                className={`p-3.5 cursor-pointer transition-all flex flex-col gap-2 relative ${
                   selectedMessage?.id === msg.id 
                     ? 'bg-slate-800/40 border-l-4 border-teal-500' 
                     : 'hover:bg-slate-900/30'
@@ -511,13 +661,27 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
               >
                 {/* Meta details */}
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(msg.id)}
+                      onChange={() => toggleSelect(msg.id)}
+                      onClick={e => e.stopPropagation()}
+                      className="rounded border-slate-700 bg-slate-900 text-teal-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    />
+                    <button
+                      onClick={e => toggleStar(msg.id, e)}
+                      className="text-slate-600 hover:text-amber-400 transition-colors"
+                      title={starredIds.has(msg.id) ? 'Unstar' : 'Star message'}
+                    >
+                      <Star className={`w-3.5 h-3.5 ${starredIds.has(msg.id) ? 'text-amber-400 fill-amber-400' : ''}`} />
+                    </button>
                     {getSourceIcon(msg.source)}
-                    <span className={`font-semibold text-xs ${!msg.read ? 'text-white' : 'text-slate-300'}`}>
+                    <span className={`font-semibold text-xs truncate max-w-[120px] ${!msg.read ? 'text-white font-bold' : 'text-slate-300'}`}>
                       {msg.from_name || msg.from_address || 'Unknown'}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500">
+                  <span className="text-[10px] text-slate-500 font-mono">
                     {msg.received_at ? new Date(msg.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                   </span>
                 </div>
@@ -639,24 +803,33 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
             <div className="flex-1 flex overflow-hidden">
               {/* Message Thread Scroll Area */}
               <div className="flex-1 p-6 overflow-y-auto space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 font-bold text-sm">
-                    {selectedMessage.from_name?.[0] || selectedMessage.from_address?.[0] || 'C'}
-                  </div>
-                  <div className="flex-1 bg-slate-900/40 border border-slate-800 rounded-2xl p-4 space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                      <span className="font-semibold text-sm text-white">
-                        {selectedMessage.from_name || selectedMessage.from_address}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {selectedMessage.received_at ? new Date(selectedMessage.received_at).toLocaleString() : ''}
-                      </span>
+                {selectedThreadMessages.map((threadMsg, idx) => (
+                  <div key={threadMsg.id || idx} className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-teal-400 font-bold text-sm shrink-0 border border-slate-700">
+                      {threadMsg.from_name?.[0] || threadMsg.from_address?.[0] || 'C'}
                     </div>
-                    <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
-                      {selectedMessage.body}
+                    <div className="flex-1 bg-slate-900/40 border border-slate-800 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-white">
+                            {threadMsg.from_name || threadMsg.from_address}
+                          </span>
+                          {threadMsg.direction === 'outbound' && (
+                            <span className="text-[10px] bg-teal-500/10 text-teal-400 px-2 py-0.5 rounded font-mono uppercase">
+                              Sent
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-slate-500 font-mono">
+                          {threadMsg.received_at || threadMsg.sent_at ? new Date(threadMsg.received_at || threadMsg.sent_at!).toLocaleString() : ''}
+                        </span>
+                      </div>
+                      <div className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {threadMsg.body}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
 
                 {/* Reply drafting interface */}
                 <div id="inbox-reply-compose" className="mt-8 pt-6 border-t border-slate-800 space-y-4">

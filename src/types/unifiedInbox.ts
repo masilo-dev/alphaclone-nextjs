@@ -1,4 +1,4 @@
-export type InboxProvider = 'microsoft' | 'zoho';
+export type InboxProvider = 'gmail' | 'microsoft' | 'zoho';
 
 export type InboxFolder = 'inbox' | 'sent' | 'drafts' | 'trash';
 
@@ -31,6 +31,7 @@ export interface UnifiedInboxMessage {
   receivedAt: string;
   threadId?: string;
   isRead?: boolean;
+  isStarred?: boolean;
   hasAttachments?: boolean;
   webLink?: string;
   /** Zoho folder id — needed to fetch full message body */

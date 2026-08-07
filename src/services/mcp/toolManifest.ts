@@ -1362,18 +1362,23 @@ export const MCP_TOOLS = [
         tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
         platforms: { type: 'array', items: { type: 'string' }, description: 'facebook | linkedin | instagram | x | tiktok (default: facebook)' },
         page_id: { type: 'string', description: 'Optional connected Facebook Page ID. If omitted, MCP auto-selects a publishable page.' },
-        caption: { type: 'string' },
+        caption: { type: 'string', description: 'The text content/caption of the social post. Aliases accepted: content, text, message, post, description, prompt.' },
+        content: { type: 'string', description: 'Alias of caption.' },
+        text: { type: 'string', description: 'Alias of caption.' },
+        message: { type: 'string', description: 'Alias of caption.' },
         link_url: { type: 'string' },
-        media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image URLs' },
+        media_urls: { type: 'array', items: { type: 'string' }, description: 'Optional image/video URLs. Aliases accepted: image_url, image_urls, media_url, image, file_url.' },
+        image_url: { type: 'string', description: 'Alias of media_urls (single public image URL).' },
+        image_urls: { type: 'array', items: { type: 'string' }, description: 'Alias of media_urls.' },
         media_asset_ids: { type: 'array', items: { type: 'string' }, description: 'Optional media asset references uploaded to the workspace library' },
         hashtags: { type: 'array', items: { type: 'string' } },
-        publish_now: { type: 'boolean' },
-        scheduled_at: { type: 'string', description: 'Required ISO datetime when publish_now is false' },
+        publish_now: { type: 'boolean', description: 'Set true to publish immediately to Facebook/LinkedIn.' },
+        scheduled_at: { type: 'string', description: 'ISO datetime when publish_now is false. Optional: defaults to +5min if omitted.' },
         task_id: { type: 'string', description: 'Optional task reference to update with execution notes' },
         task_title: { type: 'string', description: 'Optional task title to create when task_id is not provided' },
         task_note: { type: 'string', description: 'Optional note describing what was posted/scheduled' },
         mark_task_done: { type: 'boolean', description: 'If true, mark task as completed after action.' },
-        executing_agent: { type: 'string', description: 'The AI agent executing the tool: claude | grok | manus (default: auto)' },
+        executing_agent: { type: 'string', description: 'The AI agent executing the tool: claude | grok | manus | chatgpt (default: auto)' },
         media_base64_data: {
           type: 'array',
           items: {
@@ -1385,11 +1390,11 @@ export const MCP_TOOLS = [
             },
             required: ['file_name', 'file_type', 'base64']
           },
-          description: 'Direct base64 media payload to solve uploading issues for Claude/Grok/Manus.'
+          description: 'Direct base64 media payload to solve uploading issues for Claude/Grok/Manus/ChatGPT.'
         },
         auto_refine_with_context: { type: 'boolean', description: 'Automatically read workspace files (e.g. DESIGN.md) and enrich post with corporate safety, OSM maps, and solopreneur trial pricing alignment.' }
       },
-      required: ['caption'],
+      required: [],
     },
   },
   {
@@ -2354,6 +2359,36 @@ export const MCP_TOOLS = [
         scheduled_at: { type: 'string', description: 'Optional ISO datetime. If omitted, AI chooses the next best slot.' }
       },
       required: ['topic'],
+    },
+  },
+  {
+    name: 'generate_ai_image',
+    description: 'Autonomous Visual Creator: Generates a high-quality AI visual image using DALL-E 3 (OpenAI) or Grok (xAI), saves it to permanent sovereign CDN storage, and returns the public CDN image URL.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        prompt: { type: 'string', description: 'Detailed prompt/description for the visual image to generate. Aliases: image_prompt, description.' },
+        image_prompt: { type: 'string', description: 'Alias of prompt.' },
+        image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
+        size: { type: 'string', description: 'Resolution (e.g. 1024x1024, 1792x1024, 1024x1792). Default: 1024x1024' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'generate_image',
+    description: 'Alias of generate_ai_image for OpenAI ChatGPT and AI agent tool compatibility.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        prompt: { type: 'string', description: 'Detailed prompt/description for the visual image to generate.' },
+        image_prompt: { type: 'string', description: 'Alias of prompt.' },
+        image_provider: { type: 'string', enum: ['openai', 'xai'], description: 'Default: openai' },
+        size: { type: 'string', description: 'Resolution (e.g. 1024x1024). Default: 1024x1024' },
+      },
+      required: [],
     },
   },
   {
