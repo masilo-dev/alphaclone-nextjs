@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import Image from 'next/image';
 import {
     Users,
     Search,
@@ -15,6 +14,7 @@ import { Input } from '../../ui/UIComponents';
 import { EnterpriseDataTable, type EnterpriseColumn } from '../../ui/EnterpriseDataTable';
 import { StatusBadge, userStatusVariant } from '../../ui/StatusBadge';
 import { rowActionsClass } from '../../ui/ResponsiveTable';
+import { Avatar } from '@/components/ui/Avatar';
 import { toast } from 'react-hot-toast';
 
 const SuperAdminUsersTab: React.FC = () => {
@@ -89,15 +89,14 @@ const SuperAdminUsersTab: React.FC = () => {
             sortValue: (u) => u.name,
             accessor: (u) => (
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 shrink-0 relative">
-                        <Image
-                            src={u.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${u.email}`}
-                            alt={u.name}
-                            fill
-                            className="object-cover"
-                            sizes="40px"
-                        />
-                    </div>
+                    <Avatar
+                        src={u.avatar}
+                        name={u.name}
+                        email={u.email}
+                        size={40}
+                        className="shrink-0 rounded-xl"
+                        shape="rounded"
+                    />
                     <div className="min-w-0">
                         <p className="font-bold text-white text-sm truncate">{u.name}</p>
                         <p className="text-xs text-slate-500 font-mono truncate">{u.email}</p>
@@ -162,7 +161,6 @@ const SuperAdminUsersTab: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-fade-in min-w-0 ac-scroll-full ac-enterprise-module">
-            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -185,7 +183,6 @@ const SuperAdminUsersTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Filters */}
             <div className="flex flex-wrap gap-2">
                 {(['all', 'active', 'suspended', 'admin', 'super_admin', 'tenant_admin', 'client'] as const).map(f => (
                     <button
@@ -213,4 +210,3 @@ const SuperAdminUsersTab: React.FC = () => {
 };
 
 export default SuperAdminUsersTab;
-

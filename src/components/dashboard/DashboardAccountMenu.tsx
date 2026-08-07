@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import { ChevronDown, Globe, LogOut, Settings, Smartphone } from 'lucide-react';
 import { User } from '@/types';
 import { useLanguage, LANGUAGES } from '@/contexts/LanguageContext';
 import { usePWA } from '@/contexts/PWAContext';
 import { useIsMobile } from '@/hooks/useTouchGestures';
+import { Avatar } from '@/components/ui/Avatar';
 
 interface DashboardAccountMenuProps {
   user: User;
@@ -24,8 +24,6 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
   const showMobileApp = isPWA || isMobile;
 
   const displayName = user.name || user.email?.split('@')[0] || 'User';
-  const avatarUrl =
-    user.avatar || `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user.email || user.name || 'user'}`;
 
   useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
@@ -54,9 +52,13 @@ export function DashboardAccountMenu({ user, onLogout, onSettings, onPwaSettings
         aria-label={t('Account menu')}
         className="flex items-center gap-1.5 rounded-full border border-slate-700/60 bg-slate-800/60 pl-1 pr-2 py-1 hover:border-slate-600 hover:bg-slate-800 transition-colors"
       >
-        <span className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
-          <Image src={avatarUrl} alt="" fill className="object-cover" sizes="32px" />
-        </span>
+        <Avatar
+          src={user.avatar}
+          name={user.name}
+          email={user.email}
+          size={32}
+          className="shrink-0"
+        />
         <ChevronDown
           className={`w-3.5 h-3.5 text-slate-500 transition-transform ${open ? 'rotate-180' : ''}`}
         />

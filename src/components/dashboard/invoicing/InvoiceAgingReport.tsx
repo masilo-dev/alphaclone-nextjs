@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Clock, DollarSign, AlertCircle, FileText } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
+import { Clock, DollarSign, FileText } from 'lucide-react';
+import { WrapChart } from '@/lib/chartWrapper';
 
 type AgingBucket = {
   range: string;
@@ -119,7 +120,7 @@ export function InvoiceAgingReport() {
           <div className="ac-workspace-panel rounded-xl p-4 sm:p-6">
             <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Receivables by Age</p>
             <div className="min-h-[240px]">
-              <ResponsiveContainer width="100%" height={240} minWidth={0}>
+              <WrapChart height={240}>
                 <BarChart data={buckets} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} />
@@ -141,7 +142,7 @@ export function InvoiceAgingReport() {
                     {buckets.map(b => <Cell key={b.range} fill={b.color} />)}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+              </WrapChart>
             </div>
           </div>
 

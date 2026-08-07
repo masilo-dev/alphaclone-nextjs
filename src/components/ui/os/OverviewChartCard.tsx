@@ -1,5 +1,7 @@
 'use client';
 
+import { ChartMount } from '@/components/dashboard/ChartMount';
+
 import { useState } from 'react';
 import {
   ResponsiveContainer,
@@ -85,7 +87,7 @@ export function OverviewChartCard({
             Not enough data yet for this view.
           </div>
         ) : tab === 'pipeline' ? (
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
+          <ChartMount height={220}><ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
             <BarChart data={data}>
               <CartesianGrid stroke="var(--ws-border)" vertical={false} />
               <XAxis dataKey="label" tick={{ fill: 'var(--ws-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -100,9 +102,9 @@ export function OverviewChartCard({
               />
               <Bar dataKey="value" fill="var(--brand-blue-500)" radius={[6, 6, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer></ChartMount>
         ) : (
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
+          <ChartMount height={220}><ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="osArea" x1="0" y1="0" x2="0" y2="1">
@@ -139,7 +141,7 @@ export function OverviewChartCard({
                 />
               ) : null}
             </AreaChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer></ChartMount>
         )}
       </div>
     </section>

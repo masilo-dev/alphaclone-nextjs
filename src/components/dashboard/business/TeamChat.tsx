@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import { Avatar } from '@/components/ui/Avatar';
 import { Send, MessageCircle, CheckCircle, CheckCheck } from 'lucide-react';
 import { User } from '../../../types';
 import { format } from 'date-fns';
@@ -360,9 +360,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
                 </div>
                     <div className="flex -space-x-2">
                         {teamMembers.slice(0, 5).map(m => (
-                            <div key={m.user_id} className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-bold text-white" title={m.user.name}>
-                                {m.user.name?.charAt(0)}
-                            </div>
+                            <Avatar key={m.user_id} src={m.user.avatar} name={m.user.name} email={m.user.email} size={32} className="border-2 border-slate-900" />
                         ))}
                         {teamMembers.length > 5 && (
                             <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">
@@ -399,13 +397,7 @@ export const TeamChat: React.FC<TeamChatProps> = ({ user, teamMembers, tenantId 
 
                             return (
                                 <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
-                                <div className="w-8 h-8 rounded-full bg-slate-700 flex-shrink-0 flex items-center justify-center font-bold text-xs relative overflow-hidden">
-                                    {msg.userAvatar ? (
-                                        <Image src={msg.userAvatar} fill className="object-cover" alt="" sizes="32px" />
-                                    ) : (
-                                        msg.userName.charAt(0)
-                                    )}
-                                </div>
+                                <Avatar src={msg.userAvatar} name={msg.userName} size={32} />
                                 <div className={`max-w-[70%] space-y-1 ${isMe ? 'items-end' : 'items-start'}`}>
                                     <div className="flex items-center gap-2 text-xs text-slate-400">
                                         <span className="font-bold text-slate-300">{msg.userName}</span>
