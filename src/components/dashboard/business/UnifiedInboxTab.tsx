@@ -75,9 +75,16 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
   const [savingDraft, setSavingDraft] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem('inbox_starred') : null;
+      return saved ? new Set(JSON.parse(saved)) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [filterStarredOnly, setFilterStarredOnly] = useState(false);
+  const [filterNeedsReply, setFilterNeedsReply] = useState(false);
+  const [filterUnreadOnly, setFilterUnreadOnly] = useState(false);
 
   const loadMessages = useCallback(async () => {
     if (!tenant?.id) return;
@@ -115,6 +122,7 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
         next.add(msgId);
         toast.success('Message starred');
       }
+      try { localStorage.setItem('inbox_starred', JSON.stringify(Array.from(next))); } catch {}
       return next;
     });
   };
@@ -445,6 +453,8 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
 
   const filteredMessages = messages.filter(m => {
     if (needsReplyOnly && !m.needs_response) return false;
+    if (filterNeedsReply && !m.needs_response) return false;
+    if (filterUnreadOnly && m.read) return false;
     if (filterSource !== 'all' && m.source !== filterSource) return false;
     if (filterPriority !== 'all' && m.priority !== filterPriority) return false;
     if (filterStarredOnly && !starredIds.has(m.id)) return false;
@@ -552,10 +562,57 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
             );
           })}
 
-          <div className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-wider font-semibold text-slate-500">Filters</div>
+          <div className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-wider font-semibold text-slate-500">Smart Folders</div>
 
           <button
-            onClick={() => setFilterPriority(filterPriority === 'urgent' ? 'all' : 'urgent')}
+            onClick={() => {
+              setFilterNeedsReply(prev => !prev);
+              setFilterStarredOnly(false);
+              setFilterUnreadOnly(false);
+            }}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
+              filterNeedsReply
+                ? 'bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <CornerUpLeft className="w-3.5 h-3.5 text-amber-400" />
+              Needs Reply
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {messages.filter(m => m.needs_response).length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setFilterUnreadOnly(prev => !prev);
+              setFilterStarredOnly(false);
+              setFilterNeedsReply(false);
+            }}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
+              filterUnreadOnly
+                ? 'bg-blue-500/15 text-blue-300 font-semibold border border-blue-500/20'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Mail className="w-3.5 h-3.5 text-blue-400" />
+              Unread
+            </span>
+            <span className="text-[10px] text-slate-500 font-mono">
+              {messages.filter(m => !m.read).length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setFilterPriority(filterPriority === 'urgent' ? 'all' : 'urgent');
+              setFilterStarredOnly(false);
+              setFilterNeedsReply(false);
+              setFilterUnreadOnly(false);
+            }}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
               filterPriority === 'urgent'
                 ? 'bg-rose-500/15 text-rose-300 font-semibold border border-rose-500/20'
@@ -572,7 +629,11 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
           </button>
 
           <button
-            onClick={() => setFilterStarredOnly(!filterStarredOnly)}
+            onClick={() => {
+              setFilterStarredOnly(prev => !prev);
+              setFilterNeedsReply(false);
+              setFilterUnreadOnly(false);
+            }}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${
               filterStarredOnly
                 ? 'bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/20'
@@ -581,7 +642,7 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
           >
             <span className="flex items-center gap-2">
               <Star className={`w-3.5 h-3.5 ${filterStarredOnly ? 'text-amber-400 fill-amber-400' : 'text-amber-400'}`} />
-              Starred Messages
+              Starred
             </span>
             <span className="text-[10px] text-slate-500 font-mono">
               {starredIds.size}
@@ -596,7 +657,12 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
         <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-900/40">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-300 capitalize">
-              {filterStarredOnly ? 'Starred Messages' : filterSource === 'all' ? 'All Conversations' : `${filterSource} Messages`}
+              {filterStarredOnly ? '⭐ Starred'
+                : filterNeedsReply ? '↩ Needs Reply'
+                : filterUnreadOnly ? '● Unread'
+                : filterPriority === 'urgent' ? '🔴 High Priority'
+                : filterSource === 'all' ? 'All Conversations'
+                : `${filterSource.charAt(0).toUpperCase() + filterSource.slice(1)} Messages`}
             </span>
             <span className="text-[10px] text-slate-500 font-mono">
               {filteredMessages.length} items
@@ -643,10 +709,30 @@ export default function UnifiedInboxTab({ needsReplyOnly = false }: { needsReply
         {/* Scrollable Message List */}
         <div className="flex-1 overflow-y-auto divide-y divide-slate-900">
           {filteredMessages.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 space-y-2">
-              <Inbox className="w-8 h-8 mx-auto opacity-40 text-slate-400" />
-              <p className="text-sm font-medium">Inbox is empty</p>
-              <p className="text-xs opacity-60">All messages caught up!</p>
+            <div className="p-8 text-center text-slate-500 space-y-3">
+              <Inbox className="w-10 h-10 mx-auto opacity-30 text-slate-400" />
+              {messages.length === 0 ? (
+                <>
+                  <p className="text-sm font-semibold text-white">No messages yet</p>
+                  <p className="text-xs opacity-60 max-w-[180px] mx-auto">Connect Zoho, WhatsApp or Facebook to start seeing conversations here.</p>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] bg-teal-500/10 text-teal-400 border border-teal-500/20 px-3 py-1.5 rounded-full font-semibold">
+                      Go to Integrations to connect
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">No matches</p>
+                  <p className="text-xs opacity-60">Try a different filter or clear your search.</p>
+                  <button
+                    onClick={() => { setSearchQuery(''); setFilterSource('all'); setFilterPriority('all'); setFilterStarredOnly(false); setFilterNeedsReply(false); setFilterUnreadOnly(false); }}
+                    className="mt-1 text-xs text-teal-400 hover:text-teal-300 underline"
+                  >
+                    Clear all filters
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             filteredMessages.map(msg => (
