@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/lib/supabase';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 import { TrendingUp, DollarSign, Target, BarChart3 } from 'lucide-react';
+import { WrapChart } from '@/lib/chartWrapper';
 
 type StageData = {
   stage: string;
@@ -103,7 +104,6 @@ export function PipelineForecastPanel() {
         <p className="text-xs text-slate-400 mt-0.5">Weighted by deal probability across all active stages</p>
       </div>
 
-      {/* Summary KPIs */}
       <div className="grid grid-cols-2 gap-4">
         <div className="ac-workspace-panel rounded-xl p-4">
           <p className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
@@ -130,7 +130,7 @@ export function PipelineForecastPanel() {
           <div className="ac-workspace-panel rounded-xl p-4 sm:p-6">
             <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Weighted Value by Stage</p>
             <div className="min-h-[240px]">
-              <ResponsiveContainer width="100%" height={240} minWidth={0}>
+              <WrapChart height={240}>
                 <BarChart data={stages} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
                   <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} />
@@ -140,11 +140,10 @@ export function PipelineForecastPanel() {
                     {stages.map(s => <Cell key={s.stage} fill={s.color} />)}
                   </Bar>
                 </BarChart>
-              </ResponsiveContainer>
+              </WrapChart>
             </div>
           </div>
 
-          {/* Stage Breakdown Table */}
           <div className="ac-workspace-panel rounded-xl overflow-hidden">
             <div className="px-5 py-3 border-b border-white/5 bg-[var(--ws-toolbar)]">
               <p className="text-xs font-black uppercase tracking-widest text-white">Stage Breakdown</p>
