@@ -41,7 +41,6 @@ export async function dispatchHermesTask(input: HermesTaskInput): Promise<Hermes
   if (config.localMode && !config.url) {
     const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
     const { createInitialGraphForObjective } = await import('@/lib/bonnie/runtime/plannerService');
-    const { processClaimableTasks } = await import('@/lib/bonnie/runtime/workerService');
     const admin = createSupabaseAdminClient();
     const { data: run, error } = await admin
       .from('agent_runs')
@@ -85,15 +84,6 @@ export async function dispatchHermesTask(input: HermesTaskInput): Promise<Hermes
       .eq('tenant_id', input.tenantId)
       .eq('id', input.taskId);
 
-    let worker: HermesDispatchResult['worker'] | undefined;
-    if (process.env.HERMES_LOCAL_AUTO_KICK !== 'false') {
-      try {
-        worker = await processClaimableTasks(Number(process.env.HERMES_LOCAL_KICK_LIMIT || 3));
-      } catch (error) {
-        console.warn('[hermes] local worker kick failed:', error);
-      }
-    }
-
     return {
       dispatched: true,
       status: 'local_queued',
@@ -101,7 +91,6 @@ export async function dispatchHermesTask(input: HermesTaskInput): Promise<Hermes
       runId: input.taskId,
       goalId: null,
       graphId: graph.graphId,
-      worker,
       message: 'Hermes local runtime queued the task in this app',
     };
   }

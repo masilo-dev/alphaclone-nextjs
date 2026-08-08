@@ -21,7 +21,6 @@ test('Hermes adapter is server-side and disabled when not configured', () => {
   assert.match(client, /HERMES_INTERNAL_API_KEY/);
   assert.match(client, /HERMES_LOCAL_MODE/);
   assert.match(client, /createInitialGraphForObjective/);
-  assert.match(client, /processClaimableTasks/);
   assert.match(client, /Hermes internal service is not configured/);
   assert.doesNotMatch(client, /NEXT_PUBLIC_HERMES/);
 });
