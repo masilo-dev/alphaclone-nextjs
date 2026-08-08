@@ -30,6 +30,9 @@ const COLUMNS = [
       { label: 'Privacy', path: '/privacy-policy' },
       { label: 'Terms', path: '/terms-of-service' },
       { label: 'Cookies', path: '/cookie-policy' },
+      { label: 'Data deletion', path: '/data-deletion' },
+      { label: 'Privacy choices', path: '/privacy-choices' },
+      { label: 'DPA', path: '/dpa' },
       { label: 'Status', path: '/platform-status' },
     ],
   },
@@ -112,6 +115,12 @@ export default function MarketingFooter() {
             </Link>
             <Link href="/security-policy" className="mkt-footer-link">
               Security
+            </Link>
+            <Link href="/data-deletion" className="mkt-footer-link">
+              Data deletion
+            </Link>
+            <Link href="/privacy-choices" className="mkt-footer-link">
+              Privacy choices
             </Link>
           </div>
         </div>

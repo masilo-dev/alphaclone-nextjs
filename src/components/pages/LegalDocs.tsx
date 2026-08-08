@@ -184,16 +184,28 @@ export function PrivacyPolicy() {
             <Sub title="2.5 Calendly Integration & Scheduling Data">
                <p>When you connect Calendly via OAuth, AlphaClone retrieves event types, scheduled meetings, invitee names, email addresses, and event details solely to sync booking availability and auto-ingest meeting invitees into your CRM leads and calendar. OAuth access tokens are stored using AES-256 encryption at rest.</p>
             </Sub>
-            <Sub title="2.6 Usage & Technical Data">
+            <Sub title="2.6 Microsoft 365, Outlook, Calendar & Tasks Data">
+               <p>When you connect Microsoft 365, AlphaClone may process mailbox metadata, selected email content, calendar events, meeting details, task lists, user profile information, and OAuth tokens solely to provide inbox sync, email sending, calendar scheduling, task sync, CRM matching, and user-requested automation. Microsoft data is scoped to your connected account and workspace, and access can be revoked from your Microsoft account or AlphaClone integration settings.</p>
+            </Sub>
+            <Sub title="2.7 Meta, Facebook, Instagram & WhatsApp Business Data">
+               <p>When you connect Meta products, AlphaClone may process Facebook Page details, Instagram business profile data, post content, media assets, comments, direct business messages, Lead Ads form responses, WhatsApp Business message metadata, delivery status, phone numbers, and consent/opt-out signals. This data is used only for publishing, inbox sync, lead capture, CRM updates, and user-requested customer communication workflows.</p>
+            </Sub>
+            <Sub title="2.8 AI Assistant, Bonnie & Hermes Runtime Data">
+               <InfoBox>
+                  Bonnie AI and the Hermes durable agent runtime operate inside AlphaClone to help users complete workspace tasks. They process only the tenant-scoped data needed for the requested task, such as CRM records, invoices, tasks, messages, social posts, files, audit logs, and integration status.
+               </InfoBox>
+               <p className="mt-3">AI prompts, tool calls, execution logs, approvals, task plans, and agent run metadata may be stored in your workspace for auditability, recovery, debugging, and user-visible history. External actions such as sending messages, publishing posts, billing changes, or sensitive data access are governed by platform policy, user permissions, and approval controls where applicable. We do not use your workspace data to train third-party foundation models unless you separately agree in writing.</p>
+            </Sub>
+            <Sub title="2.9 Usage & Technical Data">
                <p>We automatically collect technical data when you use the platform: IP address, browser type and version, operating system, device type, pages visited, features used, session duration, and error logs. This data is used for platform security, debugging, and improving the user experience.</p>
             </Sub>
-            <Sub title="2.7 Payment Data">
+            <Sub title="2.10 Payment Data">
                <p>Payment processing is handled entirely by Stripe, Inc. AlphaClone never stores, processes, or has access to your credit card details. What we retain is limited to: Stripe Customer ID, subscription plan details, billing address, and payment history (invoice amounts and dates). See <a href="https://stripe.com/privacy" className="text-teal-400 hover:underline" target="_blank" rel="noreferrer">Stripe's Privacy Policy</a> for how they handle payment data.</p>
             </Sub>
-            <Sub title="2.6 AI Growth Agent Data">
+            <Sub title="2.11 AI Growth Agent Data">
                <p>The AI Growth Agent uses publicly available business directory data to identify prospective leads. We do not scrape private data or use data obtained through unauthorized means. Outreach conversations managed by the AI agent are stored in your workspace and are not accessible to other users or AlphaClone staff without your consent.</p>
             </Sub>
-            <Sub title="2.7 Model Context Protocol (MCP) AI Agent Data">
+            <Sub title="2.12 Model Context Protocol (MCP) AI Agent Data">
                <InfoBox variant="warn">
                   When you connect an external AI agent (e.g. Anthropic Claude Desktop, Manus AI) to AlphaClone via the Model Context Protocol (MCP), your workspace data — including client names, project details, task records, and revenue summaries — is transmitted to that AI agent over an encrypted SSE channel. AlphaClone does not control how the receiving AI provider processes or retains this data. You must review the privacy policy of any external AI agent before enabling MCP access.
                </InfoBox>
@@ -247,10 +259,16 @@ export function PrivacyPolicy() {
                      {[
                         { p: 'Supabase (US)', pu: 'Database & authentication', d: 'All platform data (encrypted at rest)' },
                         { p: 'Stripe, Inc. (US)', pu: 'Payment processing', d: 'Email, billing address, Stripe customer ID' },
-                        { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in', d: 'Google account OAuth token, email actions only' },
+                        { p: 'Google LLC (US)', pu: 'Gmail API, OAuth sign-in, calendar where enabled', d: 'OAuth tokens, account profile, email/calendar actions you authorize' },
+                        { p: 'Microsoft Corporation (US)', pu: 'Microsoft 365, Outlook, Calendar, Teams, To Do sync', d: 'OAuth tokens, profile data, selected mailbox/calendar/task records' },
+                        { p: 'LinkedIn Corporation (US)', pu: 'OAuth, social publishing, organization analytics, Lead Gen Forms', d: 'OAuth tokens, profile/page data, post data, lead form submissions' },
+                        { p: 'Meta Platforms, Inc. (US)', pu: 'Facebook/Instagram publishing, Page inbox, Lead Ads, analytics', d: 'OAuth tokens, page/profile data, posts, media, comments, lead forms' },
+                        { p: 'WhatsApp Business / Meta (US)', pu: 'Customer messaging and delivery status', d: 'Phone numbers, messages, templates, delivery/read status' },
+                        { p: 'Calendly LLC (US)', pu: 'Scheduling and invitee sync', d: 'OAuth tokens, event types, invitee names/emails, booking metadata' },
                         { p: 'Cloudflare, Inc. (US)', pu: 'Bot protection & security (Turnstile)', d: 'IP address, browser metadata, telemetry' },
                         { p: 'Railway Corp. (US)', pu: 'Application hosting & CDN', d: 'IP address, request metadata' },
                         { p: 'Resend / SendGrid', pu: 'Transactional email delivery', d: 'Email address, email content (transactional only)' },
+                        { p: 'AI model providers configured for the workspace', pu: 'Bonnie AI assistance, drafting, summarization, classification, and task execution', d: 'Task prompts and tenant-scoped records needed to complete user-requested actions' },
                         { p: 'Anthropic / Manus AI (optional)', pu: 'MCP AI agent integration (user-initiated)', d: 'CRM data transmitted only when user activates MCP integration' },
                      ].map((row, i) => (
                         <tr key={i}>

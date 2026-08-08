@@ -8,6 +8,98 @@ export async function executeCustomTool(
   userId: string,
   args: Record<string, unknown> = {}
 ): Promise<BonnieToolResult> {
+  if (tool === 'delegate_to_hermes') {
+    const prompt = String(args.prompt || args.task || args.instruction || args.goal || '').trim();
+    if (!prompt) {
+      return { tool, success: false, summary: 'Provide a prompt or task for Hermes.' };
+    }
+
+    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+    const { dispatchHermesTask } = await import('@/lib/hermes/client');
+    const { evaluateHermesPolicy, normalizeHermesPolicy } = await import('@/lib/hermes/policy');
+    const policy = normalizeHermesPolicy(args.policy);
+    const decision = evaluateHermesPolicy(policy);
+    const sessionId = String(args.session_id || args.sessionId || '').trim();
+    const conversationId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sessionId)
+      ? sessionId
+      : null;
+    const admin = createSupabaseAdminClient();
+
+    const { data: run, error } = await admin
+      .from('agent_runs')
+      .insert({
+        tenant_id: tenantId,
+        user_id: userId,
+        conversation_id: conversationId,
+        title: prompt.slice(0, 120),
+        description: prompt,
+        execution_mode: decision.requiresApproval ? 'approval_required' : 'semi_autonomous',
+        status: decision.allowed ? 'pending' : 'waiting',
+        progress_pct: 0,
+        metadata: {
+          runtime: 'hermes',
+          source: 'bonnie_chat',
+          policy,
+          policyDecision: decision,
+          prompt,
+          sessionId: sessionId || null,
+          requestedAt: new Date().toISOString(),
+        },
+      })
+      .select('id, status, metadata')
+      .single();
+
+    if (error || !run) {
+      return {
+        tool,
+        success: false,
+        summary: `Hermes task could not be recorded: ${error?.message || 'unknown database error'}`,
+      };
+    }
+
+    if (!decision.allowed) {
+      return {
+        tool,
+        success: true,
+        summary: decision.requiresApproval
+          ? `Hermes task ${run.id} is waiting for approval before it runs.`
+          : `Hermes task ${run.id} was held by policy: ${decision.reason}`,
+        details: JSON.stringify({ runId: run.id, policy, decision }, null, 2),
+      };
+    }
+
+    const dispatch = await dispatchHermesTask({
+      tenantId,
+      userId,
+      taskId: run.id,
+      sessionId: sessionId || undefined,
+      prompt,
+      metadata: { source: 'bonnie_chat', policy },
+    });
+
+    await admin
+      .from('agent_runs')
+      .update({
+        status: dispatch.dispatched ? (dispatch.status === 'local_queued' ? 'planning' : 'pending') : 'failed',
+        metadata: {
+          ...(run.metadata || {}),
+          hermes: dispatch,
+          dispatchedAt: new Date().toISOString(),
+        },
+      })
+      .eq('tenant_id', tenantId)
+      .eq('id', run.id);
+
+    return {
+      tool,
+      success: dispatch.dispatched,
+      summary: dispatch.dispatched
+        ? `Hermes task ${run.id} started from Bonnie chat.`
+        : `Hermes task ${run.id} was recorded but could not start: ${dispatch.reason || dispatch.status}`,
+      details: JSON.stringify({ runId: run.id, policy, dispatch }, null, 2),
+    };
+  }
+
   if (tool === 'run_autonomous_scan') {
     const { autonomousRunnerService } = await import('@/services/autonomousRunnerService');
     const result = await autonomousRunnerService.runForTenant(tenantId);

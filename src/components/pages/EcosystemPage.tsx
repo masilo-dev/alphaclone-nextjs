@@ -59,6 +59,21 @@ const EcosystemPage: React.FC = () => {
         },
     ];
 
+    const integrations = [
+        { name: 'Calendly', desc: 'Scheduling sync', status: 'Available' },
+        { name: 'LinkedIn', desc: 'OAuth, posting, lead forms', status: 'Available' },
+        { name: 'Facebook', desc: 'Pages, posts, lead capture', status: 'Available' },
+        { name: 'DeepSeek API', desc: 'Bonnie planning provider', status: 'Available' },
+        { name: 'Claude API', desc: 'AI reasoning fallback', status: 'Available' },
+        { name: 'OpenAI API', desc: 'Generation and AI fallback', status: 'Available' },
+        { name: 'OpenRouter', desc: 'Optional model routing', status: 'Available' },
+        { name: 'Microsoft 365', desc: 'Outlook, calendar, tasks', status: 'Available' },
+        { name: 'Stripe', desc: 'Payment processing', status: 'Available' },
+        { name: 'WhatsApp', desc: 'Dashboard connection', status: 'Coming soon' },
+        { name: 'Instagram', desc: 'Business publishing/inbox', status: 'Coming soon' },
+        { name: 'Supabase', desc: 'Database, auth, realtime', status: 'Available' },
+    ];
+
     return (
         <div className="min-h-screen page-network-bg marketing-theme bg-transparent text-white">
             <div className="max-w-7xl mx-auto px-4 py-20 pt-32">
@@ -177,8 +192,8 @@ const EcosystemPage: React.FC = () => {
                                 <Layers className="w-10 h-10 text-teal-400 mb-4" />
                                 <h3 className="text-xl font-bold mb-4">Infrastructure</h3>
                                 <ul className="space-y-2 text-slate-400">
-                                    <li>Vercel Edge Network</li>
-                                    <li>Managed hosting on Vercel</li>
+                                    <li>Railway deployment</li>
+                                    <li>Managed app hosting</li>
                                     <li>Global CDN</li>
                                     <li>Auto-scaling</li>
                                 </ul>
@@ -194,23 +209,25 @@ const EcosystemPage: React.FC = () => {
                             Core <span className="text-teal-400">Integrations</span>
                         </h2>
                         <p className="text-slate-400 text-center max-w-2xl mx-auto mb-12">
-                            Built-in integrations with essential business tools, managed from one workspace.
+                            Built-in integrations and AI provider connections, managed from one workspace.
                         </p>
                     </AnimateIn>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto min-w-0 px-1">
-                        {[
-                            { name: 'Stripe', desc: 'Payment processing' },
-                            { name: 'Supabase', desc: 'Database & Auth' },
-                            { name: 'Vercel', desc: 'Hosting & Deploy' },
-                            { name: 'Email', desc: 'SMTP & Notifications' }
-                        ].map((integration, idx) => (
+                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto min-w-0 px-1">
+                        {integrations.map((integration, idx) => (
                             <AnimateIn key={idx} type="stagger" index={idx}>
-                                <div className="bg-slate-900/50 backdrop-blur-sm p-6 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all text-center group">
+                                <div className="bg-slate-900/50 backdrop-blur-sm p-5 rounded-xl border border-slate-800 hover:border-teal-500/50 transition-all text-center group">
                                     <div className="w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl mx-auto mb-4 flex items-center justify-center group-hover:from-slate-700 group-hover:to-slate-800 transition-all">
                                         <span className="text-lg font-black text-teal-400">{integration.name.slice(0, 2)}</span>
                                     </div>
                                     <p className="text-base font-bold text-white mb-1">{integration.name}</p>
                                     <p className="text-xs text-slate-500">{integration.desc}</p>
+                                    <span className={`mt-3 inline-flex rounded px-2 py-1 text-[10px] font-black uppercase tracking-wide ${
+                                        integration.status === 'Coming soon'
+                                            ? 'border border-amber-500/20 bg-amber-500/10 text-amber-200'
+                                            : 'border border-emerald-500/20 bg-emerald-500/10 text-emerald-200'
+                                    }`}>
+                                        {integration.status}
+                                    </span>
                                 </div>
                             </AnimateIn>
                         ))}

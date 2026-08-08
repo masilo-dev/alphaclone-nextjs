@@ -53,8 +53,10 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'get_tasks', 'create_task', 'update_task',
   // Email campaigns — create + publish
   'create_bulk_email_campaign', 'queue_email_campaign_send', 'send_bulk_email_campaign',
+  'send_batch_outreach',
   // Social publish
   'create_social_post', 'create_post', 'create_linkedin_post', 'create_post_with_ai_image',
+  'publish_social_post', 'publish_post',
   'upload_media_asset',
   // WhatsApp
   'send_whatsapp_message', 'get_whatsapp_status', 'enable_whatsapp_chatbot', 'disable_whatsapp_chatbot',
@@ -67,14 +69,19 @@ export const BONNIE_MCP_SERVER_TOOLS = [
   'nexus_lead_enrichment', 'nexus_sales_campaign',
   'capture_linkedin_comment_leads', 'auto_create_lead_from_message',
   // Tickets
-  'create_ticket', 'get_tickets',
+  'create_ticket', 'get_tickets', 'escalate_ticket',
   // Invoicing actions
-  'send_invoice', 'nexus_invoice_chasing',
+  'send_invoice', 'nexus_invoice_chasing', 'reconcile_payment', 'send_receipt', 'start_invoice_lifecycle',
+  // Quotes and contracts
+  'get_quotes', 'create_quote', 'send_quote', 'start_contract_lifecycle',
+  // Platform health
+  'get_api_health',
   // Deals scoring
   'score_deal',
 ] as const;
 
 export const BONNIE_CUSTOM_TOOLS = [
+  'delegate_to_hermes',
   'run_autonomous_scan',
   'summarize_workspace',
   'get_account_overview',
@@ -265,13 +272,14 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   automation: {
     label: 'Automation',
-    tools: ['run_playbook', 'get_automation_health', 'orchestrate_task', 'get_autonomous_rules', 'run_autonomous_scan'],
-    examples: ['Run invoice recovery playbook', 'What automations are unhealthy?'],
+    tools: ['delegate_to_hermes', 'run_playbook', 'get_automation_health', 'orchestrate_task', 'get_autonomous_rules', 'run_autonomous_scan'],
+    examples: ['Run invoice recovery playbook', 'What automations are unhealthy?', 'Start a background agent task for this workflow'],
   },
   general: {
     label: 'Workspace',
     tools: [
       'get_account_overview',
+      'delegate_to_hermes',
       'get_integration_health',
       'get_proactive_brief',
       'get_customer_360',
