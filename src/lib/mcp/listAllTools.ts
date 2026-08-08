@@ -6,13 +6,15 @@ import {
 } from '@/lib/mcp/compactToolSchema';
 import { SUPPLEMENTAL_MCP_TOOLS, type McpDiscoveryTool } from '@/lib/mcp/supplementalToolDefinitions';
 import { resolveToolAnnotations } from '@/lib/mcp/toolAnnotations';
-import { coreTools, DISCOVERY_CONTROL_TOOLS } from '@/lib/mcp/progressiveDiscovery';
-import { getToolCatalogModeForClient } from '@/lib/mcp/ensureOAuthClient';
+import {
+  coreTools,
+  DISCOVERY_CONTROL_TOOLS,
+  moduleForTool,
+} from '@/lib/mcp/progressiveDiscovery';
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
 let cachedFullTools: UnifiedMcpTool[] | null = null;
-let cachedCuratedTools: UnifiedMcpTool[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 60_000;
 
@@ -79,10 +81,9 @@ function prepareDiscoveryTools(
 
 /**
  * Single source of truth for MCP tool discovery.
- * Catalog selection follows the registered OAuth-client policy. The default is
- * the compacted full platform catalog so clients can actually call every
- * authorised tool. Progressive discovery remains available as a selection aid,
- * rather than being used to hide callable tools from the client.
+ * The default is progressive discovery: a bounded core catalogue plus any
+ * modules loaded for the current MCP session. Internal audits and local agent
+ * runners can request the full catalog explicitly.
  */
 export async function getUnifiedMcpTools(options?: {
   sanitizeForClient?: boolean;
@@ -92,10 +93,11 @@ export async function getUnifiedMcpTools(options?: {
   clientId?: string | null;
   clientLabel?: string | null;
   userAgent?: string | null;
+  loadedModules?: string[];
+  catalogMode?: 'progressive' | 'full';
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  // Always expose the complete platform tool catalog so ChatGPT, Claude, and all MCP clients discover 100% of tools
-  const catalogMode: string = 'full';
+  const catalogMode = options?.catalogMode || 'progressive';
   const now = Date.now();
 
   if (
@@ -104,7 +106,10 @@ export async function getUnifiedMcpTools(options?: {
     cachedFullTools &&
     cachedFullTools.length > 0
   ) {
-    const cached = cachedFullTools;
+    const cached = selectCatalogTools(cachedFullTools, {
+      catalogMode,
+      loadedModules: options?.loadedModules,
+    });
     console.info(
       `[mcp.tools/list] cache hit catalog=${catalogMode} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
     );
@@ -168,23 +173,12 @@ export async function getUnifiedMcpTools(options?: {
   }
 
   cachedFullTools = prepareDiscoveryTools(annotated, sanitizeForClient);
-  cachedCuratedTools = coreTools(cachedFullTools, 32);
-  for (const control of withAnnotations(DISCOVERY_CONTROL_TOOLS)) {
-    if (!cachedCuratedTools.some((tool) => tool.name === control.name)) {
-      cachedCuratedTools.push(...prepareDiscoveryTools([control], sanitizeForClient));
-    }
-  }
-  for (const alias of withAnnotations(DISCOVERY_ALIAS_TOOLS)) {
-    if (!cachedCuratedTools.some((t) => t.name === alias.name)) {
-      cachedCuratedTools.push(
-        ...prepareDiscoveryTools([alias], sanitizeForClient)
-      );
-    }
-  }
-  cachedCuratedTools.sort((a, b) => a.name.localeCompare(b.name));
 
   cacheTime = now;
-  const result = cachedFullTools;
+  const result = selectCatalogTools(cachedFullTools, {
+    catalogMode,
+    loadedModules: options?.loadedModules,
+  });
   console.info(
     `[mcp.tools/list] returning catalog=${catalogMode} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
   );
@@ -201,8 +195,23 @@ export async function getUnifiedMcpToolCount(options?: {
 
 export function invalidateUnifiedMcpToolCache(): void {
   cachedFullTools = null;
-  cachedCuratedTools = null;
   cacheTime = 0;
+}
+
+function selectCatalogTools(
+  full: UnifiedMcpTool[],
+  options: { catalogMode: 'progressive' | 'full'; loadedModules?: string[] },
+): UnifiedMcpTool[] {
+  if (options.catalogMode === 'full') return full;
+
+  const loaded = new Set((options.loadedModules || []).map((m) => m.toLowerCase()));
+  const coreNames = new Set(coreTools(full, 40).map((tool) => tool.name));
+  for (const tool of DISCOVERY_CONTROL_TOOLS) coreNames.add(tool.name);
+  for (const tool of DISCOVERY_ALIAS_TOOLS) coreNames.add(tool.name);
+
+  return full
+    .filter((tool) => coreNames.has(tool.name) || loaded.has(moduleForTool(tool.name)))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 /** @deprecated Use getUnifiedMcpTools — kept for backward compatibility */

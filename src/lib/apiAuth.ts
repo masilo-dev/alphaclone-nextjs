@@ -100,7 +100,7 @@ async function requireActiveProfile(
     }
 
     const status = String(profile.account_status || 'active');
-    if (status === 'deleted' || status === 'suspended') {
+    if (status === 'deleted' || status === 'suspended' || status === 'disabled') {
         throw new RouteAuthError(403, 'Account is not active', 'FORBIDDEN');
     }
     if (status === 'pending_deletion' && !options?.allowPendingDeletion) {

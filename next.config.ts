@@ -213,6 +213,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
         source: '/.well-known/:path*',
         headers: [
           {
@@ -236,11 +245,23 @@ const nextConfig: NextConfig = {
 
       {
         source: '/',
-        headers: securityHeaders,
+        headers: [
+          ...securityHeaders,
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate, max-age=0',
+          },
+        ],
       },
       {
         source: '/:path*',
-        headers: securityHeaders,
+        headers: [
+          ...securityHeaders,
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate, max-age=0',
+          },
+        ],
       },
     ];
   },

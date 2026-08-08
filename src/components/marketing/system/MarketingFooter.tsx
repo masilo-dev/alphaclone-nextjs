@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Facebook, Linkedin, Twitter } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
-import { DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 
 const COLUMNS = [
   {
@@ -72,13 +72,13 @@ export default function MarketingFooter() {
             </div>
             <div className="mkt-footer-cta-row">
               <Link href={TRIAL_HREF} className="mkt-btn mkt-btn-primary mkt-btn-compact">
-                Start free for 14 days
+                {CTA_LABELS.primary}
               </Link>
               <Link href={LOGIN_HREF} data-login-trigger className="mkt-btn mkt-btn-secondary mkt-btn-compact">
                 Log in
               </Link>
               <Link href={DEMO_HREF} className="mkt-btn mkt-btn-ghost mkt-btn-compact">
-                Book a demo
+                {CTA_LABELS.secondary}
               </Link>
             </div>
           </div>

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { AlphaIcon } from '@/components/marketing/icons';
-import type { AlphaIconName } from '@/components/marketing/icons';
+import React, { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { AlphaIcon } from "@/components/marketing/icons";
+import type { AlphaIconName } from "@/components/marketing/icons";
 
 interface WorkflowStep {
   id: string;
@@ -17,74 +17,80 @@ interface WorkflowStep {
 
 const WORKFLOW_STEPS: WorkflowStep[] = [
   {
-    id: 'lead',
-    step: '01',
-    title: 'New Lead Ingestion',
-    desc: 'Capture leads automatically from web forms, social ads, or email outreach into CRM.',
-    icon: 'leads',
-    color: 'from-blue-500 to-cyan-400',
+    id: "lead",
+    step: "01",
+    title: "New Lead Ingestion",
+    desc: "Capture leads automatically from web forms, social ads, or email outreach into CRM.",
+    icon: "leads",
+    color: "from-blue-500 to-cyan-400",
   },
   {
-    id: 'proposal',
-    step: '02',
-    title: 'AI Proposal Generation',
-    desc: 'Generate customized proposals with smart pricing and terms in seconds using Bonnie AI.',
-    icon: 'documents',
-    color: 'from-teal-500 to-emerald-400',
+    id: "proposal",
+    step: "02",
+    title: "AI Proposal Generation",
+    desc: "Generate customized proposals with smart pricing and terms in seconds using Bonnie AI.",
+    icon: "documents",
+    color: "from-teal-500 to-emerald-400",
   },
   {
-    id: 'contract',
-    step: '03',
-    title: 'E-Sign Contract',
-    desc: 'Auto-send legal contracts for e-signature with instant audit logging and document storage.',
-    icon: 'check',
-    color: 'from-amber-500 to-yellow-400',
+    id: "contract",
+    step: "03",
+    title: "E-Sign Contract",
+    desc: "Auto-send legal contracts for e-signature with instant audit logging and document storage.",
+    icon: "check",
+    color: "from-amber-500 to-yellow-400",
   },
   {
-    id: 'invoice',
-    step: '04',
-    title: 'Instant Invoice & Tax',
-    desc: 'Convert won deals directly into compliant invoices sent via preferred email providers.',
-    icon: 'invoicing',
-    color: 'from-purple-500 to-indigo-400',
+    id: "invoice",
+    step: "04",
+    title: "Instant Invoice & Tax",
+    desc: "Convert won deals directly into compliant invoices sent via preferred email providers.",
+    icon: "invoicing",
+    color: "from-purple-500 to-indigo-400",
   },
   {
-    id: 'payment',
-    step: '05',
-    title: 'Reconciled Payment',
-    desc: 'Receive payments, update P&L snapshot, and notify team automatically.',
-    icon: 'reports',
-    color: 'from-emerald-500 to-teal-400',
+    id: "payment",
+    step: "05",
+    title: "Reconciled Payment",
+    desc: "Receive payments, update P&L snapshot, and notify team automatically.",
+    icon: "reports",
+    color: "from-emerald-500 to-teal-400",
   },
 ];
 
 const CUSTOMER_SCENARIOS = [
   {
-    id: 'agency',
-    role: 'Digital Agency & Freelancers',
-    challenge: 'Tired of paying $400/mo for HubSpot, DocuSign, Harvest & Buffer separately.',
-    solution: 'AlphaClone replaces 5 fragmented tools for $15/mo with an AI assistant that handles admin work.',
-    metric: 'Save $4,600+/yr',
+    id: "agency",
+    role: "Digital Agency & Freelancers",
+    challenge:
+      "Tired of paying $400/mo for HubSpot, DocuSign, Harvest & Buffer separately.",
+    solution:
+      "AlphaClone replaces 5 fragmented tools for $15/mo with an AI assistant that handles admin work.",
+    metric: "Save $4,600+/yr",
   },
   {
-    id: 'consultant',
-    role: 'B2B Consultants & Services',
-    challenge: 'Losing 10+ hours a week copying lead data, drafting proposals, and chasing overdue invoices.',
-    solution: 'Execute complete Lead → Contract → Payment workflows in under 60 seconds.',
-    metric: '10+ hrs saved weekly',
+    id: "consultant",
+    role: "B2B Consultants & Services",
+    challenge:
+      "Losing 10+ hours a week copying lead data, drafting proposals, and chasing overdue invoices.",
+    solution:
+      "Execute complete Lead → Contract → Payment workflows in under 60 seconds.",
+    metric: "10+ hrs saved weekly",
   },
   {
-    id: 'solopreneur',
-    role: 'Solo Founders & Small Teams',
-    challenge: 'Need enterprise-grade operating capabilities without hiring expensive operations staff.',
-    solution: 'Connect your favorite AI (ChatGPT/Claude/Manus) via MCP to operate your business in plain English.',
-    metric: '100% Autopilot ready',
+    id: "solopreneur",
+    role: "Solo Founders & Small Teams",
+    challenge:
+      "Need enterprise-grade operating capabilities without hiring expensive operations staff.",
+    solution:
+      "Connect your favorite AI (ChatGPT/Claude/Manus) via MCP to operate your business in plain English.",
+    metric: "100% Autopilot ready",
   },
 ];
 
 export default function AllInOnePlatformShowcase() {
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [activeScenario, setActiveScenario] = useState<string>('agency');
+  const [activeScenario, setActiveScenario] = useState<string>("agency");
 
   return (
     <div className="w-full my-12 text-slate-100 select-none">
@@ -98,13 +104,14 @@ export default function AllInOnePlatformShowcase() {
           All-In-One Intelligent Business OS
         </div>
         <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3 font-marketing-heading">
-          Everything Your Business Needs.{' '}
+          Everything Your Business Needs.{" "}
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400">
             All in One Intelligent Platform.
           </span>
         </h2>
         <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto">
-          CRM, Projects, Finance, Marketing, Documents & more — connect via MCP and automate your entire operational workflow.
+          CRM, Projects, Finance, Marketing, Documents & more — connect via MCP
+          and automate your entire operational workflow.
         </p>
       </div>
 
@@ -117,7 +124,9 @@ export default function AllInOnePlatformShowcase() {
               <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
               <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
               <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
-              <span className="ml-2 font-mono text-[11px] text-slate-400 hidden sm:inline">alphaclone-workspace.app</span>
+              <span className="ml-2 font-mono text-[11px] text-slate-400 hidden sm:inline">
+                alphaclone-workspace.app
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium text-xs">
@@ -128,7 +137,7 @@ export default function AllInOnePlatformShowcase() {
 
           {/* Protected Static Image Display Area */}
           <div
-            className="relative w-full aspect-[16/10] bg-slate-950 flex items-center justify-center overflow-hidden"
+            className="relative mx-auto w-full max-w-[92vw] sm:max-w-3xl lg:max-w-5xl aspect-[16/10] bg-slate-950 flex items-center justify-center overflow-hidden"
             onContextMenu={(e) => e.preventDefault()}
             onDragStart={(e) => e.preventDefault()}
           >
@@ -137,7 +146,7 @@ export default function AllInOnePlatformShowcase() {
               alt="AlphaClone All In One Intelligent Platform Architecture"
               fill
               priority
-              sizes="(max-width: 1200px) 100vw, 1200px"
+              sizes="(max-width: 640px) 92vw, (max-width: 1024px) 768px, 1024px"
               className="object-contain pointer-events-none select-none"
               draggable={false}
             />
@@ -152,20 +161,36 @@ export default function AllInOnePlatformShowcase() {
           {/* Feature Strip Footer */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 sm:p-6 bg-slate-950/90 border-t border-slate-800 text-center">
             <div className="p-2 sm:p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-xs text-slate-400 font-medium">Connect Favorite Tools</p>
-              <p className="text-sm font-semibold text-teal-300 mt-1">ChatGPT, Claude, Manus & Gmail</p>
+              <p className="text-xs text-slate-400 font-medium">
+                Connect Favorite Tools
+              </p>
+              <p className="text-sm font-semibold text-teal-300 mt-1">
+                ChatGPT, Claude, Manus & Gmail
+              </p>
             </div>
             <div className="p-2 sm:p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-xs text-slate-400 font-medium">Model Context Protocol</p>
-              <p className="text-sm font-semibold text-emerald-300 mt-1">Secure Real-Time Action</p>
+              <p className="text-xs text-slate-400 font-medium">
+                Model Context Protocol
+              </p>
+              <p className="text-sm font-semibold text-emerald-300 mt-1">
+                Secure Real-Time Action
+              </p>
             </div>
             <div className="p-2 sm:p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-xs text-slate-400 font-medium">Publish Everywhere</p>
-              <p className="text-sm font-semibold text-cyan-300 mt-1">Meta, LinkedIn, Zoho & Brevo</p>
+              <p className="text-xs text-slate-400 font-medium">
+                Publish Everywhere
+              </p>
+              <p className="text-sm font-semibold text-cyan-300 mt-1">
+                Meta, LinkedIn, Zoho & Brevo
+              </p>
             </div>
             <div className="p-2 sm:p-3 rounded-xl bg-slate-900/60 border border-slate-800">
-              <p className="text-xs text-slate-400 font-medium">Platform Power</p>
-              <p className="text-sm font-semibold text-amber-300 mt-1">489 Tools Exposable via MCP</p>
+              <p className="text-xs text-slate-400 font-medium">
+                Platform Power
+              </p>
+              <p className="text-sm font-semibold text-amber-300 mt-1">
+                489 Tools Exposable via MCP
+              </p>
             </div>
           </div>
         </div>
@@ -176,7 +201,9 @@ export default function AllInOnePlatformShowcase() {
         <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800 shadow-xl">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-teal-400">Complete End-To-End Business Flow</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
+                Complete End-To-End Business Flow
+              </span>
               <h3 className="text-xl sm:text-2xl font-bold text-white mt-1">
                 From Lead to Cash in Under 60 Seconds
               </h3>
@@ -197,18 +224,26 @@ export default function AllInOnePlatformShowcase() {
                   onClick={() => setActiveStep(idx)}
                   className={`text-left p-4 rounded-xl border transition-all relative overflow-hidden ${
                     isSelected
-                      ? 'bg-slate-800/90 border-teal-500/80 shadow-lg shadow-teal-950/50'
-                      : 'bg-slate-900/40 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50'
+                      ? "bg-slate-800/90 border-teal-500/80 shadow-lg shadow-teal-950/50"
+                      : "bg-slate-900/40 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-950 border ${isSelected ? 'border-teal-500/50 text-teal-300' : 'border-slate-800 text-slate-400'}`}>
+                    <span
+                      className={`text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-950 border ${isSelected ? "border-teal-500/50 text-teal-300" : "border-slate-800 text-slate-400"}`}
+                    >
                       {s.step}
                     </span>
-                    <span className={`w-2 h-2 rounded-full bg-gradient-to-r ${s.color}`}></span>
+                    <span
+                      className={`w-2 h-2 rounded-full bg-gradient-to-r ${s.color}`}
+                    ></span>
                   </div>
-                  <h4 className="font-bold text-white text-sm mb-1">{s.title}</h4>
-                  <p className="text-xs text-slate-400 leading-relaxed">{s.desc}</p>
+                  <h4 className="font-bold text-white text-sm mb-1">
+                    {s.title}
+                  </h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {s.desc}
+                  </p>
                 </button>
               );
             })}
@@ -222,11 +257,19 @@ export default function AllInOnePlatformShowcase() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-teal-400 uppercase font-mono">Step {WORKFLOW_STEPS[activeStep].step} Spotlight</span>
-                  <span className="text-xs text-slate-400">• Automated Action</span>
+                  <span className="text-xs font-bold text-teal-400 uppercase font-mono">
+                    Step {WORKFLOW_STEPS[activeStep].step} Spotlight
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    • Automated Action
+                  </span>
                 </div>
-                <h5 className="text-base font-bold text-white mt-0.5">{WORKFLOW_STEPS[activeStep].title}</h5>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1">{WORKFLOW_STEPS[activeStep].desc}</p>
+                <h5 className="text-base font-bold text-white mt-0.5">
+                  {WORKFLOW_STEPS[activeStep].title}
+                </h5>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                  {WORKFLOW_STEPS[activeStep].desc}
+                </p>
               </div>
             </div>
             <Link
@@ -246,7 +289,8 @@ export default function AllInOnePlatformShowcase() {
             Built For How Real Businesses Actually Work
           </h3>
           <p className="text-sm text-slate-400 mt-2">
-            No bloated corporate jargon. Just practical automation tailored for small teams and solo operators.
+            No bloated corporate jargon. Just practical automation tailored for
+            small teams and solo operators.
           </p>
         </div>
 
@@ -257,8 +301,8 @@ export default function AllInOnePlatformShowcase() {
               onClick={() => setActiveScenario(sc.id)}
               className={`p-6 rounded-2xl border transition-all cursor-pointer ${
                 activeScenario === sc.id
-                  ? 'bg-slate-900 border-teal-500/80 shadow-xl shadow-teal-950/30 ring-1 ring-teal-500/30'
-                  : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                  ? "bg-slate-900 border-teal-500/80 shadow-xl shadow-teal-950/30 ring-1 ring-teal-500/30"
+                  : "bg-slate-900/50 border-slate-800 hover:border-slate-700"
               }`}
             >
               <div className="flex items-center justify-between mb-4">
@@ -271,17 +315,48 @@ export default function AllInOnePlatformShowcase() {
               </div>
               <div className="mb-3">
                 <p className="flex items-center gap-1 text-[10px] text-rose-400 font-semibold mb-1 uppercase tracking-wider">
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2 2l6 6M8 2l-6 6"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                   Old Way:
                 </p>
-                <p className="text-xs text-slate-400 leading-relaxed">{sc.challenge}</p>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {sc.challenge}
+                </p>
               </div>
               <div>
                 <p className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold mb-1 uppercase tracking-wider">
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"><path d="M1.5 5l2.5 2.5L8.5 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 10 10"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M1.5 5l2.5 2.5L8.5 2"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                   AlphaClone Way:
                 </p>
-                <p className="text-xs text-slate-200 leading-relaxed font-medium">{sc.solution}</p>
+                <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                  {sc.solution}
+                </p>
               </div>
             </div>
           ))}

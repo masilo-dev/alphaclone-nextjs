@@ -11,8 +11,8 @@ export const BUSINESS_SIGNUP_HREF = TRIAL_HREF;
 export const DEMO_HREF = '/book-demo';
 
 export const CTA_LABELS = {
-  primary: 'Start free for 14 days',
-  secondary: 'Book a demo',
+  primary: 'Start for $15/month',
+  secondary: 'See how it works',
   tertiaryLogin: 'Log in',
   pricing: 'See pricing',
   features: 'Explore the platform',

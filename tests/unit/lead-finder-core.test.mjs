@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   escapeCsvFormula, normalizeCompany, normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate,
 } from '../../src/lib/lead-finder/core.ts';
@@ -22,6 +23,22 @@ test('lead finder keeps quality and fit scoring explainable and separate', () =>
   assert.ok(score.fitScore >= 80);
   assert.ok(score.explanation.some(item => item.type === 'quality'));
   assert.ok(score.explanation.some(item => item.type === 'fit'));
+});
+
+test('lead discovery worker can run from production cron without starting an infinite loop', () => {
+  const src = readFileSync(
+    new URL('../../src/workers/lead-discovery-worker.ts', import.meta.url),
+    'utf8'
+  );
+  const route = readFileSync(
+    new URL('../../src/app/api/cron/lead-discovery-worker/route.ts', import.meta.url),
+    'utf8'
+  );
+
+  assert.match(src, /export async function processLeadDiscoveryBatch/);
+  assert.match(src, /process\.argv\[1\]\?\.includes\('lead-discovery-worker'\)/);
+  assert.match(route, /processLeadDiscoveryBatch/);
+  assert.match(route, /denyIfCronUnauthorized/);
 });
 
 test('exports neutralize spreadsheet formulas', () => {

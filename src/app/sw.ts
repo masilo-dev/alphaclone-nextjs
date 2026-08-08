@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, ExpirationPlugin, Serwist, NetworkOnly, NetworkFirst, disableNavigationPreload } from "serwist";
+import { CacheFirst, ExpirationPlugin, Serwist, NetworkOnly, disableNavigationPreload } from "serwist";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -146,15 +146,13 @@ const serwist = new Serwist({
             handler: networkOnlyRetryOrError,
         },
         {
-            // All other page navigations: NetworkFirst with offline fallback
+            // Page shells must come from the active deployment. Caching HTML/RSC
+            // across deploys is what leaves browsers requesting deleted chunks.
             matcher({ request }) {
                 return request.mode === 'navigate';
             },
-            handler: new NetworkFirst({
-                networkTimeoutSeconds: 10,
-                cacheName: 'ac-public-pages-v1',
+            handler: new NetworkOnly({
                 plugins: [
-                    new ExpirationPlugin({ maxEntries: 24, maxAgeSeconds: 24 * 60 * 60 }),
                     {
                         handlerDidError: async () => {
                             return (await self.caches.match('/offline.html')) || Response.error();

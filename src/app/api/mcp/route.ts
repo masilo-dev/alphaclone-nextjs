@@ -116,6 +116,46 @@ function authClientIdOf(auth: { client_id?: string } | { error: string }): strin
   return auth.client_id || null;
 }
 
+async function getSessionLoadedModules(mcpSessionId: string | null): Promise<string[]> {
+  if (!mcpSessionId || !ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) return [];
+  try {
+    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+    const { data } = await supabaseAdmin
+      .from('mcp_sessions')
+      .select('metadata')
+      .eq('id', mcpSessionId)
+      .maybeSingle();
+    const modules = (data?.metadata as Record<string, unknown> | null)?.loaded_modules;
+    return Array.isArray(modules) ? modules.filter((m): m is string => typeof m === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+async function persistSessionLoadedModule(mcpSessionId: string | null, moduleName: string): Promise<string[]> {
+  const current = await getSessionLoadedModules(mcpSessionId);
+  const normalized = moduleName.trim().toLowerCase();
+  const next = Array.from(new Set([...current, normalized])).filter(Boolean).sort();
+  if (!mcpSessionId || !ENV.VITE_SUPABASE_URL || !ENV.SUPABASE_SERVICE_ROLE_KEY) return next;
+
+  try {
+    const supabaseAdmin = createClient(ENV.VITE_SUPABASE_URL, ENV.SUPABASE_SERVICE_ROLE_KEY);
+    const { data } = await supabaseAdmin
+      .from('mcp_sessions')
+      .select('metadata')
+      .eq('id', mcpSessionId)
+      .maybeSingle();
+    const metadata = { ...((data?.metadata || {}) as Record<string, unknown>), loaded_modules: next };
+    await supabaseAdmin
+      .from('mcp_sessions')
+      .update({ metadata, last_seen_at: new Date().toISOString() })
+      .eq('id', mcpSessionId);
+  } catch (err) {
+    console.warn('[MCP progressive discovery] failed to persist loaded module:', err);
+  }
+  return next;
+}
+
 function unauthorizedFromAuth(req: NextRequest, auth: { error: string; status: number; wwwAuthenticate?: string }) {
   if (auth.status === 403) {
     return createUnauthorizedResponse(req, 'insufficient_scope', auth.error, undefined, 403);
@@ -325,6 +365,7 @@ export async function POST(req: NextRequest) {
         clientId,
         clientLabel,
         userAgent: req.headers.get('user-agent'),
+        loadedModules: await getSessionLoadedModules(mcpSessionId),
       });
 
       console.info(
@@ -430,7 +471,7 @@ export async function POST(req: NextRequest) {
     if (['list_tools', 'list_modules', 'list_capabilities', 'search_tools', 'load_module_tools'].includes(toolName)) {
       const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
       const { MODULE_KEYWORDS, coreTools, searchToolCatalog } = await import('@/lib/mcp/progressiveDiscovery');
-      const full = await getUnifiedMcpTools({ forChatGPT: false });
+      const full = await getUnifiedMcpTools({ forChatGPT: false, catalogMode: 'full' });
       let data: unknown;
       if (toolName === 'list_modules') data = Object.keys(MODULE_KEYWORDS);
       else if (toolName === 'list_tools') data = coreTools(full);
@@ -440,12 +481,26 @@ export async function POST(req: NextRequest) {
         oauth_grants: true,
         media_transfer: ['base64', 'source_url', 'signed_upload'],
       };
-      else data = searchToolCatalog(full, {
-        query: toolArgs.query,
-        module: toolName === 'load_module_tools' ? toolArgs.module : toolArgs.module,
-        action: toolArgs.action,
-        limit: toolArgs.limit,
-      });
+      else {
+        const moduleName = String(toolArgs.module || '');
+        const loadedModules = toolName === 'load_module_tools'
+          ? await persistSessionLoadedModule(mcpSessionId, moduleName)
+          : await getSessionLoadedModules(mcpSessionId);
+        const tools = searchToolCatalog(full, {
+          query: toolArgs.query,
+          module: moduleName,
+          action: toolArgs.action,
+          limit: toolArgs.limit,
+        });
+        data = toolName === 'load_module_tools'
+          ? {
+              module: moduleName,
+              loaded_modules: loadedModules,
+              tools,
+              execution_available_after_tools_list_refresh: true,
+            }
+          : tools;
+      }
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
@@ -800,6 +855,7 @@ export async function GET(req: NextRequest) {
     const tools = await getUnifiedMcpTools({
       clientId: authClientIdOf(auth),
       userAgent: req.headers.get('user-agent'),
+      loadedModules: await getSessionLoadedModules(req.headers.get('mcp-session-id')),
     });
 
     return NextResponse.json({ tools, count: tools.length }, {

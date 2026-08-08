@@ -32,6 +32,7 @@ export const MODULE_KEYWORDS: Record<string, string[]> = {
 
 export function moduleForTool(name: string): string {
   const lower = name.toLowerCase();
+  if (/(social|facebook|linkedin|instagram|twitter|x_)/.test(lower)) return 'social';
   for (const [module, words] of Object.entries(MODULE_KEYWORDS)) {
     if (words.some((word) => lower.includes(word))) return module;
   }

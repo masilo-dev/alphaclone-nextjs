@@ -41,6 +41,7 @@ test("tools/list exposes every canonical social tool", async () => {
     sanitizeForClient: false,
     forceRefresh: true,
     forChatGPT: false,
+    loadedModules: ["social", "media"],
   });
   const names = new Set(tools.map((t) => t.name));
   for (const required of CANONICAL_SOCIAL_MCP_TOOLS) {
@@ -58,12 +59,14 @@ test("inspect_tools catalog (full) and tools/list include the same canonical soc
   const full = await getUnifiedMcpTools({
     forceRefresh: true,
     forChatGPT: false,
+    catalogMode: "full",
   });
   const chatgpt = await getUnifiedMcpTools({
     forceRefresh: true,
     forChatGPT: true,
     clientId: "chatgpt-connector",
     userAgent: "ChatGPT",
+    loadedModules: ["social", "media"],
   });
   const fullNames = new Set(full.map((t) => t.name));
   const chatgptNames = new Set(chatgpt.map((t) => t.name));
@@ -107,6 +110,7 @@ test("upload_media / get_media / delete_media are ChatGPT-discoverable with AI i
     forChatGPT: true,
     clientId: "chatgpt-connector",
     userAgent: "ChatGPT",
+    loadedModules: ["social", "media"],
   });
   const byName = new Map(chatgpt.map((t) => [t.name, t]));
   for (const name of ["upload_media", "get_media", "delete_media", "publish_post", "get_post_status"]) {

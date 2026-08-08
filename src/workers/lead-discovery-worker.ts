@@ -73,11 +73,17 @@ async function execute(job: Job) {
   }).eq('id', job.id);
 }
 
-async function tick() {
-  const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: workerId, claim_limit: 3 });
+export async function processLeadDiscoveryBatch(options?: { workerId?: string; claimLimit?: number }) {
+  const activeWorkerId = options?.workerId || workerId;
+  const claimLimit = Math.max(1, Math.min(options?.claimLimit ?? 3, 10));
+  const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: activeWorkerId, claim_limit: claimLimit });
   if (error) throw error;
+  const results: Array<{ jobId: string; ok: boolean; error?: string }> = [];
   for (const job of (data || []) as Job[]) {
-    try { await execute(job); }
+    try {
+      await execute(job);
+      results.push({ jobId: job.id, ok: true });
+    }
     catch (error) {
       const retry = job.attempt_count < job.max_attempts;
       await supabase.from('lead_search_jobs').update({
@@ -87,8 +93,18 @@ async function tick() {
         error_message: 'Discovery job failed; retry policy applied.',
       }).eq('id', job.id);
       if (!retry) await supabase.from('lead_searches').update({ status: 'failed', error_count: 1 }).eq('id', job.search_id);
+      results.push({
+        jobId: job.id,
+        ok: false,
+        error: error instanceof Error ? error.message : 'WORKER_ERROR',
+      });
     }
   }
+  return { claimed: (data || []).length, results };
+}
+
+async function tick() {
+  await processLeadDiscoveryBatch();
 }
 
 process.on('SIGTERM', () => { stopping = true; });
@@ -99,4 +115,6 @@ async function main() {
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 }
-void main();
+if (process.argv[1]?.includes('lead-discovery-worker')) {
+  void main();
+}

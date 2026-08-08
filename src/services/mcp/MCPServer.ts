@@ -995,11 +995,12 @@ class AlphaCloneMCPServer {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       try {
         const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
-        // Full catalog for SDK transports (Claude Code, etc.) — never ChatGPT-curated by default.
+        // Full catalog for SDK transports (Claude Code, etc.).
         const tools = await getUnifiedMcpTools({
           sanitizeForClient: false,
           forChatGPT: false,
           clientLabel: 'mcp-sdk',
+          catalogMode: 'full',
         });
         console.info(`[mcp.ListTools] returning ${tools.length} tools`);
         if (tools.length === 0) {

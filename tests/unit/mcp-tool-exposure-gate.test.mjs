@@ -48,7 +48,7 @@ test("ToolPolicyGate enforces human oversight for high-risk tools (source)", asy
   assert.match(src, /requiresApproval/);
 });
 
-test("unified tools/list exposes the compact full catalog for internal client", async () => {
+test("unified tools/list exposes bounded progressive catalog by default", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: false,
@@ -60,11 +60,8 @@ test("unified tools/list exposes the compact full catalog for internal client", 
   const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
   initializeRegistry();
   const registryNames = new Set(listTools(false).map((tool) => tool.name));
-  assert.ok(tools.length >= registryNames.size, `expected at least ${registryNames.size} tools, got ${tools.length}`);
   const names = new Set(tools.map((t) => t.name));
-  for (const name of registryNames) {
-    assert.ok(names.has(name), `tools/list omitted registered tool ${name}`);
-  }
+  assert.ok(tools.length < registryNames.size, `expected progressive catalog smaller than ${registryNames.size}, got ${tools.length}`);
   for (const required of [
     "search_tools",
     "load_module_tools",
@@ -75,30 +72,31 @@ test("unified tools/list exposes the compact full catalog for internal client", 
   }
 });
 
-test("Claude OAuth client gets compacted full catalog", async () => {
+test("module loading adds executable tools for that module", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
     forceRefresh: true,
-    clientId: "1778309945386-41bab8272f61",
-    clientLabel: "claude.ai",
-    userAgent: "Claude-User",
+    clientId: "chatgpt-connector",
+    loadedModules: ["social"],
   });
   const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
   initializeRegistry();
   const registered = listTools(false);
-  assert.ok(tools.length >= registered.length, `expected at least ${registered.length} tools, got ${tools.length}`);
   const discoveredNames = new Set(tools.map((tool) => tool.name));
-  for (const tool of registered) assert.ok(discoveredNames.has(tool.name), `ChatGPT catalog omitted ${tool.name}`);
   const names = new Set(tools.map((t) => t.name));
   for (const required of [
     "search_tools",
-    "search_leads",
     "load_module_tools",
     "list_capabilities",
+    "upload_media",
+    "get_social_identities",
+    "publish_social_post",
+    "verify_social_post_published",
   ]) {
     assert.ok(names.has(required), `missing platform tool ${required}`);
   }
+  assert.ok(tools.length < registered.length, `loaded module should not expose every registered tool`);
   // Compaction: property descriptions should be stripped on discovery schemas
   const sample = tools.find((t) => t.name === "search_leads") || tools[0];
   const props = sample?.inputSchema?.properties || {};
@@ -107,12 +105,13 @@ test("Claude OAuth client gets compacted full catalog", async () => {
   }
 });
 
-test("API-key path also gets the full catalog by default", async () => {
+test("full catalog remains available only for explicit internal audit mode", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: true,
     forceRefresh: true,
     clientId: null,
+    catalogMode: "full",
   });
   const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
   initializeRegistry();

@@ -7,6 +7,8 @@ export interface AccountDeletionResult {
 }
 
 const GRACE_PERIOD_DAYS = 30;
+export const INACTIVE_ACCOUNT_DISABLE_DAYS = 60;
+export const DISABLED_ACCOUNT_PURGE_DAYS = 6;
 
 function normalizeEmail(email: string | null | undefined): string | null {
     if (!email) return null;
@@ -172,6 +174,136 @@ export const accountDeletionService = {
                 error: err instanceof Error ? err.message : 'Unknown error during account purge',
             };
         }
+    },
+
+    /**
+     * Company policy:
+     * - Accounts with no sign-in activity for 60 days are disabled.
+     * - Disabled inactive accounts are permanently purged 6 days later.
+     *
+     * Uses Supabase Auth's last_sign_in_at as the source of truth, because a
+     * normal logged-in super-admin session cannot delete auth.users.
+     */
+    async processInactiveAccounts(options?: {
+        disableAfterDays?: number;
+        purgeAfterDays?: number;
+        maxUsers?: number;
+    }): Promise<{
+        disabled: number;
+        purged: number;
+        skippedAdmins: number;
+        failed: string[];
+    }> {
+        const admin = createSupabaseAdminClient();
+        const disableAfterDays = options?.disableAfterDays ?? INACTIVE_ACCOUNT_DISABLE_DAYS;
+        const purgeAfterDays = options?.purgeAfterDays ?? DISABLED_ACCOUNT_PURGE_DAYS;
+        const maxUsers = Math.max(1, Math.min(options?.maxUsers ?? 1000, 1000));
+        const now = new Date();
+        const disableCutoff = new Date(now.getTime() - disableAfterDays * 24 * 60 * 60 * 1000);
+        const purgeCutoff = new Date(now.getTime() - purgeAfterDays * 24 * 60 * 60 * 1000);
+        const failed: string[] = [];
+        let disabled = 0;
+        let purged = 0;
+        let skippedAdmins = 0;
+
+        const { data: disabledRows, error: disabledError } = await admin
+            .from('profiles')
+            .select('id, disabled_at')
+            .eq('account_status', 'disabled')
+            .lte('disabled_at', purgeCutoff.toISOString())
+            .limit(maxUsers);
+
+        if (disabledError) {
+            failed.push(`disabled-list: ${disabledError.message}`);
+        } else {
+            for (const row of disabledRows || []) {
+                const result = await this.purgeUserAccount(row.id, 'inactive_account_policy_purge');
+                if (result.success) purged += 1;
+                else failed.push(`${row.id}: ${result.error}`);
+            }
+        }
+
+        let page = 1;
+        const perPage = 100;
+        while (disabled + purged + skippedAdmins + failed.length < maxUsers) {
+            const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+            if (error) {
+                failed.push(`auth-list: ${error.message}`);
+                break;
+            }
+            const users = data.users || [];
+            if (!users.length) break;
+
+            const ids = users.map((user) => user.id);
+            const { data: profiles, error: profileError } = await admin
+                .from('profiles')
+                .select('id, role, account_status')
+                .in('id', ids);
+            if (profileError) {
+                failed.push(`profile-list:${page}: ${profileError.message}`);
+                break;
+            }
+            const profileById = new Map((profiles || []).map((profile) => [profile.id, profile]));
+
+            for (const user of users) {
+                if (disabled + purged + skippedAdmins + failed.length >= maxUsers) break;
+                const profile = profileById.get(user.id);
+                if (!profile || profile.account_status !== 'active') continue;
+                if (['admin', 'super_admin', 'platform_admin', 'platform_owner'].includes(String(profile.role || '').toLowerCase())) {
+                    skippedAdmins += 1;
+                    continue;
+                }
+
+                const lastActivity = user.last_sign_in_at || user.created_at;
+                if (!lastActivity || new Date(lastActivity) > disableCutoff) continue;
+
+                const disabledAt = now.toISOString();
+                const scheduledDeletionAt = new Date(now.getTime() + purgeAfterDays * 24 * 60 * 60 * 1000).toISOString();
+                const { error: banError } = await admin.auth.admin.updateUserById(user.id, {
+                    ban_duration: '876000h',
+                    app_metadata: {
+                        ...(user.app_metadata || {}),
+                        account_status: 'disabled',
+                        disabled_reason: 'inactive_60_days',
+                        disabled_at: disabledAt,
+                    },
+                });
+                if (banError) {
+                    failed.push(`${user.id}: auth disable failed: ${banError.message}`);
+                    continue;
+                }
+
+                const { error: profileUpdateError } = await admin
+                    .from('profiles')
+                    .update({
+                        account_status: 'disabled',
+                        disabled_at: disabledAt,
+                        disabled_reason: 'inactive_60_days',
+                        scheduled_deletion_at: scheduledDeletionAt,
+                        updated_at: disabledAt,
+                    })
+                    .eq('id', user.id);
+                if (profileUpdateError) {
+                    failed.push(`${user.id}: ${profileUpdateError.message}`);
+                    await admin.auth.admin.updateUserById(user.id, {
+                        ban_duration: 'none',
+                        app_metadata: {
+                            ...(user.app_metadata || {}),
+                            account_status: 'active',
+                            disabled_reason: null,
+                            disabled_at: null,
+                        },
+                    });
+                    continue;
+                }
+                disabled += 1;
+            }
+
+            if (users.length < perPage) break;
+            page += 1;
+        }
+
+        return { disabled, purged, skippedAdmins, failed };
     },
 
     /** Process accounts whose grace period has expired. */

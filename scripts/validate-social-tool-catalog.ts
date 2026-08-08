@@ -26,6 +26,7 @@ async function main() {
     sanitizeForClient: false,
     forceRefresh: true,
     forChatGPT: false,
+    catalogMode: 'full',
   });
   const fullNames = new Set(fullList.map((t) => t.name));
 
@@ -35,6 +36,7 @@ async function main() {
     forChatGPT: true,
     clientId: 'chatgpt-connector',
     userAgent: 'ChatGPT',
+    loadedModules: ['social', 'media'],
   });
   const chatgptNames = new Set(chatgptList.map((t) => t.name));
 

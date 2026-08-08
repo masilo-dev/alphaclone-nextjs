@@ -35,6 +35,63 @@ test.describe("Mobile unified inbox", () => {
     ).toHaveAttribute("aria-selected", "true");
   });
 
+  test("Desktop mail keeps scrolling inside the inbox, not the dashboard shell", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/dashboard/mail");
+    await expect(
+      page.getByRole("region", { name: "Email mailbox" }),
+    ).toBeVisible({
+      timeout: 15000,
+    });
+
+    const mainOverflow = await page.locator("#main-content").evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return {
+        overflowY: style.overflowY,
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+      };
+    });
+    expect(mainOverflow.overflowY).toBe("hidden");
+    expect(mainOverflow.scrollHeight).toBeLessThanOrEqual(
+      mainOverflow.clientHeight + 8,
+    );
+
+    const scrollablePaneCount = await page
+      .locator(
+        '[role="list"][aria-label$="messages"], [aria-label="Email mailbox"] .overflow-y-auto',
+      )
+      .count();
+    expect(scrollablePaneCount).toBeGreaterThan(0);
+  });
+
+  test("Desktop business messages uses a contained chat scroller", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/dashboard/business/messages");
+    await expect(page.locator("#main-content")).toBeVisible({ timeout: 15000 });
+
+    const mainOverflow = await page.locator("#main-content").evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      return {
+        overflowY: style.overflowY,
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+      };
+    });
+    expect(mainOverflow.overflowY).toBe("hidden");
+    expect(mainOverflow.scrollHeight).toBeLessThanOrEqual(
+      mainOverflow.clientHeight + 8,
+    );
+
+    await expect(page.locator('[data-tour="messages"]')).toBeVisible({
+      timeout: 15000,
+    });
+  });
+
   test("Mobile: folder tabs remain tappable", async ({ page }) => {
     await page.goto("/dashboard/mail");
     const sentTab = page.getByRole("tab", { name: "sent" });

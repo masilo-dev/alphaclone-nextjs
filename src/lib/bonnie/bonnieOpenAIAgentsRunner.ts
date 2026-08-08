@@ -94,7 +94,7 @@ export async function runBonnieWithOpenAIAgents(input: RunInput): Promise<OpenAI
 
   const [{ Agent, OpenAIProvider, Runner, tool }, catalog] = await Promise.all([
     import('@openai/agents'),
-    getUnifiedMcpTools({ sanitizeForClient: false }),
+    getUnifiedMcpTools({ sanitizeForClient: false, catalogMode: 'full' }),
   ]);
 
   const specialists = selectAgentsForGoal(input.instruction, { maxAgents: 4 });

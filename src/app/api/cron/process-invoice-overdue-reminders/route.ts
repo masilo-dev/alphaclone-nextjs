@@ -43,7 +43,8 @@ async function processInvoiceOverdueReminders() {
             await admin
                 .from('business_invoices')
                 .update({ status: 'overdue', lifecycle_status: 'overdue', updated_at: nowIso })
-                .eq('id', invoice.id);
+                .eq('id', invoice.id)
+                .eq('tenant_id', invoice.tenant_id);
             await logInvoiceEvent({
                 invoiceId: invoice.id,
                 tenantId: invoice.tenant_id,
@@ -260,7 +261,8 @@ async function processInvoiceOverdueReminders() {
                     last_reminder_at: nowIso,
                     updated_at: nowIso,
                 })
-                .eq('id', invoice.id);
+                .eq('id', invoice.id)
+                .eq('tenant_id', invoice.tenant_id);
 
             remindersSent += 1;
         }

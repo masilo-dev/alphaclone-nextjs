@@ -201,6 +201,27 @@ export async function GET(request: Request) {
                     }
                 }
 
+                try {
+                    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin')
+                    const { recordRegistrationEvent, inferSignupMethod } = await import('@/lib/auth/registrationEvents')
+                    const admin = createSupabaseAdminClient()
+                    const registrationResult = await recordRegistrationEvent(admin, {
+                        user,
+                        signupMethod: inferSignupMethod(user),
+                        sourceUrl: request.headers.get('referer'),
+                        userAgent: request.headers.get('user-agent'),
+                        metadata: {
+                            callbackProvider: provider || null,
+                            callbackNext: requestedNext || null,
+                        },
+                    })
+                    if (!registrationResult.success) {
+                        console.error('[auth/callback] Registration event failed:', registrationResult.error)
+                    }
+                } catch (registrationErr) {
+                    console.error('[auth/callback] Registration event error:', registrationErr)
+                }
+
                 // Apply signup consent prefs after email confirmation (no session existed at signUp).
                 if (user.user_metadata?.signup_method === 'email' && !user.user_metadata?.communication_prefs_applied_at) {
                     try {

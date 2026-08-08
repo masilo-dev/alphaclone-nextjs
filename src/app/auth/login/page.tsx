@@ -252,6 +252,22 @@ function LoginContent() {
                                     isRegistration: true,
                                 }),
                             });
+                            void fetch('/api/auth/registration-event', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    Authorization: `Bearer ${sessionToken}`,
+                                },
+                                body: JSON.stringify({
+                                    selectedPlan,
+                                    referralCode: referralCodeParam,
+                                    businessName,
+                                    marketingOptIn,
+                                    legalAccepted,
+                                    euConsent,
+                                    ageConfirmed,
+                                }),
+                            }).catch((eventErr) => console.warn('Registration event notification failed:', eventErr));
                         }
                     } catch (consentErr) {
                         console.warn('Failed to persist registration consent:', consentErr);
