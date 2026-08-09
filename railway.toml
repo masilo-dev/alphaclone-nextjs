@@ -6,7 +6,7 @@ dockerfilePath = "Dockerfile"
 # webpack fails to resolve @/* (Module not found for @/lib/*, @/config/*, etc.).
 # railway.toml buildCommand overrides nixpacks.toml [phases.build], so cleanup
 # must live here (and in the npm "build" script) — not only in nixpacks.toml.
-buildCommand = "rm -rf app && NODE_OPTIONS='--max-old-space-size=6144' npm run build"
+buildCommand = "rm -rf app && NODE_OPTIONS='--max-old-space-size=12288' npm run build"
 
 [deploy]
 # Start Next directly so missing optional env (Redis/Turnstile/etc.) cannot
