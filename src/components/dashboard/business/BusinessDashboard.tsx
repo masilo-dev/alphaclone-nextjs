@@ -545,6 +545,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                     </React.Suspense>
                 );
             case '/dashboard/business/meetings':
+            case '/dashboard/meetings':
+            case '/dashboard/conference':
                 return (
                     <React.Suspense fallback={<TableSkeleton rows={6} columns={4} />}>
                         <MeetingsPage user={user} onJoinRoom={handleJoinCall} />
@@ -659,6 +661,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <ContractDashboard user={user} initialTab="details" />;
             // Duplicate DocumentHub removed to allow EnhancedDocumentSystem to take precedence
             case '/dashboard/business/quotes':
+            case '/dashboard/quotes':
                 return <QuotesTab user={user} />;
             case '/dashboard/business/tasks':
                 return (
@@ -961,10 +964,15 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/business/onboarding': return t('Client Onboarding');
             case '/dashboard/business/vault': return t('Document Vault');
             case '/dashboard/business/tax-estimator': return t('Tax Estimator');
+            case '/dashboard/business/invoices': return t('Invoices');
 
             case '/dashboard/business/ingestion': return t('Lead Ingestion');
-            case '/dashboard/business/quotes': return t('Quotes & Proposals');
+            case '/dashboard/business/quotes':
+            case '/dashboard/quotes': return t('Quotes & Proposals');
             case '/dashboard/business/booking': return t('Scheduling & Booking');
+            case '/dashboard/business/meetings':
+            case '/dashboard/meetings':
+            case '/dashboard/conference': return t('Meetings');
             case '/dashboard/business/teams': return t('MS Teams');
             case '/dashboard/business/social-command': return t('Social Command Center');
             case '/dashboard/tasks': return t('Tasks');

@@ -108,6 +108,11 @@ const envSchema = z.object({
     CALENDLY_CLIENT_SECRET: z.string().optional(),
     VITE_CALENDLY_REDIRECT_URI: z.string().url().optional(),
     CALENDLY_WEBHOOK_SIGNING_KEY: z.string().optional(),
+    CAL_WEBHOOK_SECRET: z.string().optional(),
+    CALCOM_WEBHOOK_SECRET: z.string().optional(),
+    CAL_BASE_URL: z.string().url().optional(),
+    CAL_OAUTH_CLIENT_ID: z.string().optional(),
+    CAL_OAUTH_CLIENT_SECRET: z.string().optional(),
 
     // Google OAuth
     GOOGLE_CLIENT_ID: z.string().min(1, 'Google Client ID is required').optional(),
@@ -232,6 +237,11 @@ function validateEnv() {
         CALENDLY_CLIENT_SECRET: process.env.CALENDLY_CLIENT_SECRET,
         VITE_CALENDLY_REDIRECT_URI: process.env.NEXT_PUBLIC_CALENDLY_REDIRECT_URI || process.env.VITE_CALENDLY_REDIRECT_URI || process.env.CALENDLY_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL || 'https://alphaclonesystems.com'}/api/auth/calendly/callback`,
         CALENDLY_WEBHOOK_SIGNING_KEY: process.env.CALENDLY_WEBHOOK_SIGNING_KEY || process.env.VITE_CALENDLY_WEBHOOK_SIGNING_KEY || process.env.NEXT_PUBLIC_CALENDLY_WEBHOOK_SIGNING_KEY,
+        CAL_WEBHOOK_SECRET: process.env.CAL_WEBHOOK_SECRET,
+        CALCOM_WEBHOOK_SECRET: process.env.CALCOM_WEBHOOK_SECRET || process.env.CAL_WEBHOOK_SECRET,
+        CAL_BASE_URL: process.env.CAL_BASE_URL || process.env.NEXT_PUBLIC_CAL_BASE_URL,
+        CAL_OAUTH_CLIENT_ID: process.env.CAL_OAUTH_CLIENT_ID || process.env.NEXT_PUBLIC_CAL_OAUTH_CLIENT_ID,
+        CAL_OAUTH_CLIENT_SECRET: process.env.CAL_OAUTH_CLIENT_SECRET,
 
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,

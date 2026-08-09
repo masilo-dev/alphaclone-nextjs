@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/UIComponents';
 import { Calendar, Settings, AlertCircle, Clock, ExternalLink, RefreshCw, User, CalendarCheck, CalendarDays } from 'lucide-react';
 import { ModuleStatCards, type ModuleStat } from '../common/ModuleStatCards';
 import { toast } from 'react-hot-toast';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { BOOKING_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 const BookingTab: React.FC = () => {
     const { currentTenant } = useTenant();
@@ -86,21 +88,27 @@ const BookingTab: React.FC = () => {
 
     if (!isEnabled || !calendlyUrl) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in-up">
-                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                    <Calendar className="w-10 h-10 text-slate-500" />
+            <div className="space-y-5 pb-20 ac-scroll-full ac-enterprise-module">
+                <ExecutionDecisionGuide
+                    steps={BOOKING_EXECUTION_STEPS}
+                    onNavigate={(href) => { window.location.href = href; }}
+                />
+                <div className="flex flex-col items-center justify-center py-16 text-center animate-fade-in-up">
+                    <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                        <Calendar className="w-10 h-10 text-slate-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Booking Not Connected</h3>
+                    <p className="text-slate-400 max-w-md mb-8">
+                        Connect native booking, Cal.com/Cal.diy, or Calendly in settings to enable public scheduling, webhook sync, and client follow-up.
+                    </p>
+                    <button
+                        onClick={() => window.location.href = '/dashboard/business/settings'}
+                        className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
+                    >
+                        <Settings className="w-4 h-4" />
+                        Go to Settings
+                    </button>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Calendly Not Connected</h3>
-                <p className="text-slate-400 max-w-md mb-8">
-                    Connect your Calendly account in settings to enable the embedded booking view and schedule sync.
-                </p>
-                <button
-                    onClick={() => window.location.href = '/dashboard/business/settings'}
-                    className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-teal-900/20"
-                >
-                    <Settings className="w-4 h-4" />
-                    Go to Settings
-                </button>
             </div>
         );
     }
@@ -131,6 +139,11 @@ const BookingTab: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            <ExecutionDecisionGuide
+                steps={BOOKING_EXECUTION_STEPS}
+                onNavigate={(href) => { window.location.href = href; }}
+            />
 
             <ModuleStatCards stats={bookingStats} />
 
@@ -333,4 +346,3 @@ const BookingTab: React.FC = () => {
 };
 
 export default BookingTab;
-

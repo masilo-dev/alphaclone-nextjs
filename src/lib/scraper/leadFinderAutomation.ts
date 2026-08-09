@@ -34,6 +34,144 @@ function normalizeTraceValue(value: unknown): string {
   return String(value || '').trim();
 }
 
+function normalizeTextKey(value: unknown): string {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function normalizePhoneKey(value: unknown): string {
+  return String(value || '').replace(/\D/g, '');
+}
+
+function normalizeHostKey(value: unknown): string {
+  const raw = normalizeTraceValue(value);
+  if (!raw) return '';
+  try {
+    const url = raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+    const host = new URL(url).hostname.toLowerCase();
+    return host.startsWith('www.') ? host.slice(4) : host;
+  } catch {
+    return normalizeTextKey(raw);
+  }
+}
+
+function buildLeadDedupeKey(input: {
+  email?: unknown;
+  phone?: unknown;
+  website?: unknown;
+  company?: unknown;
+  address?: unknown;
+}): string {
+  const email = normalizeTextKey(input.email);
+  if (email.includes('@')) return `email:${email}`;
+
+  const phone = normalizePhoneKey(input.phone);
+  if (phone.length >= 7) return `phone:${phone}`;
+
+  const host = normalizeHostKey(input.website);
+  if (host) return `domain:${host}`;
+
+  const company = normalizeTextKey(input.company);
+  const address = normalizeTextKey(input.address);
+  return [company, address].filter(Boolean).join('|');
+}
+
+function buildMatchReasons(lead: LeadResult, score: number, radiusKm: number): string[] {
+  const reasons = new Set<string>();
+  if (lead.category) reasons.add(`Category matched: ${lead.category}`);
+  if (lead.phone) reasons.add('Public phone found');
+  if (lead.email) reasons.add('Public email found');
+  if (lead.website) reasons.add('Website found');
+  if (lead.decision_maker_name) reasons.add(`Decision maker found: ${lead.decision_maker_name}`);
+  if (typeof lead.reach_km === 'number') reasons.add(`Inside ${radiusKm} km radius: ${lead.reach_km} km away`);
+  if (lead.rating) reasons.add(`Directory rating: ${lead.rating}`);
+  reasons.add(`Confidence score: ${score}`);
+  return Array.from(reasons).slice(0, 8);
+}
+
+function buildSourceUrls(lead: Pick<LeadResult, 'source_url' | 'website'>): string[] {
+  return Array.from(
+    new Set(
+      [lead.source_url, lead.website]
+        .map((value) => normalizeTraceValue(value))
+        .filter((value) => /^https?:\/\//i.test(value))
+    )
+  );
+}
+
+async function removeKnownDuplicateRows(
+  tenantId: string,
+  rows: Array<Record<string, any>>
+): Promise<{ rows: Array<Record<string, any>>; removedCount: number }> {
+  if (!rows.length) return { rows, removedCount: 0 };
+
+  const supabase = createSupabaseAdminClient();
+  const seen = new Set<string>();
+
+  const addExistingKeys = (items: Array<Record<string, any>>, source: 'scraper' | 'lead' | 'contact' | 'client') => {
+    for (const item of items) {
+      const key = source === 'scraper'
+        ? normalizeTraceValue(item.dedupe_key) || buildLeadDedupeKey({
+            email: item.email,
+            phone: item.phone,
+            website: item.company_website || item.source_url,
+            company: item.company,
+            address: item.address,
+          })
+        : buildLeadDedupeKey({
+            email: item.email,
+            phone: item.phone || item.mobile,
+            website: item.website || item.company_website,
+            company: item.business_name || item.company || item.name || item.full_name,
+            address: item.location || item.address || item.address_line1,
+          });
+      if (key) seen.add(key);
+    }
+  };
+
+  const [scraper, leads, contacts, clients] = await Promise.all([
+    supabase
+      .from('scraper_leads')
+      .select('dedupe_key,email,phone,company,company_website,source_url,address')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(2000),
+    supabase
+      .from('leads')
+      .select('email,phone,website,business_name,location')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(2000),
+    supabase
+      .from('contacts')
+      .select('email,phone,mobile,full_name,address_line1')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(2000),
+    supabase
+      .from('business_clients')
+      .select('email,phone,website,company,name,location')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(2000),
+  ]);
+
+  addExistingKeys((scraper.data || []) as Array<Record<string, any>>, 'scraper');
+  addExistingKeys((leads.data || []) as Array<Record<string, any>>, 'lead');
+  addExistingKeys((contacts.data || []) as Array<Record<string, any>>, 'contact');
+  addExistingKeys((clients.data || []) as Array<Record<string, any>>, 'client');
+
+  const local = new Set<string>();
+  const deduped = rows.filter((row) => {
+    const key = normalizeTraceValue(row.dedupe_key);
+    if (!key) return true;
+    if (seen.has(key) || local.has(key)) return false;
+    local.add(key);
+    return true;
+  });
+
+  return { rows: deduped, removedCount: rows.length - deduped.length };
+}
+
 export async function logLeadRun(input: {
   tenantId: string;
   campaignId: string;
@@ -124,6 +262,17 @@ export async function fallbackLocalSearch(
     const sourceId = normalizeTraceValue(
       place?.placeId || `${place?.source || 'directory'}:${place?.businessName}`
     );
+    const sourceUrls = buildSourceUrls({
+      website: place?.website || '',
+      source_url: place?.website || '',
+    });
+    const matchReasons = [
+      'Directory business matched search niche',
+      phone ? 'Public phone found' : '',
+      email ? 'Public email found' : '',
+      place?.website ? 'Website found' : '',
+      dmName ? `Decision maker found: ${dmName}` : '',
+    ].filter(Boolean);
     enrichedRows.push({
       campaign_id: campaignId,
       tenant_id: tenantId,
@@ -142,18 +291,34 @@ export async function fallbackLocalSearch(
       lat: place?.lat ?? null,
       lng: place?.lng ?? null,
       score: email && phone ? 72 : 58,
+      confidence_score: email && phone ? 72 : 58,
       grade: email && phone ? 'B' : 'C',
       status: 'new',
+      dedupe_key: buildLeadDedupeKey({
+        email,
+        phone,
+        website: place?.website,
+        company: place?.businessName || p.company,
+        address: place?.formattedAddress,
+      }) || null,
+      match_reasons: matchReasons,
+      source_urls: sourceUrls,
+      enrichment_status: 'completed',
+      verification_status: email && phone ? 'verified' : 'partial',
+      duplicate_status: 'unique',
+      source_health: { primary: place?.source || 'directory', urls: sourceUrls },
       quality_reason: 'SMB directory + auto contact enrichment',
       metadata: {
         free_source: place?.source || 'directory',
         decision_maker_name: dmName || null,
         auto_enriched: true,
+        match_reasons: matchReasons,
+        source_urls: sourceUrls,
       },
     });
   }
 
-  const rows = enrichedRows;
+  const { rows, removedCount } = await removeKnownDuplicateRows(tenantId, enrichedRows);
   if (!rows.length) return 0;
 
   const { error } = await supabase.from('scraper_leads').insert(rows);
@@ -167,6 +332,7 @@ export async function fallbackLocalSearch(
     sourceCount: places.length,
     enrichedCount: rows.length,
     createdCount: rows.length,
+    errors: removedCount ? [{ stage: 'dedupe', message: `${removedCount} duplicate leads skipped` }] : [],
   });
   return rows.length;
 }
@@ -278,11 +444,16 @@ async function updateCampaignRunProgress(
     tenant_id: tenantId,
     status: patch.status || 'running',
     current_step: patch.current_step || 'scraping',
+    stage: patch.current_step || 'scraping',
     progress: patch.progress ?? 10,
     source_count: patch.source_count ?? 0,
     enriched_count: patch.enriched_count ?? 0,
     created_count: patch.created_count ?? 0,
     errors: patch.errors || [],
+    source_health: {
+      errors: patch.errors || [],
+      healthy: (patch.errors || []).length === 0,
+    },
     run_at: new Date().toISOString(),
   };
   await supabase.from('lead_campaign_runs').insert(payload);
@@ -405,6 +576,8 @@ export async function runInProcessLeadCampaign(
   const rows = smb.slice(0, limit).map((entry) => {
     const lead = entry.lead;
     const { score, grade } = scoreFromLeadResult(lead, radiusKm);
+    const sourceUrls = buildSourceUrls(lead);
+    const matchReasons = buildMatchReasons(lead, score, radiusKm);
     const sourceId =
       normalizeTraceValue(lead.source_id) ||
       normalizeTraceValue(`${lead.source}:${lead.business_name}:${lead.lat},${lead.lng}`);
@@ -439,6 +612,24 @@ export async function runInProcessLeadCampaign(
       reach_km: typeof lead.reach_km === 'number' ? lead.reach_km : null,
       search_center_lat: searchCenter?.lat ?? null,
       search_center_lng: searchCenter?.lng ?? null,
+      dedupe_key: buildLeadDedupeKey({
+        email: lead.email,
+        phone: lead.phone,
+        website: lead.website || lead.source_url,
+        company: lead.business_name,
+        address: lead.address,
+      }) || null,
+      confidence_score: score,
+      match_reasons: matchReasons,
+      source_urls: sourceUrls,
+      enrichment_status: lead.email || lead.phone ? 'completed' : 'partial',
+      verification_status: lead.email && lead.phone ? 'verified' : lead.email || lead.phone ? 'partial' : 'unverified',
+      duplicate_status: 'unique',
+      source_health: {
+        primary: lead.source || 'osm',
+        urls: sourceUrls,
+        browser_enabled: canUseBrowserScraper(),
+      },
       score,
       grade,
       status: 'new',
@@ -454,23 +645,34 @@ export async function runInProcessLeadCampaign(
         decision_maker_title: dmTitle,
         auto_enriched: true,
         playwright: canUseBrowserScraper(),
+        source_urls: sourceUrls,
+        match_reasons: matchReasons,
+        verification_status: lead.email && lead.phone ? 'verified' : lead.email || lead.phone ? 'partial' : 'unverified',
       },
     };
   });
 
-  if (!rows.length) {
+  const { rows: dedupedRows, removedCount } = await removeKnownDuplicateRows(tenantId, rows);
+  sourceStats.duplicates = (sourceStats.duplicates || 0) + removedCount;
+
+  if (!dedupedRows.length) {
     await updateCampaignRunProgress(tenantId, campaignId, {
       status: 'failed',
-      current_step: 'no_contactable_leads',
+      current_step: removedCount > 0 ? 'duplicates_removed' : 'no_contactable_leads',
       progress: 100,
       source_count: finalResults.length,
       created_count: 0,
-      errors: [{ stage: 'enrich', message: 'No leads with phone or email after enrichment' }],
+      errors: [{
+        stage: removedCount > 0 ? 'dedupe' : 'enrich',
+        message: removedCount > 0
+          ? 'All discovered leads already exist in scraper or CRM records.'
+          : 'No leads with phone or email after enrichment',
+      }],
     });
     return { count: 0, sourceStats, sourceErrors, searchCenter };
   }
 
-  const { error } = await supabase.from('scraper_leads').insert(rows);
+  const { error } = await supabase.from('scraper_leads').insert(dedupedRows);
   if (error) throw error;
 
   await updateCampaignRunProgress(tenantId, campaignId, {
@@ -478,8 +680,9 @@ export async function runInProcessLeadCampaign(
     current_step: 'done',
     progress: 100,
     source_count: finalResults.length,
-    enriched_count: rows.length,
-    created_count: rows.length,
+    enriched_count: dedupedRows.length,
+    created_count: dedupedRows.length,
+    errors: removedCount > 0 ? [{ stage: 'dedupe', message: `${removedCount} duplicate leads skipped` }] : [],
   });
 
   await logLeadRun({
@@ -489,12 +692,12 @@ export async function runInProcessLeadCampaign(
     category: niche,
     status: 'completed',
     sourceCount: finalResults.length,
-    enrichedCount: rows.length,
-    createdCount: rows.length,
+    enrichedCount: dedupedRows.length,
+    createdCount: dedupedRows.length,
     errors: Object.entries(sourceErrors).map(([stage, message]) => ({ stage, message })),
   });
 
-  return { count: rows.length, sourceStats, sourceErrors, searchCenter };
+  return { count: dedupedRows.length, sourceStats, sourceErrors, searchCenter };
 }
 
 export async function saveLeadsToCrm(

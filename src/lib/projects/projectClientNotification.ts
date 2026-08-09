@@ -3,6 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { sendEmailServer } from '@/lib/email/sendEmailServer';
 import { ensureFooter } from '@/lib/email/emailComposition';
+import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
 
 const NOREPLY_FOOTER =
   '\n\n—\nThis is an automated project update from AlphaClone Systems. Please do not reply to this email; use your project portal link to message the team.';
@@ -21,7 +22,7 @@ type ProjectNotifyRow = {
 
 function buildPortalUrl(origin: string, portalToken: string | null): string | null {
   if (!portalToken) return null;
-  return `${origin.replace(/\/$/, '')}/p/${portalToken}`;
+  return buildCanonicalProjectPortalUrl(portalToken);
 }
 
 async function resolveClientRecipient(

@@ -29,8 +29,15 @@ export interface ScraperLead {
   source?: string;
   industry?: string;
   source_label?: string;
+  quality_reason?: string;
   source_id?: string;
   source_url?: string;
+  source_urls?: string[];
+  confidence_score?: number;
+  match_reasons?: string[];
+  enrichment_status?: string;
+  verification_status?: string;
+  duplicate_status?: string;
   crm_lead_id?: string;
   address?: string;
   lat?: number | null;
@@ -56,10 +63,49 @@ const GRADE_COLORS: Record<string, string> = {
   D: 'text-slate-400 bg-slate-800',
 };
 
+const fieldClass = 'rounded-lg border border-[var(--ws-border)] bg-[var(--ws-surface)] px-2 py-1 text-sm text-[var(--ws-text-primary)] outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/50';
+const optionStyle = { backgroundColor: 'Canvas', color: 'CanvasText' };
+
 function exportCsv(leads: ScraperLead[]) {
-  const headers = ['name', 'email', 'phone', 'company', 'title', 'score', 'grade', 'status', 'source'];
+  const headers = [
+    'name',
+    'email',
+    'phone',
+    'company',
+    'title',
+    'score',
+    'confidence_score',
+    'grade',
+    'status',
+    'verification_status',
+    'enrichment_status',
+    'source',
+    'source_url',
+    'source_urls',
+    'match_reasons',
+    'address',
+    'reach_km',
+  ];
   const rows = leads.map((l) =>
-    [l.name, l.email, l.phone, l.company, l.title, l.score, l.grade, l.status, l.source]
+    [
+      l.name,
+      l.email,
+      l.phone,
+      l.company,
+      l.title,
+      l.score,
+      l.confidence_score,
+      l.grade,
+      l.status,
+      l.verification_status,
+      l.enrichment_status,
+      l.source,
+      l.source_url,
+      (l.source_urls || []).join(' | '),
+      (l.match_reasons || []).join(' | '),
+      l.address,
+      l.reach_km,
+    ]
       .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
       .join(',')
   );
@@ -237,7 +283,25 @@ export default function ScraperLeadsTable({
     if (!tenant?.id || exporting) return;
     setExporting(true);
     const toastId = toast.loading('Preparing export...');
-    const headers = ['name', 'email', 'phone', 'company', 'title', 'score', 'grade', 'status', 'source'];
+    const headers = [
+      'name',
+      'email',
+      'phone',
+      'company',
+      'title',
+      'score',
+      'confidence_score',
+      'grade',
+      'status',
+      'verification_status',
+      'enrichment_status',
+      'source',
+      'source_url',
+      'source_urls',
+      'match_reasons',
+      'address',
+      'reach_km',
+    ];
     const rows: string[] = [];
     const MAX_EXPORT = 1000;
     const batchLimit = 200;
@@ -256,7 +320,25 @@ export default function ScraperLeadsTable({
         const batch = (data.leads || []) as ScraperLead[];
         for (const l of batch) {
           rows.push(
-            [l.name, l.email, l.phone, l.company, l.title, l.score, l.grade, l.status, l.source]
+            [
+              l.name,
+              l.email,
+              l.phone,
+              l.company,
+              l.title,
+              l.score,
+              l.confidence_score,
+              l.grade,
+              l.status,
+              l.verification_status,
+              l.enrichment_status,
+              l.source,
+              l.source_url,
+              (l.source_urls || []).join(' | '),
+              (l.match_reasons || []).join(' | '),
+              l.address,
+              l.reach_km,
+            ]
               .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`)
               .join(',')
           );
@@ -351,20 +433,20 @@ export default function ScraperLeadsTable({
               <Download className="w-4 h-4" />
             </button>
             <select
-              className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-sm text-white"
+              className={fieldClass}
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
             >
-              <option value="">All grades</option>
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-              <option value="D">D</option>
+              <option value="" style={optionStyle}>All grades</option>
+              <option value="A" style={optionStyle}>A</option>
+              <option value="B" style={optionStyle}>B</option>
+              <option value="C" style={optionStyle}>C</option>
+              <option value="D" style={optionStyle}>D</option>
             </select>
             <input
               type="number"
               placeholder="Min score"
-              className="w-24 rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-sm text-white"
+              className={`${fieldClass} w-24`}
               value={minScore}
               onChange={(e) => setMinScore(e.target.value)}
             />
@@ -387,9 +469,9 @@ export default function ScraperLeadsTable({
                 <th className="text-left py-2 px-2">Email</th>
                 <th className="text-left py-2 px-2">Phone</th>
                 <th className="text-left py-2 px-2">Company</th>
-                <th className="text-left py-2 px-2 hidden lg:table-cell">Location / source</th>
+                <th className="text-left py-2 px-2 hidden lg:table-cell">Proof / reason</th>
                 <th className="text-center py-2 px-2 hidden md:table-cell">Reach</th>
-                <th className="text-center py-2 px-2">Score</th>
+                <th className="text-center py-2 px-2">Confidence</th>
                 <th className="text-center py-2 px-2">Grade</th>
                 <th className="text-left py-2 px-2">Status</th>
               </tr>
@@ -426,13 +508,25 @@ export default function ScraperLeadsTable({
                   <td className="py-2 px-2 text-slate-300">{lead.email || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.phone || '—'}</td>
                   <td className="py-2 px-2 text-slate-300">{lead.company || '—'}</td>
-                  <td className="py-2 px-2 text-slate-400 text-xs hidden lg:table-cell max-w-[160px] truncate">
-                    {lead.address || lead.source_label || lead.industry || lead.source || '—'}
+                  <td className="py-2 px-2 text-slate-400 text-xs hidden lg:table-cell max-w-[240px]">
+                    <div className="truncate">
+                      {lead.match_reasons?.[0] || lead.quality_reason || lead.address || lead.source_label || lead.industry || lead.source || '—'}
+                    </div>
+                    {(lead.source_url || lead.source_urls?.[0]) && (
+                      <a
+                        href={lead.source_url || lead.source_urls?.[0]}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 block truncate text-teal-300 hover:text-teal-200"
+                      >
+                        {lead.source_url || lead.source_urls?.[0]}
+                      </a>
+                    )}
                   </td>
                   <td className="py-2 px-2 text-center text-slate-300 tabular-nums text-xs hidden md:table-cell">
                     {lead.reach_km != null ? `${lead.reach_km} km` : '—'}
                   </td>
-                  <td className="py-2 px-2 text-center text-white tabular-nums">{lead.score ?? '—'}</td>
+                  <td className="py-2 px-2 text-center text-white tabular-nums">{lead.confidence_score ?? lead.score ?? '—'}</td>
                   <td className="py-2 px-2 text-center">
                     {lead.grade ? (
                       <span className={`px-2 py-0.5 rounded text-xs font-medium ${GRADE_COLORS[lead.grade] || ''}`}>
@@ -442,7 +536,12 @@ export default function ScraperLeadsTable({
                       '—'
                     )}
                   </td>
-                  <td className="py-2 px-2 text-slate-400 capitalize">{lead.status || 'new'}</td>
+                  <td className="py-2 px-2 text-slate-400 capitalize">
+                    <div>{lead.status || 'new'}</div>
+                    <div className="text-[11px] text-slate-500">
+                      {lead.verification_status || 'unverified'} · {lead.enrichment_status || 'queued'}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -463,13 +562,13 @@ export default function ScraperLeadsTable({
               <select
                 value={String(pageSize)}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-sm text-white"
+                className={fieldClass}
                 aria-label="Leads per page"
               >
-                <option value="25">25 / page</option>
-                <option value="50">50 / page</option>
-                <option value="100">100 / page</option>
-                <option value="200">200 / page</option>
+                <option value="25" style={optionStyle}>25 / page</option>
+                <option value="50" style={optionStyle}>50 / page</option>
+                <option value="100" style={optionStyle}>100 / page</option>
+                <option value="200" style={optionStyle}>200 / page</option>
               </select>
               <button
                 type="button"

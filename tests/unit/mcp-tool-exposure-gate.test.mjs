@@ -97,12 +97,92 @@ test("module loading adds executable tools for that module", async () => {
     assert.ok(names.has(required), `missing platform tool ${required}`);
   }
   assert.ok(tools.length < registered.length, `loaded module should not expose every registered tool`);
+
+  for (const tool of tools) {
+    assert.ok(
+      registered.some((registeredTool) => registeredTool.name === tool.name) ||
+        ["search", "fetch", "list_tools", "list_modules", "list_capabilities", "search_tools", "load_module_tools"].includes(tool.name),
+      `loaded tool ${tool.name} is discoverable but not executable`,
+    );
+  }
+
+  const uploadMedia = registered.find((tool) => tool.name === "upload_media");
+  assert.ok(uploadMedia, "upload_media must be registered as an executable tool");
+  for (const field of ["content_base64", "file_base64", "data_url", "url"]) {
+    assert.ok(uploadMedia.inputSchema.properties[field], `upload_media missing ${field}`);
+  }
+
   // Compaction: property descriptions should be stripped on discovery schemas
   const sample = tools.find((t) => t.name === "search_leads") || tools[0];
   const props = sample?.inputSchema?.properties || {};
   for (const prop of Object.values(props)) {
     assert.equal(prop?.description, undefined);
   }
+});
+
+test("search_tools intent can discover upload_media before loading media tools", async () => {
+  invalidateUnifiedMcpToolCache();
+  const full = await getUnifiedMcpTools({
+    sanitizeForClient: false,
+    forceRefresh: true,
+    catalogMode: "full",
+  });
+  const { searchToolCatalog, moduleForTool } = await import("../../src/lib/mcp/progressiveDiscovery.ts");
+  const matches = searchToolCatalog(full, { query: "upload image", limit: 10 });
+  assert.ok(
+    matches.some((tool) => tool.name === "upload_media"),
+    `upload_media missing from upload image search results: ${matches.map((tool) => tool.name).join(", ")}`,
+  );
+  assert.equal(moduleForTool("upload_media"), "media");
+});
+
+test("every progressive module exposes only executable routed tools", async () => {
+  invalidateUnifiedMcpToolCache();
+  const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
+  const { MODULE_KEYWORDS } = await import("../../src/lib/mcp/progressiveDiscovery.ts");
+  initializeRegistry();
+
+  const executable = new Set([
+    ...listTools(false).map((tool) => tool.name),
+    "search",
+    "fetch",
+    "list_tools",
+    "list_modules",
+    "list_capabilities",
+    "search_tools",
+    "load_module_tools",
+  ]);
+
+  for (const moduleName of Object.keys(MODULE_KEYWORDS)) {
+    const tools = await getUnifiedMcpTools({
+      sanitizeForClient: true,
+      forceRefresh: true,
+      catalogMode: "progressive",
+      loadedModules: [moduleName],
+    });
+    const nonExecutable = tools
+      .map((tool) => tool.name)
+      .filter((name) => !executable.has(name));
+    assert.deepEqual(nonExecutable, [], `${moduleName} exposed non-executable tools`);
+  }
+});
+
+test("credentialed ChatGPT MCP audit scripts exist and default to non-destructive dry-run", async () => {
+  const fs = await import("node:fs");
+  const inventory = fs.readFileSync(
+    new URL("../../scripts/generate-mcp-tool-inventory.ts", import.meta.url),
+    "utf8",
+  );
+  const execution = fs.readFileSync(
+    new URL("../../scripts/chatgpt-mcp-execution-audit.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(inventory, /mcp-canonical-tool-inventory\.json/);
+  assert.match(inventory, /executable_status/);
+  assert.match(execution, /chatgpt-mcp-execution-audit\.json/);
+  assert.match(execution, /--execute-read-tools/);
+  assert.match(execution, /--execute-write-tools/);
+  assert.match(execution, /skipped_destructive/);
 });
 
 test("full catalog remains available only for explicit internal audit mode", async () => {

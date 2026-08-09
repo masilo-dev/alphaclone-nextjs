@@ -3,7 +3,6 @@ import { dashboardStatsService } from '@/services/dashboardStatsService';
 import {
   type HubKpiId,
   type SlimHubStats,
-  normalizeRpcHubStats,
   slimHubStats,
 } from '@/lib/dashboard/hubKpi';
 import { getStatsCache, setStatsCache } from '@/lib/dashboard/statsCache';
@@ -50,18 +49,6 @@ export async function getHubKpiStats(
   const cacheKey = `hub-kpi:${hub}:${tenantId}`;
   const cached = getStatsCache<SlimHubStats>(cacheKey);
   if (cached) return cached;
-
-  const { data, error } = await supabase.rpc('get_hub_kpi_snapshot', {
-    p_tenant_id: tenantId,
-    p_hub: hub,
-  });
-  if (!error && data != null) {
-    const normalized = normalizeRpcHubStats(data);
-    if (normalized && normalized.metrics.length > 0) {
-      setStatsCache(cacheKey, normalized);
-      return normalized;
-    }
-  }
 
   const loader = HUB_SERVICE[hub];
   const stats = await loader(supabase, tenantId);

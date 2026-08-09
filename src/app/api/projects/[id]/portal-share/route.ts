@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { hashPortalPassword } from '@/lib/projects/portalPassword';
+import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
 import crypto from 'crypto';
 
 const portalShareSchema = z.object({
@@ -80,8 +81,7 @@ export async function POST(req: NextRequest, context: RouteContext) {
 
     if (updateError) throw updateError;
 
-    const origin = req.nextUrl.origin.replace(/\/$/, '');
-    const url = `${origin}/p/${token}`;
+    const url = buildCanonicalProjectPortalUrl(token);
 
     return NextResponse.json({
       success: true,

@@ -14,25 +14,54 @@ export const CORE_TOOL_NAMES = new Set([
 
 export const MODULE_KEYWORDS: Record<string, string[]> = {
   crm: ['lead', 'contact', 'company', 'deal', 'pipeline', 'crm'],
+  leads: ['lead'],
+  contacts: ['contact', 'client', 'note', 'follow_up'],
+  companies: ['company', 'companies'],
   projects: ['project'],
-  tasks: ['task'],
-  documents: ['document', 'contract', 'file'],
-  finance: ['invoice', 'account', 'payment', 'revenue', 'subscription'],
-  email: ['email', 'message', 'outreach'],
-  calendar: ['calendar', 'appointment', 'event'],
-  social: ['social', 'post', 'facebook', 'linkedin', 'instagram'],
-  marketing: ['campaign', 'funnel', 'landing', 'engagement'],
+  tasks: ['task', 'reminder'],
+  documents: ['document', 'contract', 'file', 'signature', 'legal_hold', 'knowledge'],
+  finance: ['invoice', 'account', 'payment', 'revenue', 'subscription', 'quote', 'opportunity', 'inventory', 'stock', 'finance'],
+  email: ['email', 'message', 'outreach', 'reply'],
+  calendar: ['calendar', 'appointment', 'event', 'meeting', 'schedule'],
+  appointments: ['appointment', 'meeting'],
+  social: ['social', 'post', 'facebook', 'linkedin', 'instagram', 'draft', 'engagement'],
+  marketing: ['campaign', 'funnel', 'landing', 'engagement', 'conversion', 'sequence'],
   media: ['media', 'image', 'video', 'upload'],
   support: ['ticket', 'support'],
-  automation: ['workflow', 'automation', 'approval', 'job'],
-  analytics: ['analytics', 'report', 'status', 'health', 'audit'],
-  bonnie: ['bonnie', 'skill', 'outcome'],
-  integrations: ['integration', 'connected_account', 'provider'],
+  automation: ['workflow', 'automation', 'approval', 'job', 'orchestration'],
+  workflows: ['workflow', 'orchestration', 'playbook'],
+  approvals: ['approval', 'approve', 'reject', 'review', 'request_changes'],
+  analytics: ['analytics', 'report', 'status', 'health', 'audit', 'dashboard', 'metric'],
+  reporting: ['analytics', 'report', 'dashboard', 'metric'],
+  bonnie: ['bonnie', 'skill', 'outcome', 'dream', 'nexus', 'memory', 'agent', 'business_ai', 'digital_twin', 'cognitive', 'autopilot', 'solo_owner', 'trust_ledger'],
+  integrations: ['integration', 'connected_account', 'provider', 'microsoft', 'google', 'zoho', 'stripe', 'calendly', 'gmail'],
+  workspace: ['workspace', 'conversation', 'widget', 'notification', 'user', 'points'],
+  health: ['health', 'status', 'version', 'environment', 'feature_flag', 'readiness'],
+  admin: ['admin', 'system', 'platform', 'restart', 'audit'],
+  search: ['search', 'fetch', 'find', 'inspect', 'vector', 'embedding', 'rag', 'planner', 'executor', 'scheduler', 'capabilities'],
 };
 
 export function moduleForTool(name: string): string {
   const lower = name.toLowerCase();
-  if (/(social|facebook|linkedin|instagram|twitter|x_)/.test(lower)) return 'social';
+  if (/(social|facebook|linkedin|instagram|twitter|x_|post|draft|engagement)/.test(lower)) return 'social';
+  if (/^(inspect_|search|fetch|find|negotiate_capabilities)/.test(lower)) return 'search';
+  if (/(restart|admin|audit_platform|legal_hold)/.test(lower)) return 'admin';
+  if (/(health|status|version|environment|feature_flag|readiness|compare_versions|recent_errors)/.test(lower)) return 'health';
+  if (/(approve|reject|review|request_changes|pending_action)/.test(lower)) return 'approvals';
+  if (/(workflow|orchestrat|playbook)/.test(lower)) return 'workflows';
+  if (/(bonnie|dream|nexus|memory|agent|business_ai|digital_twin|cognitive|autopilot|solo_owner|trust_ledger|knowledge_graph|growth_lifecycle|recommend_next_steps)/.test(lower)) return 'bonnie';
+  if (/(microsoft|google|zoho|stripe|calendly|gmail|integration|connected_account|provider)/.test(lower)) return 'integrations';
+  if (/(meeting|calendar|appointment|event|reminder)/.test(lower)) return 'calendar';
+  if (/(document|contract|file|signature|legal_hold)/.test(lower)) return 'documents';
+  if (/(invoice|payment|revenue|subscription|quote|opportunit|inventory|stock|finance)/.test(lower)) return 'finance';
+  if (/(dashboard|metric|report|analytics)/.test(lower)) return 'reporting';
+  if (/(conversation|widget|notification|user|points|workspace)/.test(lower)) return 'workspace';
+  if (/compan/.test(lower)) return 'companies';
+  if (/contact|client|note|follow_up/.test(lower)) return 'contacts';
+  if (/lead/.test(lower)) return 'leads';
+  if (/task/.test(lower)) return 'tasks';
+  if (/(email|message|outreach|reply)/.test(lower)) return 'email';
+  if (/(campaign|funnel|landing|conversion|sequence)/.test(lower)) return 'marketing';
   for (const [module, words] of Object.entries(MODULE_KEYWORDS)) {
     if (words.some((word) => lower.includes(word))) return module;
   }
@@ -48,9 +77,14 @@ export function searchToolCatalog(
   input: { query?: string; module?: string; action?: string; limit?: number },
 ): UnifiedMcpTool[] {
   const query = `${input.query || ''} ${input.action || ''}`.trim().toLowerCase();
+  const terms = query.split(/[\s_-]+/).map((term) => term.trim()).filter(Boolean);
   return full
     .filter((tool) => !input.module || moduleForTool(tool.name) === input.module)
-    .filter((tool) => !query || `${tool.name} ${tool.description}`.toLowerCase().includes(query))
+    .filter((tool) => {
+      if (!terms.length) return true;
+      const haystack = `${tool.name} ${tool.description || ''}`.toLowerCase();
+      return terms.every((term) => haystack.includes(term));
+    })
     .slice(0, Math.min(Math.max(input.limit || 20, 1), 50));
 }
 

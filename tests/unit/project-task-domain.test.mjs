@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   calculateProjectHealth,
   calculateWeightedProgress,
@@ -42,4 +43,14 @@ test('dependency cycles are rejected', () => {
   assert.equal(wouldCreateDependencyCycle('a', 'b', [
     { taskId: 'c', dependsOnTaskId: 'd' },
   ]), false);
+});
+
+test('projects dashboard avoids unused contract load and project-length reload loop', () => {
+  const src = fs.readFileSync(
+    new URL('../../src/components/dashboard/business/ProjectsPage.tsx', import.meta.url),
+    'utf8',
+  );
+  assert.doesNotMatch(src, /contractService/);
+  assert.doesNotMatch(src, /projects\.length\]\)/);
+  assert.match(src, /loadedTenantRef/);
 });

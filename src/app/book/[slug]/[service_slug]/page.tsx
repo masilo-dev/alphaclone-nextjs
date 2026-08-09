@@ -72,12 +72,6 @@ export default function BookingPage() {
         try {
             const { tenant, service } = await fetchBookingData(activeSlug, serviceSlug);
 
-            // Redirect to main booking page if Calendly is enabled (deprecating legacy service links)
-            if ((tenant.settings as any)?.calendly?.enabled) {
-                router.replace(`/book/${activeSlug}`);
-                return;
-            }
-
             setTenant(tenant);
             setService(service);
         } catch (err: any) {
@@ -296,7 +290,7 @@ export default function BookingPage() {
                                     url={(tenant.settings as any).calendly.eventUrl}
                                     branding={{
                                         primaryColor: tenant.settings.branding?.primaryColor,
-                                        backgroundColor: '#0f172a' // Dark slate to match theme
+                                        backgroundColor: '#0f172a'
                                     }}
                                 />
                             ) : (

@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Milestone } from '@/services/milestoneService';
 import { Project } from '@/types';
 import { Card } from '@/components/ui/UIComponents';
-import { CheckCircle2, Calendar, MessageSquare, Send, Loader2, Lock } from 'lucide-react';
+import { CheckCircle2, Calendar, MessageSquare, Send, Loader2, Lock, ReceiptText, Timer } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,19 @@ interface ProjectComment {
   created_at: string;
 }
 
+interface ProjectPortalInvoice {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+  total: number;
+  amountPaid: number;
+  balanceDue: number;
+  currency: string;
+  dueDate?: string | null;
+  paidAt?: string | null;
+  isPaid: boolean;
+}
+
 const portalPasswordKey = (token: string) => `portal_pw_${token}`;
 
 export default function PublicProjectPage() {
@@ -26,6 +39,7 @@ export default function PublicProjectPage() {
   const [project, setProject] = useState<Partial<Project> | null>(null);
   const [internalProjectId, setInternalProjectId] = useState<string | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [invoices, setInvoices] = useState<ProjectPortalInvoice[]>([]);
   const [comments, setComments] = useState<ProjectComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +106,7 @@ export default function PublicProjectPage() {
           description: m.description ? String(m.description) : undefined,
         }))
       );
+      setInvoices(data.invoices || []);
       if (password) {
         sessionStorage.setItem(portalPasswordKey(portalRef), password);
         setAccessPassword(password);
@@ -124,9 +139,17 @@ export default function PublicProjectPage() {
         const row = payload.new as ProjectComment;
         setComments((prev) => (prev.some((c) => c.id === row.id) ? prev : [...prev, row]));
       })
+      .on('postgres_changes' as any, {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'projects',
+        filter: `id=eq.${internalProjectId}`,
+      }, () => {
+        loadPortal(accessPassword);
+      })
       .subscribe();
     return () => { channel.unsubscribe(); };
-  }, [internalProjectId, loadComments, requiresPassword]);
+  }, [internalProjectId, loadComments, requiresPassword, loadPortal, accessPassword]);
 
   const handleUnlock = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,7 +271,69 @@ export default function PublicProjectPage() {
             </div>
           </div>
           <div className="text-3xl font-bold text-teal-400">{project.currentStage || 'In Progress'}</div>
+          <div className="grid gap-3 md:grid-cols-3 mt-6 text-sm">
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <p className="text-slate-500">Status</p>
+              <p className="font-semibold text-white">{project.status || 'Active'}</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <p className="text-slate-500">Deadline</p>
+              <p className="font-semibold text-white">{project.dueDate ? new Date(project.dueDate).toLocaleDateString() : 'Not set'}</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <p className="text-slate-500 flex items-center gap-1"><Timer className="w-3.5 h-3.5" /> Time left</p>
+              <p className="font-semibold text-white">
+                {(project as any).daysLeft == null ? 'Not set' : (project as any).daysLeft > 0 ? `${(project as any).daysLeft} day${(project as any).daysLeft === 1 ? '' : 's'}` : 'Due now'}
+              </p>
+            </div>
+          </div>
+          {(project as any).portalExpiresAt && (
+            <p className="mt-4 text-xs text-slate-500">
+              This secure portal link is valid until {new Date((project as any).portalExpiresAt).toLocaleString()}.
+            </p>
+          )}
         </Card>
+
+        {invoices.length > 0 && (
+          <Card className="p-6 border-slate-800 bg-slate-900/50">
+            <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+              <ReceiptText className="w-5 h-5 text-teal-400" /> Invoices & Payments
+            </h3>
+            <div className="space-y-3">
+              {invoices.map((invoice) => (
+                <div key={invoice.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-semibold text-white">{invoice.invoiceNumber || 'Invoice'}</p>
+                      <p className="text-xs text-slate-500">
+                        {invoice.dueDate ? `Due ${new Date(invoice.dueDate).toLocaleDateString()}` : 'No due date'}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-right text-sm">
+                      <div>
+                        <p className="text-slate-500">Total</p>
+                        <p className="font-semibold">{invoice.currency} {invoice.total.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Paid</p>
+                        <p className="font-semibold text-teal-300">{invoice.currency} {invoice.amountPaid.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">Balance</p>
+                        <p className="font-semibold text-amber-300">{invoice.currency} {invoice.balanceDue.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${invoice.isPaid ? 'bg-teal-500/10 text-teal-300' : 'bg-amber-500/10 text-amber-300'}`}>
+                      {invoice.isPaid ? 'Paid' : invoice.status || 'Open'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {milestones.length > 0 && (
           <div className="space-y-4">

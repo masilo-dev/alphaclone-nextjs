@@ -47,6 +47,11 @@ const DISCOVERY_ALIAS_TOOLS: UnifiedMcpTool[] = [
   },
 ];
 
+const DISCOVERY_ROUTED_TOOL_NAMES = new Set([
+  ...DISCOVERY_ALIAS_TOOLS.map((tool) => tool.name),
+  ...DISCOVERY_CONTROL_TOOLS.map((tool) => tool.name),
+]);
+
 function dedupeTools(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
   const seen = new Set<string>();
   const merged: UnifiedMcpTool[] = [];
@@ -106,9 +111,15 @@ export async function getUnifiedMcpTools(options?: {
     cachedFullTools &&
     cachedFullTools.length > 0
   ) {
+    initializeRegistry();
+    const executableNames = new Set([
+      ...listTools(false).map((tool) => tool.name),
+      ...DISCOVERY_ROUTED_TOOL_NAMES,
+    ]);
     const cached = selectCatalogTools(cachedFullTools, {
       catalogMode,
       loadedModules: options?.loadedModules,
+      executableNames,
     });
     console.info(
       `[mcp.tools/list] cache hit catalog=${catalogMode} count=${cached.length} bytes≈${estimateToolsListBytes(cached)}`
@@ -140,6 +151,7 @@ export async function getUnifiedMcpTools(options?: {
   }
 
   const registryNames = new Set(registryTools.map((t) => t.name));
+  const executableNames = new Set([...registryNames, ...DISCOVERY_ROUTED_TOOL_NAMES]);
   const supplemental = SUPPLEMENTAL_MCP_TOOLS.filter(
     (t) => !registryNames.has(t.name) && !manifestLegacy.some((m) => m.name === t.name)
   );
@@ -178,6 +190,7 @@ export async function getUnifiedMcpTools(options?: {
   const result = selectCatalogTools(cachedFullTools, {
     catalogMode,
     loadedModules: options?.loadedModules,
+    executableNames,
   });
   console.info(
     `[mcp.tools/list] returning catalog=${catalogMode} count=${result.length} bytes≈${estimateToolsListBytes(result)}`
@@ -200,7 +213,11 @@ export function invalidateUnifiedMcpToolCache(): void {
 
 function selectCatalogTools(
   full: UnifiedMcpTool[],
-  options: { catalogMode: 'progressive' | 'full'; loadedModules?: string[] },
+  options: {
+    catalogMode: 'progressive' | 'full';
+    loadedModules?: string[];
+    executableNames: Set<string>;
+  },
 ): UnifiedMcpTool[] {
   if (options.catalogMode === 'full') return full;
 
@@ -210,6 +227,7 @@ function selectCatalogTools(
   for (const tool of DISCOVERY_ALIAS_TOOLS) coreNames.add(tool.name);
 
   return full
+    .filter((tool) => options.executableNames.has(tool.name))
     .filter((tool) => coreNames.has(tool.name) || loaded.has(moduleForTool(tool.name)))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

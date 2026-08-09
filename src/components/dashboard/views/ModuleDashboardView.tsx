@@ -18,6 +18,7 @@ import { CrmSyncToolbar } from '../crm/CrmSyncToolbar';
 import { ModuleOverviewChrome } from '@/components/ui/os/ModuleOverviewChrome';
 import { CHART_COLORS } from '@/constants/brand';
 import { OutreachLifecyclePanel } from '@/components/dashboard/outreach/OutreachLifecyclePanel';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 
 interface ModuleDashboardViewProps {
   moduleId: ModuleDashboardId;
@@ -89,7 +90,7 @@ function DashboardContent({
     );
   }
 
-  const { actions } = resolveModuleActions(moduleId, user?.role ?? 'client');
+  const { actions, executionSteps } = resolveModuleActions(moduleId, user?.role ?? 'client');
   const workspaceAction = actions.find((a) => a.primary) ?? actions[0];
   const metrics = data.metrics.slice(0, 4);
   const allMetricsZero = metrics.every((m) => Number(m.value) === 0 || m.value === '0' || m.value === '0%');
@@ -174,6 +175,12 @@ function DashboardContent({
           ))}
         </div>
       ) : null}
+      {executionSteps.length ? (
+        <ExecutionDecisionGuide
+          steps={executionSteps}
+          onNavigate={(href) => router.push(href)}
+        />
+      ) : null}
       <div className="flex items-center justify-end gap-2">
         {workspaceAction ? (
           <button
@@ -208,18 +215,28 @@ function DashboardContent({
           <DashboardLineChart
             data={data.mainChart}
             color={chartColor}
+            moduleId={moduleId}
             valuePrefix={valuePrefix}
             title={chartTitle}
             subtitle={chartSubtitle}
+            emptyTitle="No trend data yet"
+            emptyDescription="Work in this module and the chart will show movement here."
+            emptyActionLabel={workspaceAction?.label}
+            onEmptyAction={workspaceAction ? () => router.push(workspaceAction.resolvedHref) : undefined}
           />
         ) : (
           <DashboardBarChart
             data={data.mainChart}
             color={chartColor}
+            moduleId={moduleId}
             dual={dualBar}
             valuePrefix={valuePrefix}
             title={chartTitle}
             subtitle={chartSubtitle}
+            emptyTitle="No volume data yet"
+            emptyDescription="Create records in this module and the graph will fill in automatically."
+            emptyActionLabel={workspaceAction?.label}
+            onEmptyAction={workspaceAction ? () => router.push(workspaceAction.resolvedHref) : undefined}
           />
         )}
       </div>

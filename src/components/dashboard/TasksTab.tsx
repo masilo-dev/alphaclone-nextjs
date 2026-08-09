@@ -28,6 +28,8 @@ import type { Task as KanbanTask } from '../../services/taskService';
 import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { TASKS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -680,8 +682,12 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </div>
       <ModulePageLayout
         header={(
-          <div className="px-4 pt-2">
+          <div className="px-4 pt-2 space-y-2.5">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+            <ExecutionDecisionGuide
+              steps={TASKS_EXECUTION_STEPS}
+              onNavigate={(href) => router.push(href)}
+            />
           </div>
         )}
         toolbar={(

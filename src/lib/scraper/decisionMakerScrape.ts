@@ -6,6 +6,7 @@
 
 import { BrowserManager } from '@/lib/scraper/browserManager';
 import { enrichLeadWebsite, type EnrichmentResult } from '@/lib/scraper/enrichmentPipeline';
+export { hasReachableContact as hasPhoneOrEmail } from '@/lib/scraper/contactGate';
 
 export type DecisionMaker = {
   name: string;
@@ -254,11 +255,4 @@ export async function enrichBusinessWithDecisionMakers(
     primaryDecisionMaker: primary,
     enrichedFrom: url,
   };
-}
-
-export function hasPhoneOrEmail(input: { phone?: string | null; email?: string | null; website?: string | null; company_website?: string | null }): boolean {
-  const phone = (input.phone || '').trim();
-  const email = (input.email || '').trim();
-  const website = (input.website || input.company_website || '').trim();
-  return phone.length >= 7 || (email.includes('@') && email.includes('.')) || (website.length > 0 && /^https?:\/\//i.test(website));
 }

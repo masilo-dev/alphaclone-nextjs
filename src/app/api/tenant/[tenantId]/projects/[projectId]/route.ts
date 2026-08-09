@@ -6,6 +6,12 @@ import {
   normalizeProjectStage,
   normalizeProjectStatus,
 } from "@/lib/projects/projectEnums";
+import {
+  notifyProjectClientProgressUpdate,
+  notifyProjectClientStageUpdate,
+} from "@/lib/projects/projectClientNotification";
+import { sendEmailServer } from "@/lib/email/sendEmailServer";
+import { buildCanonicalProjectPortalUrl } from "@/lib/projects/portalLinks";
 
 const fields = z
   .object({
@@ -123,7 +129,7 @@ export async function PATCH(
     }
     const { data: before, error: beforeError } = await admin
       .from("projects")
-      .select("id, current_stage")
+      .select("id, name, current_stage, status, progress, portal_expires_at, owner_id")
       .eq("id", projectId)
       .eq("tenant_id", tenantId)
       .maybeSingle();
@@ -165,6 +171,14 @@ export async function PATCH(
         : value;
     }
     if (parsed.data.portalEnabled === false) patch.portal_token = null;
+    const nextStatus = typeof patch.status === "string" ? patch.status.toLowerCase() : null;
+    const wasComplete = String(before.status || "").toLowerCase() === "completed";
+    const willBeComplete = nextStatus === "completed" || nextStatus === "complete";
+    if (willBeComplete && !wasComplete && !before.portal_expires_at) {
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 14);
+      patch.portal_expires_at = expires.toISOString();
+    }
     const { data: project, error } = await admin
       .from("projects")
       .update(patch)
@@ -191,7 +205,61 @@ export async function PATCH(
         "[projects] project_updated event could not be recorded",
         eventError,
       );
-    return NextResponse.json({ project, previousStage: before.current_stage });
+    const origin = req.nextUrl.origin;
+    const notificationResults: Record<string, unknown> = {};
+    if (typeof project.current_stage === "string" && before.current_stage !== project.current_stage) {
+      notificationResults.stage = await notifyProjectClientStageUpdate({
+        admin,
+        projectId,
+        tenantId,
+        previousStage: before.current_stage || "In Progress",
+        newStage: project.current_stage,
+        origin,
+      });
+    }
+    if (typeof project.progress === "number" && before.progress !== project.progress) {
+      notificationResults.progress = await notifyProjectClientProgressUpdate({
+        admin,
+        projectId,
+        tenantId,
+        previousProgress: before.progress ?? null,
+        newProgress: project.progress,
+        origin,
+        trigger: "progress_change",
+      });
+    }
+    const changedForOwner = [
+      before.current_stage !== project.current_stage ? `Stage: ${before.current_stage || "In Progress"} -> ${project.current_stage || "In Progress"}` : "",
+      before.status !== project.status ? `Status: ${before.status || "Active"} -> ${project.status || "Active"}` : "",
+      before.progress !== project.progress ? `Progress: ${before.progress ?? 0}% -> ${project.progress ?? 0}%` : "",
+    ].filter(Boolean);
+    if (changedForOwner.length && before.owner_id) {
+      const { data: ownerProfile } = await admin
+        .from("profiles")
+        .select("email, name")
+        .eq("id", before.owner_id)
+        .maybeSingle();
+      if (ownerProfile?.email) {
+        const projectPortalUrl = project.portal_token ? buildCanonicalProjectPortalUrl(project.portal_token) : "";
+        const ownerEmail = await sendEmailServer({
+          tenantId,
+          to: ownerProfile.email,
+          subject: `Project updated: ${project.name || before.name}`,
+          fromName: "AlphaClone Project Updates",
+          isPlatformNotification: true,
+          templateName: "projectOwnerUpdate",
+          html: `
+            <p>Hi ${ownerProfile.name || "there"},</p>
+            <p><strong>${project.name || before.name}</strong> was updated.</p>
+            <ul>${changedForOwner.map((line) => `<li>${line}</li>`).join("")}</ul>
+            ${projectPortalUrl ? `<p><a href="${projectPortalUrl}">Open client portal</a></p>` : ""}
+            <p style="color:#64748b;font-size:12px;">Automated notification from AlphaClone Systems.</p>
+          `,
+        });
+        notificationResults.owner = { sent: ownerEmail.success, skipped: ownerEmail.error };
+      }
+    }
+    return NextResponse.json({ project, previousStage: before.current_stage, notifications: notificationResults });
   } catch (error) {
     return routeErrorResponse(error, "Project could not be updated", req);
   }

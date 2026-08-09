@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '../../../types';
@@ -9,7 +9,6 @@ import { projectService } from '../../../services/projectService';
 import { supabase } from '../../../lib/supabase';
 import { businessClientService } from '../../../services/businessClientService';
 import { Project as BusinessProject } from '../../../types';
-import { contractService } from '../../../services/contractService';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
 import { milestoneService } from '../../../services/milestoneService';
 import {
@@ -45,6 +44,8 @@ import { TaskCountdown } from '../tasks/TaskCountdown';
 import { ProjectStage } from '../../../types';
 import { RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { PROJECT_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 interface ProjectsPageProps {
     user: User;
@@ -78,12 +79,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const { currentTenant } = useTenant();
     const [projects, setProjects] = useState<BusinessProject[]>([]);
     const [clients, setClients] = useState<any[]>([]);
-    const [contracts, setContracts] = useState<any[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [searchQuery, setSearchQuery] = useState('');
     const [viewingProject, setViewingProject] = useState<BusinessProject | null>(null);
+    const loadedTenantRef = useRef<string | null>(null);
 
     useEffect(() => {
         if (!nextSearch) return;
@@ -96,27 +97,26 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     const loadData = useCallback(async () => {
         if (!currentTenant) return;
 
-        // Use cached projects if available before showing full loader to avoid flashing
-        if (projects.length === 0) {
+        // Use cached projects for the same tenant before showing a full loader.
+        if (loadedTenantRef.current !== currentTenant.id) {
             setLoading(true);
         }
 
         try {
-            const [projectRes, clientRes, contractRes] = await Promise.all([
+            const [projectRes, clientRes] = await Promise.all([
                 projectService.getProjects(user.id, user.role),
                 businessClientService.getClients(currentTenant.id),
-                contractService.getUserContracts(user.id, 'tenant_admin')
             ]);
 
             setProjects(projectRes.projects || []);
             setClients(clientRes.clients || []);
-            setContracts(contractRes.contracts || []);
+            loadedTenantRef.current = currentTenant.id;
         } catch (e) {
             console.error('Failed to load mission control data', e);
         } finally {
             setLoading(false);
         }
-    }, [currentTenant, user.id, user.role, projects.length]);
+    }, [currentTenant, user.id, user.role]);
 
     useEffect(() => {
         if (currentTenant) {
@@ -218,6 +218,10 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
     return (
         <div className="h-full flex flex-col space-y-3 sm:space-y-5 px-3 py-4 sm:px-5 sm:py-6 md:p-8 overflow-y-auto custom-scrollbar min-w-0">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+            <ExecutionDecisionGuide
+                steps={PROJECT_MANAGER_EXECUTION_STEPS}
+                onNavigate={(href) => router.push(href)}
+            />
             {/* Header */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-5 min-w-0">
                 <div className="min-w-0">

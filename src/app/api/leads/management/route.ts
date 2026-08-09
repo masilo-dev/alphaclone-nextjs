@@ -595,20 +595,38 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
   try {
     const { leadId, conversionType, dealData } = config;
 
-    // Update lead status
-    const { data: lead, error: leadError } = await supabase
+    const { data: leadBefore, error: leadLookupError } = await supabase
       .from('leads')
-      .update({
-        stage: 'converted',
-        converted_at: new Date().toISOString(),
-        conversion_type: conversionType
-      })
+      .select('id, tenant_id, business_name, value, email')
       .eq('id', leadId)
       .eq('tenant_id', tenantId)
-      .select()
+      .maybeSingle();
+
+    if (leadLookupError) throw leadLookupError;
+    if (!leadBefore) return { success: false, error: 'Lead not found' };
+
+    const { data: conversion, error: conversionError } = await supabase.rpc('convert_lead_to_contact', {
+      lead_id: leadId,
+      create_company: false,
+      company_name: null,
+      contact_name_override: null,
+    });
+
+    if (conversionError) throw conversionError;
+
+    const conversionPayload =
+      typeof conversion === 'string'
+        ? JSON.parse(conversion)
+        : (conversion || {});
+
+    const { data: lead, error: refreshedLeadError } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('id', leadId)
+      .eq('tenant_id', tenantId)
       .single();
 
-    if (leadError) throw leadError;
+    if (refreshedLeadError) throw refreshedLeadError;
 
     // Create deal if dealData provided
     if (dealData) {
@@ -616,11 +634,18 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
         .from('deals')
         .insert({
           tenant_id: tenantId,
-          name: dealData.name || `Deal from ${lead.business_name}`,
-          value: dealData.value || lead.value || 0,
-          stage: dealData.stage || 'initial',
+          name: dealData.name || `Deal from ${leadBefore.business_name}`,
+          value: dealData.value || leadBefore.value || 0,
+          stage: dealData.stage || 'lead',
           expected_close_date: dealData.expectedCloseDate,
           probability: dealData.probability || 50,
+          contact_id: conversionPayload.contact_id || null,
+          metadata: {
+            source: 'lead_conversion',
+            conversion_type: conversionType || null,
+            original_lead_id: leadId,
+            business_client_id: conversionPayload.client_id || null,
+          },
           created_at: new Date().toISOString()
         })
         .select()
@@ -630,14 +655,14 @@ async function convertLead(tenantId: string, config: any, supabase: any) {
 
       return {
         success: true,
-        data: { lead, deal },
+        data: { lead, deal, conversion: conversionPayload },
         message: 'Lead converted to deal successfully'
       };
     }
 
     return {
       success: true,
-      data: lead,
+      data: { lead, conversion: conversionPayload },
       message: 'Lead converted successfully'
     };
   } catch (error: any) {

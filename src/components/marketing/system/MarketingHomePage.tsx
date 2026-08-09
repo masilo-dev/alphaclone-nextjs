@@ -142,7 +142,7 @@ export default function MarketingHomePage() {
             </div>
           </div>
 
-          <div className="mkt-reveal mx-auto mt-8 max-w-[92vw] sm:max-w-3xl lg:max-w-5xl">
+          <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
             <div className="overflow-hidden rounded-[1.75rem] border border-white/15 bg-white shadow-2xl shadow-teal-950/20">
               <Image
                 src="/images/alphaclone-all-in-one-mcp-platform.png"
@@ -150,7 +150,7 @@ export default function MarketingHomePage() {
                 width={1024}
                 height={682}
                 priority
-                sizes="(max-width: 640px) 92vw, (max-width: 1024px) 768px, 1024px"
+                sizes="(max-width: 640px) 90vw, (max-width: 1024px) 672px, 880px"
                 className="h-auto w-full"
               />
             </div>

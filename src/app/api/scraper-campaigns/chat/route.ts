@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { callScraperService } from '@/lib/scraper/scraperServiceClient';
-import { parseLeadIntentFromChat, type ParsedLeadIntent } from '@/lib/scraper/parseLeadIntent';
+import {
+  parseLeadIntentHeuristic,
+  parseLeadIntentFromChat,
+  type ParsedLeadIntent,
+} from '@/lib/scraper/parseLeadIntent';
 import { filterSmbLeads } from '@/lib/scraper/smbLeadFilters';
 import {
   broadenIntentForRetry,
@@ -22,37 +26,76 @@ import { runCampaignOnPlatform } from '@/lib/scraper/scraperPlatform';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
 
+function normalizeRunIntent(intent: Partial<ParsedLeadIntent> | undefined): ParsedLeadIntent {
+  const seed = parseLeadIntentHeuristic(
+    intent?.search_query ||
+      intent?.summary ||
+      intent?.niche ||
+      intent?.industry?.[0] ||
+      'local business leads'
+  );
+  const location = { ...(seed.location || {}), ...(intent?.location || {}) };
+
+  return {
+    ...seed,
+    ...intent,
+    name: intent?.name || seed.name,
+    sources: Array.isArray(intent?.sources) && intent.sources.length ? intent.sources : ['website', 'directory'],
+    industry: Array.isArray(intent?.industry) ? intent.industry : seed.industry,
+    location: {
+      ...location,
+      radius_km: Math.min(Math.max(Number(location.radius_km || 25), 1), 100),
+    },
+    title_keywords: Array.isArray(intent?.title_keywords) && intent.title_keywords.length
+      ? intent.title_keywords
+      : seed.title_keywords,
+    company_size_range: intent?.company_size_range || seed.company_size_range,
+    exclude_domains: Array.isArray(intent?.exclude_domains) ? intent.exclude_domains : seed.exclude_domains,
+    exclude_keywords: Array.isArray(intent?.exclude_keywords) ? intent.exclude_keywords : seed.exclude_keywords,
+    min_score_threshold: Number(intent?.min_score_threshold || seed.min_score_threshold || 45),
+    daily_limit: Math.min(Math.max(Number(intent?.daily_limit || seed.daily_limit || 40), 1), 80),
+    enrichment_level: intent?.enrichment_level === 'basic' ? 'basic' : 'full',
+    target_language: intent?.target_language || seed.target_language || 'en',
+    summary: intent?.summary || seed.summary,
+    search_query: intent?.search_query || seed.search_query,
+    niche: intent?.niche || seed.niche,
+    smb_only: intent?.smb_only !== false,
+  };
+}
+
 async function createAndRunCampaign(
   tenantId: string,
   userId: string,
   intent: ParsedLeadIntent
 ) {
   const supabase = createSupabaseAdminClient();
+  const safeIntent = normalizeRunIntent(intent);
+  const sources = safeIntent.sources.length ? safeIntent.sources : ['website', 'directory'];
 
   const { data: campaign, error } = await supabase
     .from('scraper_campaigns')
     .insert({
       tenant_id: tenantId,
-      name: intent.name,
+      name: safeIntent.name,
       status: 'active',
-      source: intent.sources[0] || 'osm',
-      sources: intent.sources?.length ? intent.sources : ['osm', 'wikidata', 'directory'],
+      source: sources[0] || 'directory',
+      sources,
       location: {
-        ...intent.location,
-        radius_km: intent.location?.radius_km || 25,
+        ...safeIntent.location,
+        radius_km: safeIntent.location?.radius_km || 25,
       },
-      industry: intent.industry,
-      title_keywords: intent.title_keywords,
-      company_size_range: intent.company_size_range,
-      exclude_domains: intent.exclude_domains,
-      daily_limit: intent.daily_limit || 40,
-      min_score_threshold: intent.min_score_threshold,
-      enrichment_level: intent.enrichment_level,
+      industry: safeIntent.industry,
+      title_keywords: safeIntent.title_keywords,
+      company_size_range: safeIntent.company_size_range,
+      exclude_domains: safeIntent.exclude_domains,
+      daily_limit: safeIntent.daily_limit || 40,
+      min_score_threshold: safeIntent.min_score_threshold,
+      enrichment_level: safeIntent.enrichment_level,
       scoring_rules: {
-        target_language: intent.target_language,
-        exclude_keywords: intent.exclude_keywords,
-        smb_only: intent.smb_only,
-        niche: intent.niche,
+        target_language: safeIntent.target_language,
+        exclude_keywords: safeIntent.exclude_keywords,
+        smb_only: safeIntent.smb_only,
+        niche: safeIntent.niche,
         free_only: true,
         reach_based: true,
       },
@@ -68,8 +111,8 @@ async function createAndRunCampaign(
   await logLeadRun({
     tenantId,
     campaignId: campaign.id,
-    market: formatSearchLocation(intent),
-    category: formatSearchNiche(intent),
+    market: formatSearchLocation(safeIntent),
+    category: formatSearchNiche(safeIntent),
     status: 'running',
     sourceCount: 0,
     enrichedCount: 0,
@@ -256,7 +299,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'retry_niche' && providedIntent) {
-      const broadened = broadenIntentForRetry(providedIntent, retryAttempt);
+      const broadened = broadenIntentForRetry(normalizeRunIntent(providedIntent), retryAttempt);
       const campaign = await createAndRunCampaign(tenantId, user.id, broadened);
       const advice = getNicheSearchAdvice(broadened, 0, retryAttempt);
       return NextResponse.json({
@@ -269,7 +312,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'run') {
-      const intent = providedIntent;
+      const intent = normalizeRunIntent(providedIntent);
       if (!intent) return NextResponse.json({ error: 'Missing intent' }, { status: 400 });
       const campaign = await createAndRunCampaign(tenantId, user.id, intent);
       const nicheLabel = intent.niche || intent.industry?.[0] || 'businesses';

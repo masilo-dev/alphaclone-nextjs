@@ -55,6 +55,8 @@ import { Input } from '../ui/UIComponents';
 import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { ModuleFrame, RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { CRM_WORKSPACE_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type LeadStatus = 'new' | 'contacted' | 'qualified' | 'disqualified';
@@ -2188,6 +2190,10 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <CrmSyncToolbar />
               </div>
             </div>
+            <ExecutionDecisionGuide
+              steps={CRM_WORKSPACE_EXECUTION_STEPS}
+              onNavigate={(href) => router.push(href)}
+            />
           </div>
         )}
         stats={(

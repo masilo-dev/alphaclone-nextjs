@@ -27,6 +27,9 @@ import { useConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { InvoiceLifecycleDrawer } from '@/components/dashboard/invoicing/InvoiceLifecycleDrawer';
 import { InvoiceAgingReport } from '../invoicing/InvoiceAgingReport';
 import { OverdueReminderPanel } from '../invoicing/OverdueReminderPanel';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { BILLING_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { semanticStatusStyle } from '@/lib/ui/statusSemantics';
 
 interface EnhancedBillingPageProps {
     user: any;
@@ -252,12 +255,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     });
 
     const getStatusStyles = (status: string) => {
-        switch (status) {
-            case 'paid': return 'text-teal-400 bg-teal-400/10 border-teal-500/20';
-            case 'sent': return 'text-teal-400 bg-teal-400/10 border-teal-500/20';
-            case 'overdue': return 'text-rose-400 bg-rose-400/10 border-rose-500/20';
-            default: return 'text-slate-400 bg-slate-400/10 border-slate-500/20';
-        }
+        return semanticStatusStyle(status).badge;
     };
 
     const handleViewPDF = (inv: BusinessInvoice) => {
@@ -290,6 +288,10 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     return (
         <div className={`space-y-5 pb-24 ${isMobile ? 'p-2' : 'p-6'}`}>
             <OperationalWorkflowStrip moduleId="invoicing" userRole={user?.role} />
+            <ExecutionDecisionGuide
+                steps={BILLING_MANAGER_EXECUTION_STEPS}
+                onNavigate={(href) => router.push(href)}
+            />
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>

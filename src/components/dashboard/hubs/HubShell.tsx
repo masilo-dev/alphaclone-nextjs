@@ -9,6 +9,8 @@ import { BonnieModulePageShell } from '../bonnie/BonnieModulePageShell';
 import { WORKSPACE, MODULE_IDENTITY, type ModuleId } from '@/constants/design';
 import { MODULE_ICONS } from '@/components/icons/alphaclone';
 import { cn } from '@/lib/utils';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { HUB_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 export interface HubTab {
   label: string;
@@ -37,6 +39,27 @@ const LEGACY_ACCENT: Record<NonNullable<HubShellProps['accent']>, string> = {
   green: '#16A36A',
 };
 
+const ROUTES_WITH_PAGE_GUIDES = new Set([
+  '/dashboard/crm',
+  '/dashboard/crm/workspace',
+  '/dashboard/outreach',
+  '/dashboard/deals',
+  '/dashboard/tasks',
+  '/dashboard/business/billing',
+  '/dashboard/business/billing/manage',
+  '/dashboard/finance',
+  '/dashboard/finance/manage',
+  '/dashboard/contracts',
+  '/dashboard/business/contracts',
+  '/dashboard/projects',
+  '/dashboard/business/projects',
+  '/dashboard/projects/manage',
+  '/dashboard/business/projects/manage',
+  '/dashboard/business/social',
+  '/dashboard/social',
+  '/dashboard/business/booking',
+]);
+
 export default function HubShell({
   title,
   description,
@@ -58,6 +81,9 @@ export default function HubShell({
       pathname?.includes('/comms') ||
       pathname?.includes('/mail') ||
       pathname?.includes('/unified-inbox'));
+  const hubSteps = moduleId && pathname && !ROUTES_WITH_PAGE_GUIDES.has(pathname)
+    ? HUB_EXECUTION_STEPS[moduleId]
+    : undefined;
 
   return (
     <div
@@ -143,6 +169,14 @@ export default function HubShell({
             );
           })}
         </div>
+
+        {hubSteps?.length && isFullHeight ? (
+          <ExecutionDecisionGuide
+            steps={hubSteps}
+            onNavigate={(href) => router.push(href)}
+            className="my-3"
+          />
+        ) : null}
       </div>
 
       <div
@@ -151,7 +185,16 @@ export default function HubShell({
           isFullHeight ? 'h-full overflow-hidden p-0' : 'ac-scroll-full px-4 py-4 md:py-5'
         )}
       >
-        <BonnieModulePageShell showBonnieDock={false}>{children}</BonnieModulePageShell>
+        <BonnieModulePageShell showBonnieDock={false}>
+          {hubSteps?.length && !isFullHeight ? (
+            <ExecutionDecisionGuide
+              steps={hubSteps}
+              onNavigate={(href) => router.push(href)}
+              className="mb-4"
+            />
+          ) : null}
+          {children}
+        </BonnieModulePageShell>
       </div>
     </div>
   );

@@ -66,7 +66,7 @@ test("social cron disables legacy dual-path by default (source)", async () => {
     "utf8",
   );
   assert.match(src, /SOCIAL_LEGACY_SCHEDULED_POSTS/);
-  assert.match(src, /publishDueSocialPosts/);
+  assert.match(src, /publishDueSocialPostSummary/);
 });
 
 test("form webhooks require secret in production (source)", async () => {

@@ -40,6 +40,8 @@ import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { usePathname } from 'next/navigation';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
+import { DEALS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
 type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
@@ -1151,6 +1153,10 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         <CRMNav pathname={pathname} />
         <CrmSyncToolbar />
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+        <ExecutionDecisionGuide
+          steps={DEALS_EXECUTION_STEPS}
+          onNavigate={(href) => router.push(href)}
+        />
       </div>
       <ModulePageLayout
         toolbar={(

@@ -64,7 +64,8 @@ export function calculateExpectedValue(input: ExpectedValueInput): ExpectedValue
     };
   }
 
-  const expectedValue = potentialValue * probability - executionCost - riskAdjustment;
+  const expectedValue =
+    Math.round((potentialValue * probability - executionCost - riskAdjustment) * 100) / 100;
 
   return {
     status: 'calculated',

@@ -35,6 +35,8 @@
     "test:mcp-connector": "node --import tsx --test tests/unit/mcp-chatgpt-connector.test.mjs",
     "audit:mcp": "node scripts/audit-mcp.mjs",
     "audit:mcp-exposure": "tsx scripts/audit-mcp-exposure.ts",
+    "audit:mcp-inventory": "tsx scripts/generate-mcp-tool-inventory.ts",
+    "audit:mcp-chatgpt": "tsx scripts/chatgpt-mcp-execution-audit.ts",
     "audit:inventory": "node scripts/generate-repository-inventory.mjs && node scripts/generate-production-audit-artifacts.mjs",
     "audit:production": "node scripts/audit-production-readiness.mjs",
     "audit:data": "tsx scripts/audit-data-integrity.ts",

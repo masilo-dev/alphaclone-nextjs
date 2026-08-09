@@ -202,7 +202,8 @@ export const projectService = {
                 .from('projects')
                 .select('*')
                 .eq('is_public', true)
-                .or(`portal_token.eq.${tokenOrId},id.eq.${tokenOrId}`)
+                .eq('portal_enabled', true)
+                .eq('portal_token', tokenOrId)
                 .maybeSingle();
 
             if (error || !data) {

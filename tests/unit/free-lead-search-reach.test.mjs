@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const { resolveOsmNiche, buildOverpassClauses } = await import('../../src/lib/scraper/osmNicheTags.ts');
 const { haversineKm, geocodeFree } = await import('../../src/lib/scraper/freeGeoSources.ts');
-const { hasPhoneOrEmail } = await import('../../src/lib/scraper/decisionMakerScrape.ts');
+const { hasPhoneOrEmail } = await import('../../src/lib/scraper/contactGate.ts');
 
 describe('osm niche tags', () => {
   it('maps dentist niche to amenity tags', () => {
