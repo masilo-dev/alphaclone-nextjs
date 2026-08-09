@@ -61,7 +61,7 @@ ARG NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV SERWIST_SUPPRESS_TURBOPACK_WARNING=1
-ENV NODE_OPTIONS="--max-old-space-size=6144"
+ENV NODE_OPTIONS="--max-old-space-size=12288"
 
 RUN npm run build
 
@@ -73,6 +73,7 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV PATH="/app/node_modules/.bin:$PATH"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
@@ -81,6 +82,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/chatgpt-app-submission.json ./chatgpt-app-submission.json
 
 EXPOSE 3000
 

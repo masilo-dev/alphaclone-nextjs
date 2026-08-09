@@ -20,7 +20,12 @@ export async function POST(req: NextRequest, context: Context) {
     await admin.from('lead_searches').update({ status: 'queued', progress: 0, cancelled_at: null, updated_at: new Date().toISOString() }).eq('id', id);
     const key = `lead.search.start:${id}:${crypto.randomUUID()}`;
     const { error } = await admin.from('lead_search_jobs').insert({
-      workspace_id: workspaceId, created_by: user.id, search_id: id, job_type: 'lead.search.start',
+      tenant_id: workspaceId,
+      user_id: user.id,
+      workspace_id: workspaceId,
+      created_by: user.id,
+      search_id: id,
+      job_type: 'lead.search.start',
       source_type: 'orchestrator', idempotency_key: key,
     });
     if (error && isUnavailableSchema(error)) {

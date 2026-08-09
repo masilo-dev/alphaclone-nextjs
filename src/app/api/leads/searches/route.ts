@@ -61,7 +61,11 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
     if (input.runNow) {
       const { error: jobError } = await admin.from('lead_search_jobs').insert({
-        workspace_id: input.workspaceId, created_by: user.id, search_id: search.id,
+        tenant_id: input.workspaceId,
+        user_id: user.id,
+        workspace_id: input.workspaceId,
+        created_by: user.id,
+        search_id: search.id,
         job_type: 'lead.search.start', source_type: 'orchestrator',
         idempotency_key: `lead.search.start:${search.id}`,
         metadata: { sources: input.sources },
