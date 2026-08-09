@@ -95,7 +95,7 @@ export async function executeCustomTool(
       success: dispatch.dispatched,
       summary: dispatch.dispatched
         ? `Hermes task ${run.id} started from Bonnie chat.`
-        : `Hermes task ${run.id} was recorded but could not start: ${dispatch.reason || dispatch.status}`,
+        : `Hermes task ${run.id} was recorded but could not start: ${dispatch.message || dispatch.status}`,
       details: JSON.stringify({ runId: run.id, policy, dispatch }, null, 2),
     };
   }
