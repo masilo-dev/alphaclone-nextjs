@@ -277,7 +277,7 @@ export default function AlphaCloneEmailWorkspace() {
     const ch = supabase
       .channel(`workspace-inbox-${tenant.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'unified_messages', filter: `tenant_id=eq.${tenant.id}` },
-        (payload) => {
+        (payload: any) => {
           const newThread = mapUnifiedToThread(payload.new as Record<string, any>);
           setThreads((prev) => [newThread, ...prev]);
           toast('📬 New message from ' + newThread.senderName, { duration: 4000 });
