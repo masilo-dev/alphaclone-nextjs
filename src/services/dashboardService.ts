@@ -14,6 +14,25 @@ export interface Notification {
     metadata?: Record<string, any>;
     created_at: string;
     updated_at: string;
+    /**
+     * Notification priority — 5 tiers across the platform:
+     * - low     : informational digest items, no OS push
+     * - normal  : default for routine events (alias: 'medium' — also accepted for DB rows written by workflow executor)
+     * - medium  : same as 'normal' (DB insert sites sometimes use this label)
+     * - high    : action-required → show OS push even if app focused
+     * - urgent  : sticky OS notification (requireInteraction=true) until dismissed
+     */
+    priority?: 'low' | 'normal' | 'medium' | 'high' | 'urgent';
+    /** Optional avatar image (e.g. sender profile picture). */
+    avatar_url?: string;
+    /** Explicit dismissal flag (distinct from read). */
+    dismissed?: boolean;
+    /** ISO timestamp of when the user dismissed the notification. */
+    dismissed_at?: string;
+    /** ISO timestamp until which the notification should be hidden (snooze). */
+    snooze_until?: string;
+    /** Explicit seen flag (distinct from read; used for badge-increment logic). */
+    seen?: boolean;
 }
 
 export interface ActivityLog {
