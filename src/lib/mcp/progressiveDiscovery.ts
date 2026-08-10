@@ -68,8 +68,34 @@ export function moduleForTool(name: string): string {
   return 'workspace';
 }
 
+export const ALL_MODULE_NAMES = Object.keys(MODULE_KEYWORDS);
+
 export function coreTools(full: UnifiedMcpTool[], limit = 32): UnifiedMcpTool[] {
   return full.filter((tool) => CORE_TOOL_NAMES.has(tool.name)).slice(0, limit);
+}
+
+export function getModuleTools(full: UnifiedMcpTool[], moduleName: string): UnifiedMcpTool[] {
+  const lower = moduleName.toLowerCase().trim();
+  return full.filter((tool) => moduleForTool(tool.name) === lower);
+}
+
+export function findToolsByQuery(
+  full: UnifiedMcpTool[],
+  query: string,
+  limit = 15
+): UnifiedMcpTool[] {
+  if (!query?.trim()) return full.slice(0, limit);
+  const terms = query.toLowerCase().split(/[\s_-]+/).filter(Boolean);
+  const scored = full.map((tool) => {
+    const haystack = `${tool.name} ${tool.description || ''}`.toLowerCase();
+    const hits = terms.filter((t) => haystack.includes(t)).length;
+    return { tool, hits };
+  });
+  return scored
+    .filter(({ hits }) => hits > 0)
+    .sort((a, b) => b.hits - a.hits)
+    .slice(0, limit)
+    .map(({ tool }) => tool);
 }
 
 export function searchToolCatalog(

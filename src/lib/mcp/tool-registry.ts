@@ -254,6 +254,13 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/autonomous-ops'), './tools/autonomous-ops');
   loadToolModule(() => require('./tools/email-ops'), './tools/email-ops');
   loadToolModule(() => require('./tools/document-os'), './tools/document-os');
+  loadToolModule(() => require('./tools/discovery-system'), './tools/discovery-system');
+  loadToolModule(() => require('./tools/banking-ops'), './tools/banking-ops');
+  loadToolModule(() => require('./tools/contracts-ops'), './tools/contracts-ops');
+  loadToolModule(() => require('./tools/tickets-ops'), './tools/tickets-ops');
+  loadToolModule(() => require('./tools/lead-scraping-ops'), './tools/lead-scraping-ops');
+  // Universal Manifest Bridge — registers all remaining canonical tools from toolManifest & supplemental definitions
+  loadToolModule(() => require('./tools/manifest-bridge'), './tools/manifest-bridge');
   // Canonical social publishing — MUST load last so it overrides legacy stubs
   // (publish_post wrappers, upload_media, get_*_identities, create_social_post).
   loadToolModule(() => require('./tools/social-publishing'), './tools/social-publishing');

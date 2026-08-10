@@ -30,7 +30,13 @@ export type ConnectorPermission =
   | 'documents:write'
   | 'reports:read'
   | 'integrations:read'
-  | 'integrations:write';
+  | 'integrations:write'
+  | 'contracts:read'
+  | 'contracts:write'
+  | 'support:read'
+  | 'support:write'
+  | 'accounting:read'
+  | 'accounting:write';
 
 export type PaginationInput = {
   limit?: number;
