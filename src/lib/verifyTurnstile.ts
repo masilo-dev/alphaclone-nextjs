@@ -4,6 +4,19 @@
  * When unset or placeholder, verification is skipped (local dev).
  */
 
+import { TURNSTILE_BYPASS_TOKEN } from '@/components/security/TurnstileWidget';
+
+/**
+ * Known fake/fallback token strings that must never be accepted as valid.
+ * These were historically emitted by TurnstileWidget on timeout/error —
+ * they have been removed from the widget but we guard server-side too.
+ */
+const KNOWN_FAKE_TOKENS = new Set([
+  'turnstile-bypass-timeout',
+  'turnstile-fallback-error',
+  'bypass',
+]);
+
 function turnstileSecret(): string | undefined {
     const primary = process.env.TURNSTILE_SECRET?.trim();
     if (primary && primary !== 'placeholder') return primary;
@@ -39,6 +52,16 @@ export function readClientIp(request: { headers: Headers } | null | undefined): 
     return undefined;
 }
 
+/**
+ * Returns true if the token is the explicit bypass sentinel emitted by
+ * TurnstileWidget when `bypassOnError` is true. Used by API routes that
+ * want to accept graceful degradation (e.g. non-critical public forms).
+ * NOT accepted by the auth or payment routes.
+ */
+export function isTurnstileBypassToken(token: string): boolean {
+    return token === TURNSTILE_BYPASS_TOKEN;
+}
+
 export async function verifyTurnstileToken(
     token: string | undefined,
     remoteip?: string | null
@@ -49,11 +72,33 @@ export async function verifyTurnstileToken(
     if (!token?.trim()) {
         return false;
     }
+
+    const trimmed = token.trim();
+
+    // Hard-reject known fake strings that should never reach the API.
+    if (KNOWN_FAKE_TOKENS.has(trimmed)) {
+        console.warn('[verifyTurnstile] Rejected known fake token:', trimmed);
+        return false;
+    }
+
+    // Hard-reject the bypass sentinel — callers that accept it must check
+    // isTurnstileBypassToken() before calling verifyTurnstileToken().
+    if (trimmed === TURNSTILE_BYPASS_TOKEN) {
+        return false;
+    }
+
+    // Development-only bypass: TURNSTILE_ALLOW_BYPASS=true skips network call.
+    // Never set this in production.
+    if (process.env.TURNSTILE_ALLOW_BYPASS === 'true' && process.env.NODE_ENV !== 'production') {
+        console.warn('[verifyTurnstile] DEV BYPASS ACTIVE — skipping siteverify');
+        return true;
+    }
+
     try {
         const secret = turnstileSecret()!;
         const body = new URLSearchParams({
             secret,
-            response: token.trim(),
+            response: trimmed,
         });
         if (remoteip?.trim()) {
             body.set('remoteip', remoteip.trim());

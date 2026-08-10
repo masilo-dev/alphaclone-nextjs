@@ -30,6 +30,7 @@ export default function UpgradePage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [turnstileToken, setTurnstileToken] = useState('');
     const [turnstileNonce, setTurnstileNonce] = useState(0);
+    const [turnstileError, setTurnstileError] = useState(false);
     const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
     if (tenantLoading || authLoading) {
@@ -241,14 +242,42 @@ export default function UpgradePage() {
                             </p>
                         </div>
 
-                        <Button
-                            onClick={handleUpgrade}
-                            isLoading={isProcessing}
-                            className="w-full md:w-auto px-10 h-14 bg-teal-600 hover:bg-teal-500 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 group transition-all"
-                        >
-                            {isProcessing ? 'Setting up secure checkout...' : 'Open checkout'}
-                            {!isProcessing && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
-                        </Button>
+                        <div className="flex flex-col items-center gap-3">
+                            {turnstileEnabled && (
+                                <div className="flex flex-col items-center gap-1">
+                                    <TurnstileWidget
+                                        key={turnstileNonce}
+                                        theme="dark"
+                                        onTokenChange={(t) => {
+                                            setTurnstileToken(t);
+                                            if (t) setTurnstileError(false);
+                                        }}
+                                        onExpire={() => {
+                                            setTurnstileToken('');
+                                            setTurnstileError(false);
+                                        }}
+                                        onError={() => {
+                                            setTurnstileToken('');
+                                            setTurnstileError(true);
+                                        }}
+                                    />
+                                    {turnstileError && (
+                                        <p className="text-[11px] text-amber-400 text-center">
+                                            Security check unavailable. Please refresh and try again.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                            <Button
+                                onClick={handleUpgrade}
+                                isLoading={isProcessing}
+                                disabled={!selectedPlan || (turnstileEnabled && (!turnstileToken || turnstileError))}
+                                className="w-full md:w-auto px-10 h-14 bg-teal-600 hover:bg-teal-500 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 group transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isProcessing ? 'Setting up secure checkout...' : 'Open checkout'}
+                                {!isProcessing && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                            </Button>
+                        </div>
                     </div>
                 </motion.div>
 

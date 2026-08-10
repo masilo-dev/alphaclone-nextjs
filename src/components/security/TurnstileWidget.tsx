@@ -22,6 +22,13 @@ declare global {
   }
 }
 
+/**
+ * Sentinel value used when `bypassOnError` is true — callers and
+ * `verifyTurnstile.ts` both recognise this constant so it is never
+ * confused with a real Cloudflare token or a fake string.
+ */
+export const TURNSTILE_BYPASS_TOKEN = '__turnstile_bypass__';
+
 const TURNSTILE_SCRIPT_ID = 'cloudflare-turnstile-script';
 let scriptPromise: Promise<void> | null = null;
 
@@ -66,6 +73,13 @@ interface TurnstileWidgetProps {
   onTokenChange: (token: string) => void;
   onError?: () => void;
   onExpire?: () => void;
+  /**
+   * When true, a load-timeout or JS error causes the widget to emit
+   * TURNSTILE_BYPASS_TOKEN instead of blocking the form forever.
+   * Only use this for non-critical forms where security can be relaxed.
+   * Default: false (form stays blocked on failure).
+   */
+  bypassOnError?: boolean;
 }
 
 export default function TurnstileWidget({
@@ -75,6 +89,7 @@ export default function TurnstileWidget({
   onTokenChange,
   onError,
   onExpire,
+  bypassOnError = false,
 }: TurnstileWidgetProps) {
   const containerId = useId();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -87,13 +102,23 @@ export default function TurnstileWidget({
 
     let cancelled = false;
 
-    // Timeout safety net: if Cloudflare Turnstile hangs spinning for > 5 seconds, auto-bypass or error out gracefully
+    /**
+     * Timeout safety net: if Cloudflare Turnstile hangs for > 8s without
+     * rendering, either bypass (if opted-in) or fire onError so the caller
+     * can surface a clear "security check unavailable" message.
+     * We intentionally do NOT emit a fake truthy token here — that would
+     * let the submit-button guard think the challenge passed.
+     */
     const timeoutTimer = setTimeout(() => {
       if (!cancelled && !widgetIdRef.current) {
-        console.warn('[TurnstileWidget] Cloudflare Turnstile challenge timeout — bypassing spinner.');
-        onTokenChange('turnstile-bypass-timeout');
+        console.warn('[TurnstileWidget] Cloudflare Turnstile challenge timeout.');
+        if (bypassOnError) {
+          onTokenChange(TURNSTILE_BYPASS_TOKEN);
+        } else {
+          onError?.();
+        }
       }
-    }, 5000);
+    }, 8000);
 
     void loadTurnstileScript()
       .then(() => {
@@ -120,15 +145,25 @@ export default function TurnstileWidget({
           'error-callback': () => {
             clearTimeout(timeoutTimer);
             widgetIdRef.current = null;
-            onTokenChange('turnstile-fallback-error');
-            onError?.();
+            if (bypassOnError) {
+              onTokenChange(TURNSTILE_BYPASS_TOKEN);
+            } else {
+              // Emit empty string so the submit-button disabled guard remains
+              // active, then fire the caller's onError for UI feedback.
+              onTokenChange('');
+              onError?.();
+            }
           },
         });
       })
       .catch(() => {
         clearTimeout(timeoutTimer);
-        onTokenChange('turnstile-fallback-error');
-        onError?.();
+        if (bypassOnError) {
+          onTokenChange(TURNSTILE_BYPASS_TOKEN);
+        } else {
+          onTokenChange('');
+          onError?.();
+        }
       });
 
     return () => {
@@ -139,7 +174,7 @@ export default function TurnstileWidget({
       }
       widgetIdRef.current = null;
     };
-  }, [onError, onExpire, onTokenChange, siteKey, theme]);
+  }, [bypassOnError, onError, onExpire, onTokenChange, siteKey, theme]);
 
   if (!siteKey) {
     return null;
