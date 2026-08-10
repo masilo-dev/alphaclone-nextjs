@@ -114,3 +114,12 @@ Thumbs.db
 .env*.local
 *.pem
 /.swc
+# MCP audit scratch scripts
+scratch_audit.ts
+scratch_contract_tests.ts
+scratch_detail_missing.ts
+scratch_group_missing.ts
+scratch_mcp_server.ts
+scratch_test_bridge.ts
+scratch_test_progressive.ts
+scratch_tool_matrix.ts

@@ -138,15 +138,16 @@ export default function UnifiedInboxTab({
       setMessages(data || []);
 
       // Select the first message by default if none is selected
-      if (data && data.length > 0 && !selectedMessage) {
-        setSelectedMessage(data[0]);
+      if (data && data.length > 0) {
+        setSelectedMessage((prev) => prev ?? data[0]);
       }
     } catch (err: any) {
       toast.error("Failed to load messages: " + err.message);
     } finally {
       setLoading(false);
     }
-  }, [tenant?.id, selectedMessage]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenant?.id]); // intentionally excludes selectedMessage — avoids re-fetch loop on selection
 
   const toggleStar = (msgId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -284,6 +285,7 @@ export default function UnifiedInboxTab({
           subject: replySubject,
           body: draftReplyText,
           deliveryProvider: provider === "auto" ? "zoho" : provider,
+          directSend: true,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -415,6 +417,7 @@ export default function UnifiedInboxTab({
             subject: replySubject,
             body: data.draft,
             deliveryProvider: provider === "auto" ? "zoho" : provider,
+            directSend: true,
           }),
         }).then(async (draftRes) => {
           if (draftRes.ok)
@@ -491,6 +494,9 @@ export default function UnifiedInboxTab({
           autoSend: true,
           consentGranted: true,
           confidenceScore: 100,
+          // Skip CRM validation gate — this is a direct reply to an incoming message
+          directSend: true,
+          skipCrmGate: true,
           ...(provider
             ? { preferredProvider: provider, deliveryProviders: [provider] }
             : {}),

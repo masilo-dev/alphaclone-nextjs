@@ -312,7 +312,8 @@ export async function POST(request: Request) {
       : [];
     const preferred = normalizeProvider(preferredProvider);
 
-    const { data: integrations, error: integrationsError } = await admin
+    // Primary: fetch integrations scoped to the calling user
+    let { data: integrations, error: integrationsError } = await admin
       .from('integrations')
       .select('type, config, enabled, user_id, updated_at')
       .eq('tenant_id', tenantId)
@@ -321,6 +322,19 @@ export async function POST(request: Request) {
       .in('type', ['brevo', 'resend', 'sendgrid', 'zoho']);
     if (integrationsError) {
       return NextResponse.json({ success: false, status: 'failed', error: integrationsError.message }, { status: 500 });
+    }
+
+    // Fallback: if no user-scoped integrations found, use any tenant-level ones (owner connected on behalf of all)
+    if (!integrations || integrations.length === 0) {
+      const { data: tenantIntegrations } = await admin
+        .from('integrations')
+        .select('type, config, enabled, user_id, updated_at')
+        .eq('tenant_id', tenantId)
+        .eq('enabled', true)
+        .in('type', ['brevo', 'resend', 'sendgrid', 'zoho']);
+      if (tenantIntegrations && tenantIntegrations.length > 0) {
+        integrations = tenantIntegrations;
+      }
     }
 
     const { data: profileIntegration } = await admin
