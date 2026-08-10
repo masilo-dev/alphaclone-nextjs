@@ -18,6 +18,7 @@ import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 import DevSetupBanner from '@/components/auth/DevSetupBanner';
+import PublicStatusPill from '@/components/status/PublicStatusPill';
 
 export default function LoginPage() {
     return (
@@ -523,11 +524,14 @@ function LoginContent() {
                         </Link>
                     )}
                     <h1 className="text-base font-bold text-white mb-0.5">AlphaClone Systems</h1>
-                    <p className="text-slate-400 text-[11px]">
+                    <p className="text-slate-400 text-[11px] mb-2">
                         {isRegistering
                             ? '14-day free trial · workspace ready in seconds'
                             : 'Sign in to your business workspace'}
                     </p>
+                    <div className="flex justify-center my-1">
+                        <PublicStatusPill />
+                    </div>
                 </div>
 
                 <DevSetupBanner />

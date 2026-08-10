@@ -71,14 +71,14 @@ function configured(value: unknown): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function envStatus(required: string[], optional: string[] = {} as string[]): WorkspaceCheck {
+function envStatus(required: string[], optional: string[] = []): WorkspaceCheck {
   const missingRequired = required.filter((key) => !configured(process.env[key]));
   const missingOptional = optional.filter((key) => !configured(process.env[key]));
   return {
     status: missingRequired.length ? 'unhealthy' : missingOptional.length ? 'degraded' : 'healthy',
     details: {
-      missingRequired,
-      missingOptional,
+      configured: missingRequired.length === 0,
+      optionalConfigured: missingOptional.length === 0,
     },
   };
 }

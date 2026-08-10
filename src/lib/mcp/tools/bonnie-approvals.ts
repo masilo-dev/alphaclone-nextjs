@@ -29,7 +29,7 @@ registerTool('bonnie-approvals', {
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin
       .from('autonomous_runner_approvals')
-      .select('id, action_type, risk_level, status, payload, created_at, workflow_id')
+      .select('id, action_key, risk_level, status, reason, payload, created_at, workflow_id')
       .eq('tenant_id', args.tenant_id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -41,10 +41,10 @@ registerTool('bonnie-approvals', {
       const payload = (row.payload || {}) as Record<string, unknown>;
       return {
         approval_id: row.id,
-        tool: payload.tool || payload.toolName || row.action_type,
+        tool: payload.tool || payload.toolName || row.action_key,
         risk_level: row.risk_level || 'medium',
         created_at: row.created_at,
-        summary: payload.summary || payload.reason || null,
+        summary: payload.summary || payload.reason || row.reason || null,
         preview: payload.preview || null,
         args: payload.args || null,
       };

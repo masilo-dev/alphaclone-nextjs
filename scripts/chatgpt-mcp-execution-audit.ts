@@ -79,23 +79,18 @@ async function main() {
   }
 
   const catalogs = await loadMcpCatalogs();
-  const modules = Object.keys(catalogs.moduleKeywords).sort();
   const rows: AuditRow[] = [];
-  const progressivelyVisibleNames = new Set<string>();
+  const exposedToolNames = new Set<string>();
+  const { getUnifiedMcpTools, invalidateUnifiedMcpToolCache } = await import('../src/lib/mcp/listAllTools');
+  invalidateUnifiedMcpToolCache();
+  const visible = await getUnifiedMcpTools({
+    sanitizeForClient: false,
+    forceRefresh: true,
+  });
+  const visibleNames = new Set(visible.map((tool) => tool.name));
 
-  for (const moduleName of modules) {
-    const { getUnifiedMcpTools, invalidateUnifiedMcpToolCache } = await import('../src/lib/mcp/listAllTools');
-    invalidateUnifiedMcpToolCache();
-    const visible = await getUnifiedMcpTools({
-      sanitizeForClient: false,
-      forceRefresh: true,
-      catalogMode: 'progressive',
-      loadedModules: [moduleName],
-    });
-    const visibleNames = new Set(visible.map((tool) => tool.name));
-
-    for (const tool of visible) {
-      progressivelyVisibleNames.add(tool.name);
+  for (const tool of visible) {
+      exposedToolNames.add(tool.name);
       const annotations = catalogs.inferToolAnnotations(tool.name);
       const readWrite = classifyReadWrite(tool.name, annotations);
       const risk = classifyRisk(tool.name, annotations);
@@ -114,12 +109,12 @@ async function main() {
         read_write: readWrite,
         risk_level: risk,
         status: 'passed',
-        detail: 'Discoverable after module load and executable by MCP route/registry.',
+        detail: 'Discoverable in default full tools/list and executable by MCP route/registry.',
       };
 
       if (!executableRegistered) {
         row.status = 'not_executable';
-        row.detail = 'Tool appears in progressive tools/list but is not backed by route or registry execution.';
+        row.detail = 'Tool appears in default tools/list but is not backed by route or registry execution.';
       } else if (risk === 'critical' && !executeWriteTools) {
         row.status = 'skipped_destructive';
         row.detail = 'Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test.';
@@ -139,11 +134,10 @@ async function main() {
       }
 
       rows.push(row);
-    }
   }
 
   for (const tool of catalogs.registryTools) {
-    if (progressivelyVisibleNames.has(tool.name)) continue;
+    if (exposedToolNames.has(tool.name)) continue;
     const annotations = catalogs.inferToolAnnotations(tool.name);
     const readWrite = classifyReadWrite(tool.name, annotations);
     const risk = classifyRisk(tool.name, annotations);
@@ -157,7 +151,7 @@ async function main() {
       risk_level: risk,
       status: 'failed',
       detail:
-        'Executable registry tool is not discoverable through any current progressive module load. Add module keywords/mapping or intentionally classify it as internal-only.',
+        'Executable registry tool is not discoverable through the default MCP tools/list. Fix registry/listAllTools drift or intentionally classify it as internal-only.',
     });
   }
 
@@ -178,11 +172,11 @@ async function main() {
       base_url: useHttp ? baseUrl : null,
     },
     policy:
-      'Default mode proves ChatGPT progressive discover/load/executable exposure without side effects. Live invocation requires --http and explicit execution flags.',
+      'Default mode proves ChatGPT full-catalog discoverability and route/registry executability without side effects. Live invocation requires --http and explicit execution flags.',
     totals: {
       tools_audited: uniqueRows.length,
       registry_tools: catalogs.registryNames.size,
-      progressively_visible_tools: progressivelyVisibleNames.size,
+      directly_visible_tools: exposedToolNames.size,
       ...totals,
     },
     failures: uniqueRows.filter((row) => row.status === 'failed' || row.status === 'not_executable'),

@@ -41,6 +41,28 @@ test('lead discovery worker can run from production cron without starting an inf
   assert.match(route, /denyIfCronUnauthorized/);
 });
 
+test('lead search queue inserts satisfy legacy and rebuilt not-null columns', () => {
+  const createRoute = readFileSync(
+    new URL('../../src/app/api/leads/searches/route.ts', import.meta.url),
+    'utf8'
+  );
+  const runRoute = readFileSync(
+    new URL('../../src/app/api/leads/searches/[id]/run/route.ts', import.meta.url),
+    'utf8'
+  );
+
+  for (const source of [createRoute, runRoute]) {
+    assert.match(source, /tenant_id:\s*input\.workspaceId|tenant_id:\s*workspaceId/);
+    assert.match(source, /user_id:\s*input\.userId|user_id:\s*user\.id/);
+    assert.match(source, /niche,/);
+    assert.match(source, /sort_by:\s*'default'/);
+    assert.match(source, /use_playwright:\s*false/);
+    assert.match(source, /workspace_id:/);
+    assert.match(source, /created_by:/);
+    assert.match(source, /idempotency_key:/);
+  }
+});
+
 test('exports neutralize spreadsheet formulas', () => {
   assert.equal(escapeCsvFormula('=HYPERLINK("bad")'), '\'=HYPERLINK("bad")');
   assert.equal(escapeCsvFormula('Normal company'), 'Normal company');

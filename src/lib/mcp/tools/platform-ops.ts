@@ -139,9 +139,8 @@ defineConnectorTool({
     app_version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
     package_name: 'alphaclone-nextjs',
     mcp_protocol_version: '2025-11-25',
-    node_version: process.version,
-    commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || null,
-    build_id: process.env.RAILWAY_DEPLOYMENT_ID || process.env.VERCEL_DEPLOYMENT_ID || null,
+    status: 'operational',
+    environment: process.env.NODE_ENV || 'production',
   }),
 });
 
@@ -149,7 +148,7 @@ defineConnectorTool({
   module: 'platform-ops',
   name: 'get_environment',
   description:
-    'Return non-secret environment metadata: NODE_ENV, region, public URLs, and feature capability flags.',
+    'Return tenant-owned environment metadata and active workspace integrations for this tenant.',
   permission: 'platform:read',
   inputSchema: z.object({
     tenant_id: tenantIdField,
@@ -161,20 +160,39 @@ defineConnectorTool({
     },
     required: ['tenant_id'],
   },
-  handler: async () => ({
-    node_env: process.env.NODE_ENV || 'development',
-    app_url: process.env.NEXT_PUBLIC_APP_URL || null,
-    region: process.env.RAILWAY_REGION || process.env.VERCEL_REGION || null,
-    platform: process.env.RAILWAY_ENVIRONMENT_NAME ? 'railway' : process.env.VERCEL ? 'vercel' : 'unknown',
-    configured: {
-      supabase: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
-      stripe: Boolean(process.env.STRIPE_SECRET_KEY),
-      openai: Boolean(process.env.OPENAI_API_KEY),
-      deepseek: Boolean(process.env.DEEPSEEK_API_KEY || process.env.OPENROUTER_API_KEY),
-      redis: Boolean(process.env.UPSTASH_REDIS_REST_URL || process.env.REDIS_URL),
-      sentry: Boolean(process.env.SENTRY_DSN),
-    },
-  }),
+  handler: async (args) => {
+    const supabase = createSupabaseAdminClient();
+
+    const [
+      { count: emailSendersCount },
+      { count: linkedinCount },
+      { count: facebookCount },
+      { data: tenant },
+    ] = await Promise.all([
+      supabase.from('email_sender_identities').select('id', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
+      supabase.from('linkedin_integrations').select('id', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
+      supabase.from('facebook_integrations').select('id', { count: 'exact', head: true }).eq('tenant_id', args.tenant_id),
+      supabase.from('tenants').select('id, name, plan, features').eq('id', args.tenant_id).maybeSingle(),
+    ]);
+
+    return {
+      tenant_id: args.tenant_id,
+      tenant_name: (tenant as any)?.name || 'Workspace',
+      plan: (tenant as any)?.plan || 'enterprise',
+      tenant_integrations: {
+        email_senders_configured: (emailSendersCount || 0) > 0,
+        linkedin_connected: (linkedinCount || 0) > 0,
+        facebook_connected: (facebookCount || 0) > 0,
+      },
+      capabilities: {
+        lead_discovery: true,
+        unified_inbox: true,
+        social_publisher: true,
+        bonnie_agentic_os: true,
+        mcp_catalog_version: '2025-11-25',
+      },
+    };
+  },
 });
 
 defineConnectorTool({

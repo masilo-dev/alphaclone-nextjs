@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-09T10:38:21.537Z",
+  "generated_at": "2026-08-10T09:11:29.663Z",
   "mode": {
     "transport": "local-dry-run",
     "execute_read_tools": false,
     "execute_write_tools": false,
     "base_url": null
   },
-  "policy": "Default mode proves ChatGPT progressive discover/load/executable exposure without side effects. Live invocation requires --http and explicit execution flags.",
+  "policy": "Default mode proves ChatGPT full-catalog discoverability and route/registry executability without side effects. Live invocation requires --http and explicit execution flags.",
   "totals": {
-    "tools_audited": 307,
-    "registry_tools": 302,
-    "progressively_visible_tools": 307,
-    "passed": 120,
-    "skipped_write": 132,
-    "skipped_destructive": 10,
-    "requires_approval": 45
+    "tools_audited": 501,
+    "registry_tools": 500,
+    "directly_visible_tools": 501,
+    "passed": 190,
+    "skipped_write": 235,
+    "skipped_destructive": 13,
+    "requires_approval": 63
   },
   "failures": [],
   "tools": [
@@ -32,6 +32,17 @@
     {
       "module": "admin",
       "tool_name": "get_audit_logs",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "admin",
+      "tool_name": "nexus_design_audit",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -76,6 +87,17 @@
     {
       "module": "admin",
       "tool_name": "run_strategic_pnl_audit",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "admin",
+      "tool_name": "write_audit_log",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -130,6 +152,17 @@
     },
     {
       "module": "approvals",
+      "tool_name": "get_contract_approvals",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "approvals",
       "tool_name": "list_pending_approvals",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -175,6 +208,28 @@
     {
       "module": "approvals",
       "tool_name": "request_changes",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "approvals",
+      "tool_name": "request_contract_approval",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "approvals",
+      "tool_name": "review_contract_approval",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -296,6 +351,94 @@
     {
       "module": "bonnie",
       "tool_name": "load_skill",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_content_synthesis",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_email_triage",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_market_pulse",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_meeting_intelligence",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_month_end_close",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_onboarding_flow",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_payroll_sync",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "bonnie",
+      "tool_name": "nexus_support_triage",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -460,6 +603,17 @@
     },
     {
       "module": "calendar",
+      "tool_name": "book_calendar_meeting",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
       "tool_name": "cancel_meeting",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -468,6 +622,39 @@
       "risk_level": "critical",
       "status": "skipped_destructive",
       "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "create_business_event",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "create_client_portal_event",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "create_linkedin_event",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "calendar",
@@ -490,6 +677,17 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "get_business_events",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "calendar",
@@ -537,7 +735,62 @@
     },
     {
       "module": "calendar",
+      "tool_name": "nexus_calendar_nexus",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "plan_social_calendar",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
       "tool_name": "reminders",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "subscribe_events",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "sync_calendly_events",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "calendar",
+      "tool_name": "unsubscribe_event",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -571,6 +824,17 @@
     {
       "module": "contacts",
       "tool_name": "add_note",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "contacts",
+      "tool_name": "backfill_contact_phone_country_codes",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -644,6 +908,39 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "contacts",
+      "tool_name": "get_client_by_id",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "contacts",
+      "tool_name": "get_client_email_history",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "contacts",
+      "tool_name": "get_client_history",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "contacts",
@@ -724,6 +1021,39 @@
     },
     {
       "module": "contacts",
+      "tool_name": "segment_clients_by_criteria",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "contacts",
+      "tool_name": "update_client",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "contacts",
+      "tool_name": "update_client_metadata",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "contacts",
       "tool_name": "update_contact",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -790,6 +1120,17 @@
     },
     {
       "module": "documents",
+      "tool_name": "analyze_document_intelligence",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "documents",
       "tool_name": "analyze_workspace_document_url",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -846,6 +1187,28 @@
     {
       "module": "documents",
       "tool_name": "create_contract",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
+      "tool_name": "create_contract_template",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
+      "tool_name": "create_contract_version",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -933,6 +1296,17 @@
     },
     {
       "module": "documents",
+      "tool_name": "generate_contract_draft",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
       "tool_name": "generate_contract_signing_token",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -941,6 +1315,28 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
+      "tool_name": "get_contract_templates",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "documents",
+      "tool_name": "get_contract_versions",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "documents",
@@ -977,7 +1373,40 @@
     },
     {
       "module": "documents",
+      "tool_name": "get_documents",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "documents",
       "tool_name": "get_file_download_url",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "documents",
+      "tool_name": "get_linkedin_member_profile",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "documents",
+      "tool_name": "get_x_profile",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -1011,6 +1440,17 @@
     {
       "module": "documents",
       "tool_name": "microsoft_upload_file",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
+      "tool_name": "nexus_contract_drafter",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -1098,6 +1538,17 @@
     },
     {
       "module": "documents",
+      "tool_name": "save_contract",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
       "tool_name": "search_documents",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1160,6 +1611,17 @@
       "read_write": "write",
       "risk_level": "high",
       "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "documents",
+      "tool_name": "start_contract_lifecycle",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
@@ -1230,6 +1692,17 @@
     },
     {
       "module": "email",
+      "tool_name": "autonomous_reply",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
       "tool_name": "classify_outreach_reply",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1263,6 +1736,17 @@
     },
     {
       "module": "email",
+      "tool_name": "get_recent_messages",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "email",
       "tool_name": "get_tenant_messages",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1285,6 +1769,17 @@
     },
     {
       "module": "email",
+      "tool_name": "reconcile_outreach_vs_logs",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
       "tool_name": "reply_to_email",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1296,7 +1791,29 @@
     },
     {
       "module": "email",
+      "tool_name": "send_batch_outreach",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
       "tool_name": "send_email",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
+      "tool_name": "send_message",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -1326,6 +1843,39 @@
       "risk_level": "high",
       "status": "requires_approval",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
+      "tool_name": "send_whatsapp_message",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
+      "tool_name": "set_outreach_limits",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "email",
+      "tool_name": "verify_outreach_delivery",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "finance",
@@ -1483,12 +2033,34 @@
     },
     {
       "module": "health",
+      "tool_name": "get_calendly_status",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "health",
       "tool_name": "get_delivery_status",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
       "read_write": "read",
       "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "health",
+      "tool_name": "get_email_campaign_delivery_status",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "high",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
@@ -1549,6 +2121,17 @@
     },
     {
       "module": "health",
+      "tool_name": "get_run_status",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "health",
       "tool_name": "get_signature_status",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1577,6 +2160,17 @@
       "executable_via": "tool-registry",
       "read_write": "read",
       "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "health",
+      "tool_name": "get_whatsapp_status",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
@@ -1681,6 +2275,17 @@
     },
     {
       "module": "health",
+      "tool_name": "update_client_status_batch",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "health",
       "tool_name": "zoho_health",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1714,6 +2319,17 @@
     },
     {
       "module": "integrations",
+      "tool_name": "create_bank_account",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "integrations",
       "tool_name": "export_to_google_workspace",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1722,6 +2338,17 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "get_account_overview",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "integrations",
@@ -1747,6 +2374,28 @@
     },
     {
       "module": "integrations",
+      "tool_name": "get_bank_accounts",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "get_linkedin_ad_accounts",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "integrations",
       "tool_name": "get_social_accounts",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -1755,6 +2404,61 @@
       "risk_level": "medium",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "get_zoho_mail_messages",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "get_zoho_mail_thread",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "gmail_get_thread",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "gmail_list_threads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "integrations",
+      "tool_name": "gmail_send_email",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "integrations",
@@ -1889,6 +2593,17 @@
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
+      "module": "integrations",
+      "tool_name": "reply_to_zoho_mail",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
       "module": "invoices",
       "tool_name": "convert_quote_to_invoice",
       "discoverable_after_load": true,
@@ -1920,6 +2635,17 @@
       "risk_level": "high",
       "status": "requires_approval",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "invoices",
+      "tool_name": "get_invoice_line_items",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "high",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "invoices",
@@ -1956,7 +2682,29 @@
     },
     {
       "module": "invoices",
+      "tool_name": "nexus_invoice_chasing",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "invoices",
       "tool_name": "send_invoice",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "invoices",
+      "tool_name": "start_invoice_lifecycle",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -1988,6 +2736,39 @@
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
+      "module": "invoices",
+      "tool_name": "verify_invoice_sent",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "high",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "leads",
+      "tool_name": "auto_create_lead_from_message",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "capture_linkedin_comment_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
       "module": "leads",
       "tool_name": "create_lead",
       "discoverable_after_load": true,
@@ -2008,6 +2789,28 @@
       "risk_level": "critical",
       "status": "skipped_destructive",
       "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "leads",
+      "tool_name": "enable_lead_auto_outreach",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "find_and_qualify_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "leads",
@@ -2033,7 +2836,62 @@
     },
     {
       "module": "leads",
+      "tool_name": "get_scraper_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "leads",
       "tool_name": "list_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "leads",
+      "tool_name": "nexus_lead_enrichment",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "parse_lead_criteria",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "qualify_crm_leads",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "search_facebook_leads",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2055,6 +2913,28 @@
     },
     {
       "module": "leads",
+      "tool_name": "start_lead_campaign",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "start_lead_nurture",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
       "tool_name": "update_lead",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2063,6 +2943,28 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "leads",
+      "tool_name": "update_lead_status",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "leads",
+      "tool_name": "verify_lead_created",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "marketing",
@@ -2089,6 +2991,17 @@
     {
       "module": "marketing",
       "tool_name": "landing_pages",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "media",
+      "tool_name": "create_post_with_ai_image",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2140,6 +3053,50 @@
       "risk_level": "critical",
       "status": "skipped_destructive",
       "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "media",
+      "tool_name": "generate_ai_image",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "media",
+      "tool_name": "generate_grok_video",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "media",
+      "tool_name": "generate_image",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "media",
+      "tool_name": "generate_viral_video_script",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "media",
@@ -2252,6 +3209,28 @@
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
+      "module": "payments",
+      "tool_name": "reconcile_payment",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "payments",
+      "tool_name": "send_receipt",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
       "module": "projects",
       "tool_name": "create_project",
       "discoverable_after_load": true,
@@ -2275,6 +3254,39 @@
     },
     {
       "module": "projects",
+      "tool_name": "get_project_milestones",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "projects",
+      "tool_name": "get_project_summary",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "projects",
+      "tool_name": "get_project_timeline",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "projects",
       "tool_name": "get_projects",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2286,6 +3298,28 @@
     },
     {
       "module": "projects",
+      "tool_name": "nexus_project_architect",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "projects",
+      "tool_name": "send_project_email",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "projects",
       "tool_name": "update_project",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2294,6 +3328,17 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "projects",
+      "tool_name": "update_project_status",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "reporting",
@@ -2363,6 +3408,39 @@
     },
     {
       "module": "reporting",
+      "tool_name": "generate_business_report",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "reporting",
+      "tool_name": "generate_expense_report",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "reporting",
+      "tool_name": "generate_market_authority_report",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "reporting",
       "tool_name": "get_dashboard_stats",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2374,7 +3452,29 @@
     },
     {
       "module": "reporting",
+      "tool_name": "get_failure_report",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "reporting",
       "tool_name": "get_post_analytics",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "reporting",
+      "tool_name": "get_throughput_report",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2407,6 +3507,28 @@
     },
     {
       "module": "revenue",
+      "tool_name": "create_quote",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "revenue",
+      "tool_name": "create_subscription_checkout",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "revenue",
       "tool_name": "deal_to_cash_flow",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2429,7 +3551,29 @@
     },
     {
       "module": "revenue",
+      "tool_name": "get_quotes",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "revenue",
       "tool_name": "get_revenue_summary",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "revenue",
+      "tool_name": "list_event_subscriptions",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2506,6 +3650,28 @@
     },
     {
       "module": "revenue",
+      "tool_name": "score_deal",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "revenue",
+      "tool_name": "send_quote",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "revenue",
       "tool_name": "subscriptions",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2517,7 +3683,29 @@
     },
     {
       "module": "revenue",
+      "tool_name": "trigger_deal_automation",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "revenue",
       "tool_name": "update_deal",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "revenue",
+      "tool_name": "update_quote",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2663,7 +3851,7 @@
       "tool_name": "list_capabilities",
       "discoverable_after_load": true,
       "executable_registered": true,
-      "executable_via": "mcp-route",
+      "executable_via": "tool-registry",
       "read_write": "read",
       "risk_level": "low",
       "status": "passed",
@@ -2685,7 +3873,7 @@
       "tool_name": "load_module_tools",
       "discoverable_after_load": true,
       "executable_registered": true,
-      "executable_via": "mcp-route",
+      "executable_via": "tool-registry",
       "read_write": "write",
       "risk_level": "medium",
       "status": "skipped_write",
@@ -2715,10 +3903,43 @@
     },
     {
       "module": "search",
+      "tool_name": "search_clients",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "search",
       "tool_name": "search_tools",
       "discoverable_after_load": true,
       "executable_registered": true,
-      "executable_via": "mcp-route",
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "search",
+      "tool_name": "search_x_tweets",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "medium",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "search",
+      "tool_name": "search_x_users",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
       "read_write": "read",
       "risk_level": "low",
       "status": "passed",
@@ -2759,7 +3980,51 @@
     },
     {
       "module": "social",
+      "tool_name": "create_bulk_email_campaign",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
       "tool_name": "create_email_draft",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "create_linkedin_comment",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "create_linkedin_post",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "create_linkedin_reaction",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2792,6 +4057,17 @@
     },
     {
       "module": "social",
+      "tool_name": "delete_facebook_post",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "critical",
+      "status": "skipped_destructive",
+      "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "social",
       "tool_name": "delete_post",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -2811,6 +4087,17 @@
       "risk_level": "critical",
       "status": "skipped_destructive",
       "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "social",
+      "tool_name": "draft_reply",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "social",
@@ -2836,7 +4123,40 @@
     },
     {
       "module": "social",
+      "tool_name": "generate_outreach_draft",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "get_email_campaign_stats",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "high",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
       "tool_name": "get_facebook_identities",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
+      "tool_name": "get_facebook_post_insights",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2858,7 +4178,40 @@
     },
     {
       "module": "social",
+      "tool_name": "get_linkedin_ad_campaigns",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "high",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
       "tool_name": "get_linkedin_identities",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
+      "tool_name": "get_linkedin_post_stats",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
+      "tool_name": "get_linkedin_posts",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -2921,6 +4274,39 @@
       "risk_level": "medium",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
+      "tool_name": "get_x_timeline",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "social",
+      "tool_name": "nexus_sales_campaign",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "post_x_tweet",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "social",
@@ -3023,6 +4409,28 @@
     },
     {
       "module": "social",
+      "tool_name": "queue_email_campaign_send",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "reply_to_x_tweet",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
       "tool_name": "retry_social_post",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -3067,6 +4475,39 @@
     },
     {
       "module": "social",
+      "tool_name": "send_bulk_email_campaign",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "send_x_dm",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
+      "tool_name": "start_email_campaign",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "social",
       "tool_name": "store_facebook_token",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -3099,6 +4540,83 @@
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
+      "module": "support",
+      "tool_name": "create_ticket",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "support",
+      "tool_name": "escalate_ticket",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "support",
+      "tool_name": "get_ticket_stats",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "support",
+      "tool_name": "get_tickets",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "support",
+      "tool_name": "summarize_ticket",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "support",
+      "tool_name": "update_ticket",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "add_task_dependency",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
       "module": "tasks",
       "tool_name": "create_project_task",
       "discoverable_after_load": true,
@@ -3111,7 +4629,40 @@
     },
     {
       "module": "tasks",
+      "tool_name": "create_task",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "create_tasks_batch",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
       "tool_name": "get_project_tasks",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "get_tasks",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -3155,7 +4706,95 @@
     },
     {
       "module": "tasks",
+      "tool_name": "send_task_email",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "requires_approval",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "set_task_recurrence",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
       "tool_name": "supervise_task",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "task_create",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "task_delete",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "critical",
+      "status": "skipped_destructive",
+      "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "task_get_results",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "task_list",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "task_pause",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "task_resume",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -3185,6 +4824,39 @@
       "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "update_task",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "tasks",
+      "tool_name": "write_task_note",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "get_automation_health",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
     },
     {
       "module": "workflows",
@@ -3221,6 +4893,28 @@
     },
     {
       "module": "workflows",
+      "tool_name": "kickoff_project_automation",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "list_playbooks",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workflows",
       "tool_name": "list_workflows",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -3229,6 +4923,39 @@
       "risk_level": "low",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "nexus_strategic_orchestrator",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "onboard_user_automation",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "orchestrate_meeting_workflow",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "high",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "workflows",
@@ -3254,12 +4981,45 @@
     },
     {
       "module": "workflows",
+      "tool_name": "run_mcp_agent_workflow",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "run_playbook",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
       "tool_name": "run_workflow",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
       "read_write": "write",
       "risk_level": "high",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workflows",
+      "tool_name": "schedule_social_automation",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
       "status": "skipped_write",
       "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
@@ -3276,7 +5036,40 @@
     },
     {
       "module": "workspace",
+      "tool_name": "automate_expense_entry",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
       "tool_name": "award_points",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "cancel_run",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "critical",
+      "status": "skipped_destructive",
+      "detail": "Destructive/critical tool was not executed. Pass --execute-write-tools in a staging workspace to test."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "create_expense",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -3298,6 +5091,160 @@
     },
     {
       "module": "workspace",
+      "tool_name": "create_journal_entry",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "create_reconciliation_session",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "create_vendor_bill",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "disable_whatsapp_chatbot",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "dispatch_tool",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "enable_whatsapp_chatbot",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "execute_action",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "execute_strategic_intelligence",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_balance_sheet",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_business_snapshot",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_cash_flow_statement",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_chatbot_conversations",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_chatbot_performance",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_chatbot_persona",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
       "tool_name": "get_conversation",
       "discoverable_after_load": true,
       "executable_registered": true,
@@ -3309,7 +5256,84 @@
     },
     {
       "module": "workspace",
+      "tool_name": "get_current_user",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_expenses",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_momentum_score",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_pnl_statement",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_reconciliation_sessions",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_strategic_plan",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
       "tool_name": "get_user_points",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "read",
+      "risk_level": "low",
+      "status": "passed",
+      "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "get_vendor_bills",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -3345,7 +5369,7 @@
       "tool_name": "list_modules",
       "discoverable_after_load": true,
       "executable_registered": true,
-      "executable_via": "mcp-route",
+      "executable_via": "tool-registry",
       "read_write": "read",
       "risk_level": "low",
       "status": "passed",
@@ -3364,7 +5388,62 @@
     },
     {
       "module": "workspace",
+      "tool_name": "read_url_content",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
       "tool_name": "reorder_widgets",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "retry_run_step",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "run_autonomous_scan",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "run_chief_of_staff_routine",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "set_chatbot_handoff_rules",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",
@@ -3386,7 +5465,62 @@
     },
     {
       "module": "workspace",
+      "tool_name": "summarize_workspace",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "sync_all_inboxes",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
       "tool_name": "toggle_widget_visibility",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "train_chatbot",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "update_chatbot_persona",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "voice_action_router",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",

@@ -49,7 +49,7 @@ async function main() {
         tenant_scope: 'session_tenant_required',
         feature_flag_dependency: null,
         integration_dependency: integrationDependency,
-        executable_status: executable ? 'executable' : 'catalog_only_not_exposed_progressively',
+        executable_status: executable ? 'executable' : 'catalog_only_not_executable',
         executable_via: catalogs.registryNames.has(tool.name)
           ? 'tool-registry'
           : ROUTE_EXECUTED_TOOL_NAMES.has(tool.name)
@@ -71,7 +71,7 @@ async function main() {
     generated_at: new Date().toISOString(),
     source_of_truth: 'runtime MCP registry + unified tools/list full catalog',
     policy:
-      'Progressive ChatGPT catalogs must expose only tool-registry or MCP-route executable tools. Full catalog may include catalog-only entries for internal audit visibility.',
+      'Default MCP discovery exposes the full executable catalog to every client. Catalog-only entries are audit visibility only and must not be reported as executable tools.',
     totals: {
       full_catalog_tools: tools.length,
       registry_executable_tools: catalogs.registryNames.size,

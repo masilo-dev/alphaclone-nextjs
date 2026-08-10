@@ -48,7 +48,7 @@ test("ToolPolicyGate enforces human oversight for high-risk tools (source)", asy
   assert.match(src, /requiresApproval/);
 });
 
-test("unified tools/list exposes bounded progressive catalog by default", async () => {
+test("unified tools/list exposes the full executable catalog by default", async () => {
   invalidateUnifiedMcpToolCache();
   const tools = await getUnifiedMcpTools({
     sanitizeForClient: false,
@@ -61,7 +61,10 @@ test("unified tools/list exposes bounded progressive catalog by default", async 
   initializeRegistry();
   const registryNames = new Set(listTools(false).map((tool) => tool.name));
   const names = new Set(tools.map((t) => t.name));
-  assert.ok(tools.length < registryNames.size, `expected progressive catalog smaller than ${registryNames.size}, got ${tools.length}`);
+  assert.ok(tools.length >= registryNames.size, `expected full catalog with at least ${registryNames.size} tools, got ${tools.length}`);
+  for (const registered of registryNames) {
+    assert.ok(names.has(registered), `default tools/list missing registered tool ${registered}`);
+  }
   for (const required of [
     "search_tools",
     "load_module_tools",
@@ -78,6 +81,7 @@ test("module loading adds executable tools for that module", async () => {
     sanitizeForClient: true,
     forceRefresh: true,
     clientId: "chatgpt-connector",
+    catalogMode: "progressive",
     loadedModules: ["social"],
   });
   const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
@@ -185,15 +189,21 @@ test("credentialed ChatGPT MCP audit scripts exist and default to non-destructiv
   assert.match(execution, /skipped_destructive/);
 });
 
-test("full catalog remains available only for explicit internal audit mode", async () => {
+test("progressive catalog remains available only for explicit compatibility mode", async () => {
   invalidateUnifiedMcpToolCache();
-  const tools = await getUnifiedMcpTools({
+  const progressive = await getUnifiedMcpTools({
     sanitizeForClient: true,
     forceRefresh: true,
     clientId: null,
-    catalogMode: "full",
+    catalogMode: "progressive",
+  });
+  const full = await getUnifiedMcpTools({
+    sanitizeForClient: true,
+    forceRefresh: true,
+    clientId: null,
   });
   const { initializeRegistry, listTools } = await import("../../src/lib/mcp/tool-registry.ts");
   initializeRegistry();
-  assert.ok(tools.length >= listTools(false).length, `full catalog omitted registered tools`);
+  assert.ok(full.length >= listTools(false).length, `default full catalog omitted registered tools`);
+  assert.ok(progressive.length < full.length, `explicit progressive catalog should be smaller than full catalog`);
 });

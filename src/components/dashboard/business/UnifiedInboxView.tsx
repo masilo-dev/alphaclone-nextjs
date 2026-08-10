@@ -358,6 +358,11 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     });
   }, [emails, searchQuery, activeLabel, labelMap, provider]);
 
+  const unreadCount = useMemo(
+    () => emails.filter((email) => email.isRead === false).length,
+    [emails]
+  );
+
   const selectedEmail = useMemo(
     () => filteredEmails.find((email) => email.id === selectedId) || null,
     [filteredEmails, selectedId]
@@ -754,11 +759,84 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
         role="region"
         aria-label="Email mailbox"
       >
-        {/* Sidebar list — 30% width */}
+        {!readerExpanded && (
+          <aside className="hidden w-56 shrink-0 flex-col border-r border-white/5 bg-slate-950/70 p-3 md:flex">
+            <button
+              type="button"
+              onClick={openNewEmail}
+              disabled={!providerConnected}
+              aria-label="Compose new email"
+              className="mb-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-teal-600 px-3 py-2 text-sm font-bold text-white shadow-lg shadow-teal-900/25 hover:bg-teal-500 disabled:opacity-40"
+            >
+              <PenSquare className="h-4 w-4" />
+              Compose
+            </button>
+
+            <div className="mb-3 grid grid-cols-2 gap-1 rounded-lg border border-white/8 bg-slate-900/80 p-1">
+              <button
+                type="button"
+                onClick={() => switchProvider('microsoft')}
+                className={`rounded-md py-1.5 text-[11px] font-bold transition-all ${
+                  provider === 'microsoft' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                Outlook
+              </button>
+              <button
+                type="button"
+                onClick={() => switchProvider('zoho')}
+                className={`rounded-md py-1.5 text-[11px] font-bold transition-all ${
+                  provider === 'zoho' ? 'bg-teal-600 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                Zoho
+              </button>
+            </div>
+
+            <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto custom-scrollbar" aria-label="Mail modules">
+              {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => {
+                    setFolder(f);
+                    setSelectedId(null);
+                    setThreadMessages([]);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold capitalize transition-all ${
+                    folder === f
+                      ? 'bg-teal-500/15 text-teal-200 ring-1 ring-teal-500/30'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <span>{f}</span>
+                  {f === 'inbox' && unreadCount > 0 ? (
+                    <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-[10px] font-black text-teal-200">
+                      {unreadCount}
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+            </nav>
+
+            <div className="mt-3 border-t border-white/5 pt-3">
+              <button
+                type="button"
+                onClick={refresh}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-300 hover:border-white/20 hover:text-white"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                Refresh
+              </button>
+            </div>
+          </aside>
+        )}
+
+        {/* Message list */}
         <div
           className={`${
             readerExpanded ? 'hidden' : selectedId ? 'hidden md:flex' : 'flex'
-          } w-full md:w-[300px] lg:w-[320px] flex-col h-full min-h-0 border-r border-white/5 bg-slate-950/50 shrink-0`}
+          } w-full md:w-[340px] lg:w-[380px] flex-col h-full min-h-0 border-r border-white/5 bg-slate-950/50 shrink-0`}
         >
           <div className="p-2.5 border-b border-white/8 shrink-0 space-y-2">
             {/* AI draft banner */}
@@ -771,58 +849,6 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                 });
               }}
             />
-
-            {/* ── Compose + Refresh + Campaigns row ── */}
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={openNewEmail}
-                disabled={!providerConnected}
-                aria-label="Compose new email"
-                className="flex-1 flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 disabled:opacity-40 px-3 py-1.5 text-xs font-bold text-white shadow-lg shadow-teal-900/30"
-              >
-                <PenSquare className="w-3.5 h-3.5" />
-                Compose
-              </button>
-              <button
-                type="button"
-                onClick={refresh}
-                className="rounded-full border border-white/10 p-1.5 text-slate-400 hover:text-white hover:border-white/20 shrink-0"
-                aria-label="Refresh"
-                title="Refresh mailbox"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
-              <Link
-                href="/dashboard/business/campaigns"
-                className="rounded-full border border-white/10 p-1.5 text-slate-400 hover:text-white hover:border-white/20 shrink-0"
-                title="Bulk campaigns"
-              >
-                <Users className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {/* ── Provider switcher — compact pill row ── */}
-            <div className="flex gap-1 p-0.5 rounded-full bg-slate-900/80 border border-white/8">
-              <button
-                type="button"
-                onClick={() => switchProvider('microsoft')}
-                className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all ${
-                  provider === 'microsoft' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {status.microsoft ? '● ' : '○ '}Outlook
-              </button>
-              <button
-                type="button"
-                onClick={() => switchProvider('zoho')}
-                className={`flex-1 py-1 text-[11px] font-bold rounded-full transition-all ${
-                  provider === 'zoho' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {status.zoho ? '● ' : '○ '}Zoho
-              </button>
-            </div>
 
             {/* Not-connected banner */}
             {!providerConnected && (
@@ -880,31 +906,6 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
               </button>
             </div>
 
-            {/* ── Folder tabs — inline horizontal strip ── */}
-            <div className="flex gap-1" role="tablist" aria-label="Mail folders">
-              {(['inbox', 'sent', 'drafts', 'trash'] as InboxFolder[]).map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  role="tab"
-                  aria-selected={folder === f}
-                  onClick={() => {
-                    setFolder(f);
-                    setSelectedId(null);
-                    setThreadMessages([]);
-                  }}
-                  className={`flex-1 py-1 text-[11px] font-bold rounded-full capitalize transition-all ${
-                    folder === f
-                      ? provider === 'microsoft'
-                        ? 'bg-blue-600/90 text-white shadow-sm'
-                        : 'bg-teal-600/90 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto divide-y divide-white/5" role="list" aria-label={`${folder} messages`}>

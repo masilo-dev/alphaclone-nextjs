@@ -86,9 +86,9 @@ function prepareDiscoveryTools(
 
 /**
  * Single source of truth for MCP tool discovery.
- * The default is progressive discovery: a bounded core catalogue plus any
- * modules loaded for the current MCP session. Internal audits and local agent
- * runners can request the full catalog explicitly.
+ * The default is the full executable catalog so every MCP client can discover
+ * and execute the same AlphaClone capability contract. Progressive discovery
+ * remains available only as an explicit opt-in for clients that ask for it.
  */
 export async function getUnifiedMcpTools(options?: {
   sanitizeForClient?: boolean;
@@ -102,7 +102,7 @@ export async function getUnifiedMcpTools(options?: {
   catalogMode?: 'progressive' | 'full';
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
-  const catalogMode = options?.catalogMode || 'progressive';
+  const catalogMode = options?.catalogMode || 'full';
   const now = Date.now();
 
   if (

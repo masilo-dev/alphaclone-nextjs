@@ -552,15 +552,15 @@ export default function AlphaCloneEmailWorkspace() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-full bg-[#0B1220] text-slate-100 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+    <div className="flex h-[calc(100dvh-5.5rem)] min-h-[620px] max-h-[calc(100dvh-5.5rem)] w-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1220] text-slate-100 shadow-2xl max-md:h-[calc(100dvh-4.75rem)] max-md:min-h-[520px] max-md:max-h-[calc(100dvh-4.75rem)]">
       
       {/* ------------------------------------------------------------- */}
       {/* TOP HEADER: UNIVERSAL SEARCH & SYSTEM ENGINE CONTROL */}
       {/* ------------------------------------------------------------- */}
-      <header className="flex flex-wrap items-center justify-between gap-4 px-5 py-3.5 bg-[#0F172A]/90 backdrop-blur-xl border-b border-white/10 shrink-0 z-20">
+      <header className="flex min-h-[68px] items-center justify-between gap-3 overflow-x-auto px-4 py-3 bg-[#0F172A]/90 backdrop-blur-xl border-b border-white/10 shrink-0 z-20 no-scrollbar lg:px-5">
         
         {/* Left branding & Workspace tab selector */}
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-max items-center gap-4">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black">
               <Mail className="w-5 h-5 stroke-[2.5]" />
@@ -650,7 +650,7 @@ export default function AlphaCloneEmailWorkspace() {
         </div>
 
         {/* Universal Search & Quick AI Bar */}
-        <div className="flex-1 max-w-xl flex items-center gap-2">
+        <div className="flex min-w-[260px] flex-1 items-center gap-2 md:max-w-xl">
           <div className="relative w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
@@ -689,7 +689,7 @@ export default function AlphaCloneEmailWorkspace() {
         </div>
 
         {/* Connected Status & User Profile */}
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-max items-center gap-3">
           {/* Accounts status badge */}
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-white/10 text-xs">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -711,7 +711,7 @@ export default function AlphaCloneEmailWorkspace() {
       {/* ------------------------------------------------------------- */}
 
       {activeTab === 'inbox' && (
-        <div className="flex-1 flex min-h-0 overflow-hidden relative">
+        <div className="grid flex-1 min-h-0 overflow-hidden relative grid-cols-[auto_minmax(18rem,26rem)_minmax(0,1fr)] max-md:flex max-md:flex-col">
           
           {/* --------------------------------------------------------- */}
           {/* LEFT SIDEBAR: FOLDERS & WORKSPACE DIRECTORY */}
@@ -719,7 +719,7 @@ export default function AlphaCloneEmailWorkspace() {
           <aside
             className={`${
               sidebarCollapsed ? 'w-16' : 'w-64'
-            } border-r border-white/10 bg-[#0F172A]/70 backdrop-blur-md flex flex-col transition-all duration-200 shrink-0 select-none`}
+            } border-r border-white/10 bg-[#0F172A]/70 backdrop-blur-md flex flex-col transition-all duration-200 shrink-0 select-none min-h-0 max-md:hidden`}
           >
             {/* Compose & Collapse toggle */}
             <div className="p-3 flex items-center justify-between border-b border-white/10">
@@ -743,7 +743,7 @@ export default function AlphaCloneEmailWorkspace() {
             </div>
 
             {/* Folder list */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-4 text-xs">
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-4 text-xs custom-scrollbar">
               
               {/* CORE MAILBOX */}
               <div>
@@ -945,10 +945,10 @@ export default function AlphaCloneEmailWorkspace() {
           <div
             className={`${
               selectedThreadId ? 'hidden md:flex' : 'flex'
-            } w-full md:w-[380px] lg:w-[440px] border-r border-white/10 bg-[#0B1220] flex-col shrink-0 min-h-0 select-none`}
+            } w-full border-r border-white/10 bg-[#0B1220] flex-col shrink-0 min-h-0 select-none md:flex md:w-auto`}
           >
             {/* Filter toolbar */}
-            <div className="p-3 border-b border-white/10 bg-[#0F172A]/40 flex items-center justify-between gap-2 shrink-0">
+            <div className="sticky top-0 z-10 p-3 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-md flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-1.5 overflow-x-auto">
                 <button
                   onClick={() => {
@@ -1002,7 +1002,7 @@ export default function AlphaCloneEmailWorkspace() {
             </div>
 
             {/* Email Threads List */}
-            <div className="flex-1 overflow-y-auto divide-y divide-white/5">
+            <div className="flex-1 min-h-0 overflow-y-auto divide-y divide-white/5 custom-scrollbar">
               {filteredThreads.length === 0 ? (
                 <div className="p-12 text-center text-slate-500 space-y-3">
                   <Mail className="w-10 h-10 mx-auto text-slate-600 stroke-[1.5]" />
@@ -1146,20 +1146,20 @@ export default function AlphaCloneEmailWorkspace() {
           {/* --------------------------------------------------------- */}
           {/* RIGHT PANEL: THREADED CONVERSATION VIEW & CRM TIMELINE */}
           {/* --------------------------------------------------------- */}
-          <div className="flex-1 flex flex-col bg-[#080E1A] min-h-0 overflow-hidden">
+          <div className="flex-1 flex min-w-0 flex-col bg-[#080E1A] min-h-0 overflow-hidden">
             {selectedThread ? (
               <div className="flex-1 flex flex-col min-h-0">
                 
                 {/* Thread Header */}
-                <div className="p-5 border-b border-white/10 bg-[#0F172A]/80 backdrop-blur-md flex flex-wrap items-center justify-between gap-4 shrink-0">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base font-black text-white">{selectedThread.subject}</h2>
+                <div className="sticky top-0 z-10 p-4 border-b border-white/10 bg-[#0F172A]/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0 md:p-5">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h2 className="truncate text-base font-black text-white">{selectedThread.subject}</h2>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-[10px] font-bold text-emerald-300">
                         {selectedThread.crmStatus}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400">
+                    <p className="truncate text-xs text-slate-400">
                       Thread with <strong className="text-slate-200">{selectedThread.senderName}</strong> ({selectedThread.senderEmail}) — {selectedThread.companyName}
                     </p>
                   </div>
@@ -1191,10 +1191,10 @@ export default function AlphaCloneEmailWorkspace() {
                 </div>
 
                 {/* Main Thread Content & Context Sidebar */}
-                <div className="flex-1 flex flex-col xl:flex-row min-h-0 overflow-hidden">
+                <div className="grid flex-1 min-h-0 overflow-hidden xl:grid-cols-[minmax(0,1fr)_20rem]">
                   
                   {/* Messages Timeline */}
-                  <div className="flex-1 p-6 space-y-6 overflow-y-auto min-h-0">
+                  <div className="min-h-0 overflow-y-auto p-4 space-y-6 custom-scrollbar md:p-6">
                     
                     {/* Bonnie AI Summary Banner */}
                     <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 to-teal-950/40 border border-emerald-500/30 space-y-2">
@@ -1303,7 +1303,7 @@ export default function AlphaCloneEmailWorkspace() {
                   </div>
 
                   {/* CRM & Deal Intelligence Right Context Bar */}
-                  <div className="w-full xl:w-80 border-t xl:border-t-0 xl:border-l border-white/10 bg-[#0B1220] p-5 space-y-5 shrink-0">
+                  <div className="hidden min-h-0 overflow-y-auto border-l border-white/10 bg-[#0B1220] p-5 space-y-5 shrink-0 custom-scrollbar xl:block">
                     
                     {/* Contact Profile */}
                     <div className="space-y-3">
@@ -1311,7 +1311,11 @@ export default function AlphaCloneEmailWorkspace() {
                       <div className="p-4 rounded-xl bg-slate-900/80 border border-white/10 space-y-2">
                         <div className="flex items-center gap-3">
                           {selectedThread.senderAvatar ? (
-                            <img src={selectedThread.senderAvatar} className="w-10 h-10 rounded-full object-cover" />
+                            <img
+                              src={selectedThread.senderAvatar}
+                              alt={selectedThread.senderName}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center">
                               {selectedThread.senderName.charAt(0)}
@@ -1386,7 +1390,7 @@ export default function AlphaCloneEmailWorkspace() {
       {/* CAMPAIGNS TAB */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'campaigns' && (
-        <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        <div className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto custom-scrollbar">
           {/* Campaign Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
@@ -1466,7 +1470,7 @@ export default function AlphaCloneEmailWorkspace() {
       {/* OTHER TABS: SEQUENCES / TEMPLATES / ANALYTICS / HEALTH */}
       {/* ------------------------------------------------------------- */}
       {activeTab === 'sequences' && (
-        <div className="flex-1 p-8 text-center text-slate-400 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-8 text-center text-slate-400 space-y-4 custom-scrollbar">
           <Workflow className="w-12 h-12 text-emerald-400 mx-auto stroke-[1.5]" />
           <h2 className="text-lg font-bold text-white">Multi-Channel Sequences Visual Engine</h2>
           <p className="text-xs max-w-md mx-auto">
@@ -1476,7 +1480,7 @@ export default function AlphaCloneEmailWorkspace() {
       )}
 
       {activeTab === 'templates' && (
-        <div className="flex-1 p-8 text-center text-slate-400 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-8 text-center text-slate-400 space-y-4 custom-scrollbar">
           <FileText className="w-12 h-12 text-teal-400 mx-auto stroke-[1.5]" />
           <h2 className="text-lg font-bold text-white">Drag & Drop Email Template Builder</h2>
           <p className="text-xs max-w-md mx-auto">
@@ -1486,7 +1490,7 @@ export default function AlphaCloneEmailWorkspace() {
       )}
 
       {activeTab === 'analytics' && (
-        <div className="flex-1 p-8 text-center text-slate-400 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-8 text-center text-slate-400 space-y-4 custom-scrollbar">
           <BarChart3 className="w-12 h-12 text-emerald-400 mx-auto stroke-[1.5]" />
           <h2 className="text-lg font-bold text-white">Attribution & Heatmap Analytics</h2>
           <p className="text-xs max-w-md mx-auto">
@@ -1496,7 +1500,7 @@ export default function AlphaCloneEmailWorkspace() {
       )}
 
       {activeTab === 'health' && (
-        <div className="flex-1 p-8 text-center text-slate-400 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-8 text-center text-slate-400 space-y-4 custom-scrollbar">
           <ShieldCheck className="w-12 h-12 text-teal-400 mx-auto stroke-[1.5]" />
           <h2 className="text-lg font-bold text-white">Domain Health & Warmup Center</h2>
           <p className="text-xs max-w-md mx-auto">

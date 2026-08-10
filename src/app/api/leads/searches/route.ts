@@ -1,6 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { leadSearchInput } from '@/lib/lead-finder/core';
+import { processLeadDiscoveryBatch } from '@/workers/lead-discovery-worker';
+
+function leadSearchJobSeed(input: {
+  workspaceId: string;
+  userId: string;
+  searchId: string;
+  idempotencyKey: string;
+  sources?: string[];
+  query?: string;
+  businessKeywords?: string[];
+  industry?: string;
+  location?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+}) {
+  const niche = [
+    input.industry,
+    ...(input.businessKeywords || []),
+    input.query,
+  ].map((part) => String(part || '').trim()).filter(Boolean).join(', ') || 'Lead discovery';
+  const location = [
+    input.location,
+    input.city,
+    input.region,
+    input.country,
+  ].map((part) => String(part || '').trim()).filter(Boolean).join(', ') || null;
+
+  return {
+    tenant_id: input.workspaceId,
+    user_id: input.userId,
+    workspace_id: input.workspaceId,
+    created_by: input.userId,
+    search_id: input.searchId,
+    niche,
+    location,
+    sort_by: 'default',
+    use_playwright: false,
+    job_type: 'lead.search.start',
+    source_type: 'orchestrator',
+    idempotency_key: input.idempotencyKey,
+    metadata: { sources: input.sources || [] },
+  };
+}
 
 function isUnavailableSchema(error: unknown): boolean {
   const candidate = error as { code?: string; message?: string } | null;
@@ -60,16 +104,20 @@ export async function POST(req: NextRequest) {
     }
     if (error) throw error;
     if (input.runNow) {
-      const { error: jobError } = await admin.from('lead_search_jobs').insert({
-        tenant_id: input.workspaceId,
-        user_id: user.id,
-        workspace_id: input.workspaceId,
-        created_by: user.id,
-        search_id: search.id,
-        job_type: 'lead.search.start', source_type: 'orchestrator',
-        idempotency_key: `lead.search.start:${search.id}`,
-        metadata: { sources: input.sources },
-      });
+      const { error: jobError } = await admin.from('lead_search_jobs').insert(leadSearchJobSeed({
+        workspaceId: input.workspaceId,
+        userId: user.id,
+        searchId: search.id,
+        idempotencyKey: `lead.search.start:${search.id}`,
+        sources: input.sources,
+        query: input.query,
+        businessKeywords: input.businessKeywords,
+        industry: input.industry,
+        location: input.location,
+        city: input.city,
+        region: input.region,
+        country: input.country,
+      }));
       if (jobError && isUnavailableSchema(jobError)) {
         return NextResponse.json(
           {
@@ -81,6 +129,10 @@ export async function POST(req: NextRequest) {
         );
       }
       if (jobError) throw jobError;
+
+      void processLeadDiscoveryBatch({ workerId: `api-trigger-${search.id}`, claimLimit: 1 }).catch((err) => {
+        console.warn('[api/leads/searches] Immediate discovery trigger warning:', err);
+      });
     }
     await admin.from('lead_audit_logs').insert({
       workspace_id: input.workspaceId, created_by: user.id, actor_id: user.id,

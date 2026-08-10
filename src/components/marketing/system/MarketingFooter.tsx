@@ -4,6 +4,7 @@ import { Facebook, Linkedin, Twitter } from 'lucide-react';
 import { MarketingContainer } from './LayoutPrimitives';
 import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
 import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
+import PublicStatusPill from '@/components/status/PublicStatusPill';
 
 const COLUMNS = [
   {
@@ -106,7 +107,8 @@ export default function MarketingFooter() {
 
         <div className="mkt-footer-bottom">
           <p>{formatCopyrightLine()}</p>
-          <div className="mkt-footer-legal">
+          <div className="mkt-footer-legal flex items-center gap-4 flex-wrap">
+            <PublicStatusPill />
             <Link href="/privacy-policy" className="mkt-footer-link">
               Privacy
             </Link>

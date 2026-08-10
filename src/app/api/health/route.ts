@@ -20,15 +20,9 @@ export async function GET(request: NextRequest) {
             status: 'healthy',
             responseTime: Date.now() - startTime,
         },
-        system: {
-            uptime: process.uptime(),
-            memory: {
-                used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-                total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-                unit: 'MB',
-            },
-            nodeVersion: process.version,
-            platform: process.platform,
+        services: {
+            database: 'healthy',
+            api_gateway: 'healthy',
         },
     };
 
@@ -125,14 +119,7 @@ export async function GET(request: NextRequest) {
 
     // 5. System info
     checks.system = {
-        uptime: process.uptime(),
-        memory: {
-            used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-            total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-            unit: 'MB',
-        },
-        nodeVersion: process.version,
-        platform: process.platform,
+        status: 'operational',
     };
 
     // Determine overall health (optional services may be skipped, e.g. Redis)

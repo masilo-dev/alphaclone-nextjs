@@ -95,11 +95,9 @@ export const DOCUMENTS_HUB_ROUTES = new Set([
 ]);
 
 export const CHANNELS_HUB_ROUTES = new Set([
-  '/dashboard/comms',
   '/dashboard/business/tickets',
   '/dashboard/messages',
   '/dashboard/business/messages',
-  '/dashboard/mail',
   '/dashboard/business/whatsapp',
 ]);
 

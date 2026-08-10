@@ -54,10 +54,9 @@ async function main() {
   invalidateUnifiedMcpToolCache();
 
   const registered = listTools(false);
-  const progressive = await getUnifiedMcpTools({
+  const exposed = await getUnifiedMcpTools({
     sanitizeForClient: false,
     forceRefresh: true,
-    catalogMode: 'progressive',
   });
   const full = await getUnifiedMcpTools({
     sanitizeForClient: false,
@@ -65,7 +64,7 @@ async function main() {
     catalogMode: 'full',
   });
 
-  const progressiveNames = new Set(progressive.map((tool) => tool.name));
+  const exposedNames = new Set(exposed.map((tool) => tool.name));
   const registeredNames = new Set(registered.map((tool) => tool.name));
 
   const rows: ExposureRow[] = full.map((tool) => {
@@ -80,10 +79,10 @@ async function main() {
     return {
       tool_name: name,
       registered: registeredNames.has(name),
-      chatgpt_exposed: progressiveNames.has(name),
-      claude_exposed: progressiveNames.has(name),
-      bonnie_exposed: progressiveNames.has(name),
-      cursor_exposed: progressiveNames.has(name),
+      chatgpt_exposed: exposedNames.has(name),
+      claude_exposed: exposedNames.has(name),
+      bonnie_exposed: exposedNames.has(name),
+      cursor_exposed: exposedNames.has(name),
       read_or_write: readOrWrite,
       module,
       risk_level: classifyRisk(name, annotations),
@@ -112,7 +111,7 @@ async function main() {
 
   const report = {
     generated_at: new Date().toISOString(),
-    exposure_model: 'progressive: core tools plus modules loaded through load_module_tools',
+    exposure_model: 'full: every registered executable tool is exposed to every MCP client by default',
     totals,
     tools: rows,
   };

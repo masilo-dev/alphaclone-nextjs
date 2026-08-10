@@ -1160,15 +1160,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             </button>
                         )}
 
-                        <button
-                            type="button"
-                            onClick={() => setCommandPaletteOpen(true)}
-                            className="hidden lg:inline-flex ac-workspace-action-btn ac-workspace-action-btn--primary min-h-9 px-3"
-                            aria-label="Create a business record"
-                        >
-                            <Plus className="h-4 w-4" aria-hidden="true" />
-                            <span>Create</span>
-                        </button>
+                        {/* Create button intentionally removed from header – use BottomNav → More on mobile, or Command Palette on desktop */}
                         <button
                             type="button"
                             onClick={() => setActiveTab('/dashboard/business/bonnie')}
