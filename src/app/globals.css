@@ -2337,3 +2337,38 @@ html.light .ac-business-main .bg-slate-900 {
 
 
 
+
+/* Inbox: HTML email body rendering */
+.email-html-body {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  line-height: 1.75;
+  word-break: break-words;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.email-html-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+.email-html-body a {
+  color: #2dd4bf;
+  text-decoration: underline;
+}
+.email-html-body p { margin-bottom: 0.75rem; }
+.email-html-body blockquote {
+  border-left: 3px solid #334155;
+  padding-left: 1rem;
+  color: #94a3b8;
+  margin: 0.75rem 0;
+}
+.email-html-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.email-html-body td, .email-html-body th {
+  padding: 0.5rem;
+  border: 1px solid #1e293b;
+}
