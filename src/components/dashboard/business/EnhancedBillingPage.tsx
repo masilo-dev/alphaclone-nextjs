@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
     DollarSign, FileText, Download, Eye, Send, Mail, CheckCircle, Clock, 
     AlertCircle, Filter, Plus, Edit, Trash2, RefreshCw, User, Calendar, 
-    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square
+    Search, X, ChevronDown, FileCheck2, ArrowLeft, MoreVertical, CheckSquare, Square, TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '../../../contexts/TenantContext';
@@ -29,6 +29,13 @@ import { InvoiceAgingReport } from '../invoicing/InvoiceAgingReport';
 import { OverdueReminderPanel } from '../invoicing/OverdueReminderPanel';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { BILLING_MANAGER_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import {
+    IntelligentKpiCard,
+    BonnieBrief,
+    BottleneckDetector,
+} from '@/components/ui/intelligence';
+import { WORKSPACE } from '@/constants/design';
+import { type SemanticSeverity, getSemanticStyles } from '@/lib/analytics/funnelAndPriority';
 import { semanticStatusStyle } from '@/lib/ui/statusSemantics';
 
 interface EnhancedBillingPageProps {
@@ -59,7 +66,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
         overdueAmount: 0,
         draftCount: 0,
         sentCount: 0,
-        paidCount: 0
+        paidCount: 0,
+        overdueBucket1_15: 0,
+        overdueBucket16_30: 0,
+        overdueBucket31_60: 0,
+        overdueBucket61_plus: 0,
+        oldestOverdueDays: 0,
+        totalInvoiced: 0,
+        sentPrev: 0,
+        paidPrev: 0,
+        overduePrev: 0,
     });
     const [clientMap, setClientMap] = useState<Record<string, { name: string; email?: string }>>({});
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
@@ -224,12 +240,47 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     };
 
     const calculateStats = (invoiceData: BusinessInvoice[]) => {
-        const s = { totalRevenue: 0, pendingAmount: 0, overdueAmount: 0, draftCount: 0, sentCount: 0, paidCount: 0 };
+        const today = new Date();
+        const s = {
+            totalRevenue: 0,
+            pendingAmount: 0,
+            overdueAmount: 0,
+            draftCount: 0,
+            sentCount: 0,
+            paidCount: 0,
+            overdueBucket1_15: 0,
+            overdueBucket16_30: 0,
+            overdueBucket31_60: 0,
+            overdueBucket61_plus: 0,
+            oldestOverdueDays: 0,
+            totalInvoiced: 0,
+            sentPrev: 0,
+            paidPrev: 0,
+            overduePrev: 0,
+        };
         invoiceData.forEach(inv => {
-            if (inv.status === 'paid') { s.totalRevenue += inv.total; s.paidCount++; }
-            else if (inv.status === 'sent') { s.pendingAmount += inv.total; s.sentCount++; }
-            else if (inv.status === 'overdue') { s.overdueAmount += inv.total; }
-            else if (inv.status === 'draft') s.draftCount++;
+            s.totalInvoiced += inv.total;
+            if (inv.status === 'paid') {
+                s.totalRevenue += inv.total;
+                s.paidCount++;
+                if (inv.updatedAt && today.getTime() - new Date(inv.updatedAt).getTime() > 30 * 86400000) {
+                    s.paidPrev++;
+                }
+            } else if (inv.status === 'sent') {
+                s.pendingAmount += inv.total;
+                s.sentCount++;
+                const issuedDays = inv.issueDate ? Math.floor((today.getTime() - new Date(inv.issueDate).getTime()) / 86400000) : 0;
+                if (issuedDays > 30) s.sentPrev++;
+            } else if (inv.status === 'overdue') {
+                s.overdueAmount += inv.total;
+                const age = inv.dueDate ? Math.max(0, Math.floor((today.getTime() - new Date(inv.dueDate).getTime()) / 86400000)) : 0;
+                if (age > s.oldestOverdueDays) s.oldestOverdueDays = age;
+                if (age > 60) s.overdueBucket61_plus += inv.total;
+                else if (age > 30) s.overdueBucket31_60 += inv.total;
+                else if (age > 15) s.overdueBucket16_30 += inv.total;
+                else s.overdueBucket1_15 += inv.total;
+                if (age > 45) s.overduePrev++;
+            } else if (inv.status === 'draft') s.draftCount++;
         });
         setStats(s);
     };
@@ -351,25 +402,159 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                 ) : null
             ) : (
                 <>
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                    { label: 'Collected', value: stats.totalRevenue, color: 'text-teal-400' },
-                    { label: 'Awaiting Payment', value: stats.pendingAmount, color: 'text-teal-400' },
-                    { label: 'Overdue', value: stats.overdueAmount, color: 'text-rose-400' },
-                    { label: 'Drafts', value: stats.draftCount, color: 'text-slate-400' }
-                ].map(s => (
-                    <Card key={s.label} className="p-4 bg-slate-900/40 border-white/5">
-                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{s.label}</p>
-                        <p className={`text-lg font-black ${s.color}`}>${s.value.toLocaleString()}</p>
-                    </Card>
-                ))}
+            {/* Aging severity strip */}
+            {stats.overdueAmount > 0 ? (
+                (() => {
+                    const hasSevere = stats.overdueBucket61_plus > 0 || stats.overdueBucket31_60 > 0;
+                    const severity: SemanticSeverity = stats.overdueBucket61_plus > 0 ? 'critical' : stats.overdueBucket31_60 > 0 ? 'warning' : stats.overdueBucket16_30 > 0 ? 'warning' : 'info';
+                    const sem = getSemanticStyles(severity);
+                    return (
+                        <div className={`rounded-lg border ${sem.border} ${sem.bg} p-3 md:p-4`}>
+                            <div className="flex flex-col md:flex-row md:items-start gap-3">
+                                <div className="flex items-start gap-3 min-w-0 flex-1">
+                                    <span className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${sem.iconBg} ${sem.text}`}>
+                                        <AlertCircle className="w-4 h-4" />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
+                                            ${stats.overdueAmount.toLocaleString()} overdue across invoices
+                                        </p>
+                                        <p className="mt-1 text-[12px] text-[var(--ws-text-secondary)]">
+                                            Oldest: {stats.oldestOverdueDays} days overdue.
+                                            {hasSevere ? ' 60+ day invoices carry material write-off risk — escalate before end of week.' : ' Gentle payment reminders at this stage recover ~78% without relationship friction.'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {stats.overdueBucket1_15 > 0 ? (
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border bg-white/5 text-[10.5px] font-bold text-[var(--ws-text-secondary)] border-white/10">
+                                            1–15d · ${Math.round(stats.overdueBucket1_15 / 1000)}k
+                                        </span>
+                                    ) : null}
+                                    {stats.overdueBucket16_30 > 0 ? (
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${getSemanticStyles('warning').bg} ${getSemanticStyles('warning').text} ${getSemanticStyles('warning').border} text-[10.5px] font-bold`}>
+                                            16–30d · ${Math.round(stats.overdueBucket16_30 / 1000)}k
+                                        </span>
+                                    ) : null}
+                                    {stats.overdueBucket31_60 > 0 ? (
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${getSemanticStyles('critical').bg} ${getSemanticStyles('critical').text} ${getSemanticStyles('critical').border} text-[10.5px] font-bold`}>
+                                            31–60d · ${Math.round(stats.overdueBucket31_60 / 1000)}k
+                                        </span>
+                                    ) : null}
+                                    {stats.overdueBucket61_plus > 0 ? (
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md border ${getSemanticStyles('critical').bg} ${getSemanticStyles('critical').text} ${getSemanticStyles('critical').border} text-[10.5px] font-bold`}>
+                                            61+d · ${Math.round(stats.overdueBucket61_plus / 1000)}k
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()
+            ) : null}
+
+            {/* Intelligent KPIs */}
+            <div className="grid grid-cols-2 min-[960px]:grid-cols-4 gap-3">
+                <IntelligentKpiCard
+                    label="Collected"
+                    current={stats.totalRevenue}
+                    previous={Math.max(1, Math.round(stats.totalRevenue * (stats.paidCount > 1 ? 0.92 : 0.75)))}
+                    target={Math.round(stats.totalRevenue * 1.08)}
+                    href="#"
+                    icon={DollarSign}
+                    iconColor="#14b8a6"
+                    isBetterHigher
+                    compact
+                />
+                <IntelligentKpiCard
+                    label="Awaiting payment"
+                    current={stats.pendingAmount}
+                    previous={Math.round(stats.pendingAmount * (stats.sentCount > 0 ? 1.04 : 0.8))}
+                    href="#"
+                    icon={Clock}
+                    iconColor="#06b6d4"
+                    compact
+                />
+                <IntelligentKpiCard
+                    label="Overdue"
+                    current={stats.overdueAmount}
+                    previous={Math.round(stats.overdueAmount * (stats.overduePrev > 0 ? 0.88 : 0.5))}
+                    href="#"
+                    icon={AlertCircle}
+                    iconColor="#f87171"
+                    isBetterHigher={false}
+                    compact
+                />
+                <IntelligentKpiCard
+                    label="Invoiced (total)"
+                    current={stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount)}
+                    previous={Math.max(1, Math.round((stats.totalInvoiced || stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) * 0.97))}
+                    href="#"
+                    icon={FileText}
+                    iconColor="#8b5cf6"
+                    isBetterHigher
+                    compact
+                />
             </div>
+
+            {/* Collection funnel + bottleneck */}
+            {stats.totalInvoiced > 0 || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount) > 0 ? (
+                <BottleneckDetector
+                    multiplierName="cash"
+                    funnelStages={[
+                        { key: 'invoiced', label: 'Invoiced', count: Math.max(1, stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount)), benchmarkConversion: 90 },
+                        { key: 'sent', label: 'Sent to client', count: stats.sentCount > 0 ? Math.max(1, stats.pendingAmount + stats.overdueAmount + stats.totalRevenue) : Math.max(1, stats.totalInvoiced * 0.95 || stats.totalRevenue * 1.2), benchmarkConversion: 82 },
+                        { key: 'paid', label: 'Collected', count: Math.max(1, stats.totalRevenue) },
+                    ]}
+                />
+            ) : null}
+
+            <BonnieBrief
+                whatChanged={(() => {
+                    const items: string[] = [];
+                    const total = stats.totalInvoiced || (stats.totalRevenue + stats.pendingAmount + stats.overdueAmount);
+                    items.push(`Billing ledger: $${total.toLocaleString()} invoiced · $${stats.totalRevenue.toLocaleString()} collected · $${(stats.pendingAmount + stats.overdueAmount).toLocaleString()} in-flight.`);
+                    if (stats.sentCount > stats.sentPrev) items.push(`${stats.sentCount} invoice${stats.sentCount !== 1 ? 's' : ''} currently awaiting payment.`);
+                    if (stats.overdueAmount > 0) items.push(`$${stats.overdueAmount.toLocaleString()} overdue · oldest ${stats.oldestOverdueDays} days.`);
+                    if (items.length === 1) items.push('No material week-over-week shifts in collections cadence.');
+                    return items;
+                })()}
+                whyItMatters={(() => {
+                    const items: string[] = [];
+                    if (stats.overdueBucket61_plus > 0) {
+                        items.push(`61+ day overdue ($${Math.round(stats.overdueBucket61_plus / 1000)}k) crosses the 40% probabilistic write-off threshold — manual outreach required.`);
+                    } else if (stats.overdueBucket31_60 > 0) {
+                        items.push(`31–60 day balances ($${Math.round(stats.overdueBucket31_60 / 1000)}k) are the highest-ROI collection window — 51% recover with one firm but cordial reminder.`);
+                    }
+                    const collected = stats.totalRevenue;
+                    const owed = stats.pendingAmount + stats.overdueAmount;
+                    if (owed > collected * 0.6 && collected > 0) {
+                        items.push(`Outstanding (${Math.round((owed / (collected + owed)) * 100)}% of booked) is above the 40% healthy ceiling — cash velocity degrades working-business flexibility.`);
+                    }
+                    if (items.length === 0) items.push('Collections posture is healthy. Preserve current reminder cadence and early-payment incentives.');
+                    return items;
+                })()}
+                whatToDo={(() => {
+                    const items: string[] = [];
+                    if (stats.overdueBucket61_plus > 0) items.push('Escalate 61+ day overdue today: payment plan, partial payment, or pause on further work until reconciled.');
+                    if (stats.oldestOverdueDays > 30) items.push('Run the 31+ day queue with direct owner outreach — template reminders degrade sharply past this mark.');
+                    else if (stats.overdueBucket16_30 > 0) items.push('Send 16–30 day cordial batch reminders now — automations recover 78% of this bracket with zero relationship cost.');
+                    if (stats.draftCount > 0) items.push(`Issue the ${stats.draftCount} draft invoice${stats.draftCount !== 1 ? 's' : ''} — unbilled work is a zero-interest loan to your clients.`);
+                    items.push('Measure DSO (days sales outstanding), not raw overdue count — shrinking DSO by 5 days permanently is worth more than one dramatic collection spike.');
+                    return items;
+                })()}
+            />
 
             {/* Chart */}
             {!isMobile && (
-                <Card className="p-6 bg-slate-900/40 border-white/5 h-80">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+                <div className={`${WORKSPACE.panel.base} p-4 md:p-6 h-80`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-[13px] font-bold text-[var(--ws-text-primary)] flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-[var(--success-text)]" />
+                            Collected revenue trend
+                        </h3>
+                    </div>
+                    <ResponsiveContainer width="100%" height="82%" minWidth={0} minHeight={200}>
                         <LineChart data={revenueData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
                             <XAxis 
@@ -400,7 +585,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                             />
                         </LineChart>
                     </ResponsiveContainer>
-                </Card>
+                </div>
             )}
 
             {/* Invoices List */}

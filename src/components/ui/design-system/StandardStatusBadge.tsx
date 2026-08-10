@@ -14,33 +14,46 @@ export type BadgeVariant =
   | 'medium'    // amber gradient border
   | 'low';      // emerald gradient border
 
+/**
+ * Map design-system BadgeVariant to app-scoped semantic severity surfaces.
+ * Using scoped severity classes (ac-sev-*) ensures badges automatically
+ * respect light/dark theme tokens instead of hardcoded Tailwind colors.
+ */
 const VARIANT_MAP: Record<BadgeVariant, string> = {
-  success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-  error: 'bg-red-500/10 text-red-400 border-red-500/20',
-  info: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-  neutral: 'bg-slate-800/50 text-slate-400 border-slate-700/30',
-  purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-  
-  // Custom Priority styles with micro-glows/borders
-  high: 'bg-red-950/20 text-red-400 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]',
-  medium: 'bg-amber-950/20 text-amber-400 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.1)]',
-  low: 'bg-emerald-950/20 text-emerald-400 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]',
+  // Scoped semantic severity — theme-token aware
+  success: 'ac-sev-success',
+  warning: 'ac-sev-warning',
+  error: 'ac-sev-error',
+  info: 'ac-sev-info',
+  neutral:
+    'bg-[var(--ws-surface-secondary)] border-[var(--ws-border-strong)] text-[var(--ws-text-secondary)]',
+  purple:
+    'bg-[color-mix(in_srgb,var(--brand-violet-500)_14%,var(--ws-surface-primary))] border-[color-mix(in_srgb,var(--brand-violet-500)_30%,var(--ws-border))] text-[color-mix(in_srgb,var(--brand-violet-400)_90%,var(--ws-text-primary))]',
+
+  // Priority styles (used for ticket / deal / task priority) — same severity semantics
+  high: 'ac-sev-error shadow-[0_0_10px_rgba(239,68,68,0.1)]',
+  medium: 'ac-sev-warning shadow-[0_0_10px_rgba(245,158,11,0.1)]',
+  low: 'ac-sev-success shadow-[0_0_10px_rgba(16,185,129,0.1)]',
 };
 
 interface StandardStatusBadgeProps {
   children: React.ReactNode;
   variant?: BadgeVariant;
   className?: string;
+  /** Optional screen-reader-only label (useful when the visual text is a terse abbreviation). */
+  'aria-label'?: string;
 }
 
 export function StandardStatusBadge({
   children,
   variant = 'neutral',
   className,
+  'aria-label': ariaLabel,
 }: StandardStatusBadgeProps) {
   return (
     <span
+      role="status"
+      aria-label={ariaLabel}
       className={cn(
         'inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border whitespace-nowrap select-none transition-all duration-300',
         VARIANT_MAP[variant],

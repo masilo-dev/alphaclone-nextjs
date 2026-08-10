@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { languageToBcp47 } from '@/i18n/languages';
 import {
   ArrowLeft,
   AlertTriangle,
@@ -104,14 +106,20 @@ async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: bool
   return { microsoft, zoho };
 }
 
-function buildReplyQuote(email: UnifiedInboxMessage): string {
-  const when = new Date(email.receivedAt).toLocaleString();
+function buildReplyQuote(email: UnifiedInboxMessage, locale?: Intl.LocalesArgument): string {
+  const when = new Date(email.receivedAt).toLocaleString(locale, {
+    dateStyle: 'full',
+    timeStyle: 'short',
+  });
   const excerpt = email.snippet || '';
   return `\n\n---\nOn ${when}, ${email.from} wrote:\n${excerpt}`;
 }
 
-function buildForwardBody(email: UnifiedInboxMessage): string {
-  const when = new Date(email.receivedAt).toLocaleString();
+function buildForwardBody(email: UnifiedInboxMessage, locale?: Intl.LocalesArgument): string {
+  const when = new Date(email.receivedAt).toLocaleString(locale, {
+    dateStyle: 'full',
+    timeStyle: 'short',
+  });
   const bodyText = email.body?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() || email.snippet || '';
   return `\n\n---------- Forwarded message ----------\nFrom: ${email.from}\nDate: ${when}\nSubject: ${email.subject || '(no subject)'}\n\n${bodyText}`;
 }
@@ -180,6 +188,8 @@ function getSmartReplyChips(email: UnifiedInboxMessage) {
 export default function UnifiedInboxView({ defaultProvider, initialFolder }: UnifiedInboxViewProps) {
   const { user } = useAuth();
   const { currentTenant } = useTenant();
+  const { language } = useLanguage();
+  const dateLocale = useMemo(() => languageToBcp47(language), [language]);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -424,7 +434,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
     openCompose({
       to: [...new Set(toList)].join(', '),
       subject,
-      body: bodyOverride ?? buildReplyQuote(selectedEmail),
+      body: bodyOverride ?? buildReplyQuote(selectedEmail, dateLocale),
     });
   };
 
@@ -437,7 +447,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
       subject: selectedEmail.subject?.match(/^Fwd:/i)
         ? selectedEmail.subject
         : `Fwd: ${selectedEmail.subject || ''}`,
-      body: buildForwardBody(selectedEmail),
+      body: buildForwardBody(selectedEmail, dateLocale),
     });
   };
 
@@ -1338,7 +1348,7 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
                               void handleInlineReply(false);
                               return;
                             }
-                            openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!)}`);
+                            openReply(false, `${inlineReply}${buildReplyQuote(selectedEmail!, dateLocale)}`);
                           }}
                           disabled={sendingReply || !inlineReply.trim()}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-bold text-white disabled:opacity-40"

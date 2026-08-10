@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Loader2, XCircle, Wrench } from 'lucide-react';
+import { CheckCircle2, Loader2, XCircle, Sparkles } from 'lucide-react';
 import type { BonnieToolStep } from '../BonnieChatPanel';
+import { hermeticBonnieActivityLabel } from '../BonnieChatPanel';
 
 function friendlyToolLabel(tool: string): string {
   const map: Record<string, string> = {
@@ -14,7 +15,8 @@ function friendlyToolLabel(tool: string): string {
     start_invoice_lifecycle: 'Preparing invoice lifecycle',
   };
   if (map[tool]) return map[tool];
-  return `Working with ${tool.replace(/_/g, ' ')}`;
+  const hermetic = hermeticBonnieActivityLabel(tool);
+  return hermetic.text;
 }
 
 type Props = {
@@ -29,6 +31,14 @@ export default function BonnieToolActivityCard({ tools }: Props) {
       {tools.map((tool, index) => {
         const pending = tool.approvalRequired && !tool.success;
         const failed = tool.success === false && !tool.approvalRequired;
+        const hermetic = hermeticBonnieActivityLabel(tool.tool);
+        const Icon = hermetic.Icon || Sparkles;
+        const summaryLine =
+          pending
+            ? `Bonnie needs approval to continue`
+            : failed
+              ? `Could not finish — review what went wrong`
+              : tool.summary || `Completed in workspace`;
         return (
           <details
             key={`${tool.tool}-${index}`}
@@ -40,24 +50,25 @@ export default function BonnieToolActivityCard({ tools }: Props) {
               ) : failed ? (
                 <XCircle className="h-4 w-4 text-rose-500" />
               ) : (
-                <CheckCircle2 className="h-4 w-4 text-teal-600" />
+                <Icon className={`h-4 w-4 ${hermetic.accent}`} />
               )}
               <span className="min-w-0 flex-1 truncate">
                 {pending
-                  ? `Bonnie needs approval: ${friendlyToolLabel(tool.tool)}`
+                  ? `Bonnie: ${hermetic.text} (waiting on you)`
                   : failed
-                    ? `Could not finish: ${friendlyToolLabel(tool.tool)}`
-                    : friendlyToolLabel(tool.tool)}
+                    ? `Bonnie hit a snag: ${hermetic.text}`
+                    : `Bonnie · ${friendlyToolLabel(tool.tool)}`}
               </span>
-              <Wrench className="h-3.5 w-3.5 text-slate-400 opacity-0 transition group-open:opacity-100" />
+              <Sparkles className="h-3.5 w-3.5 text-slate-400 opacity-0 transition group-open:opacity-100" />
             </summary>
             <div className="space-y-1 border-t border-slate-200 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:text-slate-300">
               <p>
-                <span className="font-semibold">Tool:</span> {tool.tool}
+                <span className="font-semibold">Activity:</span> {hermetic.text}
+                {hermetic.moduleLabel ? ` · ${hermetic.moduleLabel}` : ''}
               </p>
               {tool.riskClass && (
                 <p>
-                  <span className="font-semibold">Risk:</span> {tool.riskClass}
+                  <span className="font-semibold">Safety:</span> {tool.riskClass}
                 </p>
               )}
               <p>
@@ -66,7 +77,7 @@ export default function BonnieToolActivityCard({ tools }: Props) {
               </p>
               {tool.summary && (
                 <p>
-                  <span className="font-semibold">Result:</span> {tool.summary}
+                  <span className="font-semibold">What happened:</span> {tool.summary}
                 </p>
               )}
               {tool.preview?.target && (

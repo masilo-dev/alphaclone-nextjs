@@ -22,6 +22,144 @@ function localizeNextPack(pack: NextPack): NextPack {
     };
 }
 
+/**
+ * XP progress engine — progress-driven gamification (rituals, not badges).
+ * SAFETY: 100% client-side (localStorage per user). Optionally mirrors award_points
+ * through the bonnie MCP stack if the network is up — but that path is fire-and-forget
+ * (silently swallowed errors), so zero UX breakage from network blips.
+ */
+const XP_STORAGE_KEY = 'ac-gamification-xp-v1';
+const LEVEL_XP = [0, 100, 300, 700, 1500, 3000, 6000, 12000, 25000, 50000];
+function levelForXp(xp: number): { level: number; next: number; pct: number } {
+    let level = 0;
+    for (let i = 0; i < LEVEL_XP.length; i++) {
+        if (xp >= LEVEL_XP[i]) level = i;
+    }
+    const cur = LEVEL_XP[level] ?? 0;
+    const next = LEVEL_XP[Math.min(level + 1, LEVEL_XP.length - 1)] ?? cur;
+    const pct = next - cur > 0 ? Math.max(0, Math.min(100, ((xp - cur) * 100) / (next - cur))) : 100;
+    return { level: level + 1, next, pct };
+}
+function readXpState(): { xp: number; level: number; next: number; pct: number } {
+    if (typeof window === 'undefined') return { xp: 0, level: 1, next: 100, pct: 0 };
+    try {
+        const raw = window.localStorage.getItem(XP_STORAGE_KEY) || '0';
+        const xp = Math.max(0, parseInt(raw, 10) || 0);
+        return { xp, ...levelForXp(xp) };
+    } catch { return { xp: 0, level: 1, next: 100, pct: 0 }; }
+}
+function writeXp(xp: number): void {
+    try { window.localStorage.setItem(XP_STORAGE_KEY, String(Math.max(0, xp))); } catch {}
+}
+
+/**
+ * Celebrate a ritual win: award XP, show gold sparkle toast, and (if a new level broke)
+ * fire a LEVEL UP banner with shimmering border. This is the "celebration ritual" so
+ * saves don't silently drop — user gets a visceral "progress was just made" microfeeling.
+ */
+export function celebrateWinRitual(args: {
+    /** Why points were awarded (human label, used for toast microcopy). */
+    reason: string;
+    /** Points amount; choose from the ritual tiers below for consistency. */
+    points: 10 | 25 | 50 | 100 | 250 | 500;
+    /** Mirror award_points to bonnie/MCP in the background (fire-and-forget, no error UI). */
+    tenantId?: string | null;
+    userId?: string | null;
+}): { xp: number; level: number; next: number; pct: number; leveledUp: boolean } {
+    const before = readXpState();
+    const newXp = before.xp + args.points;
+    writeXp(newXp);
+    const after = { ...levelForXp(newXp), xp: newXp };
+    const leveledUp = after.level > before.level;
+
+    const lang = getStoredLanguage();
+    // Mirror through bonnie MCP /award_points backend tool if available
+    if (typeof window !== 'undefined' && args.tenantId && args.userId) {
+        void Promise.resolve().then(async () => {
+            try {
+                const mcpReq = {
+                    jsonrpc: '2.0',
+                    id: `xp-${Date.now()}`,
+                    method: 'tools/call',
+                    params: { name: 'award_points', arguments: { tenant_id: args.tenantId, user_id: args.userId, points: args.points, reason: args.reason } },
+                };
+                await fetch('/api/mcp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mcpReq),
+                    keepalive: true,
+                }).catch(() => void 0);
+            } catch { /* backend award is best-effort only; localStorage is source of UX truth */ }
+        });
+    }
+
+    toast.custom((tid) => {
+        const headline = leveledUp
+            ? uiTranslate(lang, `Level ${after.level} — unlocked!`)
+            : `+${args.points} XP`;
+        const subhead = leveledUp
+            ? uiTranslate(lang, args.reason)
+            : uiTranslate(lang, args.reason);
+        return (
+            <div
+                role="status"
+                className={
+                    leveledUp
+                        ? 'pointer-events-auto w-[min(100vw-2rem,22rem)] rounded-2xl border-2 border-amber-400/70 bg-gradient-to-br from-amber-500/15 via-slate-900 to-purple-500/10 p-4 shadow-2xl shadow-amber-500/20 relative overflow-hidden'
+                        : 'pointer-events-auto w-[min(100vw-2rem,20rem)] rounded-xl border border-emerald-400/30 bg-slate-900 p-3.5 shadow-xl'
+                }
+            >
+                {leveledUp && (
+                    <span aria-hidden className="pointer-events-none absolute inset-0 animate-[pulse_2.2s_ease-in-out_infinite] bg-[radial-gradient(ellipse_at_top,_rgba(251,191,36,0.18),_transparent_55%)]" />
+                )}
+                <div className="relative flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className={leveledUp ? 'text-base font-black text-amber-300 tracking-wide' : 'text-sm font-bold text-emerald-300'}>
+                            {headline}
+                        </p>
+                        <p className="text-xs text-slate-300 mt-1 leading-snug">{subhead}</p>
+                        <div className="mt-2 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div
+                                className={
+                                    leveledUp
+                                        ? 'h-full bg-gradient-to-r from-amber-400 to-purple-400'
+                                        : 'h-full bg-gradient-to-r from-emerald-400 to-teal-400'
+                                }
+                                style={{ width: `${after.pct}%` }}
+                            />
+                        </div>
+                        <p className="mt-1.5 text-[10px] text-slate-500 tabular-nums">
+                            Level {after.level} · {after.xp.toLocaleString()} XP · next at {after.next.toLocaleString()}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => toast.dismiss(tid.id)}
+                        className="text-slate-500 hover:text-slate-300 flex-shrink-0"
+                        aria-label="Dismiss"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        );
+    }, { duration: leveledUp ? 6000 : 3200 });
+
+    return { xp: after.xp, level: after.level, next: after.next, pct: after.pct, leveledUp };
+}
+
+/** Standard XP ritual tiers — pick the closest one rather than inventing new numbers. */
+export const XP_TIERS = {
+    SAVE_EDIT: 10 as const,     // Save button pressed on existing record (lead/client/project)
+    SAVE_CREATE: 25 as const,   // New record created
+    STAGE_WIN: 50 as const,     // Deal moved forward / stage bumped / contract signed
+    SEND_OUTBOUND: 50 as const, // Campaign sent / invoice sent / outreach run
+    MONEY_CLOSED: 250 as const, // Invoice paid / deal closed won / cash in
+    LANDMARK: 500 as const,     // Milestones: 1st client, 10th lead, etc.
+} as const;
+
 const PACKS: Record<string, NextPack> = {
     contract_saved: {
         headline: 'Contract saved — revenue comes next',
@@ -193,6 +331,36 @@ const PACKS: Record<string, NextPack> = {
             { label: 'Billing', path: '/dashboard/business/billing' },
             { label: 'Projects', path: '/dashboard/business/projects' },
             { label: 'Tasks', path: '/dashboard/tasks' },
+        ],
+    },
+    project_updated: {
+        headline: 'Project saved — keep scope aligned with cash',
+        detail:
+            'If scope expanded, check if the change order belongs in a new invoice or milestone. Push updates to the client portal so nothing surprises them.',
+        links: [
+            { label: 'Tasks', path: '/dashboard/tasks' },
+            { label: 'Billing', path: '/dashboard/business/billing' },
+            { label: 'Client portal', path: '/dashboard/business/clients' },
+        ],
+    },
+    lead_saved: {
+        headline: 'Lead saved — move them towards qualified',
+        detail:
+            'Enrich what you know with email, phone, company size, or LinkedIn context. Set a clear follow-up; leads that sit die quiet deaths.',
+        links: [
+            { label: 'Lead Finder', path: '/dashboard/business/lead-finder' },
+            { label: 'Contacts', path: '/dashboard/contacts' },
+            { label: 'Outreach', path: '/dashboard/business/campaigns' },
+        ],
+    },
+    client_saved: {
+        headline: 'Client updated — mirror reality in the money chain',
+        detail:
+            'Confirm the active deal stage still matches the relationship, update any invoice contacts, and set the next 30-day check-in so retention stays visible.',
+        links: [
+            { label: 'Deals', path: '/dashboard/deals' },
+            { label: 'Billing', path: '/dashboard/business/billing' },
+            { label: 'Calendar', path: '/dashboard/business/calendar' },
         ],
     },
 };

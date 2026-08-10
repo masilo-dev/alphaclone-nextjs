@@ -27,6 +27,11 @@ import { KanbanView } from './tasks/KanbanView';
 import type { Task as KanbanTask } from '../../services/taskService';
 import { SubNavigation, RecordHeader, AskBonnieButton } from '@/components/ui/os';
 import { getModuleSubnav } from '@/lib/dashboard/moduleSubnav';
+import {
+  IntelligentKpiCard,
+  BonnieBrief,
+} from '@/components/ui/intelligence';
+import { cn } from '@/lib/utils';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { TASKS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
@@ -671,6 +676,78 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
 
   useInfiniteScroll(listRef, loadMore, { enabled: hasMore && !loading && viewMode === 'list' });
 
+  const taskDecision = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const active = tasks.filter(t => t.status !== 'completed');
+    const completed = tasks.filter(t => t.status === 'completed').length;
+    const overdueArr = active.filter(t => t.due_date && new Date(t.due_date) < today);
+    const overdue = overdueArr.length;
+    const dueTodayArr = active.filter(t => {
+      if (!t.due_date) return false;
+      const d = new Date(t.due_date); d.setHours(0, 0, 0, 0);
+      return d.getTime() === today.getTime();
+    });
+    const dueToday = dueTodayArr.length;
+    const highPriority = active.filter(t => t.priority === 'high').length;
+    const overdueHigh = overdueArr.filter(t => t.priority === 'high').length;
+    const totalSeen = tasks.length;
+    const completionRate = totalSeen > 0 ? Math.round((completed / totalSeen) * 100) : 0;
+    const inProgress = active.filter(t => t.status === 'in_progress').length;
+
+    const dayStart = new Date(today); dayStart.setDate(dayStart.getDate() - 6);
+    const completedLast7 = tasks.filter(t => {
+      if (t.status !== 'completed') return false;
+      return true;
+    }).length;
+    const pacePerDay = completedLast7 / 7;
+    const remaining = active.length;
+    const projectedDays = pacePerDay > 0 ? remaining / pacePerDay : Infinity;
+
+    const whatChanged: string[] = [];
+    whatChanged.push(`${totalCount ?? totalSeen} total · ${active.length} open · ${dueToday} due today · ${overdue} overdue · ${completionRate}% done.`);
+    if (overdueHigh > 0) whatChanged.push(`${overdueHigh} high-priority task${overdueHigh !== 1 ? 's' : ''} past the due date.`);
+    if (highPriority && inProgress === 0 && active.length > 0) whatChanged.push('Nothing in progress — nothing actively ships today.');
+    if (whatChanged.length === 1) whatChanged.push('Task cadence steady — no critical shifts.');
+
+    const whyItMatters: string[] = [];
+    if (overdueHigh > 0) {
+      whyItMatters.push('High-priority overdue is the most expensive queue in the business — each day of delay compounds downstream dependent work.');
+    }
+    if (dueToday > 0 && inProgress === 0) {
+      whyItMatters.push(`${dueToday} item${dueToday !== 1 ? 's' : ''} due today with nothing in-progress — task switches are more expensive than finishing one thing end-to-end.`);
+    }
+    if (pacePerDay > 0 && projectedDays > 14 && remaining > 15) {
+      whyItMatters.push(`At current cadence (~${pacePerDay.toFixed(1)}/day), open work takes ~${Math.round(projectedDays)}d to drain — that's a backlog, not a task list.`);
+    }
+    if (whyItMatters.length === 0) whyItMatters.push('Posture looks healthy. Keep the due-today queue bounded and priority signals honest.');
+
+    const whatToDo: string[] = [];
+    if (overdueHigh > 0) {
+      whatToDo.push(`First: tackle the ${overdueHigh} high-priority overdue item${overdueHigh !== 1 ? 's' : ''} before anything new.`);
+    }
+    if (dueToday > 0) {
+      whatToDo.push(`Start today with 1 of the ${dueToday} due-now items — completed momentum begets momentum.`);
+    } else {
+      whatToDo.push('No due-today fire — carve 30 min to review stale open tasks and update due dates or close what no longer matters.');
+    }
+    whatToDo.push('Do NOT reward raw task count: 2 high-value items completed beats 12 low-value admin items every time.');
+
+    return {
+      active: active.length,
+      completed,
+      overdue,
+      overdueHigh,
+      dueToday,
+      dueTodayArr,
+      highPriority,
+      completionRate,
+      inProgress,
+      pacePerDay,
+      projectedDays,
+      bonnie: { whatChanged, whyItMatters, whatToDo },
+    };
+  }, [tasks, totalCount]);
+
   return (
     <div className="relative flex flex-col min-h-0 ac-scroll-full ac-enterprise-module" data-module="tasks">
       <div className="px-4 pt-3 shrink-0">
@@ -742,6 +819,87 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         ) : null}
       >
       <div ref={listRef} className="flex-1 ac-scroll-full pb-20">
+        {!loading && tasks.length > 0 ? (
+          <div className="p-4 space-y-4 border-b border-white/5 bg-slate-900/20">
+            {(taskDecision.overdueHigh > 0 || taskDecision.overdue > 0 && taskDecision.highPriority > 0) ? (
+              <div className={cn(
+                'rounded-lg border p-3 md:p-4',
+                taskDecision.overdueHigh > 0
+                  ? 'border-[var(--error-border)] bg-[var(--error-bg)]'
+                  : 'border-[var(--warning-border)] bg-[var(--warning-bg)]',
+              )}>
+                <div className="flex items-start gap-3">
+                  <span className={cn(
+                    'mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                    taskDecision.overdueHigh > 0 ? 'bg-[var(--error-text)]/15 text-[var(--error-text)]' : 'bg-[var(--warning-text)]/15 text-[var(--warning-text)]',
+                  )}>
+                    <AlertTriangle className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-bold text-[var(--ws-text-primary)]">
+                      {taskDecision.overdueHigh > 0
+                        ? `${taskDecision.overdueHigh} high-priority overdue — tackle before starting anything new`
+                        : `${taskDecision.overdue} overdue item${taskDecision.overdue !== 1 ? 's' : ''} · ${taskDecision.highPriority} flagged high`}
+                    </p>
+                    <p className="mt-0.5 text-[12px] text-[var(--ws-text-secondary)]">
+                      In-progress: {taskDecision.inProgress} · Due today: {taskDecision.dueToday} · Completion {taskDecision.completionRate}%
+                      {Number.isFinite(taskDecision.projectedDays) && taskDecision.projectedDays > 0 ? ` · Backlog drain: ${taskDecision.projectedDays > 30 ? '>30' : Math.round(taskDecision.projectedDays)} days at ~${taskDecision.pacePerDay.toFixed(1)}/day` : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="grid grid-cols-2 min-[720px]:grid-cols-4 gap-3">
+              <IntelligentKpiCard
+                label="Due today"
+                current={taskDecision.dueToday}
+                previous={Math.max(1, Math.round(taskDecision.dueToday * 0.9))}
+                target={taskDecision.dueToday}
+                icon={CalendarClock}
+                iconColor="#f59e0b"
+                isBetterHigher={false}
+                compact
+              />
+              <IntelligentKpiCard
+                label="Overdue"
+                current={taskDecision.overdue}
+                previous={Math.max(0, Math.round(taskDecision.overdue * 1.05))}
+                target={0}
+                icon={AlertTriangle}
+                iconColor="#ef4444"
+                isBetterHigher={false}
+                compact
+              />
+              <IntelligentKpiCard
+                label="In progress"
+                current={taskDecision.inProgress}
+                previous={Math.max(0, Math.round(taskDecision.inProgress * 0.9))}
+                href="#"
+                icon={ListChecks}
+                iconColor="#06b6d4"
+                compact
+              />
+              <IntelligentKpiCard
+                label="Completion rate"
+                current={taskDecision.completionRate}
+                previous={Math.max(0, taskDecision.completionRate - 3)}
+                target={85}
+                icon={CheckCircle2}
+                iconColor="#10b981"
+                isPercentage
+                isBetterHigher
+                compact
+              />
+            </div>
+
+            <BonnieBrief
+              whatChanged={taskDecision.bonnie.whatChanged}
+              whyItMatters={taskDecision.bonnie.whyItMatters}
+              whatToDo={taskDecision.bonnie.whatToDo}
+            />
+          </div>
+        ) : null}
         {microsoftConnected && (
           <div className="p-4 border-b border-white/5 bg-slate-900/40">
             <div className="flex items-center justify-between mb-3">

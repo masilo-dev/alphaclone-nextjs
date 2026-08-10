@@ -2379,3 +2379,141 @@ html.light .ac-business-main .bg-slate-900 {
   padding: 0.5rem;
   border: 1px solid #1e293b;
 }
+
+
+/* ========================================================================
+   ALPHACLONE AUDIT 2026 – APP-SCOPED STANDARDIZATION HELPERS
+   Scope: ONLY .ac-dashboard-root / .ac-business-root
+   → NO IMPACT on public marketing website (/about, /pricing, /blog etc.)
+   ======================================================================== */
+
+/* 1. Universal low-opacity surface helpers (replaces bg-white/[3..8]% chaos — 660 usages) */
+.ac-dashboard-root .ac-surface-subtle,
+.ac-business-root .ac-surface-subtle { background: var(--ws-surface-secondary); }
+.ac-dashboard-root .ac-surface-hover,
+.ac-business-root .ac-surface-hover { background: var(--ws-hover); }
+.ac-dashboard-root .ac-surface-active,
+.ac-business-root .ac-surface-active { background: var(--ws-active); }
+
+/* 2. Universal radius helpers — canonical tokens for panels/controls/chips (replaces 232 random rounded-2xl/3xl) */
+.ac-dashboard-root .ac-radius-panel,
+.ac-business-root .ac-radius-panel { border-radius: var(--ws-radius-lg); }
+.ac-dashboard-root .ac-radius-control,
+.ac-business-root .ac-radius-control { border-radius: var(--ws-radius); }
+.ac-dashboard-root .ac-radius-chip,
+.ac-business-root .ac-radius-chip { border-radius: 999px; }
+
+/* 3. A11Y: Universal focus-visible outline for all interactive elements (WAI-ARIA) */
+.ac-dashboard-root :focus-visible,
+.ac-business-root :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand-teal) 80%, transparent);
+  outline-offset: 2px;
+  border-radius: var(--ws-radius);
+}
+.ac-dashboard-root [role="button"]:focus-visible,
+.ac-business-root [role="button"]:focus-visible,
+.ac-dashboard-root button:focus-visible,
+.ac-business-root button:focus-visible { outline-offset: 1px; }
+
+/* 4. Reduce motion support (respects OS preference — audit requirement) */
+@media (prefers-reduced-motion: reduce) {
+  .ac-dashboard-root *,
+  .ac-business-root * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 5. Semantic severity surface helpers (use existing tokens — don't duplicate definitions) */
+.ac-dashboard-root .ac-sev-success,
+.ac-business-root .ac-sev-success { background: var(--success-surface); border: 1px solid var(--success-border); color: var(--success-text); }
+.ac-dashboard-root .ac-sev-warning,
+.ac-business-root .ac-sev-warning { background: var(--warning-surface); border: 1px solid var(--warning-border); color: var(--warning-text); }
+.ac-dashboard-root .ac-sev-error,
+.ac-business-root .ac-sev-error   { background: var(--error-surface);   border: 1px solid var(--error-border);   color: var(--error-text); }
+.ac-dashboard-root .ac-sev-info,
+.ac-business-root .ac-sev-info     { background: var(--info-surface);    border: 1px solid var(--info-border);    color: var(--info-text); }
+
+/* 6. Row hover + row density for data tables (ENTERPRISE.dataTable token alignment) */
+.ac-dashboard-root .ac-dt-row,
+.ac-business-root .ac-dt-row {
+  height: 48px;
+  transition: background-color 120ms ease;
+}
+.ac-dashboard-root .ac-dt-row:hover,
+.ac-business-root .ac-dt-row:hover { background: var(--ws-hover); }
+.ac-dashboard-root .ac-dt-cell,
+.ac-business-root .ac-dt-cell { padding: 12px; }
+.ac-dashboard-root .ac-dt-cell--num,
+.ac-business-root .ac-dt-cell--num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* ========================================================================
+   ALPHACLONE AUDIT 2026 — Z-INDEX, MODAL LAYERING & SCROLL LOCK HELPERS
+   Scope: APP-SCOPED. Public marketing website unaffected.
+   ======================================================================== */
+
+/* 7. Modal backdrop: elevated above dashboard chrome + sidebar but below focus traps */
+.ac-dashboard-root [data-dialog-backdrop="true"],
+.ac-business-root [data-dialog-backdrop="true"],
+.ac-dashboard-root [data-sheet-overlay],
+.ac-business-root [data-sheet-overlay] {
+  z-index: 9998 !important;
+}
+.ac-dashboard-root [role="dialog"],
+.ac-business-root [role="dialog"],
+.ac-dashboard-root [data-dialog-content],
+.ac-business-root [data-dialog-content],
+.ac-dashboard-root [role="alertdialog"],
+.ac-business-root [role="alertdialog"] {
+  z-index: 9999 !important;
+}
+
+/* 8. Scroll lock — applied to <html>/<body> when a dialog is open so the page behind
+   cannot be scrolled accidentally via mouse wheel inside form field overflow. */
+html.ac-scroll-lock,
+html.ac-scroll-lock body,
+html.ac-scroll-lock .ac-dashboard-root,
+html.ac-scroll-lock .ac-business-root {
+  overflow: hidden !important;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+/* 9. Prevent iframe bleed (email composer iframes, embeds) above modals.
+   The EmailBody iframe has sandbox, but on iOS iframes capture taps — so
+   when a dialog is mounted above, iframes get pointer-events disabled
+   automatically via this CSS plus the JS snippet appended at sheet/dialog mount. */
+.ac-dashboard-root:has([role="dialog"]) iframe,
+.ac-business-root:has([role="dialog"]) iframe,
+.ac-dashboard-root:has([data-dialog-content]) iframe,
+.ac-business-root:has([data-dialog-content]) iframe {
+  pointer-events: none !important;
+}
+
+/* 10. Email composer scrollable bodies — preserve existing .email-html-body baseline
+   but cap to readable max-width so really long nested tables don't explode horizontally */
+.email-html-body table {
+  display: block;
+  overflow-x: auto;
+  white-space: normal;
+}
+.email-html-body pre,
+.email-html-body code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 11. iOS PWA safe-area bottom padding for modals/sheets (avoid clipped buttons
+   when the Home Indicator bar overlays a full-height modal's Save button) */
+.ac-dashboard-root [role="dialog"] > :last-child,
+.ac-business-root [role="dialog"] > :last-child,
+.ac-dashboard-root [data-sheet-content],
+.ac-business-root [data-sheet-content] {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

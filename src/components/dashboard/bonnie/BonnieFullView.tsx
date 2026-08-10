@@ -17,12 +17,14 @@ import {
   Menu,
   PanelRight,
   Share2,
+  Tag as TagIcon,
+  X as XIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { openBonniePopoutWindow, resolveBonnieDashboardRoute } from '@/lib/bonnie/bonnieWorkspace';
-import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath } from '@/lib/bonnie/bonnieToolCatalog';
+import { BONNIE_MODULE_HINTS, resolveBonnieModuleFromPath, type BonnieModuleId } from '@/lib/bonnie/bonnieToolCatalog';
 import { useTenant } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { bonnieService } from '@/services/bonnieService';
@@ -85,6 +87,26 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   const [goalsChasing, setGoalsChasing] = useState(false);
   const [workspaceView, setWorkspaceView] = useState<BonnieWorkspaceView>('chat');
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  /** Module-tag: user can pin any conversation to a BonnieModuleId (CRM/Leads/Finance/etc.) */
+  const [conversationModuleTag, setConversationModuleTag] = useState<BonnieModuleId | 'general' | null>(null);
+  /** KEEP-ALIVE ping: while Bonnie is executing, periodically touch our API so server connections
+   *  (SSE / Railway proxy / Supabase realtime) do not drop from idle. 0 = not running. */
+  const keepAliveTimerRef = React.useRef<number | null>(null);
+  const startKeepAlive = useCallback(() => {
+    if (keepAliveTimerRef.current) return;
+    keepAliveTimerRef.current = window.setInterval(() => {
+      // Lightweight no-op — Railway / Supabase proxies kill idle sockets after ~60s; 25s ping keeps them alive.
+      fetch('/api/health', { method: 'GET', cache: 'no-store', keepalive: true }).catch(() => void 0);
+    }, 25_000);
+  }, []);
+  const stopKeepAlive = useCallback(() => {
+    if (keepAliveTimerRef.current !== null) {
+      clearInterval(keepAliveTimerRef.current);
+      keepAliveTimerRef.current = null;
+    }
+  }, []);
+  useEffect(() => () => stopKeepAlive(), [stopKeepAlive]);
+
   const [contextItems, setContextItems] = useState<BonnieContextItem[]>([
     {
       id: 'perm-tenant',
@@ -93,6 +115,13 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
       detail: 'Bonnie only accesses records in this workspace',
     },
   ]);
+
+  /** Active module = pinned conversation tag (user override) > URL auto-detect */
+  const effectiveModule: BonnieModuleId | 'general' = conversationModuleTag || activeModule;
+  useEffect(() => {
+    // Reset pinned tag when user opens a different conversation (not global)
+    setConversationModuleTag(null);
+  }, [activeConversationId]);
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) || null,
@@ -216,17 +245,22 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   ) => {
     if (!tenantId) return { text: 'Select a workspace first.', error: true };
     setShowWelcome(false);
-    const res = await bonnieService.sendInstruction(tenantId, text, history, {
-      pathname: contextPath || undefined,
-      moduleContext: activeModule,
-    });
-    if (res.success) {
-      void refreshApprovals();
-      void refresh();
-      void refreshGoals();
-      return mapInstructionResult(res);
+    startKeepAlive();
+    try {
+      const res = await bonnieService.sendInstruction(tenantId, text, history, {
+        pathname: contextPath || undefined,
+        moduleContext: effectiveModule,
+      });
+      if (res.success) {
+        void refreshApprovals();
+        void refresh();
+        void refreshGoals();
+        return mapInstructionResult(res);
+      }
+      return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
+    } finally {
+      stopKeepAlive();
     }
-    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleBonnieStream = async (
@@ -238,20 +272,25 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
   ) => {
     if (!tenantId) return { text: 'Select a workspace first.', error: true };
     setShowWelcome(false);
-    const res = await bonnieService.streamInstruction(tenantId, text, history, {
-      pathname: contextPath || undefined,
-      moduleContext: activeModule,
-      onToken,
-      onPhase: (phase, meta) => onPhase?.(phase, meta),
-      signal,
-    });
-    if (res.success) {
-      void refreshApprovals();
-      void refresh();
-      void refreshGoals();
-      return mapInstructionResult(res);
+    startKeepAlive();
+    try {
+      const res = await bonnieService.streamInstruction(tenantId, text, history, {
+        pathname: contextPath || undefined,
+        moduleContext: effectiveModule,
+        onToken,
+        onPhase: (phase, meta) => onPhase?.(phase, meta),
+        signal,
+      });
+      if (res.success) {
+        void refreshApprovals();
+        void refresh();
+        void refreshGoals();
+        return mapInstructionResult(res);
+      }
+      return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
+    } finally {
+      stopKeepAlive();
     }
-    return { text: res.response || 'Failed to process command.', error: true, executionStatus: res.executionStatus };
   };
 
   const handleResolveApproval = async (
@@ -370,11 +409,74 @@ export default function BonnieFullView({ variant = 'default' }: BonnieFullViewPr
             <Heading size="xs" color="white" noOfLines={1} fontWeight="semibold">
               {activeConversation?.title || 'Bonnie workspace'}
             </Heading>
-            <Text fontSize="10px" color="gray.500" noOfLines={1}>
-              {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Executes tools
-              {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
-              {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
-            </Text>
+            <Flex alignItems="center" gap={1.5} flexWrap="wrap">
+              <Text fontSize="10px" color="gray.500" noOfLines={1}>
+                {currentTenant?.name || 'Workspace'} · {moduleHint.label} · Executes tools
+                {openGoalsCount > 0 ? ` · ${openGoalsCount} goals` : ''}
+                {pendingCount > 0 ? ` · ${pendingCount} approvals` : ''}
+              </Text>
+              {/* Module tag pin — user can lock this conversation to any module so routing/planning never drifts */}
+              <Box
+                as="span"
+                display="inline-flex"
+                alignItems="center"
+                gap={1}
+                px={1.5}
+                py={0.5}
+                borderRadius="6px"
+                fontSize="10px"
+                fontWeight="700"
+                letterSpacing="0.02em"
+                color={conversationModuleTag ? 'white' : 'gray.500'}
+                bg={conversationModuleTag ? 'teal.500/20' : 'whiteAlpha.50'}
+                borderWidth={conversationModuleTag ? '1px' : 0}
+                borderColor={conversationModuleTag ? 'teal.500/40' : 'transparent'}
+                title={conversationModuleTag ? `Pinned to ${BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag}` : 'Auto-detected module (click to pin)'}
+                _hover={{ cursor: 'pointer', bg: conversationModuleTag ? 'teal.500/30' : 'whiteAlpha.100' }}
+                onClick={() => {
+                  const mods = Object.keys(BONNIE_MODULE_HINTS) as BonnieModuleId[];
+                  const current = conversationModuleTag;
+                  const currentIdx = mods.indexOf(current as BonnieModuleId);
+                  const next = current ? null : mods[0];
+                  const options = mods.map((m, idx) => `${idx + 1}. ${BONNIE_MODULE_HINTS[m]?.label || m}`).join('\n');
+                  const choice = window.prompt(
+                    conversationModuleTag
+                      ? `Pinned: ${BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag}.\n\nUnpin (OK) or enter a number to switch:\n\n${options}`
+                      : `Choose module to pin this conversation to (leave empty to unpin):\n\n${options}`,
+                    conversationModuleTag ? '' : String(currentIdx < 0 ? 1 : currentIdx + 1),
+                  );
+                  if (choice === null) return;
+                  const trimmed = choice.trim();
+                  if (!trimmed || trimmed === '0') { setConversationModuleTag(null); toast.success('Module pin cleared'); return; }
+                  const idx = Number.parseInt(trimmed, 10);
+                  if (Number.isInteger(idx) && idx >= 1 && idx <= mods.length) {
+                    setConversationModuleTag(mods[idx - 1]);
+                    toast.success(`Pinned to ${BONNIE_MODULE_HINTS[mods[idx - 1]]?.label || mods[idx - 1]}`);
+                    return;
+                  }
+                  const named = (mods as string[]).find((m) => m.toLowerCase() === trimmed.toLowerCase());
+                  if (named) {
+                    setConversationModuleTag(named as BonnieModuleId);
+                    toast.success(`Pinned to ${BONNIE_MODULE_HINTS[named as BonnieModuleId]?.label || named}`);
+                    return;
+                  }
+                  toast.error('Module not found. Use the number or the module id.');
+                }}
+              >
+                <TagIcon size={10} />
+                {conversationModuleTag
+                  ? BONNIE_MODULE_HINTS[conversationModuleTag]?.label || conversationModuleTag
+                  : effectiveModule === 'general'
+                  ? 'General (auto)'
+                  : `${BONNIE_MODULE_HINTS[effectiveModule as BonnieModuleId]?.label || effectiveModule} (auto)`}
+                {conversationModuleTag ? (
+                  <XIcon
+                    size={9}
+                    onClick={(e: any) => { e.stopPropagation(); setConversationModuleTag(null); toast.success('Pin cleared'); }}
+                  />
+                ) : null}
+              </Box>
+            </Flex>
           </Box>
           <HStack spacing={1}>
             {!isPopout && (

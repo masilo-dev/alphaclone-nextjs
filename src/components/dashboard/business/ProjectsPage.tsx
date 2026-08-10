@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ProjectPortalShareDialog } from './ProjectPortalShareDialog';
-import { showActionNextSteps } from '../../common/showActionNextSteps';
+import { showActionNextSteps, celebrateWinRitual, XP_TIERS } from '../../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from '../OperationalWorkflowStrip';
 import { exportToCSV } from '../../../utils/exportUtils';
 import { TaskCountdown } from '../tasks/TaskCountdown';
@@ -138,6 +138,14 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                 if (!error) {
                     setProjects(prev => prev.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
                     setEditingProject(null);
+                    toast.success('Project saved');
+                    celebrateWinRitual({
+                        reason: 'Project updated',
+                        points: XP_TIERS.SAVE_EDIT,
+                        tenantId: currentTenant?.id,
+                        userId: user.id,
+                    });
+                    showActionNextSteps('project_updated', (path) => router.push(path));
                 } else {
                     toast.error(`Project update failed: ${error}`);
                 }
@@ -164,6 +172,12 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
                     setProjects(prev => [project, ...prev]);
                     setShowAddModal(false);
                     toast.success('Project created');
+                    celebrateWinRitual({
+                        reason: 'New project created',
+                        points: XP_TIERS.SAVE_CREATE,
+                        tenantId: currentTenant?.id,
+                        userId: user.id,
+                    });
                     showActionNextSteps('project_created', (path) => router.push(path));
                 }
             }

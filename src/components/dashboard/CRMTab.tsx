@@ -35,7 +35,7 @@ import { EmbeddableFormGenerator } from './crm/EmbeddableFormGenerator';
 import { ClientChurnRadarPanel } from './crm/ClientChurnRadarPanel';
 import { CustomerTimeline } from '@/components/communication/CustomerTimeline';
 import { HUMAN_LABELS } from '@/lib/copy/humanLabels';
-import { showActionNextSteps } from '../common/showActionNextSteps';
+import { showActionNextSteps, celebrateWinRitual, XP_TIERS } from '../common/showActionNextSteps';
 import { BulkTeamMessageModal } from './crm/BulkTeamMessageModal';
 import { buildBulkTeamMessageBody, normalizeRecipientEmails } from '@/lib/email/bulkTeamMessage';
 import { CRMActionChips } from './crm/CRMActionChips';
@@ -330,7 +330,11 @@ const LeadDetail: React.FC<{
   onSaveLead?: (id: string, patch: { name: string; email?: string; phone?: string; company?: string }) => Promise<void>;
   onDeleteLead?: (leadId: string) => Promise<void>;
   inDrawer?: boolean;
-}> = ({ lead, onBack, onUpdate, onQualify, onSaveLead, onDeleteLead, inDrawer }) => {
+  /** For gamification XP (celebrateWinRitual) — optional; omitted degrades gracefully. */
+  userId?: string | null;
+  tenantId?: string | null;
+}> = ({ lead, onBack, onUpdate, onQualify, onSaveLead, onDeleteLead, inDrawer, userId, tenantId }) => {
+  const router = useRouter();
   const [activities, setActivities] = useState<Array<{ id: string; type: string; description: string; created_at: string }>>([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
   const [name, setName] = useState(lead.name);
@@ -390,6 +394,16 @@ const LeadDetail: React.FC<{
         phone: phone.trim() || undefined,
         company: company.trim() || undefined,
       });
+      toast.success('Lead saved');
+      celebrateWinRitual({
+        reason: 'Lead saved',
+        points: XP_TIERS.SAVE_EDIT,
+        tenantId: tenantId || undefined,
+        userId: userId || undefined,
+      });
+      showActionNextSteps('lead_saved', (p) => router.push(p));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save lead');
     } finally {
       setSaving(false);
     }
@@ -662,6 +676,13 @@ const Client360Detail: React.FC<{
         });
         if (error) throw new Error(error);
         toast.success('Client updated');
+        celebrateWinRitual({
+          reason: 'Client record updated',
+          points: XP_TIERS.SAVE_EDIT,
+          tenantId: currentTenant?.id,
+          userId: user.id,
+        });
+        showActionNextSteps('client_saved', (p) => router.push(p));
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update client');
@@ -2562,6 +2583,8 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
             onSaveLead={handleLeadSave}
             onDeleteLead={handleLeadDelete}
             inDrawer
+            userId={user.id}
+            tenantId={currentTenant?.id}
           />
         )}
       </DetailDrawer>

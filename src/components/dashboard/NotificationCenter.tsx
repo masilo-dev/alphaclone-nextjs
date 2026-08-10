@@ -15,6 +15,7 @@ interface NotificationCenterProps {
 }
 
 import { notificationService, type Notification } from '../../services/dashboardService';
+import { pwaService } from '../../services/pwaService';
 
 const TYPE_CONFIG: Record<string, { Icon: any; color: string; bg: string; label: string }> = {
     message: { Icon: MessageCircle, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', label: 'Message' },
@@ -89,10 +90,27 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
 
         const unsubscribe = notificationService.subscribeToNotifications(userId, tenantId, (newNotif: Notification) => {
             setNotifications(prev => [newNotif, ...prev]);
+
+            // Also push to native OS notifications if permissions are granted
+            // (so users on other tabs / PWA standalone still see it instantly)
+            try {
+                const isPwaOrFocused =
+                    (typeof document !== 'undefined' && document.visibilityState === 'visible')
+                        ? false
+                        : pwaService.isRunningAsPWA() || (typeof document !== 'undefined' && document.visibilityState !== 'visible');
+                if (isPwaOrFocused || newNotif.priority === 'high' || newNotif.priority === 'urgent') {
+                    pwaService.showNotification(newNotif.title, {
+                        body: newNotif.message || undefined,
+                        tag: newNotif.id,
+                        requireInteraction: newNotif.priority === 'urgent',
+                        data: newNotif.link ? { url: newNotif.link } : undefined,
+                    });
+                }
+            } catch { /* noop — failing to show a native push is not fatal */ }
         });
 
         return () => { unsubscribe(); };
-    }, [userId, loadNotifications]);
+    }, [userId, tenantId, loadNotifications]);
 
     useEffect(() => {
         setUnreadCount(notifications.filter(n => !n.read).length);

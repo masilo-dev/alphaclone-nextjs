@@ -11,6 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { Check, Pencil, ShieldAlert, X } from 'lucide-react';
 import { BC } from './bonnieChakra';
+import { hermeticBonnieActivityLabel } from './BonnieChatPanel';
 
 export type BonnieApprovalCardProps = {
   approvalId: string;
@@ -72,7 +73,8 @@ export default function BonnieApprovalCard({
     [editing, draftText, preview?.draft]
   );
 
-  const whatLabel = summary || `Run ${tool.replace(/_/g, ' ')}`;
+  const hermetic = hermeticBonnieActivityLabel(tool);
+  const whatLabel = summary || hermetic.text;
   const whyLabel = reason || 'Bonnie needs your OK before this can change customer or money data.';
   const impactLabel =
     impact ||
@@ -135,8 +137,8 @@ export default function BonnieApprovalCard({
             What
           </Text>
           <Text mt={0.5} fontSize="sm" fontWeight="medium" color="whiteAlpha.900">
-            <Text as="span" fontFamily="mono" color="teal.300">
-              {tool}
+            <Text as="span" fontWeight="semibold" color="teal.300">
+              {hermetic.text}
             </Text>
             <Text as="span" color="gray.400">
               {' '}

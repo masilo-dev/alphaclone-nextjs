@@ -17,6 +17,14 @@ import {
   Wrench,
   XCircle,
   Zap,
+  Search,
+  FileText,
+  Save,
+  Send as SendIcon,
+  Database,
+  User as UserIcon,
+  Sparkles,
+  Bot,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import BonnieApprovalCard from './BonnieApprovalCard';
@@ -26,6 +34,67 @@ import BonnieToolActivityCard from './workspace/BonnieToolActivityCard';
 import { bonnieService, resolveBonnieNavIntent } from '@/services/bonnieService';
 import { normalizeBonnieNavPath, parseBonnieDeepLink } from '@/lib/bonnie/bonnieDeepLink';
 import { useBonniePersistence } from '@/hooks/useBonniePersistence';
+import { moduleForTool } from '@/lib/mcp/progressiveDiscovery';
+import { BONNIE_MODULE_HINTS } from '@/lib/bonnie/bonnieToolCatalog';
+
+/**
+ * ── HERMETIC BONNIE FACADE ───────────────────────────────────────────────────
+ * Never expose raw MCP tool names (`get_leads`, `search_invoices`…) to the user.
+ * All 501 tools are internal plumbing. Map each tool to a BONNIE semantic action
+ * verb label (Searching / Reading / Saving / Sending / Checking…). This is the
+ * hermetic boundary: Bonnie talks like ONE agent, not a 501-tool catalog.
+ */
+type HermeticActionKind =
+  | 'search'
+  | 'read'
+  | 'save'
+  | 'send'
+  | 'data'
+  | 'people'
+  | 'ai'
+  | 'system'
+  | 'general';
+
+const HERMETIC_ACTION: Record<HermeticActionKind, { label: string; Icon: any; accent: string }> = {
+  search:  { label: 'Searching',   Icon: Search,    accent: 'text-sky-400' },
+  read:    { label: 'Reading',     Icon: FileText,  accent: 'text-slate-400' },
+  save:    { label: 'Saving',      Icon: Save,      accent: 'text-teal-400' },
+  send:    { label: 'Sending',     Icon: SendIcon,  accent: 'text-violet-400' },
+  data:    { label: 'Syncing data',Icon: Database,  accent: 'text-amber-400' },
+  people:  { label: 'Checking people', Icon: UserIcon, accent: 'text-emerald-400' },
+  ai:      { label: 'Running AI',  Icon: Sparkles,  accent: 'text-fuchsia-400' },
+  system:  { label: 'Running',     Icon: Bot,       accent: 'text-[color:var(--brand-blue-400)]' },
+  general: { label: 'Working',     Icon: Wrench,    accent: 'text-slate-400' },
+};
+
+function classifyHermeticAction(toolName: string): HermeticActionKind {
+  if (!toolName) return 'general';
+  const t = toolName.toLowerCase();
+  if (/^(search|find|fetch|lookup|query|inspect|discover|scrape|enrich|vector|rag|dedupe|score)/.test(t)) return 'search';
+  if (/^(get_|list_|load_|read_|pull_|view_|browse)/.test(t)) return 'read';
+  if (/^(create_|update_|save_|upsert_|edit_|patch_|write_|set_|attach_|link_|tag_|sync_|merge_|import)/.test(t)) return 'save';
+  if (/^(send_|publish_|post_|deliver_|broadcast_|outreach_|sms_|campaign_|invoice_|email_|whatsapp_|mail_)/.test(t)) return 'send';
+  if (/(report|dashboard|metric|analytics|stat|forecast|pipeline|ledger|audit|export|csv|sync|reconcile)/.test(t)) return 'data';
+  if (/(lead|client|customer|contact|people|user|team|tenant|owner|deal|account)/.test(t)) return 'people';
+  if (/(ai|gpt|deepseek|llm|inspect_planner|planner|bonnie|hermes|recommend|proposal|predict|churn|enrich|match|classify|summar|draft|write_)/.test(t)) return 'ai';
+  if (/(system|auth|login|token|setting|config|health|init|migrate|ensure|mcp|tool|capab|route|policy|approval|workflow|automation|playbook|orchestr|delegate)/.test(t)) return 'system';
+  return 'general';
+}
+
+/** Bonnie-only label — no tool ID, no `font-mono` leak, no underscore noise. */
+export function hermeticBonnieActivityLabel(toolName: string): {
+  text: string;
+  Icon: any;
+  accent: string;
+  moduleLabel?: string;
+} {
+  const kind = classifyHermeticAction(toolName);
+  const { label, Icon, accent } = HERMETIC_ACTION[kind];
+  const mod = moduleForTool(toolName);
+  const moduleLabel = (BONNIE_MODULE_HINTS as any)[mod]?.label || undefined;
+  const text = moduleLabel ? `${label} · ${moduleLabel}` : label;
+  return { text, Icon, accent, moduleLabel };
+}
 
 type BrowserSpeechRecognition = {
   continuous: boolean;
@@ -153,13 +222,16 @@ type BonnieChatPanelProps = {
 };
 
 function mapToolsToPlanSteps(tools: Array<{ tool: string; success?: boolean; summary?: string }>): AgentPlanStep[] {
-  return tools.map((tool, index) => ({
-    id: `plan-${tool.tool}-${index}`,
-    label: tool.summary || tool.tool,
-    tool: tool.tool,
-    status: tool.success === false ? 'failed' : 'done',
-    detail: tool.summary,
-  }));
+  return tools.map((tool, index) => {
+    const hermetic = hermeticBonnieActivityLabel(tool.tool);
+    return {
+      id: `plan-${tool.tool}-${index}`,
+      label: tool.summary || hermetic.text,
+      tool: hermetic.text,
+      status: tool.success === false ? 'failed' : 'done',
+      detail: tool.summary,
+    };
+  });
 }
 
 /** Emit a custom event so Dashboard.tsx can deep-link to the relevant module */
@@ -644,27 +716,35 @@ export default function BonnieChatPanel({
                   ) : (
                     <>
                   <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    <Wrench className="h-3 w-3" /> Actions run
+                    <Sparkles className="h-3 w-3 text-[color:var(--brand-blue-400)]" /> Bonnie did this
                   </p>
                   {/* Timeline events for live runs */}
                   {timelineEvents.length > 0 && msg.role === 'assistant' && messages[messages.length - 1]?.id === msg.id
                     ? timelineEvents.map((ev) => (
                         <ExecutionTimelineEvent key={ev.id} {...ev} />
                       ))
-                    : msg.tools.map((t, i) => (
-                        <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 text-[11px] text-slate-400">
-                          {t.success ? (
-                            <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-400" />
-                          ) : (
-                            <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" />
-                          )}
-                          <span>
-                            <span className="font-mono text-slate-300">{t.tool}</span>
-                            {' — '}
-                            {sanitizeDisplayText(t.summary)}
-                          </span>
-                        </div>
-                      ))
+                    : msg.tools.map((t, i) => {
+                        const hermetic = hermeticBonnieActivityLabel(t.tool);
+                        const Icon = hermetic.Icon || Wrench;
+                        return (
+                          <div key={`${t.tool}-${i}`} className="flex items-start gap-1.5 text-[11px] text-slate-400">
+                            {t.success ? (
+                              <Icon className={`mt-0.5 h-3 w-3 shrink-0 ${hermetic.accent}`} />
+                            ) : (
+                              <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-rose-400" />
+                            )}
+                            <span>
+                              <span className="font-semibold text-slate-200">{hermetic.text}</span>
+                              {t.summary ? (
+                                <>
+                                  {' — '}
+                                  {sanitizeDisplayText(t.summary)}
+                                </>
+                              ) : null}
+                            </span>
+                          </div>
+                        );
+                      })
                   }
                     </>
                   )}
