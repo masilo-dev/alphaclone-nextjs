@@ -1107,7 +1107,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 )}
 
                 {/* Header */}
-                <header className={`${WORKSPACE.toolbar.height} border-b border-[var(--ws-border)] flex items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
+                <header className={`min-h-14 h-auto md:h-14 pt-safe md:pt-0 border-b border-[var(--ws-border)] flex items-center justify-between ${WORKSPACE.toolbar.padding} sticky top-0 z-10 w-full ac-business-header ac-workspace-toolbar ${route === '/dashboard/pwa-settings' ? 'hidden md:flex' : ''}`}>
                     {/* Left: Menu & Mobile Logo */}
                     <div className="flex items-center gap-4">
                         {/* Mobile Menu Toggle removed - BottomNav handles it */}
@@ -1216,7 +1216,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                             routeKey={route}
                             className={`w-full min-w-0 ${WORKSPACE.canvas.maxWidth} mx-auto ${
                                 DASHBOARD_EDGE_TO_EDGE_TABS.includes(route)
-                                    ? 'h-full min-h-0 max-md:pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))]'
+                                    ? 'h-full min-h-0 max-md:pb-[calc(4.25rem+min(env(safe-area-inset-bottom,0px),20px))]'
                                     : 'min-h-full'
                             }`}
                         >

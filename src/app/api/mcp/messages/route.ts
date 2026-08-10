@@ -190,6 +190,43 @@ export async function POST(req: NextRequest) {
     }, { headers: getMcpCorsHeaders(req) });
   }
 
+  if (requestBody.method === 'tools/call') {
+    const toolName = requestBody.params?.name;
+    const toolArgs = requestBody.params?.arguments || {};
+
+    const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
+    initializeRegistry();
+
+    if (hasTool(toolName)) {
+      try {
+        const rawResult = await executeTool(tenantId, userId, toolName, {
+          ...toolArgs,
+          tenant_id: tenantId,
+          user_id: userId,
+        });
+        const result = (rawResult && typeof rawResult === 'object' && Array.isArray((rawResult as any).content))
+          ? rawResult
+          : { content: [{ type: 'text', text: typeof rawResult === 'string' ? rawResult : JSON.stringify(rawResult ?? {}, null, 2) }] };
+
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          result,
+        }, { headers: getMcpCorsHeaders(req) });
+      } catch (err: any) {
+        console.error(`[MCP Messages route.ts] Execution error for ${toolName}:`, err);
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          result: {
+            content: [{ type: 'text', text: JSON.stringify({ error: true, message: err?.message || 'Tool execution failed' }) }],
+            isError: true,
+          },
+        }, { headers: getMcpCorsHeaders(req) });
+      }
+    }
+  }
+
   try {
     const mcpServer = createMCPServer({
       tenantId,

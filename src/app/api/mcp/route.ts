@@ -763,16 +763,33 @@ export async function POST(req: NextRequest) {
     const { initializeRegistry, hasTool, executeTool } = await import('@/lib/mcp/tool-registry');
     initializeRegistry();
     if (hasTool(toolName)) {
-      const result = await executeTool(tenantId, userId, toolName, {
-        ...toolArgs,
-        tenant_id: tenantId,
-        user_id: userId,
-      });
-      return NextResponse.json({
-        jsonrpc: '2.0',
-        id: requestBody.id,
-        result: toUtcIso(result),
-      }, { headers: mcpJsonHeaders(req) });
+      try {
+        const rawResult = await executeTool(tenantId, userId, toolName, {
+          ...toolArgs,
+          tenant_id: tenantId,
+          user_id: userId,
+        });
+        const isoResult = toUtcIso(rawResult);
+        const result = (isoResult && typeof isoResult === 'object' && Array.isArray((isoResult as any).content))
+          ? isoResult
+          : { content: [{ type: 'text', text: typeof isoResult === 'string' ? isoResult : JSON.stringify(isoResult ?? {}, null, 2) }] };
+
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          result,
+        }, { headers: mcpJsonHeaders(req) });
+      } catch (err: any) {
+        console.error(`[MCP route.ts] Execution error for ${toolName}:`, err);
+        return NextResponse.json({
+          jsonrpc: '2.0',
+          id: requestBody.id,
+          result: {
+            content: [{ type: 'text', text: JSON.stringify({ error: true, message: err?.message || 'Tool execution failed' }) }],
+            isError: true,
+          },
+        }, { headers: mcpJsonHeaders(req) });
+      }
     }
   }
 
