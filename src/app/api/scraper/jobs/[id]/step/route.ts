@@ -109,25 +109,26 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       .select('*')
       .single();
 
+    if (updateError) return clientErrorResponse(updateError, { request: req, scope: 'scraper/jobs/[id]/step.POST' });
+
     const sanitizeLeads = (leads: any[]) => (Array.isArray(leads) ? leads : []);
     const sanitizeStats = (stats: any) => {
       if (!stats || typeof stats !== 'object') return {};
       const sanitized: Record<string, number> = {};
-      Object.entries(stats).forEach(([_, count], i) => {
-        if (typeof count === 'number' && count > 0) sanitized[`engine_${i + 1}`] = count;
-      });
+      for (const [key, count] of Object.entries(stats)) {
+        if (typeof count === 'number' && count > 0) sanitized[key] = count;
+      }
       return sanitized;
     };
 
     const sanitizedJob = {
       ...updatedJob,
-      source_stats: sanitizeStats(updatedJob.source_stats),
-      source_errors: updatedJob.source_errors,
-      partial_results: sanitizeLeads(updatedJob.partial_results),
-      final_results: sanitizeLeads(updatedJob.final_results),
+      source_stats: sanitizeStats(updatedJob!.source_stats),
+      source_errors: updatedJob!.source_errors,
+      partial_results: sanitizeLeads(updatedJob!.partial_results),
+      final_results: sanitizeLeads(updatedJob!.final_results),
     };
 
-    if (updateError) return clientErrorResponse(updateError, { request: req, scope: 'scraper/jobs/[id]/step.POST' });
     return NextResponse.json({ success: true, job: sanitizedJob });
   } catch (err: unknown) {
     return clientErrorResponse(err, { request: req, scope: 'scraper/jobs/[id]/step.POST' });

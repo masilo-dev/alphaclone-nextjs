@@ -685,14 +685,24 @@ export default function OmniLeadFinder() {
 
         let done = false;
         let latestJob: any = createData.job;
+        let stepIterations = 0;
+        const MAX_STEP_ITERATIONS = 20;
 
         while (!done) {
+          if (stepIterations >= MAX_STEP_ITERATIONS) {
+            throw new Error('Lead search timed out — too many steps without completion. Please try again.');
+          }
+          stepIterations++;
+
           const stepRes = await fetch(`/api/scraper/jobs/${jobId}/step`, { method: 'POST' });
           if (!stepRes.ok) {
             const errData = await stepRes.json().catch(() => ({}));
             throw new Error(errData.error || 'Lead job processing failed');
           }
           const stepData = await stepRes.json();
+          if (!stepData?.job) {
+            throw new Error('Lead search returned an invalid response. Please try again.');
+          }
           latestJob = stepData.job;
 
           const partialLeads: ScrapedLead[] = Array.isArray(latestJob?.partial_results) ? latestJob.partial_results : [];
