@@ -266,7 +266,6 @@ export default function AlphaCloneEmailWorkspace() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenant?.id]);
 
   useEffect(() => { void loadMessages(); }, [loadMessages]);
@@ -1006,8 +1005,14 @@ export default function AlphaCloneEmailWorkspace() {
             <div className="px-3 pt-2">
               <AiDraftReviewBanner
                 onOpenDraft={(draft) => {
-                  setInlineReplyBody(draft);
-                  setComposeBody(draft);
+                  const body = draft.body || '';
+                  const subject = draft.subject || '';
+                  const to = draft.fromEmail || draft.from || '';
+                  setInlineReplyBody(body);
+                  setComposeBody(body);
+                  setComposeSubject(subject.startsWith('Re:') ? subject : `Re: ${subject}`);
+                  setComposeTo(to);
+                  setComposerOpen(true);
                 }}
               />
             </div>
