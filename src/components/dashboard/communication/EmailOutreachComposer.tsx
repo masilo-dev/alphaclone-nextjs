@@ -50,20 +50,20 @@ export function EmailOutreachComposer() {
       const [leadsRes, contactsRes, clientsRes] = await Promise.all([
         supabase
           .from('leads')
-          .select('id, name, email, emails, status')
+          .select('id, name, email, status')
           .eq('tenant_id', currentTenant.id)
           .order('updated_at', { ascending: false })
           .limit(300),
         supabase
           .from('contacts')
-          .select('id, first_name, last_name, email, emails')
+          .select('id, first_name, last_name, email')
           .eq('tenant_id', currentTenant.id)
           .is('deleted_at', null)
           .order('updated_at', { ascending: false })
           .limit(300),
         supabase
           .from('business_clients')
-          .select('id, name, email, emails, sales_stage')
+          .select('id, name, email, sales_stage')
           .eq('tenant_id', currentTenant.id)
           .order('updated_at', { ascending: false })
           .limit(300),

@@ -50,14 +50,14 @@ async function resolveRecipientByNameOrEmail(params: {
   const [{ data: contacts }, { data: leads }] = await Promise.all([
     supabase
       .from('contacts')
-      .select('id, first_name, last_name, email, emails')
+      .select('id, first_name, last_name, email')
       .eq('tenant_id', params.tenantId)
       .is('deleted_at', null)
       .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},email.ilike.${pattern}`)
       .limit(10),
     supabase
       .from('leads')
-      .select('id, name, email, emails')
+      .select('id, name, email')
       .eq('tenant_id', params.tenantId)
       .or(`name.ilike.${pattern},email.ilike.${pattern}`)
       .limit(10),

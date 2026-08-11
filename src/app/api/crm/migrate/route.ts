@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requirePlatformSuperAdmin, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requirePlatformSuperAdmin, requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
+import { reconcileTenantCrm } from '@/lib/crm/crmBridgeServer';
 import { dataMigrationService } from '@/services/migration/DataMigrationService';
 import { rateLimitConfigs, rateLimitMiddleware } from '@/lib/rateLimit';
 import { securityLogService } from '@/services/securityLogService';
@@ -11,10 +12,6 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === 'production' && process.env.CRM_MIGRATE_ALLOW_SECRET_IN_PROD !== 'true') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   try {
     const requestIp =
       (req.headers.get('x-forwarded-for') || '')
@@ -35,40 +32,65 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 422 });
     }
+    const { tenantId } = parsed.data;
+    const { admin, user, membership } = await requireTenantRole(
+      tenantId,
+      ['owner', 'admin', 'tenant_admin', 'super_admin'],
+      req
+    );
 
-    try {
-      await requirePlatformSuperAdmin();
-    } catch {
-      const secret =
-        req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() ||
-        req.headers.get('x-crm-migrate-secret')?.trim() ||
-        req.nextUrl.searchParams.get('secret') ||
-        '';
-      const expected = process.env.CRM_MIGRATE_SECRET || '';
-      if (
-        !expected ||
-        !secret ||
-        expected.length !== secret.length ||
-        !timingSafeEqual(Buffer.from(secret), Buffer.from(expected))
-      ) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const needsDestructiveMigrate =
+      process.env.NODE_ENV !== 'production' ||
+      process.env.CRM_MIGRATE_ALLOW_SECRET_IN_PROD === 'true';
+
+    let isDestructiveMigration = false;
+    if (needsDestructiveMigrate) {
+      try {
+        await requirePlatformSuperAdmin();
+        isDestructiveMigration = true;
+      } catch {
+        const secret =
+          req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim() ||
+          req.headers.get('x-crm-migrate-secret')?.trim() ||
+          req.nextUrl.searchParams.get('secret') ||
+          '';
+        const expected = process.env.CRM_MIGRATE_SECRET || '';
+        if (
+          expected &&
+          secret &&
+          expected.length === secret.length &&
+          timingSafeEqual(Buffer.from(secret), Buffer.from(expected))
+        ) {
+          isDestructiveMigration = true;
+        }
       }
     }
 
-    const tenantAccess = await requireTenantAccess(parsed.data.tenantId, req);
     void securityLogService.logEvent({
-      tenantId: tenantAccess.membership.tenant_id,
-      userId: tenantAccess.user.id,
-      eventType: 'ADMIN_CRM_MIGRATION_INVOKED',
+      tenantId,
+      userId: user.id,
+      eventType: isDestructiveMigration
+        ? 'ADMIN_CRM_MIGRATION_INVOKED'
+        : 'CRM_ACCOUNT_RECONCILE_INVOKED',
       ipAddress: requestIp,
       userAgent: req.headers.get('user-agent') || undefined,
-      severity: 'critical',
+      severity: isDestructiveMigration ? 'critical' : 'info',
       useAdminClient: true,
-      eventDetails: { tenantId: parsed.data.tenantId },
-    });
+      eventDetails: { tenantId, destructive: isDestructiveMigration },
+    }).catch(() => void 0);
 
-    const result = await dataMigrationService.runFullMigration();
-    return NextResponse.json({ success: true, result });
+    if (isDestructiveMigration) {
+      const result = await dataMigrationService.runFullMigration();
+      return NextResponse.json({ success: true, destructive: true, result });
+    }
+
+    const summary = await reconcileTenantCrm(admin, tenantId);
+    return NextResponse.json({
+      success: true,
+      destructive: false,
+      note: 'CRM bridge reconcile mode: linked leads, contacts, clients, deals to unified accounts & opportunities.',
+      ...summary,
+    });
   } catch (error) {
     return routeErrorResponse(error, 'CRM migration failed', req);
   }

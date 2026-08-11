@@ -37,7 +37,7 @@ export async function resolveMcpEmailRecipient(
   if (leadId) {
     const { data } = await supabase
       .from('leads')
-      .select('id, email, emails')
+      .select('id, email')
       .eq('tenant_id', tenantId)
       .eq('id', leadId)
       .maybeSingle();
@@ -49,7 +49,7 @@ export async function resolveMcpEmailRecipient(
   if (contactId) {
     const { data } = await supabase
       .from('contacts')
-      .select('id, email, emails')
+      .select('id, email')
       .eq('tenant_id', tenantId)
       .is('deleted_at', null)
       .eq('id', contactId)
@@ -62,7 +62,7 @@ export async function resolveMcpEmailRecipient(
   if (clientId) {
     const { data } = await supabase
       .from('business_clients')
-      .select('id, email, emails')
+      .select('id, email')
       .eq('tenant_id', tenantId)
       .eq('id', clientId)
       .maybeSingle();

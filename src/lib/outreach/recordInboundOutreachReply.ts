@@ -11,7 +11,37 @@ export async function recordInboundOutreachReply(options: { admin: any; tenantId
   const eventType = classification === 'positive' ? 'positive_reply' : classification === 'unsubscribe' ? 'unsubscribed' : classification === 'neutral' ? 'replied' : classification;
   const providerEventId = options.providerEventId || `${options.provider}:${enrollment.id}:${Date.now()}`;
   const { data: sequence } = await options.admin.from('outreach_sequences').select('campaign_id,stop_on_reply').eq('tenant_id', options.tenantId).eq('id', enrollment.sequence_id).maybeSingle();
-  const { data: event, error: eventError } = await options.admin.from('outreach_events').upsert({ tenant_id: options.tenantId, campaign_id: sequence?.campaign_id || null, sequence_id: enrollment.sequence_id, contact_id: enrollment.contact_id || null, lead_id: enrollment.lead_id || null, channel: options.channel, event_type: eventType, provider: options.provider, provider_event_id: providerEventId, variant: enrollment.metadata?.variant || null, metadata: { enrollment_id: enrollment.id, experiment_id: enrollment.metadata?.experiment_id || null, reply_text: options.text.slice(0, 100_000), reply_classification: classification, sender: options.sender } }, { onConflict: 'tenant_id,provider,provider_event_id', ignoreDuplicates: true }).select('id').maybeSingle();
+  const outreachEvent = {
+    tenant_id: options.tenantId,
+    campaign_id: sequence?.campaign_id || null,
+    sequence_id: enrollment.sequence_id,
+    contact_id: enrollment.contact_id || null,
+    lead_id: enrollment.lead_id || null,
+    client_id: enrollment.client_id || null,
+    channel: options.channel,
+    event_type: eventType,
+    provider: options.provider,
+    provider_event_id: providerEventId,
+    variant: enrollment.metadata?.variant || null,
+    metadata: {
+      enrollment_id: enrollment.id,
+      experiment_id: enrollment.metadata?.experiment_id || null,
+      reply_text: options.text.slice(0, 100_000),
+      reply_classification: classification,
+      sender: options.sender,
+      email: enrollment.recipient_email || enrollment.email || null,
+      recipient: enrollment.recipient_email || enrollment.email || null,
+      normalized_recipient: normalized,
+      recipient_name: enrollment.recipient_name || enrollment.contact_name || enrollment.lead_name || null,
+      contact_name: enrollment.recipient_name || enrollment.contact_name || null,
+      lead_name: enrollment.lead_name || null,
+    },
+  };
+  const { data: event, error: eventError } = await options.admin
+    .from('outreach_events')
+    .upsert(outreachEvent, { onConflict: 'tenant_id,provider,provider_event_id', ignoreDuplicates: true })
+    .select('id')
+    .maybeSingle();
   if (eventError) throw eventError;
   if (sequence?.stop_on_reply !== false) await options.admin.from('outreach_sequence_enrollments').update({ status: 'stopped', last_event_type: eventType, updated_at: new Date().toISOString() }).eq('tenant_id', options.tenantId).eq('id', enrollment.id);
   if (classification === 'unsubscribe') await options.admin.from('outreach_suppressions').upsert({ tenant_id: options.tenantId, channel: options.channel, normalized_recipient: normalized, reason: 'Inbound unsubscribe request', source: options.provider }, { onConflict: 'tenant_id,channel,normalized_recipient' });

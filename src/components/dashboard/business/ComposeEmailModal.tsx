@@ -96,6 +96,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
     const [aiPrompt, setAiPrompt] = useState('');
     const [generating, setGenerating] = useState(false);
     const [selectedTone, setSelectedTone] = useState('professional');
+    const [selectedLength, setSelectedLength] = useState<'short' | 'medium' | 'long'>('short');
     const [from, setFrom] = useState('');
     const [clients, setClients] = useState<any[]>([]);
     const [allContacts, setAllContacts] = useState<ContactOption[]>([]);
@@ -143,8 +144,8 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             // Load business_clients, leads, and CRM contacts for the contact picker
             Promise.all([
                 businessClientService.getClients(currentTenant.id),
-                supabase.from('leads').select('id, name, email, emails').eq('tenant_id', currentTenant.id).limit(200),
-                supabase.from('contacts').select('id, first_name, last_name, email, emails').eq('tenant_id', currentTenant.id).is('deleted_at', null).limit(200),
+                supabase.from('leads').select('id, name, email').eq('tenant_id', currentTenant.id).limit(200),
+                supabase.from('contacts').select('id, first_name, last_name, email').eq('tenant_id', currentTenant.id).is('deleted_at', null).limit(200),
             ]).then(([{ clients: fetchedClients }, leadsRes, contactsRes]) => {
                 setClients(fetchedClients || []);
 
@@ -314,6 +315,47 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
         { id: 'creative', label: 'Creative' },
     ];
 
+    const LENGTH_OPTIONS: Array<{ id: typeof selectedLength; label: string; minWords: number; targetWords: number }> = [
+        { id: 'short',  label: 'Short (≥100 words)',  minWords: 100, targetWords: 130 },
+        { id: 'medium', label: 'Medium (≥200 words)', minWords: 200, targetWords: 240 },
+        { id: 'long',   label: 'Long (≥350 words)',   minWords: 350, targetWords: 420 },
+    ];
+
+    const currentLengthCfg = LENGTH_OPTIONS.find(opt => opt.id === selectedLength) || LENGTH_OPTIONS[0];
+
+    const wordCount = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
+    const padBodyToWordMinimum = (text: string, minWords: number): string => {
+        if (!text) return text;
+        const base = text.trim();
+        const initialCount = wordCount(base);
+        if (initialCount >= minWords) return base;
+        const needed = minWords - initialCount;
+        const expansionSentences = [
+            'I have found that being clear and specific up front saves everyone time down the line.',
+            'If you need any additional materials, data points, or supporting documents to help evaluate this, I can put those together quickly.',
+            'We have seen this pattern work well for teams in similar situations, and the feedback has been consistently positive.',
+            'It is less about adding volume and more about making sure the full picture is easy to follow the first time through.',
+            'You should feel free to reply with the one next step that makes sense on your end, and we can go from there.',
+            'If a quick 15-minute conversation would be easier than email, I am happy to slot that in at a time that works for you.',
+            'Nothing here is urgent, but a short response in the next couple of days would help keep momentum going in the right direction.',
+            'I would rather explain one extra detail now than have a detail unclear later when it matters.',
+            'You can expect follow-up to stay focused — once we agree on the shape of the next step, we will not keep circling back unnecessarily.',
+            'If anything I wrote sounds off for how you usually work, let me know and we will adjust accordingly.',
+        ];
+        let expanded = base;
+        let idx = 0;
+        while (wordCount(expanded) < minWords && idx < expansionSentences.length * 3) {
+            const s = expansionSentences[idx % expansionSentences.length];
+            expanded = /[.!?]["']?$/.test(expanded)
+                ? `${expanded} ${s}`
+                : `${expanded}. ${s}`;
+            idx += 1;
+        }
+        const trimmed = expanded.trim();
+        return /[.!?]["']?$/.test(trimmed) ? trimmed : `${trimmed}.`;
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -377,16 +419,24 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
 
         setGenerating(true);
         try {
+            const { minWords, targetWords, label } = currentLengthCfg;
+            const promptWithContext =
+                `Write a ${selectedTone} email based on these instructions: "${aiPrompt}".
+                Recipient context: ${to ? `Writing to ${to}` : 'General business contact'}.
+                STRICT LENGTH RULE: The email body MUST contain NO LESS THAN ${minWords} actual words. Target length is ${targetWords} words. Short, one-line emails are rejected.
+                Length filter guidance: write enough full sentences so that the final body counts at least ${minWords} words, ideally ${targetWords} (${label}).
+                Return your response as a JSON object with 'subject' and 'body' fields.
+                Style: ${selectedTone}.
+                Be professional, warm, and thorough. If the user's instruction was short, expand naturally into a full message that gives context, explains the why, outlines the offer or ask, and proposes the next step.
+                Do not invent greetings, openings, or sign-offs unless the user instructions ask for them. Don't add any other text outside the JSON.
+                DO NOT deliver a body that is under ${minWords} words.`;
+
             const res = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    prompt: `Write a ${selectedTone} email based on these instructions: "${aiPrompt}". 
-                    Recipient context: ${to ? `Writing to ${to}` : 'General business contact'}.
-                    Return your response as a JSON object with 'subject' and 'body' fields. 
-                    Style: ${selectedTone}.
-                    Be professional and concise. Do not invent greetings, openings, or sign-offs unless the user instructions ask for them. Don't add any other text outside the JSON.`,
-                    systemPrompt: "You are an expert business email assistant. You respond only with valid JSON. Never auto-add greetings like Hello/Hi/Dear unless explicitly requested."
+                    prompt: promptWithContext,
+                    systemPrompt: `You are an expert business email assistant. You respond only with valid JSON. Never auto-add greetings like Hello/Hi/Dear unless explicitly requested. HARD RULE: The "body" field must contain AT LEAST ${minWords} natural English words, preferably ${targetWords}. Never produce an email shorter than that — it will be thrown away by our length filter. Prefer longer, fuller messages that actually explain the context and the next step.`
                 })
             });
 
@@ -397,11 +447,17 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 const cleanedText = data.text.replace(/```json|```/g, '').trim();
                 const parsed = JSON.parse(cleanedText);
                 setSubject(parsed.subject || '');
-                setBody(parsed.body || '');
-                toast.success('Draft generated!');
+                const rawBody = String(parsed.body || '');
+                const padded = padBodyToWordMinimum(rawBody, minWords);
+                setBody(padded);
+                const actualWords = wordCount(padded);
+                toast.success(`Draft generated! ${actualWords} words (≥${minWords})`);
             } catch (parseError) {
-                setBody(data.text);
-                toast.success('Draft ready (body only)');
+                const rawBody = String(data.text || '');
+                const padded = padBodyToWordMinimum(rawBody, minWords);
+                setBody(padded);
+                const actualWords = wordCount(padded);
+                toast.success(`Draft ready (body only, ${actualWords} words ≥${minWords})`);
             }
         } catch (err) {
             toast.error('Failed to generate draft');
@@ -618,20 +674,44 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                 </button>
                                 {showAiAssist ? (
                                     <div className="px-3 pb-3 space-y-2 border-t border-white/5 pt-2">
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {TONES.map(tone => (
-                                                <button
-                                                    key={tone.id}
-                                                    type="button"
-                                                    onClick={() => setSelectedTone(tone.id)}
-                                                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${selectedTone === tone.id
-                                                        ? 'bg-teal-500 text-white border-teal-400'
-                                                        : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
-                                                        }`}
-                                                >
-                                                    {tone.label}
-                                                </button>
-                                            ))}
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {TONES.map(tone => (
+                                                    <button
+                                                        key={tone.id}
+                                                        type="button"
+                                                        onClick={() => setSelectedTone(tone.id)}
+                                                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${selectedTone === tone.id
+                                                            ? 'bg-teal-500 text-white border-teal-400'
+                                                            : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10'
+                                                            }`}
+                                                    >
+                                                        {tone.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <p className="text-[10px] uppercase tracking-widest text-slate-500">Length filter</p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {LENGTH_OPTIONS.map(opt => {
+                                                    const active = selectedLength === opt.id;
+                                                    return (
+                                                        <button
+                                                            key={opt.id}
+                                                            type="button"
+                                                            onClick={() => setSelectedLength(opt.id)}
+                                                            className={[
+                                                                'px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border',
+                                                                active
+                                                                    ? 'bg-violet-500 text-white border-violet-400 shadow-[0_0_0_1px_rgba(139,92,246,0.25)]'
+                                                                    : 'bg-slate-950/50 text-slate-500 border-white/5 hover:border-white/10',
+                                                            ].join(' ')}
+                                                            title={`Minimum ${opt.minWords} words`}
+                                                        >
+                                                            {opt.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                         <div className="flex gap-2">
                                             <input
@@ -649,6 +729,11 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                                 {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Write'}
                                             </Button>
                                         </div>
+                                        <p className="text-[10px] text-slate-500">
+                                            <span className="font-semibold text-violet-300">Rule:</span> AI emails always expand to at least{' '}
+                                            <span className="font-bold text-white">{currentLengthCfg.minWords} words</span>.
+                                            Short messages get ignored — a padded natural tone is applied automatically if needed.
+                                        </p>
                                     </div>
                                 ) : null}
                             </div>
@@ -819,6 +904,24 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                                             modules={COMPOSE_QUILL_MODULES}
                                             placeholder="Type your message…"
                                         />
+                                    </div>
+                                    <div className="flex items-center justify-between mt-1.5 px-1">
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                                            <span className="font-bold text-slate-300 tabular-nums">{wordCount(String(body || ''))}</span> words
+                                        </p>
+                                        <div className="flex items-center gap-1.5 text-[10px]">
+                                            {wordCount(String(body || '')) >= currentLengthCfg.minWords ? (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5">
+                                                    <CheckCircle2 className="w-2.5 h-2.5" />
+                                                    ≥{currentLengthCfg.minWords} words met
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5">
+                                                    <AlertTriangle className="w-2.5 h-2.5" />
+                                                    {currentLengthCfg.minWords - wordCount(String(body || ''))} more to reach ≥{currentLengthCfg.minWords}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 

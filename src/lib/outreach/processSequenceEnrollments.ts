@@ -134,16 +134,33 @@ function applyVariant(template: Record<string, unknown>, assignment: ExperimentA
 }
 
 async function finishStep(db: Db, enrollment: Enrollment, step: Step, nextStep: Step | null, eventType: string, assignment: ExperimentAssignment | null) {
+  const rawEmail = enrollment.recipient_email || enrollment.email || null;
+  const normalized =
+    rawEmail && step.channel === 'email'
+      ? (typeof (db as any).raw !== 'function' ? rawEmail.toLowerCase() : rawEmail.toLowerCase())
+      : rawEmail || enrollment.normalized_recipient || (enrollment as any).normalized_recipient || null;
   await db.from('outreach_events').insert({
     tenant_id: enrollment.tenant_id,
     sequence_id: enrollment.sequence_id,
     step_id: step.id,
     contact_id: enrollment.contact_id || null,
     lead_id: enrollment.lead_id || null,
+    client_id: (enrollment as any).client_id || null,
     channel: step.channel,
     event_type: eventType,
     variant: assignment?.variantKey || null,
-    metadata: { enrollment_id: enrollment.id, recipient: enrollment.email || enrollment.phone || enrollment.linkedin_url, experiment_id: assignment?.experimentId || null },
+    metadata: {
+      enrollment_id: enrollment.id,
+      experiment_id: assignment?.experimentId || null,
+      email: rawEmail,
+      to: rawEmail,
+      recipient: rawEmail || enrollment.phone || enrollment.linkedin_url,
+      normalized_recipient: normalized || null,
+      recipient_name: enrollment.recipient_name || enrollment.contact_name || enrollment.lead_name || null,
+      contact_name: enrollment.recipient_name || enrollment.contact_name || null,
+      lead_name: enrollment.lead_name || null,
+      subject: (enrollment as any).last_subject || null,
+    },
   });
   const now = Date.now();
   await db.from('outreach_sequence_enrollments').update(nextStep ? {

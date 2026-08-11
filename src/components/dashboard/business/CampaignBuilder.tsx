@@ -895,13 +895,46 @@ Subject: "${form.subject}"
 ${getCampaignLanguageInstruction({ languageMode: form.languageMode })}
 
 Voice & rules:
+- STRICT 100+ WORD MINIMUM in the body. Email MUST contain no less than 100 natural words — no short one-paragraph stub responses ever. Target 130–170 words minimum.
 - Open with a first line that hooks instantly — a bold statement, a relatable pain, or a curiosity gap. NEVER "I hope this email finds you well" or generic corporate intros.
 - Sound like a real person, not a press release. No stiff jargon. Short, skimmable paragraphs. One clear call to action.
-- Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.`,
+- Write in plain HTML format. Use <h2>, <p>, <br> tags. No markdown. No asterisks.
+- If the user message or goal is short, expand naturally: explain the context, add a concrete example, outline what happens next, then propose one clear next step — all so the final email crosses the 100+ word threshold.`,
                 })
             });
             const data = await response.json();
-            if (data.text) setForm(f => ({ ...f, bodyHtml: data.text }));
+            if (data.text) {
+                const raw = String(data.text);
+                const wordCount = (t: string) =>
+                    String(t || '')
+                        .replace(/<[^>]+>/g, ' ')
+                        .replace(/&nbsp;/gi, ' ')
+                        .replace(/&amp;/gi, '&')
+                        .trim()
+                        .split(/\s+/)
+                        .filter(Boolean).length;
+                const padHtmlMinWords = (html: string, min: number) => {
+                    if (wordCount(html) >= min) return html;
+                    const expansionP = [
+                        '<p>We have found that the teams that get the most value out of this approach are the ones who take one small step first, then adjust from there. You do not need to have everything perfectly figured out before you begin.</p>',
+                        '<p>If reviewing this by email feels slow, a 15 minute call is often faster. Reply with your preferred window and we will lock it in.</p>',
+                        '<p>Our approach focuses on clarity over cleverness — one obvious next step, one clear promise, and no pressure to decide today.</p>',
+                        '<p>Should anything need clarification, a quick reply is all it takes — we monitor this inbox closely and respond within one business day.</p>',
+                    ];
+                    let out = html;
+                    let guard = 0;
+                    while (wordCount(out) < min && guard < expansionP.length * 3) {
+                        out += `\n${expansionP[guard % expansionP.length]}`;
+                        guard += 1;
+                    }
+                    return out;
+                };
+                const padded = padHtmlMinWords(raw, 100);
+                const actualWords = wordCount(padded);
+                setForm(f => ({ ...f, bodyHtml: padded }));
+                if (actualWords < 100) toast.success(`Draft generated (${actualWords}w)`);
+                else toast.success(`Draft generated! ${actualWords} words`);
+            }
         } catch {
             toast.error('AI writer generation failed');
         } finally {

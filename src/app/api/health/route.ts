@@ -46,40 +46,60 @@ export async function GET(request: NextRequest) {
     const resendConfigured = !!ENV.RESEND_API_KEY;
     const pushConfigured = isVapidConfigured();
 
-    // 1. Check database connection
+    // 1. Check database connection (2.5s timeout so degraded infra never
+    //    503s for 60+ seconds and clogs Railway health checks)
     try {
-        const supabase = createAdminSupabaseClientOrThrow();
-        const { error: dbError } = await supabase
-            .from('tenants')
-            .select('id')
-            .limit(1);
-
+        const supabase = supabaseConfigured ? createAdminSupabaseClientOrThrow() : null;
+        const dbStart = Date.now();
+        let dbError: string | null | undefined = null;
+        if (supabase) {
+            const timeoutMs = 2500;
+            const timeout = new Promise<null>((_, rej) =>
+                setTimeout(() => rej(new Error('timeout')), timeoutMs)
+            );
+            const query = supabase.from('tenants').select('id').limit(1).maybeSingle();
+            const { error } = await Promise.race([query, timeout])
+                .then((res: any) => res || { error: null })
+                .catch((e: Error) => ({ error: e.message || 'unavailable' }));
+            dbError = error ? (typeof error === 'string' ? error : error.message || 'unavailable') : null;
+        } else {
+            dbError = 'Supabase admin config missing (VITE_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)';
+        }
         checks.database = {
-            status: dbError ? 'unhealthy' : 'healthy',
-            responseTime: Date.now() - startTime,
-            error: dbError ? 'unavailable' : undefined,
+            status: dbError ? 'degraded' : 'healthy',
+            responseTime: Date.now() - dbStart,
+            error: dbError || undefined,
         };
-    } catch {
+    } catch (e: any) {
         checks.database = {
-            status: 'unhealthy',
-            error: 'unavailable',
+            status: 'degraded',
+            error: e?.message || 'unavailable',
         };
     }
 
     // 2. Check Redis connection
-    const { redisEnabled } = await import('@/lib/cache/redis');
+    let redisEnabled = false;
+    try {
+        const redisMod = await import('@/lib/cache/redis');
+        redisEnabled = !!redisMod.redisEnabled;
+    } catch {
+        redisEnabled = false;
+    }
     if (redisEnabled && redis) {
         try {
             const redisStart = Date.now();
-            await redis.ping();
+            const redisTimeout = new Promise<null>((_, rej) =>
+                setTimeout(() => rej(new Error('timeout')), 1500)
+            );
+            await Promise.race([redis.ping(), redisTimeout]);
             checks.redis = {
                 status: 'healthy',
                 responseTime: Date.now() - redisStart,
             };
-        } catch {
+        } catch (e: any) {
             checks.redis = {
-                status: 'unhealthy',
-                error: 'unavailable',
+                status: 'degraded',
+                error: e?.message || 'unavailable',
             };
         }
     } else {
@@ -93,20 +113,22 @@ export async function GET(request: NextRequest) {
     try {
         const authStart = Date.now();
         checks.auth = {
-            status: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY ? 'healthy' : 'unhealthy',
+            status: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY ? 'healthy' : 'degraded',
             responseTime: Date.now() - authStart,
-            error: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY ? undefined : 'Supabase auth configuration is incomplete',
+            error: supabaseConfigured && !!ENV.VITE_SUPABASE_ANON_KEY
+                ? undefined
+                : 'Supabase auth configuration is incomplete',
         };
-    } catch {
+    } catch (e: any) {
         checks.auth = {
-            status: 'unhealthy',
-            error: 'unavailable',
+            status: 'degraded',
+            error: e?.message || 'unavailable',
         };
     }
 
-    // 4. System info
+    // 4. Config summary
     checks.config = {
-        status: supabaseConfigured ? 'healthy' : 'unhealthy',
+        status: supabaseConfigured ? 'healthy' : 'degraded',
         services: {
             supabase: supabaseConfigured ? 'configured' : 'missing',
             supabaseAuth: ENV.VITE_SUPABASE_ANON_KEY ? 'configured' : 'missing',
@@ -117,20 +139,23 @@ export async function GET(request: NextRequest) {
         },
     };
 
-    // 5. System info
+    // 5. System runtime
     checks.system = {
         status: 'operational',
     };
 
-    // Determine overall health (optional services may be skipped, e.g. Redis)
-    const allHealthy = Object.values(checks).every(
+    // Overall status: use 'degraded' for partial issues but always return 200
+    // so downstream monitors see the payload + render amber banner instead
+    // of treating the route itself as dead.
+    const anyUnhealthy = Object.values(checks).some(
         (check) =>
-            !check?.status ||
-            check.status === 'healthy' ||
-            check.status === 'skipped'
+            check?.status &&
+            check.status !== 'healthy' &&
+            check.status !== 'skipped' &&
+            check.status !== 'operational'
     );
 
-    const overallStatus = allHealthy ? 'healthy' : 'degraded';
+    const overallStatus = anyUnhealthy ? 'degraded' : 'healthy';
     const totalResponseTime = Date.now() - startTime;
 
     return NextResponse.json(
@@ -141,6 +166,6 @@ export async function GET(request: NextRequest) {
             checks,
             version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
         },
-        { status: allHealthy ? 200 : 503 }
+        { status: 200 }
     );
 }

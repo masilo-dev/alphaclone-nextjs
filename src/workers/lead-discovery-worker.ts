@@ -13,6 +13,106 @@ type Search = {
   business_keywords?: string[]; result_limit: number; exclusions?: { keywords?: string[] };
 };
 
+function autoAcceptAndSyncHighQuality(
+  rows: Array<Record<string, unknown>>,
+  workspaceId: string,
+  ownerId: string
+): Promise<{ accepted: number; synced: number }> {
+  const qualityThreshold = 70;
+  const fitThreshold = 65;
+  const confidenceMin = 40;
+
+  const toAccept: Array<Record<string, unknown>> = [];
+  const toLeadInsert: Array<Record<string, unknown>> = [];
+  const now = new Date().toISOString();
+
+  for (const row of rows) {
+    const q = typeof row.quality_score === 'number' ? row.quality_score : 0;
+    const f = typeof row.fit_score === 'number' ? row.fit_score : 0;
+    const c = typeof row.confidence_score === 'number' ? row.confidence_score : 0;
+    const email = String(row.public_email || '').trim();
+    if ((q >= qualityThreshold || f >= fitThreshold) && c >= confidenceMin && email.includes('@')) {
+      const total = Math.round((q * 0.5) + (f * 0.35) + (c * 0.15));
+      const stage =
+        total >= 75 ? 'qualified' :
+        total >= 50 ? 'prospect' : 'lead';
+      row.review_status = 'accepted';
+      row.accepted_at = now;
+      row.updated_at = now;
+      toAccept.push(row);
+
+      const notesParts: string[] = [];
+      if (row.description) notesParts.push(String(row.description));
+      if (typeof row.score_explanation === 'string' && row.score_explanation) notesParts.push(`Fit: ${row.score_explanation}`);
+      if (row.city || row.country || row.industry) {
+        const meta = [row.city, row.country].filter(Boolean).join(', ');
+        if (meta || row.industry) notesParts.push([String(row.industry || ''), meta].filter(Boolean).join(' · '));
+      }
+      if (row.source_url || row.source_type) {
+        const srcParts = [row.source_type && `Source: ${row.source_type}`, row.source_url && String(row.source_url)].filter(Boolean);
+        if (srcParts.length) notesParts.push(srcParts.join(' — '));
+      }
+
+      toLeadInsert.push({
+        tenant_id: workspaceId,
+        owner_id: ownerId,
+        business_name: String(row.business_name || 'Discovered business').trim() || 'Discovered business',
+        industry: row.industry ? String(row.industry) : null,
+        location: [row.city, row.country].filter(Boolean).join(', ') || null,
+        phone: row.public_phone ? String(row.public_phone) : null,
+        email,
+        website: row.website ? String(row.website) : null,
+        source: `Lead Finder:${String(row.source_type || row.search_id || 'discovery')}`,
+        stage,
+        value: 0,
+        notes: notesParts.length ? notesParts.join('\n\n') : null,
+        outreach_status: 'pending',
+        is_verified: true,
+        trust_score: Math.max(0, Math.min(100, total)),
+        verification_notes:
+          row.verification_status ? `Lead Finder verification: ${String(row.verification_status)}` : null,
+        metadata: {
+          lead_candidate_id: String(row.id || ''),
+          lead_search_id: row.search_id ? String(row.search_id) : null,
+          source: {
+            type: row.source_type ? String(row.source_type) : null,
+            external_id: row.source_external_id ? String(row.source_external_id) : null,
+            url: row.source_url ? String(row.source_url) : null,
+          },
+          scores: { quality: q, fit: f, confidence: c },
+        },
+      });
+    }
+  }
+
+  if (toAccept.length === 0) return Promise.resolve({ accepted: 0, synced: 0 });
+
+  return (async () => {
+    const { data: leads, error: leadInsertErr } = await supabase
+      .from('leads')
+      .upsert(toLeadInsert, { onConflict: 'tenant_id,email', ignoreDuplicates: true, defaultToNull: false })
+      .select('id,email');
+    if (leadInsertErr) throw leadInsertErr;
+    const byEmail = new Map<string, string>();
+    for (const l of (leads || []) as Array<{ id: string; email?: string | null }>) {
+      if (l.email) byEmail.set(String(l.email).toLowerCase(), l.id);
+    }
+    const acceptedRows = toAccept.map(r => {
+      const em = String((r as any).public_email || '').toLowerCase();
+      const leadId = byEmail.get(em) || null;
+      return { ...(r as any), synced_lead_id: leadId };
+    });
+    const { error: updateErr } = await supabase
+      .from('lead_candidates')
+      .upsert(acceptedRows, { onConflict: 'workspace_id,source_type,source_external_id', ignoreDuplicates: false, defaultToNull: false });
+    if (updateErr) throw updateErr;
+    return { accepted: acceptedRows.length, synced: leads?.length || 0 };
+  })().catch(err => {
+    console.warn('[lead-discovery-worker] Auto-accept sync warning:', err);
+    return { accepted: 0, synced: 0 };
+  });
+}
+
 async function execute(job: Job) {
   const started = Date.now();
   const { data: search, error } = await supabase.from('lead_searches').select('*').eq('id', job.search_id).single<Search>();
@@ -61,15 +161,28 @@ async function execute(job: Job) {
     const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, { onConflict: 'workspace_id,source_type,source_external_id', ignoreDuplicates: true });
     if (insertError) throw insertError;
   }
+
+  let crmSyncedCount = 0;
+  let autoAcceptedCount = 0;
+  try {
+    const auto = await autoAcceptAndSyncHighQuality(rows, job.workspace_id, job.created_by);
+    crmSyncedCount = auto.synced;
+    autoAcceptedCount = auto.accepted;
+  } catch (err) {
+    console.warn('[lead-discovery-worker] Auto-accept/sync failed gracefully, search continues:', err);
+  }
+
   const status = Object.keys(sourceErrors).length ? 'partially_completed' : 'completed';
   await supabase.from('lead_searches').update({
     status, progress: 100, discovered_count: rows.length, error_count: Object.keys(sourceErrors).length,
+    accepted_count: autoAcceptedCount, crm_synced_count: crmSyncedCount,
     completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
   }).eq('id', search.id);
   await supabase.from('lead_search_jobs').update({
     status: 'completed', progress: 100, records_found: rows.length, records_processed: rows.length,
+    records_crm_synced: crmSyncedCount, records_auto_accepted: autoAcceptedCount,
     completed_at: new Date().toISOString(), locked_at: null,
-    metadata: { source_errors: sourceErrors, duration_ms: Date.now() - started },
+    metadata: { source_errors: sourceErrors, duration_ms: Date.now() - started, auto_accepted: autoAcceptedCount, crm_synced: crmSyncedCount },
   }).eq('id', job.id);
 }
 

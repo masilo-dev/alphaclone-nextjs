@@ -52,6 +52,7 @@ import {
   ProjectsDashboard,
   SocialDashboard,
 } from '../views/ModuleDashboardView';
+import { OutreachInbox } from '../outreach/OutreachInbox';
 import ProjectsPage from './ProjectsPage';
 import TeamPage from './TeamPage';
 import ClientsPage from './ClientsPage';
@@ -558,6 +559,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                 return <CrmDashboard />;
             case '/dashboard/crm/workspace':
                 return <CRMTab user={user} />;
+            case '/dashboard/outreach/inbox':
+              return <OutreachInbox />;
             case '/dashboard/outreach':
                 return <OutreachDashboard />;
             case '/dashboard/deals':
@@ -908,6 +911,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         switch (route) {
             case '/dashboard': return t('Dashboard');
             case '/dashboard/crm': return t('CRM');
+            case '/dashboard/outreach/inbox': return t('Outreach Reach Inbox');
+            case '/dashboard/outreach': return t('Outreach');
             case '/dashboard/leads': return t('Leads');
             case '/dashboard/deals': return t('Deals');
             case '/dashboard/contacts':
