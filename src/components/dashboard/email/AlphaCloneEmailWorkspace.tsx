@@ -1774,7 +1774,7 @@ export default function AlphaCloneEmailWorkspace() {
                 <span>Dispatch:</span>
                 <select
                   value={composeProvider}
-                  onChange={(e) => setComposeProvider(e.target.value)}
+                  onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
                   className="bg-slate-950 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none"
                 >
                   <option value="auto">Auto (Best Deliverability)</option>
