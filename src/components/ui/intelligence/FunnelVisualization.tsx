@@ -74,7 +74,7 @@ export function FunnelVisualization({
           const drop = conversion != null ? 100 - conversion : null;
           const isBottleneck = analysis.bottleneck?.stageKey === stage.key;
           const severity = isBottleneck
-            ? analysis.bottleneck.severity === 'critical'
+            ? analysis.bottleneck?.severity === 'critical'
               ? 'critical'
               : 'warning'
             : 'neutral';
