@@ -91,6 +91,30 @@ async function downloadRemoteUrl(url: string): Promise<{ buffer: Buffer; mimeTyp
   }
 }
 
+const LOCAL_AI_PATH_PATTERNS = [
+  /^\/mnt\/data\//i,
+  /^\/var\/folders\//i,
+  /^\/tmp\//i,
+  /^C:\\Users\\/i,
+  /^file:\/\//i,
+];
+
+/**
+ * Rejects values that look like local AI sandbox paths (e.g. /mnt/data/... from ChatGPT).
+ * These cannot be fetched server-side and must be rejected early with a clear error.
+ */
+export function rejectLocalAiPaths(value: string | null | undefined, fieldName: string): void {
+  if (!value || typeof value !== 'string') return;
+  for (const pattern of LOCAL_AI_PATH_PATTERNS) {
+    if (pattern.test(value)) {
+      throw new Error(
+        `${fieldName} contains a local AI sandbox path ("${value}") that cannot be fetched server-side. ` +
+          `Upload the file first via upload_media and pass the returned media_url or media_id instead.`
+      );
+    }
+  }
+}
+
 /**
  * Ingest one MediaInput into a tenant-scoped media_assets record.
  */
