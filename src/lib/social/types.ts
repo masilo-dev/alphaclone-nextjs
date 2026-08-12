@@ -155,6 +155,7 @@ export const CANONICAL_SOCIAL_MCP_TOOLS = [
   'get_facebook_identities',
   'get_facebook_page_capabilities',
   'get_linkedin_identities',
+  'upload_social_media',
   'upload_media',
   'get_media',
   'get_media_asset',

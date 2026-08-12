@@ -78,7 +78,7 @@ async function downloadRemoteUrl(url: string): Promise<{ buffer: Buffer; mimeTyp
     const res = await fetch(url, {
       redirect: 'error',
       signal: controller.signal,
-      headers: { Accept: 'image/*,video/*,application/octet-stream' },
+      headers: { Accept: 'image/*,video/*,application/pdf,application/octet-stream' },
     });
     if (!res.ok) throw new Error(`Failed to download media_url (${res.status})`);
     const contentType = (res.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim();
@@ -150,7 +150,9 @@ export async function ingestMediaInput(params: {
         tenantId,
         userId,
         filename: media.filename || remote.filename,
-        mimeType: remote.mimeType.startsWith('image/') || remote.mimeType.startsWith('video/')
+        mimeType: remote.mimeType.startsWith('image/') ||
+          remote.mimeType.startsWith('video/') ||
+          remote.mimeType === 'application/pdf'
           ? remote.mimeType
           : 'image/png',
         contentBase64: remote.buffer.toString('base64'),
@@ -237,10 +239,15 @@ export async function ingestPublishMedia(params: {
           type: 'asset_id',
           assetId: String(raw.assetId || raw.asset_id),
         });
-      } else if (type === 'base64' || typeof raw.data === 'string') {
+      } else if (
+        type === 'base64' ||
+        typeof raw.data === 'string' ||
+        typeof raw.base64 === 'string' ||
+        typeof raw.content_base64 === 'string'
+      ) {
         inputs.push({
           type: 'base64',
-          data: String(raw.data),
+          data: String(raw.data || raw.base64 || raw.content_base64),
           mimeType: String(raw.mimeType || raw.mime_type || 'image/png'),
           filename: String(raw.filename || 'upload.png'),
         });
@@ -250,10 +257,10 @@ export async function ingestPublishMedia(params: {
           dataUrl: String(raw.dataUrl || raw.data_url),
           filename: typeof raw.filename === 'string' ? raw.filename : undefined,
         });
-      } else if (type === 'url' || typeof raw.url === 'string') {
+      } else if (type === 'url' || typeof raw.url === 'string' || typeof raw.source_url === 'string') {
         inputs.push({
           type: 'url',
-          url: String(raw.url),
+          url: String(raw.url || raw.source_url),
           filename: typeof raw.filename === 'string' ? raw.filename : undefined,
         });
       } else if (type === 'document_id' || typeof raw.document_id === 'string' || typeof raw.documentId === 'string') {

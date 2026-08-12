@@ -43,6 +43,146 @@ async function requireSocialAuth(
   return { tenantId, userId };
 }
 
+registerTool('social-publishing', {
+  name: 'check_mcp_execution_readiness',
+  description:
+    'Check whether the current MCP workspace can execute ChatGPT write actions, especially social publishing and email sending. Use this when tools are visible but posting or sending fails.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    action: z.enum(['all', 'social_post', 'email_send', 'media_upload']).optional().default('all'),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      action: {
+        type: 'string',
+        enum: ['all', 'social_post', 'email_send', 'media_upload'],
+      },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = requireTenantId(args, ctx);
+    const userId = ctx.userId;
+    if (!userId) throw new Error('Authenticated user required');
+
+    const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
+    const { resolveTenantRole } = await import('@/lib/mcp/connector/permissions');
+    const { hasTool } = await import('../tool-registry');
+    await assertTenantMembership(tenantId, userId);
+
+    const supabase = createSupabaseAdminClient();
+    const role = await resolveTenantRole(tenantId, userId);
+    const canSocial = role.permissions.includes('social:publish');
+    const canWriteSocial = role.permissions.includes('social:write');
+    const canEmail = role.permissions.includes('sales:write') || role.permissions.includes('marketing:write');
+
+    const [identitiesRes, emailIntegrationsRes, senderRes] = await Promise.all([
+      supabase
+        .from('social_identities')
+        .select('identity_id, provider, identity_type, display_name, can_publish, can_upload_media, is_active')
+        .eq('tenant_id', tenantId)
+        .eq('is_active', true),
+      supabase
+        .from('integrations')
+        .select('id, provider, type, status, is_active, config')
+        .eq('tenant_id', tenantId)
+        .in('provider', ['zoho', 'gmail', 'brevo', 'sendgrid', 'resend', 'outlook', 'smtp']),
+      supabase
+        .from('email_sender_addresses')
+        .select('id, provider, email_address, display_name, is_default, is_verified')
+        .eq('tenant_id', tenantId),
+    ]);
+
+    const identities = identitiesRes.data || [];
+    const publishableIdentities = identities.filter((i) => i.can_publish);
+    const uploadableIdentities = identities.filter((i) => i.can_upload_media);
+    const emailIntegrations = (emailIntegrationsRes.data || []).filter(
+      (i) => i.is_active !== false && String(i.status || 'connected') !== 'disconnected'
+    );
+    const senders = senderRes.data || [];
+    const verifiedSenders = senders.filter((s) => s.is_verified !== false);
+
+    const tools = {
+      upload_social_media: hasTool('upload_social_media'),
+      publish_social_post: hasTool('publish_social_post'),
+      get_social_identities: hasTool('get_social_identities'),
+      send_email: hasTool('send_email'),
+    };
+
+    const socialMissing: string[] = [];
+    if (!tools.publish_social_post || !tools.get_social_identities) socialMissing.push('MCP social tools are not registered');
+    if (!canSocial) socialMissing.push('Workspace role lacks social:publish permission');
+    if (publishableIdentities.length === 0) socialMissing.push('No active publishable Facebook/LinkedIn identity is connected');
+
+    const mediaMissing: string[] = [];
+    if (!tools.upload_social_media) mediaMissing.push('upload_social_media is not registered');
+    if (!canWriteSocial) mediaMissing.push('Workspace role lacks social:write permission');
+    if (identities.length > 0 && uploadableIdentities.length === 0) {
+      mediaMissing.push('Connected social identities do not advertise media upload capability');
+    }
+
+    const emailMissing: string[] = [];
+    if (!tools.send_email) emailMissing.push('send_email is not registered');
+    if (!canEmail) emailMissing.push('Workspace role lacks sales:write or marketing:write permission');
+    if (emailIntegrations.length === 0) emailMissing.push('No active email provider integration is connected');
+    if (verifiedSenders.length === 0) emailMissing.push('No verified/default sender address is configured');
+
+    const readiness = {
+      requested_action: args.action || 'all',
+      workspace: {
+        tenant_id: tenantId,
+        user_id: userId,
+        role: role.role,
+      },
+      tools,
+      social_post: {
+        executable: socialMissing.length === 0,
+        missing: socialMissing,
+        identities: publishableIdentities.map((i) => ({
+          identity_id: i.identity_id,
+          provider: i.provider,
+          identity_type: i.identity_type,
+          display_name: i.display_name,
+          can_publish: i.can_publish,
+          can_upload_media: i.can_upload_media,
+        })),
+      },
+      media_upload: {
+        executable: mediaMissing.length === 0,
+        missing: mediaMissing,
+        accepted_sources: ['file', 'base64', 'source_url'],
+        accepted_media_types: ['image', 'video', 'document'],
+      },
+      email_send: {
+        executable: emailMissing.length === 0,
+        missing: emailMissing,
+        providers: emailIntegrations.map((i) => ({
+          integration_id: i.id,
+          provider: i.provider || i.type,
+          status: i.status,
+        })),
+        sender_addresses: verifiedSenders.map((s) => ({
+          sender_id: s.id,
+          provider: s.provider,
+          email_address: s.email_address,
+          display_name: s.display_name,
+          is_default: s.is_default,
+        })),
+      },
+    };
+
+    return toMcpContent(
+      okResult('check_mcp_execution_readiness', readiness, {
+        meta: {
+          note:
+            'If executable=false, ChatGPT can see the tool but the workspace/provider setup is not ready for that action.',
+        },
+      })
+    );
+  },
+});
+
 // ─── Identity tools ─────────────────────────────────────────────────────────
 
 registerTool('social-publishing', {
@@ -184,14 +324,24 @@ type MediaToolAsset = {
 
 /** ChatGPT / Claude / connector-friendly media envelope. */
 function mediaToolResult(asset: MediaToolAsset) {
+  const mediaType = asset.mime_type.startsWith('video/')
+    ? 'video'
+    : asset.mime_type === 'application/pdf'
+      ? 'document'
+      : 'image';
   return {
     success: true,
     ok: true,
     media_id: asset.id,
     media_asset_id: asset.id,
     media_url: asset.url,
+    storage_url: asset.url,
     public_url: asset.url,
     asset_id: asset.id,
+    filename: asset.filename,
+    mime_type: asset.mime_type,
+    media_type: mediaType,
+    size_bytes: asset.size_bytes,
     thumbnail_url: asset.thumbnail_url || null,
     provider: asset.provider || 'supabase',
     asset,
@@ -240,6 +390,92 @@ registerTool('social-publishing', {
     const { executeTool } = await import('../tool-registry');
     const post = await executeTool(tenantId, userId, 'create_social_post', { tenant_id: tenantId, platform: args.platform, platforms: [args.platform], identity_type: args.identity_type, identity_id: args.identity_id, caption: args.caption, media_asset_ids: [asset.media_asset_id], publish_now: args.publish_now, scheduled_at: args.scheduled_at });
     return { generated: true, model, revised_prompt: payload?.data?.[0]?.revised_prompt || null, media_id: asset.media_asset_id, media_url: asset.public_url, post, verification: { image_stored: Boolean(asset.public_url), post_action_returned: Boolean(post) } };
+  },
+});
+
+registerTool('social-publishing', {
+  name: 'upload_social_media',
+  description:
+    'Canonical MCP media ingestion for social publishing. Accept exactly one source: file/base64 bytes, base64, or source_url. Stores media in AlphaClone first and returns media_id + storage_url for publish_social_post. Handles ChatGPT-generated images and user-uploaded files; never pass /mnt/data paths as URLs.',
+  inputSchema: z.object({
+    tenant_id: z.string().uuid().optional(),
+    file: z.string().optional(),
+    base64: z.string().optional(),
+    source_url: z.string().optional(),
+    filename: z.string().optional(),
+    mime_type: z.string().optional(),
+    media_type: z.enum(['image', 'video', 'document']).optional(),
+    purpose: z.string().optional().default('social'),
+    alt_text: z.string().optional(),
+  }).refine((v) => [v.file, v.base64, v.source_url].filter((x) => Boolean(String(x || '').trim())).length === 1, {
+    message: 'Provide exactly one media source: file, base64, or source_url',
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      file: {
+        type: 'string',
+        description:
+          'MCP file/binary content when the client can transfer it. If represented as bytes, pass base64 or a data URI string here.',
+      },
+      base64: {
+        type: 'string',
+        description: 'Raw base64 bytes or data:image/png;base64,... fallback.',
+      },
+      source_url: {
+        type: 'string',
+        description: 'Public HTTPS media URL to ingest into AlphaClone storage.',
+      },
+      filename: { type: 'string', description: 'Required for raw base64/file bytes' },
+      mime_type: {
+        type: 'string',
+        description: 'Declared MIME. Server validates actual file signature.',
+      },
+      media_type: { type: 'string', enum: ['image', 'video', 'document'] },
+      purpose: { type: 'string', description: 'Defaults to social' },
+      alt_text: { type: 'string' },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
+    const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+    const source = args.file || args.base64 || args.source_url || '';
+
+    rejectLocalAiPaths(args.source_url, 'source_url');
+    rejectLocalAiPaths(args.file, 'file');
+    rejectLocalAiPaths(args.base64, 'base64');
+    rejectLocalAiPaths(args.filename, 'filename');
+
+    const asset = await ingestMediaInput({
+      tenantId,
+      userId,
+      purpose: args.purpose || 'social',
+      media: args.source_url
+        ? { type: 'url', url: args.source_url, filename: args.filename }
+        : {
+            type: String(source).startsWith('data:') ? 'data_url' : 'base64',
+            ...(String(source).startsWith('data:')
+              ? { dataUrl: source, filename: args.filename }
+              : {
+                  data: source,
+                  filename: args.filename || `social-upload.${args.media_type === 'document' ? 'pdf' : args.media_type === 'video' ? 'mp4' : 'png'}`,
+                  mimeType: args.mime_type || (args.media_type === 'document' ? 'application/pdf' : args.media_type === 'video' ? 'video/mp4' : 'image/png'),
+                }),
+          } as any,
+    });
+
+    return mediaToolResult({
+      id: asset.id,
+      filename: asset.filename,
+      mime_type: asset.mime_type,
+      size_bytes: asset.size_bytes,
+      url: asset.url,
+      status: asset.status,
+      width: asset.width,
+      height: asset.height,
+      checksum: asset.checksum,
+    });
   },
 });
 
@@ -609,6 +845,7 @@ registerTool('social-publishing', {
     caption: z.string().optional(),
     content: z.string().optional(),
     media: z.array(z.record(z.string(), z.unknown())).optional(),
+    media_ids: z.array(z.string().uuid()).optional(),
     media_asset_ids: z.array(z.string().uuid()).optional(),
     media_urls: z.array(z.string()).optional(),
     link_url: z.string().url().optional(),
@@ -640,6 +877,11 @@ registerTool('social-publishing', {
         items: { type: 'object' },
       },
       media_asset_ids: { type: 'array', items: { type: 'string', format: 'uuid' } },
+      media_ids: {
+        type: 'array',
+        description: 'Canonical alias for media_asset_ids returned by upload_social_media.',
+        items: { type: 'string', format: 'uuid' },
+      },
       media_urls: { type: 'array', items: { type: 'string' } },
       link_url: { type: 'string' },
       publish_now: { type: 'boolean' },
@@ -688,7 +930,7 @@ registerTool('social-publishing', {
       userId,
       media: args.media as any,
       mediaUrls: args.media_urls,
-      mediaAssetIds: args.media_asset_ids,
+      mediaAssetIds: args.media_ids || args.media_asset_ids,
     });
 
     const publishNow =

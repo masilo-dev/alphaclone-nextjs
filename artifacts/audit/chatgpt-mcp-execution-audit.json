@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-10T09:11:29.663Z",
+  "generated_at": "2026-08-12T11:34:14.426Z",
   "mode": {
     "transport": "local-dry-run",
     "execute_read_tools": false,
@@ -8,11 +8,11 @@
   },
   "policy": "Default mode proves ChatGPT full-catalog discoverability and route/registry executability without side effects. Live invocation requires --http and explicit execution flags.",
   "totals": {
-    "tools_audited": 501,
-    "registry_tools": 500,
-    "directly_visible_tools": 501,
+    "tools_audited": 502,
+    "registry_tools": 501,
+    "directly_visible_tools": 502,
     "passed": 190,
-    "skipped_write": 235,
+    "skipped_write": 236,
     "skipped_destructive": 13,
     "requires_approval": 63
   },
@@ -3189,6 +3189,17 @@
     {
       "module": "media",
       "tool_name": "upload_media_asset",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "media",
+      "tool_name": "upload_social_media",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",

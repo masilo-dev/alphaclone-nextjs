@@ -44,13 +44,33 @@ export const MCP_TOOL_REQUIRED_SCOPES: Record<string, McpScope[]> = {
   update_lead: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
   delete_lead: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
   create_invoice: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  upload_social_media: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  upload_media: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  create_social_post: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  create_social_post_with_media: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  publish_social_post: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
   publish_post: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  send_email: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  gmail_send_email: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  microsoft_send_email: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  send_transactional_email: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  send_task_email: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  send_project_email: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  create_bulk_email_campaign: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  queue_email_campaign_send: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
+  send_bulk_email_campaign: [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS],
   // Resources
   'resources/list': [MCP_SCOPES.READ, MCP_SCOPES.RESOURCES],
   'resources/read': [MCP_SCOPES.READ, MCP_SCOPES.RESOURCES],
 };
 
 export function requiredScopesForTool(toolName: string): McpScope[] {
+  if (/(^|_)(send|publish|upload|create|update|delete|queue|retry|approve|reject)_?/.test(toolName)) {
+    return [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS];
+  }
+  if (/(email|social_post|media|campaign)/.test(toolName) && !/^(get|list|search|fetch|verify|check)_/.test(toolName)) {
+    return [MCP_SCOPES.WRITE, MCP_SCOPES.TOOLS];
+  }
   return MCP_TOOL_REQUIRED_SCOPES[toolName] ?? [MCP_SCOPES.READ, MCP_SCOPES.TOOLS];
 }
 
