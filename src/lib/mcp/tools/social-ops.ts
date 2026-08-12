@@ -185,8 +185,7 @@ defineConnectorTool({
   module: 'social-ops',
   name: 'publish_post',
   description:
-    'Publish/schedule a social post. AI images: upload_media(content_base64) first, then media_urls=[media_url] or media_asset_ids=[media_id]. ' +
-    'Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.',
+    'Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.',
   permission: 'social:publish',
   rateLimitClass: 'publish',
   auditAction: 'mcp_publish_post',
@@ -194,9 +193,19 @@ defineConnectorTool({
     tenant_id: tenantIdField,
     platform: z.string().min(1),
     content: z.string().min(1),
-    scheduled_at: z.string().datetime().optional(),
+    scheduled_at: z.string().optional(),
     media_urls: z.array(z.string()).optional(),
-    media_asset_ids: z.array(z.string().uuid()).optional(),
+    media_asset_ids: z.array(z.string()).optional(),
+    filename: z.string().optional(),
+    file_name: z.string().optional(),
+    mime_type: z.string().optional(),
+    content_type: z.string().optional(),
+    content_base64: z.string().optional(),
+    file_base64: z.string().optional(),
+    file: z.string().optional(),
+    data_url: z.string().optional(),
+    source_url: z.string().optional(),
+    url: z.string().optional(),
     identity_type: z
       .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
       .optional(),
@@ -213,7 +222,7 @@ defineConnectorTool({
       tenant_id: { type: 'string', format: 'uuid' },
       platform: { type: 'string' },
       content: { type: 'string' },
-      scheduled_at: { type: 'string', format: 'date-time' },
+      scheduled_at: { type: 'string' },
       media_urls: {
         type: 'array',
         items: { type: 'string' },
@@ -222,9 +231,19 @@ defineConnectorTool({
       },
       media_asset_ids: {
         type: 'array',
-        items: { type: 'string', format: 'uuid' },
+        items: { type: 'string' },
         description: 'media_id values returned by upload_media',
       },
+      filename: { type: 'string', description: 'Original file name e.g. post.png' },
+      file_name: { type: 'string', description: 'Alias for filename' },
+      mime_type: { type: 'string', description: 'MIME type e.g. image/png' },
+      content_type: { type: 'string', description: 'Alias for mime_type' },
+      content_base64: { type: 'string', description: 'Base64 image string' },
+      file_base64: { type: 'string', description: 'Alias for content_base64' },
+      file: { type: 'string', description: 'Alias for content_base64' },
+      data_url: { type: 'string', description: 'data:image/...;base64,... string' },
+      source_url: { type: 'string', description: 'Public HTTPS image URL' },
+      url: { type: 'string', description: 'Alias for source_url' },
       identity_type: {
         type: 'string',
         enum: ['facebook_page', 'linkedin_person', 'linkedin_organization'],
@@ -245,6 +264,62 @@ defineConnectorTool({
         'UNSUPPORTED_PLATFORM',
         `publish_post supports facebook|linkedin (got ${args.platform})`
       );
+    }
+
+    // Process inline media if provided
+    const contentBase64 = args.content_base64 || args.file_base64 || args.file;
+    const sourceUrl = args.source_url || args.url;
+    const filename = args.filename || args.file_name;
+    const mimeType = args.mime_type || args.content_type;
+
+    const mediaAssetIds: string[] = [...(args.media_asset_ids || [])];
+    const mediaUrls: string[] = [...(args.media_urls || [])];
+
+    const hasRawMediaInput = Boolean(contentBase64 || args.data_url || sourceUrl);
+
+    if (hasRawMediaInput) {
+      const { rejectLocalAiPaths } = await import('@/lib/media/ingestMedia');
+      rejectLocalAiPaths(sourceUrl, 'source_url');
+      rejectLocalAiPaths(contentBase64, 'content_base64');
+      rejectLocalAiPaths(args.data_url, 'data_url');
+      rejectLocalAiPaths(filename, 'filename');
+
+      let mediaInput: any = null;
+      if (args.data_url || (contentBase64 && String(contentBase64).startsWith('data:'))) {
+        mediaInput = {
+          type: 'data_url' as const,
+          dataUrl: args.data_url || String(contentBase64),
+          filename,
+        };
+      } else if (sourceUrl) {
+        mediaInput = { type: 'url' as const, url: sourceUrl, filename };
+      } else if (contentBase64) {
+        mediaInput = {
+          type: 'base64' as const,
+          base64: contentBase64,
+          filename: filename || 'upload.png',
+          mimeType: mimeType || 'image/png',
+        };
+      }
+
+      try {
+        const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
+        const asset = await ingestMediaInput({
+          tenantId: args.tenant_id,
+          userId: ctx.userId!,
+          purpose: 'social_post',
+          media: mediaInput,
+        });
+        if (asset?.id) mediaAssetIds.push(asset.id);
+        if (asset?.url) mediaUrls.push(asset.url);
+      } catch (err: any) {
+        // STRICT RULE: If media input was supplied but ingestion failed, DO NOT publish text-only!
+        throwConnectorError(
+          'MEDIA_INGESTION_FAILED',
+          `Media processing failed: ${err?.message || 'Unknown media ingestion error'}. Aborting post execution.`,
+          err
+        );
+      }
     }
 
     let identityType = args.identity_type;
@@ -297,8 +372,8 @@ defineConnectorTool({
       identityType: identityType!,
       identityId: identityId!,
       caption: args.content,
-      mediaUrls: args.media_urls,
-      mediaAssetIds: args.media_asset_ids,
+      mediaUrls: mediaUrls.length > 0 ? mediaUrls : undefined,
+      mediaAssetIds: mediaAssetIds.length > 0 ? mediaAssetIds : undefined,
       publishNow: publishNow && !args.scheduled_at,
       scheduledAt: args.scheduled_at || (args.status === 'scheduled' ? new Date().toISOString() : null),
       idempotencyKey: args.idempotency_key,
@@ -328,9 +403,10 @@ defineConnectorTool({
               verified: result.receipt.verified,
               verified_at: result.receipt.verified_at,
               correlation_id: result.receipt.correlation_id,
+              media_asset_ids: result.data?.media_asset_ids || mediaAssetIds,
             },
           }
-        : null,
+        : undefined,
     });
   },
 });

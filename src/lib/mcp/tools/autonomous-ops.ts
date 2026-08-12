@@ -658,74 +658,35 @@ defineConnectorTool({
   rateLimitClass: 'write',
   inputSchema: z.object({
     tenant_id: tenantIdField,
-    filename: z.string().min(1),
-    content_base64: z.string().min(1).optional(),
-    content_url: z.string().url().optional(),
-    mime_type: z.string().optional().default('image/png'),
+    filename: z.string().optional(),
+    file_name: z.string().optional(),
+    content_base64: z.string().optional(),
+    file_base64: z.string().optional(),
+    content_url: z.string().optional(),
+    source_url: z.string().optional(),
+    url: z.string().optional(),
+    data_url: z.string().optional(),
+    mime_type: z.string().optional(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
       tenant_id: { type: 'string', format: 'uuid' },
       filename: { type: 'string' },
+      file_name: { type: 'string' },
       content_base64: { type: 'string' },
+      file_base64: { type: 'string' },
       content_url: { type: 'string' },
+      source_url: { type: 'string' },
+      url: { type: 'string' },
+      data_url: { type: 'string' },
       mime_type: { type: 'string' },
     },
-    required: ['tenant_id', 'filename'],
+    required: [],
   },
   handler: async (args, ctx) => {
-    if (!args.content_base64 && !args.content_url) {
-      throwConnectorError('VALIDATION_ERROR', 'content_base64 or content_url is required');
-    }
-    const supabase = createSupabaseAdminClient();
-    const path = `${args.tenant_id}/mcp-media/${Date.now()}_${args.filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-
-    let publicUrl: string | null = null;
-    if (args.content_base64) {
-      const buffer = Buffer.from(args.content_base64, 'base64');
-      const { error } = await supabase.storage.from('social-assets').upload(path, buffer, {
-        contentType: args.mime_type || 'image/png',
-        upsert: false,
-      });
-      if (error) {
-        // Fall back to documents bucket
-        const retry = await supabase.storage.from('documents').upload(path, buffer, {
-          contentType: args.mime_type || 'image/png',
-          upsert: false,
-        });
-        if (retry.error) throwConnectorError('UPLOAD_FAILED', retry.error.message);
-        const { data } = supabase.storage.from('documents').getPublicUrl(path);
-        publicUrl = data.publicUrl;
-      } else {
-        const { data } = supabase.storage.from('social-assets').getPublicUrl(path);
-        publicUrl = data.publicUrl;
-      }
-    } else {
-      publicUrl = args.content_url!;
-    }
-
-    const mediaId = newActionId();
-    return okResult(
-      'upload_media',
-      {
-        media_id: mediaId,
-        public_url: publicUrl,
-        storage_path: path,
-        mime_type: args.mime_type,
-      },
-      {
-        receipt: {
-          action_id: mediaId,
-          status: 'completed',
-          entity_id: mediaId,
-          entity_type: 'media',
-          live_url: publicUrl,
-          timestamp: new Date().toISOString(),
-          verification: { permanent_public_url: Boolean(publicUrl) },
-        },
-      }
-    );
+    const { executeTool } = await import('../tool-registry');
+    return executeTool(args.tenant_id, ctx.userId!, 'upload_media', args);
   },
 });
 
