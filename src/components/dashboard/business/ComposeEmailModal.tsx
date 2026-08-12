@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus, Users } from 'lucide-react';
+import { X, Send, Loader2, Wand2, Check, ChevronDown, Plus, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '../../ui/UIComponents';
 import toast from 'react-hot-toast';
 import { supabase } from '../../../lib/supabase';

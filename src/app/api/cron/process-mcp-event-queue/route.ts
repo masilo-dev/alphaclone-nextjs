@@ -51,6 +51,7 @@ async function processBatchOutreachEvent(
       custom_context: payload.custom_context || '',
       delivery_provider: payload.delivery_provider || 'sendgrid',
       language_mode: payload.language_mode || 'en',
+      process_inline: true,
     });
     if (result.isError) {
       failed += chunk.lead_ids.length + chunk.client_ids.length;

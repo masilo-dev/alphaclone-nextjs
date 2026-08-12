@@ -46,6 +46,12 @@ function isUuid(value: string): boolean {
   );
 }
 
+function looksLikeRawProviderIdentityId(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed || isUuid(trimmed)) return false;
+  return /^\d{4,}$/.test(trimmed) || /^[A-Za-z0-9_.:-]{4,64}$/.test(trimmed);
+}
+
 /** List identities for the active tenant only. */
 export async function listTenantSocialIdentities(params: {
   tenantId: string;
@@ -279,6 +285,12 @@ export async function resolveTenantIdentityForPublish(params: {
 
     if (!match) {
       // Do not leak whether it exists in another tenant
+      if (looksLikeRawProviderIdentityId(requested)) {
+        throw new TenantIsolationError(
+          "identity_id must be the Alphaclone identity UUID from get_social_identities, not the provider's raw ID.",
+          'PERMISSION_DENIED'
+        );
+      }
       throw new TenantIsolationError(
         'Identity not found for this tenant',
         'NOT_FOUND'

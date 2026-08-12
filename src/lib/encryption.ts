@@ -22,7 +22,11 @@ function uint8ArrayToHex(arr: Uint8Array): string {
 
 async function getKey(secret: string): Promise<CryptoKey> {
     const encoder = new TextEncoder();
-    const keyData = encoder.encode(secret);
+    const secretBytes = encoder.encode(secret);
+    const keyData =
+        secret.length === 32
+            ? secretBytes
+            : new Uint8Array(await crypto.subtle.digest('SHA-256', secretBytes));
     return await crypto.subtle.importKey(
         'raw',
         keyData,
@@ -38,8 +42,8 @@ async function getKey(secret: string): Promise<CryptoKey> {
  * @param secret The 32-character encryption secret
  */
 export async function encrypt(text: string, secret: string): Promise<string> {
-    if (secret.length !== 32) {
-        throw new Error('Encryption secret must be 32 characters long');
+    if (secret.length < 32) {
+        throw new Error('Encryption secret must be at least 32 characters long');
     }
 
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
@@ -69,8 +73,8 @@ export async function encrypt(text: string, secret: string): Promise<string> {
  * @param secret The 32-character encryption secret
  */
 export async function decrypt(encryptedText: string, secret: string): Promise<string> {
-    if (secret.length !== 32) {
-        throw new Error('Encryption secret must be 32 characters long');
+    if (secret.length < 32) {
+        throw new Error('Encryption secret must be at least 32 characters long');
     }
 
     const parts = encryptedText.split(':');

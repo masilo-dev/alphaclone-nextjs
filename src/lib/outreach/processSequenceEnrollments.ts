@@ -12,6 +12,11 @@ type Enrollment = {
   lead_id?: string | null;
   client_id?: string | null;
   email?: string | null;
+  recipient_email?: string | null;
+  normalized_recipient?: string | null;
+  recipient_name?: string | null;
+  contact_name?: string | null;
+  lead_name?: string | null;
   phone?: string | null;
   linkedin_url?: string | null;
   current_step_order: number;

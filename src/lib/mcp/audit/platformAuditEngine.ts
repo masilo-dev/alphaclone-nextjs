@@ -4,6 +4,7 @@
  */
 
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
+import { getIntegrationEncryptionSecret } from '@/lib/integration/integrationTokenCrypto';
 import { getUnifiedMcpToolCount } from '@/lib/mcp/listAllTools';
 import { buildApiHealthReport } from '@/lib/mcp/apiHealthReport';
 import type { AuditFinding, PlatformHealthScore } from '@/lib/mcp/connector/types';
@@ -329,7 +330,7 @@ export async function runPlatformAudit(params: {
       recommendation: 'Configure the service role secret in the deployment environment.',
     });
   }
-  if (!process.env.INTEGRATION_TOKEN_ENCRYPTION_SECRET && !process.env.TOKEN_ENCRYPTION_SECRET) {
+  if (!getIntegrationEncryptionSecret()) {
     findings.push({
       id: 'sec-missing-token-encryption',
       module: 'security',

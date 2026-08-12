@@ -2,9 +2,9 @@
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import {
   Search, Send, ChevronRight, Users, PlaySquare, Inbox,
@@ -55,6 +55,22 @@ type OutreachEvent = {
   created_at: string;
 };
 
+type LeadOutreachLog = {
+  id: string;
+  tenant_id: string;
+  user_id?: string | null;
+  lead_id?: string | null;
+  lead_name?: string | null;
+  lead_email?: string | null;
+  subject?: string | null;
+  body_html?: string | null;
+  status?: string | null;
+  provider?: string | null;
+  sent_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 type ReachThread = {
   threadKey: string;
   normalizedRecipient: string;
@@ -91,6 +107,21 @@ const POSITIVE_CLASS = new Set(['interested', 'positive', 'booking', 'demo_reque
 function normalizeEmail(raw: unknown): string | null {
   const s = String(raw || '').trim().toLowerCase();
   return s.includes('@') ? s : null;
+}
+
+function htmlToReadableText(raw: string): string {
+  return raw
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function buildThreads(events: OutreachEvent[]): ReachThread[] {
@@ -165,6 +196,35 @@ function buildThreads(events: OutreachEvent[]): ReachThread[] {
   return arr.sort((a, b) => (a.lastActivityAt < b.lastActivityAt ? 1 : -1));
 }
 
+function outreachLogToEvent(log: LeadOutreachLog): OutreachEvent {
+  const when = log.sent_at || log.created_at || log.updated_at || new Date().toISOString();
+  return {
+    id: `lead_outreach_log:${log.id}`,
+    tenant_id: log.tenant_id,
+    sequence_id: null,
+    campaign_id: null,
+    contact_id: null,
+    lead_id: log.lead_id || null,
+    channel: 'email',
+    event_type: String(log.status || 'sent').toLowerCase() === 'failed' ? 'failed' : 'sent',
+    provider: log.provider || null,
+    variant: null,
+    metadata: {
+      source: 'lead_outreach_log',
+      email: log.lead_email || null,
+      to: log.lead_email || null,
+      recipient: log.lead_email || null,
+      normalized_recipient: normalizeEmail(log.lead_email) || null,
+      recipient_name: log.lead_name || null,
+      lead_name: log.lead_name || null,
+      subject: log.subject || null,
+      body_html: log.body_html || null,
+    },
+    occurred_at: when,
+    created_at: log.created_at || when,
+  };
+}
+
 function formatTimestamp(d: string | null | undefined): { relative: string; absolute: string } {
   if (!d) return { relative: '—', absolute: '' };
   const dt = new Date(d);
@@ -209,7 +269,6 @@ function classifyIconForList(list: OutreachListKey): React.ComponentType<any> {
 }
 
 export function OutreachInbox() {
-  const supabase = useSupabaseClient();
   const router = useRouter();
   const { user } = useAuth();
   const { currentTenant } = useTenant();
@@ -237,7 +296,7 @@ export function OutreachInbox() {
     setLoading(true);
     try {
       const since = new Date(Date.now() - 90 * 86400_000).toISOString();
-      const [{ data: ev }, { data: providerData }] = await Promise.all([
+      const [{ data: ev }, { data: logs }, { data: providerData }] = await Promise.all([
         supabase
           .from('outreach_events')
           .select('id,tenant_id,sequence_id,campaign_id,contact_id,lead_id,channel,event_type,provider,variant,metadata,occurred_at,created_at')
@@ -245,11 +304,19 @@ export function OutreachInbox() {
           .gte('occurred_at', since)
           .order('occurred_at', { ascending: false })
           .limit(2000),
+        supabase
+          .from('lead_outreach_log')
+          .select('id,tenant_id,user_id,lead_id,lead_name,lead_email,subject,body_html,status,provider,sent_at,created_at,updated_at')
+          .eq('tenant_id', tenantId)
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(2000),
         fetch(`/api/settings/email-provider?tenantId=${encodeURIComponent(tenantId)}`)
           .then((r) => r.json().catch(() => ({})))
           .catch(() => ({})),
       ]);
-      setEvents((ev || []) as OutreachEvent[]);
+      const logEvents = ((logs || []) as LeadOutreachLog[]).map(outreachLogToEvent);
+      setEvents([...(ev || []) as OutreachEvent[], ...logEvents]);
       const raw = (providerData?.connectedProviders || providerData?.providers || []) as
         Array<{ id?: string; provider?: string; label?: string; name?: string; connected?: boolean; enabled?: boolean }>;
       const list: typeof connectedProviders = raw
@@ -414,7 +481,7 @@ export function OutreachInbox() {
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
               <Input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
                 placeholder="Search by name or email…"
                 className="pl-8 h-8 text-xs bg-slate-950/70 border-white/10 focus:border-violet-400/40 placeholder:text-slate-500"
               />
@@ -651,6 +718,13 @@ export function OutreachInbox() {
                       const isReply = REPLY_TYPES.has(et);
                       const md = (e.metadata || {}) as Record<string, unknown>;
                       const replyText = typeof md.reply_text === 'string' ? md.reply_text : '';
+                      const sentBody = htmlToReadableText(
+                        typeof md.body_html === 'string'
+                          ? md.body_html
+                          : typeof md.body === 'string'
+                            ? md.body
+                            : ''
+                      );
                       const variant = typeof e.variant === 'string' ? e.variant : '';
                       const subtitle = typeof md.subject === 'string' ? md.subject : variant ? `Variant ${variant}` : '';
                       let icon: React.ComponentType<any> = Zap;
@@ -706,6 +780,11 @@ export function OutreachInbox() {
                               {replyText.length > 2000 ? `${replyText.slice(0, 2000)}…` : replyText}
                             </p>
                           ) : null}
+                          {!replyText && SENT_TYPES.has(et) && sentBody ? (
+                            <p className="text-xs text-slate-300 whitespace-pre-wrap leading-relaxed rounded-lg bg-slate-950/70 border border-white/5 p-2.5">
+                              {sentBody.length > 4000 ? `${sentBody.slice(0, 4000)}…` : sentBody}
+                            </p>
+                          ) : null}
                         </div>
                       );
                     });
@@ -744,7 +823,7 @@ export function OutreachInbox() {
               <div className="grid grid-cols-12 gap-2">
                 <div className="col-span-8 space-y-2">
                   <label className="block text-[11px] text-slate-400">To</label>
-                  <Input value={composeTo} onChange={e => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-slate-950/60 border-white/10 text-xs h-9" />
+                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-slate-950/60 border-white/10 text-xs h-9" />
                 </div>
                 <div className="col-span-4 space-y-2">
                   <label className="block text-[11px] text-slate-400">Dispatch via</label>
@@ -768,13 +847,13 @@ export function OutreachInbox() {
               </div>
               <div className="space-y-2">
                 <label className="block text-[11px] text-slate-400">Subject</label>
-                <Input value={composeSubject} onChange={e => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950/60 border-white/10 text-xs h-9" />
+                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950/60 border-white/10 text-xs h-9" />
               </div>
               <div className="space-y-2">
                 <label className="block text-[11px] text-slate-400">Message</label>
                 <Textarea
                   value={composeBody}
-                  onChange={e => setComposeBody(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposeBody(e.target.value)}
                   rows={9}
                   className="bg-slate-950/60 border-white/10 text-xs leading-relaxed"
                   placeholder="Hi [first name],…"

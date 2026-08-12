@@ -4,21 +4,21 @@ import { isProduction } from '@/lib/security/productionGuard';
 
 export function getIntegrationEncryptionSecret(): string | null {
   const secret =
+    process.env.INTEGRATION_TOKEN_ENCRYPTION_SECRET ||
     ENV.ENCRYPTION_SECRET ||
     ENV.ZOHO_ENCRYPTION_SECRET ||
-    process.env.INTEGRATION_TOKEN_ENCRYPTION_SECRET ||
     process.env.TOKEN_ENCRYPTION_SECRET ||
     null;
-  return secret && secret.length === 32 ? secret : null;
+  return secret && secret.length >= 32 ? secret : null;
 }
 
 export function requireIntegrationEncryptionSecret(): string {
   const secret = getIntegrationEncryptionSecret();
   if (!secret) {
     if (isProduction()) {
-      throw new Error('ENCRYPTION_SECRET (32 chars) is required in production');
+      throw new Error('INTEGRATION_TOKEN_ENCRYPTION_SECRET (32+ chars) is required in production');
     }
-    throw new Error('ENCRYPTION_SECRET is not configured');
+    throw new Error('INTEGRATION_TOKEN_ENCRYPTION_SECRET is not configured');
   }
   return secret;
 }
@@ -53,7 +53,7 @@ export async function encryptIntegrationToken(token: string): Promise<string> {
   const secret = getIntegrationEncryptionSecret();
   if (!secret) {
     if (isProduction()) {
-      throw new Error('ENCRYPTION_SECRET (32 chars) is required in production');
+      throw new Error('INTEGRATION_TOKEN_ENCRYPTION_SECRET (32+ chars) is required in production');
     }
     return token;
   }

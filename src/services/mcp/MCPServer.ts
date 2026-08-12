@@ -772,7 +772,7 @@ async function enqueueMcpEvent(
   eventName: string,
   payload: Record<string, unknown>
 ) {
-  await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('mcp_event_queue')
     .insert({
       tenant_id: tenantId,
@@ -782,7 +782,11 @@ async function enqueueMcpEvent(
       status: 'pending',
       attempts: 0,
       available_at: new Date().toISOString(),
-    });
+    })
+    .select('id')
+    .single();
+  if (error) throw supabaseErrorToMcpClientError(eventName, error.message);
+  return data?.id as string | undefined;
 }
 
 class AlphaCloneMCPServer {
@@ -2921,12 +2925,12 @@ class AlphaCloneMCPServer {
             throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
           }
           
-          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 50);
+          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 200);
           const CHUNK_SIZE = 3;
-          const ASYNC_THRESHOLD = 5;
+          const processInline = a.process_inline === true;
 
-          if (combinedIds.length > ASYNC_THRESHOLD) {
-            await enqueueMcpEvent(supabaseAdmin, tenant_id, user_id, 'send_batch_outreach', {
+          if (!processInline) {
+            const batchId = await enqueueMcpEvent(supabaseAdmin, tenant_id, user_id, 'send_batch_outreach', {
               lead_ids,
               client_ids,
               tone,
@@ -2939,7 +2943,9 @@ class AlphaCloneMCPServer {
                 type: 'text',
                 text: JSON.stringify({
                   status: 'queued',
-                  message: `Batch outreach queued for ${combinedIds.length} recipients (chunks of ${CHUNK_SIZE}). Poll get_email_campaign_stats or dashboard outreach log for delivery.`,
+                  batch_id: batchId,
+                  job_id: batchId,
+                  message: `Batch outreach queued for ${combinedIds.length} recipients. Personalization and sends will run server-side. Poll the MCP event queue/dashboard outreach log for delivery.`,
                   recipient_count: combinedIds.length,
                 }, null, 2),
               }],

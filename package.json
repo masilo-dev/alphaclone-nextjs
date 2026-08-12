@@ -41,6 +41,7 @@
     "audit:production": "node scripts/audit-production-readiness.mjs",
     "audit:data": "tsx scripts/audit-data-integrity.ts",
     "audit:routes": "tsx scripts/audit-routes.ts",
+    "migrate:encrypt-integrations": "tsx scripts/encrypt-integration-configs.ts",
     "validate:env": "node scripts/validate-production-env.mjs",
     "validate:production": "node scripts/validate-production-env.mjs",
     "test:mcp-compatibility": "node --import tsx --test tests/unit/mcp-universal-compat.test.mjs tests/unit/mcp-production-hardening.test.mjs",

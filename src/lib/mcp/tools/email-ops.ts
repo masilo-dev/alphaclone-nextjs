@@ -65,7 +65,8 @@ async function resolveRecipientByNameOrEmail(params: {
 
   const matches: Array<{ id: string; name: string; email: string }> = [];
   for (const c of contacts || []) {
-    const email = String(c.email || (Array.isArray(c.emails) ? c.emails[0] : '') || '').trim();
+    const legacyEmails = (c as { emails?: unknown }).emails;
+    const email = String(c.email || (Array.isArray(legacyEmails) ? legacyEmails[0] : '') || '').trim();
     if (!email.includes('@')) continue;
     matches.push({
       id: c.id,
@@ -74,7 +75,8 @@ async function resolveRecipientByNameOrEmail(params: {
     });
   }
   for (const l of leads || []) {
-    const email = String(l.email || (Array.isArray(l.emails) ? l.emails[0] : '') || '').trim();
+    const legacyEmails = (l as { emails?: unknown }).emails;
+    const email = String(l.email || (Array.isArray(legacyEmails) ? legacyEmails[0] : '') || '').trim();
     if (!email.includes('@')) continue;
     matches.push({
       id: l.id,
