@@ -9,6 +9,7 @@ export type McpDiscoveryTool = {
   description: string;
   inputSchema: Record<string, unknown>;
   annotations?: McpToolAnnotations;
+  jsonSchema?: Record<string, unknown>;
 };
 
 const tenantIdProp = { type: 'string', description: 'AlphaClone Workspace ID' };

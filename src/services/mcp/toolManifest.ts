@@ -2738,20 +2738,7 @@ export const MCP_TOOLS = [
       required: ['prompt'],
     },
   },
-  {
-    name: 'send_batch_outreach',
-    description: 'Trigger personalized outreach to multiple leads simultaneously.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        lead_ids: { type: 'array', items: { type: 'string' }, description: 'List of lead UUIDs' },
-        tone: { type: 'string', description: 'Tone of the message (professional, punchy, etc.)' },
-        custom_context: { type: 'string', description: 'Additional context for personalization' },
-        delivery_provider: { type: 'string', enum: ['sendgrid', 'resend', 'zoho'], default: 'sendgrid' }
-      },
-      required: ['lead_ids'],
-    },
-  },
+
   {
     name: 'get_x_profile',
     description: 'Fetch an X (Twitter) user profile by username or ID.',

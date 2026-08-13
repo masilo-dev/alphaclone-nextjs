@@ -84,6 +84,7 @@ export function registerManifestBridgeTools() {
       inputSchema: zodSchema,
       handler: async (args: Record<string, unknown>, ctx: { tenantId: string; userId: string }) => {
         // Bridge handler: executes via the canonical MCPServer execution path.
+        let mcpServerError: string | null = null;
         try {
           const { createMCPServer } = await import('@/services/mcp/MCPServer');
           const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
@@ -96,15 +97,24 @@ export function registerManifestBridgeTools() {
             supabase
           );
           if (legacyResult) return legacyResult;
-        } catch {
-          // Fallthrough to default receipt
+        } catch (err: any) {
+          mcpServerError = err?.message || String(err);
+          console.error(`[manifest-bridge] ${toolDef.name} MCPServer error:`, mcpServerError);
         }
 
+        // MCPServer returned nothing or errored — return structured not_configured
+        // so ChatGPT can surface the real issue instead of showing fake success.
+        const isOAuthRequired = /oauth|not connected|not configured|missing token|no account/i.test(mcpServerError || '');
+        console.warn(`[manifest-bridge] ${toolDef.name} has no real handler — returning not_configured`);
         return toMcpContent(
           okResult(toolDef.name, {
-            executed: true,
+            status: isOAuthRequired ? 'requires_oauth' : 'not_configured',
             tool: toolDef.name,
             tenant_id: ctx.tenantId,
+            message: isOAuthRequired
+              ? `${toolDef.name} requires an OAuth connection. Please connect the relevant integration in your AlphaClone workspace settings.`
+              : `${toolDef.name} is not yet fully configured for this workspace. Check your AlphaClone integrations or contact support.`,
+            ...(mcpServerError ? { debug_error: mcpServerError } : {}),
             timestamp: new Date().toISOString(),
           })
         );

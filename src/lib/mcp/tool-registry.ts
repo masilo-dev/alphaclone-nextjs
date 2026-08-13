@@ -259,6 +259,10 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/contracts-ops'), './tools/contracts-ops');
   loadToolModule(() => require('./tools/tickets-ops'), './tools/tickets-ops');
   loadToolModule(() => require('./tools/lead-scraping-ops'), './tools/lead-scraping-ops');
+  loadToolModule(() => require('./tools/gap-tools-finance'), './tools/gap-tools-finance');
+  loadToolModule(() => require('./tools/gap-tools-crm'), './tools/gap-tools-crm');
+  loadToolModule(() => require('./tools/gap-tools-email-social'), './tools/gap-tools-email-social');
+  loadToolModule(() => require('./tools/gap-tools-contracts-strategy'), './tools/gap-tools-contracts-strategy');
   // Universal Manifest Bridge — registers all remaining canonical tools from toolManifest & supplemental definitions
   loadToolModule(() => require('./tools/manifest-bridge'), './tools/manifest-bridge');
   // Canonical social publishing — MUST load last so it overrides legacy stubs
