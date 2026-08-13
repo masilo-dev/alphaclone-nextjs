@@ -66,6 +66,10 @@ async function safeCount(
   }
 }
 
+function envPresent(...keys: string[]): boolean {
+  return keys.some((k) => Boolean(process.env[k] && String(process.env[k]).trim()));
+}
+
 function envConfigured(keys: string[]): boolean {
   return keys.every((k) => Boolean(process.env[k] && String(process.env[k]).trim()));
 }
@@ -204,16 +208,16 @@ export async function runPlatformAudit(params: {
 
   // Env-backed platform integrations
   const envIntegrationStatus: Record<string, boolean> = {
-    github: envConfigured(['GITHUB_TOKEN']) || connectedTypes.has('github'),
+    github: envPresent('GITHUB_TOKEN', 'GITHUB_APP_ID') || connectedTypes.has('github'),
     gmail: connectedTypes.has('gmail') || connectedTypes.has('google_gmail'),
     google_calendar: connectedTypes.has('google_calendar'),
     zoho: connectedTypes.has('zoho') || connectedTypes.has('zoho_mail'),
-    stripe: envConfigured(['STRIPE_SECRET_KEY']) || connectedTypes.has('stripe'),
+    stripe: envPresent('STRIPE_SECRET_KEY') || connectedTypes.has('stripe'),
     calendly: connectedTypes.has('calendly'),
-    railway: envConfigured(['RAILWAY_TOKEN', 'RAILWAY_API_TOKEN']) || connectedTypes.has('railway'),
-    supabase: envConfigured(['VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']) || envConfigured(['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']),
-    openai: envConfigured(['OPENAI_API_KEY']) || connectedTypes.has('openai'),
-    deepseek: envConfigured(['DEEPSEEK_API_KEY', 'OPENROUTER_API_KEY']) || connectedTypes.has('deepseek'),
+    railway: Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID) || envPresent('RAILWAY_TOKEN', 'RAILWAY_API_TOKEN') || connectedTypes.has('railway'),
+    supabase: (envPresent('SUPABASE_SERVICE_ROLE_KEY') && envPresent('VITE_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL')) || connectedTypes.has('supabase'),
+    openai: envPresent('OPENAI_API_KEY') || connectedTypes.has('openai'),
+    deepseek: envPresent('DEEPSEEK_API_KEY', 'OPENROUTER_API_KEY') || connectedTypes.has('deepseek'),
   };
 
   for (const name of REQUIRED_INTEGRATIONS) {

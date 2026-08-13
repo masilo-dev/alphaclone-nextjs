@@ -315,6 +315,15 @@ export async function resolveTenantIdentityForPublish(params: {
 
   // No identity provided — only auto-select when exactly one publishable, or a tenant default
   const publishable = identities.filter((i) => i.can_publish);
+  const availableIdentities = publishable.map((i) => ({
+    identity_id: i.identity_id,
+    display_name: i.display_name,
+    provider: i.provider,
+    identity_type: i.identity_type,
+    can_publish: i.can_publish,
+    is_default: i.is_default,
+  }));
+
   if (params.identityType) {
     const typed = publishable.filter((i) => i.identity_type === params.identityType);
     if (typed.length === 1) return typed[0];
@@ -324,7 +333,8 @@ export async function resolveTenantIdentityForPublish(params: {
     }
     throw new TenantIsolationError(
       `Multiple or zero ${params.identityType} identities — pass identity_id from get_social_identities`,
-      'PERMISSION_DENIED'
+      'MISSING_IDENTITY',
+      { available_identities: availableIdentities }
     );
   }
 
@@ -335,7 +345,8 @@ export async function resolveTenantIdentityForPublish(params: {
   }
   throw new TenantIsolationError(
     'identity_id is required when the tenant has multiple social identities. Call get_social_identities.',
-    'PERMISSION_DENIED'
+    'MISSING_IDENTITY',
+    { available_identities: availableIdentities }
   );
 }
 

@@ -13,7 +13,9 @@ export class TenantIsolationError extends Error {
       | 'NOT_A_MEMBER'
       | 'CROSS_TENANT'
       | 'NOT_FOUND'
-      | 'PERMISSION_DENIED' = 'CROSS_TENANT'
+      | 'PERMISSION_DENIED'
+      | 'MISSING_IDENTITY' = 'CROSS_TENANT',
+    public readonly details?: unknown
   ) {
     super(message);
     this.name = 'TenantIsolationError';

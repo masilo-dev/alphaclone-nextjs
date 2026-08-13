@@ -14,6 +14,17 @@ import {
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
+export function getCatalogChecksum(tools: UnifiedMcpTool[]): string {
+  const names = tools.map((t) => t.name).sort().join(',');
+  let hash = 0;
+  for (let i = 0; i < names.length; i++) {
+    const char = names.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return `sha256-${Math.abs(hash).toString(16)}-${tools.length}`;
+}
+
 let cachedFullTools: UnifiedMcpTool[] | null = null;
 let cacheTime = 0;
 const CACHE_TTL_MS = 60_000;
@@ -64,10 +75,18 @@ function dedupeTools(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
 }
 
 function withAnnotations(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
-  return tools.map((tool) => ({
-    ...tool,
-    annotations: tool.annotations || resolveToolAnnotations(tool.name),
-  }));
+  return tools.map((tool) => {
+    const jsonSchema =
+      tool.jsonSchema ||
+      (typeof tool.inputSchema === 'object' && tool.inputSchema && !('_def' in tool.inputSchema)
+        ? (tool.inputSchema as Record<string, unknown>)
+        : { type: 'object', properties: {} });
+    return {
+      ...tool,
+      jsonSchema,
+      annotations: tool.annotations || resolveToolAnnotations(tool.name),
+    };
+  });
 }
 
 function prepareDiscoveryTools(

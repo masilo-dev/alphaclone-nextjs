@@ -347,7 +347,7 @@ defineConnectorTool({
       identityId = stored.provider_identity_id;
     } catch (err) {
       if (err instanceof TenantIsolationError) {
-        throwConnectorError(err.code, err.message);
+        throwConnectorError(err.code, err.message, err.details);
       }
       throw err;
     }

@@ -908,7 +908,7 @@ registerTool('social-publishing', {
     } catch (err) {
       if (err instanceof TenantIsolationError) {
         return toMcpContent(
-          errorResult('publish_social_post', err.code, err.message)
+          errorResult('publish_social_post', err.code, err.message, err.details)
         );
       }
       throw err;

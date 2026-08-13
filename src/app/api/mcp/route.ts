@@ -334,7 +334,7 @@ export async function POST(req: NextRequest) {
   // 3. Short-circuit discovery methods (bypass SDK state machine for speed/reliability)
   if (requestBody.method === 'tools/list') {
     try {
-      const { getUnifiedMcpTools } = await import('@/lib/mcp/listAllTools');
+      const { getUnifiedMcpTools, getCatalogChecksum } = await import('@/lib/mcp/listAllTools');
 
       // Prefer live auth client_id; fall back to session metadata / UA for ChatGPT detection.
       let clientId: string | null = null;
@@ -361,26 +361,45 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      const requestedCatalogMode =
+        (requestBody.params?.catalogMode || requestBody.params?.catalog_mode) === 'progressive'
+          ? 'progressive'
+          : 'full';
+
       const tools = await getUnifiedMcpTools({
         clientId,
         clientLabel,
         userAgent: req.headers.get('user-agent'),
         loadedModules: await getSessionLoadedModules(mcpSessionId),
+        catalogMode: requestedCatalogMode,
       });
 
+      const checksum = getCatalogChecksum(tools);
+
       console.info(
-        `[mcp.route tools/list] count=${tools.length} clientId=${clientId || '-'} label=${clientLabel || '-'} ua=${(req.headers.get('user-agent') || '').slice(0, 80)}`
+        `[mcp.route tools/list] count=${tools.length} catalogMode=${requestedCatalogMode} checksum=${checksum} clientId=${clientId || '-'} label=${clientLabel || '-'}`
       );
 
       if (tools.length === 0) {
         console.error('[mcp.route tools/list] CRITICAL: returning empty tool list');
       }
 
+      const headers = new Headers(mcpJsonHeaders(req) as Record<string, string>);
+      headers.set('X-MCP-Version', '2.0.0');
+      headers.set('X-Catalog-Checksum', checksum);
+
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result: { tools },
-      }, { headers: mcpJsonHeaders(req) });
+        result: {
+          tools,
+          _meta: {
+            registry_version: '2.0.0',
+            catalog_checksum: checksum,
+            total_tools: tools.length,
+          },
+        },
+      }, { headers });
     } catch (err: any) {
       console.error('[mcp.route tools/list] error:', err?.message || err);
       return NextResponse.json({
