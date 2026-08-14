@@ -206,6 +206,12 @@ defineConnectorTool({
     data_url: z.string().optional(),
     source_url: z.string().optional(),
     url: z.string().optional(),
+    media_url: z.string().optional(),
+    image_url: z.string().optional(),
+    signed_url: z.string().optional(),
+    media_id: z.string().optional(),
+    media_asset_id: z.string().optional(),
+    media_ids: z.array(z.string()).optional(),
     identity_type: z
       .enum(['facebook_page', 'linkedin_person', 'linkedin_organization'])
       .optional(),
@@ -234,6 +240,12 @@ defineConnectorTool({
         items: { type: 'string' },
         description: 'media_id values returned by upload_media',
       },
+      media_url: { type: 'string', description: 'Single public HTTPS media URL from upload_social_media' },
+      image_url: { type: 'string', description: 'Alias for media_url' },
+      signed_url: { type: 'string', description: 'Alias for media_url' },
+      media_id: { type: 'string', description: 'Single media_id returned by upload_social_media' },
+      media_asset_id: { type: 'string', description: 'Alias for media_id' },
+      media_ids: { type: 'array', items: { type: 'string' }, description: 'Alias for media_asset_ids' },
       filename: { type: 'string', description: 'Original file name e.g. post.png' },
       file_name: { type: 'string', description: 'Alias for filename' },
       mime_type: { type: 'string', description: 'MIME type e.g. image/png' },
@@ -274,6 +286,21 @@ defineConnectorTool({
 
     const mediaAssetIds: string[] = [...(args.media_asset_ids || [])];
     const mediaUrls: string[] = [...(args.media_urls || [])];
+
+    const singleMediaUrl = args.media_url || args.image_url || args.signed_url;
+    if (singleMediaUrl && typeof singleMediaUrl === 'string') {
+      const { rejectLocalAiPaths } = await import('@/lib/media/ingestMedia');
+      rejectLocalAiPaths(singleMediaUrl, 'media_url');
+      mediaUrls.push(singleMediaUrl);
+    }
+
+    const singleMediaId = args.media_id || args.media_asset_id;
+    if (singleMediaId && typeof singleMediaId === 'string') {
+      mediaAssetIds.push(singleMediaId);
+    }
+    if (Array.isArray(args.media_ids)) {
+      mediaAssetIds.push(...args.media_ids);
+    }
 
     const hasRawMediaInput = Boolean(contentBase64 || args.data_url || sourceUrl);
 

@@ -393,44 +393,60 @@ registerTool('social-publishing', {
   },
 });
 
-registerTool('social-publishing', {
+defineConnectorTool({
+  module: 'social-publishing',
   name: 'upload_social_media',
   description:
-    'Canonical MCP media ingestion for social publishing. Accept exactly one source: file/base64 bytes, base64, or source_url. Stores media in AlphaClone first and returns media_id + storage_url for publish_social_post. Handles ChatGPT-generated images and user-uploaded files; never pass /mnt/data paths as URLs.',
+    'Canonical MCP media ingestion for social publishing. Accept file bytes, base64 content, data URL, or remote HTTPS source URL. Ingests media into AlphaClone permanent storage and returns media_id + public/signed HTTPS media_url for publish_post / publish_social_post. Handles ChatGPT session files and generated images; never pass /mnt/data paths.',
+  permission: 'social:write',
+  rateLimitClass: 'heavy',
+  auditAction: 'mcp_upload_social_media',
   inputSchema: z.object({
-    tenant_id: z.string().uuid().optional(),
+    tenant_id: tenantIdField.optional(),
     file: z.string().optional(),
     base64: z.string().optional(),
+    content_base64: z.string().optional(),
+    file_base64: z.string().optional(),
+    data_url: z.string().optional(),
     source_url: z.string().optional(),
+    url: z.string().optional(),
+    image_url: z.string().optional(),
     filename: z.string().optional(),
+    file_name: z.string().optional(),
     mime_type: z.string().optional(),
+    content_type: z.string().optional(),
     media_type: z.enum(['image', 'video', 'document']).optional(),
     purpose: z.string().optional().default('social'),
     alt_text: z.string().optional(),
-  }).refine((v) => [v.file, v.base64, v.source_url].filter((x) => Boolean(String(x || '').trim())).length === 1, {
-    message: 'Provide exactly one media source: file, base64, or source_url',
   }),
   jsonSchema: {
     type: 'object',
     properties: {
+      tenant_id: { type: 'string', format: 'uuid' },
       file: {
         type: 'string',
-        description:
-          'MCP file/binary content when the client can transfer it. If represented as bytes, pass base64 or a data URI string here.',
+        description: 'Base64 file content, data URL, or file bytes string.',
       },
       base64: {
         type: 'string',
         description: 'Raw base64 bytes or data:image/png;base64,... fallback.',
       },
+      content_base64: { type: 'string', description: 'Alias for base64' },
+      file_base64: { type: 'string', description: 'Alias for base64' },
+      data_url: { type: 'string', description: 'data:image/...;base64,... string' },
       source_url: {
         type: 'string',
         description: 'Public HTTPS media URL to ingest into AlphaClone storage.',
       },
-      filename: { type: 'string', description: 'Required for raw base64/file bytes' },
+      url: { type: 'string', description: 'Alias for source_url' },
+      image_url: { type: 'string', description: 'Alias for source_url' },
+      filename: { type: 'string', description: 'File name e.g. post.png' },
+      file_name: { type: 'string', description: 'Alias for filename' },
       mime_type: {
         type: 'string',
         description: 'Declared MIME. Server validates actual file signature.',
       },
+      content_type: { type: 'string', description: 'Alias for mime_type' },
       media_type: { type: 'string', enum: ['image', 'video', 'document'] },
       purpose: { type: 'string', description: 'Defaults to social' },
       alt_text: { type: 'string' },
@@ -440,42 +456,89 @@ registerTool('social-publishing', {
   handler: async (args, ctx) => {
     const { tenantId, userId } = await requireSocialAuth(args, ctx, 'social:write');
     const { ingestMediaInput } = await import('@/lib/media/ingestMedia');
-    const source = args.file || args.base64 || args.source_url || '';
 
-    rejectLocalAiPaths(args.source_url, 'source_url');
-    rejectLocalAiPaths(args.file, 'file');
-    rejectLocalAiPaths(args.base64, 'base64');
-    rejectLocalAiPaths(args.filename, 'filename');
+    const filename = args.filename || args.file_name;
+    const mimeType = args.mime_type || args.content_type;
+    const contentBase64 = args.content_base64 || args.file_base64 || args.file || args.base64;
+    const sourceUrl = args.source_url || args.url || args.image_url;
+    const dataUrl = args.data_url;
 
-    const asset = await ingestMediaInput({
-      tenantId,
-      userId,
-      purpose: args.purpose || 'social',
-      media: args.source_url
-        ? { type: 'url', url: args.source_url, filename: args.filename }
-        : {
-            type: String(source).startsWith('data:') ? 'data_url' : 'base64',
-            ...(String(source).startsWith('data:')
-              ? { dataUrl: source, filename: args.filename }
-              : {
-                  data: source,
-                  filename: args.filename || `social-upload.${args.media_type === 'document' ? 'pdf' : args.media_type === 'video' ? 'mp4' : 'png'}`,
-                  mimeType: args.mime_type || (args.media_type === 'document' ? 'application/pdf' : args.media_type === 'video' ? 'video/mp4' : 'image/png'),
-                }),
-          } as any,
-    });
+    rejectLocalAiPaths(sourceUrl, 'source_url');
+    rejectLocalAiPaths(contentBase64, 'content_base64');
+    rejectLocalAiPaths(dataUrl, 'data_url');
+    rejectLocalAiPaths(filename, 'filename');
 
-    return mediaToolResult({
-      id: asset.id,
-      filename: asset.filename,
-      mime_type: asset.mime_type,
-      size_bytes: asset.size_bytes,
-      url: asset.url,
-      status: asset.status,
-      width: asset.width,
-      height: asset.height,
-      checksum: asset.checksum,
-    });
+    let mediaInput: any = null;
+
+    if (dataUrl || (contentBase64 && String(contentBase64).startsWith('data:'))) {
+      mediaInput = {
+        type: 'data_url' as const,
+        dataUrl: dataUrl || String(contentBase64),
+        filename,
+      };
+    } else if (sourceUrl) {
+      mediaInput = {
+        type: 'url' as const,
+        url: sourceUrl,
+        filename,
+      };
+    } else if (contentBase64) {
+      mediaInput = {
+        type: 'base64' as const,
+        base64: contentBase64,
+        filename: filename || `social-upload.${args.media_type === 'document' ? 'pdf' : args.media_type === 'video' ? 'mp4' : 'png'}`,
+        mimeType: mimeType || (args.media_type === 'document' ? 'application/pdf' : args.media_type === 'video' ? 'video/mp4' : 'image/png'),
+      };
+    } else {
+      throwConnectorError(
+        'INVALID_INPUT',
+        'Provide media content via base64/file, data_url, or source_url.'
+      );
+    }
+
+    try {
+      const asset = await ingestMediaInput({
+        tenantId,
+        userId,
+        purpose: args.purpose || 'social',
+        media: mediaInput,
+      });
+
+      const mediaResult = mediaToolResult({
+        id: asset.id,
+        filename: asset.filename,
+        mime_type: asset.mime_type,
+        size_bytes: asset.size_bytes,
+        url: asset.url,
+        status: asset.status,
+        width: asset.width,
+        height: asset.height,
+        checksum: asset.checksum,
+      });
+
+      return okResult('upload_social_media', mediaResult, {
+        receipt: {
+          action_id: asset.id,
+          status: 'completed',
+          entity_id: asset.id,
+          entity_type: 'media_asset',
+          live_url: asset.url,
+          timestamp: new Date().toISOString(),
+          verification: {
+            permanent_public_url: Boolean(asset.url),
+            signed_url: asset.url,
+            mime_type: asset.mime_type,
+            size_bytes: asset.size_bytes,
+          },
+        },
+      });
+    } catch (err: any) {
+      throwConnectorError(
+        'UPLOAD_FAILED',
+        err?.message || 'Social media ingestion failed',
+        err
+      );
+    }
   },
 });
 
@@ -845,6 +908,10 @@ registerTool('social-publishing', {
     media_ids: z.array(z.string().uuid()).optional(),
     media_asset_ids: z.array(z.string().uuid()).optional(),
     media_urls: z.array(z.string()).optional(),
+    media_url: z.string().optional(),
+    image_url: z.string().optional(),
+    media_id: z.string().uuid().optional(),
+    media_asset_id: z.string().uuid().optional(),
     link_url: z.string().url().optional(),
     publish_now: z.boolean().optional().default(false),
     status: z.enum(['publish_now', 'draft', 'scheduled']).optional(),
@@ -880,6 +947,10 @@ registerTool('social-publishing', {
         items: { type: 'string', format: 'uuid' },
       },
       media_urls: { type: 'array', items: { type: 'string' } },
+      media_url: { type: 'string', description: 'Single public HTTPS media URL from upload_social_media' },
+      image_url: { type: 'string', description: 'Alias for media_url' },
+      media_id: { type: 'string', format: 'uuid', description: 'Single media_id from upload_social_media' },
+      media_asset_id: { type: 'string', format: 'uuid', description: 'Alias for media_id' },
       link_url: { type: 'string' },
       publish_now: { type: 'boolean' },
       status: { type: 'string', enum: ['publish_now', 'draft', 'scheduled'] },
@@ -922,12 +993,24 @@ registerTool('social-publishing', {
       | 'linkedin_person'
       | 'linkedin_organization';
 
+    const mediaUrls = [
+      ...(args.media_urls || []),
+      ...(args.media_url ? [args.media_url] : []),
+      ...(args.image_url ? [args.image_url] : []),
+    ];
+    const mediaAssetIds = [
+      ...(args.media_ids || []),
+      ...(args.media_asset_ids || []),
+      ...(args.media_id ? [args.media_id] : []),
+      ...(args.media_asset_id ? [args.media_asset_id] : []),
+    ];
+
     const ingested = await ingestPublishMedia({
       tenantId,
       userId,
       media: args.media as any,
-      mediaUrls: args.media_urls,
-      mediaAssetIds: args.media_ids || args.media_asset_ids,
+      mediaUrls,
+      mediaAssetIds,
     });
 
     const publishNow =
