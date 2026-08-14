@@ -225,4 +225,17 @@ export const SUPPLEMENTAL_MCP_TOOLS: McpDiscoveryTool[] = [
       required: ['tenant_id'],
     },
   },
+  {
+    name: 'execute_internal_tool',
+    description: 'Execute ANY of AlphaClone\'s 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: tenantIdProp,
+        tool_name: { type: 'string', description: 'Canonical internal tool name to execute' },
+        arguments: { type: 'object', description: 'Arguments object matching the target tool schema' },
+      },
+      required: ['tenant_id', 'tool_name'],
+    },
+  },
 ];

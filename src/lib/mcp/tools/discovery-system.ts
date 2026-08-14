@@ -273,6 +273,34 @@ defineConnectorTool({
   },
 });
 
+defineConnectorTool({
+  module: 'discovery',
+  name: 'execute_internal_tool',
+  description: 'Execute ANY of AlphaClone\'s 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    tool_name: z.string().min(1),
+    arguments: z.record(z.string(), z.unknown()).optional().default({}),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      tool_name: { type: 'string', description: 'Canonical tool name to execute' },
+      arguments: { type: 'object', description: 'Input arguments matching target tool schema' },
+    },
+    required: ['tool_name'],
+  },
+  handler: async (args, ctx) => {
+    const name = args.tool_name.trim();
+    if (!hasTool(name)) {
+      throwConnectorError('RESOURCE_NOT_FOUND', `Tool "${name}" is not registered in the canonical catalog.`);
+    }
+
+    return await executeTool(ctx.tenantId, ctx.userId, name, args.arguments || {});
+  },
+});
+
 // ── summarize_workspace ──────────────────────────────────────────────────────
 defineConnectorTool({
   module: 'discovery',

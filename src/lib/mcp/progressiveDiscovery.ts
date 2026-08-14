@@ -9,7 +9,25 @@ export const CORE_TOOL_NAMES = new Set([
   'get_action_status', 'get_recent_errors', 'connected_accounts',
   'pipeline_status', 'appointments', 'revenue_report',
   'search_tools', 'list_tools', 'list_modules', 'list_capabilities',
-  'load_module_tools', 'load_skill',
+  'load_module_tools', 'load_skill', 'execute_internal_tool',
+  'dispatch_tool', 'execute_action',
+  // Essential CRM & Lead mutations
+  'create_lead', 'update_lead', 'create_deal', 'score_deal',
+  'create_company', 'create_contact', 'qualify_crm_leads', 'find_and_qualify_leads',
+  // Social Media publishing & media ingestion
+  'upload_social_media', 'create_social_post_with_media', 'publish_social_post',
+  'publish_post', 'get_social_identities', 'get_facebook_identities',
+  'get_linkedin_identities', 'check_mcp_execution_readiness', 'verify_social_post',
+  // Invoicing & Financial Lifecycle
+  'create_invoice', 'start_invoice_lifecycle', 'send_invoice_reminder',
+  'pay_invoice', 'get_invoices', 'nexus_invoice_chasing',
+  // Contracts & Documents
+  'create_contract', 'sign_contract', 'send_contract_for_signature',
+  'update_contract_status', 'get_contracts',
+  // Email & Outreach
+  'send_email', 'send_outreach_email', 'reply_to_email', 'generate_outreach_draft',
+  // Projects & Tasks
+  'create_project', 'update_project_stage',
 ]);
 
 export const MODULE_KEYWORDS: Record<string, string[]> = {
@@ -28,7 +46,7 @@ export const MODULE_KEYWORDS: Record<string, string[]> = {
   marketing: ['campaign', 'funnel', 'landing', 'engagement', 'conversion', 'sequence'],
   media: ['media', 'image', 'video', 'upload'],
   support: ['ticket', 'support'],
-  automation: ['workflow', 'automation', 'approval', 'job', 'orchestration'],
+  automation: ['workflow', 'approval', 'job', 'orchestration'],
   workflows: ['workflow', 'orchestration', 'playbook'],
   approvals: ['approval', 'approve', 'reject', 'review', 'request_changes'],
   analytics: ['analytics', 'report', 'status', 'health', 'audit', 'dashboard', 'metric'],
@@ -70,7 +88,7 @@ export function moduleForTool(name: string): string {
 
 export const ALL_MODULE_NAMES = Object.keys(MODULE_KEYWORDS);
 
-export function coreTools(full: UnifiedMcpTool[], limit = 32): UnifiedMcpTool[] {
+export function coreTools(full: UnifiedMcpTool[], limit = 120): UnifiedMcpTool[] {
   return full.filter((tool) => CORE_TOOL_NAMES.has(tool.name)).slice(0, limit);
 }
 
