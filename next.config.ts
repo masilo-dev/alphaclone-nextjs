@@ -108,6 +108,10 @@ const nextConfig: NextConfig = {
         source: '/.well-known/oauth-authorization-server',
         destination: '/api/mcp/well-known/oauth-authorization-server',
       },
+      {
+        source: '/.well-known/microsoft-identity-association',
+        destination: '/.well-known/microsoft-identity-association.json',
+      },
     ];
   },
   webpack: (config, { isServer }) => {
