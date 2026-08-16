@@ -197,7 +197,8 @@ export async function proxy(request: NextRequest) {
     if (
       pathname.startsWith("/.well-known/mcp") ||
       pathname.startsWith("/.well-known/oauth-protected-resource") ||
-      pathname.startsWith("/.well-known/oauth-authorization-server")
+      pathname.startsWith("/.well-known/oauth-authorization-server") ||
+      pathname.startsWith("/.well-known/microsoft-identity-association")
     ) {
       return NextResponse.next();
     }
