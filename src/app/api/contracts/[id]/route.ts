@@ -67,7 +67,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     // 4. Sanitize Content
     if (updatePayload.content) {
       updatePayload.content = sanitizeHtml(updatePayload.content, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'h1', 'h2', 'table', 'tr', 'td']),
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'table', 'tr', 'td']),
         allowedAttributes: {
           ...sanitizeHtml.defaults.allowedAttributes,
           '*': ['style', 'class'],

@@ -4,13 +4,12 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import {
   Search, Send, ChevronRight, Users, PlaySquare, Inbox,
   MailCheck, MailWarning, Mail, MailX, Reply, Archive, Star,
   MoreHorizontal, Filter, RefreshCcw, Loader2, Sparkles, AlertTriangle,
-  CheckCircle2, Target, Zap,
+  CheckCircle2, Target, Zap, ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +68,17 @@ type LeadOutreachLog = {
   sent_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+type EmailWebhookEvent = {
+  id: string;
+  tenant_id: string;
+  provider?: string | null;
+  event_type: string;
+  recipient_email?: string | null;
+  provider_event_id?: string | null;
+  payload?: Record<string, unknown> | null;
+  processed_at?: string | null;
 };
 
 type ReachThread = {
@@ -225,6 +235,32 @@ function outreachLogToEvent(log: LeadOutreachLog): OutreachEvent {
   };
 }
 
+function webhookToEvent(event: EmailWebhookEvent): OutreachEvent {
+  const when = event.processed_at || new Date().toISOString();
+  return {
+    id: `email_webhook_event:${event.id}`,
+    tenant_id: event.tenant_id,
+    sequence_id: null,
+    campaign_id: null,
+    contact_id: null,
+    lead_id: null,
+    channel: 'email',
+    event_type: event.event_type,
+    provider: event.provider || null,
+    variant: null,
+    metadata: {
+      ...(event.payload || {}),
+      source: 'email_webhook_events',
+      email: event.recipient_email || null,
+      recipient: event.recipient_email || null,
+      normalized_recipient: normalizeEmail(event.recipient_email),
+      provider_event_id: event.provider_event_id || null,
+    },
+    occurred_at: when,
+    created_at: when,
+  };
+}
+
 function formatTimestamp(d: string | null | undefined): { relative: string; absolute: string } {
   if (!d) return { relative: '—', absolute: '' };
   const dt = new Date(d);
@@ -284,6 +320,8 @@ export function OutreachInbox() {
   const [composeBody, setComposeBody] = useState('');
   const [composeProvider, setComposeProvider] = useState<DeliveryEmailProvider>('auto');
   const [sending, setSending] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [mobilePane, setMobilePane] = useState<'threads' | 'detail'>('threads');
   const [refreshFlag, setRefreshFlag] = useState(0);
   const [connectedProviders, setConnectedProviders] = useState<
     Array<{ id: DeliveryEmailProvider; label: string; connected: boolean }>
@@ -295,28 +333,20 @@ export function OutreachInbox() {
     if (!tenantId) return;
     setLoading(true);
     try {
-      const since = new Date(Date.now() - 90 * 86400_000).toISOString();
-      const [{ data: ev }, { data: logs }, { data: providerData }] = await Promise.all([
-        supabase
-          .from('outreach_events')
-          .select('id,tenant_id,sequence_id,campaign_id,contact_id,lead_id,channel,event_type,provider,variant,metadata,occurred_at,created_at')
-          .eq('tenant_id', tenantId)
-          .gte('occurred_at', since)
-          .order('occurred_at', { ascending: false })
-          .limit(2000),
-        supabase
-          .from('lead_outreach_log')
-          .select('id,tenant_id,user_id,lead_id,lead_name,lead_email,subject,body_html,status,provider,sent_at,created_at,updated_at')
-          .eq('tenant_id', tenantId)
-          .gte('created_at', since)
-          .order('created_at', { ascending: false })
-          .limit(2000),
+      const [inboxData, providerData] = await Promise.all([
+        fetch(`/api/outreach/inbox?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
+          .then(async (response) => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.error || 'Could not load outreach history');
+            return data;
+          }),
         fetch(`/api/settings/email-provider?tenantId=${encodeURIComponent(tenantId)}`)
           .then((r) => r.json().catch(() => ({})))
           .catch(() => ({})),
       ]);
-      const logEvents = ((logs || []) as LeadOutreachLog[]).map(outreachLogToEvent);
-      setEvents([...(ev || []) as OutreachEvent[], ...logEvents]);
+      const logEvents = ((inboxData.logs || []) as LeadOutreachLog[]).map(outreachLogToEvent);
+      const webhookEvents = ((inboxData.webhookEvents || []) as EmailWebhookEvent[]).map(webhookToEvent);
+      setEvents([...((inboxData.events || []) as OutreachEvent[]), ...logEvents, ...webhookEvents]);
       const raw = (providerData?.connectedProviders || providerData?.providers || []) as
         Array<{ id?: string; provider?: string; label?: string; name?: string; connected?: boolean; enabled?: boolean }>;
       const list: typeof connectedProviders = raw
@@ -336,7 +366,7 @@ export function OutreachInbox() {
     } finally {
       setLoading(false);
     }
-  }, [supabase, tenantId]);
+  }, [tenantId]);
 
   useEffect(() => { load(); }, [load, refreshFlag]);
 
@@ -388,6 +418,57 @@ export function OutreachInbox() {
     setComposeBody(`Hi ${t.displayName.split(' ')[0] || 'there'},\n\nJust wanted to make sure you saw my last message. Happy to walk through anything that would help on your end.\n\nBest,`);
     setComposerOpen(true);
   }, []);
+
+  const handleAiDraft = useCallback(async () => {
+    if (!tenantId || !composeTo.trim()) {
+      toast.error('Add a recipient before generating a draft');
+      return;
+    }
+    setDrafting(true);
+    try {
+      const context = activeThread
+        ? activeThread.events
+            .slice(-4)
+            .map((event) => {
+              const metadata = event.metadata || {};
+              return `${event.event_type}: ${String(metadata.reply_text || metadata.body || metadata.body_html || metadata.subject || '')}`;
+            })
+            .join('\n')
+        : '';
+      const response = await fetch('/api/outreach/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          tenantId,
+          industry: 'business services',
+          tone: 'professional',
+          customContext: [
+            'Write a complete email draft of at least 100 words. Do not send it.',
+            composeSubject ? `Requested subject or intent: ${composeSubject}` : '',
+            context ? `Recent conversation context:\n${context}` : '',
+          ].filter(Boolean).join('\n'),
+          leads: [{
+            business_name: activeThread?.displayName || composeTo.split('@')[0] || 'Contact',
+            email: composeTo.split(',')[0]?.trim(),
+            pitchAngle: activeThread?.repliedCount ? 'strategic-partnership' : 'growth-opportunity',
+            insights: [],
+            score: 80,
+          }],
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      const draft = data.emails?.[0];
+      if (!response.ok || !draft?.body) throw new Error(data.error || 'AI draft could not be generated');
+      setComposeSubject(String(draft.subject || composeSubject || 'Following up'));
+      setComposeBody(String(draft.body));
+      toast.success('AI draft ready for review');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'AI draft could not be generated');
+    } finally {
+      setDrafting(false);
+    }
+  }, [tenantId, composeTo, composeSubject, activeThread]);
 
   const handleSend = useCallback(async () => {
     if (!tenantId || !user?.id) { toast.error('Select a workspace first'); return; }
@@ -464,7 +545,7 @@ export function OutreachInbox() {
   return (
     <ModuleOverviewChrome moduleId="outreach" activeHref="/dashboard/outreach/inbox">
       <div className="rounded-2xl border border-white/10 bg-[#0c1015]/60 overflow-hidden shadow-[0_8px_40px_-24px_rgba(0,0,0,0.5)]">
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-white/10">
+        <div className="flex flex-col gap-2 px-3 py-3 border-b border-white/10 sm:flex-row sm:items-center sm:justify-between sm:px-4">
           <div className="flex items-center gap-2 min-w-0">
             <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500/30 to-sky-500/30 border border-white/10 flex items-center justify-center">
               <Inbox className="w-4 h-4 text-violet-300" />
@@ -476,8 +557,8 @@ export function OutreachInbox() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-[min(38ch,52vw)]">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
+            <div className="relative min-w-0 flex-1 sm:w-[min(38ch,38vw)]">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
               <Input
                 value={search}
@@ -499,7 +580,7 @@ export function OutreachInbox() {
             <Button
               size="sm"
               onClick={() => setComposerOpen(true)}
-              className="h-8 px-3 rounded-lg bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-violet-500/20"
+              className="h-8 shrink-0 px-2.5 rounded-lg bg-gradient-to-r from-violet-500 to-sky-500 hover:opacity-95 text-white text-xs font-bold shadow-lg shadow-violet-500/20"
             >
               <Sparkles className="w-3.5 h-3.5" />
               New message
@@ -507,10 +588,10 @@ export function OutreachInbox() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 min-h-[70vh] divide-x divide-white/5">
+        <div className="grid min-h-[34rem] grid-cols-12 divide-white/5 lg:h-[min(70vh,46rem)] lg:divide-x">
           {/* PANEL 1: Lists */}
-          <aside className="col-span-3 xl:col-span-2 border-r border-white/5 bg-slate-950/30 py-3 space-y-1 px-2">
-            <p className="px-2 pb-1 text-[10px] uppercase tracking-wider text-slate-500">Lists</p>
+          <aside className="col-span-12 flex gap-1 overflow-x-auto border-b border-white/5 bg-slate-950/30 p-2 lg:col-span-2 lg:block lg:space-y-1 lg:overflow-visible lg:border-b-0 lg:border-r lg:py-3">
+            <p className="hidden px-2 pb-1 text-[10px] uppercase tracking-wider text-slate-500 lg:block">Lists</p>
             {OUTREACH_LISTS.map(({ id, label, Icon, tone, description }) => {
               const active = activeList === id;
               const c = listCounts[id] || 0;
@@ -521,7 +602,7 @@ export function OutreachInbox() {
                   onClick={() => { setActiveList(id); setActiveThreadKey(null); }}
                   title={description}
                   className={[
-                    'w-full group flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left',
+                    'min-w-fit group flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left lg:w-full',
                     active
                       ? 'bg-white/10 border border-white/10'
                       : 'hover:bg-white/5 border border-transparent',
@@ -545,7 +626,7 @@ export function OutreachInbox() {
           </aside>
 
           {/* PANEL 2: Threads list */}
-          <section className="col-span-5 xl:col-span-4 border-r border-white/5 bg-slate-950/10 flex flex-col">
+          <section className={`${mobilePane === 'detail' ? 'hidden lg:flex' : 'flex'} col-span-12 bg-slate-950/10 flex-col border-r border-white/5 lg:col-span-4`}>
             <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-slate-500 border-b border-white/5 flex items-center justify-between">
               <span>
                 {OUTREACH_LISTS.find(l => l.id === activeList)?.label}
@@ -589,7 +670,7 @@ export function OutreachInbox() {
                     return (
                       <li key={t.threadKey}>
                         <button
-                          onClick={() => setActiveThreadKey(t.threadKey)}
+                          onClick={() => { setActiveThreadKey(t.threadKey); setMobilePane('detail'); }}
                           className={[
                             'w-full text-left px-3 py-3 border-b border-white/5 transition-colors',
                             active ? 'bg-white/10' : hasReply ? 'bg-emerald-500/[0.04] hover:bg-white/5' : 'hover:bg-white/5',
@@ -630,7 +711,7 @@ export function OutreachInbox() {
           </section>
 
           {/* PANEL 3: Message / thread reader */}
-          <section className="col-span-4 xl:col-span-6 bg-slate-950/20 flex flex-col min-h-0">
+          <section className={`${mobilePane === 'threads' ? 'hidden lg:flex' : 'flex'} col-span-12 min-h-0 flex-col bg-slate-950/20 lg:col-span-6`}>
             {!activeThread ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="max-w-md text-center space-y-3">
@@ -647,7 +728,14 @@ export function OutreachInbox() {
               </div>
             ) : (
               <>
-                <header className="px-4 py-3 border-b border-white/5 space-y-2">
+                <header className="px-3 py-3 border-b border-white/5 space-y-2 sm:px-4">
+                  <button
+                    type="button"
+                    onClick={() => setMobilePane('threads')}
+                    className="mb-1 inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 text-xs text-slate-300 lg:hidden"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" /> Threads
+                  </button>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -850,7 +938,20 @@ export function OutreachInbox() {
                 <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950/60 border-white/10 text-xs h-9" />
               </div>
               <div className="space-y-2">
-                <label className="block text-[11px] text-slate-400">Message</label>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="block text-[11px] text-slate-400">Message</label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAiDraft}
+                    disabled={drafting || !composeTo.trim()}
+                    className="h-8 border border-violet-400/20 px-2.5 text-xs text-violet-200 hover:bg-violet-500/10"
+                  >
+                    {drafting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
+                    {drafting ? 'Drafting...' : 'AI draft'}
+                  </Button>
+                </div>
                 <Textarea
                   value={composeBody}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposeBody(e.target.value)}

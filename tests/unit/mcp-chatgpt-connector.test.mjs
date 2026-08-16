@@ -7,6 +7,13 @@ import fs from "node:fs";
 import path from "node:path";
 
 const REQUIRED_CONNECTOR_TOOLS = [
+  "list_tools",
+  "list_modules",
+  "list_capabilities",
+  "search_tools",
+  "load_module_tools",
+  "dispatch_tool",
+  "execute_action",
   "get_platform_status",
   "get_system_health",
   "get_version",
@@ -87,6 +94,7 @@ const REQUIRED_CONNECTOR_TOOLS = [
 ];
 
 const CONNECTOR_FILES = [
+  "discovery-system.ts",
   "platform-ops.ts",
   "bonnie-inspect.ts",
   "crm-ops.ts",
@@ -148,6 +156,20 @@ describe("mcp connector helpers", () => {
       for (const match of src.matchAll(/name:\s*'([A-Za-z0-9_]+)'/g)) {
         names.add(match[1]);
       }
+    }
+
+    const progressiveDiscovery = fs.readFileSync(
+      path.join(process.cwd(), "src/lib/mcp/progressiveDiscovery.ts"),
+      "utf8",
+    );
+    for (const name of [
+      "list_tools",
+      "list_modules",
+      "list_capabilities",
+      "search_tools",
+      "load_module_tools",
+    ]) {
+      if (progressiveDiscovery.includes(`'${name}'`)) names.add(name);
     }
 
     const missing = REQUIRED_CONNECTOR_TOOLS.filter((name) => !names.has(name));

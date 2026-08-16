@@ -1,8 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ENV } from '@/config/env';
-import { createAdminSupabaseClientOrThrow } from '@/lib/apiAuth';
-import { redis } from '@/lib/cache/redis';
-import { isVapidConfigured } from '@/lib/push/vapidEnv';
 
 /**
  * Liveness endpoint for Railway and external monitors.
@@ -38,6 +34,20 @@ export async function GET(request: NextRequest) {
             { status: 200 }
         );
     }
+
+    // Keep Railway's frequent liveness probe cheap. Infrastructure clients are
+    // loaded only for an explicitly requested deep diagnostic.
+    const [
+        { ENV },
+        { createAdminSupabaseClientOrThrow },
+        { redis, redisEnabled },
+        { isVapidConfigured },
+    ] = await Promise.all([
+        import('@/config/env'),
+        import('@/lib/apiAuth'),
+        import('@/lib/cache/redis'),
+        import('@/lib/push/vapidEnv'),
+    ]);
 
     const checks: Record<string, any> = {};
     const supabaseConfigured = !!ENV.VITE_SUPABASE_URL && !!ENV.SUPABASE_SERVICE_ROLE_KEY;
@@ -78,13 +88,6 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Check Redis connection
-    let redisEnabled = false;
-    try {
-        const redisMod = await import('@/lib/cache/redis');
-        redisEnabled = !!redisMod.redisEnabled;
-    } catch {
-        redisEnabled = false;
-    }
     if (redisEnabled && redis) {
         try {
             const redisStart = Date.now();

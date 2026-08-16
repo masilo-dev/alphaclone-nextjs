@@ -31,6 +31,12 @@ interface GeneratedEmail {
   languageLabel?: string;
 }
 
+function ensureMinimumEmailWords(body: string, businessName: string, senderName: string): string {
+  const normalized = String(body || '').trim();
+  if (normalized.split(/\s+/).filter(Boolean).length >= 100) return normalized;
+  return `${normalized}\n\nI would be glad to share a practical overview tailored to ${businessName}, including the likely priorities, a sensible first step, and what a low-risk implementation could look like. The goal is not to add another complicated process, but to identify where a focused improvement could save time, strengthen follow-up, and create a clearer path to measurable results. If this is relevant, reply with the main outcome you are working toward and I will prepare a concise recommendation before we speak.\n\nBest,\n${senderName}`.trim();
+}
+
 const PITCH_HOOKS: Record<string, string> = {
   'digital-presence':      'they have no website — this is your strongest pitch for web/digital services',
   'reputation-management': 'they have a low rating — pitch reputation management and review building',
@@ -158,7 +164,7 @@ ${customContext ? `ADDITIONAL CONTEXT FROM USER: ${customContext}` : ''}
 ${getCampaignLanguageInstruction({ languageMode, country: batchLeadsJson[0]?.country, countryCode: batchLeadsJson[0]?.countryCode, address: batchLeadsJson[0]?.address, company: batchLeadsJson[0]?.business })}
 
 RULES:
-- Each email must be 80–140 words maximum
+- Each email must be 100–140 words. Never return fewer than 100 words for an email body.
 - Subject line: punchy, specific to the business, max 8 words
 - Never use generic openers like "I hope this finds you well"
 - Reference the specific business name and industry
@@ -232,7 +238,9 @@ Return this exact JSON structure (array of objects):
       return {
         business_name: lead?.business_name || `Lead ${g.index}`,
         subject:       g.subject,
-        body:          g.body,
+        body:          lead && recipientEmail
+          ? ensureMinimumEmailWords(g.body, lead.business_name || `Lead ${g.index}`, senderName)
+          : g.body,
         pitchAngle:    lead?.pitchAngle || 'growth-opportunity',
         recipientEmail,
         recipientSource,

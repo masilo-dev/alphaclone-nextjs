@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     const isHtml = /<[a-z][\s\S]*>/i.test(emailBody);
     const bodyToSanitize = isHtml ? emailBody : emailBody.replace(/\r?\n/g, '<br />');
     const sanitizedBody = sanitizeHtml(bodyToSanitize, {
-      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
+      allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
       allowedAttributes: {
         ...sanitizeHtml.defaults.allowedAttributes,
         '*': ['style', 'class'],

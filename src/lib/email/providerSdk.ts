@@ -45,6 +45,7 @@ function loadSendGrid(): SendGridModule | null {
 import { ZohoMailService } from '@/services/zoho/ZohoMailService';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { syncExternalMessageAdmin, resolveContactByEmailAdmin } from '@/services/unified/unifiedMessageAdmin';
+import { microsoftServerService } from '@/services/server/microsoftServerService';
 
 export type EmailProvider = 'brevo' | 'sendgrid' | 'resend' | 'zoho' | 'gmail' | 'mailflow' | 'outlook' | 'smtp';
 
@@ -369,47 +370,22 @@ async function sendViaOutlook(input: EmailSendInput): Promise<EmailSendResult> {
         if (!input.userId) {
             return { ok: false, provider: 'outlook', error: 'Outlook send requires userId (OAuth context)' };
         }
-        // Use Microsoft Graph API via nodemailer-like approach or direct fetch
-        // Credentials resolved from Supabase tenant integrations at runtime
-        const supabaseAdmin = createSupabaseAdminClient();
-        const { data: integration } = await supabaseAdmin
-            .from('integrations')
-            .select('config')
-            .eq('user_id', input.userId)
-            .eq('type', 'outlook')
-            .maybeSingle();
-
-        const accessToken = integration?.config?.access_token;
-        if (!accessToken) {
-            return { ok: false, provider: 'outlook', error: 'No Outlook OAuth token found for user' };
-        }
-
         const recipients = normalizeRecipients(input.to);
-        const graphPayload = {
-            message: {
-                subject: input.subject,
-                body: { contentType: input.html ? 'HTML' : 'Text', content: input.html || input.text || '' },
-                toRecipients: recipients.map(addr => ({ emailAddress: { address: addr } })),
-                ...(input.cc?.length ? { ccRecipients: input.cc.map(addr => ({ emailAddress: { address: addr } })) } : {}),
-                ...(input.bcc?.length ? { bccRecipients: input.bcc.map(addr => ({ emailAddress: { address: addr } })) } : {}),
-                ...(input.replyTo ? { replyTo: [{ emailAddress: { address: input.replyTo } }] } : {}),
-            },
-            saveToSentItems: true,
-        };
-
-        const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(graphPayload),
+        await microsoftServerService.sendEmail(input.userId, {
+            to: recipients,
+            subject: input.subject,
+            html: input.html || input.text || '',
+            cc: input.cc,
+            bcc: input.bcc,
+            replyTo: input.replyTo,
+            attachments: input.attachments?.map((attachment) => ({
+                filename: attachment.filename,
+                contentType: attachment.contentType,
+                contentBase64: Buffer.isBuffer(attachment.content)
+                    ? attachment.content.toString('base64')
+                    : String(attachment.content),
+            })),
         });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            return { ok: false, provider: 'outlook', error: errText };
-        }
 
         return { ok: true, provider: 'outlook' };
     } catch (error) {

@@ -4771,6 +4771,90 @@
         "open_world_justification": "Does not write to public internet state or third-party systems.",
         "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
       }
+    },
+    "list_tools": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "list_modules": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "list_capabilities": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "search_tools": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "load_module_tools": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only reads or computes data and does not modify workspace or external state.",
+        "open_world_justification": "Does not write to public internet state or third-party systems.",
+        "destructive_justification": "Does not delete, cancel, overwrite, or revoke anything."
+      }
+    },
+    "dispatch_tool": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Routes to both read and write tools, so it cannot be classified as read-only.",
+        "open_world_justification": "May route to tools that send email, publish content, or call connected providers.",
+        "destructive_justification": "May route to destructive tools, which remain subject to RBAC and approval policy."
+      }
+    },
+    "execute_action": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": true
+      },
+      "justifications": {
+        "read_only_justification": "Routes to both read and write tools, so it cannot be classified as read-only.",
+        "open_world_justification": "May route to tools that send email, publish content, or call connected providers.",
+        "destructive_justification": "May route to destructive tools, which remain subject to RBAC and approval policy."
+      }
     }
   },
   "test_cases": [

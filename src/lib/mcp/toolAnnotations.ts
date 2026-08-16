@@ -72,6 +72,15 @@ export function resolveToolAnnotations(toolName: string): McpToolAnnotations {
 
 /** Size-limited connector tool surface (ChatGPT Apps, Claude.ai, etc.). */
 export const CHATGPT_CONNECTOR_TOOL_NAMES = [
+  // Stable discovery and dispatch gateway. These keep the full platform
+  // reachable even when the Apps client snapshots a bounded tool catalogue.
+  'list_tools',
+  'list_modules',
+  'list_capabilities',
+  'search_tools',
+  'load_module_tools',
+  'dispatch_tool',
+  'execute_action',
   'get_platform_status',
   'get_system_health',
   'get_version',

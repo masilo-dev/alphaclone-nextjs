@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
 import { requireTenantRole, routeErrorResponse } from '@/lib/apiAuth';
 import { publicAppUrl } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     try {
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     const { user } = await requireTenantRole(tenantId, ['owner','admin','tenant_admin','super_admin']);
 
     const clientId = ENV.VITE_CALENDLY_CLIENT_ID;
-    const redirectUri = ENV.VITE_CALENDLY_REDIRECT_URI;
+    const redirectUri = OAUTH_CALLBACKS.calendly;
 
     if (!clientId || !redirectUri) {
         return NextResponse.redirect(

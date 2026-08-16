@@ -39,11 +39,11 @@ export function ExecutionDecisionGuide({
   if (!steps.length) return null;
 
   return (
-    <section className={cn('ac-workspace-panel rounded-lg p-4', className)} aria-label={title}>
+    <section className={cn('ac-workspace-panel rounded-lg p-3', className)} aria-label={title}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-[11px] font-black uppercase tracking-widest text-[var(--brand-blue-400)]">{title}</p>
-          <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{description}</p>
+          <p className="mt-0.5 text-xs leading-5 text-slate-400">{description}</p>
         </div>
         <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
           {(['success', 'running', 'warning', 'danger'] as SemanticStatus[]).map((status) => {
@@ -58,7 +58,7 @@ export function ExecutionDecisionGuide({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
         {steps.map((step, index) => {
           const status = step.status || (index === 0 ? 'active' : 'neutral');
           const style = SEMANTIC_STATUS_STYLES[status];
@@ -73,8 +73,8 @@ export function ExecutionDecisionGuide({
                 </span>
                 {step.href ? <ChevronRight className="h-4 w-4 text-slate-500" aria-hidden /> : null}
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-white">{step.title}</h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-slate-400">{step.description}</p>
+              <h3 className="mt-2 text-[13px] font-semibold text-white">{step.title}</h3>
+              <p className="mt-0.5 text-xs leading-5 text-slate-400">{step.description}</p>
             </>
           );
 
@@ -84,7 +84,7 @@ export function ExecutionDecisionGuide({
                 key={step.id}
                 type="button"
                 onClick={() => onNavigate(step.href!)}
-                className={cn('rounded-lg border p-4 text-left transition-all hover:bg-slate-900/70', style.border, style.bg)}
+                className={cn('min-h-0 rounded-lg border p-3 text-left transition-all hover:bg-slate-900/70', style.border, style.bg)}
               >
                 {content}
               </button>
@@ -92,7 +92,7 @@ export function ExecutionDecisionGuide({
           }
 
           return (
-            <div key={step.id} className={cn('rounded-lg border p-4', style.border, style.bg)}>
+            <div key={step.id} className={cn('min-h-0 rounded-lg border p-3', style.border, style.bg)}>
               {content}
             </div>
           );

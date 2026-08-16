@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { ENV } from '@/config/env';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 import { saveCalendlyIntegration } from '@/services/calendly/calendlyIntegrationService';
 import {
     pullAndSyncCalendlyEvents,
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
 
     const clientId = ENV.VITE_CALENDLY_CLIENT_ID;
     const clientSecret = ENV.CALENDLY_CLIENT_SECRET;
-    const redirectUri = ENV.VITE_CALENDLY_REDIRECT_URI;
+    const redirectUri = OAUTH_CALLBACKS.calendly;
 
     if (!clientId || !clientSecret || !redirectUri) {
         return NextResponse.json({ error: 'Calendly OAuth is not configured' }, { status: 500 });

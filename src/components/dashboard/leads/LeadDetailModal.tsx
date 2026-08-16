@@ -759,7 +759,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
             size="wide"
         >
             <div className="flex flex-col min-h-0">
-                <div className="px-4 sm:px-6 pt-4 bg-slate-900">
+                <div className="px-3 sm:px-4 pt-2 bg-slate-900">
                     <RecordHeader
                         moduleId="leads"
                         title={lead.businessName}
@@ -820,13 +820,13 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                 </div>
 
                 {/* Header actions */}
-                <div className="px-4 sm:px-6 py-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start gap-4 bg-slate-900">
-                    <div className="flex-1 min-w-0 text-xs text-slate-500">
+                <div className="px-3 sm:px-4 py-2 border-b border-slate-800 flex flex-col lg:flex-row justify-between items-start gap-2 bg-slate-900">
+                    <div className="min-w-0 text-xs text-slate-500 lg:pt-2">
                         Quick actions for this lead
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col items-end gap-2 rounded-2xl border border-white/5 bg-slate-900/40 px-3 py-2">
+                    <div className="w-full lg:w-auto flex flex-col items-start lg:items-end gap-1.5 rounded-lg border border-white/5 bg-slate-900/40 px-2 py-1.5">
                         <div className="self-start">
                             <span className="inline-flex h-5 items-center rounded-full border border-white/5 bg-slate-950/70 px-2 text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
                                 Quick actions
@@ -863,7 +863,7 @@ export default function LeadDetailModal({ isOpen, onClose, lead, onLeadUpdate, o
                                 },
                             ]}
                         />
-                        <div className="flex flex-wrap items-center justify-end gap-2">
+                        <div className="flex w-full flex-wrap items-center gap-1.5 lg:justify-end">
                             <Button
                             variant="outline"
                             size="sm"

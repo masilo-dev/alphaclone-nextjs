@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
-import { buildMicrosoftAuthorizeUrl, getMicrosoftRedirectUri } from '@/config/microsoft';
+import { buildMicrosoftAuthorizeUrl } from '@/config/microsoft';
 import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { PUBLIC_APP_ORIGIN, publicAppUrl } from '@/lib/config/public-origin';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 function getAppUrl(_req: NextRequest) {
   return PUBLIC_APP_ORIGIN;
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
       metadata: {
         provider: 'microsoft',
         return_to: returnTo,
-        redirect_uri: getMicrosoftRedirectUri(appUrl),
+        redirect_uri: OAUTH_CALLBACKS.microsoft,
       },
     });
 

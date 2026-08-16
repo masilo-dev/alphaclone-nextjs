@@ -34,6 +34,20 @@ test("ChatGPT connector clients are still detected for curated catalog", () => {
     false,
   );
   assert.ok(CHATGPT_CONNECTOR_TOOL_NAMES.length > 20);
+  for (const name of [
+    "list_tools",
+    "list_modules",
+    "list_capabilities",
+    "search_tools",
+    "load_module_tools",
+    "dispatch_tool",
+    "execute_action",
+  ]) {
+    assert.ok(
+      CHATGPT_CONNECTOR_TOOL_NAMES.includes(name),
+      `ChatGPT connector missing discovery gateway ${name}`,
+    );
+  }
 });
 
 test("ToolPolicyGate enforces human oversight for high-risk tools (source)", async () => {

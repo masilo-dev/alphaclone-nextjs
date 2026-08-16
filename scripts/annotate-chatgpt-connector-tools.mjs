@@ -71,7 +71,30 @@ const OPEN_WORLD = {
   },
 };
 
+const UNIVERSAL_ROUTER = {
+  annotations: {
+    readOnlyHint: false,
+    openWorldHint: true,
+    destructiveHint: true,
+  },
+  justifications: {
+    read_only_justification:
+      "Routes to both read and write tools, so it cannot be classified as read-only.",
+    open_world_justification:
+      "May route to tools that send email, publish content, or call connected providers.",
+    destructive_justification:
+      "May route to destructive tools, which remain subject to RBAC and approval policy.",
+  },
+};
+
 const TOOLS = {
+  list_tools: READ_ONLY,
+  list_modules: READ_ONLY,
+  list_capabilities: READ_ONLY,
+  search_tools: READ_ONLY,
+  load_module_tools: READ_ONLY,
+  dispatch_tool: UNIVERSAL_ROUTER,
+  execute_action: UNIVERSAL_ROUTER,
   get_platform_status: READ_ONLY,
   get_system_health: READ_ONLY,
   get_version: READ_ONLY,

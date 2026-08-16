@@ -47,7 +47,7 @@ export function DetailDrawer({
             : isMobile
               ? 'max-h-[85vh]'
               : size === 'wide'
-                ? 'h-full !w-[min(100vw,48rem)]'
+                ? 'h-full !w-[min(100vw,44rem)] !p-4 !gap-2'
                 : 'h-full',
           className
         )}

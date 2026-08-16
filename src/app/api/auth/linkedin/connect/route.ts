@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     }
 
     const clientId = ENV.LINKEDIN_CLIENT_ID;
-    const redirectUri = ENV.LINKEDIN_REDIRECT_URI || OAUTH_CALLBACKS.linkedin;
+    const redirectUri = OAUTH_CALLBACKS.linkedin;
     if (!clientId) {
       return NextResponse.redirect(`${appUrl}/dashboard/business/linkedin?li_error=app_not_configured`);
     }

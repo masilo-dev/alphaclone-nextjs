@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ENV } from '@/config/env';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { upsertHubSpotIntegration } from '@/services/hubspot/hubspotIntegrationService';
 import { PUBLIC_APP_ORIGIN } from '@/lib/config/public-origin';
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
 
         const clientId = ENV.HUBSPOT_CLIENT_ID;
         const clientSecret = ENV.HUBSPOT_CLIENT_SECRET;
-        const redirectUri = ENV.HUBSPOT_REDIRECT_URI;
+        const redirectUri = OAUTH_CALLBACKS.hubspot;
 
         const tokenResponse = await fetch('https://api.hubapi.com/oauth/v1/token', {
             method: 'POST',

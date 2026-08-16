@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 import { ENV } from '@/config/env';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 import { linkedInFetch } from '@/lib/linkedin/linkedinClient';
 import { parseLinkedInOAuthState, type LinkedInOAuthState } from '@/lib/linkedin/oauthState';
 import {
@@ -87,7 +88,7 @@ export async function GET(req: NextRequest) {
 
     const clientId = ENV.LINKEDIN_CLIENT_ID;
     const clientSecret = ENV.LINKEDIN_CLIENT_SECRET;
-    const redirectUri = ENV.LINKEDIN_REDIRECT_URI || `${appUrl}/api/auth/linkedin/callback`;
+    const redirectUri = OAUTH_CALLBACKS.linkedin;
     if (!clientId || !clientSecret) {
       return buildRedirect(appUrl, stateData, { ok: false, errorCode: 'app_not_configured' });
     }

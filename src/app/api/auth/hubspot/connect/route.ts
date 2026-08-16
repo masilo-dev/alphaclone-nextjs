@@ -4,6 +4,7 @@ import { ENV } from '@/config/env';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { generateCodeVerifier, generateCodeChallenge } from '@/lib/pkce';
 import { requireTenantRole } from '@/lib/apiAuth';
+import { OAUTH_CALLBACKS } from '@/lib/config/oauth-callbacks';
 
 export async function GET(req: NextRequest) {
     const supabaseAdmin = createSupabaseAdminClient();
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
 
         // 3. Build HubSpot authorization URL
         const clientId = ENV.HUBSPOT_CLIENT_ID;
-        const redirectUri = ENV.HUBSPOT_REDIRECT_URI;
+        const redirectUri = OAUTH_CALLBACKS.hubspot;
         
         // Scopes needed for contacts and lead management
         const scopes = [

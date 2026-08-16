@@ -4,10 +4,12 @@ import { SITE_URL } from '@/lib/siteUrl';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = SITE_URL;
+    const lastModified = new Date();
 
     // 1. Static Marketing Routes
     const highPriorityRoutes = ['', '/services', '/about', '/guide', '/docs', '/faq', '/pricing', '/contact', '/demo', '/book-demo', '/tools/ai-architect'].map((route) => ({
         url: `${baseUrl}${route}`,
+        lastModified,
         changeFrequency: 'weekly' as const,
         priority: route === '' ? 1.0 : (route === '/book-demo' || route === '/demo') ? 0.95 : route === '/tools/ai-architect' ? 0.8 : 0.9,
     }));
@@ -36,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/claude-manus-integrations',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
+        lastModified,
         changeFrequency: 'monthly' as const,
         priority:
             route === '/legal' ||
@@ -63,6 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/privacy-choices',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
+        lastModified,
         changeFrequency: 'monthly' as const,
         priority: 0.7,
     }));
@@ -77,6 +81,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         '/legal/ai-disclaimer',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
+        lastModified,
         changeFrequency: 'yearly' as const,
         priority: 0.3,
     }));

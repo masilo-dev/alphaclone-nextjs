@@ -273,11 +273,11 @@ export async function sendEmail(
     let normalizedHtml = sanitizedHtmlSource
       ? (shouldAppendFooter
         ? ensureFooter(sanitizeHtml(htmlToSanitize, {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }), { unsubscribeUrl })
         : sanitizeHtml(htmlToSanitize, {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'style', 'br', 'p', 'div', 'span']),
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'br', 'p', 'div', 'span']),
           allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['style', 'class'] },
         }))
       : undefined;

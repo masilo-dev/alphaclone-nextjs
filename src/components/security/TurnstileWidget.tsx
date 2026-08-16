@@ -94,6 +94,17 @@ export default function TurnstileWidget({
   const containerId = useId();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
+  const onTokenChangeRef = useRef(onTokenChange);
+  const onErrorRef = useRef(onError);
+  const onExpireRef = useRef(onExpire);
+
+  // Parent forms commonly pass inline callbacks. Keep the latest handlers
+  // without destroying a verified widget every time its token updates state.
+  useEffect(() => {
+    onTokenChangeRef.current = onTokenChange;
+    onErrorRef.current = onError;
+    onExpireRef.current = onExpire;
+  }, [onError, onExpire, onTokenChange]);
 
   useEffect(() => {
     if (!siteKey || !containerRef.current || widgetIdRef.current) {
@@ -113,9 +124,9 @@ export default function TurnstileWidget({
       if (!cancelled && !widgetIdRef.current) {
         console.warn('[TurnstileWidget] Cloudflare Turnstile challenge timeout.');
         if (bypassOnError) {
-          onTokenChange(TURNSTILE_BYPASS_TOKEN);
+          onTokenChangeRef.current(TURNSTILE_BYPASS_TOKEN);
         } else {
-          onError?.();
+          onErrorRef.current?.();
         }
       }
     }, 8000);
@@ -134,24 +145,22 @@ export default function TurnstileWidget({
           appearance: 'always',
           callback: (token) => {
             clearTimeout(timeoutTimer);
-            onTokenChange(token);
+            onTokenChangeRef.current(token);
           },
           'expired-callback': () => {
             clearTimeout(timeoutTimer);
-            widgetIdRef.current = null;
-            onTokenChange('');
-            onExpire?.();
+            onTokenChangeRef.current('');
+            onExpireRef.current?.();
           },
           'error-callback': () => {
             clearTimeout(timeoutTimer);
-            widgetIdRef.current = null;
             if (bypassOnError) {
-              onTokenChange(TURNSTILE_BYPASS_TOKEN);
+              onTokenChangeRef.current(TURNSTILE_BYPASS_TOKEN);
             } else {
               // Emit empty string so the submit-button disabled guard remains
               // active, then fire the caller's onError for UI feedback.
-              onTokenChange('');
-              onError?.();
+              onTokenChangeRef.current('');
+              onErrorRef.current?.();
             }
           },
         });
@@ -159,10 +168,10 @@ export default function TurnstileWidget({
       .catch(() => {
         clearTimeout(timeoutTimer);
         if (bypassOnError) {
-          onTokenChange(TURNSTILE_BYPASS_TOKEN);
+          onTokenChangeRef.current(TURNSTILE_BYPASS_TOKEN);
         } else {
-          onTokenChange('');
-          onError?.();
+          onTokenChangeRef.current('');
+          onErrorRef.current?.();
         }
       });
 
@@ -174,7 +183,7 @@ export default function TurnstileWidget({
       }
       widgetIdRef.current = null;
     };
-  }, [bypassOnError, onError, onExpire, onTokenChange, siteKey, theme]);
+  }, [bypassOnError, siteKey, theme]);
 
   if (!siteKey) {
     return null;
