@@ -12,8 +12,8 @@ initializeRegistry();
 
 // Core lifecycle tool names grouped by stage
 const LIFECYCLE_TOOLS = {
-  'CRM': ['create_lead', 'create_contact', 'get_contacts', 'create_company', 'add_note'],
-  'Deals': ['create_deal', 'get_deals', 'update_deal_stage'],
+  'CRM': ['create_lead', 'create_contact', 'get_contacts', 'create_client', 'log_contact_activity'],
+  'Deals': ['create_deal', 'get_deals', 'move_deal_stage'],
   'Contracts': ['create_contract', 'get_contracts', 'create_contract_template'],
   'Invoicing': ['create_invoice', 'get_invoices', 'mark_invoice_paid', 'send_invoice', 'send_receipt', 'reconcile_payment'],
   'Finance': ['create_quote', 'create_expense', 'get_pnl_statement', 'get_balance_sheet', 'create_journal_entry'],

@@ -72,15 +72,15 @@ export class DomainEventBus {
     const supabase = getDbClient();
     const eventTime = new Date().toISOString();
 
-    const newEvent = {
+    const newEvent: DomainEvent = {
       tenant_id: event.tenant_id,
       event_type: event.event_type,
       aggregate_type: event.aggregate_type,
       aggregate_id: event.aggregate_id,
       payload: event.payload || {},
       actor_type: event.actor_type || "system",
-      actor_id: event.actor_id || null,
-      correlation_id: event.correlation_id || null,
+      actor_id: event.actor_id || undefined,
+      correlation_id: event.correlation_id || undefined,
       created_at: eventTime,
     };
 
@@ -88,7 +88,11 @@ export class DomainEventBus {
     try {
       const { data, error } = await supabase
         .from("domain_events")
-        .insert(newEvent)
+        .insert({
+          ...newEvent,
+          actor_id: newEvent.actor_id || null,
+          correlation_id: newEvent.correlation_id || null,
+        })
         .select()
         .single();
 

@@ -61,8 +61,14 @@ export class SocialAutopilot {
     }
 
     try {
-      // Delegate to canonical SocialPublishingService
-      const success = await SocialPublishingService.publishPost(postId);
+      const { publishSocialPost } = await import("@/lib/social/cronPublish");
+      await publishSocialPost(postId);
+      const { data: updated } = await supabase
+        .from("social_posts")
+        .select("status")
+        .eq("id", postId)
+        .single();
+      const success = updated?.status === "published";
       console.log(`[SocialAutopilot] Publishing result for post ${postId}: ${success ? "SUCCESS" : "FAILED"}`);
       return success;
     } catch (err: any) {

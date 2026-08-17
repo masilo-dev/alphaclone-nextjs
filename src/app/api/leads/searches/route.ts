@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 
     const searchesList = data || [];
     // If any searches are queued or stuck in running, trigger background batch discovery to process them
-    if (searchesList.some(s => s.status === 'queued' || s.status === 'running')) {
+    if (searchesList.some((s: { status?: string }) => s.status === 'queued' || s.status === 'running')) {
       void processLeadDiscoveryBatch({ claimLimit: 2 }).catch((err) => {
         console.warn('[api/leads/searches] Background queue pump warning:', err);
       });

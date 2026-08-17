@@ -241,7 +241,7 @@ function selectCatalogTools(
   if (options.catalogMode === 'full') return full;
 
   const loaded = new Set((options.loadedModules || []).map((m) => m.toLowerCase()));
-  const coreNames = new Set(coreTools(full, 40).map((tool) => tool.name));
+  const coreNames = new Set(coreTools(full, 80).map((tool) => tool.name));
   for (const tool of DISCOVERY_CONTROL_TOOLS) coreNames.add(tool.name);
   for (const tool of DISCOVERY_ALIAS_TOOLS) coreNames.add(tool.name);
 
