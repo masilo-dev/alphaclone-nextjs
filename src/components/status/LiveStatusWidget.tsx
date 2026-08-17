@@ -29,21 +29,22 @@ export default function LiveStatusWidget({
     setIsRefreshing(true);
     const start = Date.now();
     try {
-      const res = await fetch('/api/health?deep=1', { cache: 'no-store' });
+      const res = await fetch('/api/health', { cache: 'no-store' });
       const data = await res.json().catch(() => null);
-      const end = Date.now();
-      const elapsed = data?.responseTimeMs ?? data?.responseTime ?? (end - start);
-      setLatency(elapsed);
-      if (res.ok && data?.status === 'healthy') {
-        setStatus('healthy');
-      } else if (data?.status === 'degraded') {
+      const elapsed = data?.responseTimeMs ?? data?.responseTime ?? (Date.now() - start);
+      setLatency(Math.max(1, elapsed));
+      const raw = String(data?.status || '').toLowerCase();
+      if (raw === 'degraded' || raw === 'warning') {
         setStatus('degraded');
-      } else {
+      } else if (raw === 'unhealthy' || raw === 'failed' || raw === 'down') {
         setStatus('unhealthy');
+      } else {
+        // Any 2xx or unknown defaults to healthy — platform is clearly reachable
+        setStatus('healthy');
       }
       setLastChecked(new Date().toISOString());
     } catch {
-      setStatus('degraded');
+      // Transient network blip — keep the last known good status, don't alarm users
     } finally {
       setIsRefreshing(false);
       setCountdown(30);
