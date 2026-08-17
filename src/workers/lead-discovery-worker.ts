@@ -2,22 +2,55 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { normalizeDomain, normalizeEmail, normalizePhone, scoreCandidate } from '@/lib/lead-finder/core';
 import { runLeadStep, type LeadResult, type LeadStep } from '@/lib/scraper/freeLeadSearch';
 import type { GeoPoint } from '@/lib/scraper/freeGeoSources';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
 const workerId = process.env.RAILWAY_REPLICA_ID || `lead-worker-${process.pid}`;
-const supabase = createSupabaseAdminClient();
 let stopping = false;
 
 type Job = { id: string; workspace_id: string; created_by: string; search_id: string; attempt_count: number; max_attempts: number };
 type Search = {
   id: string; query?: string; location?: string; city?: string; country?: string; industry?: string;
-  business_keywords?: string[]; result_limit: number; exclusions?: { keywords?: string[] };
+  business_keywords?: string[]; result_limit?: number; exclusions?: { keywords?: string[] };
 };
+
+function getAdminClient(): SupabaseClient {
+  const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const envKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (envUrl && envKey) {
+    return createSupabaseAdminClient();
+  }
+
+  // Fallback: Read from .env.local if environment variables are not populated in current process
+  try {
+    const envPath = path.join(process.cwd(), '.env.local');
+    if (fs.existsSync(envPath)) {
+      const content = fs.readFileSync(envPath, 'utf8');
+      let url = envUrl;
+      let key = envKey;
+      for (const line of content.split('\n')) {
+        const [k, ...v] = line.split('=');
+        const trimmedK = k?.trim();
+        const val = v.join('=').trim().replace(/^"|"$/g, '').replace(/^'|'$/g, '');
+        if (!url && (trimmedK === 'NEXT_PUBLIC_SUPABASE_URL' || trimmedK === 'VITE_SUPABASE_URL')) url = val;
+        if (!key && trimmedK === 'SUPABASE_SERVICE_ROLE_KEY') key = val;
+      }
+      if (url && key) {
+        return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+      }
+    }
+  } catch {}
+
+  return createSupabaseAdminClient();
+}
 
 function autoAcceptAndSyncHighQuality(
   rows: Array<Record<string, unknown>>,
   workspaceId: string,
   ownerId: string
 ): Promise<{ accepted: number; synced: number }> {
+  const supabase = getAdminClient();
   const qualityThreshold = 70;
   const fitThreshold = 65;
   const confidenceMin = 40;
@@ -114,29 +147,42 @@ function autoAcceptAndSyncHighQuality(
 }
 
 async function execute(job: Job) {
+  const supabase = getAdminClient();
   const started = Date.now();
   const { data: search, error } = await supabase.from('lead_searches').select('*').eq('id', job.search_id).single<Search>();
   if (error || !search) throw new Error('SEARCH_NOT_FOUND');
-  await supabase.from('lead_searches').update({ status: 'running', progress: 5, started_at: new Date().toISOString() }).eq('id', search.id);
+  await supabase.from('lead_searches').update({ status: 'running', progress: 10, started_at: new Date().toISOString() }).eq('id', search.id);
 
-  let step: LeadStep = 'init'; let partial: LeadResult[] = [];
-  let sourceErrors: Record<string, string> = {}; let sourceStats: Record<string, number> = {};
+  let step: LeadStep = 'init';
+  let partial: LeadResult[] = [];
+  let sourceErrors: Record<string, string> = {};
+  let sourceStats: Record<string, number> = {};
   let searchCenter: GeoPoint | null = null;
+
   for (let guard = 0; guard < 4; guard++) {
     const result = await runLeadStep({
-      step, niche: search.query || search.business_keywords?.join(' ') || search.industry || 'business',
+      step,
+      niche: search.query || search.business_keywords?.join(' ') || search.industry || 'business',
       location: search.location || [search.city, search.country].filter(Boolean).join(', '),
-      radiusKm: 40, partialResults: partial, usePlaywright: false, sortBy: 'reach_asc',
-      sourceErrors, sourceStats, searchCenter,
+      radiusKm: 40,
+      partialResults: partial,
+      usePlaywright: false,
+      sortBy: 'reach_asc',
+      sourceErrors,
+      sourceStats,
+      searchCenter,
     });
-    partial = result.partialResults; sourceErrors = result.sourceErrors;
-    sourceStats = result.sourceStats; searchCenter = result.searchCenter;
-    await supabase.from('lead_searches').update({ progress: result.progress, discovered_count: partial.length }).eq('id', search.id);
+    partial = result.partialResults;
+    sourceErrors = result.sourceErrors;
+    sourceStats = result.sourceStats;
+    searchCenter = result.searchCenter;
+    await supabase.from('lead_searches').update({ progress: Math.min(90, Math.max(15, result.progress)), discovered_count: partial.length }).eq('id', search.id);
     if (result.nextStep === 'completed') break;
     step = result.nextStep;
   }
 
-  const rows = partial.slice(0, search.result_limit).map(lead => {
+  const limit = Math.max(1, search.result_limit || 25);
+  const rows = partial.slice(0, limit).map(lead => {
     const candidate = {
       website: lead.website || null, public_email: normalizeEmail(lead.email), public_phone: normalizePhone(lead.phone, search.country),
       address_line_1: lead.address || null, industry: lead.category || search.industry || null,
@@ -157,9 +203,12 @@ async function execute(job: Job) {
       verification_status: candidate.public_email ? 'format_valid' : 'unverified',
     };
   });
+
   if (rows.length) {
     const { error: insertError } = await supabase.from('lead_candidates').upsert(rows, { onConflict: 'workspace_id,source_type,source_external_id', ignoreDuplicates: true });
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.warn('[lead-discovery-worker] lead_candidates upsert warning:', insertError.message);
+    }
   }
 
   let crmSyncedCount = 0;
@@ -172,7 +221,7 @@ async function execute(job: Job) {
     console.warn('[lead-discovery-worker] Auto-accept/sync failed gracefully, search continues:', err);
   }
 
-  const status = Object.keys(sourceErrors).length ? 'partially_completed' : 'completed';
+  const status = Object.keys(sourceErrors).length && rows.length === 0 ? 'failed' : Object.keys(sourceErrors).length ? 'partially_completed' : 'completed';
   await supabase.from('lead_searches').update({
     status, progress: 100, discovered_count: rows.length, error_count: Object.keys(sourceErrors).length,
     accepted_count: autoAcceptedCount, crm_synced_count: crmSyncedCount,
@@ -186,26 +235,78 @@ async function execute(job: Job) {
   }).eq('id', job.id);
 }
 
-export async function processLeadDiscoveryBatch(options?: { workerId?: string; claimLimit?: number }) {
+export async function processLeadDiscoveryBatch(options?: { workerId?: string; claimLimit?: number; searchId?: string }) {
+  const supabase = getAdminClient();
   const activeWorkerId = options?.workerId || workerId;
   const claimLimit = Math.max(1, Math.min(options?.claimLimit ?? 3, 10));
-  const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: activeWorkerId, claim_limit: claimLimit });
-  if (error) throw error;
+  let jobs: Job[] = [];
+
+  // Try RPC claim first
+  try {
+    const { data, error } = await supabase.rpc('claim_lead_search_jobs', { worker_id: activeWorkerId, claim_limit: claimLimit });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      jobs = data as Job[];
+    }
+  } catch (err) {
+    console.warn('[lead-discovery-worker] claim_lead_search_jobs RPC call failed, using direct query fallback:', err);
+  }
+
+  // Fallback: If RPC claimed 0 jobs or threw error, query lead_search_jobs directly
+  if (jobs.length === 0) {
+    try {
+      let query = supabase
+        .from('lead_search_jobs')
+        .select('id, workspace_id, created_by, search_id, attempt_count, max_attempts')
+        .in('status', ['queued', 'pending', 'retrying']);
+
+      if (options?.searchId) {
+        query = query.eq('search_id', options.searchId);
+      }
+
+      const { data: unclaimed, error: selectErr } = await query
+        .order('created_at', { ascending: true })
+        .limit(claimLimit);
+
+      if (!selectErr && unclaimed && unclaimed.length > 0) {
+        const jobIds = unclaimed.map((j) => j.id);
+        const { error: lockErr } = await supabase
+          .from('lead_search_jobs')
+          .update({
+            status: 'running',
+            locked_at: new Date().toISOString(),
+            attempt_count: ((unclaimed[0].attempt_count as number) || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .in('id', jobIds);
+
+        if (!lockErr) {
+          jobs = unclaimed as Job[];
+        }
+      }
+    } catch (fallbackErr) {
+      console.warn('[lead-discovery-worker] Direct claim fallback error:', fallbackErr);
+    }
+  }
+
   const results: Array<{ jobId: string; ok: boolean; error?: string }> = [];
-  for (const job of (data || []) as Job[]) {
+  for (const job of jobs) {
     try {
       await execute(job);
       results.push({ jobId: job.id, ok: true });
-    }
-    catch (error) {
-      const retry = job.attempt_count < job.max_attempts;
+    } catch (error) {
+      const attemptCount = typeof job.attempt_count === 'number' ? job.attempt_count : 1;
+      const maxAttempts = typeof job.max_attempts === 'number' ? job.max_attempts : 3;
+      const retry = attemptCount < maxAttempts;
       await supabase.from('lead_search_jobs').update({
-        status: retry ? 'retrying' : 'failed', locked_at: null,
-        next_run_at: new Date(Date.now() + Math.min(30 * 60_000, 2 ** job.attempt_count * 30_000)).toISOString(),
+        status: retry ? 'retrying' : 'failed',
+        locked_at: null,
+        next_run_at: new Date(Date.now() + Math.min(30 * 60_000, 2 ** attemptCount * 30_000)).toISOString(),
         error_code: error instanceof Error ? error.message.slice(0, 80) : 'WORKER_ERROR',
         error_message: 'Discovery job failed; retry policy applied.',
       }).eq('id', job.id);
-      if (!retry) await supabase.from('lead_searches').update({ status: 'failed', error_count: 1 }).eq('id', job.search_id);
+      if (!retry) {
+        await supabase.from('lead_searches').update({ status: 'failed', error_count: 1 }).eq('id', job.search_id);
+      }
       results.push({
         jobId: job.id,
         ok: false,
@@ -213,7 +314,7 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
       });
     }
   }
-  return { claimed: (data || []).length, results };
+  return { claimed: jobs.length, results };
 }
 
 async function tick() {
@@ -222,12 +323,23 @@ async function tick() {
 
 process.on('SIGTERM', () => { stopping = true; });
 process.on('SIGINT', () => { stopping = true; });
+
 async function main() {
   while (!stopping) {
-    try { await tick(); } catch (error) { console.error(JSON.stringify({ level: 'error', service: 'lead-discovery-worker', worker_id: workerId, error: error instanceof Error ? error.message : 'unknown' })); }
+    try {
+      await tick();
+    } catch (error) {
+      console.error(JSON.stringify({
+        level: 'error',
+        service: 'lead-discovery-worker',
+        worker_id: workerId,
+        error: error instanceof Error ? error.message : 'unknown',
+      }));
+    }
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 }
+
 if (process.argv[1]?.includes('lead-discovery-worker')) {
   void main();
 }

@@ -546,7 +546,7 @@ defineConnectorTool({
   module: 'social-publishing',
   name: 'upload_media',
   description:
-    'Upload social media asset (image PNG/JPG/JPEG/GIF/WebP, video MP4/MOV/WebM, or document PDF) via base64, data URL, remote HTTPS source URL, or file. Returns media_asset_id and public_url for social publishing.',
+    'Upload image/video via content_base64, data URL, or HTTPS URL. Returns media_url (/mnt/data paths blocked). Use media_url in publish_post.',
   permission: 'social:write',
   rateLimitClass: 'heavy',
   auditAction: 'mcp_upload_media',

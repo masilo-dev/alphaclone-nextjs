@@ -238,13 +238,28 @@ export async function listSocialAccounts(tenantId: string) {
   };
 }
 
+export function normalizeIdentityType(type: string): SocialIdentityType {
+  const norm = String(type || '').trim().toLowerCase();
+  if (['linkedin_personal', 'personal', 'member', 'person', 'linkedin_person'].includes(norm)) {
+    return 'linkedin_person';
+  }
+  if (['linkedin_org', 'linkedin_organization', 'organization', 'company', 'org'].includes(norm)) {
+    return 'linkedin_organization';
+  }
+  if (['page', 'facebook_page', 'fb_page', 'facebook_page_identity'].includes(norm)) {
+    return 'facebook_page';
+  }
+  return type as SocialIdentityType;
+}
+
 export async function resolveIdentity(params: {
   tenantId: string;
   platform: SocialPlatform;
   identityType: SocialIdentityType;
   identityId: string;
 }): Promise<ResolvedIdentity> {
-  const { tenantId, platform, identityType, identityId } = params;
+  const { tenantId, platform, identityId } = params;
+  const identityType = normalizeIdentityType(params.identityType);
   const id = String(identityId || '').trim();
   if (!id) throw new Error('identity_id is required');
 

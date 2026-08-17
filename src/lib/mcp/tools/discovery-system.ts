@@ -11,6 +11,30 @@ import { ALL_MODULE_NAMES, getModuleTools, findToolsByQuery } from '@/lib/mcp/pr
 import { executeTool, hasTool } from '@/lib/mcp/tool-registry';
 
 
+
+// ── list_tools ────────────────────────────────────────────────────────────────
+defineConnectorTool({
+  module: 'discovery',
+  name: 'list_tools',
+  description: 'List the small stable core MCP catalogue. Read-only; returns canonical names and modules.',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+  handler: async () => {
+    const allTools = await getUnifiedMcpTools({ catalogMode: 'full', sanitizeForClient: false });
+    return okResult('list_tools', {
+      total: allTools.length,
+      tools: allTools.map((t) => ({ name: t.name, description: t.description?.slice(0, 80) })),
+    });
+  },
+});
+
 // ── search_tools ─────────────────────────────────────────────────────────────
 defineConnectorTool({
   module: 'discovery',

@@ -22,15 +22,51 @@ async function handleDiscovery(req: NextRequest, method: string) {
       const { getUnifiedMcpTools, getCatalogChecksum } = await import('@/lib/mcp/listAllTools');
       const tools = await getUnifiedMcpTools({ catalogMode: 'full' });
       const checksum = getCatalogChecksum(tools);
-      return NextResponse.json(
-        {
-          tools,
-          metadata: {
-            registry_version: '2.0.0',
-            catalog_checksum: checksum,
-            total_tools: tools.length,
-          },
+
+      const rawCursor = req.nextUrl.searchParams.get('cursor');
+      const rawLimit = req.nextUrl.searchParams.get('limit') || req.nextUrl.searchParams.get('pageSize');
+      const hasPaginationArgs = rawCursor !== null || rawLimit !== null;
+
+      let offset = 0;
+      if (typeof rawCursor === 'string' && rawCursor.trim() !== '') {
+        const parsed = parseInt(rawCursor.trim(), 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          offset = parsed;
+        }
+      }
+
+      let limit = tools.length;
+      if (rawLimit !== null) {
+        const parsedLimit = parseInt(String(rawLimit).trim(), 10);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          limit = Math.min(parsedLimit, 250);
+        }
+      } else if (hasPaginationArgs) {
+        limit = 75;
+      }
+
+      const paginatedTools = hasPaginationArgs ? tools.slice(offset, offset + limit) : tools;
+      const nextOffset = offset + paginatedTools.length;
+      const nextCursor = (hasPaginationArgs && nextOffset < tools.length) ? String(nextOffset) : undefined;
+
+      const responsePayload: Record<string, unknown> = {
+        tools: paginatedTools,
+        metadata: {
+          registry_version: '2.0.0',
+          catalog_checksum: checksum,
+          total_tools: tools.length,
+          returned_tools: paginatedTools.length,
+          offset,
+          next_cursor: nextCursor || null,
         },
+      };
+
+      if (nextCursor) {
+        responsePayload.nextCursor = nextCursor;
+      }
+
+      return NextResponse.json(
+        responsePayload,
         {
           headers: {
             ...getMcpCorsHeaders(req),

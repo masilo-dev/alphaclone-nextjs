@@ -653,7 +653,8 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'autonomous-ops',
   name: 'upload_media',
-  description: 'Upload media (including ChatGPT-generated images) and return a permanent public URL.',
+  description:
+    'Upload image/video via content_base64, data URL, or HTTPS URL. Returns media_url (/mnt/data paths blocked). Use media_url in publish_post.',
   permission: 'social:write',
   rateLimitClass: 'write',
   inputSchema: z.object({

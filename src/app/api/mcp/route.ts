@@ -388,17 +388,53 @@ export async function POST(req: NextRequest) {
       headers.set('X-MCP-Version', '2.0.0');
       headers.set('X-Catalog-Checksum', checksum);
 
+      // Extract pagination arguments from params or query params
+      const rawCursor = requestBody.params?.cursor || req.nextUrl.searchParams.get('cursor');
+      const rawLimit = requestBody.params?.limit || requestBody.params?.pageSize || req.nextUrl.searchParams.get('limit');
+      const hasPaginationArgs = rawCursor !== undefined && rawCursor !== null || rawLimit !== undefined && rawLimit !== null;
+
+      let offset = 0;
+      if (typeof rawCursor === 'string' && rawCursor.trim() !== '') {
+        const parsed = parseInt(rawCursor.trim(), 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          offset = parsed;
+        }
+      }
+
+      let limit = tools.length;
+      if (rawLimit !== undefined && rawLimit !== null) {
+        const parsedLimit = parseInt(String(rawLimit).trim(), 10);
+        if (!isNaN(parsedLimit) && parsedLimit > 0) {
+          limit = Math.min(parsedLimit, 250);
+        }
+      } else if (hasPaginationArgs) {
+        limit = 75;
+      }
+
+      const paginatedTools = hasPaginationArgs ? tools.slice(offset, offset + limit) : tools;
+      const nextOffset = offset + paginatedTools.length;
+      const nextCursor = (hasPaginationArgs && nextOffset < tools.length) ? String(nextOffset) : undefined;
+
+      const result: Record<string, unknown> = {
+        tools: paginatedTools,
+        _meta: {
+          registry_version: '2.0.0',
+          catalog_checksum: checksum,
+          total_tools: tools.length,
+          returned_tools: paginatedTools.length,
+          offset,
+          next_cursor: nextCursor || null,
+        },
+      };
+
+      if (nextCursor) {
+        result.nextCursor = nextCursor;
+      }
+
       return NextResponse.json({
         jsonrpc: '2.0',
         id: requestBody.id,
-        result: {
-          tools,
-          _meta: {
-            registry_version: '2.0.0',
-            catalog_checksum: checksum,
-            total_tools: tools.length,
-          },
-        },
+        result,
       }, { headers });
     } catch (err: any) {
       console.error('[mcp.route tools/list] error:', err?.message || err);

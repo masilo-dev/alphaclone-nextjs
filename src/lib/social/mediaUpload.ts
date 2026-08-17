@@ -323,6 +323,8 @@ export function rejectLocalAiPaths(value: unknown, field: string = 'media_url'):
       /^\/mnt\/data\//i.test(v) ||
       /^\/tmp\//i.test(v) ||
       /^file:/i.test(v) ||
+      /^sandbox:/i.test(v) ||
+      /^\/?sandbox\//i.test(v) ||
       /^[A-Za-z]:\\/.test(v)
     ) {
       throw new Error(

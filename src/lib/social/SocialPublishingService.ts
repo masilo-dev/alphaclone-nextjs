@@ -20,6 +20,7 @@ import {
   applyTestCaptionPrefix,
   getTestModeDestinations,
   isSocialPublishTestMode,
+  normalizeIdentityType,
 } from '@/lib/social/identityResolution';
 import { redactSecrets, resolveMediaUrls } from '@/lib/social/mediaUpload';
 import type {
@@ -102,6 +103,7 @@ export class SocialPublishingService {
     identityId: string;
   }): Promise<ResolvedIdentity> {
     let identityId = input.identityId;
+    const normalizedType = normalizeIdentityType(input.identityType);
     if (isSocialPublishTestMode()) {
       const test = getTestModeDestinations();
       if (input.platform === 'facebook' && test.facebookPageId) {
@@ -109,12 +111,12 @@ export class SocialPublishingService {
       }
       if (
         input.platform === 'linkedin' &&
-        input.identityType === 'linkedin_organization' &&
+        normalizedType === 'linkedin_organization' &&
         test.linkedinOrganizationId
       ) {
         identityId = test.linkedinOrganizationId;
       }
-      if (input.identityType === 'linkedin_person') {
+      if (normalizedType === 'linkedin_person') {
         throw new Error('SOCIAL_PUBLISH_TEST_MODE forbids personal LinkedIn publishing');
       }
     }
@@ -124,7 +126,7 @@ export class SocialPublishingService {
     const stored = await resolveTenantIdentityForPublish({
       tenantId: input.tenantId,
       identityId,
-      identityType: input.identityType,
+      identityType: normalizedType,
       provider: input.platform,
       allowDefault: false,
     });

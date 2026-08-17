@@ -69,7 +69,16 @@ export async function GET(req: NextRequest) {
         notice: 'Lead search history table is initializing for this workspace.',
       });
     }
-    return NextResponse.json({ searches: data || [], available: true });
+
+    const searchesList = data || [];
+    // If any searches are queued or stuck in running, trigger background batch discovery to process them
+    if (searchesList.some(s => s.status === 'queued' || s.status === 'running')) {
+      void processLeadDiscoveryBatch({ claimLimit: 2 }).catch((err) => {
+        console.warn('[api/leads/searches] Background queue pump warning:', err);
+      });
+    }
+
+    return NextResponse.json({ searches: searchesList, available: true });
   } catch (error) {
     return NextResponse.json({
       searches: [],
@@ -89,9 +98,10 @@ export async function POST(req: NextRequest) {
       location: input.location, country: input.country, city: input.city, region: input.region,
       industry: input.industry, company_size_min: input.companySizeMin,
       company_size_max: input.companySizeMax, source_filters: input.sources,
-      requirements: input.requirements, exclusions: input.exclusions, result_limit: input.resultLimit,
+      requirements: input.requirements, exclusions: input.exclusions, result_limit: input.resultLimit || 25,
       status: input.runNow ? 'queued' : 'draft',
     }).select().single();
+
     if (error && isUnavailableSchema(error)) {
       return NextResponse.json(
         {
@@ -103,6 +113,7 @@ export async function POST(req: NextRequest) {
       );
     }
     if (error) throw error;
+
     if (input.runNow) {
       const { error: jobError } = await admin.from('lead_search_jobs').insert(leadSearchJobSeed({
         workspaceId: input.workspaceId,
@@ -118,6 +129,7 @@ export async function POST(req: NextRequest) {
         region: input.region,
         country: input.country,
       }));
+
       if (jobError && isUnavailableSchema(jobError)) {
         return NextResponse.json(
           {
@@ -130,15 +142,25 @@ export async function POST(req: NextRequest) {
       }
       if (jobError) throw jobError;
 
-      void processLeadDiscoveryBatch({ workerId: `api-trigger-${search.id}`, claimLimit: 1 }).catch((err) => {
+      // Execute discovery immediately and await the initial processing batch
+      try {
+        await processLeadDiscoveryBatch({ workerId: `api-trigger-${search.id}`, claimLimit: 1, searchId: search.id });
+      } catch (err) {
         console.warn('[api/leads/searches] Immediate discovery trigger warning:', err);
-      });
+      }
     }
+
+    // Refetch latest search status after execution
+    const { data: updatedSearch } = await admin.from('lead_searches').select('*').eq('id', search.id).single();
+
     await admin.from('lead_audit_logs').insert({
       workspace_id: input.workspaceId, created_by: user.id, actor_id: user.id,
       action: input.runNow ? 'search.queued' : 'search.created', entity_type: 'lead_search',
-      entity_id: search.id, after_data: search,
+      entity_id: search.id, after_data: updatedSearch || search,
     });
-    return NextResponse.json({ search }, { status: 201 });
-  } catch (error) { return routeErrorResponse(error, 'Failed to create lead search', req); }
+
+    return NextResponse.json({ search: updatedSearch || search }, { status: 201 });
+  } catch (error) {
+    return routeErrorResponse(error, 'Failed to create lead search', req);
+  }
 }

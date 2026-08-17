@@ -272,7 +272,7 @@ defineConnectorTool({
       .eq('tenant_id', args.tenant_id)
       .eq('id', args.lead_id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error && (error.code === '42703' || /column|does not exist/i.test(error.message || ''))) {
       const fallback: Record<string, unknown> = {};
@@ -286,10 +286,11 @@ defineConnectorTool({
         .eq('tenant_id', args.tenant_id)
         .eq('id', args.lead_id)
         .select()
-        .single());
+        .maybeSingle());
     }
 
     if (error) throwConnectorError('UPDATE_FAILED', error.message);
+    if (!data) throwConnectorError('RESOURCE_NOT_FOUND', `Lead with id ${args.lead_id} was not found in this workspace`);
     return data;
   },
 });

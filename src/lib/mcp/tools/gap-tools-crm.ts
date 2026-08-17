@@ -170,6 +170,33 @@ registerTool('gap-crm', {
   jsonSchema: { type: 'object', properties: { tenant_id: { type: 'string' }, title: { type: 'string' }, description: { type: 'string' }, due_date: { type: 'string' }, priority: { type: 'string' }, assigned_to: { type: 'string' }, project_id: { type: 'string' }, client_id: { type: 'string' } }, required: ['title'] },
   handler: async (args, ctx) => {
     const supabase = createSupabaseAdminClient();
+    // Deduplication check: if pending task with identical title & tenant exists for client_id/project_id, update it
+    if (args.title && (args.client_id || args.project_id)) {
+      let q = supabase
+        .from('tasks')
+        .select('*')
+        .eq('tenant_id', args.tenant_id)
+        .eq('title', args.title)
+        .eq('status', 'pending');
+      if (args.client_id) q = q.eq('client_id', args.client_id);
+      if (args.project_id) q = q.eq('project_id', args.project_id);
+      const { data: existing } = await q.maybeSingle();
+      if (existing?.id) {
+        const { data: updated } = await supabase
+          .from('tasks')
+          .update({
+            description: args.description || existing.description,
+            due_date: args.due_date || existing.due_date,
+            priority: args.priority || existing.priority,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existing.id)
+          .select()
+          .single();
+        return { content: [{ type: 'text', text: JSON.stringify({ ...updated, deduplicated: true }, null, 2) }] };
+      }
+    }
+
     const { data, error } = await supabase.from('tasks').insert({ tenant_id: args.tenant_id, title: args.title, description: args.description || null, due_date: args.due_date || null, priority: args.priority || 'medium', assigned_to: args.assigned_to || ctx.userId, project_id: args.project_id || null, client_id: args.client_id || null, status: 'pending', created_by: ctx.userId, created_at: new Date().toISOString() }).select().single();
     if (error) return { content: [{ type: 'text', text: JSON.stringify({ error: error.message }) }] };
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };

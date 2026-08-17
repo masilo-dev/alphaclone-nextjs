@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T11:34:14.426Z",
+  "generated_at": "2026-08-17T14:03:35.961Z",
   "mode": {
     "transport": "local-dry-run",
     "execute_read_tools": false,
@@ -8,11 +8,11 @@
   },
   "policy": "Default mode proves ChatGPT full-catalog discoverability and route/registry executability without side effects. Live invocation requires --http and explicit execution flags.",
   "totals": {
-    "tools_audited": 502,
-    "registry_tools": 501,
-    "directly_visible_tools": 502,
+    "tools_audited": 504,
+    "registry_tools": 503,
+    "directly_visible_tools": 504,
     "passed": 190,
-    "skipped_write": 236,
+    "skipped_write": 238,
     "skipped_destructive": 13,
     "requires_approval": 63
   },
@@ -1942,6 +1942,17 @@
       "risk_level": "low",
       "status": "passed",
       "detail": "Dry-run passed. Pass --execute-read-tools --http to invoke read tools against a credentialed endpoint."
+    },
+    {
+      "module": "health",
+      "tool_name": "check_mcp_execution_readiness",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
     },
     {
       "module": "health",
@@ -5169,6 +5180,17 @@
     {
       "module": "workspace",
       "tool_name": "execute_action",
+      "discoverable_after_load": true,
+      "executable_registered": true,
+      "executable_via": "tool-registry",
+      "read_write": "write",
+      "risk_level": "medium",
+      "status": "skipped_write",
+      "detail": "Write tool was not executed by default. Pass --execute-write-tools only in a staging workspace."
+    },
+    {
+      "module": "workspace",
+      "tool_name": "execute_internal_tool",
       "discoverable_after_load": true,
       "executable_registered": true,
       "executable_via": "tool-registry",

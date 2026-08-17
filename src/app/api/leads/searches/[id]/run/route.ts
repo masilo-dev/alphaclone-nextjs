@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { processLeadDiscoveryBatch } from '@/workers/lead-discovery-worker';
+
 type Context = { params: Promise<{ id: string }> };
 
 function leadSearchJobSeed(input: {
@@ -59,11 +60,13 @@ function isUnavailableSchema(error: unknown): boolean {
 
 export async function POST(req: NextRequest, context: Context) {
   try {
-    const { id } = await context.params; const { workspaceId } = await req.json();
+    const { id } = await context.params;
+    const { workspaceId } = await req.json();
     const { user, admin } = await requireTenantAccess(workspaceId, req);
     const { data: search } = await admin.from('lead_searches').select('id,status,query,business_keywords,industry,location,city,region,country,source_filters')
       .eq('workspace_id', workspaceId).eq('id', id).single();
     if (!search) return NextResponse.json({ error: 'Search not found' }, { status: 404 });
+    
     await admin.from('lead_searches').update({ status: 'queued', progress: 0, cancelled_at: null, updated_at: new Date().toISOString() }).eq('id', id);
     const key = `lead.search.start:${id}:${crypto.randomUUID()}`;
     const { error } = await admin.from('lead_search_jobs').insert(leadSearchJobSeed({
@@ -73,6 +76,7 @@ export async function POST(req: NextRequest, context: Context) {
       idempotencyKey: key,
       search,
     }));
+
     if (error && isUnavailableSchema(error)) {
       return NextResponse.json(
         { error: 'Lead Finder queue is not available yet for this workspace.', available: false },
@@ -81,10 +85,16 @@ export async function POST(req: NextRequest, context: Context) {
     }
     if (error) throw error;
 
-    void processLeadDiscoveryBatch({ workerId: `api-trigger-${id}`, claimLimit: 1 }).catch((err) => {
+    try {
+      await processLeadDiscoveryBatch({ workerId: `api-trigger-${id}`, claimLimit: 1, searchId: id });
+    } catch (err) {
       console.warn('[api/leads/searches/run] Immediate discovery trigger warning:', err);
-    });
+    }
 
-    return NextResponse.json({ status: 'queued' }, { status: 202 });
-  } catch (error) { return routeErrorResponse(error, 'Failed to queue lead search', req); }
+    const { data: updatedSearch } = await admin.from('lead_searches').select('status,progress,discovered_count').eq('id', id).single();
+
+    return NextResponse.json({ status: updatedSearch?.status || 'queued', progress: updatedSearch?.progress || 0 }, { status: 200 });
+  } catch (error) {
+    return routeErrorResponse(error, 'Failed to queue lead search', req);
+  }
 }

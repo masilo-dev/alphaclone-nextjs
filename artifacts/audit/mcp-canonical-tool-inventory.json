@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-10T09:11:22.796Z",
+  "generated_at": "2026-08-17T14:03:20.492Z",
   "source_of_truth": "runtime MCP registry + unified tools/list full catalog",
   "policy": "Default MCP discovery exposes the full executable catalog to every client. Catalog-only entries are audit visibility only and must not be reported as executable tools.",
   "totals": {
-    "full_catalog_tools": 501,
-    "registry_executable_tools": 500,
+    "full_catalog_tools": 504,
+    "registry_executable_tools": 503,
     "progressive_route_tools": 7,
     "catalog_only_tools": 0,
-    "write_tools": 311,
-    "write_tools_with_idempotency": 22,
+    "write_tools": 314,
+    "write_tools_with_idempotency": 23,
     "write_tools_with_receipt_signal": 20,
     "duplicate_names": []
   },
@@ -621,20 +621,20 @@
         {
           "canonical_tool_name": "get_contract_approvals",
           "module": "approvals",
-          "description": "List contract approval requests, optionally filtered to one contract.",
+          "description": "Fetch approval workflow state and audit trail for a contract.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "contract_id": {
-                "type": "string",
-                "description": "Optional contract reference"
+                "type": "string"
               }
             },
-            "required": []
+            "required": [
+              "contract_id"
+            ]
           },
           "output_schema": {
             "type": "object",
@@ -2620,44 +2620,32 @@
         {
           "canonical_tool_name": "create_business_event",
           "module": "calendar",
-          "description": "Create an internal business event trigger record for automation loops.",
+          "description": "Create a business event, milestone, or calendar entry.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "title": {
+                "type": "string"
+              },
+              "start_time": {
+                "type": "string"
+              },
+              "end_time": {
                 "type": "string"
               },
               "description": {
                 "type": "string"
               },
-              "start_time": {
-                "type": "string",
-                "description": "ISO datetime"
-              },
-              "end_time": {
-                "type": "string",
-                "description": "ISO datetime"
-              },
               "event_type": {
-                "type": "string",
-                "description": "lead_created | invoice_paid | meeting | custom"
-              },
-              "attendees": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "type": "string"
               }
             },
             "required": [
               "title",
-              "start_time",
-              "end_time",
-              "event_type"
+              "start_time"
             ]
           },
           "output_schema": {
@@ -2687,38 +2675,29 @@
         {
           "canonical_tool_name": "create_client_portal_event",
           "module": "calendar",
-          "description": "Client portal event adapter: records timeline, download, and feedback events.",
+          "description": "Create a client-facing portal event or notification.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "event_type": {
-                "type": "string"
-              },
-              "project_id": {
                 "type": "string"
               },
               "client_id": {
                 "type": "string"
               },
-              "deliverable_id": {
+              "title": {
                 "type": "string"
               },
-              "feedback_rating": {
-                "type": "number"
-              },
-              "feedback_comment": {
+              "message": {
                 "type": "string"
               },
-              "metadata": {
-                "type": "object"
+              "event_type": {
+                "type": "string"
               }
             },
             "required": [
-              "event_type"
+              "client_id",
+              "title"
             ]
           },
           "output_schema": {
@@ -2937,28 +2916,21 @@
         {
           "canonical_tool_name": "get_business_events",
           "module": "calendar",
-          "description": "List business events so agents can poll for new triggers.",
+          "description": "List business events (meetings, milestones, deadlines).",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "event_type": {
                 "type": "string"
               },
-              "from_time": {
-                "type": "string",
-                "description": "ISO datetime lower bound for start_time"
+              "from_date": {
+                "type": "string"
               },
-              "to_time": {
-                "type": "string",
-                "description": "ISO datetime upper bound for start_time"
+              "to_date": {
+                "type": "string"
               },
               "limit": {
-                "type": "number",
-                "description": "Max records (default 50, max 200)"
+                "type": "number"
               }
             },
             "required": []
@@ -4020,17 +3992,15 @@
         {
           "canonical_tool_name": "get_client_by_id",
           "module": "contacts",
-          "description": "Fetch a single client record by reference for update or review flows.",
+          "description": "Fetch a single CRM client record by ID.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "client_id": {
-                "type": "string",
-                "description": "Reference from get_clients or search_clients"
+                "type": "string"
               }
             },
             "required": [
@@ -4064,28 +4034,23 @@
         {
           "canonical_tool_name": "get_client_email_history",
           "module": "contacts",
-          "description": "Get outbound/inbound email history for a specific client, including Zoho-synced unified messages and outreach logs.",
+          "description": "Get email history for a specific client.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "client_id": {
-                "type": "string",
-                "description": "Client reference from get_clients."
-              },
-              "client_email": {
-                "type": "string",
-                "description": "Optional email fallback when client_id is unknown."
+                "type": "string"
               },
               "limit": {
-                "type": "number",
-                "description": "Max records (default 50, max 200)."
+                "type": "number"
               }
             },
-            "required": []
+            "required": [
+              "client_id"
+            ]
           },
           "output_schema": {
             "type": "object",
@@ -4114,13 +4079,12 @@
         {
           "canonical_tool_name": "get_client_history",
           "module": "contacts",
-          "description": "Fetch a full client history: profile, related leads, outreach logs, and recent unified messages.",
+          "description": "Get activity history (invoices, outreach, notes) for a client.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "client_id": {
                 "type": "string"
@@ -4510,18 +4474,14 @@
         {
           "canonical_tool_name": "segment_clients_by_criteria",
           "module": "contacts",
-          "description": "Filter clients by advanced criteria for targeted automations.",
+          "description": "Segment clients by industry, stage, value range, or location.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "industry": {
                 "type": "string"
               },
-              "location": {
+              "industry": {
                 "type": "string"
               },
               "sales_stage": {
@@ -4533,11 +4493,8 @@
               "max_value": {
                 "type": "number"
               },
-              "has_email": {
-                "type": "boolean"
-              },
-              "has_phone": {
-                "type": "boolean"
+              "location": {
+                "type": "string"
               },
               "limit": {
                 "type": "number"
@@ -4558,7 +4515,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "email_provider",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -4656,13 +4613,12 @@
         {
           "canonical_tool_name": "update_client_metadata",
           "module": "contacts",
-          "description": "Merge metadata fields into a client custom_fields object.",
+          "description": "Update custom metadata fields on a client record.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "client_id": {
                 "type": "string"
@@ -5021,26 +4977,20 @@
         {
           "canonical_tool_name": "analyze_document_intelligence",
           "module": "documents",
-          "description": "Document intelligence adapter: extracts clauses/risk flags and stores a scan run.",
+          "description": "Run automated AI intelligence extraction on a document or contract.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "document_url": {
                 "type": "string"
               },
-              "document_text": {
+              "document_id": {
                 "type": "string"
-              },
-              "document_type": {
-                "type": "string",
-                "description": "contract | proposal | invoice | nda | other"
               }
             },
-            "required": []
+            "required": [
+              "document_id"
+            ]
           },
           "output_schema": {
             "type": "object",
@@ -6016,17 +5966,15 @@
         {
           "canonical_tool_name": "get_contract_versions",
           "module": "documents",
-          "description": "List stored versions for a contract.",
+          "description": "List version history and revisions for a contract.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "contract_id": {
-                "type": "string",
-                "description": "Contract reference"
+                "type": "string"
               }
             },
             "required": [
@@ -8523,33 +8471,22 @@
         {
           "canonical_tool_name": "send_whatsapp_message",
           "module": "email",
-          "description": "Send a WhatsApp message through the tenant connected WhatsApp integration and return the real provider delivery result.",
+          "description": "Send a WhatsApp message via connected Business API.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
-              "phone": {
-                "type": "string",
-                "description": "Recipient phone number in international format"
+              "recipient_phone": {
+                "type": "string"
               },
               "message": {
-                "type": "string",
-                "description": "Message text to send"
-              },
-              "contact_id": {
-                "type": "string",
-                "description": "Optional CRM contact/client reference"
-              },
-              "integration_id": {
-                "type": "string",
-                "description": "Optional WhatsApp integration override"
+                "type": "string"
               }
             },
             "required": [
-              "phone",
+              "recipient_phone",
               "message"
             ]
           },
@@ -8845,9 +8782,9 @@
       ]
     },
     "health": {
-      "total": 34,
-      "executable": 34,
-      "write": 7,
+      "total": 35,
+      "executable": 35,
+      "write": 8,
       "tools": [
         {
           "canonical_tool_name": "ai_business_readiness_score",
@@ -8925,6 +8862,49 @@
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": true,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "check_mcp_execution_readiness",
+          "module": "health",
+          "description": "Check whether the current MCP workspace can execute ChatGPT write actions, especially social publishing and email sending. Use this when tools are visible but posting or sending fails.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "social_post",
+                  "email_send",
+                  "media_upload"
+                ]
+              }
+            },
+            "required": []
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": "email_provider",
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
             "openWorldHint": false,
             "destructiveHint": false
           }
@@ -9307,16 +9287,14 @@
         {
           "canonical_tool_name": "get_calendly_status",
           "module": "health",
-          "description": "Check Calendly connection status and return configured booking URL plus local booking fallback.",
+          "description": "Check status of Calendly OAuth connection and active event types.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               }
-            },
-            "required": []
+            }
           },
           "output_schema": {
             "type": "object",
@@ -9433,7 +9411,7 @@
         {
           "canonical_tool_name": "get_environment",
           "module": "health",
-          "description": "Return non-secret environment metadata: NODE_ENV, region, public URLs, and feature capability flags.",
+          "description": "Return tenant-owned environment metadata and active workspace integrations for this tenant.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -10220,13 +10198,12 @@
         {
           "canonical_tool_name": "update_client_status_batch",
           "module": "health",
-          "description": "Batch update client sales_stage with dry_run safety.",
+          "description": "Update sales_stage or status for multiple clients at once.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "client_ids": {
                 "type": "array",
@@ -10237,13 +10214,12 @@
               "sales_stage": {
                 "type": "string"
               },
-              "dry_run": {
+              "is_active": {
                 "type": "boolean"
               }
             },
             "required": [
-              "client_ids",
-              "sales_stage"
+              "client_ids"
             ]
           },
           "output_schema": {
@@ -10855,17 +10831,15 @@
         {
           "canonical_tool_name": "gmail_get_thread",
           "module": "integrations",
-          "description": "Fetch all messages in a specific Gmail thread by threadId.",
+          "description": "Fetch all messages in a specific Gmail thread.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "thread_id": {
-                "type": "string",
-                "description": "The thread identifier from gmail_list_threads"
+                "type": "string"
               }
             },
             "required": [
@@ -10899,20 +10873,14 @@
         {
           "canonical_tool_name": "gmail_list_threads",
           "module": "integrations",
-          "description": "List recent Gmail conversations via IMAP. Returns a list of threads with subjects, senders, and dates.",
+          "description": "List Gmail threads for workspace connected accounts.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "limit": {
-                "type": "number",
-                "description": "Max threads to fetch (default 20)"
+                "type": "string"
               }
-            },
-            "required": []
+            }
           },
           "output_schema": {
             "type": "object",
@@ -11820,13 +11788,12 @@
         {
           "canonical_tool_name": "get_invoice_line_items",
           "module": "invoices",
-          "description": "Get line items from an invoice for detailed billing analysis.",
+          "description": "Fetch line items for a specific invoice.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "invoice_id": {
                 "type": "string"
@@ -13443,9 +13410,9 @@
       ]
     },
     "media": {
-      "total": 18,
-      "executable": 18,
-      "write": 15,
+      "total": 19,
+      "executable": 19,
+      "write": 16,
       "tools": [
         {
           "canonical_tool_name": "create_post_with_ai_image",
@@ -13599,33 +13566,90 @@
         {
           "canonical_tool_name": "create_social_post_with_media",
           "module": "media",
-          "description": "Create, schedule, or publish a social post using existing asset_ids; base64 upload remains supported for one-step AI image transfer.",
+          "description": "One-step media ingestion and social post publishing/scheduling for ChatGPT and MCP clients. Accepts base64 image/video/document content, data URLs, source URLs, or existing asset IDs. Enforces valid media processing and returns verification receipt with provider post ID and live URL.",
           "input_schema": {
             "type": "object",
             "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              },
               "caption": {
-                "type": "string"
+                "type": "string",
+                "description": "Post text / caption"
+              },
+              "content": {
+                "type": "string",
+                "description": "Alias for caption"
+              },
+              "text": {
+                "type": "string",
+                "description": "Alias for caption"
               },
               "filename": {
-                "type": "string"
+                "type": "string",
+                "description": "Original media filename"
               },
               "file_name": {
-                "type": "string"
+                "type": "string",
+                "description": "Alias for filename"
               },
               "mime_type": {
-                "type": "string"
+                "type": "string",
+                "description": "MIME type e.g. image/png, video/mp4"
+              },
+              "content_type": {
+                "type": "string",
+                "description": "Alias for mime_type"
               },
               "content_base64": {
-                "type": "string"
+                "type": "string",
+                "description": "Base64 image/video/document string"
               },
               "file_base64": {
-                "type": "string"
+                "type": "string",
+                "description": "Alias for content_base64"
+              },
+              "file": {
+                "type": "string",
+                "description": "Alias for content_base64"
+              },
+              "data_url": {
+                "type": "string",
+                "description": "data:image/...;base64,... data URL"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "Public HTTPS media URL"
+              },
+              "url": {
+                "type": "string",
+                "description": "Alias for source_url"
+              },
+              "media_url": {
+                "type": "string",
+                "description": "Alias for source_url"
+              },
+              "asset_id": {
+                "type": "string",
+                "description": "Existing media asset ID"
               },
               "asset_ids": {
                 "type": "array",
                 "items": {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
+                }
+              },
+              "media_asset_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "media_urls": {
+                "type": "array",
+                "items": {
+                  "type": "string"
                 }
               },
               "platform": {
@@ -13664,12 +13688,12 @@
               "scheduled_at": {
                 "type": "string",
                 "format": "date-time"
+              },
+              "idempotency_key": {
+                "type": "string"
               }
             },
-            "required": [
-              "caption",
-              "mime_type"
-            ]
+            "required": []
           },
           "output_schema": {
             "type": "object",
@@ -13687,7 +13711,7 @@
           "integration_dependency": "linkedin",
           "executable_status": "executable",
           "executable_via": "tool-registry",
-          "supports_idempotency": false,
+          "supports_idempotency": true,
           "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
@@ -13784,36 +13808,20 @@
         {
           "canonical_tool_name": "generate_ai_image",
           "module": "media",
-          "description": "Autonomous Visual Creator: Generates a high-quality AI visual image using DALL-E 3 (OpenAI) or Grok (xAI), saves it to permanent sovereign CDN storage, and returns the public CDN image URL.",
+          "description": "Generate an AI image asset using standard text prompts.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "prompt": {
-                "type": "string",
-                "description": "Detailed prompt/description for the visual image to generate. Aliases: image_prompt, description."
-              },
-              "image_prompt": {
-                "type": "string",
-                "description": "Alias of prompt."
-              },
-              "image_provider": {
-                "type": "string",
-                "enum": [
-                  "openai",
-                  "xai"
-                ],
-                "description": "Default: openai"
-              },
-              "size": {
-                "type": "string",
-                "description": "Resolution (e.g. 1024x1024, 1792x1024, 1024x1792). Default: 1024x1024"
+                "type": "string"
               }
             },
-            "required": []
+            "required": [
+              "prompt"
+            ]
           },
           "output_schema": {
             "type": "object",
@@ -13828,7 +13836,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "openai",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -13898,36 +13906,20 @@
         {
           "canonical_tool_name": "generate_image",
           "module": "media",
-          "description": "Alias of generate_ai_image for OpenAI ChatGPT and AI agent tool compatibility.",
+          "description": "Generate or edit an image prompt for marketing/social media.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "prompt": {
-                "type": "string",
-                "description": "Detailed prompt/description for the visual image to generate."
-              },
-              "image_prompt": {
-                "type": "string",
-                "description": "Alias of prompt."
-              },
-              "image_provider": {
-                "type": "string",
-                "enum": [
-                  "openai",
-                  "xai"
-                ],
-                "description": "Default: openai"
-              },
-              "size": {
-                "type": "string",
-                "description": "Resolution (e.g. 1024x1024). Default: 1024x1024"
+                "type": "string"
               }
             },
-            "required": []
+            "required": [
+              "prompt"
+            ]
           },
           "output_schema": {
             "type": "object",
@@ -13942,7 +13934,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "openai",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -14421,17 +14413,25 @@
         {
           "canonical_tool_name": "upload_media",
           "module": "media",
-          "description": "Upload AI images with content_base64 (+filename, mime_type). No /mnt/data paths. Returns media_url + media_id for publish_post.media_urls. Also accepts data_url or public HTTPS url. Permanent public HTTPS; no storage credentials.",
+          "description": "Upload social media asset (image PNG/JPG/JPEG/GIF/WebP, video MP4/MOV/WebM, or document PDF) via base64, data URL, remote HTTPS source URL, or file. Returns media_asset_id and public_url for social publishing.",
           "input_schema": {
             "type": "object",
             "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              },
               "filename": {
                 "type": "string",
-                "description": "e.g. facebook-post.png (required with base64 uploads)"
+                "description": "Original file name e.g. post.png"
+              },
+              "file_name": {
+                "type": "string",
+                "description": "Alias for filename"
               },
               "mime_type": {
                 "type": "string",
-                "description": "image/png | image/jpeg | image/webp | image/gif | video/mp4 …"
+                "description": "MIME type e.g. image/png, video/mp4"
               },
               "content_type": {
                 "type": "string",
@@ -14439,23 +14439,27 @@
               },
               "content_base64": {
                 "type": "string",
-                "description": "Raw base64 image/video bytes OR a data:image/...;base64,... URL. Use this for ChatGPT-generated images."
-              },
-              "file": {
-                "type": "string",
-                "description": "Alias for content_base64"
+                "description": "Base64 file content string"
               },
               "file_base64": {
                 "type": "string",
                 "description": "Alias for content_base64"
               },
-              "url": {
+              "file": {
                 "type": "string",
-                "description": "Already-public HTTPS URL to ingest into the tenant library"
+                "description": "Alias for content_base64"
               },
               "data_url": {
                 "type": "string",
-                "description": "data:image/...;base64,..."
+                "description": "data:image/...;base64,... string"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "HTTPS source URL of media to fetch/ingest"
+              },
+              "url": {
+                "type": "string",
+                "description": "Alias for source_url"
               },
               "purpose": {
                 "type": "string",
@@ -14480,7 +14484,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "facebook",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -14549,6 +14553,107 @@
             "openWorldHint": false,
             "destructiveHint": false
           }
+        },
+        {
+          "canonical_tool_name": "upload_social_media",
+          "module": "media",
+          "description": "Canonical MCP media ingestion for social publishing. Accept file bytes, base64 content, data URL, or remote HTTPS source URL. Ingests media into AlphaClone permanent storage and returns media_id + public/signed HTTPS media_url for publish_post / publish_social_post. Handles ChatGPT session files and generated images; never pass /mnt/data paths.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "file": {
+                "type": "string",
+                "description": "Base64 file content, data URL, or file bytes string."
+              },
+              "base64": {
+                "type": "string",
+                "description": "Raw base64 bytes or data:image/png;base64,... fallback."
+              },
+              "content_base64": {
+                "type": "string",
+                "description": "Alias for base64"
+              },
+              "file_base64": {
+                "type": "string",
+                "description": "Alias for base64"
+              },
+              "data_url": {
+                "type": "string",
+                "description": "data:image/...;base64,... string"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "Public HTTPS media URL to ingest into AlphaClone storage."
+              },
+              "url": {
+                "type": "string",
+                "description": "Alias for source_url"
+              },
+              "image_url": {
+                "type": "string",
+                "description": "Alias for source_url"
+              },
+              "filename": {
+                "type": "string",
+                "description": "File name e.g. post.png"
+              },
+              "file_name": {
+                "type": "string",
+                "description": "Alias for filename"
+              },
+              "mime_type": {
+                "type": "string",
+                "description": "Declared MIME. Server validates actual file signature."
+              },
+              "content_type": {
+                "type": "string",
+                "description": "Alias for mime_type"
+              },
+              "media_type": {
+                "type": "string",
+                "enum": [
+                  "image",
+                  "video",
+                  "document"
+                ]
+              },
+              "purpose": {
+                "type": "string",
+                "description": "Defaults to social"
+              },
+              "alt_text": {
+                "type": "string"
+              }
+            },
+            "required": []
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": true,
+            "destructiveHint": false
+          }
         }
       ]
     },
@@ -14606,29 +14711,29 @@
         {
           "canonical_tool_name": "reconcile_payment",
           "module": "payments",
-          "description": "Mark an invoice as paid and attach reconciliation metadata.",
+          "description": "Mark an invoice as paid and record the payment.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "invoice_id": {
                 "type": "string"
               },
-              "amount": {
+              "amount_paid": {
                 "type": "number"
               },
-              "paid_at": {
+              "payment_method": {
                 "type": "string"
               },
-              "payment_ref": {
+              "payment_reference": {
                 "type": "string"
               }
             },
             "required": [
-              "invoice_id"
+              "invoice_id",
+              "amount_paid"
             ]
           },
           "output_schema": {
@@ -14658,31 +14763,18 @@
         {
           "canonical_tool_name": "send_receipt",
           "module": "payments",
-          "description": "Send a formal payment receipt for a paid invoice using the specified email provider (Brevo, Resend, Zoho, or SendGrid).",
+          "description": "Send a payment receipt to a client for a paid invoice.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "invoice_id": {
-                "type": "string",
-                "description": "Reference of the PAID invoice"
+                "type": "string"
               },
               "recipient_email": {
-                "type": "string",
-                "description": "Optional override email for recipient"
-              },
-              "provider": {
-                "type": "string",
-                "enum": [
-                  "brevo",
-                  "resend",
-                  "zoho",
-                  "sendgrid"
-                ],
-                "description": "Preferred email provider for this send"
+                "type": "string"
               }
             },
             "required": [
@@ -14702,7 +14794,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "zoho",
+          "integration_dependency": "email_provider",
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -14827,13 +14919,12 @@
         {
           "canonical_tool_name": "get_project_milestones",
           "module": "projects",
-          "description": "Get milestones linked to a project.",
+          "description": "Get milestones for a project.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "project_id": {
                 "type": "string"
@@ -14914,13 +15005,12 @@
         {
           "canonical_tool_name": "get_project_timeline",
           "module": "projects",
-          "description": "Flat timeline of all project events, status changes, and upcoming deadlines.",
+          "description": "Get a project timeline with tasks and milestones sorted by date.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "project_id": {
                 "type": "string"
@@ -15534,13 +15624,12 @@
         {
           "canonical_tool_name": "generate_expense_report",
           "module": "reporting",
-          "description": "Generate an expense summary report grouped by category and status.",
+          "description": "Generate a summarized expense report grouped by category.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "from_date": {
                 "type": "string"
@@ -15909,47 +15998,32 @@
         {
           "canonical_tool_name": "create_quote",
           "module": "revenue",
-          "description": "Create a quote/proposal for a contact or deal in this workspace.",
+          "description": "Create a new quote/proposal for a client.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
-              "name": {
-                "type": "string",
-                "description": "Quote title"
+              "client_id": {
+                "type": "string"
               },
-              "contact_id": {
-                "type": "string",
-                "description": "Optional contact/client reference"
+              "title": {
+                "type": "string"
               },
-              "deal_id": {
-                "type": "string",
-                "description": "Optional deal reference"
+              "total": {
+                "type": "number"
               },
-              "currency": {
-                "type": "string",
-                "description": "Default USD"
-              },
-              "valid_for_days": {
-                "type": "number",
-                "description": "Default 30"
+              "valid_until": {
+                "type": "string"
               },
               "notes": {
                 "type": "string"
-              },
-              "terms_and_conditions": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string",
-                "description": "draft | sent | viewed | accepted | rejected | expired | converted"
               }
             },
             "required": [
-              "name"
+              "title",
+              "total"
             ]
           },
           "output_schema": {
@@ -15969,7 +16043,7 @@
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
-          "supports_action_receipt": true,
+          "supports_action_receipt": false,
           "annotations": {
             "readOnlyHint": false,
             "openWorldHint": false,
@@ -15979,36 +16053,27 @@
         {
           "canonical_tool_name": "create_subscription_checkout",
           "module": "revenue",
-          "description": "Payment/subscription adapter: creates Stripe checkout URL for subscription upgrade.",
+          "description": "Create a Stripe subscription checkout session for a client.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
-              "plan_id": {
-                "type": "string",
-                "description": "starter | pro | enterprise"
+              "client_id": {
+                "type": "string"
               },
               "price_id": {
                 "type": "string"
               },
-              "admin_email": {
+              "plan_name": {
                 "type": "string"
               },
-              "success_url": {
-                "type": "string"
-              },
-              "cancel_url": {
-                "type": "string"
+              "amount_cents": {
+                "type": "number"
               }
             },
-            "required": [
-              "plan_id",
-              "price_id",
-              "admin_email"
-            ]
+            "required": []
           },
           "output_schema": {
             "type": "object",
@@ -16023,7 +16088,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "email_provider",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -16120,17 +16185,18 @@
         {
           "canonical_tool_name": "get_quotes",
           "module": "revenue",
-          "description": "Read-only: List quotes and proposals with their statuses.",
+          "description": "List quotes/proposals for the workspace.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "status": {
-                "type": "string",
-                "description": "draft | sent | accepted | declined"
+                "type": "string"
+              },
+              "limit": {
+                "type": "number"
               }
             },
             "required": []
@@ -16587,38 +16653,22 @@
         {
           "canonical_tool_name": "send_quote",
           "module": "revenue",
-          "description": "Send a quote/proposal by email with quote details and an attached quote document generated from AlphaClone data.",
+          "description": "Mark a quote as sent and optionally email it to the client.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "quote_id": {
-                "type": "string",
-                "description": "Reference from get_quotes or create_quote"
+                "type": "string"
               },
-              "to": {
-                "type": "string",
-                "description": "Recipient email address"
-              },
-              "subject": {
-                "type": "string",
-                "description": "Optional subject override"
-              },
-              "message": {
-                "type": "string",
-                "description": "Optional intro message to include before quote details"
-              },
-              "provider": {
-                "type": "string",
-                "description": "Optional provider override: zoho | brevo | sendgrid | resend"
+              "recipient_email": {
+                "type": "string"
               }
             },
             "required": [
-              "quote_id",
-              "to"
+              "quote_id"
             ]
           },
           "output_schema": {
@@ -16634,7 +16684,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "zoho",
+          "integration_dependency": "email_provider",
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -16804,36 +16854,23 @@
         {
           "canonical_tool_name": "update_quote",
           "module": "revenue",
-          "description": "Update quote details and lifecycle status after creation.",
+          "description": "Update a quote status, total, or notes.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "quote_id": {
-                "type": "string",
-                "description": "Reference from get_quotes"
-              },
-              "name": {
                 "type": "string"
               },
               "status": {
-                "type": "string",
-                "description": "draft | sent | viewed | accepted | rejected | expired | converted"
+                "type": "string"
+              },
+              "total": {
+                "type": "number"
               },
               "notes": {
-                "type": "string"
-              },
-              "terms_and_conditions": {
-                "type": "string"
-              },
-              "valid_until": {
-                "type": "string",
-                "description": "YYYY-MM-DD"
-              },
-              "currency": {
                 "type": "string"
               }
             },
@@ -19916,7 +19953,7 @@
         {
           "canonical_tool_name": "publish_post",
           "module": "social",
-          "description": "Publish/schedule a social post. AI images: upload_media(content_base64) first, then media_urls=[media_url] or media_asset_ids=[media_id]. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
+          "description": "Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -19931,8 +19968,7 @@
                 "type": "string"
               },
               "scheduled_at": {
-                "type": "string",
-                "format": "date-time"
+                "type": "string"
               },
               "media_urls": {
                 "type": "array",
@@ -19944,10 +19980,76 @@
               "media_asset_ids": {
                 "type": "array",
                 "items": {
-                  "type": "string",
-                  "format": "uuid"
+                  "type": "string"
                 },
                 "description": "media_id values returned by upload_media"
+              },
+              "media_url": {
+                "type": "string",
+                "description": "Single public HTTPS media URL from upload_social_media"
+              },
+              "image_url": {
+                "type": "string",
+                "description": "Alias for media_url"
+              },
+              "signed_url": {
+                "type": "string",
+                "description": "Alias for media_url"
+              },
+              "media_id": {
+                "type": "string",
+                "description": "Single media_id returned by upload_social_media"
+              },
+              "media_asset_id": {
+                "type": "string",
+                "description": "Alias for media_id"
+              },
+              "media_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Alias for media_asset_ids"
+              },
+              "filename": {
+                "type": "string",
+                "description": "Original file name e.g. post.png"
+              },
+              "file_name": {
+                "type": "string",
+                "description": "Alias for filename"
+              },
+              "mime_type": {
+                "type": "string",
+                "description": "MIME type e.g. image/png"
+              },
+              "content_type": {
+                "type": "string",
+                "description": "Alias for mime_type"
+              },
+              "content_base64": {
+                "type": "string",
+                "description": "Base64 image string"
+              },
+              "file_base64": {
+                "type": "string",
+                "description": "Alias for content_base64"
+              },
+              "file": {
+                "type": "string",
+                "description": "Alias for content_base64"
+              },
+              "data_url": {
+                "type": "string",
+                "description": "data:image/...;base64,... string"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "Public HTTPS image URL"
+              },
+              "url": {
+                "type": "string",
+                "description": "Alias for source_url"
               },
               "identity_type": {
                 "type": "string",
@@ -20058,11 +20160,37 @@
                   "format": "uuid"
                 }
               },
+              "media_ids": {
+                "type": "array",
+                "description": "Canonical alias for media_asset_ids returned by upload_social_media.",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
               "media_urls": {
                 "type": "array",
                 "items": {
                   "type": "string"
                 }
+              },
+              "media_url": {
+                "type": "string",
+                "description": "Single public HTTPS media URL from upload_social_media"
+              },
+              "image_url": {
+                "type": "string",
+                "description": "Alias for media_url"
+              },
+              "media_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Single media_id from upload_social_media"
+              },
+              "media_asset_id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Alias for media_id"
               },
               "link_url": {
                 "type": "string"
@@ -20994,13 +21122,12 @@
         {
           "canonical_tool_name": "add_task_dependency",
           "module": "tasks",
-          "description": "Declare that one task depends on completion of another task.",
+          "description": "Add a dependency between two tasks (task B cannot start until task A completes).",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "task_id": {
                 "type": "string"
@@ -21116,13 +21243,12 @@
         {
           "canonical_tool_name": "create_task",
           "module": "tasks",
-          "description": "Create a native AlphaClone task or schedule a follow-up. Use like Asana/Azure task assignment inside AlphaClone. Can link to projects and optionally notify the assignee by email.",
+          "description": "Create a new task in the workspace.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "title": {
                 "type": "string"
@@ -21130,24 +21256,20 @@
               "description": {
                 "type": "string"
               },
-              "project_id": {
-                "type": "string",
-                "description": "Optional. Reference of business project to link (stored as related_to_project)."
+              "due_date": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
               },
               "assigned_to": {
                 "type": "string"
               },
-              "notify_assignee": {
-                "type": "boolean",
-                "description": "If true and assigned_to has an email, send the task assignment by AlphaClone email."
+              "project_id": {
+                "type": "string"
               },
-              "due_date": {
-                "type": "string",
-                "description": "ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)"
-              },
-              "priority": {
-                "type": "string",
-                "description": "low | medium | high | urgent"
+              "client_id": {
+                "type": "string"
               }
             },
             "required": [
@@ -21167,7 +21289,7 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "email_provider",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
@@ -21181,22 +21303,18 @@
         {
           "canonical_tool_name": "create_tasks_batch",
           "module": "tasks",
-          "description": "Batch create tasks with per-item results and dry_run option.",
+          "description": "Create multiple tasks at once.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "tasks": {
                 "type": "array",
                 "items": {
                   "type": "object"
                 }
-              },
-              "dry_run": {
-                "type": "boolean"
               }
             },
             "required": [
@@ -21275,32 +21393,24 @@
         {
           "canonical_tool_name": "get_tasks",
           "module": "tasks",
-          "description": "Retrieve tasks. Use to see what is pending, what is due, or what is assigned to a team member.",
+          "description": "List tasks for the workspace with optional filters.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
-              "project_id": {
-                "type": "string",
-                "description": "Optional. Reference of the linked business project (same as tasks.related_to_project)."
+              "status": {
+                "type": "string"
               },
               "assigned_to": {
                 "type": "string"
               },
-              "completed": {
-                "type": "boolean",
-                "description": "If true, only completed tasks; if false, only open tasks."
+              "project_id": {
+                "type": "string"
               },
-              "due_after": {
-                "type": "string",
-                "description": "ISO date or datetime; return tasks with due_date on or after this instant (for \"this week\" windows)."
-              },
-              "due_before": {
-                "type": "string",
-                "description": "ISO date or datetime; return tasks with due_date on or before this instant."
+              "limit": {
+                "type": "number"
               }
             },
             "required": []
@@ -21322,7 +21432,7 @@
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
-          "supports_action_receipt": false,
+          "supports_action_receipt": true,
           "annotations": {
             "readOnlyHint": true,
             "openWorldHint": false,
@@ -21530,40 +21640,26 @@
         {
           "canonical_tool_name": "set_task_recurrence",
           "module": "tasks",
-          "description": "Set recurrence schedule for a task.",
+          "description": "Set a recurrence schedule on an existing task.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "task_id": {
                 "type": "string"
               },
-              "frequency": {
-                "type": "string",
-                "description": "Daily | Weekly | Monthly | Yearly"
-              },
-              "interval": {
-                "type": "number"
-              },
-              "days_of_week": {
-                "type": "array",
-                "items": {
-                  "type": "number"
-                }
-              },
-              "day_of_month": {
-                "type": "number"
-              },
-              "end_date": {
+              "recurrence": {
                 "type": "string"
+              },
+              "interval_days": {
+                "type": "number"
               }
             },
             "required": [
               "task_id",
-              "frequency"
+              "recurrence"
             ]
           },
           "output_schema": {
@@ -22049,39 +22145,30 @@
         {
           "canonical_tool_name": "update_task",
           "module": "tasks",
-          "description": "Update task fields such as status, due date, assignee, title, and priority.",
+          "description": "Update a task status, priority, due date, or assignment.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "task_id": {
-                "type": "string",
-                "description": "Task reference from get_tasks"
-              },
-              "title": {
                 "type": "string"
               },
-              "description": {
+              "task_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              },
+              "due_date": {
                 "type": "string"
               },
               "assigned_to": {
-                "type": "string",
-                "description": "Optional assignee user reference"
+                "type": "string"
               },
-              "due_date": {
-                "type": "string",
-                "description": "ISO 8601 datetime or date string"
-              },
-              "priority": {
-                "type": "string",
-                "description": "low | medium | high | urgent"
-              },
-              "status": {
-                "type": "string",
-                "description": "ideas | todo | in_progress | review | completed | cancelled"
+              "title": {
+                "type": "string"
               }
             },
             "required": [
@@ -22343,16 +22430,21 @@
         {
           "canonical_tool_name": "kickoff_project_automation",
           "module": "workflows",
-          "description": "Vercel Workflows: Trigger project environment setup and milestone monitoring.",
+          "description": "Kickoff a project by setting status to active and creating initial tasks.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "project_id": {
                 "type": "string"
+              },
+              "kickoff_tasks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
@@ -22963,9 +23055,9 @@
       ]
     },
     "workspace": {
-      "total": 45,
-      "executable": 45,
-      "write": 27,
+      "total": 46,
+      "executable": 46,
+      "write": 28,
       "tools": [
         {
           "canonical_tool_name": "automate_expense_entry",
@@ -23114,29 +23206,30 @@
         {
           "canonical_tool_name": "create_expense",
           "module": "workspace",
-          "description": "Log a new business expense manually. Use when the user specifies all details.",
+          "description": "Create a new business expense record.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
               "description": {
-                "type": "string",
-                "description": "What was purchased / vendor name"
+                "type": "string"
               },
               "amount": {
-                "type": "number",
-                "description": "Amount in USD"
+                "type": "number"
               },
               "category": {
-                "type": "string",
-                "description": "Office Supplies | Travel | Software | Marketing | Meals | Utilities | Other"
+                "type": "string"
               },
               "date": {
-                "type": "string",
-                "description": "YYYY-MM-DD (defaults to today)"
+                "type": "string"
+              },
+              "vendor": {
+                "type": "string"
+              },
+              "receipt_url": {
+                "type": "string"
               }
             },
             "required": [
@@ -23157,11 +23250,11 @@
           ],
           "tenant_scope": "session_tenant_required",
           "feature_flag_dependency": null,
-          "integration_dependency": "microsoft",
+          "integration_dependency": null,
           "executable_status": "executable",
           "executable_via": "tool-registry",
           "supports_idempotency": false,
-          "supports_action_receipt": false,
+          "supports_action_receipt": true,
           "annotations": {
             "readOnlyHint": false,
             "openWorldHint": false,
@@ -23238,44 +23331,37 @@
         {
           "canonical_tool_name": "create_journal_entry",
           "module": "workspace",
-          "description": "Manually record a double-entry journal entry in the general ledger.",
+          "description": "Create a manual journal entry for accounting adjustments.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "date": {
                 "type": "string"
               },
               "description": {
                 "type": "string"
               },
-              "lines": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "account_id": {
-                      "type": "string"
-                    },
-                    "debit": {
-                      "type": "number"
-                    },
-                    "credit": {
-                      "type": "number"
-                    }
-                  },
-                  "required": [
-                    "account_id"
-                  ]
-                }
+              "debit_account": {
+                "type": "string"
+              },
+              "credit_account": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "number"
+              },
+              "date": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
               }
             },
             "required": [
               "description",
-              "lines"
+              "debit_account",
+              "credit_account",
+              "amount"
             ]
           },
           "output_schema": {
@@ -23483,16 +23569,14 @@
         {
           "canonical_tool_name": "enable_whatsapp_chatbot",
           "module": "workspace",
-          "description": "Turn on auto-reply for tenant's WhatsApp integration.",
+          "description": "Enable automated AI chatbot handling for incoming WhatsApp messages.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               }
-            },
-            "required": []
+            }
           },
           "output_schema": {
             "type": "object",
@@ -23563,28 +23647,60 @@
           }
         },
         {
+          "canonical_tool_name": "execute_internal_tool",
+          "module": "workspace",
+          "description": "Execute ANY of AlphaClone's 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tool_name": {
+                "type": "string",
+                "description": "Canonical tool name to execute"
+              },
+              "arguments": {
+                "type": "object",
+                "description": "Input arguments matching target tool schema"
+              }
+            },
+            "required": [
+              "tool_name"
+            ]
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+          },
+          "read_write_classification": "write",
+          "risk_level": "medium",
+          "approval_requirement": false,
+          "auth_scope": [
+            "write",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": false,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
           "canonical_tool_name": "execute_strategic_intelligence",
           "module": "workspace",
-          "description": "Unified router for executing AlphaClone 3-Year Leap strategic intelligence modules (e.g. pricing_elasticity, churn_propensity, proposal_generator, ivr_agent, network_graph, data_enrichment, revenue_recognition, invoice_factoring, objection_handling, narrative_reports, anomaly_alert, sql_query, etc.)",
+          "description": "Execute strategic intelligence analysis across leads, pipeline, and market positioning.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "module_name": {
-                "type": "string",
-                "description": "The name of the intelligence module to execute"
-              },
-              "parameters": {
-                "type": "object",
-                "description": "Parameters required by the chosen intelligence module (e.g., deal_id, client_id, query, etc.)"
+                "type": "string"
               }
-            },
-            "required": [
-              "module_name"
-            ]
+            }
           },
           "output_schema": {
             "type": "object",
@@ -23613,17 +23729,12 @@
         {
           "canonical_tool_name": "get_balance_sheet",
           "module": "workspace",
-          "description": "Generate Strategic Balance Sheet: A point-in-time analysis of Assets, Liabilities, and Equity to assess organizational solvency.",
+          "description": "Generate a balance sheet summary: assets, liabilities, and equity.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "as_of_date": {
-                "type": "string",
-                "description": "YYYY-MM-DD"
+                "type": "string"
               }
             },
             "required": []
@@ -23693,18 +23804,14 @@
         {
           "canonical_tool_name": "get_cash_flow_statement",
           "module": "workspace",
-          "description": "Analyze cash inflows and outflows for a specific period.",
+          "description": "Cash flow summary: inflows from paid invoices, outflows from expenses.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "from_date": {
                 "type": "string"
               },
-              "to_date": {
+              "period": {
                 "type": "string"
               }
             },
@@ -23899,13 +24006,12 @@
         {
           "canonical_tool_name": "get_current_user",
           "module": "workspace",
-          "description": "Get the authenticated user's internal AlphaClone profile ID, email, display name, and workspace (tenant) ID from the current MCP session. Use this before calling tools that require a user_id (e.g. get_momentum_score) when the internal ID is not already known.",
+          "description": "Get the current authenticated user profile and workspace info.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID (optional — resolved from session if omitted)"
+                "type": "string"
               }
             },
             "required": []
@@ -23937,63 +24043,21 @@
         {
           "canonical_tool_name": "get_expenses",
           "module": "workspace",
-          "description": "Read-only: Fetch expense records for a tenant. Use to review spending or find receipts.",
+          "description": "List business expenses with optional filters.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
               },
-              "status": {
-                "type": "string",
-                "description": "pending | approved | rejected"
+              "category": {
+                "type": "string"
+              },
+              "limit": {
+                "type": "number"
               },
               "from_date": {
-                "type": "string",
-                "description": "YYYY-MM-DD"
-              },
-              "to_date": {
-                "type": "string",
-                "description": "YYYY-MM-DD"
-              }
-            },
-            "required": []
-          },
-          "output_schema": {
-            "type": "object",
-            "description": "MCP content envelope containing structured JSON data or read-only result."
-          },
-          "read_write_classification": "read",
-          "risk_level": "low",
-          "approval_requirement": false,
-          "auth_scope": [
-            "read",
-            "mcp:tools"
-          ],
-          "tenant_scope": "session_tenant_required",
-          "feature_flag_dependency": null,
-          "integration_dependency": null,
-          "executable_status": "executable",
-          "executable_via": "tool-registry",
-          "supports_idempotency": false,
-          "supports_action_receipt": true,
-          "annotations": {
-            "readOnlyHint": true,
-            "openWorldHint": false,
-            "destructiveHint": false
-          }
-        },
-        {
-          "canonical_tool_name": "get_momentum_score",
-          "module": "workspace",
-          "description": "Get the gamification XP, level, and momentum score for the authenticated user (resolved from MCP session).",
-          "input_schema": {
-            "type": "object",
-            "properties": {
-              "user_id": {
-                "type": "string",
-                "description": "Optional — defaults to authenticated MCP user"
+                "type": "string"
               }
             },
             "required": []
@@ -24023,32 +24087,59 @@
           }
         },
         {
-          "canonical_tool_name": "get_pnl_statement",
+          "canonical_tool_name": "get_momentum_score",
           "module": "workspace",
-          "description": "Generate a detailed Profit & Loss (P&L) statement including revenue momentum, expense distribution, and net margin analysis.",
+          "description": "Calculate real-time business momentum and operational throughput score.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
+                "type": "string"
+              }
+            }
+          },
+          "output_schema": {
+            "type": "object",
+            "description": "MCP content envelope containing structured JSON data or read-only result."
+          },
+          "read_write_classification": "read",
+          "risk_level": "low",
+          "approval_requirement": false,
+          "auth_scope": [
+            "read",
+            "mcp:tools"
+          ],
+          "tenant_scope": "session_tenant_required",
+          "feature_flag_dependency": null,
+          "integration_dependency": null,
+          "executable_status": "executable",
+          "executable_via": "tool-registry",
+          "supports_idempotency": false,
+          "supports_action_receipt": false,
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": false,
+            "destructiveHint": false
+          }
+        },
+        {
+          "canonical_tool_name": "get_pnl_statement",
+          "module": "workspace",
+          "description": "Generate a detailed Profit & Loss statement including revenue, expenses, and net margin.",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "tenant_id": {
+                "type": "string"
               },
               "period": {
-                "type": "string",
-                "enum": [
-                  "monthly",
-                  "quarterly",
-                  "yearly"
-                ],
-                "description": "Default: monthly"
+                "type": "string"
               },
               "from_date": {
-                "type": "string",
-                "description": "Optional start date (YYYY-MM-DD)"
+                "type": "string"
               },
               "to_date": {
-                "type": "string",
-                "description": "Optional end date (YYYY-MM-DD)"
+                "type": "string"
               }
             },
             "required": []
@@ -24773,19 +24864,14 @@
         {
           "canonical_tool_name": "sync_all_inboxes",
           "module": "workspace",
-          "description": "Autonomous Assistant: Fetches unread/recent communications from all connected channels (Email, Facebook, LinkedIn) for processing.",
+          "description": "Trigger immediate sync for all connected email inboxes.",
           "input_schema": {
             "type": "object",
             "properties": {
               "tenant_id": {
-                "type": "string",
-                "description": "AlphaClone Workspace ID"
-              },
-              "limit": {
-                "type": "number"
+                "type": "string"
               }
-            },
-            "required": []
+            }
           },
           "output_schema": {
             "type": "object",
@@ -25586,20 +25672,20 @@
     {
       "canonical_tool_name": "get_contract_approvals",
       "module": "approvals",
-      "description": "List contract approval requests, optionally filtered to one contract.",
+      "description": "Fetch approval workflow state and audit trail for a contract.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "contract_id": {
-            "type": "string",
-            "description": "Optional contract reference"
+            "type": "string"
           }
         },
-        "required": []
+        "required": [
+          "contract_id"
+        ]
       },
       "output_schema": {
         "type": "object",
@@ -27571,44 +27657,32 @@
     {
       "canonical_tool_name": "create_business_event",
       "module": "calendar",
-      "description": "Create an internal business event trigger record for automation loops.",
+      "description": "Create a business event, milestone, or calendar entry.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "title": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          },
+          "end_time": {
             "type": "string"
           },
           "description": {
             "type": "string"
           },
-          "start_time": {
-            "type": "string",
-            "description": "ISO datetime"
-          },
-          "end_time": {
-            "type": "string",
-            "description": "ISO datetime"
-          },
           "event_type": {
-            "type": "string",
-            "description": "lead_created | invoice_paid | meeting | custom"
-          },
-          "attendees": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+            "type": "string"
           }
         },
         "required": [
           "title",
-          "start_time",
-          "end_time",
-          "event_type"
+          "start_time"
         ]
       },
       "output_schema": {
@@ -27638,38 +27712,29 @@
     {
       "canonical_tool_name": "create_client_portal_event",
       "module": "calendar",
-      "description": "Client portal event adapter: records timeline, download, and feedback events.",
+      "description": "Create a client-facing portal event or notification.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "event_type": {
-            "type": "string"
-          },
-          "project_id": {
             "type": "string"
           },
           "client_id": {
             "type": "string"
           },
-          "deliverable_id": {
+          "title": {
             "type": "string"
           },
-          "feedback_rating": {
-            "type": "number"
-          },
-          "feedback_comment": {
+          "message": {
             "type": "string"
           },
-          "metadata": {
-            "type": "object"
+          "event_type": {
+            "type": "string"
           }
         },
         "required": [
-          "event_type"
+          "client_id",
+          "title"
         ]
       },
       "output_schema": {
@@ -27888,28 +27953,21 @@
     {
       "canonical_tool_name": "get_business_events",
       "module": "calendar",
-      "description": "List business events so agents can poll for new triggers.",
+      "description": "List business events (meetings, milestones, deadlines).",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "event_type": {
             "type": "string"
           },
-          "from_time": {
-            "type": "string",
-            "description": "ISO datetime lower bound for start_time"
+          "from_date": {
+            "type": "string"
           },
-          "to_time": {
-            "type": "string",
-            "description": "ISO datetime upper bound for start_time"
+          "to_date": {
+            "type": "string"
           },
           "limit": {
-            "type": "number",
-            "description": "Max records (default 50, max 200)"
+            "type": "number"
           }
         },
         "required": []
@@ -28957,17 +29015,15 @@
     {
       "canonical_tool_name": "get_client_by_id",
       "module": "contacts",
-      "description": "Fetch a single client record by reference for update or review flows.",
+      "description": "Fetch a single CRM client record by ID.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "client_id": {
-            "type": "string",
-            "description": "Reference from get_clients or search_clients"
+            "type": "string"
           }
         },
         "required": [
@@ -29001,28 +29057,23 @@
     {
       "canonical_tool_name": "get_client_email_history",
       "module": "contacts",
-      "description": "Get outbound/inbound email history for a specific client, including Zoho-synced unified messages and outreach logs.",
+      "description": "Get email history for a specific client.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "client_id": {
-            "type": "string",
-            "description": "Client reference from get_clients."
-          },
-          "client_email": {
-            "type": "string",
-            "description": "Optional email fallback when client_id is unknown."
+            "type": "string"
           },
           "limit": {
-            "type": "number",
-            "description": "Max records (default 50, max 200)."
+            "type": "number"
           }
         },
-        "required": []
+        "required": [
+          "client_id"
+        ]
       },
       "output_schema": {
         "type": "object",
@@ -29051,13 +29102,12 @@
     {
       "canonical_tool_name": "get_client_history",
       "module": "contacts",
-      "description": "Fetch a full client history: profile, related leads, outreach logs, and recent unified messages.",
+      "description": "Get activity history (invoices, outreach, notes) for a client.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "client_id": {
             "type": "string"
@@ -29447,18 +29497,14 @@
     {
       "canonical_tool_name": "segment_clients_by_criteria",
       "module": "contacts",
-      "description": "Filter clients by advanced criteria for targeted automations.",
+      "description": "Segment clients by industry, stage, value range, or location.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "industry": {
             "type": "string"
           },
-          "location": {
+          "industry": {
             "type": "string"
           },
           "sales_stage": {
@@ -29470,11 +29516,8 @@
           "max_value": {
             "type": "number"
           },
-          "has_email": {
-            "type": "boolean"
-          },
-          "has_phone": {
-            "type": "boolean"
+          "location": {
+            "type": "string"
           },
           "limit": {
             "type": "number"
@@ -29495,7 +29538,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "email_provider",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -29593,13 +29636,12 @@
     {
       "canonical_tool_name": "update_client_metadata",
       "module": "contacts",
-      "description": "Merge metadata fields into a client custom_fields object.",
+      "description": "Update custom metadata fields on a client record.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "client_id": {
             "type": "string"
@@ -29944,26 +29986,20 @@
     {
       "canonical_tool_name": "analyze_document_intelligence",
       "module": "documents",
-      "description": "Document intelligence adapter: extracts clauses/risk flags and stores a scan run.",
+      "description": "Run automated AI intelligence extraction on a document or contract.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "document_url": {
             "type": "string"
           },
-          "document_text": {
+          "document_id": {
             "type": "string"
-          },
-          "document_type": {
-            "type": "string",
-            "description": "contract | proposal | invoice | nda | other"
           }
         },
-        "required": []
+        "required": [
+          "document_id"
+        ]
       },
       "output_schema": {
         "type": "object",
@@ -30939,17 +30975,15 @@
     {
       "canonical_tool_name": "get_contract_versions",
       "module": "documents",
-      "description": "List stored versions for a contract.",
+      "description": "List version history and revisions for a contract.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "contract_id": {
-            "type": "string",
-            "description": "Contract reference"
+            "type": "string"
           }
         },
         "required": [
@@ -33439,33 +33473,22 @@
     {
       "canonical_tool_name": "send_whatsapp_message",
       "module": "email",
-      "description": "Send a WhatsApp message through the tenant connected WhatsApp integration and return the real provider delivery result.",
+      "description": "Send a WhatsApp message via connected Business API.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
-          "phone": {
-            "type": "string",
-            "description": "Recipient phone number in international format"
+          "recipient_phone": {
+            "type": "string"
           },
           "message": {
-            "type": "string",
-            "description": "Message text to send"
-          },
-          "contact_id": {
-            "type": "string",
-            "description": "Optional CRM contact/client reference"
-          },
-          "integration_id": {
-            "type": "string",
-            "description": "Optional WhatsApp integration override"
+            "type": "string"
           }
         },
         "required": [
-          "phone",
+          "recipient_phone",
           "message"
         ]
       },
@@ -33827,6 +33850,49 @@
       "supports_action_receipt": false,
       "annotations": {
         "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "check_mcp_execution_readiness",
+      "module": "health",
+      "description": "Check whether the current MCP workspace can execute ChatGPT write actions, especially social publishing and email sending. Use this when tools are visible but posting or sending fails.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "all",
+              "social_post",
+              "email_send",
+              "media_upload"
+            ]
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": "email_provider",
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
         "openWorldHint": false,
         "destructiveHint": false
       }
@@ -34209,16 +34275,14 @@
     {
       "canonical_tool_name": "get_calendly_status",
       "module": "health",
-      "description": "Check Calendly connection status and return configured booking URL plus local booking fallback.",
+      "description": "Check status of Calendly OAuth connection and active event types.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           }
-        },
-        "required": []
+        }
       },
       "output_schema": {
         "type": "object",
@@ -34335,7 +34399,7 @@
     {
       "canonical_tool_name": "get_environment",
       "module": "health",
-      "description": "Return non-secret environment metadata: NODE_ENV, region, public URLs, and feature capability flags.",
+      "description": "Return tenant-owned environment metadata and active workspace integrations for this tenant.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -35122,13 +35186,12 @@
     {
       "canonical_tool_name": "update_client_status_batch",
       "module": "health",
-      "description": "Batch update client sales_stage with dry_run safety.",
+      "description": "Update sales_stage or status for multiple clients at once.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "client_ids": {
             "type": "array",
@@ -35139,13 +35202,12 @@
           "sales_stage": {
             "type": "string"
           },
-          "dry_run": {
+          "is_active": {
             "type": "boolean"
           }
         },
         "required": [
-          "client_ids",
-          "sales_stage"
+          "client_ids"
         ]
       },
       "output_schema": {
@@ -35750,17 +35812,15 @@
     {
       "canonical_tool_name": "gmail_get_thread",
       "module": "integrations",
-      "description": "Fetch all messages in a specific Gmail thread by threadId.",
+      "description": "Fetch all messages in a specific Gmail thread.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "thread_id": {
-            "type": "string",
-            "description": "The thread identifier from gmail_list_threads"
+            "type": "string"
           }
         },
         "required": [
@@ -35794,20 +35854,14 @@
     {
       "canonical_tool_name": "gmail_list_threads",
       "module": "integrations",
-      "description": "List recent Gmail conversations via IMAP. Returns a list of threads with subjects, senders, and dates.",
+      "description": "List Gmail threads for workspace connected accounts.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "limit": {
-            "type": "number",
-            "description": "Max threads to fetch (default 20)"
+            "type": "string"
           }
-        },
-        "required": []
+        }
       },
       "output_schema": {
         "type": "object",
@@ -36708,13 +36762,12 @@
     {
       "canonical_tool_name": "get_invoice_line_items",
       "module": "invoices",
-      "description": "Get line items from an invoice for detailed billing analysis.",
+      "description": "Fetch line items for a specific invoice.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "invoice_id": {
             "type": "string"
@@ -38466,33 +38519,90 @@
     {
       "canonical_tool_name": "create_social_post_with_media",
       "module": "media",
-      "description": "Create, schedule, or publish a social post using existing asset_ids; base64 upload remains supported for one-step AI image transfer.",
+      "description": "One-step media ingestion and social post publishing/scheduling for ChatGPT and MCP clients. Accepts base64 image/video/document content, data URLs, source URLs, or existing asset IDs. Enforces valid media processing and returns verification receipt with provider post ID and live URL.",
       "input_schema": {
         "type": "object",
         "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
           "caption": {
-            "type": "string"
+            "type": "string",
+            "description": "Post text / caption"
+          },
+          "content": {
+            "type": "string",
+            "description": "Alias for caption"
+          },
+          "text": {
+            "type": "string",
+            "description": "Alias for caption"
           },
           "filename": {
-            "type": "string"
+            "type": "string",
+            "description": "Original media filename"
           },
           "file_name": {
-            "type": "string"
+            "type": "string",
+            "description": "Alias for filename"
           },
           "mime_type": {
-            "type": "string"
+            "type": "string",
+            "description": "MIME type e.g. image/png, video/mp4"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Alias for mime_type"
           },
           "content_base64": {
-            "type": "string"
+            "type": "string",
+            "description": "Base64 image/video/document string"
           },
           "file_base64": {
-            "type": "string"
+            "type": "string",
+            "description": "Alias for content_base64"
+          },
+          "file": {
+            "type": "string",
+            "description": "Alias for content_base64"
+          },
+          "data_url": {
+            "type": "string",
+            "description": "data:image/...;base64,... data URL"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Public HTTPS media URL"
+          },
+          "url": {
+            "type": "string",
+            "description": "Alias for source_url"
+          },
+          "media_url": {
+            "type": "string",
+            "description": "Alias for source_url"
+          },
+          "asset_id": {
+            "type": "string",
+            "description": "Existing media asset ID"
           },
           "asset_ids": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
+            }
+          },
+          "media_asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "media_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           },
           "platform": {
@@ -38531,12 +38641,12 @@
           "scheduled_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "idempotency_key": {
+            "type": "string"
           }
         },
-        "required": [
-          "caption",
-          "mime_type"
-        ]
+        "required": []
       },
       "output_schema": {
         "type": "object",
@@ -38554,7 +38664,7 @@
       "integration_dependency": "linkedin",
       "executable_status": "executable",
       "executable_via": "tool-registry",
-      "supports_idempotency": false,
+      "supports_idempotency": true,
       "supports_action_receipt": false,
       "annotations": {
         "readOnlyHint": false,
@@ -38651,36 +38761,20 @@
     {
       "canonical_tool_name": "generate_ai_image",
       "module": "media",
-      "description": "Autonomous Visual Creator: Generates a high-quality AI visual image using DALL-E 3 (OpenAI) or Grok (xAI), saves it to permanent sovereign CDN storage, and returns the public CDN image URL.",
+      "description": "Generate an AI image asset using standard text prompts.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "prompt": {
-            "type": "string",
-            "description": "Detailed prompt/description for the visual image to generate. Aliases: image_prompt, description."
-          },
-          "image_prompt": {
-            "type": "string",
-            "description": "Alias of prompt."
-          },
-          "image_provider": {
-            "type": "string",
-            "enum": [
-              "openai",
-              "xai"
-            ],
-            "description": "Default: openai"
-          },
-          "size": {
-            "type": "string",
-            "description": "Resolution (e.g. 1024x1024, 1792x1024, 1024x1792). Default: 1024x1024"
+            "type": "string"
           }
         },
-        "required": []
+        "required": [
+          "prompt"
+        ]
       },
       "output_schema": {
         "type": "object",
@@ -38695,7 +38789,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "openai",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -38765,36 +38859,20 @@
     {
       "canonical_tool_name": "generate_image",
       "module": "media",
-      "description": "Alias of generate_ai_image for OpenAI ChatGPT and AI agent tool compatibility.",
+      "description": "Generate or edit an image prompt for marketing/social media.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "prompt": {
-            "type": "string",
-            "description": "Detailed prompt/description for the visual image to generate."
-          },
-          "image_prompt": {
-            "type": "string",
-            "description": "Alias of prompt."
-          },
-          "image_provider": {
-            "type": "string",
-            "enum": [
-              "openai",
-              "xai"
-            ],
-            "description": "Default: openai"
-          },
-          "size": {
-            "type": "string",
-            "description": "Resolution (e.g. 1024x1024). Default: 1024x1024"
+            "type": "string"
           }
         },
-        "required": []
+        "required": [
+          "prompt"
+        ]
       },
       "output_schema": {
         "type": "object",
@@ -38809,7 +38887,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "openai",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -39288,17 +39366,25 @@
     {
       "canonical_tool_name": "upload_media",
       "module": "media",
-      "description": "Upload AI images with content_base64 (+filename, mime_type). No /mnt/data paths. Returns media_url + media_id for publish_post.media_urls. Also accepts data_url or public HTTPS url. Permanent public HTTPS; no storage credentials.",
+      "description": "Upload social media asset (image PNG/JPG/JPEG/GIF/WebP, video MP4/MOV/WebM, or document PDF) via base64, data URL, remote HTTPS source URL, or file. Returns media_asset_id and public_url for social publishing.",
       "input_schema": {
         "type": "object",
         "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
           "filename": {
             "type": "string",
-            "description": "e.g. facebook-post.png (required with base64 uploads)"
+            "description": "Original file name e.g. post.png"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Alias for filename"
           },
           "mime_type": {
             "type": "string",
-            "description": "image/png | image/jpeg | image/webp | image/gif | video/mp4 …"
+            "description": "MIME type e.g. image/png, video/mp4"
           },
           "content_type": {
             "type": "string",
@@ -39306,23 +39392,27 @@
           },
           "content_base64": {
             "type": "string",
-            "description": "Raw base64 image/video bytes OR a data:image/...;base64,... URL. Use this for ChatGPT-generated images."
-          },
-          "file": {
-            "type": "string",
-            "description": "Alias for content_base64"
+            "description": "Base64 file content string"
           },
           "file_base64": {
             "type": "string",
             "description": "Alias for content_base64"
           },
-          "url": {
+          "file": {
             "type": "string",
-            "description": "Already-public HTTPS URL to ingest into the tenant library"
+            "description": "Alias for content_base64"
           },
           "data_url": {
             "type": "string",
-            "description": "data:image/...;base64,..."
+            "description": "data:image/...;base64,... string"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "HTTPS source URL of media to fetch/ingest"
+          },
+          "url": {
+            "type": "string",
+            "description": "Alias for source_url"
           },
           "purpose": {
             "type": "string",
@@ -39347,7 +39437,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "facebook",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -39418,6 +39508,107 @@
       }
     },
     {
+      "canonical_tool_name": "upload_social_media",
+      "module": "media",
+      "description": "Canonical MCP media ingestion for social publishing. Accept file bytes, base64 content, data URL, or remote HTTPS source URL. Ingests media into AlphaClone permanent storage and returns media_id + public/signed HTTPS media_url for publish_post / publish_social_post. Handles ChatGPT session files and generated images; never pass /mnt/data paths.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "file": {
+            "type": "string",
+            "description": "Base64 file content, data URL, or file bytes string."
+          },
+          "base64": {
+            "type": "string",
+            "description": "Raw base64 bytes or data:image/png;base64,... fallback."
+          },
+          "content_base64": {
+            "type": "string",
+            "description": "Alias for base64"
+          },
+          "file_base64": {
+            "type": "string",
+            "description": "Alias for base64"
+          },
+          "data_url": {
+            "type": "string",
+            "description": "data:image/...;base64,... string"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Public HTTPS media URL to ingest into AlphaClone storage."
+          },
+          "url": {
+            "type": "string",
+            "description": "Alias for source_url"
+          },
+          "image_url": {
+            "type": "string",
+            "description": "Alias for source_url"
+          },
+          "filename": {
+            "type": "string",
+            "description": "File name e.g. post.png"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Alias for filename"
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "Declared MIME. Server validates actual file signature."
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Alias for mime_type"
+          },
+          "media_type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "document"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Defaults to social"
+          },
+          "alt_text": {
+            "type": "string"
+          }
+        },
+        "required": []
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "payments",
       "module": "payments",
       "description": "List recorded payments / invoice payment events.",
@@ -39466,29 +39657,29 @@
     {
       "canonical_tool_name": "reconcile_payment",
       "module": "payments",
-      "description": "Mark an invoice as paid and attach reconciliation metadata.",
+      "description": "Mark an invoice as paid and record the payment.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "invoice_id": {
             "type": "string"
           },
-          "amount": {
+          "amount_paid": {
             "type": "number"
           },
-          "paid_at": {
+          "payment_method": {
             "type": "string"
           },
-          "payment_ref": {
+          "payment_reference": {
             "type": "string"
           }
         },
         "required": [
-          "invoice_id"
+          "invoice_id",
+          "amount_paid"
         ]
       },
       "output_schema": {
@@ -39518,31 +39709,18 @@
     {
       "canonical_tool_name": "send_receipt",
       "module": "payments",
-      "description": "Send a formal payment receipt for a paid invoice using the specified email provider (Brevo, Resend, Zoho, or SendGrid).",
+      "description": "Send a payment receipt to a client for a paid invoice.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "invoice_id": {
-            "type": "string",
-            "description": "Reference of the PAID invoice"
+            "type": "string"
           },
           "recipient_email": {
-            "type": "string",
-            "description": "Optional override email for recipient"
-          },
-          "provider": {
-            "type": "string",
-            "enum": [
-              "brevo",
-              "resend",
-              "zoho",
-              "sendgrid"
-            ],
-            "description": "Preferred email provider for this send"
+            "type": "string"
           }
         },
         "required": [
@@ -39562,7 +39740,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "zoho",
+      "integration_dependency": "email_provider",
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -39680,13 +39858,12 @@
     {
       "canonical_tool_name": "get_project_milestones",
       "module": "projects",
-      "description": "Get milestones linked to a project.",
+      "description": "Get milestones for a project.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "project_id": {
             "type": "string"
@@ -39767,13 +39944,12 @@
     {
       "canonical_tool_name": "get_project_timeline",
       "module": "projects",
-      "description": "Flat timeline of all project events, status changes, and upcoming deadlines.",
+      "description": "Get a project timeline with tasks and milestones sorted by date.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "project_id": {
             "type": "string"
@@ -40380,13 +40556,12 @@
     {
       "canonical_tool_name": "generate_expense_report",
       "module": "reporting",
-      "description": "Generate an expense summary report grouped by category and status.",
+      "description": "Generate a summarized expense report grouped by category.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "from_date": {
             "type": "string"
@@ -40748,47 +40923,32 @@
     {
       "canonical_tool_name": "create_quote",
       "module": "revenue",
-      "description": "Create a quote/proposal for a contact or deal in this workspace.",
+      "description": "Create a new quote/proposal for a client.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
-          "name": {
-            "type": "string",
-            "description": "Quote title"
+          "client_id": {
+            "type": "string"
           },
-          "contact_id": {
-            "type": "string",
-            "description": "Optional contact/client reference"
+          "title": {
+            "type": "string"
           },
-          "deal_id": {
-            "type": "string",
-            "description": "Optional deal reference"
+          "total": {
+            "type": "number"
           },
-          "currency": {
-            "type": "string",
-            "description": "Default USD"
-          },
-          "valid_for_days": {
-            "type": "number",
-            "description": "Default 30"
+          "valid_until": {
+            "type": "string"
           },
           "notes": {
             "type": "string"
-          },
-          "terms_and_conditions": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "description": "draft | sent | viewed | accepted | rejected | expired | converted"
           }
         },
         "required": [
-          "name"
+          "title",
+          "total"
         ]
       },
       "output_schema": {
@@ -40808,7 +40968,7 @@
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
-      "supports_action_receipt": true,
+      "supports_action_receipt": false,
       "annotations": {
         "readOnlyHint": false,
         "openWorldHint": false,
@@ -40818,36 +40978,27 @@
     {
       "canonical_tool_name": "create_subscription_checkout",
       "module": "revenue",
-      "description": "Payment/subscription adapter: creates Stripe checkout URL for subscription upgrade.",
+      "description": "Create a Stripe subscription checkout session for a client.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
-          "plan_id": {
-            "type": "string",
-            "description": "starter | pro | enterprise"
+          "client_id": {
+            "type": "string"
           },
           "price_id": {
             "type": "string"
           },
-          "admin_email": {
+          "plan_name": {
             "type": "string"
           },
-          "success_url": {
-            "type": "string"
-          },
-          "cancel_url": {
-            "type": "string"
+          "amount_cents": {
+            "type": "number"
           }
         },
-        "required": [
-          "plan_id",
-          "price_id",
-          "admin_email"
-        ]
+        "required": []
       },
       "output_schema": {
         "type": "object",
@@ -40862,7 +41013,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "email_provider",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -40959,17 +41110,18 @@
     {
       "canonical_tool_name": "get_quotes",
       "module": "revenue",
-      "description": "Read-only: List quotes and proposals with their statuses.",
+      "description": "List quotes/proposals for the workspace.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "description": "draft | sent | accepted | declined"
+            "type": "string"
+          },
+          "limit": {
+            "type": "number"
           }
         },
         "required": []
@@ -41426,38 +41578,22 @@
     {
       "canonical_tool_name": "send_quote",
       "module": "revenue",
-      "description": "Send a quote/proposal by email with quote details and an attached quote document generated from AlphaClone data.",
+      "description": "Mark a quote as sent and optionally email it to the client.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "quote_id": {
-            "type": "string",
-            "description": "Reference from get_quotes or create_quote"
+            "type": "string"
           },
-          "to": {
-            "type": "string",
-            "description": "Recipient email address"
-          },
-          "subject": {
-            "type": "string",
-            "description": "Optional subject override"
-          },
-          "message": {
-            "type": "string",
-            "description": "Optional intro message to include before quote details"
-          },
-          "provider": {
-            "type": "string",
-            "description": "Optional provider override: zoho | brevo | sendgrid | resend"
+          "recipient_email": {
+            "type": "string"
           }
         },
         "required": [
-          "quote_id",
-          "to"
+          "quote_id"
         ]
       },
       "output_schema": {
@@ -41473,7 +41609,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "zoho",
+      "integration_dependency": "email_provider",
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -41643,36 +41779,23 @@
     {
       "canonical_tool_name": "update_quote",
       "module": "revenue",
-      "description": "Update quote details and lifecycle status after creation.",
+      "description": "Update a quote status, total, or notes.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "quote_id": {
-            "type": "string",
-            "description": "Reference from get_quotes"
-          },
-          "name": {
             "type": "string"
           },
           "status": {
-            "type": "string",
-            "description": "draft | sent | viewed | accepted | rejected | expired | converted"
+            "type": "string"
+          },
+          "total": {
+            "type": "number"
           },
           "notes": {
-            "type": "string"
-          },
-          "terms_and_conditions": {
-            "type": "string"
-          },
-          "valid_until": {
-            "type": "string",
-            "description": "YYYY-MM-DD"
-          },
-          "currency": {
             "type": "string"
           }
         },
@@ -44741,7 +44864,7 @@
     {
       "canonical_tool_name": "publish_post",
       "module": "social",
-      "description": "Publish/schedule a social post. AI images: upload_media(content_base64) first, then media_urls=[media_url] or media_asset_ids=[media_id]. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
+      "description": "Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -44756,8 +44879,7 @@
             "type": "string"
           },
           "scheduled_at": {
-            "type": "string",
-            "format": "date-time"
+            "type": "string"
           },
           "media_urls": {
             "type": "array",
@@ -44769,10 +44891,76 @@
           "media_asset_ids": {
             "type": "array",
             "items": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             },
             "description": "media_id values returned by upload_media"
+          },
+          "media_url": {
+            "type": "string",
+            "description": "Single public HTTPS media URL from upload_social_media"
+          },
+          "image_url": {
+            "type": "string",
+            "description": "Alias for media_url"
+          },
+          "signed_url": {
+            "type": "string",
+            "description": "Alias for media_url"
+          },
+          "media_id": {
+            "type": "string",
+            "description": "Single media_id returned by upload_social_media"
+          },
+          "media_asset_id": {
+            "type": "string",
+            "description": "Alias for media_id"
+          },
+          "media_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Alias for media_asset_ids"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original file name e.g. post.png"
+          },
+          "file_name": {
+            "type": "string",
+            "description": "Alias for filename"
+          },
+          "mime_type": {
+            "type": "string",
+            "description": "MIME type e.g. image/png"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "Alias for mime_type"
+          },
+          "content_base64": {
+            "type": "string",
+            "description": "Base64 image string"
+          },
+          "file_base64": {
+            "type": "string",
+            "description": "Alias for content_base64"
+          },
+          "file": {
+            "type": "string",
+            "description": "Alias for content_base64"
+          },
+          "data_url": {
+            "type": "string",
+            "description": "data:image/...;base64,... string"
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Public HTTPS image URL"
+          },
+          "url": {
+            "type": "string",
+            "description": "Alias for source_url"
           },
           "identity_type": {
             "type": "string",
@@ -44883,11 +45071,37 @@
               "format": "uuid"
             }
           },
+          "media_ids": {
+            "type": "array",
+            "description": "Canonical alias for media_asset_ids returned by upload_social_media.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
           "media_urls": {
             "type": "array",
             "items": {
               "type": "string"
             }
+          },
+          "media_url": {
+            "type": "string",
+            "description": "Single public HTTPS media URL from upload_social_media"
+          },
+          "image_url": {
+            "type": "string",
+            "description": "Alias for media_url"
+          },
+          "media_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Single media_id from upload_social_media"
+          },
+          "media_asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Alias for media_id"
           },
           "link_url": {
             "type": "string"
@@ -45805,13 +46019,12 @@
     {
       "canonical_tool_name": "add_task_dependency",
       "module": "tasks",
-      "description": "Declare that one task depends on completion of another task.",
+      "description": "Add a dependency between two tasks (task B cannot start until task A completes).",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "task_id": {
             "type": "string"
@@ -45927,13 +46140,12 @@
     {
       "canonical_tool_name": "create_task",
       "module": "tasks",
-      "description": "Create a native AlphaClone task or schedule a follow-up. Use like Asana/Azure task assignment inside AlphaClone. Can link to projects and optionally notify the assignee by email.",
+      "description": "Create a new task in the workspace.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "title": {
             "type": "string"
@@ -45941,24 +46153,20 @@
           "description": {
             "type": "string"
           },
-          "project_id": {
-            "type": "string",
-            "description": "Optional. Reference of business project to link (stored as related_to_project)."
+          "due_date": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
           },
           "assigned_to": {
             "type": "string"
           },
-          "notify_assignee": {
-            "type": "boolean",
-            "description": "If true and assigned_to has an email, send the task assignment by AlphaClone email."
+          "project_id": {
+            "type": "string"
           },
-          "due_date": {
-            "type": "string",
-            "description": "ISO 8601 datetime (e.g. 2026-04-15T09:00:00Z)"
-          },
-          "priority": {
-            "type": "string",
-            "description": "low | medium | high | urgent"
+          "client_id": {
+            "type": "string"
           }
         },
         "required": [
@@ -45978,7 +46186,7 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "email_provider",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
@@ -45992,22 +46200,18 @@
     {
       "canonical_tool_name": "create_tasks_batch",
       "module": "tasks",
-      "description": "Batch create tasks with per-item results and dry_run option.",
+      "description": "Create multiple tasks at once.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "tasks": {
             "type": "array",
             "items": {
               "type": "object"
             }
-          },
-          "dry_run": {
-            "type": "boolean"
           }
         },
         "required": [
@@ -46086,32 +46290,24 @@
     {
       "canonical_tool_name": "get_tasks",
       "module": "tasks",
-      "description": "Retrieve tasks. Use to see what is pending, what is due, or what is assigned to a team member.",
+      "description": "List tasks for the workspace with optional filters.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
-          "project_id": {
-            "type": "string",
-            "description": "Optional. Reference of the linked business project (same as tasks.related_to_project)."
+          "status": {
+            "type": "string"
           },
           "assigned_to": {
             "type": "string"
           },
-          "completed": {
-            "type": "boolean",
-            "description": "If true, only completed tasks; if false, only open tasks."
+          "project_id": {
+            "type": "string"
           },
-          "due_after": {
-            "type": "string",
-            "description": "ISO date or datetime; return tasks with due_date on or after this instant (for \"this week\" windows)."
-          },
-          "due_before": {
-            "type": "string",
-            "description": "ISO date or datetime; return tasks with due_date on or before this instant."
+          "limit": {
+            "type": "number"
           }
         },
         "required": []
@@ -46133,7 +46329,7 @@
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
-      "supports_action_receipt": false,
+      "supports_action_receipt": true,
       "annotations": {
         "readOnlyHint": true,
         "openWorldHint": false,
@@ -46341,40 +46537,26 @@
     {
       "canonical_tool_name": "set_task_recurrence",
       "module": "tasks",
-      "description": "Set recurrence schedule for a task.",
+      "description": "Set a recurrence schedule on an existing task.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "task_id": {
             "type": "string"
           },
-          "frequency": {
-            "type": "string",
-            "description": "Daily | Weekly | Monthly | Yearly"
-          },
-          "interval": {
-            "type": "number"
-          },
-          "days_of_week": {
-            "type": "array",
-            "items": {
-              "type": "number"
-            }
-          },
-          "day_of_month": {
-            "type": "number"
-          },
-          "end_date": {
+          "recurrence": {
             "type": "string"
+          },
+          "interval_days": {
+            "type": "number"
           }
         },
         "required": [
           "task_id",
-          "frequency"
+          "recurrence"
         ]
       },
       "output_schema": {
@@ -46860,39 +47042,30 @@
     {
       "canonical_tool_name": "update_task",
       "module": "tasks",
-      "description": "Update task fields such as status, due date, assignee, title, and priority.",
+      "description": "Update a task status, priority, due date, or assignment.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "task_id": {
-            "type": "string",
-            "description": "Task reference from get_tasks"
-          },
-          "title": {
             "type": "string"
           },
-          "description": {
+          "task_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "due_date": {
             "type": "string"
           },
           "assigned_to": {
-            "type": "string",
-            "description": "Optional assignee user reference"
+            "type": "string"
           },
-          "due_date": {
-            "type": "string",
-            "description": "ISO 8601 datetime or date string"
-          },
-          "priority": {
-            "type": "string",
-            "description": "low | medium | high | urgent"
-          },
-          "status": {
-            "type": "string",
-            "description": "ideas | todo | in_progress | review | completed | cancelled"
+          "title": {
+            "type": "string"
           }
         },
         "required": [
@@ -47147,16 +47320,21 @@
     {
       "canonical_tool_name": "kickoff_project_automation",
       "module": "workflows",
-      "description": "Vercel Workflows: Trigger project environment setup and milestone monitoring.",
+      "description": "Kickoff a project by setting status to active and creating initial tasks.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "project_id": {
             "type": "string"
+          },
+          "kickoff_tasks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -47911,29 +48089,30 @@
     {
       "canonical_tool_name": "create_expense",
       "module": "workspace",
-      "description": "Log a new business expense manually. Use when the user specifies all details.",
+      "description": "Create a new business expense record.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "description": "What was purchased / vendor name"
+            "type": "string"
           },
           "amount": {
-            "type": "number",
-            "description": "Amount in USD"
+            "type": "number"
           },
           "category": {
-            "type": "string",
-            "description": "Office Supplies | Travel | Software | Marketing | Meals | Utilities | Other"
+            "type": "string"
           },
           "date": {
-            "type": "string",
-            "description": "YYYY-MM-DD (defaults to today)"
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "receipt_url": {
+            "type": "string"
           }
         },
         "required": [
@@ -47954,11 +48133,11 @@
       ],
       "tenant_scope": "session_tenant_required",
       "feature_flag_dependency": null,
-      "integration_dependency": "microsoft",
+      "integration_dependency": null,
       "executable_status": "executable",
       "executable_via": "tool-registry",
       "supports_idempotency": false,
-      "supports_action_receipt": false,
+      "supports_action_receipt": true,
       "annotations": {
         "readOnlyHint": false,
         "openWorldHint": false,
@@ -48035,44 +48214,37 @@
     {
       "canonical_tool_name": "create_journal_entry",
       "module": "workspace",
-      "description": "Manually record a double-entry journal entry in the general ledger.",
+      "description": "Create a manual journal entry for accounting adjustments.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "date": {
             "type": "string"
           },
           "description": {
             "type": "string"
           },
-          "lines": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "account_id": {
-                  "type": "string"
-                },
-                "debit": {
-                  "type": "number"
-                },
-                "credit": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "account_id"
-              ]
-            }
+          "debit_account": {
+            "type": "string"
+          },
+          "credit_account": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          },
+          "reference": {
+            "type": "string"
           }
         },
         "required": [
           "description",
-          "lines"
+          "debit_account",
+          "credit_account",
+          "amount"
         ]
       },
       "output_schema": {
@@ -48280,16 +48452,14 @@
     {
       "canonical_tool_name": "enable_whatsapp_chatbot",
       "module": "workspace",
-      "description": "Turn on auto-reply for tenant's WhatsApp integration.",
+      "description": "Enable automated AI chatbot handling for incoming WhatsApp messages.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           }
-        },
-        "required": []
+        }
       },
       "output_schema": {
         "type": "object",
@@ -48360,28 +48530,60 @@
       }
     },
     {
+      "canonical_tool_name": "execute_internal_tool",
+      "module": "workspace",
+      "description": "Execute ANY of AlphaClone's 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tool_name": {
+            "type": "string",
+            "description": "Canonical tool name to execute"
+          },
+          "arguments": {
+            "type": "object",
+            "description": "Input arguments matching target tool schema"
+          }
+        },
+        "required": [
+          "tool_name"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON with ok/error and action receipt when the action mutates state."
+      },
+      "read_write_classification": "write",
+      "risk_level": "medium",
+      "approval_requirement": false,
+      "auth_scope": [
+        "write",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
       "canonical_tool_name": "execute_strategic_intelligence",
       "module": "workspace",
-      "description": "Unified router for executing AlphaClone 3-Year Leap strategic intelligence modules (e.g. pricing_elasticity, churn_propensity, proposal_generator, ivr_agent, network_graph, data_enrichment, revenue_recognition, invoice_factoring, objection_handling, narrative_reports, anomaly_alert, sql_query, etc.)",
+      "description": "Execute strategic intelligence analysis across leads, pipeline, and market positioning.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "module_name": {
-            "type": "string",
-            "description": "The name of the intelligence module to execute"
-          },
-          "parameters": {
-            "type": "object",
-            "description": "Parameters required by the chosen intelligence module (e.g., deal_id, client_id, query, etc.)"
+            "type": "string"
           }
-        },
-        "required": [
-          "module_name"
-        ]
+        }
       },
       "output_schema": {
         "type": "object",
@@ -48410,17 +48612,12 @@
     {
       "canonical_tool_name": "get_balance_sheet",
       "module": "workspace",
-      "description": "Generate Strategic Balance Sheet: A point-in-time analysis of Assets, Liabilities, and Equity to assess organizational solvency.",
+      "description": "Generate a balance sheet summary: assets, liabilities, and equity.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "as_of_date": {
-            "type": "string",
-            "description": "YYYY-MM-DD"
+            "type": "string"
           }
         },
         "required": []
@@ -48490,18 +48687,14 @@
     {
       "canonical_tool_name": "get_cash_flow_statement",
       "module": "workspace",
-      "description": "Analyze cash inflows and outflows for a specific period.",
+      "description": "Cash flow summary: inflows from paid invoices, outflows from expenses.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "from_date": {
             "type": "string"
           },
-          "to_date": {
+          "period": {
             "type": "string"
           }
         },
@@ -48696,13 +48889,12 @@
     {
       "canonical_tool_name": "get_current_user",
       "module": "workspace",
-      "description": "Get the authenticated user's internal AlphaClone profile ID, email, display name, and workspace (tenant) ID from the current MCP session. Use this before calling tools that require a user_id (e.g. get_momentum_score) when the internal ID is not already known.",
+      "description": "Get the current authenticated user profile and workspace info.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID (optional — resolved from session if omitted)"
+            "type": "string"
           }
         },
         "required": []
@@ -48734,63 +48926,21 @@
     {
       "canonical_tool_name": "get_expenses",
       "module": "workspace",
-      "description": "Read-only: Fetch expense records for a tenant. Use to review spending or find receipts.",
+      "description": "List business expenses with optional filters.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
           },
-          "status": {
-            "type": "string",
-            "description": "pending | approved | rejected"
+          "category": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "number"
           },
           "from_date": {
-            "type": "string",
-            "description": "YYYY-MM-DD"
-          },
-          "to_date": {
-            "type": "string",
-            "description": "YYYY-MM-DD"
-          }
-        },
-        "required": []
-      },
-      "output_schema": {
-        "type": "object",
-        "description": "MCP content envelope containing structured JSON data or read-only result."
-      },
-      "read_write_classification": "read",
-      "risk_level": "low",
-      "approval_requirement": false,
-      "auth_scope": [
-        "read",
-        "mcp:tools"
-      ],
-      "tenant_scope": "session_tenant_required",
-      "feature_flag_dependency": null,
-      "integration_dependency": null,
-      "executable_status": "executable",
-      "executable_via": "tool-registry",
-      "supports_idempotency": false,
-      "supports_action_receipt": true,
-      "annotations": {
-        "readOnlyHint": true,
-        "openWorldHint": false,
-        "destructiveHint": false
-      }
-    },
-    {
-      "canonical_tool_name": "get_momentum_score",
-      "module": "workspace",
-      "description": "Get the gamification XP, level, and momentum score for the authenticated user (resolved from MCP session).",
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "user_id": {
-            "type": "string",
-            "description": "Optional — defaults to authenticated MCP user"
+            "type": "string"
           }
         },
         "required": []
@@ -48820,32 +48970,59 @@
       }
     },
     {
-      "canonical_tool_name": "get_pnl_statement",
+      "canonical_tool_name": "get_momentum_score",
       "module": "workspace",
-      "description": "Generate a detailed Profit & Loss (P&L) statement including revenue momentum, expense distribution, and net margin analysis.",
+      "description": "Calculate real-time business momentum and operational throughput score.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
+            "type": "string"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "description": "MCP content envelope containing structured JSON data or read-only result."
+      },
+      "read_write_classification": "read",
+      "risk_level": "low",
+      "approval_requirement": false,
+      "auth_scope": [
+        "read",
+        "mcp:tools"
+      ],
+      "tenant_scope": "session_tenant_required",
+      "feature_flag_dependency": null,
+      "integration_dependency": null,
+      "executable_status": "executable",
+      "executable_via": "tool-registry",
+      "supports_idempotency": false,
+      "supports_action_receipt": false,
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "canonical_tool_name": "get_pnl_statement",
+      "module": "workspace",
+      "description": "Generate a detailed Profit & Loss statement including revenue, expenses, and net margin.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tenant_id": {
+            "type": "string"
           },
           "period": {
-            "type": "string",
-            "enum": [
-              "monthly",
-              "quarterly",
-              "yearly"
-            ],
-            "description": "Default: monthly"
+            "type": "string"
           },
           "from_date": {
-            "type": "string",
-            "description": "Optional start date (YYYY-MM-DD)"
+            "type": "string"
           },
           "to_date": {
-            "type": "string",
-            "description": "Optional end date (YYYY-MM-DD)"
+            "type": "string"
           }
         },
         "required": []
@@ -49570,19 +49747,14 @@
     {
       "canonical_tool_name": "sync_all_inboxes",
       "module": "workspace",
-      "description": "Autonomous Assistant: Fetches unread/recent communications from all connected channels (Email, Facebook, LinkedIn) for processing.",
+      "description": "Trigger immediate sync for all connected email inboxes.",
       "input_schema": {
         "type": "object",
         "properties": {
           "tenant_id": {
-            "type": "string",
-            "description": "AlphaClone Workspace ID"
-          },
-          "limit": {
-            "type": "number"
+            "type": "string"
           }
-        },
-        "required": []
+        }
       },
       "output_schema": {
         "type": "object",

@@ -33,6 +33,24 @@ async function afterDealWrite(
   }
 }
 
+export function getProbabilityForStage(stage?: string | null): number {
+  switch (stage) {
+    case 'closed_won':
+      return 100;
+    case 'closed_lost':
+      return 0;
+    case 'negotiation':
+      return 75;
+    case 'proposal':
+      return 50;
+    case 'qualified':
+      return 25;
+    case 'lead':
+    default:
+      return 10;
+  }
+}
+
 // 1. get_deals
 registerTool('deals', {
   name: 'get_deals',
@@ -113,19 +131,21 @@ registerTool('deals', {
 
     const dealName = String(args.title || args.name || '').trim();
     const contactId = args.contact_id || args.client_id || null;
+    const stage = args.stage || 'lead';
+    const probability = getProbabilityForStage(stage);
     const { data, error } = await supabase
       .from('deals')
       .insert({
         tenant_id: tenantId,
         name: dealName,
         value: args.value ?? 0,
-        stage: args.stage || 'lead',
+        stage,
         contact_id: contactId,
         owner_id: ownerId,
         expected_close_date: args.expected_close_date || null,
         description: args.description || null,
         currency: 'USD',
-        probability: 0,
+        probability,
       })
       .select()
       .single();
@@ -179,12 +199,17 @@ registerTool('deals', {
       .eq('tenant_id', tenantId)
       .maybeSingle();
 
+    const updates: Record<string, unknown> = {
+      ...args.fields,
+      updated_at: new Date().toISOString(),
+    };
+    if (args.fields.stage) {
+      updates.probability = getProbabilityForStage(args.fields.stage);
+    }
+
     const { data, error } = await supabase
       .from('deals')
-      .update({
-        ...args.fields,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updates)
       .eq('id', args.deal_id)
       .eq('tenant_id', tenantId)
       .select()
@@ -235,11 +260,13 @@ registerTool('deals', {
     if (fetchError) throw fetchError;
     const oldStage = currentDeal.stage;
 
-    // 2. Update stage
+    // 2. Update stage and probability invariant
+    const newProbability = getProbabilityForStage(args.new_stage);
     const { data: updatedDeal, error: updateError } = await supabase
       .from('deals')
       .update({
         stage: args.new_stage,
+        probability: newProbability,
         updated_at: new Date().toISOString(),
       })
       .eq('id', args.deal_id)
