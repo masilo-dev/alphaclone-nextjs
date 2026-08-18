@@ -8,40 +8,72 @@ import {
 } from "@/lib/projects/projectEnums";
 
 const optionalDate = z
-  .union([z.string().date(), z.string().datetime(), z.literal(""), z.null()])
-  .optional();
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((val) => (val && val.trim().length > 0 ? val.trim() : null));
+
+const optionalUuid = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((val) => (val && z.string().uuid().safeParse(val.trim()).success ? val.trim() : undefined));
+
+const optionalNullableUuid = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((val) => (val && z.string().uuid().safeParse(val.trim()).success ? val.trim() : null));
+
+const optionalUrl = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((val) => (val && z.string().url().safeParse(val.trim()).success ? val.trim() : null));
+
+const optionalNumber = z
+  .union([z.number(), z.string().transform((v) => parseFloat(v)), z.null()])
+  .optional()
+  .transform((val) => (typeof val === 'number' && !isNaN(val) ? val : null));
+
 const schema = z.object({
   name: z.string().trim().min(1).max(200),
-  ownerId: z.string().uuid().optional(),
+  ownerId: optionalUuid,
   ownerName: z.string().trim().max(300).optional(),
   category: z.string().trim().max(120).default("General"),
   status: z.string().trim().min(1).max(80).default("Pending"),
   currentStage: z.string().trim().min(1).max(120).default("Discovery"),
-  progress: z.number().min(0).max(100).default(0),
+  progress: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0),
   dueDate: optionalDate,
   startDate: optionalDate,
-  team: z.array(z.string().uuid()).max(100).default([]),
-  image: z.string().url().max(2000).nullable().optional(),
+  team: z
+    .union([z.array(z.string()), z.null()])
+    .optional()
+    .default([])
+    .transform((arr) =>
+      (arr || []).filter((id) => Boolean(id) && z.string().uuid().safeParse(id.trim()).success)
+    ),
+  image: optionalUrl,
   description: z.string().max(10_000).nullable().optional(),
   contractStatus: z.string().max(80).default("None"),
   contractText: z.string().max(100_000).nullable().optional(),
-  externalUrl: z.string().url().max(2000).nullable().optional(),
+  externalUrl: optionalUrl,
   isPublic: z.boolean().default(false),
   showInPortfolio: z.boolean().default(false),
-  clientId: z.string().uuid().nullable().optional(),
+  clientId: optionalNullableUuid,
   location: z.string().max(500).nullable().optional(),
-  budget: z.number().min(0).max(1_000_000_000).nullable().optional(),
+  budget: optionalNumber,
   risk: z.string().max(40).nullable().optional(),
   health: z.string().max(40).nullable().optional(),
-  resources: z.array(z.string().max(300)).max(200).default([]),
-  budgetTotal: z.number().min(0).max(1_000_000_000).nullable().optional(),
-  budgetUsed: z.number().min(0).max(1_000_000_000).default(0),
-  velocityScore: z.number().min(0).max(100).nullable().optional(),
-  healthScore: z.number().min(0).max(100).nullable().optional(),
+  resources: z
+    .union([z.array(z.string()), z.null()])
+    .optional()
+    .default([])
+    .transform((arr) => (arr || []).map((s) => String(s).trim()).filter(Boolean)),
+  budgetTotal: optionalNumber,
+  budgetUsed: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).default(0),
+  velocityScore: optionalNumber,
+  healthScore: optionalNumber,
   portalEnabled: z.boolean().default(false),
   estimatedCompletionDate: optionalDate,
   autoInvoiceEnabled: z.boolean().default(false),
-  templateId: z.string().uuid().optional(),
+  templateId: optionalUuid,
 });
 
 const cleanDate = (value: string | null | undefined) =>
@@ -54,8 +86,10 @@ export async function POST(
   try {
     const { tenantId } = await context.params;
     const { user } = await requireTenantAccess(tenantId, req);
-    const parsed = schema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success)
+    const body = await req.json().catch(() => ({}));
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      console.warn("[projects POST] Validation failed:", parsed.error.flatten().fieldErrors);
       return NextResponse.json(
         {
           error: "Invalid project details",
@@ -63,33 +97,29 @@ export async function POST(
         },
         { status: 400 },
       );
+    }
     const input = parsed.data;
-    const status = normalizeProjectStatus(input.status);
-    const currentStage = normalizeProjectStage(input.currentStage);
-    if (!status)
-      return NextResponse.json(
-        { error: `Invalid project status: ${input.status}` },
-        { status: 400 },
-      );
-    if (!currentStage)
-      return NextResponse.json(
-        { error: `Invalid project stage: ${input.currentStage}` },
-        { status: 400 },
-      );
+    const status = normalizeProjectStatus(input.status) || "Pending";
+    const currentStage = normalizeProjectStage(input.currentStage) || "Discovery";
     const ownerId = input.ownerId || user.id;
     const admin = createSupabaseAdminClient();
-    const memberIds = [...new Set([ownerId, ...input.team])];
-    const { data: members, error: memberError } = await admin
-      .from("tenant_users")
-      .select("user_id")
-      .eq("tenant_id", tenantId)
-      .in("user_id", memberIds);
-    if (memberError) throw memberError;
-    if ((members || []).length !== memberIds.length)
-      return NextResponse.json(
-        { error: "Project owner and team must belong to this workspace" },
-        { status: 400 },
-      );
+    const memberIds = [...new Set([ownerId, ...input.team])].filter(
+      (id) => Boolean(id) && z.string().uuid().safeParse(id).success
+    );
+    if (memberIds.length > 0) {
+      const { data: members, error: memberError } = await admin
+        .from("tenant_users")
+        .select("user_id")
+        .eq("tenant_id", tenantId)
+        .in("user_id", memberIds);
+      if (memberError) {
+        console.warn("[projects POST] member verification error:", memberError);
+      } else {
+        const validMemberIds = new Set((members || []).map((m) => m.user_id));
+        validMemberIds.add(user.id);
+        input.team = input.team.filter((id) => validMemberIds.has(id));
+      }
+    }
     const { data: ownerProfile } = await admin
       .from("profiles")
       .select("full_name, name, email")
