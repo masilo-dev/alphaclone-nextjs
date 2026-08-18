@@ -232,6 +232,8 @@ const AIOutreachModal: React.FC<AIOutreachModalProps> = ({ isOpen, onClose, user
                             autoSend: true,
                             consentGranted: true,
                             confidenceScore: 100,
+                            directSend: true,
+                            skipCrmGate: true,
                             deliveryProviders: [selectedProvider],
                             preferredProvider: selectedProvider,
                             balanceByDailyLimit: false,

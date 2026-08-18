@@ -95,11 +95,19 @@ export async function GET(req: NextRequest) {
             webhookSubscriptionUri: webhookSubscriptionUri || undefined,
             webhookUrl,
         });
-        const { error: connectionError } = await supabaseAdmin.from('tenant_integrations').upsert({
+        let { error: connectionError } = await supabaseAdmin.from('tenant_integrations').upsert({
             tenant_id: tenantId, integration_id: 'calendly', status: 'connected',
             connected_at: new Date().toISOString(), configured_by: stateData.user_id,
             metadata: { calendlyUserUri: userUri },
         }, { onConflict: 'tenant_id,integration_id' });
+        if (connectionError && (connectionError.code === 'PGRST204' || /configured_by|schema cache/i.test(connectionError.message))) {
+            const fallback = await supabaseAdmin.from('tenant_integrations').upsert({
+                tenant_id: tenantId, integration_id: 'calendly', status: 'connected',
+                connected_at: new Date().toISOString(),
+                metadata: { calendlyUserUri: userUri },
+            }, { onConflict: 'tenant_id,integration_id' });
+            connectionError = fallback.error;
+        }
         if (connectionError) throw connectionError;
         await supabaseAdmin.from('business_automation_events').insert({
             tenant_id: tenantId, event_type: 'integration_connected',

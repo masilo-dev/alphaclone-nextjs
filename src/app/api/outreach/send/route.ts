@@ -264,7 +264,7 @@ export async function POST(request: Request) {
       .insert({
         tenant_id:    tenantId,
         user_id:      tenantCtx.user.id,
-        lead_name:    leadName,
+        lead_name:    leadName || (leadEmail ? leadEmail.split('@')[0] : 'Contact'),
         lead_email:   leadEmail,
         subject: normalizedSubject,
         body_html:    htmlWithComplianceFooter,
@@ -552,7 +552,7 @@ export async function POST(request: Request) {
     if (sentProvider) {
       const postSendWarnings: string[] = [];
       if (logId) {
-        const { error: logUpdateError } = await admin
+        let { error: logUpdateError } = await admin
           .from('lead_outreach_log')
           .update({
             status: 'sent',
@@ -567,6 +567,22 @@ export async function POST(request: Request) {
               : null,
           })
           .eq('id', logId);
+        if (logUpdateError && (logUpdateError.code === 'PGRST204' || /provider_event_status|schema cache/i.test(logUpdateError.message))) {
+          const fallback = await admin
+            .from('lead_outreach_log')
+            .update({
+              status: 'sent',
+              sent_at: new Date().toISOString(),
+              provider: sentProvider,
+              zoho_message_id: providerMessageId,
+              provider_message_id: providerMessageId,
+              error_message: providerFailures.length > 0
+                ? `Failover recovered. Previous providers failed: ${providerFailures.map((f) => `${f.provider}: ${f.error}`).join(' | ')}`
+                : null,
+            })
+            .eq('id', logId);
+          logUpdateError = fallback.error;
+        }
         if (logUpdateError) {
           console.error('[Outreach/Send] Failed to update outreach log after provider send:', logUpdateError);
           postSendWarnings.push('outreach_log_update_failed');
@@ -603,6 +619,32 @@ export async function POST(request: Request) {
       } catch (captureError) {
         console.error('[Outreach/Send] Failed to capture outbound message after provider send:', captureError);
         postSendWarnings.push('message_capture_failed');
+      }
+
+      // Log activity to the activities table if entityType is contact or entityId is provided
+      const resolvedContactId = entityId || (entityType === 'contact' ? entityId : null);
+      if (resolvedContactId) {
+        try {
+          await admin.from('activities').insert({
+            tenant_id: tenantId,
+            contact_id: resolvedContactId,
+            created_by: tenantCtx.user.id,
+            type: 'email',
+            subject: normalizedSubject,
+            description: (sanitizedBody || '').slice(0, 1000),
+            status: 'completed',
+            is_automated: false,
+            source: 'outreach',
+            metadata: {
+              provider: sentProvider,
+              tracking_id: trackingId,
+              lead_email: leadEmail,
+            },
+          });
+          await admin.from('contacts').update({ last_activity_at: new Date().toISOString() }).eq('id', resolvedContactId);
+        } catch (activityErr) {
+          console.warn('[Outreach/Send] Contact activity log failed (non-fatal):', activityErr);
+        }
       }
 
       return NextResponse.json({

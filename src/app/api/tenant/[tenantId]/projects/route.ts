@@ -122,51 +122,62 @@ export async function POST(
     const portalToken = input.portalEnabled
       ? crypto.randomUUID().replace(/-/g, "")
       : null;
-    const { data: project, error } = await admin
+    const projectPayload: Record<string, unknown> = {
+      tenant_id: tenantId,
+      owner_id: ownerId,
+      owner_name:
+        input.ownerName ||
+        ownerProfile?.full_name ||
+        ownerProfile?.name ||
+        ownerProfile?.email ||
+        user.email ||
+        "Workspace member",
+      name: input.name,
+      category: input.category,
+      status,
+      current_stage: currentStage,
+      progress: input.progress,
+      due_date: cleanDate(input.dueDate),
+      start_date: cleanDate(input.startDate),
+      team: input.team,
+      image: input.image || null,
+      description: input.description || null,
+      contract_status: input.contractStatus,
+      contract_text: input.contractText || null,
+      external_url: input.externalUrl || null,
+      is_public: input.isPublic,
+      show_in_portfolio: input.showInPortfolio,
+      client_id: input.clientId || null,
+      location: input.location || null,
+      budget: input.budget ?? null,
+      risk: input.risk || null,
+      health: input.health || null,
+      resources: input.resources,
+      budget_total: input.budgetTotal ?? null,
+      budget_used: input.budgetUsed,
+      velocity_score: input.velocityScore ?? null,
+      health_score: input.healthScore ?? null,
+      portal_token: portalToken,
+      portal_enabled: input.portalEnabled,
+      estimated_completion_date: cleanDate(input.estimatedCompletionDate),
+      auto_invoice_enabled: input.autoInvoiceEnabled,
+    };
+    let { data: project, error } = await admin
       .from("projects")
-      .insert({
-        tenant_id: tenantId,
-        owner_id: ownerId,
-        owner_name:
-          input.ownerName ||
-          ownerProfile?.full_name ||
-          ownerProfile?.name ||
-          ownerProfile?.email ||
-          user.email ||
-          "Workspace member",
-        name: input.name,
-        category: input.category,
-        status,
-        current_stage: currentStage,
-        progress: input.progress,
-        due_date: cleanDate(input.dueDate),
-        start_date: cleanDate(input.startDate),
-        team: input.team,
-        image: input.image || null,
-        description: input.description || null,
-        contract_status: input.contractStatus,
-        contract_text: input.contractText || null,
-        external_url: input.externalUrl || null,
-        is_public: input.isPublic,
-        show_in_portfolio: input.showInPortfolio,
-        client_id: input.clientId || null,
-        location: input.location || null,
-        budget: input.budget ?? null,
-        risk: input.risk || null,
-        health: input.health || null,
-        resources: input.resources,
-        budget_total: input.budgetTotal ?? null,
-        budget_used: input.budgetUsed,
-        velocity_score: input.velocityScore ?? null,
-        health_score: input.healthScore ?? null,
-        portal_token: portalToken,
-        portal_enabled: input.portalEnabled,
-        estimated_completion_date: cleanDate(input.estimatedCompletionDate),
-        auto_invoice_enabled: input.autoInvoiceEnabled,
-      })
+      .insert(projectPayload)
       .select("*")
       .single();
-    if (error) throw error;
+    if (error && (error.code === 'PGRST204' || /location|schema cache/i.test(error.message))) {
+      delete projectPayload.location;
+      const fallback = await admin
+        .from("projects")
+        .insert(projectPayload)
+        .select("*")
+        .single();
+      project = fallback.data;
+      error = fallback.error;
+    }
+    if (error || !project) throw error || new Error("Project creation failed");
 
     if (phases.length) {
       const start = new Date(input.startDate || project.created_at);

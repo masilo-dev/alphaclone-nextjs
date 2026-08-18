@@ -212,9 +212,7 @@ export async function registerCalendlyWebhook(
         'invitee.created',
         'invitee.canceled',
         'invitee.no_show.created',
-        // New events: meeting recap (Oct 2025), contacts (May 2026), routing forms
         'meeting_recap.created',
-        'routing_form_submission.created',
         'contact.created',
         'contact.updated',
         'contact.deleted',

@@ -11,11 +11,18 @@ export async function GET(req: NextRequest, context: Context) {
   try {
     const { tenantId } = await context.params;
     const { user, admin } = await requireTenantAccess(tenantId, req);
-    const [{ data: rows, error }, mcpKeys, chatgptTokens, slack] = await Promise.all([
-      admin
+    let tenantIntegrationsRes = await admin
+      .from('tenant_integrations')
+      .select('integration_id, status, connected_at, configured_by, metadata')
+      .eq('tenant_id', tenantId);
+    if (tenantIntegrationsRes.error && (tenantIntegrationsRes.error.code === 'PGRST204' || /configured_by|schema cache/i.test(tenantIntegrationsRes.error.message))) {
+      tenantIntegrationsRes = await admin
         .from('tenant_integrations')
-        .select('integration_id, status, connected_at, configured_by, metadata')
-        .eq('tenant_id', tenantId),
+        .select('integration_id, status, connected_at, metadata')
+        .eq('tenant_id', tenantId);
+    }
+    const [{ data: rows, error }, mcpKeys, chatgptTokens, slack] = await Promise.all([
+      Promise.resolve(tenantIntegrationsRes),
       admin
         .from('mcp_api_keys')
         .select('id', { count: 'exact', head: true })
@@ -93,7 +100,7 @@ export async function DELETE(req: NextRequest, context: Context) {
       await admin.from('google_calendar_secrets').delete().eq('user_id', configuredBy).eq('tenant_id', tenantId);
     }
 
-    const { error } = await admin.from('tenant_integrations').upsert({
+    let { error } = await admin.from('tenant_integrations').upsert({
       tenant_id: tenantId,
       integration_id: integrationId,
       status: 'available',
@@ -101,6 +108,16 @@ export async function DELETE(req: NextRequest, context: Context) {
       configured_by: null,
       metadata: {},
     }, { onConflict: 'tenant_id,integration_id' });
+    if (error && (error.code === 'PGRST204' || /configured_by|schema cache/i.test(error.message))) {
+      const fallback = await admin.from('tenant_integrations').upsert({
+        tenant_id: tenantId,
+        integration_id: integrationId,
+        status: 'available',
+        connected_at: null,
+        metadata: {},
+      }, { onConflict: 'tenant_id,integration_id' });
+      error = fallback.error;
+    }
     if (error) throw error;
 
     await admin.from('business_automation_events').insert({

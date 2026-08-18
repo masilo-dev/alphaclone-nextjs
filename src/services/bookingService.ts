@@ -90,5 +90,73 @@ export const bookingService = {
             console.error('[createBooking] Error:', err);
             return { bookingId: null, roomUrl: null, error: String(err) };
         }
+    },
+
+    /**
+     * Update booking status (Scheduled, Confirmed, Completed, Cancelled, Rescheduled, No-show)
+     */
+    async updateStatus(
+        bookingId: string,
+        status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled' | 'no_show',
+        options?: { tenantId?: string; reason?: string }
+    ): Promise<{ success: boolean; booking?: any; error?: string }> {
+        try {
+            const res = await fetch('/api/booking/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bookingId,
+                    status,
+                    reason: options?.reason,
+                    tenantId: options?.tenantId
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                return { success: false, error: data.error || 'Failed to update booking status' };
+            }
+
+            const data = await res.json();
+            return { success: true, booking: data.booking };
+        } catch (err: any) {
+            return { success: false, error: String(err) };
+        }
+    },
+
+    /**
+     * Reschedule an existing booking (updates original record & retains history)
+     */
+    async rescheduleBooking(
+        bookingId: string,
+        newStartTime: string,
+        newEndTime: string,
+        options?: { tenantId?: string; reason?: string }
+    ): Promise<{ success: boolean; booking?: any; error?: string }> {
+        try {
+            const res = await fetch('/api/booking/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bookingId,
+                    status: 'rescheduled',
+                    newStartTime,
+                    newEndTime,
+                    reason: options?.reason,
+                    tenantId: options?.tenantId
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                return { success: false, error: data.error || 'Failed to reschedule booking' };
+            }
+
+            const data = await res.json();
+            return { success: true, booking: data.booking };
+        } catch (err: any) {
+            return { success: false, error: String(err) };
+        }
     }
 };
+

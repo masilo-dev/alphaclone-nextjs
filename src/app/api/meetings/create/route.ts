@@ -111,36 +111,49 @@ export async function POST(req: NextRequest) {
         const roomName = `alphaclone-${crypto.randomUUID()}`;
 
         // Step 2: Create video_call in database
-        const { data: videoCall, error: videoCallError } = await supabase
+        const callPayload: Record<string, unknown> = {
+            room_id: roomName,
+            daily_room_url: provider === 'teams' ? joinUrl : null,
+            daily_room_name: null,
+            tenant_id: tenantId,
+            host_id: hostId,
+            title: title,
+            status: 'scheduled',
+            scheduled_at: scheduledAt || new Date().toISOString(),
+            participants: uniqueParticipants,
+            max_participants: maxParticipants,
+            recording_enabled: recordingEnabled,
+            screen_share_enabled: screenShareEnabled,
+            chat_enabled: chatEnabled,
+            duration_limit_minutes: actualDuration,
+            cancellation_policy_hours: cancellationPolicyHours,
+            allow_client_cancellation: allowClientCancellation,
+            is_public: isPublic,
+            metadata: {
+                provider: provider === 'teams' ? 'external' : 'livekit',
+                video_provider: provider,
+                provider_room_name: provider === 'livekit' ? roomName : undefined,
+                teams_meeting_id: provider === 'teams' ? providerMeetingId || null : undefined,
+                teams_join_url: provider === 'teams' ? joinUrl : undefined,
+            },
+        };
+
+        let { data: videoCall, error: videoCallError } = await supabase
             .from('video_calls')
-            .insert({
-                room_id: roomName,
-                daily_room_url: provider === 'teams' ? joinUrl : null,
-                daily_room_name: null,
-                tenant_id: tenantId,
-                host_id: hostId,
-                title: title,
-                status: 'scheduled',
-                scheduled_at: scheduledAt || new Date().toISOString(),
-                participants: uniqueParticipants,
-                max_participants: maxParticipants,
-                recording_enabled: recordingEnabled,
-                screen_share_enabled: screenShareEnabled,
-                chat_enabled: chatEnabled,
-                duration_limit_minutes: actualDuration,
-                cancellation_policy_hours: cancellationPolicyHours,
-                allow_client_cancellation: allowClientCancellation,
-                is_public: isPublic,
-                metadata: {
-                    provider: provider === 'teams' ? 'external' : 'livekit',
-                    video_provider: provider,
-                    provider_room_name: provider === 'livekit' ? roomName : undefined,
-                    teams_meeting_id: provider === 'teams' ? providerMeetingId || null : undefined,
-                    teams_join_url: provider === 'teams' ? joinUrl : undefined,
-                },
-            })
+            .insert(callPayload)
             .select()
             .single();
+
+        if (videoCallError && (videoCallError.code === 'PGRST204' || /scheduled_at|schema cache/i.test(videoCallError.message))) {
+            delete callPayload.scheduled_at;
+            const fallback = await supabase
+                .from('video_calls')
+                .insert(callPayload)
+                .select()
+                .single();
+            videoCall = fallback.data;
+            videoCallError = fallback.error;
+        }
 
         if (videoCallError || !videoCall) {
             console.error('[meetings/create] video_calls insert:', videoCallError);

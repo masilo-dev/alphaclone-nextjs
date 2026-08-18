@@ -93,6 +93,26 @@ export async function persistActionReceipt(params: {
           .maybeSingle();
         return existing?.id || null;
       }
+      // Schema fallback if optional columns (like correlation_id) are not present in DB
+      if (error.code === 'PGRST204' || /column.*schema cache|could not find.*column/i.test(error.message)) {
+        const { data: fallbackData } = await supabase
+          .from('mcp_action_receipts')
+          .insert({
+            tenant_id: params.tenantId,
+            user_id: params.userId || null,
+            tool: params.tool,
+            action_id: params.receipt.action_id,
+            entity_id: params.receipt.entity_id || null,
+            entity_type: params.receipt.entity_type || null,
+            success: params.success,
+            final_status: params.receipt.status,
+            sanitized_input: sanitizeForAudit(params.sanitizedInput || {}),
+            sanitized_output: sanitizeForAudit(params.sanitizedOutput || {}),
+          })
+          .select('id')
+          .maybeSingle();
+        return fallbackData?.id || null;
+      }
       console.warn('[actionReceipts] persist failed:', error.message);
       return null;
     }

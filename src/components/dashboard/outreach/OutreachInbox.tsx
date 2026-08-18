@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
@@ -306,6 +306,7 @@ function classifyIconForList(list: OutreachListKey): React.ComponentType<any> {
 
 export function OutreachInbox() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { currentTenant } = useTenant();
 
@@ -326,6 +327,22 @@ export function OutreachInbox() {
   const [connectedProviders, setConnectedProviders] = useState<
     Array<{ id: DeliveryEmailProvider; label: string; connected: boolean }>
   >([]);
+
+  useEffect(() => {
+    if (!searchParams) return;
+    const toParam = searchParams.get('to') || searchParams.get('email') || searchParams.get('leadEmail');
+    const subjectParam = searchParams.get('subject');
+    const nameParam = searchParams.get('name') || searchParams.get('contactName') || searchParams.get('leadName');
+    if (toParam) {
+      setComposeTo(toParam);
+      if (subjectParam) {
+        setComposeSubject(subjectParam);
+      } else if (nameParam) {
+        setComposeSubject(`Outreach — ${nameParam}`);
+      }
+      setComposerOpen(true);
+    }
+  }, [searchParams]);
 
   const tenantId = currentTenant?.id;
 
@@ -910,15 +927,15 @@ export function OutreachInbox() {
             <div className="p-4 space-y-3">
               <div className="grid grid-cols-12 gap-2">
                 <div className="col-span-8 space-y-2">
-                  <label className="block text-[11px] text-slate-400">To</label>
-                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-slate-950/60 border-white/10 text-xs h-9" />
+                  <label className="block text-[11px] font-semibold text-slate-300">To</label>
+                  <Input value={composeTo} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeTo(e.target.value)} placeholder="name@company.com" className="bg-slate-950 border-slate-700 text-white text-xs h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500" />
                 </div>
                 <div className="col-span-4 space-y-2">
-                  <label className="block text-[11px] text-slate-400">Dispatch via</label>
+                  <label className="block text-[11px] font-semibold text-slate-300">Dispatch via</label>
                   <select
                     value={composeProvider}
                     onChange={(e) => setComposeProvider(normalizeDeliveryProvider(e.target.value))}
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-lg px-2 py-2 text-xs text-white focus:outline-none h-9"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-2 text-xs text-white focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 h-9"
                   >
                     <option value="auto">Auto (Best deliverability)</option>
                     {(connectedProviders.length ? connectedProviders : [
@@ -934,19 +951,19 @@ export function OutreachInbox() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="block text-[11px] text-slate-400">Subject</label>
-                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950/60 border-white/10 text-xs h-9" />
+                <label className="block text-[11px] font-semibold text-slate-300">Subject</label>
+                <Input value={composeSubject} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setComposeSubject(e.target.value)} placeholder="Short, specific subject line" className="bg-slate-950 border-slate-700 text-white text-xs h-9 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500" />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <label className="block text-[11px] text-slate-400">Message</label>
+                  <label className="block text-[11px] font-semibold text-slate-300">Message</label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleAiDraft}
                     disabled={drafting || !composeTo.trim()}
-                    className="h-8 border border-violet-400/20 px-2.5 text-xs text-violet-200 hover:bg-violet-500/10"
+                    className="h-8 border border-violet-400/30 px-2.5 text-xs text-violet-200 hover:bg-violet-500/20"
                   >
                     {drafting ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}
                     {drafting ? 'Drafting...' : 'AI draft'}
@@ -956,7 +973,7 @@ export function OutreachInbox() {
                   value={composeBody}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComposeBody(e.target.value)}
                   rows={9}
-                  className="bg-slate-950/60 border-white/10 text-xs leading-relaxed"
+                  className="bg-slate-950 border-slate-700 text-white text-xs leading-relaxed focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 placeholder:text-slate-500"
                   placeholder="Hi [first name],…"
                 />
               </div>

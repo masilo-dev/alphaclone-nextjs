@@ -1230,6 +1230,8 @@ Write in plain professional text. No markdown.`;
                             autoSend: true,
                             consentGranted: true,
                             confidenceScore: 100,
+                            directSend: true,
+                            skipCrmGate: true,
                             deliveryProviders: [provider],
                             preferredProvider: provider,
                             balanceByDailyLimit: false,
