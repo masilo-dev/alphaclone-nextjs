@@ -204,8 +204,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
             if (drillRes.ok) {
                 const data = drillPayload?.data;
                 setIntelligenceSummary({
-                    topActions: (data?.topActions || []).slice(0, 5),
-                    systemicRisks: (data?.systemicRisks || []).slice(0, 5)
+                    topActions: Array.isArray(data?.topActions) ? data.topActions.slice(0, 5) : [],
+                    systemicRisks: Array.isArray(data?.systemicRisks) ? data.systemicRisks.slice(0, 5) : []
                 });
             }
         } catch (error) {
@@ -361,7 +361,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                                 <div>
                             <div className="text-xs text-[#adebb3] font-semibold mb-1">Top Actions</div>
                                     <ul className="space-y-1">
-                                        {intelligenceSummary.topActions.slice(0, 2).map((item) => (
+                                        {(Array.isArray(intelligenceSummary.topActions) ? intelligenceSummary.topActions : []).slice(0, 2).map((item) => (
                                             <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>
@@ -372,7 +372,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ user }) => {
                                         Top Risks
                                     </div>
                                     <ul className="space-y-1">
-                                        {intelligenceSummary.systemicRisks.slice(0, 2).map((item) => (
+                                        {(Array.isArray(intelligenceSummary.systemicRisks) ? intelligenceSummary.systemicRisks : []).slice(0, 2).map((item) => (
                                             <li key={item} className="text-xs text-[#e5e7eb] line-clamp-2">{item}</li>
                                         ))}
                                     </ul>

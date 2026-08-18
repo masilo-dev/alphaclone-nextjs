@@ -142,7 +142,7 @@ export function AttentionFirstDashboard() {
     });
   }
 
-  (brief?.attentionItems || []).forEach((item, i) => {
+  (Array.isArray(brief?.attentionItems) ? brief.attentionItems : []).forEach((item, i) => {
     attentionItems.push({
       id: `brief-${i}`,
       label: item,

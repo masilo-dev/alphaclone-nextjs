@@ -179,7 +179,7 @@ export function OperatingSystemHome() {
         severity: 'high',
       });
     }
-    (brief?.attentionItems || []).slice(0, 2).forEach((item, i) => {
+    (Array.isArray(brief?.attentionItems) ? brief.attentionItems : []).slice(0, 2).forEach((item, i) => {
       if (items.length >= 6) return;
       items.push({
         id: `brief-${i}`,
@@ -204,7 +204,9 @@ export function OperatingSystemHome() {
 
   const todayItems: TodayItem[] = useMemo(() => {
     const items: TodayItem[] = [];
-    const meetings = (stats?.upcomingMeetings as Array<{ id?: string; title?: string; time?: string }>) || [];
+    const meetings = Array.isArray(stats?.upcomingMeetings)
+      ? (stats.upcomingMeetings as Array<{ id?: string; title?: string; time?: string }>)
+      : [];
     meetings.slice(0, 3).forEach((m, i) => {
       items.push({
         id: m.id || `meeting-${i}`,
@@ -214,7 +216,9 @@ export function OperatingSystemHome() {
         kind: 'meeting',
       });
     });
-    const dueTasks = (stats?.tasksDueToday as Array<{ id?: string; title?: string }>) || [];
+    const dueTasks = Array.isArray(stats?.tasksDueToday)
+      ? (stats.tasksDueToday as Array<{ id?: string; title?: string }>)
+      : [];
     dueTasks.slice(0, 3).forEach((t, i) => {
       items.push({
         id: t.id || `task-${i}`,
@@ -255,7 +259,9 @@ export function OperatingSystemHome() {
   );
 
   const revenueSeries = useMemo(() => {
-    const series = (stats?.revenueSeries as Array<{ label?: string; value?: number; secondary?: number }>) || [];
+    const series = Array.isArray(stats?.revenueSeries)
+      ? (stats.revenueSeries as Array<{ label?: string; value?: number; secondary?: number }>)
+      : [];
     if (series.length) {
       return series.map((p) => ({
         label: p.label || '',
@@ -269,21 +275,22 @@ export function OperatingSystemHome() {
   }, [stats, revenue, revenuePrev]);
 
   const pipelineSeries = useMemo(() => {
-    const stages =
-      (stats?.pipelineStages as Array<{ stage?: string; label?: string; count?: number; value?: number }>) ||
-      [];
+    const stages = Array.isArray(stats?.pipelineStages)
+      ? (stats.pipelineStages as Array<{ stage?: string; label?: string; count?: number; value?: number }>)
+      : [];
     if (stages.length) {
       return stages.map((s) => ({
         label: s.label || s.stage || 'Stage',
         value: Number(s.count ?? s.value ?? 0),
       }));
     }
-    return decisionVm.funnelStages.map((s) => ({ label: s.label, value: s.count }));
+    return (Array.isArray(decisionVm?.funnelStages) ? decisionVm.funnelStages : []).map((s) => ({ label: s.label, value: s.count }));
   }, [stats, decisionVm.funnelStages]);
 
   const completionSeries = useMemo(() => {
-    const series =
-      (stats?.completionSeries as Array<{ label?: string; value?: number }>) || [];
+    const series = Array.isArray(stats?.completionSeries)
+      ? (stats.completionSeries as Array<{ label?: string; value?: number }>)
+      : [];
     if (series.length) {
       return series.map((p) => ({ label: p.label || '', value: Number(p.value || 0) }));
     }

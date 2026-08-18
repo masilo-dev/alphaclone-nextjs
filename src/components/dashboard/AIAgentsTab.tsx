@@ -931,18 +931,20 @@ const AIAgentsTab: React.FC = () => {
                 {/* Show recent runs specific to this playbook action */}
                 <div className="space-y-2">
                   <div className="text-[10px] text-slate-500 uppercase font-black tracking-wider px-1">Pipeline Run Log</div>
-                  {runs.filter(r => r.summary?.actions?.some(a => a.key === selectedPlaybook.key)).slice(0, 5).length === 0 ? (
+                  {(Array.isArray(runs) ? runs : []).filter(r => Array.isArray(r.summary?.actions) && r.summary.actions.some(a => a.key === selectedPlaybook.key)).slice(0, 5).length === 0 ? (
                     <div className="text-[11px] text-slate-500 italic p-3 bg-slate-950/40 rounded-xl border border-white/5">
                       No matching executions recorded for this playbook yet.
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {runs
-                        .filter(r => r.summary?.actions?.some(a => a.key === selectedPlaybook.key))
+                      {(Array.isArray(runs) ? runs : [])
+                        .filter(r => Array.isArray(r.summary?.actions) && r.summary.actions.some(a => a.key === selectedPlaybook.key))
                         .slice(0, 5)
                         .map((run) => {
-                          const action = run.summary.actions!.find(a => a.key === selectedPlaybook.key)!;
-                          const actionStyle = STATUS_STYLES[action.status];
+                          const actions = Array.isArray(run.summary?.actions) ? run.summary.actions : [];
+                          const action = actions.find(a => a.key === selectedPlaybook.key);
+                          if (!action) return null;
+                          const actionStyle = STATUS_STYLES[action.status] || STATUS_STYLES.idle;
                           return (
                             <div key={run.id} className="p-3 bg-slate-950 rounded-2xl border border-white/5 flex flex-col gap-2">
                               <div className="flex justify-between items-center text-[10px]">
