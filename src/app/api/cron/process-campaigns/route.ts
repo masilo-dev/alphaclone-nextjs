@@ -66,7 +66,8 @@ export async function GET(req: NextRequest) {
                 });
                 continue;
             }
-            const result = await sendScheduledCampaignServer(campaign.id);
+            const { executeCampaignDurableFanOut } = await import('@/lib/server/durableCampaignFanOut');
+            const result = await executeCampaignDurableFanOut(campaign.id);
             results.push({ id: campaign.id, tenant_id: campaign.tenant_id, ...result });
         }
 

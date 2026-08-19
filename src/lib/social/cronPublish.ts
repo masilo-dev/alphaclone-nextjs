@@ -457,8 +457,9 @@ export async function publishDueLinkedInPosts(limit = 25) {
   if (error) throw error;
 
   const duePosts = data || [];
+  const { publishSocialPostDurable } = await import("./durableSocialPublisher");
   for (const post of duePosts) {
-    await publishSocialPost(post.id);
+    await publishSocialPostDurable(post.id);
   }
 
   return duePosts.length;

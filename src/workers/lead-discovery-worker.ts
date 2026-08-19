@@ -233,6 +233,16 @@ async function execute(job: Job) {
     completed_at: new Date().toISOString(), locked_at: null,
     metadata: { source_errors: sourceErrors, duration_ms: Date.now() - started, auto_accepted: autoAcceptedCount, crm_synced: crmSyncedCount },
   }).eq('id', job.id);
+
+  // Emit durable runtime outbox event
+  try {
+    const { insertOutboxEvent } = await import('@/lib/bonnie/runtime/outboxService');
+    await insertOutboxEvent({
+      tenantId: job.workspace_id,
+      eventType: 'lead_discovery.search.completed',
+      payload: { searchId: search.id, jobId: job.id, discoveredCount: rows.length, crmSyncedCount },
+    });
+  } catch {}
 }
 
 export async function processLeadDiscoveryBatch(options?: { workerId?: string; claimLimit?: number; searchId?: string }) {

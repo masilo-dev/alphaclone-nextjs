@@ -117,6 +117,21 @@ export class JobQueueManager {
       throw new Error(`Failed to enqueue job: ${error.message}`);
     }
 
+    // Forward to agent_tasks durable runtime engine
+    try {
+      const { createRunForObjective } = await import("@/lib/bonnie/runtime/goalRunService");
+      await createRunForObjective({
+        tenantId: opts.tenant_id,
+        userId: opts.user_id || null,
+        objective: `Legacy Job Execution [${opts.job_type}]`,
+        executionMode: "autonomous",
+        successCriteria: { job_type: opts.job_type, payload: opts.payload },
+        seedGraph: true,
+      });
+    } catch (durableErr) {
+      console.warn("[JobQueue] Failed to seed agent_tasks durable run for job:", durableErr);
+    }
+
     return data as DurableJob;
   }
 
