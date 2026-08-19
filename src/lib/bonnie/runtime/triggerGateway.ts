@@ -74,17 +74,21 @@ export async function processNormalizedTrigger(envelope: NormalizedTriggerEnvelo
   });
 
   // Record in agent_event_inbox
-  await admin.from('agent_event_inbox').insert({
-    tenant_id: envelope.tenant_id,
-    event_type: envelope.event_type,
-    entity_type: envelope.trigger_type,
-    entity_id: correlationId,
-    deduplication_key: deduplicationKey,
-    run_id: runResult.run.id,
-    payload: envelope.payload,
-    processing_status: 'processed',
-    processed_at: new Date().toISOString(),
-  }).catch(() => undefined);
+  try {
+    await admin.from('agent_event_inbox').insert({
+      tenant_id: envelope.tenant_id,
+      event_type: envelope.event_type,
+      entity_type: envelope.trigger_type,
+      entity_id: correlationId,
+      deduplication_key: deduplicationKey,
+      run_id: runResult.run.id,
+      payload: envelope.payload,
+      processing_status: 'processed',
+      processed_at: new Date().toISOString(),
+    });
+  } catch {
+    // Ignore inbox insertion failure
+  }
 
   // Emit event outbox for reactive consumers
   await insertOutboxEvent({

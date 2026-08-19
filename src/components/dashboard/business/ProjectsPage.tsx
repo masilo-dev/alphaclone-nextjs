@@ -88,7 +88,9 @@ const ProjectsPage: React.FC<ProjectsPageProps> = ({ user }) => {
 
     useEffect(() => {
         if (!nextSearch) return;
-        if (nextSearch.get('create') === 'true' || nextSearch.get('new') === 'true') {
+        const createVal = nextSearch.get('create');
+        const newVal = nextSearch.get('new');
+        if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
             setShowAddModal(true);
             router.replace('/dashboard/business/projects', { scroll: false });
         }

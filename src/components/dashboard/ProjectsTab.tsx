@@ -242,7 +242,9 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
 
   useEffect(() => {
     if (!searchParams) return;
-    if (searchParams.get('create') === 'true' || searchParams.get('new') === 'true') {
+    const createVal = searchParams.get('create');
+    const newVal = searchParams.get('new');
+    if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
       setShowCreate(true);
       router.replace('/dashboard/projects/manage', { scroll: false });
     }

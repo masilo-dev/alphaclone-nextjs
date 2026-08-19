@@ -30,6 +30,8 @@ export function normalizeBusinessRoute(path: string, role?: string): string {
         '/dashboard/projects/manage': '/dashboard/business/projects/manage',
         '/dashboard/contracts/manage': '/dashboard/business/contracts/manage',
         '/dashboard/leads/campaigns': '/dashboard/leads/finder',
+        '/dashboard/crm/activities': '/dashboard/crm/follow-ups',
+        '/dashboard/crm/activity': '/dashboard/crm/follow-ups',
     };
 
     return tenantAliases[base] ?? base;

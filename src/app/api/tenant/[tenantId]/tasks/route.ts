@@ -6,10 +6,17 @@ import { canTransitionTask } from '@/lib/projects/projectTaskDomain';
 
 const taskStatus = z.enum(['ideas', 'todo', 'in_progress', 'review', 'completed', 'cancelled']);
 const taskPriority = z.enum(['low', 'medium', 'high', 'urgent']);
+const dateSchema = z.string().transform((val) => {
+  if (!val || !val.trim()) return null;
+  const trimmed = val.trim();
+  if (trimmed.includes('T')) return trimmed.split('T')[0];
+  return trimmed;
+}).pipe(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).nullable().optional();
+
 const createTaskSchema = z.object({
   title: z.string().trim().min(1).max(300),
   description: z.string().trim().max(10_000).optional(),
-  due_date: z.string().date().nullable().optional(),
+  due_date: dateSchema,
   priority: taskPriority.default('medium'),
   related_to_project: z.string().uuid().nullable().optional(),
   related_to_deal: z.string().uuid().nullable().optional(),
@@ -19,7 +26,7 @@ const createTaskSchema = z.object({
 const updateTaskSchema = z.object({
   title: z.string().trim().min(1).max(300).optional(),
   description: z.string().trim().max(10_000).nullable().optional(),
-  due_date: z.string().date().nullable().optional(),
+  due_date: dateSchema,
   priority: taskPriority.optional(),
   status: taskStatus.optional(),
 });

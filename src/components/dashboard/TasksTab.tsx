@@ -15,7 +15,7 @@ import { User as UserType } from '../../types';
 import { useMicrosoftTasks } from '@/hooks/useMicrosoftTasks';
 import toast from 'react-hot-toast';
 import { useSuccessFeedback, successMessages } from '../ui/SuccessFeedback';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { showActionNextSteps } from '../common/showActionNextSteps';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import EmptyState, { EmptyStateFromPreset } from '../ui/EmptyState';
@@ -355,6 +355,7 @@ const TaskCreateContent: React.FC<{
     title: string;
     due_date?: string;
     priority: Priority;
+    related_to_project?: string;
     related_to_deal?: string;
     related_to_contact?: string;
     related_to_lead?: string;
@@ -362,13 +363,16 @@ const TaskCreateContent: React.FC<{
   creating: boolean;
   onClose: () => void;
   tenantId?: string;
-}> = ({ onCreate, creating, onClose, tenantId }) => {
+  initialProjectId?: string;
+}> = ({ onCreate, creating, onClose, tenantId, initialProjectId }) => {
   const [title, setTitle] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState('');
+  const [projectId, setProjectId] = useState(initialProjectId || '');
   const [dealId, setDealId] = useState('');
   const [contactId, setContactId] = useState('');
   const [leadId, setLeadId] = useState('');
+  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [deals, setDeals] = useState<Array<{ id: string; name: string }>>([]);
   const [contacts, setContacts] = useState<Array<{ id: string; name: string }>>([]);
   const [leads, setLeads] = useState<Array<{ id: string; name: string }>>([]);
@@ -376,11 +380,13 @@ const TaskCreateContent: React.FC<{
   useEffect(() => {
     if (!tenantId) return;
     void (async () => {
-      const [dealsRes, clientsRes, leadsRes] = await Promise.all([
+      const [projectsRes, dealsRes, clientsRes, leadsRes] = await Promise.all([
+        supabase.from('projects').select('id, name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
         supabase.from('deals').select('id, name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
         supabase.from('contacts').select('id, first_name, last_name, email').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
         supabase.from('leads').select('id, business_name').eq('tenant_id', tenantId).order('updated_at', { ascending: false }).limit(30),
       ]);
+      setProjects((projectsRes.data || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
       setDeals((dealsRes.data || []).map((d: { id: string; name: string }) => ({ id: d.id, name: d.name })));
       setContacts((clientsRes.data || []).map((c: { id: string; first_name?: string; last_name?: string; email?: string }) => ({
         id: c.id,
@@ -399,6 +405,7 @@ const TaskCreateContent: React.FC<{
       title: title.trim(),
       due_date: dueDate || undefined,
       priority,
+      related_to_project: projectId || undefined,
       related_to_deal: dealId || undefined,
       related_to_contact: contactId || undefined,
       related_to_lead: leadId || undefined,
@@ -438,6 +445,11 @@ const TaskCreateContent: React.FC<{
         className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm outline-none"
       />
       <div className="grid grid-cols-1 gap-2">
+        <label className="text-xs font-medium text-slate-400">Link to project (optional)</label>
+        <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
+          <option value="">None</option>
+          {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
         <label className="text-xs font-medium text-slate-400">Link to deal (optional)</label>
         <select value={dealId} onChange={(e) => setDealId(e.target.value)} className="w-full px-3 py-2.5 bg-slate-800 border border-white/10 rounded-xl text-white text-sm">
           <option value="">None</option>
@@ -614,10 +626,23 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
     toast.success(`${ids.length} task(s) completed`);
   };
 
+  const searchParams = useSearchParams();
+  const initialProjectId = searchParams?.get('project') || undefined;
+
+  useEffect(() => {
+    if (!searchParams) return;
+    const createVal = searchParams.get('create');
+    const newVal = searchParams.get('new');
+    if (createVal === 'true' || createVal === '1' || newVal === 'true' || newVal === '1') {
+      setCreateOpen(true);
+    }
+  }, [searchParams]);
+
   const handleCreateTask = async (data: {
     title: string;
     due_date?: string;
     priority: Priority;
+    related_to_project?: string;
     related_to_deal?: string;
     related_to_contact?: string;
     related_to_lead?: string;
@@ -632,6 +657,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
           title: data.title,
           priority: data.priority,
           due_date: data.due_date || null,
+          related_to_project: data.related_to_project || null,
           related_to_deal: data.related_to_deal || null,
           related_to_contact: data.related_to_contact || null,
           related_to_lead: data.related_to_lead || null,
@@ -643,8 +669,8 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       setCreateOpen(false);
       toast.success('Task created');
       showActionNextSteps('task_created', (path) => router.push(path));
-    } catch {
-      toast.error('Failed to create task');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to create task');
     } finally {
       setCreating(false);
     }
@@ -1001,7 +1027,7 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
       </button>
 
       <DetailDrawer open={createOpen} onOpenChange={setCreateOpen} title="New task">
-        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} />
+        <TaskCreateContent onCreate={handleCreateTask} creating={creating} onClose={() => setCreateOpen(false)} tenantId={currentTenant?.id} initialProjectId={initialProjectId} />
       </DetailDrawer>
 
       <DetailDrawer

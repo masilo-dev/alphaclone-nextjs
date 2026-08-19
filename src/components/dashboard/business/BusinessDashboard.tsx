@@ -603,6 +603,8 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <AccountsPage />
                     </React.Suspense>
                 );
+            case '/dashboard/crm/activities':
+            case '/dashboard/crm/activity':
             case '/dashboard/crm/follow-ups':
                 return (
                     <React.Suspense fallback={<TabSkeleton />}>
