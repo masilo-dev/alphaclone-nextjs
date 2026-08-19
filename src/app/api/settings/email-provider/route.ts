@@ -39,34 +39,52 @@ async function getConnectedProviders(
   admin: ReturnType<typeof createSupabaseAdminClient>
 ): Promise<ConnectedProvider[]> {
   const types = ['zoho', 'brevo', 'sendgrid', 'resend', 'gmail'] as const;
-  const { data: integrations } = await admin
+  const { data: userIntegrations } = await admin
     .from('integrations')
     .select('type, enabled, config')
     .eq('user_id', userId)
     .in('type', [...types]);
 
-  const byType = new Map<string, IntegrationRow>(
-    ((integrations || []) as IntegrationRow[]).map((i) => [i.type, i])
-  );
+  const { data: tenantIntegrations } = await admin
+    .from('integrations')
+    .select('type, enabled, config')
+    .eq('tenant_id', tenantId)
+    .in('type', [...types])
+    .order('updated_at', { ascending: false });
+
+  const allIntegrations = [...(userIntegrations || []), ...(tenantIntegrations || [])];
+  const byType = new Map<string, IntegrationRow>();
+  for (const item of allIntegrations) {
+    if (!byType.has(item.type) || item.enabled) {
+      byType.set(item.type, item);
+    }
+  }
 
   const { data: msConn } = await admin
     .from('microsoft_connections')
     .select('microsoft_email')
-    .eq('user_id', userId)
+    .or(`user_id.eq.${userId},tenant_id.eq.${tenantId}`)
     .maybeSingle();
 
   const zohoRow = byType.get('zoho');
   const zohoConfig = (zohoRow?.config || {}) as Record<string, unknown>;
-  const zohoConnected = Boolean(zohoRow?.enabled && zohoConfig.refreshToken);
+  // Zoho is connected if the tenant has stored their own OAuth tokens in the integrations DB.
+  // process.env ZOHO_CLIENT_ID/SECRET are platform OAuth app credentials — NOT a tenant connection.
+  const zohoConnected = Boolean(
+    zohoRow?.enabled &&
+    (zohoConfig.refreshToken || zohoConfig.refresh_token || zohoConfig.access_token || zohoConfig.apiKey || zohoConfig.api_key)
+  );
 
   const checkApi = (type: string) => {
     const row = byType.get(type);
     if (!row?.enabled) return false;
     const cfg = (row.config || {}) as Record<string, unknown>;
     if (type === 'gmail') {
+      // Gmail requires fromEmail + App Password stored by the tenant in their own integration row
       return Boolean(cfg.fromEmail || cfg.from_email) && Boolean(cfg.appPassword || cfg.app_password);
     }
-    return Boolean(cfg.apiKey || cfg.api_key || type === 'zoho');
+    // All other API-key providers (Brevo, SendGrid, Resend): tenant must have stored their own API key
+    return Boolean(cfg.apiKey || cfg.api_key);
   };
 
   return [

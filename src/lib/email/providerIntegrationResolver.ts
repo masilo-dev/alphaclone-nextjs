@@ -18,7 +18,9 @@ function pickProvider(
     : ['zoho', 'brevo', 'resend', 'sendgrid', 'gmail'];
   for (const provider of order) {
     const hit = rows.find((row) => row.type === provider);
-    const cfg = (hit?.config || {}) as Record<string, unknown>;
+    if (!hit) continue;
+
+    const cfg = (hit.config || {}) as Record<string, unknown>;
 
     if (provider === 'gmail') {
       // Gmail uses App Password (SMTP) — no OAuth, no global env vars.
@@ -34,7 +36,7 @@ function pickProvider(
       };
     }
 
-    const apiKey = String(cfg.apiKey || cfg.api_key || '').trim();
+    const apiKey = String(cfg.apiKey || cfg.api_key || cfg.refreshToken || cfg.refresh_token || '').trim();
     const requiresApiKey = provider === 'brevo' || provider === 'sendgrid' || provider === 'resend';
     if (requiresApiKey && !apiKey) continue;
     return {
