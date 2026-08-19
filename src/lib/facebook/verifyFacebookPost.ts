@@ -142,7 +142,10 @@ export async function verifyFacebookPostExists(params: {
   const version = params.graphVersion || 'v19.0';
   const fetchImpl = params.fetchImpl || fetch;
   const url = new URL(`https://graph.facebook.com/${version}/${encodeURIComponent(params.postId)}`);
-  url.searchParams.set('fields', 'id,permalink_url,created_time');
+  // permalink_url is not available on all Facebook post types (video posts, some photo posts)
+  // and requesting it causes error #100 which is incorrectly treated as a publish failure.
+  // We only request id and created_time (always safe) then build the URL ourselves.
+  url.searchParams.set('fields', 'id,created_time');
   url.searchParams.set('access_token', params.pageAccessToken);
 
   const resp = await fetchImpl(url.toString(), { method: 'GET' });
@@ -162,10 +165,8 @@ export async function verifyFacebookPostExists(params: {
       ? body.id.trim()
       : params.postId;
 
-  const permalink =
-    typeof body.permalink_url === 'string' && body.permalink_url.trim()
-      ? body.permalink_url.trim()
-      : buildFacebookPostUrl(verifiedId, params.pageId);
+  // Construct the live URL from the post id — this is reliable for all post types.
+  const permalink = buildFacebookPostUrl(verifiedId, params.pageId);
 
   return {
     postId: verifiedId,
