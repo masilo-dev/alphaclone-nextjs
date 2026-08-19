@@ -139,8 +139,8 @@ export default function AccountingDashboard() {
                     .filter(a => a.accountType === 'asset' && (a.accountCode?.startsWith('10') || a.accountName.toLowerCase().includes('cash')))
                     .reduce((sum, a) => sum + (a.debitBalance - a.creditBalance), 0);
 
-                if (cashBalance === 0 && operational.paidRevenue > 0) {
-                    cashBalance = operational.paidRevenue - operational.receiptExpenses;
+                if (cashBalance === 0 && (operational.allTimePaidRevenue > 0 || operational.paidRevenue > 0)) {
+                    cashBalance = operational.allTimeAvailableCash;
                 }
 
                 const { data: entries } = journalEntriesResult;

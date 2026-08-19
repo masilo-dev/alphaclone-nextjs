@@ -94,13 +94,28 @@ function toUnifiedMicrosoft(
 }
 
 async function fetchProviderStatus(tenantId?: string): Promise<{ microsoft: boolean; zoho: boolean }> {
+  const fetchWithTimeout = async <T,>(promise: Promise<T>, timeoutMs = 5000, fallback: T): Promise<T> => {
+    let timer: any;
+    const timeoutPromise = new Promise<T>((resolve) => {
+      timer = setTimeout(() => resolve(fallback), timeoutMs);
+    });
+    return Promise.race([
+      promise.finally(() => clearTimeout(timer)),
+      timeoutPromise
+    ]);
+  };
+
   const [microsoft, zoho] = await Promise.all([
-    microsoftAuthService.isConnected().catch(() => false),
+    fetchWithTimeout(microsoftAuthService.isConnected().catch(() => false), 5000, false),
     tenantId
-      ? fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
-          .then((r) => r.json().catch(() => ({})))
-          .then((d) => Boolean(d.isConnected))
-          .catch(() => false)
+      ? fetchWithTimeout(
+          fetch(`/api/auth/zoho/status?tenantId=${encodeURIComponent(tenantId)}`, { credentials: 'include' })
+            .then((r) => r.json().catch(() => ({})))
+            .then((d) => Boolean(d.isConnected))
+            .catch(() => false),
+          5000,
+          false
+        )
       : Promise.resolve(false),
   ]);
   return { microsoft, zoho };
@@ -242,26 +257,37 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
 
   useEffect(() => {
     let cancelled = false;
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) setStatusChecked(true);
+    }, 6000);
+
     (async () => {
-      const next = await fetchProviderStatus(currentTenant?.id);
-      if (cancelled) return;
-      setStatus(next);
-      const preferred =
-        urlProvider === 'zoho' || urlProvider === 'microsoft' ? urlProvider : defaultProvider;
-      if (
-        preferred &&
-        ((preferred === 'microsoft' && next.microsoft) || (preferred === 'zoho' && next.zoho))
-      ) {
-        setProvider(preferred);
-      } else if (next.microsoft) {
-        setProvider('microsoft');
-      } else if (next.zoho) {
-        setProvider('zoho');
+      try {
+        const next = await fetchProviderStatus(currentTenant?.id);
+        if (cancelled) return;
+        setStatus(next);
+        const preferred =
+          urlProvider === 'zoho' || urlProvider === 'microsoft' ? urlProvider : defaultProvider;
+        if (
+          preferred &&
+          ((preferred === 'microsoft' && next.microsoft) || (preferred === 'zoho' && next.zoho))
+        ) {
+          setProvider(preferred);
+        } else if (next.microsoft) {
+          setProvider('microsoft');
+        } else if (next.zoho) {
+          setProvider('zoho');
+        }
+      } finally {
+        if (!cancelled) {
+          setStatusChecked(true);
+          clearTimeout(safetyTimer);
+        }
       }
-      setStatusChecked(true);
     })();
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimer);
     };
   }, [defaultProvider, urlProvider, currentTenant?.id]);
 

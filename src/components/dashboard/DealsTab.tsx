@@ -305,7 +305,7 @@ const DealDetail: React.FC<{
           meta={
             <>
               <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">
-                £{(deal.value || 0).toLocaleString()}
+                ${(deal.value || 0).toLocaleString()}
               </span>
               <span>Step {progress.step} of {progress.total}</span>
             </>
@@ -326,7 +326,7 @@ const DealDetail: React.FC<{
 
         {/* Value hero */}
         <div className="flex flex-col items-center py-4 gap-2">
-          <span className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">£{(deal.value || 0).toLocaleString()}</span>
+          <span className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">${(deal.value || 0).toLocaleString()}</span>
           <div className="w-full max-w-xs px-2">
             <div className="flex justify-between text-[10px] text-[var(--ws-text-muted)] font-semibold uppercase tracking-wide mb-1">
               <span>Pipeline step {progress.step} of {progress.total}</span>

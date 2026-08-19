@@ -164,7 +164,7 @@ const QuoteDetail: React.FC<{
           status={<StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>}
           meta={
             <>
-              <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">{amountDisplay.replace('$', '£')}</span>
+              <span className="tabular-nums font-semibold text-[var(--ws-text-primary)]">{amountDisplay}</span>
               {quote.valid_until ? (
                 <span>Valid until {new Date(quote.valid_until).toLocaleDateString('en-GB')}</span>
               ) : null}
@@ -197,7 +197,7 @@ const QuoteDetail: React.FC<{
         />
         <div className="ac-workspace-panel p-5 text-center space-y-2">
           <div className="text-[13px] text-[var(--ws-text-muted)]">Quote value</div>
-          <div className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">{amountDisplay.replace('$', '£')}</div>
+          <div className="text-[28px] font-bold text-[var(--ws-text-primary)] tabular-nums">{amountDisplay}</div>
           <StatusBadge variant={quoteStatusVariant(quote.status)}>{quote.status}</StatusBadge>
         </div>
         <QuoteDocumentPreview quoteId={quote.id} />

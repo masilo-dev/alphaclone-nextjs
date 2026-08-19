@@ -348,7 +348,7 @@ export function InvoicingDashboard() {
         chartType="bar"
         chartColor={CHART_COLORS.invoice.paid}
         dualBar
-        valuePrefix="£"
+        valuePrefix="$"
         chartTitle="Invoiced vs collected"
         chartSubtitle="Monthly"
       />
