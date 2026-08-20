@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-08-17T14:03:20.492Z",
+  "generated_at": "2026-08-20T12:53:20.492Z",
   "source_of_truth": "runtime MCP registry + unified tools/list full catalog",
-  "policy": "Default MCP discovery exposes the full executable catalog to every client. Catalog-only entries are audit visibility only and must not be reported as executable tools.",
+  "policy": "Existing clients retain the full executable catalog for compatibility. Stable-core and domain-pack discovery are available as the migration target; catalog-only entries are audit visibility only.",
   "totals": {
     "full_catalog_tools": 504,
-    "registry_executable_tools": 503,
+    "registry_executable_tools": 504,
     "progressive_route_tools": 7,
     "catalog_only_tools": 0,
     "write_tools": 314,
@@ -3736,14 +3736,27 @@
               "industry": {
                 "type": "string"
               },
+              "website": {
+                "type": "string",
+                "format": "uri"
+              },
+              "location": {
+                "type": "string"
+              },
               "sales_stage": {
                 "type": "string"
               },
               "value": {
                 "type": "number"
               },
+              "source": {
+                "type": "string"
+              },
               "notes": {
                 "type": "string"
+              },
+              "metadata": {
+                "type": "object"
               }
             },
             "required": [
@@ -4124,7 +4137,7 @@
         {
           "canonical_tool_name": "get_clients",
           "module": "contacts",
-          "description": "List CRM clients/contacts (unified contacts view). Alias for canonical contact reads.",
+          "description": "[Deprecated compatibility alias; use get_contacts.] List CRM clients/contacts (unified contacts view). Alias for canonical contact reads.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -6808,7 +6821,7 @@
         {
           "canonical_tool_name": "retrieve_document",
           "module": "documents",
-          "description": "Alias of get_document.",
+          "description": "[Deprecated compatibility alias; use get_document.] Alias of get_document.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -8912,7 +8925,7 @@
         {
           "canonical_tool_name": "compare_versions",
           "module": "health",
-          "description": "Alias of compare_document_versions.",
+          "description": "[Deprecated compatibility alias; use compare_document_versions.] Alias of compare_document_versions.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -9532,7 +9545,7 @@
         {
           "canonical_tool_name": "get_post_status",
           "module": "health",
-          "description": "Get social post status by id.",
+          "description": "[Deprecated compatibility alias; use verify_social_post_published.] Get social post status by id.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -12748,7 +12761,7 @@
         {
           "canonical_tool_name": "list_leads",
           "module": "leads",
-          "description": "List CRM leads with pagination and filters (ChatGPT-friendly alias of the lead pipeline).",
+          "description": "[Deprecated compatibility alias; use get_leads.] List CRM leads with pagination and filters (ChatGPT-friendly alias of the lead pipeline).",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -14413,7 +14426,7 @@
         {
           "canonical_tool_name": "upload_media",
           "module": "media",
-          "description": "Upload social media asset (image PNG/JPG/JPEG/GIF/WebP, video MP4/MOV/WebM, or document PDF) via base64, data URL, remote HTTPS source URL, or file. Returns media_asset_id and public_url for social publishing.",
+          "description": "Upload image/video via content_base64, data URL, or HTTPS URL. Returns media_url (/mnt/data paths blocked). Use media_url in publish_post.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -15786,7 +15799,7 @@
         {
           "canonical_tool_name": "get_post_analytics",
           "module": "reporting",
-          "description": "Get analytics for a published social post.",
+          "description": "[Deprecated compatibility alias; use get_social_post_insights.] Get analytics for a published social post.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -17452,7 +17465,8 @@
           "description": "List the small stable core MCP catalogue. Read-only; returns canonical names and modules.",
           "input_schema": {
             "type": "object",
-            "properties": {}
+            "properties": {},
+            "required": []
           },
           "output_schema": {
             "type": "object",
@@ -17469,7 +17483,7 @@
           "feature_flag_dependency": null,
           "integration_dependency": null,
           "executable_status": "executable",
-          "executable_via": "mcp-route",
+          "executable_via": "tool-registry",
           "supports_idempotency": false,
           "supports_action_receipt": false,
           "annotations": {
@@ -17661,7 +17675,7 @@
         {
           "canonical_tool_name": "search_tools",
           "module": "search",
-          "description": "Search the AlphaClone canonical catalog of 499 tools by keyword, intent, or domain query. Use when looking for capabilities to accomplish a specific task.",
+          "description": "Search the full AlphaClone canonical tool catalog by keyword, intent, or domain query. Use when looking for capabilities outside the stable core.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -18305,7 +18319,7 @@
         {
           "canonical_tool_name": "create_post",
           "module": "social",
-          "description": "Create a draft social post.",
+          "description": "[Deprecated compatibility alias; use publish_social_post.] Create a draft social post.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -19953,7 +19967,7 @@
         {
           "canonical_tool_name": "publish_post",
           "module": "social",
-          "description": "Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
+          "description": "[Deprecated compatibility alias; use publish_social_post.] Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -20376,7 +20390,7 @@
         {
           "canonical_tool_name": "schedule_post",
           "module": "social",
-          "description": "Schedule a social post for later publishing.",
+          "description": "[Deprecated compatibility alias; use schedule_social_post.] Schedule a social post for later publishing.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -22860,7 +22874,7 @@
         {
           "canonical_tool_name": "run_playbook",
           "module": "workflows",
-          "description": "Run a business automation sequence. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.",
+          "description": "[Deprecated compatibility alias; use run_workflow.] Run a business automation sequence. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -23525,7 +23539,7 @@
         {
           "canonical_tool_name": "dispatch_tool",
           "module": "workspace",
-          "description": "Universal fallback tool execution router. Allows clients with static tool catalogs to invoke any of the 499 AlphaClone tools by name with argument payload.",
+          "description": "Universal fallback tool execution router. Allows compatible clients with static catalogs to invoke an authorized AlphaClone tool by canonical name and argument payload.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -23605,7 +23619,7 @@
         {
           "canonical_tool_name": "execute_action",
           "module": "workspace",
-          "description": "Alias for dispatch_tool — execute any AlphaClone canonical tool by name.",
+          "description": "[Deprecated compatibility alias; use dispatch_tool.] Alias for dispatch_tool — execute any AlphaClone canonical tool by name.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -23649,7 +23663,7 @@
         {
           "canonical_tool_name": "execute_internal_tool",
           "module": "workspace",
-          "description": "Execute ANY of AlphaClone's 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)",
+          "description": "Compatibility dispatcher for authorized AlphaClone tools by canonical name. Prefer direct stable-core or domain-pack tools when available.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -24441,7 +24455,7 @@
         {
           "canonical_tool_name": "publish_now",
           "module": "workspace",
-          "description": "Publish a social post now via SocialPublishingService. Supports Facebook Page and LinkedIn person/organization. Requires confirmation unless tenant enables autonomous publishing. Returns real provider post ID and live URL — never fabricates success.",
+          "description": "[Deprecated compatibility alias; use publish_social_post.] Publish a social post now via SocialPublishingService. Supports Facebook Page and LinkedIn person/organization. Requires confirmation unless tenant enables autonomous publishing. Returns real provider post ID and live URL — never fabricates success.",
           "input_schema": {
             "type": "object",
             "properties": {
@@ -28759,14 +28773,27 @@
           "industry": {
             "type": "string"
           },
+          "website": {
+            "type": "string",
+            "format": "uri"
+          },
+          "location": {
+            "type": "string"
+          },
           "sales_stage": {
             "type": "string"
           },
           "value": {
             "type": "number"
           },
+          "source": {
+            "type": "string"
+          },
           "notes": {
             "type": "string"
+          },
+          "metadata": {
+            "type": "object"
           }
         },
         "required": [
@@ -29147,7 +29174,7 @@
     {
       "canonical_tool_name": "get_clients",
       "module": "contacts",
-      "description": "List CRM clients/contacts (unified contacts view). Alias for canonical contact reads.",
+      "description": "[Deprecated compatibility alias; use get_contacts.] List CRM clients/contacts (unified contacts view). Alias for canonical contact reads.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -31817,7 +31844,7 @@
     {
       "canonical_tool_name": "retrieve_document",
       "module": "documents",
-      "description": "Alias of get_document.",
+      "description": "[Deprecated compatibility alias; use get_document.] Alias of get_document.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -33900,7 +33927,7 @@
     {
       "canonical_tool_name": "compare_versions",
       "module": "health",
-      "description": "Alias of compare_document_versions.",
+      "description": "[Deprecated compatibility alias; use compare_document_versions.] Alias of compare_document_versions.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -34520,7 +34547,7 @@
     {
       "canonical_tool_name": "get_post_status",
       "module": "health",
-      "description": "Get social post status by id.",
+      "description": "[Deprecated compatibility alias; use verify_social_post_published.] Get social post status by id.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -37715,7 +37742,7 @@
     {
       "canonical_tool_name": "list_leads",
       "module": "leads",
-      "description": "List CRM leads with pagination and filters (ChatGPT-friendly alias of the lead pipeline).",
+      "description": "[Deprecated compatibility alias; use get_leads.] List CRM leads with pagination and filters (ChatGPT-friendly alias of the lead pipeline).",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -39366,7 +39393,7 @@
     {
       "canonical_tool_name": "upload_media",
       "module": "media",
-      "description": "Upload social media asset (image PNG/JPG/JPEG/GIF/WebP, video MP4/MOV/WebM, or document PDF) via base64, data URL, remote HTTPS source URL, or file. Returns media_asset_id and public_url for social publishing.",
+      "description": "Upload image/video via content_base64, data URL, or HTTPS URL. Returns media_url (/mnt/data paths blocked). Use media_url in publish_post.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -40718,7 +40745,7 @@
     {
       "canonical_tool_name": "get_post_analytics",
       "module": "reporting",
-      "description": "Get analytics for a published social post.",
+      "description": "[Deprecated compatibility alias; use get_social_post_insights.] Get analytics for a published social post.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -42370,7 +42397,8 @@
       "description": "List the small stable core MCP catalogue. Read-only; returns canonical names and modules.",
       "input_schema": {
         "type": "object",
-        "properties": {}
+        "properties": {},
+        "required": []
       },
       "output_schema": {
         "type": "object",
@@ -42387,7 +42415,7 @@
       "feature_flag_dependency": null,
       "integration_dependency": null,
       "executable_status": "executable",
-      "executable_via": "mcp-route",
+      "executable_via": "tool-registry",
       "supports_idempotency": false,
       "supports_action_receipt": false,
       "annotations": {
@@ -42579,7 +42607,7 @@
     {
       "canonical_tool_name": "search_tools",
       "module": "search",
-      "description": "Search the AlphaClone canonical catalog of 499 tools by keyword, intent, or domain query. Use when looking for capabilities to accomplish a specific task.",
+      "description": "Search the full AlphaClone canonical tool catalog by keyword, intent, or domain query. Use when looking for capabilities outside the stable core.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -43216,7 +43244,7 @@
     {
       "canonical_tool_name": "create_post",
       "module": "social",
-      "description": "Create a draft social post.",
+      "description": "[Deprecated compatibility alias; use publish_social_post.] Create a draft social post.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -44864,7 +44892,7 @@
     {
       "canonical_tool_name": "publish_post",
       "module": "social",
-      "description": "Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
+      "description": "[Deprecated compatibility alias; use publish_social_post.] Publish/schedule a social post. Accepts inline media (content_base64, file_base64, data_url, source_url) or pre-uploaded media_urls/media_asset_ids. Never /mnt/data paths. LinkedIn orgs: identity_type=linkedin_organization + identity_id. Returns provider post ID + live URL or ok=false.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -45287,7 +45315,7 @@
     {
       "canonical_tool_name": "schedule_post",
       "module": "social",
-      "description": "Schedule a social post for later publishing.",
+      "description": "[Deprecated compatibility alias; use schedule_social_post.] Schedule a social post for later publishing.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -47750,7 +47778,7 @@
     {
       "canonical_tool_name": "run_playbook",
       "module": "workflows",
-      "description": "Run a business automation sequence. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.",
+      "description": "[Deprecated compatibility alias; use run_workflow.] Run a business automation sequence. Low-risk steps auto-run; high-risk steps require approval unless auto_high_risk=true.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -48408,7 +48436,7 @@
     {
       "canonical_tool_name": "dispatch_tool",
       "module": "workspace",
-      "description": "Universal fallback tool execution router. Allows clients with static tool catalogs to invoke any of the 499 AlphaClone tools by name with argument payload.",
+      "description": "Universal fallback tool execution router. Allows compatible clients with static catalogs to invoke an authorized AlphaClone tool by canonical name and argument payload.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -48488,7 +48516,7 @@
     {
       "canonical_tool_name": "execute_action",
       "module": "workspace",
-      "description": "Alias for dispatch_tool — execute any AlphaClone canonical tool by name.",
+      "description": "[Deprecated compatibility alias; use dispatch_tool.] Alias for dispatch_tool — execute any AlphaClone canonical tool by name.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -48532,7 +48560,7 @@
     {
       "canonical_tool_name": "execute_internal_tool",
       "module": "workspace",
-      "description": "Execute ANY of AlphaClone's 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)",
+      "description": "Compatibility dispatcher for authorized AlphaClone tools by canonical name. Prefer direct stable-core or domain-pack tools when available.",
       "input_schema": {
         "type": "object",
         "properties": {
@@ -49324,7 +49352,7 @@
     {
       "canonical_tool_name": "publish_now",
       "module": "workspace",
-      "description": "Publish a social post now via SocialPublishingService. Supports Facebook Page and LinkedIn person/organization. Requires confirmation unless tenant enables autonomous publishing. Returns real provider post ID and live URL — never fabricates success.",
+      "description": "[Deprecated compatibility alias; use publish_social_post.] Publish a social post now via SocialPublishingService. Supports Facebook Page and LinkedIn person/organization. Requires confirmation unless tenant enables autonomous publishing. Returns real provider post ID and live URL — never fabricates success.",
       "input_schema": {
         "type": "object",
         "properties": {

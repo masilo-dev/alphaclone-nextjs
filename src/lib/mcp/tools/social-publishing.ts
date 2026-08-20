@@ -17,6 +17,7 @@ import {
 } from '@/lib/social/identityResolution';
 import { uploadSocialMedia } from '@/lib/social/mediaUpload';
 import { CANONICAL_SOCIAL_MCP_TOOLS, SOCIAL_PUBLISH_TOOL_CATALOG_VERSION } from '@/lib/social/types';
+import { resolveMcpActionReadiness } from '@/lib/mcp/actionReadiness';
 
 function requireTenantId(args: { tenant_id?: string }, ctx: { tenantId?: string }) {
   // Session tenant is authoritative — never prefer model-supplied tenant_id.
@@ -67,110 +68,12 @@ registerTool('social-publishing', {
     if (!userId) throw new Error('Authenticated user required');
 
     const { assertTenantMembership } = await import('@/lib/tenant/platformTenant');
-    const { resolveTenantRole } = await import('@/lib/mcp/connector/permissions');
-    const { hasTool } = await import('../tool-registry');
     await assertTenantMembership(tenantId, userId);
-
-    const supabase = createSupabaseAdminClient();
-    const role = await resolveTenantRole(tenantId, userId);
-    const canSocial = role.permissions.includes('social:publish');
-    const canWriteSocial = role.permissions.includes('social:write');
-    const canEmail = role.permissions.includes('sales:write') || role.permissions.includes('marketing:write');
-
-    const [identitiesRes, emailIntegrationsRes, senderRes] = await Promise.all([
-      supabase
-        .from('social_identities')
-        .select('identity_id, provider, identity_type, display_name, can_publish, can_upload_media, is_active')
-        .eq('tenant_id', tenantId)
-        .eq('is_active', true),
-      supabase
-        .from('integrations')
-        .select('id, provider, type, status, is_active, config')
-        .eq('tenant_id', tenantId)
-        .in('provider', ['zoho', 'gmail', 'brevo', 'sendgrid', 'resend', 'outlook', 'smtp']),
-      supabase
-        .from('email_sender_addresses')
-        .select('id, provider, email_address, display_name, is_default, is_verified')
-        .eq('tenant_id', tenantId),
-    ]);
-
-    const identities = identitiesRes.data || [];
-    const publishableIdentities = identities.filter((i) => i.can_publish);
-    const uploadableIdentities = identities.filter((i) => i.can_upload_media);
-    const emailIntegrations = (emailIntegrationsRes.data || []).filter(
-      (i) => i.is_active !== false && String(i.status || 'connected') !== 'disconnected'
-    );
-    const senders = senderRes.data || [];
-    const verifiedSenders = senders.filter((s) => s.is_verified !== false);
-
-    const tools = {
-      upload_social_media: hasTool('upload_social_media'),
-      publish_social_post: hasTool('publish_social_post'),
-      get_social_identities: hasTool('get_social_identities'),
-      send_email: hasTool('send_email'),
-    };
-
-    const socialMissing: string[] = [];
-    if (!tools.publish_social_post || !tools.get_social_identities) socialMissing.push('MCP social tools are not registered');
-    if (!canSocial) socialMissing.push('Workspace role lacks social:publish permission');
-    if (publishableIdentities.length === 0) socialMissing.push('No active publishable Facebook/LinkedIn identity is connected');
-
-    const mediaMissing: string[] = [];
-    if (!tools.upload_social_media) mediaMissing.push('upload_social_media is not registered');
-    if (!canWriteSocial) mediaMissing.push('Workspace role lacks social:write permission');
-    if (identities.length > 0 && uploadableIdentities.length === 0) {
-      mediaMissing.push('Connected social identities do not advertise media upload capability');
-    }
-
-    const emailMissing: string[] = [];
-    if (!tools.send_email) emailMissing.push('send_email is not registered');
-    if (!canEmail) emailMissing.push('Workspace role lacks sales:write or marketing:write permission');
-    if (emailIntegrations.length === 0) emailMissing.push('No active email provider integration is connected');
-    if (verifiedSenders.length === 0) emailMissing.push('No verified/default sender address is configured');
-
-    const readiness = {
-      requested_action: args.action || 'all',
-      workspace: {
-        tenant_id: tenantId,
-        user_id: userId,
-        role: role.role,
-      },
-      tools,
-      social_post: {
-        executable: socialMissing.length === 0,
-        missing: socialMissing,
-        identities: publishableIdentities.map((i) => ({
-          identity_id: i.identity_id,
-          provider: i.provider,
-          identity_type: i.identity_type,
-          display_name: i.display_name,
-          can_publish: i.can_publish,
-          can_upload_media: i.can_upload_media,
-        })),
-      },
-      media_upload: {
-        executable: mediaMissing.length === 0,
-        missing: mediaMissing,
-        accepted_sources: ['file', 'base64', 'source_url'],
-        accepted_media_types: ['image', 'video', 'document'],
-      },
-      email_send: {
-        executable: emailMissing.length === 0,
-        missing: emailMissing,
-        providers: emailIntegrations.map((i) => ({
-          integration_id: i.id,
-          provider: i.provider || i.type,
-          status: i.status,
-        })),
-        sender_addresses: verifiedSenders.map((s) => ({
-          sender_id: s.id,
-          provider: s.provider,
-          email_address: s.email_address,
-          display_name: s.display_name,
-          is_default: s.is_default,
-        })),
-      },
-    };
+    const readiness = await resolveMcpActionReadiness({
+      tenantId,
+      userId,
+      action: args.action,
+    });
 
     return toMcpContent(
       okResult('check_mcp_execution_readiness', readiness, {

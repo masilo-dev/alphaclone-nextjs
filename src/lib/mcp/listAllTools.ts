@@ -11,6 +11,7 @@ import {
   DISCOVERY_CONTROL_TOOLS,
   moduleForTool,
 } from '@/lib/mcp/progressiveDiscovery';
+import { getToolGovernance, withGovernanceDescription } from '@/lib/mcp/canonicalToolRegistry';
 
 export type UnifiedMcpTool = McpDiscoveryTool;
 
@@ -81,10 +82,22 @@ function withAnnotations(tools: UnifiedMcpTool[]): UnifiedMcpTool[] {
       (typeof tool.inputSchema === 'object' && tool.inputSchema && !('_def' in tool.inputSchema)
         ? (tool.inputSchema as Record<string, unknown>)
         : { type: 'object', properties: {} });
+    const governance = getToolGovernance(tool.name, moduleForTool(tool.name));
     return {
       ...tool,
+      description: withGovernanceDescription(tool.name, tool.description || ''),
       jsonSchema,
       annotations: tool.annotations || resolveToolAnnotations(tool.name),
+      _meta: {
+        ...(tool._meta || {}),
+        'alphaclone/canonicalTool': governance.canonicalName,
+        'alphaclone/lifecycle': governance.lifecycle,
+        'alphaclone/module': governance.module,
+        'alphaclone/deprecated': governance.deprecated,
+        ...(governance.replacement
+          ? { 'alphaclone/replacementTool': governance.replacement }
+          : {}),
+      },
     };
   });
 }
@@ -118,7 +131,7 @@ export async function getUnifiedMcpTools(options?: {
   clientLabel?: string | null;
   userAgent?: string | null;
   loadedModules?: string[];
-  catalogMode?: 'progressive' | 'full';
+  catalogMode?: 'stable' | 'progressive' | 'full';
 }): Promise<UnifiedMcpTool[]> {
   const sanitizeForClient = options?.sanitizeForClient ?? true;
   const catalogMode = options?.catalogMode || 'full';
@@ -233,20 +246,25 @@ export function invalidateUnifiedMcpToolCache(): void {
 function selectCatalogTools(
   full: UnifiedMcpTool[],
   options: {
-    catalogMode: 'progressive' | 'full';
+    catalogMode: 'stable' | 'progressive' | 'full';
     loadedModules?: string[];
     executableNames: Set<string>;
   },
 ): UnifiedMcpTool[] {
   if (options.catalogMode === 'full') return full;
 
-  const loaded = new Set((options.loadedModules || []).map((m) => m.toLowerCase()));
+  const loaded = new Set(
+    options.catalogMode === 'stable'
+      ? []
+      : (options.loadedModules || []).map((m) => m.toLowerCase())
+  );
   const coreNames = new Set(coreTools(full, 80).map((tool) => tool.name));
   for (const tool of DISCOVERY_CONTROL_TOOLS) coreNames.add(tool.name);
   for (const tool of DISCOVERY_ALIAS_TOOLS) coreNames.add(tool.name);
 
   return full
     .filter((tool) => options.executableNames.has(tool.name))
+    .filter((tool) => options.catalogMode !== 'stable' || !getToolGovernance(tool.name).deprecated)
     .filter((tool) => coreNames.has(tool.name) || loaded.has(moduleForTool(tool.name)))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

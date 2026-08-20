@@ -10,6 +10,7 @@ export type McpDiscoveryTool = {
   inputSchema: Record<string, unknown>;
   annotations?: McpToolAnnotations;
   jsonSchema?: Record<string, unknown>;
+  _meta?: Record<string, unknown>;
 };
 
 const tenantIdProp = { type: 'string', description: 'AlphaClone Workspace ID' };
@@ -227,7 +228,7 @@ export const SUPPLEMENTAL_MCP_TOOLS: McpDiscoveryTool[] = [
   },
   {
     name: 'execute_internal_tool',
-    description: 'Execute ANY of AlphaClone\'s 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)',
+    description: 'Compatibility dispatcher for authorized AlphaClone tools by canonical name. Prefer direct stable-core or domain-pack tools when available.',
     inputSchema: {
       type: 'object',
       properties: {

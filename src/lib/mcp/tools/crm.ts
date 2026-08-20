@@ -446,9 +446,13 @@ registerTool('crm', {
     email: z.string().email().optional(),
     phone: z.string().optional(),
     industry: z.string().optional(),
+    website: z.string().url().optional(),
+    location: z.string().optional(),
     sales_stage: z.string().optional(),
     value: z.number().optional(),
+    source: z.string().optional(),
     notes: z.string().optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   }),
   jsonSchema: {
     type: 'object',
@@ -458,28 +462,33 @@ registerTool('crm', {
       email: { type: 'string', format: 'email' },
       phone: { type: 'string' },
       industry: { type: 'string' },
+      website: { type: 'string', format: 'uri' },
+      location: { type: 'string' },
       sales_stage: { type: 'string' },
       value: { type: 'number' },
+      source: { type: 'string' },
       notes: { type: 'string' },
+      metadata: { type: 'object' },
     },
     required: ['tenant_id', 'name'],
   },
   handler: async (args) => {
-    if (!args.email) {
-      throw new Error('email is required for create_client');
-    }
     const supabase = createSupabaseAdminClient();
     const { data, error } = await supabase
       .from('business_clients')
       .insert({
         tenant_id: args.tenant_id,
         name: args.name,
-        email: args.email,
+        email: args.email || null,
         phone: args.phone || null,
         industry: args.industry || null,
+        website: args.website || null,
+        location: args.location || null,
         sales_stage: args.sales_stage || 'lead',
         value: Number(args.value) || 0,
         description: args.notes || null,
+        source: args.source || null,
+        custom_fields: args.metadata || {},
         is_active: true,
       })
       .select('id, name, email')
