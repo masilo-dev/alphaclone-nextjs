@@ -732,6 +732,8 @@ export type MCPConnectionContext = {
   tenantId: string;
   userId: string;
   clientLabel?: string;
+  /** Set only by the authenticated queue worker after it validates a reviewed event. */
+  internalQueueWorker?: boolean;
 };
 
 function inferMcpLeadSource(
@@ -2911,6 +2913,11 @@ class AlphaCloneMCPServer {
 
         case 'send_batch_outreach': {
           const a = args as Record<string, any>;
+          if (this.ctx?.internalQueueWorker !== true) {
+            throw new Error(
+              'Batch outreach must be reviewed and queued through the workspace batch-review flow before delivery.'
+            );
+          }
           const tenant_id = this.requireTenant(a);
           const user_id = this.requireProfileUser(a);
           const { lead_ids = [], client_ids = [], tone = 'professional', custom_context = '', delivery_provider = 'sendgrid' } = a;
@@ -2926,8 +2933,8 @@ class AlphaCloneMCPServer {
             throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
           }
           
-          const combinedIds = [...new Set([...lead_ids, ...client_ids])];
-          if (combinedIds.length > 120) {
+          const recipientCount = new Set(lead_ids).size + new Set(client_ids).size;
+          if (recipientCount > 120) {
             throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
           }
           if (a.final_confirmation !== true) {
@@ -2954,8 +2961,8 @@ class AlphaCloneMCPServer {
                   status: 'queued',
                   batch_id: batchId,
                   job_id: batchId,
-                  message: `Batch outreach queued for ${combinedIds.length} recipients. Personalization and sends will run server-side. Poll the MCP event queue/dashboard outreach log for delivery.`,
-                  recipient_count: combinedIds.length,
+                  message: `Batch outreach queued for ${recipientCount} recipients. Personalization and sends will run server-side. Poll the MCP event queue/dashboard outreach log for delivery.`,
+                  recipient_count: recipientCount,
                 }, null, 2),
               }],
             };
@@ -2963,8 +2970,12 @@ class AlphaCloneMCPServer {
           }
           
           const [{ data: leads }, { data: clients }] = await Promise.all([
-            supabaseAdmin.from('leads').select('*').in('id', combinedIds).eq('tenant_id', tenant_id),
-            supabaseAdmin.from('business_clients').select('*').in('id', combinedIds).eq('tenant_id', tenant_id)
+            lead_ids.length
+              ? supabaseAdmin.from('leads').select('*').in('id', [...new Set(lead_ids)]).eq('tenant_id', tenant_id)
+              : Promise.resolve({ data: [] }),
+            client_ids.length
+              ? supabaseAdmin.from('business_clients').select('*').in('id', [...new Set(client_ids)]).eq('tenant_id', tenant_id)
+              : Promise.resolve({ data: [] }),
           ]);
             
           const allEntities = [...(leads || []), ...(clients || [])];

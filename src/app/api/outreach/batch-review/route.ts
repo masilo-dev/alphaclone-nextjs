@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
     const normalizedLeadIds = [...new Set(Array.isArray(leadIds) ? leadIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0) : [])];
     const normalizedClientIds = [...new Set(Array.isArray(clientIds) ? clientIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0) : [])];
-    const recipientCount = new Set([...normalizedLeadIds, ...normalizedClientIds]).size;
+    const recipientCount = normalizedLeadIds.length + normalizedClientIds.length;
 
     if (!recipientCount) {
       return NextResponse.json({ error: 'Select at least one recipient.' }, { status: 400 });

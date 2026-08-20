@@ -25,7 +25,7 @@ async function processBatchOutreachEvent(
   const { createMCPServer } = await import('@/services/mcp/MCPServer');
   const leadIds = Array.isArray(payload.lead_ids) ? (payload.lead_ids as string[]) : [];
   const clientIds = Array.isArray(payload.client_ids) ? (payload.client_ids as string[]) : [];
-  const recipientCount = new Set([...leadIds, ...clientIds]).size;
+  const recipientCount = new Set(leadIds).size + new Set(clientIds).size;
   if (payload.final_confirmation !== true || typeof payload.reviewed_at !== 'string') {
     throw new Error('Batch outreach event has no reviewed final confirmation and cannot be delivered.');
   }
@@ -35,7 +35,7 @@ async function processBatchOutreachEvent(
   if (!userId) {
     throw new Error('mcp_event_queue row missing user_id — cannot execute tenant-scoped MCP tools');
   }
-  const server = createMCPServer({ tenantId, userId });
+  const server = createMCPServer({ tenantId, userId, internalQueueWorker: true });
 
   let sent = 0;
   let failed = 0;
