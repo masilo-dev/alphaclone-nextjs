@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useCurrentTenantSafe } from '@/hooks/useTenantSafe';
 import {
   ArrowRight, Check, Clock3, Database, Download, FileUp, History, ListPlus,
-  Mail, MapPin, MoreHorizontal, Pause, Play, Search, Settings2, SlidersHorizontal,
+  Mail, MapPin, Pause, Play, Search, Settings2, SlidersHorizontal,
   Sparkles, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -45,6 +45,7 @@ export default function ScraperCampaignsPage() {
   const [searches, setSearches] = useState<SearchRecord[]>([]);
   const [selectedSearch, setSelectedSearch] = useState<SearchRecord | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [reviewingCandidateId, setReviewingCandidateId] = useState<string | null>(null);
   const [form, setForm] = useState({
     keywords: '', location: '', country: '', city: '', region: '', industry: '',
     searchType: 'businesses_by_location', resultLimit: 50, website: false, email: false,
@@ -124,6 +125,28 @@ export default function ScraperCampaignsPage() {
       setSelectedSearch(body.search); setActive('Results'); await loadSearches();
     } catch (error) { toast.error(error instanceof Error ? error.message : 'Search could not be started'); }
     finally { setSubmitting(false); }
+  };
+
+  const reviewCandidate = async (candidate: Candidate, decision: 'accepted' | 'rejected') => {
+    if (!tenant?.id) return;
+    setReviewingCandidateId(candidate.id);
+    try {
+      const res = await fetch(`/api/leads/candidates/${encodeURIComponent(candidate.id)}/review`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId: tenant.id, decision }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Candidate review could not be saved');
+      setCandidates((current) => current.map((item) => item.id === candidate.id ? { ...item, review_status: decision } : item));
+      toast.success(decision === 'accepted' ? 'Candidate saved to CRM. No outreach was sent.' : 'Candidate rejected.');
+      await loadSearches();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Candidate review could not be saved');
+    } finally {
+      setReviewingCandidateId(null);
+    }
   };
 
   const metrics = useMemo(() => ({
@@ -234,7 +257,7 @@ export default function ScraperCampaignsPage() {
           </div>
         )}
 
-        {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} />}
+        {active === 'Results' && <ResultsPanel searches={searches} selected={selectedSearch} setSelected={setSelectedSearch} candidates={candidates} metrics={metrics} reviewingCandidateId={reviewingCandidateId} onReview={reviewCandidate} />}
         {active === 'Activity' && <HistoryPanel searches={searches} onOpen={s=>{setSelectedSearch(s);setActive('Results')}} />}
         {(['Lists','Outreach','Settings'] as const).includes(active as never) && <ModuleEmpty section={active}/>}
       </div>
@@ -242,7 +265,7 @@ export default function ScraperCampaignsPage() {
   );
 }
 
-function ResultsPanel({ searches, selected, setSelected, candidates, metrics }: { searches: SearchRecord[]; selected: SearchRecord|null; setSelected:(s:SearchRecord)=>void; candidates:Candidate[]; metrics:Record<string,number> }) {
+function ResultsPanel({ searches, selected, setSelected, candidates, metrics, reviewingCandidateId, onReview }: { searches: SearchRecord[]; selected: SearchRecord|null; setSelected:(s:SearchRecord)=>void; candidates:Candidate[]; metrics:Record<string,number>; reviewingCandidateId:string|null; onReview:(candidate:Candidate, decision:'accepted'|'rejected')=>void }) {
   return <div className="space-y-4">
     <div className="flex flex-col gap-3 rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4 sm:flex-row sm:items-center sm:justify-between">
       <div><h2 className="font-semibold">{selected?.name || 'No search selected'}</h2><p className="text-sm text-[var(--ws-text-secondary)]">{selected ? `${selected.status.replace('_',' ')} · ${selected.progress}% complete` : 'Create a search to discover public business leads.'}</p></div>
@@ -251,7 +274,7 @@ function ResultsPanel({ searches, selected, setSelected, candidates, metrics }: 
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">{Object.entries(metrics).map(([label,value])=><div key={label} className="rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)] p-4"><p className="text-xs uppercase tracking-wide text-[var(--ws-text-secondary)]">{label}</p><p className="mt-1 text-2xl font-bold tabular-nums">{value}</p></div>)}</div>
     {selected && ['queued','running'].includes(selected.status) && <div className="rounded-xl border border-teal-500/20 bg-teal-500/5 p-3" role="status"><div className="mb-2 flex justify-between text-xs"><span>Discovery continues in the background</span><span>{selected.progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-black/20"><div className="h-full bg-teal-400 transition-all" style={{width:`${selected.progress}%`}}/></div></div>}
     {candidates.length ? <div className="overflow-hidden rounded-2xl border border-[var(--ws-border)] bg-[var(--ws-surface)]">
-      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Source','Quality','Fit','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3">{c.source_type}</td><td className="px-4 py-3">{c.quality_score}</td><td className="px-4 py-3">{c.fit_score}</td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><button aria-label={`Actions for ${c.business_name}`} className="min-h-11 min-w-11"><MoreHorizontal/></button></td></tr>)}</tbody></table></div>
+      <div className="hidden overflow-x-auto md:block"><table className="w-full text-left text-sm"><thead className="border-b border-[var(--ws-border)] text-xs uppercase text-[var(--ws-text-secondary)]"><tr>{['Company','Location','Contact','Source','Quality','Fit','Status',''].map(x=><th key={x} className="px-4 py-3">{x}</th>)}</tr></thead><tbody>{candidates.map(c=><tr key={c.id} className="border-b border-[var(--ws-border)] last:border-0"><td className="px-4 py-3 font-semibold">{c.business_name}<div className="text-xs font-normal text-[var(--ws-text-secondary)]">{c.industry||'Uncategorized'}</div></td><td className="px-4 py-3">{[c.city,c.country].filter(Boolean).join(', ')||'—'}</td><td className="px-4 py-3">{c.public_email||c.public_phone||'No public contact'}</td><td className="px-4 py-3">{c.source_type}</td><td className="px-4 py-3">{c.quality_score}</td><td className="px-4 py-3">{c.fit_score}</td><td className="px-4 py-3 capitalize">{c.review_status}</td><td className="px-4 py-3"><div className="flex items-center justify-end gap-2"><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'accepted'} onClick={() => onReview(c, 'accepted')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-teal-500/30 px-2 text-xs font-semibold text-teal-300 hover:bg-teal-500/10 disabled:cursor-not-allowed disabled:opacity-50"><Check size={14}/>{reviewingCandidateId === c.id ? 'Saving…' : c.review_status === 'accepted' ? 'In CRM' : 'Accept'}</button><button type="button" disabled={reviewingCandidateId === c.id || c.review_status === 'rejected'} onClick={() => onReview(c, 'rejected')} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-rose-500/30 px-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-50"><X size={14}/>Reject</button></div></td></tr>)}</tbody></table></div>
       <div className="divide-y divide-[var(--ws-border)] md:hidden">{candidates.map(c=><article key={c.id} className="p-4"><div className="flex justify-between gap-3"><div><h3 className="font-semibold">{c.business_name}</h3><p className="text-sm text-[var(--ws-text-secondary)]">{[c.industry,c.city].filter(Boolean).join(' · ')}</p></div><span className="text-sm font-semibold text-teal-400">{c.fit_score} fit</span></div><p className="mt-3 text-sm">{c.public_email||c.public_phone||'No public contact found'}</p></article>)}</div>
     </div> : <ModuleEmpty section="Results"/>}
   </div>;

@@ -6,6 +6,8 @@ import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 const schema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('read'), messageId: z.string().uuid() }),
   z.object({ action: z.literal('archive'), messageId: z.string().uuid() }),
+  z.object({ action: z.literal('trash'), messageId: z.string().uuid() }),
+  z.object({ action: z.literal('star'), messageId: z.string().uuid(), value: z.boolean() }),
   z.object({ action: z.literal('needs_response'), messageId: z.string().uuid(), value: z.boolean() }),
   z.object({ action: z.literal('replied'), messageId: z.string().uuid() }),
 ]);
@@ -18,7 +20,9 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ tenan
     if (!parsed.success) return NextResponse.json({ error: 'Invalid inbox operation' }, { status: 400 });
     const now = new Date().toISOString();
     const update = parsed.data.action === 'read' ? { read: true, read_at: now }
-      : parsed.data.action === 'archive' ? { archived: true }
+      : parsed.data.action === 'archive' ? { archived: true, folder: 'archive' }
+      : parsed.data.action === 'trash' ? { archived: false, folder: 'trash' }
+      : parsed.data.action === 'star' ? { starred: parsed.data.value }
       : parsed.data.action === 'needs_response' ? { needs_response: parsed.data.value }
       : { replied_at: now, needs_response: false, read: true, read_at: now };
     const admin = createSupabaseAdminClient();

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 interface NotificationCenterProps {
@@ -70,19 +71,34 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ userId, tenantI
     }, [userId, tenantId]);
 
     const handleMarkAsRead = useCallback(async (id: string) => {
+        const previous = notifications;
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-        await notificationService.markAsRead(id);
-    }, []);
+        const { error } = await notificationService.markAsRead(id);
+        if (error) {
+            setNotifications(previous);
+            toast.error(error);
+        }
+    }, [notifications]);
 
     const handleMarkAllAsRead = useCallback(async () => {
+        const previous = notifications;
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        await notificationService.markAllAsRead(userId, tenantId);
-    }, [userId, tenantId]);
+        const { error } = await notificationService.markAllAsRead(userId, tenantId);
+        if (error) {
+            setNotifications(previous);
+            toast.error(error);
+        }
+    }, [notifications, userId, tenantId]);
 
     const handleDelete = useCallback(async (id: string) => {
+        const previous = notifications;
         setNotifications(prev => prev.filter(n => n.id !== id));
-        await notificationService.deleteNotification(id);
-    }, []);
+        const { error } = await notificationService.deleteNotification(id);
+        if (error) {
+            setNotifications(previous);
+            toast.error(error);
+        }
+    }, [notifications]);
 
     useEffect(() => {
         if (!userId) return;

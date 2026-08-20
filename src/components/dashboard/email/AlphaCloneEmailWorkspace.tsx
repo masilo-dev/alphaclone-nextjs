@@ -126,7 +126,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
     preview: clean.slice(0, 140),
     timestamp: m.received_at ? new Date(m.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
     unread: !m.read,
-    starred: false,
+    starred: Boolean(m.starred),
     hasAttachments: false,
     hasMeeting: false,
     aiSummary: [m.intent, m.category].filter(Boolean).join(' · ') || 'AI analysis pending…',
@@ -134,7 +134,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
     sentiment: m.sentiment === 'positive' ? 'Positive' : m.sentiment === 'negative' ? 'Objection' : 'Neutral',
     relationshipScore: 70,
     opportunityScore: 65,
-    folder: m.archived ? 'archive' : 'inbox',
+    folder: (m.folder || (m.archived ? 'archive' : 'inbox')) as EmailFolder,
     labels: ([m.category, m.source] as (string | null)[]).filter(Boolean) as string[],
     messages: [{
       id: m.id,
@@ -254,7 +254,6 @@ export default function AlphaCloneEmailWorkspace() {
         .from('unified_messages')
         .select('*')
         .eq('tenant_id', tenant.id)
-        .eq('archived', false)
         .order('received_at', { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -335,27 +334,54 @@ export default function AlphaCloneEmailWorkspace() {
   }, [selectedThread, selectedThreadId]);
 
   // Handler Actions
-  const handleToggleStar = (threadId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) => (t.id === threadId ? { ...t, starred: !t.starred } : t))
-    );
+  const persistInboxAction = async (
+    threadId: string,
+    action: 'archive' | 'trash' | 'star',
+    value?: boolean,
+  ) => {
+    if (!tenant?.id) throw new Error('No active workspace');
+    const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/inbox/messages`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, messageId: threadId, ...(action === 'star' ? { value: Boolean(value) } : {}) }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.success) throw new Error(payload.error || 'Inbox update failed');
   };
 
-  const handleArchiveThread = (threadId: string, e?: React.MouseEvent) => {
+  const handleToggleStar = async (threadId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) => (t.id === threadId ? { ...t, folder: 'archive' } : t))
-    );
-    toast.success('Thread archived', { icon: '📦' });
+    const current = threads.find((thread) => thread.id === threadId);
+    if (!current) return;
+    try {
+      await persistInboxAction(threadId, 'star', !current.starred);
+      setThreads((prev) => prev.map((thread) => thread.id === threadId ? { ...thread, starred: !current.starred } : thread));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Star could not be updated');
+    }
   };
 
-  const handleDeleteThread = (threadId: string, e?: React.MouseEvent) => {
+  const handleArchiveThread = async (threadId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) => (t.id === threadId ? { ...t, folder: 'trash' } : t))
-    );
-    toast.success('Moved to trash', { icon: '🗑️' });
+    try {
+      await persistInboxAction(threadId, 'archive');
+      setThreads((prev) => prev.map((thread) => thread.id === threadId ? { ...thread, folder: 'archive' } : thread));
+      toast.success('Thread archived', { icon: '📦' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Thread could not be archived');
+    }
+  };
+
+  const handleDeleteThread = async (threadId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      await persistInboxAction(threadId, 'trash');
+      setThreads((prev) => prev.map((thread) => thread.id === threadId ? { ...thread, folder: 'trash' } : thread));
+      toast.success('Moved to trash', { icon: '🗑️' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Thread could not be moved to trash');
+    }
   };
 
   const handleSelectAll = () => {

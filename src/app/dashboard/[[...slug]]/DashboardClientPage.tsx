@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Project, ChatMessage, GalleryItem, User } from '@/types';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardShellSkeleton } from '@/components/ui/TabSkeleton';
@@ -104,8 +105,23 @@ export default function DashboardClientPage() {
         return <DashboardShellSkeleton />;
     }
 
-    // Auth redirect in progress — avoid re-mounting the blocking skeleton over a live dashboard.
-    if (!user || needsMfa) return null;
+    // Auth redirect in progress — always keep a visible recovery state instead of a blank protected route.
+    if (!user || needsMfa) {
+        const loginHref = needsMfa ? '/auth/login?reason=mfa_required' : '/auth/login';
+        return (
+            <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-center text-white">
+                <section className="max-w-md rounded-2xl border border-white/10 bg-slate-900/70 p-7 shadow-2xl">
+                    <h1 className="text-xl font-semibold">Sign-in required</h1>
+                    <p className="mt-2 text-sm text-slate-300">
+                        This workspace is protected. Redirecting you to sign in now; if that does not open, use the link below.
+                    </p>
+                    <Link href={loginHref} className="mt-5 inline-flex min-h-10 items-center rounded-lg bg-teal-400 px-4 text-sm font-semibold text-slate-950 hover:bg-teal-300">
+                        Go to sign in
+                    </Link>
+                </section>
+            </main>
+        );
+    }
 
     return (
         <BuildErrorLogger>
