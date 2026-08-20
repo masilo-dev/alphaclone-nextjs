@@ -111,6 +111,22 @@ function isUuidString(value: unknown): value is string {
     return typeof value === 'string' && UUID_RE.test(value.trim());
 }
 
+/** Always returns valid JSON text, including for undefined and bigint values. */
+function safeJsonText(value: unknown, fallback: unknown = {}): string {
+  try {
+    return JSON.stringify(value ?? fallback, (_key, item) =>
+      typeof item === 'bigint' ? item.toString() : item, 2);
+  } catch (error) {
+    return JSON.stringify({
+      ok: false,
+      error: {
+        code: 'RESPONSE_SERIALIZATION_FAILED',
+        message: error instanceof Error ? error.message : 'Response could not be serialized',
+      },
+    });
+  }
+}
+
 async function generateContractDraftText(contractType: string, clientName: string, keyTerms?: string) {
   const response = await routeAIRequest({
     prompt: `Draft a professional ${contractType} for a client named "${clientName}". Key terms and scope: ${keyTerms || 'Standard professional terms'}. Write a complete, legally-structured contract with all standard sections (parties, recitals, terms, obligations, payment, termination, governing law). Use plain, professional language.`,
@@ -1598,7 +1614,7 @@ class AlphaCloneMCPServer {
           const tenant_id = this.requireTenant(a);
           const { snapshot, error } = await strategicAuditService.getSnapshot(tenant_id, supabaseAdmin);
           if (error) throw new Error(error);
-          result = { content: [{ type: 'text', text: JSON.stringify(snapshot, null, 2) }] };
+          result = { content: [{ type: 'text', text: safeJsonText(snapshot, {}) }] };
           break;
         }
 
@@ -5865,7 +5881,7 @@ class AlphaCloneMCPServer {
             byProvider[p] = (byProvider[p] || 0) + 1;
             byStatus[s] = (byStatus[s] || 0) + 1;
           });
-          result = { content: [{ type: 'text', text: JSON.stringify({ total: rows.length, by_provider: byProvider, by_status: byStatus }, null, 2) }] };
+          result = { content: [{ type: 'text', text: safeJsonText({ total: rows.length, by_provider: byProvider, by_status: byStatus }) }] };
           break;
         }
 
@@ -7983,7 +7999,7 @@ Return ONLY a JSON array of 60 objects:
           if (entity_id && typeof entity_id === 'string') docQuery = docQuery.eq('entity_id', entity_id.trim());
           const { data: docData, error: docError } = await docQuery;
           if (docError) throw supabaseErrorToMcpClientError('get_documents', docError.message);
-          result = { content: [{ type: 'text', text: JSON.stringify({ total: (docData || []).length, documents: docData || [] }, null, 2) }] };
+          result = { content: [{ type: 'text', text: safeJsonText({ total: (docData || []).length, documents: docData || [] }) }] };
           break;
         }
 

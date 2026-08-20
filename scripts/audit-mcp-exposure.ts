@@ -4,6 +4,7 @@ import { initializeRegistry, listTools } from '../src/lib/mcp/tool-registry';
 import { getUnifiedMcpTools, invalidateUnifiedMcpToolCache } from '../src/lib/mcp/listAllTools';
 import { inferToolAnnotations } from '../src/lib/mcp/toolAnnotations';
 import { moduleForTool } from '../src/lib/mcp/progressiveDiscovery';
+import { MCP_TOOL_ALIASES } from '../src/lib/mcp/canonicalToolRegistry';
 
 type ExposureRow = {
   tool_name: string;
@@ -23,17 +24,7 @@ type ExposureRow = {
   supports_verification: boolean;
 };
 
-const ALIASES: Record<string, string> = {
-  create_post: 'publish_social_post',
-  publish_post: 'publish_social_post',
-  publish_now: 'publish_social_post',
-  schedule_post: 'schedule_social_post',
-  get_post_status: 'verify_social_post_published',
-  get_post_analytics: 'get_social_post_insights',
-  retrieve_document: 'get_document',
-  run_playbook: 'run_workflow',
-  generate_ai_image: 'generate_image',
-};
+const ALIASES: Record<string, string> = { ...MCP_TOOL_ALIASES, generate_ai_image: 'generate_image' };
 
 function schemaText(schema: unknown): string {
   return JSON.stringify(schema || {}).toLowerCase();
@@ -111,7 +102,7 @@ async function main() {
 
   const report = {
     generated_at: new Date().toISOString(),
-    exposure_model: 'full: every registered executable tool is exposed to every MCP client by default',
+    exposure_model: 'compatibility-full by default; stable-core and domain-pack discovery available without removing executable aliases',
     totals,
     tools: rows,
   };

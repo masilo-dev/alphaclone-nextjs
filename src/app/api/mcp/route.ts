@@ -361,8 +361,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const requestedCatalogMode =
-        (requestBody.params?.catalogMode || requestBody.params?.catalog_mode) === 'progressive'
+      const rawCatalogMode = requestBody.params?.catalogMode || requestBody.params?.catalog_mode;
+      const requestedCatalogMode = rawCatalogMode === 'stable'
+        ? 'stable'
+        : rawCatalogMode === 'progressive'
           ? 'progressive'
           : 'full';
 
@@ -422,6 +424,7 @@ export async function POST(req: NextRequest) {
           catalog_checksum: checksum,
           total_tools: tools.length,
           returned_tools: paginatedTools.length,
+          catalog_mode: requestedCatalogMode,
           offset,
           next_cursor: nextCursor || null,
         },

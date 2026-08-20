@@ -71,7 +71,7 @@ async function main() {
     generated_at: new Date().toISOString(),
     source_of_truth: 'runtime MCP registry + unified tools/list full catalog',
     policy:
-      'Default MCP discovery exposes the full executable catalog to every client. Catalog-only entries are audit visibility only and must not be reported as executable tools.',
+      'Existing clients retain the full executable catalog for compatibility. Stable-core and domain-pack discovery are available as the migration target; catalog-only entries are audit visibility only.',
     totals: {
       full_catalog_tools: tools.length,
       registry_executable_tools: catalogs.registryNames.size,

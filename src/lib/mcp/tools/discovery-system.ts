@@ -7,7 +7,8 @@ import { defineConnectorTool, tenantIdField } from '@/lib/mcp/connector';
 import { okResult, throwConnectorError } from '@/lib/mcp/connector/response';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { getUnifiedMcpTools } from '@/lib/mcp/listAllTools';
-import { ALL_MODULE_NAMES, getModuleTools, findToolsByQuery } from '@/lib/mcp/progressiveDiscovery';
+import { ALL_MODULE_NAMES, coreTools, getModuleTools, findToolsByQuery } from '@/lib/mcp/progressiveDiscovery';
+import { getToolGovernance } from '@/lib/mcp/canonicalToolRegistry';
 import { executeTool, hasTool } from '@/lib/mcp/tool-registry';
 
 
@@ -28,9 +29,16 @@ defineConnectorTool({
   },
   handler: async () => {
     const allTools = await getUnifiedMcpTools({ catalogMode: 'full', sanitizeForClient: false });
+    const stableCore = coreTools(allTools, 80);
     return okResult('list_tools', {
-      total: allTools.length,
-      tools: allTools.map((t) => ({ name: t.name, description: t.description?.slice(0, 80) })),
+      total: stableCore.length,
+      full_catalog_total: allTools.length,
+      compatibility_note: 'Existing clients may continue using the full catalog. Use search_tools/load_module_tools for capabilities outside this stable core.',
+      tools: stableCore.map((tool) => ({
+        name: tool.name,
+        description: tool.description?.slice(0, 120),
+        ...getToolGovernance(tool.name, 'core'),
+      })),
     });
   },
 });
@@ -40,7 +48,7 @@ defineConnectorTool({
   module: 'discovery',
   name: 'search_tools',
   description:
-    'Search the AlphaClone canonical catalog of 499 tools by keyword, intent, or domain query. Use when looking for capabilities to accomplish a specific task.',
+    'Search the full AlphaClone canonical tool catalog by keyword, intent, or domain query. Use when looking for capabilities outside the stable core.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
@@ -169,6 +177,7 @@ defineConnectorTool({
     required: [],
   },
   handler: async () => {
+    const allTools = await getUnifiedMcpTools({ catalogMode: 'full', sanitizeForClient: false });
     return okResult('list_capabilities', {
       protocol_version: '2024-11-05',
       capabilities: {
@@ -182,7 +191,9 @@ defineConnectorTool({
         strict_user_verification: true,
       },
       catalog: {
-        total_canonical_tools: 499,
+        total_discoverable_tools: allTools.length,
+        stable_core_tools: coreTools(allTools, 80).length,
+        compatibility_default: 'full',
         progressive_discovery_supported: true,
       },
     });
@@ -243,7 +254,7 @@ defineConnectorTool({
   module: 'discovery',
   name: 'dispatch_tool',
   description:
-    'Universal fallback tool execution router. Allows clients with static tool catalogs to invoke any of the 499 AlphaClone tools by name with argument payload.',
+    'Universal fallback tool execution router. Allows compatible clients with static catalogs to invoke an authorized AlphaClone tool by canonical name and argument payload.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
@@ -300,7 +311,7 @@ defineConnectorTool({
 defineConnectorTool({
   module: 'discovery',
   name: 'execute_internal_tool',
-  description: 'Execute ANY of AlphaClone\'s 503 internal tools by name with parameters (e.g. create_contract, send_outreach_email, upload_media, create_invoice, etc.)',
+  description: 'Compatibility dispatcher for authorized AlphaClone tools by canonical name. Prefer direct stable-core or domain-pack tools when available.',
   permission: 'integrations:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
