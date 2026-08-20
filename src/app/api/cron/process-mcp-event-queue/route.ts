@@ -25,10 +25,17 @@ async function processBatchOutreachEvent(
   const { createMCPServer } = await import('@/services/mcp/MCPServer');
   const leadIds = Array.isArray(payload.lead_ids) ? (payload.lead_ids as string[]) : [];
   const clientIds = Array.isArray(payload.client_ids) ? (payload.client_ids as string[]) : [];
+  const recipientCount = new Set(leadIds).size + new Set(clientIds).size;
+  if (payload.final_confirmation !== true || typeof payload.reviewed_at !== 'string') {
+    throw new Error('Batch outreach event has no reviewed final confirmation and cannot be delivered.');
+  }
+  if (!recipientCount || recipientCount > 120) {
+    throw new Error('Batch outreach event has an invalid recipient count; the safe limit is 1–120.');
+  }
   if (!userId) {
     throw new Error('mcp_event_queue row missing user_id — cannot execute tenant-scoped MCP tools');
   }
-  const server = createMCPServer({ tenantId, userId });
+  const server = createMCPServer({ tenantId, userId, internalQueueWorker: true });
 
   let sent = 0;
   let failed = 0;
@@ -51,6 +58,8 @@ async function processBatchOutreachEvent(
       custom_context: payload.custom_context || '',
       delivery_provider: payload.delivery_provider || 'sendgrid',
       language_mode: payload.language_mode || 'en',
+      final_confirmation: true,
+      reviewed_at: payload.reviewed_at,
       process_inline: true,
     });
     if (result.isError) {

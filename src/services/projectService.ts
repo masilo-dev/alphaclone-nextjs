@@ -236,6 +236,31 @@ export const projectService = {
         return s.length > 0 ? s : null;
     },
 
+    async bulkUpdateProjects(
+        projectIds: string[],
+        changes: { status?: string; currentStage?: string },
+    ): Promise<{ error: string | null; count: number }> {
+        try {
+            const tenantId = this.getTenantId();
+            if (!tenantId) return { error: 'Select a workspace before updating projects', count: 0 };
+            const ids = [...new Set(projectIds)];
+            if (!ids.length) return { error: null, count: 0 };
+            if (ids.length > 200) return { error: 'Bulk project updates are limited to 200 projects.', count: 0 };
+            const response = await fetch(`/api/tenant/${tenantId}/projects/bulk`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids, changes }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            return {
+                error: response.ok && payload.success ? null : payload.error || 'Projects could not be updated in bulk',
+                count: Number(payload.updated || 0),
+            };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Unknown error', count: 0 };
+        }
+    },
+
     /**
      * Create a new project (with tenant assignment)
      */
