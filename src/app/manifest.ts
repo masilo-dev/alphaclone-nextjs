@@ -53,12 +53,6 @@ export default function manifest(): MetadataRoute.Manifest {
         url: '/dashboard/bonnie',
         icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
       },
-      {
-        name: 'Communications',
-        short_name: 'Comms',
-        url: '/dashboard/comms',
-        icons: [{ src: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' }],
-      },
     ],
     share_target: {
       action: '/dashboard/share-intake',

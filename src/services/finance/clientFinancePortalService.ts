@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { extractTenantBranding } from '@/lib/tenantBranding';
 import { buildPublicInvoiceUrl } from '@/lib/invoices/publicInvoiceAccess';
 import { AppUrls, buildValidatedPublicUrl } from '@/lib/urls';
+import { buildCanonicalProjectPortalUrl } from '@/lib/projects/portalLinks';
 
 export type ClientFinancePortalData = {
   client: { id: string; name: string; email?: string | null };
@@ -24,6 +25,14 @@ export type ClientFinancePortalData = {
     status: string;
     totalAmount: number;
     validUntil?: string | null;
+    viewUrl: string;
+  }>;
+  projects: Array<{
+    id: string;
+    name: string;
+    status: string;
+    stage: string | null;
+    progress: number;
     viewUrl: string;
   }>;
   summary: {
@@ -88,6 +97,36 @@ export async function getClientFinancePortalData(
     };
   });
 
+  const { data: publicProjects } = await admin
+    .from('projects')
+    .select('id, name, status, current_stage, progress, portal_token, portal_expires_at')
+    .eq('tenant_id', client.tenant_id)
+    .eq('client_id', client.id)
+    .eq('portal_enabled', true)
+    .eq('is_public', true)
+    .not('portal_token', 'is', null)
+    .order('updated_at', { ascending: false })
+    .limit(50);
+
+  const projectRows = (publicProjects || [])
+    .filter((project) => !project.portal_expires_at || new Date(project.portal_expires_at).getTime() >= Date.now())
+    .flatMap((project) => {
+      const token = String(project.portal_token || '');
+      if (!token) return [];
+      try {
+        return [{
+          id: String(project.id),
+          name: String(project.name || 'Untitled project'),
+          status: String(project.status || 'active'),
+          stage: project.current_stage ? String(project.current_stage) : null,
+          progress: Number(project.progress || 0),
+          viewUrl: buildCanonicalProjectPortalUrl(token),
+        }];
+      } catch {
+        return [];
+      }
+    });
+
   let quotesQuery = admin
     .from('quotes')
     .select('id, quote_number, name, status, total_amount, valid_until, metadata, contact_id')
@@ -110,6 +149,7 @@ export async function getClientFinancePortalData(
       branding: extractTenantBranding(tenant),
       invoices: invoiceRows,
       quotes: [],
+      projects: projectRows,
       summary: {
         openInvoices: invoiceRows.filter((i) => i.status !== 'paid').length,
         openBalance: invoiceRows.filter((i) => i.status !== 'paid').reduce((s, i) => s + i.total, 0),
@@ -143,6 +183,7 @@ export async function getClientFinancePortalData(
     branding: extractTenantBranding(tenant),
     invoices: invoiceRows,
     quotes: quoteRows,
+    projects: projectRows,
     summary: {
       openInvoices: openInvoices.length,
       openBalance,

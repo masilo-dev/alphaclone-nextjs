@@ -171,6 +171,14 @@ export const pwaService = {
             return { prompt: null, error: 'Not in browser environment' };
         }
 
+        // The event can fire before an install UI mounts. Reuse a prompt that a
+        // previous caller already captured instead of waiting for an event that
+        // Android will not emit again in the same browsing session.
+        const existingPrompt = (window as any).deferredPrompt;
+        if (existingPrompt) {
+            return { prompt: existingPrompt, error: null };
+        }
+
         // Listen for beforeinstallprompt event
         return new Promise((resolve) => {
             const handler = (e: Event) => {
