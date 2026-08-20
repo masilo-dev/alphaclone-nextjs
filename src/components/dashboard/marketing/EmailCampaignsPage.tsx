@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTenant } from '@/contexts/TenantContext';
 import CampaignBuilderShell from '@/components/dashboard/business/CampaignBuilder';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -84,23 +85,63 @@ const WIZARD_STEPS: WizardStep[] = [
 export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [completed, setCompleted] = useState<Set<number>>(new Set([1]));
+  const { currentTenant } = useTenant();
   const [openDraft, setOpenDraft] = useState<boolean>(false);
-  const [mockList, setMockList] = useState<CampaignListEntry[] | null>(null);
+  const [campaignList, setCampaignList] = useState<CampaignListEntry[] | null>(null);
+  const [campaignLoadError, setCampaignLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setMockList([
-        { id: 'm1', name: 'Spring product update', subject: 'A quick update from the team', status: 'sent', recipients: 342, opened: 161, clicked: 38, replied: 14, updatedAt: '2026-07-22T10:12:00Z', createdAt: '2026-07-19T09:00:00Z', sentAt: '2026-07-22T14:00:00Z' },
-        { id: 'm2', name: 'Welcome follow-up sequence', subject: 'Day 3 — one clear next step', status: 'sending', recipients: 118, opened: 29, clicked: 9, replied: 6, updatedAt: new Date(Date.now() - 45*60_000).toISOString(), createdAt: '2026-08-05T12:00:00Z', startedAt: new Date(Date.now() - 2*3600_000).toISOString() },
-        { id: 'm3', name: 'Re-engage warm leads', subject: 'Still exploring better workflows?', status: 'scheduled', recipients: 89, opened: 0, clicked: 0, replied: 0, updatedAt: new Date(Date.now() - 5*3600_000).toISOString(), createdAt: '2026-08-09T10:30:00Z', scheduledAt: new Date(Date.now() + 30*3600_000).toISOString() },
-        { id: 'm4', name: 'Founder onboarding intro', subject: 'Welcome aboard ✨', status: 'draft', recipients: 0, opened: 0, clicked: 0, replied: 0, updatedAt: new Date(Date.now() - 20*60_000).toISOString(), createdAt: new Date(Date.now() - 24*3600_000).toISOString() },
-      ]);
-    }, 350);
-    return () => clearTimeout(t);
-  }, []);
+    if (!currentTenant?.id) {
+      setCampaignList([]);
+      setCampaignLoadError('Select a workspace to view campaigns.');
+      return;
+    }
 
-  const selected = useMemo(() => mockList?.find(m => m.id === selectedId) || null, [mockList, selectedId]);
+    let cancelled = false;
+    setCampaignList(null);
+    setCampaignLoadError(null);
+    void fetch(`/api/email/campaigns?tenantId=${encodeURIComponent(currentTenant.id)}`, { credentials: 'include' })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Campaigns could not be loaded');
+        const rows = Array.isArray(payload.campaigns) ? payload.campaigns : [];
+        const mapped = rows.map((row: Record<string, unknown>): CampaignListEntry => {
+          const rawStatus = String(row.status || 'draft').toLowerCase();
+          const status: CampaignListEntry['status'] = rawStatus === 'active'
+            ? 'sending'
+            : rawStatus === 'completed'
+              ? 'sent'
+              : ['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'cancelled'].includes(rawStatus)
+                ? rawStatus as CampaignListEntry['status']
+                : 'draft';
+          return {
+            id: String(row.id || ''),
+            name: String(row.name || 'Untitled campaign'),
+            subject: String(row.subject || '(no subject)'),
+            status,
+            recipients: Number(row.sent_count || row.recipient_count || 0),
+            opened: Number(row.opened_count || 0),
+            clicked: Number(row.clicked_count || 0),
+            replied: Number(row.replied_count || row.reply_count || 0),
+            updatedAt: String(row.updated_at || row.created_at || ''),
+            createdAt: String(row.created_at || ''),
+            startedAt: typeof row.started_at === 'string' ? row.started_at : null,
+            scheduledAt: typeof row.scheduled_at === 'string' ? row.scheduled_at : null,
+            sentAt: typeof row.sent_at === 'string' ? row.sent_at : null,
+          };
+        });
+        if (!cancelled) setCampaignList(mapped);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setCampaignList([]);
+        setCampaignLoadError(error instanceof Error ? error.message : 'Campaigns could not be loaded');
+      });
+    return () => { cancelled = true; };
+  }, [currentTenant?.id]);
+
+  const selected = useMemo(() => campaignList?.find(m => m.id === selectedId) || null, [campaignList, selectedId]);
 
   const mark = (step: number, val: boolean) => {
     setCompleted(c => {
@@ -218,30 +259,30 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
               <div className="flex items-center justify-between">
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">Your campaigns</p>
                 <Badge variant="outline" className="border-white/5 text-slate-400 text-[10px] px-1.5 py-0 h-4">
-                  {mockList ? `${mockList.length} total` : 'Loading…'}
+                  {campaignList ? `${campaignList.length} total` : 'Loading…'}
                 </Badge>
               </div>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto">
-              {mockList === null ? (
+              {campaignList === null ? (
                 <div className="p-4 space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="h-20 rounded-lg border border-white/5 bg-slate-900/40 animate-[pulse_1.6s_ease-in-out_infinite] backdrop-blur-sm saturate-50 opacity-60" />
                   ))}
                 </div>
-              ) : mockList.length === 0 ? (
+              ) : campaignList.length === 0 ? (
                 <div className="p-6 text-center space-y-2">
                   <div className="mx-auto h-12 w-12 rounded-2xl border border-dashed border-white/10 bg-gradient-to-br from-fuchsia-500/10 to-sky-500/10 flex items-center justify-center">
                     <Zap className="w-5 h-5 text-fuchsia-300" />
                   </div>
                   <p className="text-sm font-semibold text-white">No campaigns yet</p>
                   <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                    Use the 16-step wizard on the left. Start with <span className="text-fuchsia-300">Step 1: Goal picker</span> — it is designed so you can do your first campaign without knowing any marketing words.
+                    {campaignLoadError || <>Use the 16-step wizard on the left. Start with <span className="text-fuchsia-300">Step 1: Goal picker</span> — it is designed so you can do your first campaign without knowing any marketing words.</>}
                   </p>
                 </div>
               ) : (
                 <ul>
-                  {mockList.map(c => {
+                  {campaignList.map(c => {
                     const active = selectedId === c.id;
                     return (
                       <li key={c.id}>

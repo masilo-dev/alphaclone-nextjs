@@ -152,32 +152,6 @@ const AIAgentsTab: React.FC = () => {
     loadData();
   }, [loadData]);
 
-  // Sovereign Autopilot Throttled Auto-Trigger
-  useEffect(() => {
-    if (!currentTenant?.id || loading) return;
-
-    const lastRunKey = `last_auto_sync_${currentTenant.id}`;
-    const lastRunStr = localStorage.getItem(lastRunKey);
-    const now = Date.now();
-    const cooldown = 5 * 60 * 1000; // 5 minutes in ms
-
-    if (!lastRunStr || now - parseInt(lastRunStr, 10) > cooldown) {
-      localStorage.setItem(lastRunKey, now.toString());
-      fetch('/api/autonomous/trigger', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tenantId: currentTenant.id }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            loadData();
-          }
-        })
-        .catch((err) => console.error('[Autopilot] Background auto-sync failed:', err));
-    }
-  }, [currentTenant?.id, loading, loadData]);
-
   // Handle manual trigger run
   const triggerAutonomousRunner = async () => {
     if (!currentTenant?.id || isTriggering) return;

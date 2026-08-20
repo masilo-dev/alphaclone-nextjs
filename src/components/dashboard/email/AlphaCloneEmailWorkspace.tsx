@@ -15,6 +15,7 @@ import {
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTenant } from '@/contexts/TenantContext';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import AiDraftReviewBanner from '@/components/dashboard/inbox/AiDraftReviewBanner';
 import { normalizeDeliveryProvider, resolveAutoProvider, type DeliveryEmailProvider } from '@/lib/email/emailProviderOptions';
@@ -126,7 +127,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
     preview: clean.slice(0, 140),
     timestamp: m.received_at ? new Date(m.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
     unread: !m.read,
-    starred: false,
+    starred: Boolean(m.starred),
     hasAttachments: false,
     hasMeeting: false,
     aiSummary: [m.intent, m.category].filter(Boolean).join(' · ') || 'AI analysis pending…',
@@ -134,7 +135,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
     sentiment: m.sentiment === 'positive' ? 'Positive' : m.sentiment === 'negative' ? 'Objection' : 'Neutral',
     relationshipScore: 70,
     opportunityScore: 65,
-    folder: m.archived ? 'archive' : 'inbox',
+    folder: (m.folder || (m.archived ? 'archive' : 'inbox')) as EmailFolder,
     labels: ([m.category, m.source] as (string | null)[]).filter(Boolean) as string[],
     messages: [{
       id: m.id,
@@ -152,6 +153,7 @@ function mapUnifiedToThread(m: Record<string, any>): EmailThread {
 
 export default function AlphaCloneEmailWorkspace() {
   const { currentTenant: tenant } = useTenant();
+  const router = useRouter();
 
   // Navigation & View States
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('inbox');
@@ -254,7 +256,6 @@ export default function AlphaCloneEmailWorkspace() {
         .from('unified_messages')
         .select('*')
         .eq('tenant_id', tenant.id)
-        .eq('archived', false)
         .order('received_at', { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -335,27 +336,54 @@ export default function AlphaCloneEmailWorkspace() {
   }, [selectedThread, selectedThreadId]);
 
   // Handler Actions
-  const handleToggleStar = (threadId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) => (t.id === threadId ? { ...t, starred: !t.starred } : t))
-    );
+  const persistInboxAction = async (
+    threadId: string,
+    action: 'archive' | 'trash' | 'star',
+    value?: boolean,
+  ) => {
+    if (!tenant?.id) throw new Error('No active workspace');
+    const response = await fetch(`/api/tenant/${encodeURIComponent(tenant.id)}/inbox/messages`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, messageId: threadId, ...(action === 'star' ? { value: Boolean(value) } : {}) }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload.success) throw new Error(payload.error || 'Inbox update failed');
   };
 
-  const handleArchiveThread = (threadId: string, e?: React.MouseEvent) => {
+  const handleToggleStar = async (threadId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) => (t.id === threadId ? { ...t, folder: 'archive' } : t))
-    );
-    toast.success('Thread archived', { icon: '📦' });
+    const current = threads.find((thread) => thread.id === threadId);
+    if (!current) return;
+    try {
+      await persistInboxAction(threadId, 'star', !current.starred);
+      setThreads((prev) => prev.map((thread) => thread.id === threadId ? { ...thread, starred: !current.starred } : thread));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Star could not be updated');
+    }
   };
 
-  const handleDeleteThread = (threadId: string, e?: React.MouseEvent) => {
+  const handleArchiveThread = async (threadId: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    setThreads((prev) =>
-      prev.map((t) => (t.id === threadId ? { ...t, folder: 'trash' } : t))
-    );
-    toast.success('Moved to trash', { icon: '🗑️' });
+    try {
+      await persistInboxAction(threadId, 'archive');
+      setThreads((prev) => prev.map((thread) => thread.id === threadId ? { ...thread, folder: 'archive' } : thread));
+      toast.success('Thread archived', { icon: '📦' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Thread could not be archived');
+    }
+  };
+
+  const handleDeleteThread = async (threadId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    try {
+      await persistInboxAction(threadId, 'trash');
+      setThreads((prev) => prev.map((thread) => thread.id === threadId ? { ...thread, folder: 'trash' } : thread));
+      toast.success('Moved to trash', { icon: '🗑️' });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Thread could not be moved to trash');
+    }
   };
 
   const handleSelectAll = () => {
@@ -1419,31 +1447,18 @@ export default function AlphaCloneEmailWorkspace() {
       {/* ------------------------------------------------------------- */}
       {activeTab === 'campaigns' && (
         <div className="flex-1 min-h-0 p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          {/* Campaign Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Emails Sent</span>
-              <p className="text-xl font-black text-white">1,940</p>
-              <span className="text-[10px] text-emerald-400 font-bold">+14.2% this week</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Average Open Rate</span>
-              <p className="text-xl font-black text-emerald-400">68.2%</p>
-              <span className="text-[10px] text-emerald-400 font-bold">Industry top 1%</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Meetings Booked</span>
-              <p className="text-xl font-black text-teal-300">92</p>
-              <span className="text-[10px] text-teal-400 font-bold">Bonnie AI Auto-booked</span>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Pipeline Created</span>
-              <p className="text-xl font-black text-emerald-400">$930,000</p>
-              <span className="text-[10px] text-emerald-400 font-bold">Direct CRM Attribution</span>
-            </div>
+          <div className="rounded-2xl border border-teal-500/20 bg-teal-500/5 p-5">
+            <h2 className="text-sm font-black text-white">Campaign activity is managed in Campaign Builder</h2>
+            <p className="mt-1 text-xs text-slate-300">
+              Open the campaign workspace to view tenant-scoped recipients, drafts, delivery activity, and engagement records. This inbox never displays estimated campaign metrics as live data.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/business/campaigns')}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-emerald-400"
+            >
+              Open Campaign Builder <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           </div>
 
           {/* Campaign List */}
@@ -1451,7 +1466,7 @@ export default function AlphaCloneEmailWorkspace() {
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-black text-white">Active Outreach Campaigns</h2>
               <button
-                onClick={() => toast.success('Opening Visual Campaign Builder...', { icon: '⚙️' })}
+                onClick={() => router.push('/dashboard/business/campaigns')}
                 className="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 text-xs font-bold"
               >
                 + Create Campaign
@@ -1605,78 +1620,40 @@ export default function AlphaCloneEmailWorkspace() {
               <h2 className="text-base font-black text-white flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-teal-400" /> Email Health & Deliverability Center
               </h2>
-              <p className="text-xs text-slate-400">Realtime domain reputation monitoring, SPF/DKIM verification, and warm-up statistics.</p>
+              <p className="text-xs text-slate-400">Provider connection status is shown here. Domain and deliverability metrics appear only after a connected provider supplies them.</p>
             </div>
             <button
-              onClick={() => toast.success('Re-checking DNS records…', { icon: '🔍' })}
+              type="button"
+              onClick={() => router.push('/dashboard/settings')}
               className="px-3.5 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs font-bold text-slate-200 hover:text-white flex items-center gap-1.5"
             >
-              <RefreshCw className="w-3.5 h-3.5" /> Verify DNS
+              <Settings className="w-3.5 h-3.5" /> Provider settings
             </button>
           </div>
 
-          {/* Core Health Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Warmup Health Score</span>
-              <p className="text-2xl font-black text-emerald-400">98.4%</p>
-              <span className="text-[10px] text-emerald-400 font-bold">Optimal Reputation</span>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Bounce Rate (30d)</span>
-              <p className="text-2xl font-black text-teal-300">0.42%</p>
-              <span className="text-[10px] text-teal-400 font-bold">Well below 2% threshold</span>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
-              <span className="text-[11px] text-slate-400 font-medium">Spam Complaint Rate</span>
-              <p className="text-2xl font-black text-emerald-400">0.01%</p>
-              <span className="text-[10px] text-emerald-400 font-bold">Pristine Inbox Placement</span>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
               <span className="text-[11px] text-slate-400 font-medium">Active Dispatchers</span>
-              <p className="text-2xl font-black text-white">{connectedProviders.length || 2}</p>
-              <span className="text-[10px] text-slate-400 font-bold">Providers Synced</span>
+              <p className="text-2xl font-black text-white">{connectedProviders.length}</p>
+              <span className="text-[10px] text-slate-400 font-bold">Connected providers only</span>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-1">
+              <span className="text-[11px] text-slate-400 font-medium">Deliverability metrics</span>
+              <p className="text-lg font-black text-slate-300">Not reported</p>
+              <span className="text-[10px] text-slate-400 font-bold">Connect a provider with reporting to view verified data</span>
             </div>
           </div>
 
-          {/* DNS Verification Status Grid */}
-          <div className="p-5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-4">
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">DNS & Protocol Authentication</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-white">SPF Record</p>
-                  <p className="text-[10px] text-slate-400 font-mono">v=spf1 include:alphaclone.tech ~all</p>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Pass</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-white">DKIM Key (2048-bit)</p>
-                  <p className="text-[10px] text-slate-400 font-mono">s1._domainkey.alphaclone.tech</p>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Verified</span>
-              </div>
-              <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-white">DMARC Policy</p>
-                  <p className="text-[10px] text-slate-400 font-mono">v=DMARC1; p=reject; rua=mailto:dmarc@...</p>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">Enforced</span>
-              </div>
-            </div>
+            <p className="text-xs text-slate-300">No workspace domain result has been verified in this view. Configure a sender domain and use the provider’s verified health report before relying on SPF, DKIM, DMARC, bounce, or complaint data.</p>
           </div>
 
           {/* Dispatcher Connections */}
           <div className="p-5 rounded-2xl bg-slate-900/80 border border-white/10 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Connected Dispatch Providers</h3>
             <div className="divide-y divide-white/5 text-xs">
-              {(providerOptions.length > 0 ? providerOptions : [
-                { id: 'outlook', label: 'Microsoft Outlook 365', connected: true },
-                { id: 'zoho', label: 'Zoho Mail Enterprise', connected: true },
-                { id: 'sendgrid', label: 'SendGrid Engine', connected: true },
-                { id: 'resend', label: 'Resend Transactional API', connected: true },
-              ]).map((prov, i) => (
+              {providerOptions.length > 0 ? providerOptions.map((prov, i) => (
                 <div key={i} className="py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -1689,7 +1666,7 @@ export default function AlphaCloneEmailWorkspace() {
                     {prov.connected ? 'Connected & Synced' : 'Disconnected'}
                   </span>
                 </div>
-              ))}
+              )) : <p className="py-3 text-xs text-slate-400">No email provider is connected to this workspace.</p>}
             </div>
           </div>
         </div>
