@@ -1097,6 +1097,18 @@
     box-shadow 160ms ease;
 }
 
+.mkt-partner-grid li { animation: mkt-partner-drift 5.8s ease-in-out infinite; }
+.mkt-partner-grid li:nth-child(2n) { animation-delay: -1.4s; }
+.mkt-partner-grid li:nth-child(3n) { animation-delay: -2.8s; }
+.mkt-partner-grid li:nth-child(4n) { animation-delay: -4.2s; }
+.mkt-partner-grid:hover li,
+.mkt-partner-grid:focus-within li { animation-play-state: paused; }
+
+@keyframes mkt-partner-drift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 .mkt-partner-chip:hover {
   border-color: color-mix(in srgb, var(--partner-color, #18c7c8) 48%, var(--border-subtle));
   transform: translateY(-2px);

@@ -12,7 +12,7 @@ export const DEMO_HREF = '/book-demo';
 
 export const CTA_LABELS = {
   primary: 'Start for $15/month',
-  secondary: 'See how it works',
+  secondary: 'Book a demo',
   tertiaryLogin: 'Log in',
   pricing: 'See pricing',
   features: 'Explore the platform',

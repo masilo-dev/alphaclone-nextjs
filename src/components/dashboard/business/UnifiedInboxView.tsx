@@ -739,7 +739,12 @@ export default function UnifiedInboxView({ defaultProvider, initialFolder }: Uni
   };
 
   const connectZoho = () => {
-    window.location.href = '/api/auth/zoho/connect';
+    if (!currentTenant?.id) {
+      toast.error('Select a workspace before connecting Zoho.');
+      return;
+    }
+
+    window.location.href = `/api/auth/zoho/connect?tenantId=${encodeURIComponent(currentTenant.id)}`;
   };
 
   useEffect(() => {

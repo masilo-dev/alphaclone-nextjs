@@ -175,5 +175,31 @@ export function validateProductionEnv(env = process.env) {
     errors.push("STRIPE_WEBHOOK_SECRET is required when Stripe is configured");
   }
 
+  const oauthProviders = [
+    ['Microsoft OAuth', ['AZURE_CLIENT_ID', 'NEXT_PUBLIC_AZURE_CLIENT_ID', 'VITE_AZURE_CLIENT_ID'], ['AZURE_CLIENT_SECRET']],
+    ['Zoho OAuth', ['ZOHO_CLIENT_ID', 'NEXT_PUBLIC_ZOHO_CLIENT_ID'], ['ZOHO_CLIENT_SECRET', 'ZOHO_ENCRYPTION_SECRET']],
+    ['Google OAuth', ['GOOGLE_CLIENT_ID', 'NEXT_PUBLIC_GOOGLE_CLIENT_ID'], ['GOOGLE_CLIENT_SECRET']],
+    ['LinkedIn OAuth', ['LINKEDIN_CLIENT_ID', 'NEXT_PUBLIC_LINKEDIN_CLIENT_ID'], ['LINKEDIN_CLIENT_SECRET']],
+    ['HubSpot OAuth', ['HUBSPOT_CLIENT_ID', 'NEXT_PUBLIC_HUBSPOT_CLIENT_ID'], ['HUBSPOT_CLIENT_SECRET']],
+    ['Slack OAuth', ['SLACK_CLIENT_ID'], ['SLACK_CLIENT_SECRET']],
+    ['Zoom OAuth', ['ZOOM_CLIENT_ID', 'NEXT_PUBLIC_ZOOM_CLIENT_ID'], ['ZOOM_CLIENT_SECRET']],
+  ];
+
+  for (const [label, clientNames, requiredNames] of oauthProviders) {
+    const clientName = firstPresent(env, clientNames);
+    const configuredRequired = requiredNames.filter((name) => Boolean(env[name]?.trim()));
+    if (!clientName && configuredRequired.length === 0) continue;
+    if (!clientName) {
+      errors.push(`${label} client ID is missing (${clientNames.join(' or ')})`);
+      continue;
+    }
+    const missing = requiredNames.filter((name) => !env[name]?.trim());
+    if (missing.length) {
+      errors.push(`${label} configuration is incomplete (${missing.join(', ')} missing)`);
+      continue;
+    }
+    configured[label] = clientName;
+  }
+
   return { ok: errors.length === 0, errors, configured };
 }

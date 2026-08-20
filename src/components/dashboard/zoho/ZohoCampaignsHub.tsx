@@ -115,7 +115,12 @@ export default function ZohoCampaignsHub({ userId }: ZohoCampaignsHubProps) {
   }, [refresh]);
 
   const connectZoho = () => {
-    router.push('/api/auth/zoho/connect?region=EU');
+    if (!currentTenant?.id) {
+      toast.error('Select a workspace before connecting Zoho.');
+      return;
+    }
+
+    router.push(`/api/auth/zoho/connect?tenantId=${encodeURIComponent(currentTenant.id)}`);
   };
 
   const handleCreateAndSend = async () => {

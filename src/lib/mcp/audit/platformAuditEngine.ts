@@ -10,8 +10,6 @@ import { buildApiHealthReport } from '@/lib/mcp/apiHealthReport';
 import type { AuditFinding, PlatformHealthScore } from '@/lib/mcp/connector/types';
 
 const REQUIRED_INTEGRATIONS = [
-  'github',
-  'gmail',
   'google_calendar',
   'zoho',
   'stripe',

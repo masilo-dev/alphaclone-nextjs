@@ -3,12 +3,14 @@ import { VERIFIED_PARTNERS, type VerifiedPartner } from '@/config/verifiedPartne
 
 const FEATURED_PARTNER_IDS = [
   'facebook',
-  'instagram',
   'linkedin',
+  'linkedin-organization',
+  'calendly',
+  'zoho',
+  'brevo',
+  'resend',
   'stripe',
-  'google',
   'microsoft',
-  'slack',
 ] as const;
 
 function PartnerChip({ partner }: { partner: VerifiedPartner }) {

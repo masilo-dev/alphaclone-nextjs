@@ -1,4 +1,5 @@
 import { Redis } from '@upstash/redis';
+import IORedis from 'ioredis';
 
 /**
  * Redis caching layer using Upstash Redis
@@ -8,15 +9,38 @@ import { Redis } from '@upstash/redis';
 // Initialize Upstash Redis client
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const railwayRedisUrl = process.env.REDIS_URL?.trim();
 
-export const redisEnabled = !!(redisUrl && redisToken);
+type RedisCommands = {
+    get(key: string): Promise<unknown>;
+    setex(key: string, seconds: number, value: string): Promise<unknown>;
+    del(...keys: string[]): Promise<number>;
+    keys(pattern: string): Promise<string[]>;
+    incr(key: string): Promise<number>;
+    decr(key: string): Promise<number>;
+    exists(key: string): Promise<number>;
+    expire(key: string, seconds: number): Promise<unknown>;
+    ttl(key: string): Promise<number>;
+    pexpire(key: string, milliseconds: number): Promise<unknown>;
+    pttl(key: string): Promise<number>;
+    ping(): Promise<unknown>;
+};
 
-export const redis = redisEnabled
-    ? new Redis({
-        url: redisUrl!,
-        token: redisToken!,
+const railwayRedis = railwayRedisUrl
+    ? new IORedis(railwayRedisUrl, {
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+        enableOfflineQueue: false,
     })
     : null;
+const upstashRedis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
+
+export const redisBackend = railwayRedis ? 'railway' : upstashRedis ? 'upstash' : 'none';
+export const redisEnabled = redisBackend !== 'none';
+
+// Railway's private Redis is preferred in production; Upstash remains a
+// compatible fallback for deployments that expose only REST credentials.
+export const redis = (railwayRedis || upstashRedis) as RedisCommands | null;
 
 /**
  * Cache TTL presets (in seconds)
@@ -84,6 +108,9 @@ export const cacheService = {
         if (!redisEnabled || !redis) return null;
         try {
             const value = await redis.get(key);
+            if (redisBackend === 'railway' && typeof value === 'string') {
+                try { return JSON.parse(value) as T; } catch { return value as T; }
+            }
             return value as T | null;
         } catch (error) {
             console.error('Cache get error:', error);

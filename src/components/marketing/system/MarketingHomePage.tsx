@@ -137,7 +137,7 @@ export default function MarketingHomePage() {
                 href={DEMO_HREF}
                 className="w-full sm:w-auto mkt-btn-large"
               >
-                See how it works
+                Book a demo
               </SecondaryCTA>
             </div>
           </div>
@@ -410,6 +410,10 @@ export default function MarketingHomePage() {
             <div className="mt-7">
               <VerifiedIntegrationsStrip />
             </div>
+            <p className="mx-auto mt-5 max-w-3xl text-xs leading-5 text-slate-400 sm:text-sm">
+              Use AlphaClone through ChatGPT, Claude, Manus or Grok. WhatsApp,
+              PayPal and Cal.com are coming soon.
+            </p>
           </div>
         </MarketingContainer>
       </MarketingSection>
@@ -435,7 +439,7 @@ export default function MarketingHomePage() {
                 href={DEMO_HREF}
                 className="w-full sm:w-auto mkt-btn-large"
               >
-                See how it works
+                Book a demo
               </SecondaryCTA>
             </div>
           </div>

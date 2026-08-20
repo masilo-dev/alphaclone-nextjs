@@ -28,6 +28,14 @@ export async function GET(req: NextRequest) {
 
         const result = await response.json();
 
+        if (!response.ok) {
+            return NextResponse.json({
+                success: false,
+                timestamp: new Date().toISOString(),
+                error: result?.error || `Workflow engine returned ${response.status}`,
+            }, { status: 502 });
+        }
+
         return NextResponse.json({
             success: true,
             timestamp: new Date().toISOString(),

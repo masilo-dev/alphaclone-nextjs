@@ -3,6 +3,7 @@ import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { securityLogService } from '../services/securityLogService';
+import { redis as sharedRedis, redisBackend } from './cache/redis';
 
 
 // Initialize Redis client from environment variables
@@ -148,7 +149,31 @@ export async function rateLimit(
     // 1. Determine identifier (IP address or provided custom identifier)
     const id = identifier || (request as any)?.ip || request?.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    // 2. Try Redis rate limiter if configured
+    // 2. Railway Redis uses a shared fixed-window counter. This keeps limits
+    // consistent across every Railway app instance without requiring REST.
+    if (redisBackend === 'railway' && sharedRedis) {
+        try {
+            const windowMs = parseWindow(config.window);
+            const key = `alphaclone:rl:${id}`;
+            const count = await sharedRedis.incr(key);
+            if (count === 1) await sharedRedis.pexpire(key, windowMs);
+            const ttl = await sharedRedis.pttl(key);
+            const result = {
+                success: count <= config.limit,
+                remaining: Math.max(config.limit - count, 0),
+                reset: Date.now() + (ttl > 0 ? ttl : windowMs),
+                limit: config.limit,
+            };
+            if (!result.success && request) {
+                await logRateLimitViolation(id, (request as any).ip || '0.0.0.0', request.nextUrl.pathname);
+            }
+            return result;
+        } catch (error) {
+            console.error('Railway Redis rate limit error, falling back:', error);
+        }
+    }
+
+    // 3. Try Upstash REST rate limiter if configured
     if (redis) {
         try {
             const ratelimit = new Ratelimit({
@@ -179,7 +204,7 @@ export async function rateLimit(
         }
     }
 
-    // 3. Fallback to In-Memory rate limiting
+    // 4. Fallback to In-Memory rate limiting
     // Note: window is a string (e.g. '15m'), we need to parse it to ms
     const windowMs = parseWindow(config.window);
     const result = checkInMemoryRateLimit(id, config.limit, windowMs);

@@ -72,7 +72,8 @@ export async function GET(req: NextRequest) {
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('access_type', 'offline');
     authUrl.searchParams.append('prompt', 'consent');
-    authUrl.searchParams.append('scope', scopes.join(' '));
+    // Zoho requires multiple OAuth scopes to be comma-separated.
+    authUrl.searchParams.append('scope', scopes.join(','));
     authUrl.searchParams.append('redirect_uri', redirectUri);
     authUrl.searchParams.append(
         'state',
