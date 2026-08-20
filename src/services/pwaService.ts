@@ -171,7 +171,15 @@ export const pwaService = {
             return { prompt: null, error: 'Not in browser environment' };
         }
 
-        // Listen for beforeinstallprompt event
+        // Reuse the prompt captured by the app shell. Waiting only for a new
+        // browser event made Android install actions feel stuck even though an
+        // install prompt was already available.
+        const capturedPrompt = (window as any).deferredPrompt;
+        if (capturedPrompt) {
+            return { prompt: capturedPrompt, error: null };
+        }
+
+        // Listen for the next beforeinstallprompt event when none was captured.
         return new Promise((resolve) => {
             const handler = (e: Event) => {
                 e.preventDefault();

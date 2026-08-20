@@ -81,6 +81,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
     const [emailCompose, setEmailCompose] = useState<{ recipient: EmailRecipient; subject: string; body?: string } | null>(null);
     const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<Set<string>>(new Set());
     const [bulkDeletingInvoices, setBulkDeletingInvoices] = useState(false);
+    const [bulkPausingFollowups, setBulkPausingFollowups] = useState(false);
     const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
     const [recordPaymentInvoice, setRecordPaymentInvoice] = useState<BusinessInvoice | null>(null);
     const [recordPaymentAmount, setRecordPaymentAmount] = useState('');
@@ -111,6 +112,34 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
 
         const subject = recipients.length === 1 ? 'Invoice follow-up' : 'Invoices follow-up';
         router.push(buildMailComposeUrl(recipients, subject));
+    };
+
+    const handleBulkPauseFollowups = async () => {
+        const ids = [...selectedInvoiceIds];
+        if (!ids.length) return;
+        const ok = await confirmDialog({
+            title: 'Pause automatic follow-ups?',
+            description: `Pause automatic follow-ups for ${ids.length} selected invoice(s). This sends no email and can be changed later on individual invoices.`,
+            confirmLabel: 'Pause follow-ups',
+        });
+        if (!ok) return;
+
+        setBulkPausingFollowups(true);
+        const toastId = toast.loading(`Pausing follow-ups for ${ids.length} invoice(s)...`);
+        try {
+            const { error, count } = await businessInvoiceService.bulkUpdateInvoices(ids, { disableFollowups: true });
+            if (error) throw new Error(error);
+            setInvoices((prev) => prev.map((invoice) => selectedInvoiceIds.has(invoice.id)
+                ? { ...invoice, autoFollowupEnabled: false }
+                : invoice));
+            setSelectedInvoiceIds(new Set());
+            toast.success(`Paused automatic follow-ups for ${count} invoice(s). No email was sent.`, { id: toastId });
+            await loadInvoices();
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Unable to pause follow-ups', { id: toastId });
+        } finally {
+            setBulkPausingFollowups(false);
+        }
     };
 
     const handleBulkDeleteInvoices = async () => {
@@ -614,7 +643,16 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                                     className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-indigo-500/30 text-indigo-300 flex items-center gap-1.5 transition-colors hover:text-indigo-200"
                                 >
                                     <Mail size={12} />
-                                    {`Send Follow-up (${selectedInvoiceIds.size})`}
+                                    {`Prepare Follow-up (${selectedInvoiceIds.size})`}
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={bulkPausingFollowups}
+                                    onClick={handleBulkPauseFollowups}
+                                    className="h-7 px-3 rounded-full text-[11px] font-black uppercase tracking-widest border border-amber-500/30 text-amber-200 flex items-center gap-1.5 transition-colors hover:text-amber-100 disabled:opacity-50"
+                                >
+                                    <Clock size={12} />
+                                    {bulkPausingFollowups ? 'Pausing…' : `Pause Follow-ups (${selectedInvoiceIds.size})`}
                                 </button>
                                 <button
                                     type="button"
@@ -633,7 +671,7 @@ const EnhancedBillingPage: React.FC<EnhancedBillingPageProps> = ({ user }) => {
                     </div>
                 </div>
                 <p className="text-xs text-slate-500 -mt-2">
-                    Tip: select invoices to send one follow-up to many clients at once. Only drafts can be bulk deleted.
+                    Tip: select invoices to prepare a follow-up draft, pause automatic follow-ups, or delete drafts. Preparing a draft does not send email.
                 </p>
 
                 <div className="space-y-3">

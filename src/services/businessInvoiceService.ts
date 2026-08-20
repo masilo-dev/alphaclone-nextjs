@@ -127,6 +127,33 @@ export const businessInvoiceService = {
         }
     },
 
+    async bulkUpdateInvoices(
+        invoiceIds: string[],
+        changes: { status?: 'void' | 'cancelled'; disableFollowups?: true },
+        reason?: string,
+    ): Promise<{ error: string | null; count: number }> {
+        try {
+            const tenantId = tenantService.getCurrentTenantId();
+            if (!tenantId) return { error: 'Select a workspace before updating invoices', count: 0 };
+            const ids = [...new Set(invoiceIds)];
+            if (!ids.length) return { error: null, count: 0 };
+            if (ids.length > 200) return { error: 'Bulk invoice updates are limited to 200 invoices.', count: 0 };
+            const response = await fetch('/api/invoices/bulk', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, ids, changes, reason, finalConfirmation: true }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            return {
+                error: response.ok && payload.success ? null : payload.error || 'Invoices could not be updated in bulk',
+                count: Number(payload.updated || 0),
+            };
+        } catch (err: any) {
+            console.error('Error updating invoices in bulk:', err);
+            return { error: err.message, count: 0 };
+        }
+    },
+
     async bulkDeleteInvoices(invoiceIds: string[]): Promise<{ error: string | null; count: number; skipped: number }> {
         if (!invoiceIds.length) return { error: null, count: 0, skipped: 0 };
         const uniqueIds = [...new Set(invoiceIds)];

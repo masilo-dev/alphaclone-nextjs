@@ -52,6 +52,7 @@ import { onLeadCreated } from '../../lib/leads/leadOnCreated';
 import { resolveEmailProviderConfig } from '../../lib/email/providerIntegrationResolver';
 import { sendWithProviderSdk, type EmailProvider } from '../../lib/email/providerSdk';
 import { sendEmailServer } from '../../lib/email/sendEmailServer';
+import { isEmailSuppressed } from '../../lib/email/suppression';
 import { insertBeforeEmailFooter } from '../../lib/email/emailComposition';
 import { parseFlexibleDueDate } from '../../lib/dates/parseFlexibleDueDate';
 import { consumeDailyResourceQuota, releaseDailyResourceQuota } from '../../lib/server/dailyResourceQuota';
@@ -765,7 +766,7 @@ function hasCountryCode(phone: unknown): boolean {
   return /^\+[1-9]\d{6,14}$/.test(normalized);
 }
 
-async function enqueueMcpEvent(
+export async function enqueueMcpEvent(
   supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
   tenantId: string,
   userId: string | null,
@@ -2925,7 +2926,13 @@ class AlphaCloneMCPServer {
             throw new Error('language_mode is "ask". Ask the user which language to use before sending outreach, then call this tool again with language or language_mode set to that language code.');
           }
           
-          const combinedIds = [...new Set([...lead_ids, ...client_ids])].slice(0, 200);
+          const combinedIds = [...new Set([...lead_ids, ...client_ids])];
+          if (combinedIds.length > 120) {
+            throw new Error('Batch outreach is limited to 120 recipients. Split the selection into smaller reviewed batches.');
+          }
+          if (a.final_confirmation !== true) {
+            throw new Error('A reviewed final confirmation is required before batch outreach can be queued or sent.');
+          }
           const CHUNK_SIZE = 3;
           const processInline = a.process_inline === true;
 
@@ -2937,6 +2944,8 @@ class AlphaCloneMCPServer {
               custom_context,
               delivery_provider,
               language_mode: batchLanguage.code,
+              final_confirmation: true,
+              reviewed_at: typeof a.reviewed_at === 'string' ? a.reviewed_at : new Date().toISOString(),
             });
             result = {
               content: [{
@@ -2973,7 +2982,29 @@ class AlphaCloneMCPServer {
                return {
                  name: entity.business_name || entity.name,
                  status: 'failed',
-                 error: 'No email found on this record. Add an email in CRM (any stage: discovered→negotiation) then retry.',
+                 error: 'No direct email found on this record. Add a verified email address before retrying.',
+               };
+             }
+             const metadata = ((entity as any).metadata && typeof (entity as any).metadata === 'object')
+               ? (entity as any).metadata as Record<string, unknown>
+               : {};
+             const hasMarketingConsent = (entity as any).marketing_opt_in === true ||
+               (entity as any).email_opt_in === true ||
+               metadata.marketing_opt_in === true ||
+               metadata.email_opt_in === true ||
+               metadata.marketingConsent === true;
+             if (!hasMarketingConsent) {
+               return {
+                 name: entity.business_name || entity.name,
+                 status: 'failed',
+                 error: 'Marketing consent is not recorded for this recipient.',
+               };
+             }
+             if (await isEmailSuppressed(tenant_id, String(email).trim().toLowerCase())) {
+               return {
+                 name: entity.business_name || entity.name,
+                 status: 'failed',
+                 error: 'Recipient is suppressed or unsubscribed.',
                };
              }
              
