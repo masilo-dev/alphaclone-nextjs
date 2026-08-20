@@ -53,7 +53,7 @@ export default function ClientFinancePortalPage() {
     );
   }
 
-  const { branding, client, invoices, quotes, summary } = portal;
+  const { branding, client, invoices, quotes, projects, summary } = portal;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-4 md:p-10">
@@ -91,12 +91,34 @@ export default function ClientFinancePortalPage() {
           <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
             <FileText className="w-10 h-10 text-teal-400 mx-auto mb-3" aria-hidden="true" />
             <p className="text-slate-300 font-medium">Documents & contracts</p>
-            <p className="text-slate-500 text-sm mt-1">Shared files and agreements will appear here.</p>
+            <p className="text-slate-500 text-sm mt-1">Documents are shared through a dedicated project portal or data room link. This finance link does not expose files that have not been explicitly shared with you.</p>
           </section>
         ) : activeTab === 'projects' ? (
-          <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
-            <p className="text-slate-300 font-medium">Project updates</p>
-            <p className="text-slate-500 text-sm mt-1">Milestones and deliverables will appear here when a project is active.</p>
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-slate-500">Project updates</h2>
+              <p className="mt-1 text-sm text-slate-400">Open a project portal to view its shared milestones, deliverables, and updates.</p>
+            </div>
+            {projects.length === 0 ? (
+              <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center">
+                <p className="text-slate-300 font-medium">No public project portal is available.</p>
+                <p className="text-slate-500 text-sm mt-1">Your project team can share a dedicated project link when client updates are ready.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {projects.map((project) => (
+                  <div key={project.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+                    <div>
+                      <p className="font-bold">{project.name}</p>
+                      <p className="text-xs text-slate-500">{project.stage || project.status} · {project.progress}% complete</p>
+                    </div>
+                    <a href={project.viewUrl} className="inline-flex items-center gap-1 px-4 py-2 rounded-xl border border-white/20 text-white text-xs font-bold uppercase">
+                      Open project <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         ) : (
         <>
