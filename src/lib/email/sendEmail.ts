@@ -37,6 +37,8 @@ export interface EmailPayload {
   skipRecipientGate?: boolean;
   /** Skip Bonnie v2.0 outbound language sanitization (platform/system mail) */
   skipBonnieQualityCheck?: boolean;
+  /** Non-sensitive business context retained with the canonical email audit record. */
+  auditMetadata?: Record<string, unknown>;
 }
 
 export interface SendEmailResult {
@@ -340,6 +342,7 @@ export async function sendEmail(
           templateName: payload.templateName,
           status: 'sent',
           emailId: providerResult.emailId || emailId,
+          metadata: payload.auditMetadata,
         });
         return {
           success: true,
@@ -359,6 +362,7 @@ export async function sendEmail(
         templateName: payload.templateName,
         status: 'failed',
         error: providerResult.error,
+        metadata: payload.auditMetadata,
       });
     }
 

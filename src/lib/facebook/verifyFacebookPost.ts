@@ -109,6 +109,11 @@ export function buildFacebookPostUrl(postId: string, pageId?: string | null): st
   const id = String(postId || '').trim();
   if (!id) return '';
   if (id.includes('_')) {
+    const [postPageId, ...postIdParts] = id.split('_');
+    const postId = postIdParts.join('_');
+    if (pageId && postPageId === String(pageId).trim() && postId) {
+      return `https://www.facebook.com/${pageId}/posts/${postId}`;
+    }
     return `https://www.facebook.com/${id}`;
   }
   if (pageId) {

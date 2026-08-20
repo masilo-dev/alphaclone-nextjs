@@ -116,6 +116,7 @@ const DocumentVaultTab = React.lazy(() => import('./DocumentVaultTab'));
 const TaxEstimatorTab = React.lazy(() => import('./TaxEstimatorTab'));
 const DeepDeskView = React.lazy(() => import('../tickets/DeepDeskView'));
 const UnifiedActionCenter = React.lazy(() => import('../bonnie/UnifiedActionCenter'));
+const AuditTrailPage = React.lazy(() => import('../AuditTrailPage'));
 const SalesForecastTab = React.lazy(() => import('../SalesForecastTab'));
 const AnalyticsTab = React.lazy(() => import('../AnalyticsTab'));
 const AccountsPage = React.lazy(() => import('../crm/AccountsPage'));
@@ -152,6 +153,7 @@ import { BusinessWelcomeModal } from './BusinessWelcomeModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { normalizeBusinessRoute } from '@/lib/normalizeDashboardRoute';
 import { bootstrapTenantViaApi } from '@/lib/tenant/bootstrapTenantClient';
+import { extractTenantBranding } from '@/lib/tenantBranding';
 import { presenceService } from '@/services/presenceService';
 import MissedCallsNotification from '../MissedCallsNotification';
 import { DashboardRouteTransition } from '../DashboardRouteTransition';
@@ -186,6 +188,11 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     );
     const { currentTenant: contextTenant, isLoading: tenantLoading, getDashboardStats, refreshTenants, error: tenantError } = useTenant();
     const currentTenant = propTenant || contextTenant;
+    const tenantBranding = useMemo(() => extractTenantBranding(currentTenant), [currentTenant]);
+    const tenantBrandStyle = useMemo(
+        () => ({ '--brand-blue-500': tenantBranding.primaryColor || '#356AF4' } as React.CSSProperties),
+        [tenantBranding.primaryColor],
+    );
     const [bootstrappingOrg, setBootstrappingOrg] = useState(false);
     usePrefetchDashboardStats(currentTenant?.id);
     const hasBootstrappedRef = useRef(Boolean(propTenant || contextTenant));
@@ -876,6 +883,12 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
                         <DeepDeskView />
                     </React.Suspense>
                 );
+            case '/dashboard/business/audit':
+                return (
+                    <React.Suspense fallback={<TableSkeleton rows={8} columns={6} />}>
+                        <AuditTrailPage />
+                    </React.Suspense>
+                );
 
             // Finance tab for tenant_admin (shared with admin/client via FinanceTab)
             case '/dashboard/finance':
@@ -991,6 +1004,7 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
             case '/dashboard/bonnie/approvals':
             case '/dashboard/business/bonnie/approvals': return t('Approvals');
             case '/dashboard/business/tickets': return t('Deep-Desk Support');
+            case '/dashboard/business/audit': return t('Audit Trail');
             case '/dashboard/accounting': return t('Accounting Dashboard');
             case '/dashboard/mail': return t('Mail');
             case '/dashboard/zoho/mail': return t('Zoho Mail');
@@ -1073,7 +1087,10 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
     // Use external nav items instead of local redundant array
 
     return (
-        <div className="flex min-w-0 ac-workspace-canvas text-[var(--ws-text-primary)] overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 w-full max-w-full ac-business-root [height:100dvh]">
+        <div
+            className="flex min-w-0 ac-workspace-canvas text-[var(--ws-text-primary)] overflow-hidden font-sans selection:bg-[var(--brand-blue-500)]/30 w-full max-w-full ac-business-root [height:100dvh]"
+            style={tenantBrandStyle}
+        >
             <SkipToMainContent />
             <div data-tour="navigation" className="flex-shrink-0">
             <Sidebar
