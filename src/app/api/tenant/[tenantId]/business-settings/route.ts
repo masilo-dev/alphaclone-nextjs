@@ -45,6 +45,8 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ tenantI
     const admin = createSupabaseAdminClient();
     const { data: existing, error: existingError } = await admin.from('business_settings').select('settings').eq('tenant_id', tenantId).maybeSingle();
     if (existingError) throw existingError;
+    const { data: existingTenant, error: tenantReadError } = await admin.from('tenants').select('settings').eq('id', tenantId).maybeSingle();
+    if (tenantReadError) throw tenantReadError;
     const { data, error } = await admin.from('business_settings').upsert({
       tenant_id: tenantId,
       business_name: value.businessName,
@@ -64,6 +66,33 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ tenantI
       updated_at: new Date().toISOString(),
     }, { onConflict: 'tenant_id' }).select('*').single();
     if (error) throw error;
+
+    const tenantSettings = existingTenant?.settings && typeof existingTenant.settings === 'object'
+      ? existingTenant.settings as Record<string, unknown>
+      : {};
+    const existingBranding = tenantSettings.branding && typeof tenantSettings.branding === 'object'
+      ? tenantSettings.branding as Record<string, unknown>
+      : {};
+    const { error: tenantUpdateError } = await admin.from('tenants').update({
+      logo_url: value.logoUrl || null,
+      brand_color_primary: value.brandColor,
+      legal_name: value.businessName,
+      business_address: value.address || null,
+      settings: {
+        ...tenantSettings,
+        branding: {
+          ...existingBranding,
+          displayName: value.tradingName || value.businessName,
+          legalBusinessName: value.businessName,
+          primaryColor: value.brandColor,
+          logo: value.logoUrl || null,
+          logoUrl: value.logoUrl || null,
+          supportEmail: value.email || null,
+        },
+      },
+    }).eq('id', tenantId);
+    if (tenantUpdateError) throw tenantUpdateError;
+
     await admin.from('business_automation_events').insert({ tenant_id: tenantId, event_type: 'business_settings_updated', payload: { actorUserId: user.id } });
     return NextResponse.json({ settings: data });
   } catch (error) {

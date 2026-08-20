@@ -54,7 +54,7 @@ const statusColors: Record<string, string> = {
 
 export default function SettingsPage({ user }: SettingsPageProps) {
     const { signOut } = useAuth();
-    const { currentTenant } = useTenant();
+    const { currentTenant, refreshTenants } = useTenant();
     const { backgroundColor, setBackgroundColor, themeMode, setThemeMode } = useTheme();
     const { language, setLanguage, t: translate } = useLanguage();
 
@@ -229,14 +229,14 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         }
     };
 
-    const handleSaveNotifications = async () => {
+    const handleSaveNotifications = async (settings = notificationSettings) => {
         setIsSaving(true);
         try {
             const { error } = await userService.updateNotificationSettings(user.id, {
-                email_notifications: notificationSettings.emailNotifications,
-                project_updates: notificationSettings.projectUpdates,
-                message_alerts: notificationSettings.messageAlerts,
-                weekly_reports: notificationSettings.weeklyReports
+                email_notifications: settings.emailNotifications,
+                project_updates: settings.projectUpdates,
+                message_alerts: settings.messageAlerts,
+                weekly_reports: settings.weeklyReports
             });
             if (error) throw new Error(error);
             toast.success('Notification preferences updated!');
@@ -245,6 +245,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleNotificationToggle = (key: keyof typeof notificationSettings) => {
+        const next = { ...notificationSettings, [key]: !notificationSettings[key] };
+        setNotificationSettings(next);
+        void handleSaveNotifications(next);
     };
 
     const handleChangePassword = async () => {
@@ -267,7 +273,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         }
     };
 
-    const handleSaveBusiness = async () => {
+    const handleSaveBusiness = async (settings = businessSettings) => {
         if (!currentTenant) return;
         setIsSaving(true);
         try {
@@ -275,10 +281,11 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                 method: 'PUT',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(businessSettings),
+                body: JSON.stringify(settings),
             });
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) throw new Error(payload.error || 'Failed to save business settings');
+            await refreshTenants();
             toast.success('Workspace business profile saved!');
         } catch (err: any) {
             toast.error(err.message || 'Failed to save business settings');
@@ -294,8 +301,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
         try {
             const result = await fileUploadService.uploadFile(file, 'tenant_logo', currentTenant.id);
             if (result.success && result.url) {
-                setBusinessSettings(prev => ({ ...prev, logoUrl: result.url! }));
-                toast.success('Logo uploaded!');
+                const nextSettings = { ...businessSettings, logoUrl: result.url };
+                setBusinessSettings(nextSettings);
+                await handleSaveBusiness(nextSettings);
             } else {
                 throw new Error(result.error);
             }
@@ -567,7 +575,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                             <textarea value={businessSettings.address} onChange={e => setBusinessSettings({...businessSettings, address: e.target.value})} placeholder="Business Address" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
                                             <textarea value={businessSettings.bankDetails} onChange={e => setBusinessSettings({...businessSettings, bankDetails: e.target.value})} placeholder="Bank transfer account details" rows={2} className="w-full bg-slate-900 border border-white/5 rounded-xl p-3 text-xs text-white resize-none" />
                                         </div>
-                                        <button onClick={handleSaveBusiness} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save Details</button>
+                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save Details</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -699,7 +707,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                                 </label>
                                             ))}
                                         </div>
-                                        <button onClick={handleSaveBusiness} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save sectors</button>
+                                        <button onClick={() => void handleSaveBusiness()} disabled={isSaving} className="px-5 py-2 bg-teal-600 text-white text-xs font-black uppercase tracking-wider rounded-xl">Save sectors</button>
                                     </div>
                                 </motion.div>
                             )}
@@ -832,13 +840,7 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <p className="text-[10px] text-slate-500">{setting.desc}</p>
                             </div>
                             <button
-                                onClick={() => {
-                                    setNotificationSettings(prev => {
-                                        const next = { ...prev, [setting.key]: !prev[setting.key as keyof typeof notificationSettings] };
-                                        setTimeout(handleSaveNotifications, 100);
-                                        return next;
-                                    });
-                                }}
+                                onClick={() => handleNotificationToggle(setting.key as keyof typeof notificationSettings)}
                                 className={`w-11 h-6 rounded-full p-0.5 transition-colors duration-200 focus:outline-none ${
                                     notificationSettings[setting.key as keyof typeof notificationSettings] ? 'bg-teal-600' : 'bg-slate-800'
                                 }`}
@@ -914,8 +916,9 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                                 <button
                                     key={preset.name}
                                     onClick={() => {
-                                        setBusinessSettings(prev => ({ ...prev, brandColor: preset.color }));
-                                        setTimeout(handleSaveBusiness, 100);
+                                        const nextSettings = { ...businessSettings, brandColor: preset.color };
+                                        setBusinessSettings(nextSettings);
+                                        void handleSaveBusiness(nextSettings);
                                     }}
                                     className="w-7 h-7 rounded-full border border-white/10 relative transition-transform active:scale-90"
                                     style={{ backgroundColor: preset.color }}
@@ -984,14 +987,12 @@ export default function SettingsPage({ user }: SettingsPageProps) {
                     </div>
 
                     {/* AI Quotas */}
-                    <div className="p-4 space-y-2">
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs font-bold text-slate-400">AI Tokens usage</span>
-                            <span className="text-[10px] font-black uppercase text-teal-400">Optimal 45% used</span>
+                    <div className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">AI usage and quotas</h4>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Live usage is calculated in the quota dashboard rather than shown as a simulated percentage here.</p>
                         </div>
-                        <div className="h-2 bg-slate-950 border border-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-teal-500 rounded-full" style={{ width: '45%' }} />
-                        </div>
+                        <Link href="/dashboard/business/quotas" className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-xl border border-white/5">Open quotas</Link>
                     </div>
 
                 </div>

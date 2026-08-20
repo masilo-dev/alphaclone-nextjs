@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminSupabaseClientOrThrow, requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
+import { requireTenantAccess, routeErrorResponse } from '@/lib/apiAuth';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { resolveEmailAttachmentsFromFileIds } from '@/lib/files/resolveEmailAttachments';
 
@@ -33,10 +33,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { tenantId, to, subject, contactId, provider, document_file_ids, skipRecipientGate, isPlatformNotification } = parsed.data;
+    const { tenantId, to, subject, contactId, clientId, threadId, provider, document_file_ids, skipRecipientGate, isPlatformNotification } = parsed.data;
     const body_html = (parsed.data.body_html || parsed.data.html || '').trim();
     const { user } = await requireTenantAccess(tenantId);
-    const admin = createAdminSupabaseClientOrThrow();
 
     const preferredProvider = provider && provider !== 'auto' ? provider as any : undefined;
     const attachments = document_file_ids?.length
@@ -50,6 +49,13 @@ export async function POST(req: NextRequest) {
       attachments,
       skipRecipientGate: skipRecipientGate ?? Boolean(document_file_ids?.length),
       isPlatformNotification: isPlatformNotification ?? false,
+      auditMetadata: {
+        source: 'api/email/send',
+        ...(contactId ? { contactId } : {}),
+        ...(clientId ? { clientId } : {}),
+        ...(threadId ? { threadId } : {}),
+        ...(document_file_ids?.length ? { documentFileCount: document_file_ids.length } : {}),
+      },
     }, preferredProvider);
 
     if (!result.success) {
@@ -59,18 +65,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Log outreach - fire-and-forget, don't let logging failure break the send
-    if (contactId) {
-      admin.from('lead_outreach_log').insert({
-        tenant_id: tenantId,
-        lead_id: contactId,
-        subject,
-        body_html,
-        sent_at: new Date().toISOString(),
-        provider: result.provider || 'unknown',
-        status: 'sent',
-      }).then(null, () => { /* non-fatal */ });
-    }
 
     return NextResponse.json({ success: true, provider: result.provider, emailId: result.emailId });
   } catch (error) {

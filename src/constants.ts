@@ -242,6 +242,7 @@ export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
     icon: Settings,
     subItems: [
       { label: 'System settings', href: '/dashboard/business/settings', icon: Settings },
+      { label: 'Audit trail', href: '/dashboard/business/audit', icon: Activity },
       { label: 'Integrations', href: '/dashboard/marketplace', icon: Globe },
       { label: 'Platform guide', href: '/dashboard/help', icon: BookOpen },
     ],
