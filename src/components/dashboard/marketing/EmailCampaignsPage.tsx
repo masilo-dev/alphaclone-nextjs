@@ -499,7 +499,7 @@ export default function EmailCampaignsPage({ userId }: EmailCampaignsPageProps) 
                   </Button>
                 </div>
                 <div className="min-h-0 flex-1 bg-white/0">
-                  <CampaignBuilderShell userId={userId} />
+                  <CampaignBuilderShell userId={userId} initialCampaignId={selectedId} />
                 </div>
               </div>
             )}

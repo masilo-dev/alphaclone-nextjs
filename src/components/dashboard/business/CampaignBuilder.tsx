@@ -203,7 +203,12 @@ type ComposeAudit = {
     info: string[];
 };
 
-const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
+type CampaignBuilderProps = {
+    userId: string;
+    initialCampaignId?: string | null;
+};
+
+const CampaignBuilder: React.FC<CampaignBuilderProps> = ({ userId, initialCampaignId = null }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { isMobile } = useBreakpoint();
@@ -223,6 +228,7 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
 
     // Selected single campaign for detail mode
     const [selectedCampaign, setSelectedCampaign] = useState<EmailCampaign | null>(null);
+    const openedInitialCampaignId = useRef<string | null>(null);
     const [selectedCampaignRecipients, setSelectedCampaignRecipients] = useState<Awaited<ReturnType<typeof emailCampaignService.getCampaignRecipients>>['recipients']>([]);
     const [loadingSelectedRecipients, setLoadingSelectedRecipients] = useState(false);
 
@@ -286,6 +292,17 @@ const CampaignBuilder: React.FC<{ userId: string }> = ({ userId }) => {
     const [retryingFailedRecipients, setRetryingFailedRecipients] = useState(false);
 
     useEffect(() => { loadData(); }, []);
+
+    useEffect(() => {
+        if (!initialCampaignId || loading || openedInitialCampaignId.current === initialCampaignId) return;
+
+        const campaign = campaigns.find((item) => item.id === initialCampaignId);
+        if (!campaign) return;
+
+        openedInitialCampaignId.current = initialCampaignId;
+        setSelectedCampaign(campaign);
+        setViewMode('detail');
+    }, [campaigns, initialCampaignId, loading]);
 
     useEffect(() => {
         const source = searchParams?.get('source');
