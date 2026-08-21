@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { IconType } from "react-icons";
 import { FaFacebook, FaHubspot, FaLinkedin, FaMicrosoft, FaSlack, FaWhatsapp } from "react-icons/fa6";
-import { SiAnthropic, SiBrevo, SiCalendly, SiGmail, SiOpenai, SiQuickbooks, SiResend, SiStripe, SiZapier, SiZoho } from "react-icons/si";
+import { SiAnthropic, SiBrevo, SiCalendly, SiGmail, SiHubspot, SiOpenai, SiQuickbooks, SiResend, SiStripe, SiZapier, SiZoho } from "react-icons/si";
 import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, MessageSquareText, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X, Sparkles } from "lucide-react";
 import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
