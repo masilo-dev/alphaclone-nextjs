@@ -12,6 +12,8 @@ import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
 import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
 import LookInsideAlphaClone from "./LookInsideAlphaClone";
+import AiInterfaceShowcase from "./AiInterfaceShowcase";
+import LifecycleFlowShowcase from "./LifecycleFlowShowcase";
 
 type Integration = { name: string; detail: string; badge: string; icon: IconType | typeof Mail; color: string };
 const executionRows = [
@@ -22,13 +24,7 @@ const executionRows = [
   ["Schedule follow-up", "Waiting for outreach approval", "Queued", "queued", "Next"],
   ["Owner approval", "6 actions require review", "Needs approval", "approval", "Review"],
 ] as const;
-const lifecycle = [
-  ["01", "Find", Search, "Lead discovery · Qualification · Market research"],
-  ["02", "Win", UserRoundCheck, "CRM · Outlook · LinkedIn · Calendly"],
-  ["03", "Run", Bot, "Bonnie · Tasks · Communication · Automation"],
-  ["04", "Deliver", BriefcaseBusiness, "Projects · Documents · Contracts · Clients"],
-  ["05", "Get paid", CircleDollarSign, "Invoices · Stripe · Revenue · Reporting"],
-] as const;
+
 const integrationGroups: Array<{ title: string; items: Integration[] }> = [
   { title: "Communication & Email", items: [
     { name: "Outlook 365", detail: "Inbox sync & email delivery", badge: "OAuth 2.0", icon: FaMicrosoft, color: "#0078d4" },
@@ -291,30 +287,12 @@ export default function MarketingHomePage() {
       </div>
     </MarketingContainer></MarketingSection>
 
-    {/* Platform Lifecycle Section */}
-    <MarketingSection id="platform" atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro title="From first opportunity to money in the bank." center/>
-      <div className="mt-9 grid gap-0 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">
-        {lifecycle.map(([n,name,Icon,items],i)=>(
-          <div key={name} className="contents">
-            <article className="group relative flex gap-4 border-l border-cyan-400/40 py-4 pl-6 lg:block lg:border-l-0 lg:p-0 lg:text-center">
-              <span className="absolute -left-[5px] top-6 h-2.5 w-2.5 rounded-full border-2 border-[#020817] bg-cyan-300 lg:static lg:mx-auto lg:grid lg:h-12 lg:w-12 lg:place-items-center lg:border lg:border-cyan-400/30 lg:bg-cyan-400/[.08] transition-all duration-300 group-hover:scale-110 group-hover:border-cyan-300 group-hover:bg-cyan-400/20 group-hover:shadow-lg group-hover:shadow-cyan-400/30">
-                <Icon className="hidden h-5 w-5 text-cyan-300 lg:block transition-transform duration-300 group-hover:scale-110"/>
-              </span>
-              <div>
-                <p className="text-[10px] font-bold text-cyan-400">{n}</p>
-                <h3 className="mt-1 text-sm font-black uppercase text-white group-hover:text-cyan-200">{name}</h3>
-                <p className="mt-1 text-[11px] leading-5 text-slate-400">{items}</p>
-              </div>
-            </article>
-            {i<4&&<ArrowRight className="hidden h-4 w-4 shrink-0 text-cyan-400/70 lg:block"/>}
-          </div>
-        ))}
-      </div>
-      <p className="mt-8 text-center text-sm font-bold text-cyan-100">Same customer. Same context. One continuous workflow.</p>
-    </MarketingContainer></MarketingSection>
+    {/* Platform Lifecycle Section (Hyper-Premium Interactive 5-Step Pipeline) */}
+    <MarketingSection id="platform" atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
+      <LifecycleFlowShowcase />
+    </MarketingSection>
 
-    {/* Deals Dashboard Screenshot encased in Premium Browser Window Frame (Zero cutoffs!) */}
+    {/* Deals Dashboard Screenshot encased in Premium Browser Window Frame */}
     <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
       <Intro title="See the business, not another collection of apps." center/>
       <div className="relative group mx-auto mt-9 max-w-6xl">
@@ -347,40 +325,10 @@ export default function MarketingHomePage() {
       </div>
     </MarketingContainer></MarketingSection>
 
-    {/* Work from your AI Section */}
-    <MarketingSection atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
-      <Intro eyebrow="Work from your AI" title="Use the AI interface you already prefer." body="ChatGPT, Claude and Manus can act as interfaces into AlphaClone while AlphaClone supplies the business context, tools, permissions and execution layer underneath." center/>
-      <div className="mx-auto mt-9 grid max-w-5xl gap-4 lg:grid-cols-[1fr_auto_1.1fr_auto_1fr] lg:items-center">
-        <div className="space-y-2">
-          {[[SiOpenai,"ChatGPT","Show me the customers that need follow-up today.", "#10a37f"],[SiAnthropic,"Claude","Review these opportunities and tell me which need attention.", "#d97706"],[MessageSquareText,"Manus","Find 20 leads, create CRM records and prepare outreach.", "#06b6d4"]].map(([Icon,name,q,color])=>(
-            <article key={String(name)} className="group rounded-xl border border-white/10 bg-slate-900/50 p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/40 hover:bg-slate-900/80">
-              <div className="flex items-center gap-2">
-                <Icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" style={{color:String(color)}}/>
-                <p className="text-xs font-bold text-white group-hover:text-cyan-200">{String(name)}</p>
-                <span className="ml-auto text-[9px] uppercase text-slate-500">AI interface</span>
-              </div>
-              <p className="mt-2 text-[10px] leading-4 text-slate-400">“{String(q)}”</p>
-            </article>
-          ))}
-        </div>
-        <ArrowRight className="mx-auto hidden h-5 w-5 text-cyan-400 lg:block"/>
-        <div className="group rounded-2xl border border-cyan-400/40 bg-cyan-400/[.08] p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-400/20">
-          <Database className="mx-auto h-6 w-6 text-cyan-300 transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12"/>
-          <h3 className="mt-3 text-lg font-black text-white">AlphaClone</h3>
-          <p className="mt-1 text-xs font-semibold text-cyan-200">Business context + execution</p>
-          <div className="mt-4 h-px bg-cyan-400/20"/>
-          <p className="mt-4 text-[10px] text-slate-300">Context · permissions · tools · audit history</p>
-        </div>
-        <ArrowRight className="mx-auto hidden h-5 w-5 text-cyan-400 lg:block"/>
-        <div className="grid grid-cols-2 gap-2">
-          {["CRM","Outreach","Calendar","Projects","Documents","Invoices","Money"].map(x=>(
-            <div key={x} className="rounded-lg border border-white/[.08] bg-slate-900/50 px-3 py-2 text-[11px] font-semibold text-slate-200 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:text-white">
-              {x}
-            </div>
-          ))}
-        </div>
-      </div>
-    </MarketingContainer></MarketingSection>
+    {/* Work from your AI Section (Hyper-Premium Interactive Model & Module Orchestrator) */}
+    <MarketingSection atmosphere="platform" className="py-10 sm:py-16 lg:py-24 border-t border-white/10">
+      <AiInterfaceShowcase />
+    </MarketingSection>
 
     {/* Business Integrations Section */}
     <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
