@@ -6,38 +6,80 @@ import { SOCIAL_PROFILES, formatCopyrightLine } from '@/lib/seo/siteEntity';
 import { CTA_LABELS, DEMO_HREF, LOGIN_HREF, TRIAL_HREF } from '@/lib/marketing/cta';
 import PublicStatusPill from '@/components/status/PublicStatusPill';
 
+type FooterLink = {
+  label: string;
+  path: string;
+  external?: boolean;
+};
+
+type FooterColumn = {
+  title: string;
+  links: readonly FooterLink[];
+};
+
 const COLUMNS = [
   {
     title: 'Product',
     links: [
+      { label: 'Platform overview', path: '/services' },
       { label: 'CRM', path: '/crm' },
-      { label: 'Projects', path: '/project-management' },
+      { label: 'Project management', path: '/project-management' },
       { label: 'Bonnie AI', path: '/ai-agents' },
+      { label: 'Marketing automation', path: '/marketing/automation' },
       { label: 'Pricing', path: '/pricing' },
+    ],
+  },
+  {
+    title: 'Solutions',
+    links: [
+      { label: 'Who we serve', path: '/who-we-serve' },
+      { label: 'Solo founders', path: '/solutions/solo-founders' },
+      { label: 'Agencies', path: '/solutions/agencies' },
+      { label: 'Consultants', path: '/solutions/consultants' },
+      { label: 'Customer workflows', path: '/results' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { label: 'Documentation', path: '/docs' },
+      { label: 'Getting started guide', path: '/guide' },
+      { label: 'Blog', path: '/blog' },
+      { label: 'Integration ecosystem', path: '/ecosystem' },
+      { label: 'Book a demo', path: '/book-demo' },
     ],
   },
   {
     title: 'Company',
     links: [
-      { label: 'About', path: '/about' },
-      { label: 'Contact', path: '/contact' },
-      { label: 'Security', path: '/security-policy' },
-      { label: 'Docs', path: '/docs' },
+      { label: 'About AlphaClone', path: '/about' },
+      { label: 'Contact us', path: '/contact' },
+      { label: 'Legal & Trust Center', path: '/legal' },
+      { label: 'Security policy', path: '/security-policy' },
+      { label: 'Platform status', path: '/platform-status' },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Privacy', path: '/privacy-policy' },
-      { label: 'Terms', path: '/terms-of-service' },
-      { label: 'Cookies', path: '/cookie-policy' },
+      { label: 'Privacy Policy', path: '/privacy-policy' },
+      { label: 'Terms of Service', path: '/terms-of-service' },
+      { label: 'Cookie Policy', path: '/cookie-policy' },
+      { label: 'Data Processing Agreement', path: '/dpa' },
+      { label: 'Your Privacy Choices', path: '/privacy-choices' },
       { label: 'Data deletion', path: '/data-deletion' },
-      { label: 'Privacy choices', path: '/privacy-choices' },
-      { label: 'DPA', path: '/dpa' },
-      { label: 'Status', path: '/platform-status' },
+      { label: 'Service SLA', path: '/sla' },
     ],
   },
-] as const;
+  {
+    title: 'Follow AlphaClone',
+    links: [
+      { label: 'LinkedIn', path: SOCIAL_PROFILES.linkedin, external: true },
+      { label: 'Facebook', path: SOCIAL_PROFILES.facebook, external: true },
+      { label: 'X (Twitter)', path: SOCIAL_PROFILES.x, external: true },
+    ],
+  },
+] as const satisfies readonly FooterColumn[];
 
 const SOCIAL_LINKS = [
   { label: 'AlphaClone on LinkedIn', href: SOCIAL_PROFILES.linkedin, Icon: Linkedin },
@@ -94,9 +136,20 @@ export default function MarketingFooter() {
                 <ul className="mkt-footer-col-list">
                   {column.links.map((item) => (
                     <li key={`${column.title}-${item.path}`}>
-                      <Link href={item.path} className="mkt-footer-link">
-                        {item.label}
-                      </Link>
+                      {'external' in item && item.external ? (
+                        <a
+                          href={item.path}
+                          target="_blank"
+                          rel="me noopener noreferrer"
+                          className="mkt-footer-link"
+                        >
+                          {item.label}
+                        </a>
+                      ) : (
+                        <Link href={item.path} className="mkt-footer-link">
+                          {item.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

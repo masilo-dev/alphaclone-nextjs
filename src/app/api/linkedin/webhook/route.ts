@@ -26,9 +26,9 @@ function getLinkedInClientSecret(): string {
 
 function verifyLinkedInSignature(rawBody: string, signatureHeader: string | null, clientSecret: string): boolean {
   if (!clientSecret || !signatureHeader) return false;
-  const signature = signatureHeader.replace(/^hmacsha256=/i, '').trim();
+  const signature = signatureHeader.trim().toLowerCase();
   if (!signature) return false;
-  return safeEqual(hmacSha256Hex(rawBody, clientSecret), signature);
+  return safeEqual(hmacSha256Hex(`hmacsha256=${rawBody}`, clientSecret), signature);
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -57,19 +57,33 @@ function extractTenantId(event: LinkedInWebhookEvent, fallback?: string | null):
 }
 
 function looksLikeLeadFormEvent(event: LinkedInWebhookEvent): boolean {
-  const text = JSON.stringify(event).toLowerCase();
-  return text.includes('lead') || text.includes('formresponse') || text.includes('leadgen');
+  return event.type === 'LEAD_ACTION' || typeof event.leadGenFormResponse === 'string';
 }
 
-async function recordWebhookEvent(event: LinkedInWebhookEvent, status: string, detail?: Record<string, unknown>) {
+function externalEventId(event: LinkedInWebhookEvent): string | null {
+  if (event.notificationId != null) return String(event.notificationId);
+  const leadResponse = typeof event.leadGenFormResponse === 'string' ? event.leadGenFormResponse : '';
+  const occurredAt = event.occurredAt != null ? String(event.occurredAt) : '';
+  return leadResponse && occurredAt ? `${leadResponse}:${occurredAt}` : null;
+}
+
+async function recordWebhookEvent(
+  event: LinkedInWebhookEvent,
+  status: string,
+  tenantId: string | null,
+  errorMessage?: string,
+) {
   try {
     const supabase = createSupabaseAdminClient();
     await supabase.from('webhook_events').insert({
+      tenant_id: tenantId,
       provider: 'linkedin',
       event_type: String(event.eventType || event.type || event.action || 'linkedin.notification'),
       status,
+      external_id: externalEventId(event),
       payload: event,
-      metadata: detail || {},
+      error_message: errorMessage || null,
+      processed_at: status === 'received' ? null : new Date().toISOString(),
       created_at: new Date().toISOString(),
     });
   } catch (error) {
@@ -92,7 +106,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     challengeCode,
     challengeResponse: hmacSha256Hex(challengeCode, clientSecret),
-  });
+  }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function POST(req: NextRequest) {
@@ -122,17 +136,43 @@ export async function POST(req: NextRequest) {
     const tenantId = extractTenantId(event, fallbackTenantId);
     if (!tenantId) {
       results.push({ status: 'ignored', reason: 'tenantId missing' });
-      await recordWebhookEvent(event, 'ignored', { reason: 'tenantId missing' });
+      await recordWebhookEvent(event, 'ignored', null, 'tenantId missing');
       continue;
+    }
+
+    const externalId = externalEventId(event);
+    if (externalId) {
+      const { data: duplicate } = await createSupabaseAdminClient()
+        .from('webhook_events')
+        .select('id')
+        .eq('provider', 'linkedin')
+        .eq('external_id', externalId)
+        .limit(1)
+        .maybeSingle();
+      if (duplicate) {
+        results.push({ status: 'accepted', deduplicated: true, reason: 'duplicate notification' });
+        continue;
+      }
     }
 
     if (!looksLikeLeadFormEvent(event)) {
       results.push({ status: 'accepted', reason: 'non-lead notification' });
-      await recordWebhookEvent(event, 'accepted', { tenantId });
+      await recordWebhookEvent(event, 'accepted', tenantId);
       continue;
     }
 
-    const parsedLead = parseLinkedInLeadResponse(event);
+    if (event.leadAction === 'DELETED') {
+      results.push({ status: 'accepted', reason: 'lead deletion recorded' });
+      await recordWebhookEvent(event, 'accepted', tenantId);
+      continue;
+    }
+
+    const parsedLead = parseLinkedInLeadResponse({
+      ...event,
+      leadFormResponseUrn: event.leadGenFormResponse,
+      leadFormUrn: event.leadGenForm,
+      submittedAt: event.occurredAt,
+    });
     const synced = await syncLinkedInLeadToCrm(tenantId, parsedLead);
     if (synced.success) {
       results.push({
@@ -140,10 +180,10 @@ export async function POST(req: NextRequest) {
         leadId: synced.leadId,
         deduplicated: synced.deduplicated,
       });
-      await recordWebhookEvent(event, 'synced', { tenantId, leadId: synced.leadId });
+      await recordWebhookEvent(event, 'synced', tenantId);
     } else {
       results.push({ status: 'failed', reason: synced.error || 'Lead sync failed' });
-      await recordWebhookEvent(event, 'failed', { tenantId, error: synced.error });
+      await recordWebhookEvent(event, 'failed', tenantId, synced.error);
     }
   }
 

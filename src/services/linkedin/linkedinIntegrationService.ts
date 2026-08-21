@@ -14,7 +14,7 @@ export type LinkedInCompanyPage = {
 };
 
 /** LinkedIn REST version for Community Management organizationAcls. */
-const LINKEDIN_REST_VERSION = '202505';
+const LINKEDIN_REST_VERSION = '202608';
 
 export type LinkedInCompanyPageFetchDiagnostics = {
   pagesFound: number;

@@ -23,6 +23,10 @@ type ZohoTokenResponse = {
     error_description?: string;
 };
 
+type ZohoMailAccountsResponse = {
+    data?: Array<{ accountId?: string | number }>;
+};
+
 function resolveZohoCredentials(region: string): { clientId: string; clientSecret: string } {
     const normalizedRegion = (region || 'US').toUpperCase();
     const regionClientId = (ENV as Record<string, unknown>)[`ZOHO_CLIENT_ID_${normalizedRegion}`];
@@ -70,7 +74,11 @@ export async function GET(req: NextRequest) {
     const zohoMailReturnUrl = `${appUrl}/dashboard/mail`;
 
     if (error) {
-        return NextResponse.redirect(`${zohoMailReturnUrl}?error=${encodeURIComponent(error)}`);
+        const description = searchParams.get('error_description');
+        const redirectUrl = new URL(zohoMailReturnUrl);
+        redirectUrl.searchParams.set('error', error);
+        if (description) redirectUrl.searchParams.set('reason', description);
+        return NextResponse.redirect(redirectUrl);
     }
 
     if (!code || !stateStr) {
@@ -130,13 +138,31 @@ export async function GET(req: NextRequest) {
             throw new Error('Missing refresh token from Zoho response');
         }
         
-        // Also fetch Zoho Mail account ID while we have the fresh token
+        // Discover the Mail account while the access token is fresh. A Zoho
+        // account can authorize the shared OAuth client without having Mail
+        // provisioned, so this optional product lookup must not discard valid
+        // tokens or fail the entire callback.
         const mailHost = ZohoService.normalizeHost(hosts.mail) || hosts.mail;
-        const mailAccountRes = await fetch(`https://${mailHost}/api/accounts`, {
-            headers: { Authorization: `Zoho-oauthtoken ${data.access_token}` }
-        });
-        const mailAccountData = await mailAccountRes.json();
-        const accountId = mailAccountData?.data?.[0]?.accountId ? String(mailAccountData.data[0].accountId) : undefined;
+        let accountId: string | undefined;
+        let mailSetupReason: string | undefined;
+        try {
+            const mailAccountRes = await fetch(`https://${mailHost}/api/accounts`, {
+                headers: { Authorization: `Zoho-oauthtoken ${data.access_token}` },
+            });
+            const mailAccountData = (await mailAccountRes.json().catch(() => ({}))) as ZohoMailAccountsResponse;
+            const discoveredAccountId = mailAccountData.data?.[0]?.accountId;
+            if (mailAccountRes.ok && discoveredAccountId != null) {
+                accountId = String(discoveredAccountId);
+            } else {
+                mailSetupReason = mailAccountRes.ok
+                    ? 'No Zoho Mail account was found for this user.'
+                    : `Zoho Mail account discovery returned HTTP ${mailAccountRes.status}.`;
+                console.warn('[zoho/callback] Mail account discovery incomplete:', mailSetupReason);
+            }
+        } catch (mailError) {
+            mailSetupReason = 'Zoho Mail account discovery was temporarily unavailable.';
+            console.warn('[zoho/callback] Mail account discovery failed:', mailError);
+        }
 
         // Fetch Zoho Books org ID while we have the fresh token
         let booksOrgId: string | undefined;
@@ -171,7 +197,12 @@ export async function GET(req: NextRequest) {
             status: 'connected',
             connected_at: new Date().toISOString(),
             configured_by: userId,
-            metadata: { region: resolvedRegion, mailReady: Boolean(accountId), booksReady: Boolean(booksOrgId) },
+            metadata: {
+                region: resolvedRegion,
+                mailReady: Boolean(accountId),
+                booksReady: Boolean(booksOrgId),
+                ...(mailSetupReason ? { mailSetupReason } : {}),
+            },
         }, { onConflict: 'tenant_id,integration_id' });
         if (connectionError) throw connectionError;
         await admin.from('business_automation_events').insert({
@@ -180,7 +211,10 @@ export async function GET(req: NextRequest) {
             payload: { integrationId: 'zoho-mail', actorUserId: userId },
         });
 
-        return NextResponse.redirect(`${zohoMailReturnUrl}?success=zoho_connected`);
+        const successUrl = new URL(zohoMailReturnUrl);
+        successUrl.searchParams.set('success', 'zoho_connected');
+        if (!accountId) successUrl.searchParams.set('mail', 'setup_required');
+        return NextResponse.redirect(successUrl);
     } catch (err: unknown) {
         console.error('Zoho Auth Callback Error:', err);
         const reason = err instanceof Error ? err.message : 'zoho_callback_failed';

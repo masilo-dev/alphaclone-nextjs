@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 const LLMS_CONTENT = `# AlphaClone Systems
 
-> AlphaClone Systems is an AI-powered Business Operating System for founders, agencies, and service firms. It unifies CRM, invoicing, contracts, project management, social media scheduling, and AI automation into one connected workspace — starting at $15/month. Built on Next.js 15, Supabase, and a native Model Context Protocol (MCP) server so AI agents like Claude and Manus can operate the platform in plain English.
+> AlphaClone Systems is an AI-powered business operating system for founders, agencies, consultants, and service firms. It connects CRM, invoicing, contracts, project management, communication, social publishing, and permission-aware AI execution in one workspace. Starter plans begin at $15/month.
 
 Live platform: https://alphaclonesystems.com
 MCP server: https://alphaclonesystems.com/api/mcp
@@ -12,7 +12,7 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 
 ## Platform Architecture
 
-- Runtime: Next.js 15 (App Router) — deployed on Railway
+- Runtime: Next.js App Router — deployed on Railway
 - Database: Supabase (PostgreSQL 17) with Row-Level Security (RLS) on all tenant tables
 - Auth: Supabase Auth + Cloudflare Turnstile (bot protection) + PKCE OAuth2
 - Storage: Supabase Storage (multi-tenant file isolation)
@@ -122,7 +122,8 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 - LinkedIn: [AlphaClone Systems on LinkedIn](https://www.linkedin.com/company/alphaclone-systems)
 - X (Twitter): [AlphaClone on X](https://twitter.com/AlphaCloneSys)
 - Industry: Business Software, AI Automation, SaaS, Enterprise Technology
-- Founded: 2024 | HQ: Remote-first | Platform version: 3.4.0
+- Facebook: [AlphaClone Systems on Facebook](https://www.facebook.com/100089899181752)
+- Legal entity: Alphaclone Systems, LLC | Formed: 2026-06-10 | Jurisdiction: Wyoming, USA
 
 ---
 
@@ -143,14 +144,19 @@ OAuth discovery: https://alphaclonesystems.com/.well-known/oauth-authorization-s
 - [Blog](https://alphaclonesystems.com/blog) — Articles on AI, business operations, and productivity
 - [Contact](https://alphaclonesystems.com/contact) — Contact form and support channels
 - [Platform Status](https://alphaclonesystems.com/platform-status) — Live uptime and incident status
+- [Legal and Trust Center](https://alphaclonesystems.com/legal) — Privacy, security, data processing, and service policies
 - [MCP Health](https://alphaclonesystems.com/api/mcp/health) — MCP server health endpoint
 - [OAuth Discovery](https://alphaclonesystems.com/.well-known/oauth-authorization-server) — OAuth2 authorization server metadata
 - [Sitemap](https://alphaclonesystems.com/sitemap.xml) — XML sitemap for search indexing
+- [Product Sitemap](https://alphaclonesystems.com/sitemaps/marketing.xml) — Product and platform pages
+- [Solutions Sitemap](https://alphaclonesystems.com/sitemaps/solutions.xml) — Audience and use-case pages
+- [Resources Sitemap](https://alphaclonesystems.com/sitemaps/resources.xml) — Documentation, guides, and resources
+- [Company Sitemap](https://alphaclonesystems.com/sitemaps/company.xml) — Company, trust, and legal pages
 - [LLM Context](https://alphaclonesystems.com/llms.txt) — This file: AI and LLM context reference
 
 ---
 
-*This file is maintained for AI search engine context and LLM discovery. Format: llms.txt v1.0 | Last updated: July 2026 | Platform version: 3.4.0*
+*This file is maintained for AI search engine context and LLM discovery. Last updated: August 2026.*
 `;
 
 export async function GET() {

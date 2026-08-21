@@ -1006,13 +1006,25 @@ Write in plain professional text. No markdown.`;
     async getRelatedDeals(leadId: string): Promise<{ data: any[]; error: string | null }> {
         try {
             const tenantId = this.getTenantId();
-            
-            // Get deals where contact was created from this lead
+
+            // PostgREST filters do not accept SQL subqueries. Resolve the
+            // converted client first, then use literal UUID filters only.
+            const { data: lead, error: leadError } = await supabase
+                .from('leads')
+                .select('client_id')
+                .eq('tenant_id', tenantId)
+                .eq('id', leadId)
+                .maybeSingle();
+            if (leadError) throw leadError;
+
+            const filters = [`metadata->>originalLeadId.eq.${leadId}`];
+            if (lead?.client_id) filters.push(`contact_id.eq.${lead.client_id}`);
+
             const { data: deals, error } = await supabase
                 .from('deals')
                 .select('*')
                 .eq('tenant_id', tenantId)
-                .or(`metadata->>originalLeadId.eq.${leadId},contact_id.in.(SELECT client_id FROM leads WHERE id = '${leadId}')`)
+                .or(filters.join(','))
                 .order('created_at', { ascending: false });
 
             if (error) throw error;

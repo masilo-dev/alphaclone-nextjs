@@ -12,7 +12,8 @@ type ContactDirectoryRow = {
 
 type LeadDirectoryRow = {
   id: string;
-  name: string | null;
+  business_name: string | null;
+  contact_name: string | null;
   email: string | null;
   created_at: string;
 };
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
         .limit(5000),
       admin
         .from('leads')
-        .select('id,name,email,created_at')
+        .select('id,business_name,contact_name,email,created_at')
         .eq('tenant_id', tenantId)
         .not('email', 'is', null)
         .limit(5000),
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
           source: 'leads',
           email: lead.email,
           normalized_recipient: String(lead.email || '').trim().toLowerCase(),
-          recipient_name: lead.name,
+          recipient_name: lead.contact_name || lead.business_name,
         },
         occurred_at: lead.created_at,
         created_at: lead.created_at,

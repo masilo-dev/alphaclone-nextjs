@@ -144,7 +144,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
             // Load business_clients, leads, and CRM contacts for the contact picker
             Promise.all([
                 businessClientService.getClients(currentTenant.id),
-                supabase.from('leads').select('id, name, email').eq('tenant_id', currentTenant.id).limit(200),
+                supabase.from('leads').select('id, business_name, contact_name, email').eq('tenant_id', currentTenant.id).limit(200),
                 supabase.from('contacts').select('id, first_name, last_name, email').eq('tenant_id', currentTenant.id).is('deleted_at', null).limit(200),
             ]).then(([{ clients: fetchedClients }, leadsRes, contactsRes]) => {
                 setClients(fetchedClients || []);
@@ -164,7 +164,7 @@ const ComposeEmailModal: React.FC<ComposeEmailModalProps> = ({
                 }
                 for (const l of leadsRes.data || []) {
                     const em = String(l.email || (Array.isArray(l.emails) ? l.emails[0] : '') || '').trim();
-                    if (em) push({ id: l.id, name: l.name || 'Lead', email: em, source: 'lead' });
+                    if (em) push({ id: l.id, name: l.contact_name || l.business_name || 'Lead', email: em, source: 'lead' });
                 }
                 for (const cnt of contactsRes.data || []) {
                     const em = String(cnt.email || (Array.isArray(cnt.emails) ? cnt.emails[0] : '') || '').trim();

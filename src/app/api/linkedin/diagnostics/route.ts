@@ -28,8 +28,9 @@ export async function GET(req: NextRequest) {
 
     const { data: lastWebhook } = await admin
       .from('webhook_events')
-      .select('id, status, event_type, created_at, metadata')
+      .select('id, tenant_id, status, event_type, external_id, error_message, processed_at, created_at')
       .eq('provider', 'linkedin')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      webhookUrl: `${appUrl(req)}/api/linkedin/webhook`,
+      webhookUrl: `${appUrl(req)}/api/linkedin/webhook?tenantId=${encodeURIComponent(tenantId)}`,
       legacyLeadWebhookUrl: `${appUrl(req)}/api/webhooks/linkedin/leads?tenantId=${tenantId}`,
       configured: {
         clientId: Boolean(ENV.LINKEDIN_CLIENT_ID),

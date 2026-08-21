@@ -39,8 +39,17 @@ test('LinkedIn developer app webhook performs HMAC challenge and signature verif
   assert.match(src, /challengeCode/);
   assert.match(src, /challengeResponse/);
   assert.match(src, /createHmac\('sha256'/);
+  assert.match(src, /hmacsha256=\$\{rawBody\}/);
   assert.match(src, /x-li-signature/i);
+  assert.match(src, /externalEventId/);
+  assert.match(src, /leadGenFormResponse.*occurredAt/s);
   assert.match(src, /syncLinkedInLeadToCrm/);
+});
+
+test('legacy LinkedIn lead webhook delegates to the signed canonical handler', () => {
+  const src = read('src/app/api/webhooks/linkedin/leads/route.ts');
+  assert.match(src, /export \{ GET, POST \} from '\.\.\/\.\.\/\.\.\/linkedin\/webhook\/route'/);
+  assert.doesNotMatch(src, /hub\.challenge|req\.json\(\)/);
 });
 
 test('cron invoice reminder writes remain tenant scoped', () => {

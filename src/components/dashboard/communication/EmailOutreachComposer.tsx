@@ -50,7 +50,7 @@ export function EmailOutreachComposer() {
       const [leadsRes, contactsRes, clientsRes] = await Promise.all([
         supabase
           .from('leads')
-          .select('id, name, email, status')
+          .select('id, business_name, contact_name, email, status')
           .eq('tenant_id', currentTenant.id)
           .order('updated_at', { ascending: false })
           .limit(300),
@@ -83,7 +83,7 @@ export function EmailOutreachComposer() {
         const email = String(row.email || (Array.isArray(row.emails) ? row.emails[0] : '') || '').trim();
         push({
           id: row.id,
-          name: row.name || 'Lead',
+          name: row.contact_name || row.business_name || 'Lead',
           email,
           source: 'lead',
           stage: row.status || undefined,

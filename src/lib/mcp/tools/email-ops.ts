@@ -57,9 +57,9 @@ async function resolveRecipientByNameOrEmail(params: {
       .limit(10),
     supabase
       .from('leads')
-      .select('id, name, email')
+      .select('id, business_name, contact_name, email')
       .eq('tenant_id', params.tenantId)
-      .or(`name.ilike.${pattern},email.ilike.${pattern}`)
+      .or(`business_name.ilike.${pattern},contact_name.ilike.${pattern},email.ilike.${pattern}`)
       .limit(10),
   ]);
 
@@ -80,7 +80,7 @@ async function resolveRecipientByNameOrEmail(params: {
     if (!email.includes('@')) continue;
     matches.push({
       id: l.id,
-      name: String(l.name || email),
+      name: String(l.contact_name || l.business_name || email),
       email,
     });
   }

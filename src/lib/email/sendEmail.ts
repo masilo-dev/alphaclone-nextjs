@@ -8,6 +8,7 @@ import { validateRecipient } from '@/lib/email/validateRecipient';
 import sanitizeHtml from 'sanitize-html';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeBonnieOutboundText } from '@/lib/bonnie/bonnieBannedLanguage';
+import { persistCanonicalOutboundEmail } from '@/lib/email/persistCanonicalEmail';
 
 export type OutboundEmailProvider = 'zoho' | 'brevo' | 'sendgrid' | 'resend';
 
@@ -44,6 +45,7 @@ export interface EmailPayload {
 export interface SendEmailResult {
   success: boolean;
   emailId?: string;
+  canonicalMessageId?: string;
   provider?: string;
   tried: Array<{ provider: string; error?: string }>;
   error?: string;
@@ -333,6 +335,50 @@ export async function sendEmail(
       });
 
       if (providerResult.ok) {
+        const providerMessageId = providerResult.emailId || emailId;
+        let canonicalMessageId: string;
+        try {
+          canonicalMessageId = await persistCanonicalOutboundEmail({
+            supabase,
+            tenantId,
+            userId: config.ownerUserId || payload.userId || null,
+            provider: config.provider,
+            providerMessageId,
+            fromEmail,
+            recipients,
+            replyTo: payload.reply_to || payload.replyTo,
+            subject: normalizedSubject,
+            html: normalizedHtml,
+            text: normalizedText,
+            hasAttachments: attachmentNames.length > 0,
+            metadata: payload.auditMetadata,
+          });
+        } catch (persistenceError) {
+          const persistenceMessage = persistenceError instanceof Error
+            ? persistenceError.message
+            : 'Canonical email persistence failed';
+          await logEmailSend({
+            tenantId,
+            userId: config.ownerUserId || payload.userId || null,
+            provider: config.provider,
+            toEmail: recipients.join(', '),
+            subject: normalizedSubject,
+            templateName: payload.templateName,
+            status: 'failed',
+            error: `Provider accepted the message, but ${persistenceMessage}`,
+            emailId: providerMessageId,
+            metadata: { ...payload.auditMetadata, providerAccepted: true },
+          });
+          return {
+            success: false,
+            emailId: providerMessageId,
+            provider: config.provider,
+            tried: [...tried, { provider: config.provider, error: persistenceMessage }],
+            error: 'Provider accepted the email, but AlphaClone could not save the canonical communication record.',
+            errorDetails: persistenceError,
+            code: 'LOCAL_EMAIL_PERSISTENCE_FAILED',
+          };
+        }
         await logEmailSend({
           tenantId,
           userId: config.ownerUserId || payload.userId || null,
@@ -341,12 +387,13 @@ export async function sendEmail(
           subject: normalizedSubject,
           templateName: payload.templateName,
           status: 'sent',
-          emailId: providerResult.emailId || emailId,
-          metadata: payload.auditMetadata,
+          emailId: providerMessageId,
+          metadata: { ...payload.auditMetadata, canonicalMessageId },
         });
         return {
           success: true,
-          emailId: providerResult.emailId || emailId,
+          emailId: providerMessageId,
+          canonicalMessageId,
           provider: config.provider,
           tried: [...tried, { provider: config.provider }],
         };

@@ -207,6 +207,10 @@ const websiteSchema = {
 const navigationSchema = buildSiteNavigationSchema();
 const organizationEntitySchema = buildOrganizationEntitySchema();
 
+function serializeJsonLd(value: object): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -235,19 +239,19 @@ export default function RootLayout({
       >
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(websiteSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(navigationSchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(navigationSchema) }}
         />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationEntitySchema) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(organizationEntitySchema) }}
         />
         <WebVitals />
         <Providers>

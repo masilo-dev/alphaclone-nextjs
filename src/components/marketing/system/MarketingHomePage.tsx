@@ -1,450 +1,111 @@
 "use client";
 
 import Image from "next/image";
-import {
-  ArrowRight,
-  BarChart3,
-  CheckCircle2,
-  CircleDollarSign,
-  Layers,
-  Megaphone,
-  ShieldCheck,
-  Target,
-  Users,
-  Workflow,
-  Zap,
-} from "lucide-react";
+import Link from "next/link";
+import type { IconType } from "react-icons";
+import { FaFacebook, FaLinkedin, FaMicrosoft } from "react-icons/fa6";
+import { SiCalendly, SiOpenai, SiResend, SiStripe, SiZoho } from "react-icons/si";
+import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, MessageSquareText, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X } from "lucide-react";
 import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
 import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
-import VerifiedIntegrationsStrip from "./VerifiedIntegrationsStrip";
-import {
-  CurvedDotField,
-  HeroDataWaves,
-  SectionAmbientLight,
-  SectionConnector,
-} from "./atmosphere";
+import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
 
-const problemPoints = [
-  "Lost context",
-  "Manual work",
-  "Missed follow-ups",
-  "Too many subscriptions",
+type Integration = { name: string; detail: string; icon: IconType | typeof Mail; color: string };
+const executionRows = [
+  ["Research prospects", "20 / 20 found", "Done", "done", "09:42"],
+  ["Check fit", "Industry · size · web · location", "Done", "done", "09:44"],
+  ["Create CRM records", "20 records created", "Done", "done", "09:46"],
+  ["Prepare outreach", "14 / 20 drafts prepared", "In progress", "active", "Now"],
+  ["Schedule follow-up", "Waiting for outreach approval", "Queued", "queued", "Next"],
+  ["Owner approval", "6 actions require review", "Needs approval", "approval", "Review"],
+] as const;
+const lifecycle = [
+  ["01", "Find", Search, "Lead discovery · Qualification · Market research"],
+  ["02", "Win", UserRoundCheck, "CRM · Outlook · LinkedIn · Calendly"],
+  ["03", "Run", Bot, "Bonnie · Tasks · Communication · Automation"],
+  ["04", "Deliver", BriefcaseBusiness, "Projects · Documents · Contracts · Clients"],
+  ["05", "Get paid", CircleDollarSign, "Invoices · Stripe · Revenue · Reporting"],
+] as const;
+const integrationGroups: Array<{ title: string; items: Integration[] }> = [
+  { title: "Communication", items: [
+    { name: "Outlook", detail: "Read & send email", icon: FaMicrosoft, color: "#35a7ff" },
+    { name: "Zoho Mail", detail: "Mailbox & replies", icon: SiZoho, color: "#f6c344" },
+    { name: "Brevo", detail: "Campaigns & transactional", icon: Mail, color: "#35d39a" },
+    { name: "Resend", detail: "Transactional email", icon: SiResend, color: "#fff" },
+  ]},
+  { title: "CRM & sales", items: [
+    { name: "Zoho CRM", detail: "Customer records", icon: SiZoho, color: "#f6c344" },
+    { name: "LinkedIn", detail: "Profile & outreach", icon: FaLinkedin, color: "#4aa7ff" },
+    { name: "Calendly", detail: "Bookings", icon: SiCalendly, color: "#2f8cff" },
+  ]},
+  { title: "Payments", items: [{ name: "Stripe", detail: "Payments", icon: SiStripe, color: "#8b85ff" }] },
+  { title: "Social", items: [
+    { name: "Facebook Pages", detail: "Social publishing", icon: FaFacebook, color: "#3b82f6" },
+    { name: "LinkedIn Pages", detail: "Organization publishing", icon: FaLinkedin, color: "#4aa7ff" },
+  ]},
 ];
 
-const disconnectedTools = [
-  "Social platform",
-  "Lead form",
-  "Spreadsheet",
-  "CRM",
-  "Email",
-  "Calendar",
-  "Documents",
-  "Invoicing",
-  "Payment system",
-  "Reporting",
-  "Standalone chatbot",
-];
-
-const outcomes = [
-  {
-    title: "Fewer handoffs",
-    body: "Customer context moves with the work from lead capture to final billing.",
-    icon: Layers,
-  },
-  {
-    title: "Less manual work",
-    body: "Routine operational actions move across connected modules automatically.",
-    icon: Zap,
-  },
-  {
-    title: "Faster follow-up",
-    body: "Opportunities don't disappear or cool off between separate tools.",
-    icon: Target,
-  },
-  {
-    title: "One operational view",
-    body: "Sales, communication, money, and delivery stay visible in one place.",
-    icon: BarChart3,
-  },
-];
-
-const capabilities = [
-  {
-    title: "Acquire",
-    items: [
-      "Lead discovery",
-      "Lead qualification",
-      "CRM",
-      "Outreach",
-      "Marketing",
-      "Social publishing",
-    ],
-    icon: Megaphone,
-  },
-  {
-    title: "Convert",
-    items: ["CRM pipeline", "Outreach", "Calendar", "Contact history"],
-    icon: Users,
-  },
-  {
-    title: "Operate",
-    items: ["Bonnie AI", "Tasks", "Communication", "Automation"],
-    icon: ShieldCheck,
-  },
-  {
-    title: "Deliver",
-    items: ["Projects", "Documents", "Contracts", "Client information"],
-    icon: Workflow,
-  },
-  {
-    title: "Get Paid",
-    items: ["Invoices", "Money Hub", "Revenue tracking", "Business reporting"],
-    icon: CircleDollarSign,
-  },
-];
+function Intro({ eyebrow, title, body, center = false }: { eyebrow?: string; title: string; body?: string; center?: boolean }) {
+  return <div className={center ? "mx-auto max-w-3xl text-center" : "max-w-3xl"}>
+    {eyebrow && <p className="text-[11px] font-black uppercase tracking-[.22em] text-cyan-300">{eyebrow}</p>}
+    <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-[1.08] text-white sm:text-4xl lg:text-[44px]">{title}</h2>
+    {body && <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">{body}</p>}
+  </div>;
+}
+function Status({ tone, children }: { tone: "done" | "active" | "queued" | "approval"; children: React.ReactNode }) {
+  const s = { done: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300", active: "border-cyan-400/30 bg-cyan-400/10 text-cyan-200", queued: "border-slate-600 bg-slate-800 text-slate-300", approval: "border-amber-400/25 bg-amber-400/10 text-amber-200" };
+  return <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${s[tone]}`}>{children}</span>;
+}
 
 export default function MarketingHomePage() {
-  return (
-    <MarketingShell>
-      <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
-        <SectionAmbientLight variant="hero" />
-        <HeroDataWaves />
-        <CurvedDotField />
-        <MarketingContainer>
-          <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
-            <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl">
-              <span>Run your business from </span>
-              <span className="block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
-                one AI workspace.
-              </span>
-            </h1>
+  return <MarketingShell>
+    {/* Approved hero — markup intentionally preserved. */}
+    <section className="mkt-hero mkt-hero--compact pt-24 sm:pt-28 lg:pt-32 pb-10 sm:pb-14">
+      <SectionAmbientLight variant="hero" /><HeroDataWaves /><CurvedDotField />
+      <MarketingContainer>
+        <div className="mkt-hero-copy mkt-reveal mx-auto max-w-4xl px-2 text-center">
+          <h1 className="font-marketing-heading text-3xl font-extrabold leading-[1.08] tracking-normal text-white sm:text-5xl md:text-6xl"><span>Run your business from </span><span className="block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">one AI workspace.</span></h1>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base md:text-lg">Find customers. Manage relationships. Deliver work. Send invoices. Let Bonnie handle the repetitive work between them.</p>
+          <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center"><PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">Start for $15/month</PrimaryCTA><SecondaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</SecondaryCTA></div>
+        </div>
+        <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]"><div className="overflow-hidden rounded-[1.75rem] border border-white/15 bg-white shadow-2xl shadow-teal-950/20"><Image src="/images/alphaclone-all-in-one-mcp-platform.png" alt="AlphaClone all-in-one platform dashboard with connected tools and business workspace" width={1024} height={682} priority sizes="(max-width: 640px) 90vw, (max-width: 1024px) 672px, 880px" className="h-auto w-full" /></div></div>
+      </MarketingContainer>
+    </section>
 
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base md:text-lg">
-              Find customers. Manage relationships. Deliver work. Send invoices.
-              Let Bonnie handle the repetitive work between them.
-            </p>
+    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
+      <Intro eyebrow="The problem" title="One customer. Eleven tabs. Half the context missing." body="A lead starts in one tool. The conversation happens somewhere else. The quote becomes a document. Delivery moves into another system. The invoice lives somewhere else again." />
+      <div className="mt-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">{["Lost context","Manual follow-up","Scattered records","Too many subscriptions"].map(x=><div key={x} className="rounded-lg border border-rose-400/15 bg-rose-400/[.06] px-3 py-2 text-xs font-semibold text-rose-100">{x}</div>)}</div>
+      <div className="mt-8 grid overflow-hidden rounded-2xl border border-white/10 bg-[#030b19]/85 lg:grid-cols-2">
+        <div className="border-b border-white/10 p-4 sm:p-6 lg:border-b-0 lg:border-r"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-bold text-white">Fragmented stack</h3><span className="text-[9px] uppercase text-rose-300">Context breaks at every handoff</span></div><div className="mt-5 space-y-2">{[[FaMicrosoft,"Outlook","Email conversation"],[SiZoho,"Zoho CRM","Customer record"],[SiCalendly,"Calendly","Meeting"],[FileText,"Google Sheets","Lead tracking"],[SiStripe,"Stripe","Payment"],[FaLinkedin,"LinkedIn","Outreach"]].map(([Icon,name,detail],i)=><div key={String(name)} className="flex items-center gap-3 rounded-xl border border-white/[.07] bg-slate-900/55 px-3 py-2.5"><Icon className="h-4 w-4 text-slate-300"/><div><p className="text-xs font-bold text-white">{String(name)}</p><p className="text-[10px] text-slate-500">{String(detail)}</p></div>{i<5&&<span className="ml-auto text-[9px] text-rose-300/80">disconnected</span>}</div>)}</div></div>
+        <div className="relative p-4 sm:p-6"><h3 className="text-sm font-bold text-cyan-200">AlphaClone connected execution</h3><div className="absolute bottom-7 left-[35px] top-16 w-px bg-gradient-to-b from-cyan-400 via-teal-300 to-emerald-400"/><div className="mt-5 space-y-2">{[[Users,"Lead","Qualified"],[Database,"CRM record","Context attached"],[Send,"Outreach","Sent"],[Clock3,"Follow-up","Due tomorrow"],[BriefcaseBusiness,"Project","Active"],[ReceiptText,"Invoice","Sent"],[WalletCards,"Payment / Revenue","Paid"]].map(([Icon,name,status])=><div key={String(name)} className="relative flex min-h-12 items-center gap-3 pl-1"><span className="z-10 grid h-8 w-8 place-items-center rounded-full border border-cyan-400/40 bg-[#041321] text-cyan-300"><Icon className="h-4 w-4"/></span><div><p className="text-xs font-bold text-white">{String(name)}</p><p className="text-[10px] text-emerald-300">{String(status)}</p></div></div>)}</div></div>
+      </div>
+    </MarketingContainer></MarketingSection>
 
-            <div className="mx-auto mt-7 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center">
-              <PrimaryCTA
-                href={TRIAL_HREF}
-                className="w-full sm:w-auto mkt-btn-large"
-              >
-                Start for $15/month
-              </PrimaryCTA>
-              <SecondaryCTA
-                href={DEMO_HREF}
-                className="w-full sm:w-auto mkt-btn-large"
-              >
-                Book a demo
-              </SecondaryCTA>
-            </div>
-          </div>
+    <MarketingSection id="bonnie" atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
+      <Intro eyebrow="Bonnie coordination" title="Tell Bonnie the outcome. It coordinates the work." body="Bonnie works across the business system rather than simply returning an answer in a chat window." />
+      <div className="overflow-hidden rounded-2xl border border-cyan-400/15 bg-[#020916] shadow-2xl shadow-cyan-950/20"><div className="border-b border-white/[.08] bg-slate-900/45 p-4"><p className="text-[10px] font-bold uppercase tracking-widest text-cyan-300">Active execution</p><blockquote className="mt-2 text-sm font-semibold leading-6 text-white">“Find 20 potential customers in Zimbabwe that fit our target profile and prepare outreach.”</blockquote></div><div className="divide-y divide-white/[.06]">{executionRows.map((r,i)=><details key={r[0]} open={i===3} className="group px-4 py-3"><summary className="flex cursor-pointer list-none items-center gap-3"><span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${r[3]==="done"?"bg-emerald-400/10 text-emerald-300":r[3]==="active"?"bg-cyan-400/10 text-cyan-300":"bg-slate-800 text-slate-400"}`}>{r[3]==="done"?<Check className="h-3.5 w-3.5"/>:<span className="h-1.5 w-1.5 rounded-full bg-current"/>}</span><div className="min-w-0 flex-1"><p className="text-xs font-bold text-white">{r[0]}</p><p className="truncate text-[10px] text-slate-400">{r[1]}</p></div><span className="hidden text-[10px] text-slate-500 sm:block">{r[4]}</span><Status tone={r[3]}>{r[2]}</Status><ChevronRight className="h-3.5 w-3.5 text-slate-500 transition group-open:rotate-90"/></summary>{r[3]==="active"&&<div className="ml-9 mt-3"><div className="h-1 overflow-hidden rounded-full bg-slate-800"><div className="h-full w-[70%] rounded-full bg-cyan-400"/></div><p className="mt-2 text-[10px] text-slate-500">Reviewing previous messages before preparing the remaining drafts.</p></div>}</details>)}</div></div>
+    </div></MarketingContainer></MarketingSection>
 
-          <div className="mkt-reveal mx-auto mt-8 max-w-[90vw] sm:max-w-2xl lg:max-w-4xl xl:max-w-[880px]">
-            <div className="overflow-hidden rounded-[1.75rem] border border-white/15 bg-white shadow-2xl shadow-teal-950/20">
-              <Image
-                src="/images/alphaclone-all-in-one-mcp-platform.png"
-                alt="AlphaClone all-in-one platform dashboard with connected tools and business workspace"
-                width={1024}
-                height={682}
-                priority
-                sizes="(max-width: 640px) 90vw, (max-width: 1024px) 672px, 880px"
-                className="h-auto w-full"
-              />
-            </div>
-          </div>
-        </MarketingContainer>
-      </section>
+    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer>
+      <Intro eyebrow="What changes" title="What changes when the work is connected" />
+      <div className="mt-8 grid gap-4 lg:grid-cols-[1.15fr_.85fr]"><article className="rounded-2xl border border-white/10 bg-slate-900/45 p-5 sm:p-6"><div className="flex items-center justify-between"><div><p className="text-[10px] uppercase tracking-wider text-cyan-300">Customer context stays attached</p><h3 className="mt-1 text-lg font-bold text-white">Acme Corp</h3></div><span className="rounded-full bg-emerald-400/10 px-2 py-1 text-[10px] text-emerald-300">Active customer</span></div><div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-4 sm:grid-cols-3">{[["Last email","2 hours ago"],["Open opportunity","$4,500"],["Meeting","Friday 14:00"],["Proposal","Sent"],["Follow-up","Tomorrow"],["Invoice","Not yet created"]].map(([k,v])=><div key={k} className="border-l border-cyan-400/30 pl-3"><p className="text-[10px] text-slate-500">{k}</p><p className="mt-1 text-xs font-semibold text-white">{v}</p></div>)}</div></article><article className="rounded-2xl border border-white/10 bg-[#030b19] p-5"><p className="text-[10px] uppercase tracking-wider text-cyan-300">Follow-up doesn&apos;t depend on memory</p><div className="mt-4 space-y-2 text-xs"><div className="rounded-lg bg-slate-900 px-3 py-2 text-slate-300">Proposal sent Monday</div><ArrowDown className="mx-auto h-3 w-3 text-slate-600"/><div className="rounded-lg bg-slate-900 px-3 py-2 text-slate-300">No response after 3 days</div><ArrowDown className="mx-auto h-3 w-3 text-cyan-500"/><div className="rounded-lg border border-cyan-400/25 bg-cyan-400/[.08] px-3 py-2 font-bold text-cyan-100">Follow-up task automatically prepared</div></div></article></div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2"><article className="rounded-2xl border border-white/10 bg-slate-900/35 p-5"><p className="text-sm font-bold text-white">Admin follows the work</p><div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-slate-300">{["Meeting completed","CRM updated","Next task created","Project note attached"].map((x,i)=><span key={x} className="contents"><span>{x}</span>{i<3&&<ArrowRight className="h-3 w-3 text-cyan-400"/>}</span>)}</div></article><article className="rounded-2xl border border-white/10 bg-slate-900/35 p-5"><p className="text-sm font-bold text-white">One operational view</p><div className="mt-4 grid grid-cols-4 gap-2">{["Sales","Communication","Delivery","Money"].map((x,i)=><div key={x} className="relative text-center text-[10px] text-slate-300"><span className="mx-auto mb-2 block h-2 w-2 rounded-full bg-cyan-400"/>{x}{i<3&&<span className="absolute left-[60%] top-1 h-px w-full bg-cyan-400/30"/>}</div>)}</div></article></div>
+    </MarketingContainer></MarketingSection>
 
-      <SectionConnector variant="fade" />
+    <MarketingSection id="platform" atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="From first opportunity to money in the bank." center/><div className="mt-9 grid gap-0 lg:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr_auto_1fr] lg:items-center">{lifecycle.map(([n,name,Icon,items],i)=><div key={name} className="contents"><article className="relative flex gap-4 border-l border-cyan-400/40 py-4 pl-6 lg:block lg:border-l-0 lg:p-0 lg:text-center"><span className="absolute -left-[5px] top-6 h-2.5 w-2.5 rounded-full border-2 border-[#020817] bg-cyan-300 lg:static lg:mx-auto lg:grid lg:h-12 lg:w-12 lg:place-items-center lg:border lg:border-cyan-400/30 lg:bg-cyan-400/[.08]"><Icon className="hidden h-5 w-5 text-cyan-300 lg:block"/></span><div><p className="text-[10px] font-bold text-cyan-400">{n}</p><h3 className="mt-1 text-sm font-black uppercase text-white">{name}</h3><p className="mt-1 text-[11px] leading-5 text-slate-400">{items}</p></div></article>{i<4&&<ArrowRight className="hidden h-4 w-4 shrink-0 text-cyan-400/70 lg:block"/>}</div>)}</div><p className="mt-8 text-center text-sm font-bold text-cyan-100">Same customer. Same context. One continuous workflow.</p></MarketingContainer></MarketingSection>
 
-      <MarketingSection atmosphere="outcomes" className="py-12 sm:py-16">
-        <MarketingContainer>
-          <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-5">
-              <span className="text-xs font-bold uppercase tracking-widest text-teal-400">
-                The Problem
-              </span>
-              <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl">
-                Your business shouldn't need ten systems to complete one job.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">
-                The enemy is fragmentation: work moves forward, but context gets
-                trapped in separate apps, tabs and handoffs.
-              </p>
+    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="See the business, not another collection of apps." center/><div className="mx-auto mt-9 max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-[#020815] p-2 shadow-2xl sm:p-4"><Image src="/screenshots/deals-dashboard.png" alt="AlphaClone deals dashboard showing connected customer and pipeline information" width={1600} height={950} sizes="(max-width: 768px) 100vw, 1100px" className="h-auto w-full rounded-xl border border-white/10"/><div className="mt-3 grid gap-2 sm:grid-cols-3">{[["CRM KNOWS THE CUSTOMER","Sarah Johnson · $2,800 opportunity · Call tomorrow"],["BONNIE KNOWS THE NEXT ACTIONS","Follow up · Prepare contract · Schedule kickoff"],["MONEY CLOSES THE LOOP","Proposal → Contract → Invoice → Payment"]].map(([h,p])=><div key={h} className="rounded-xl border border-cyan-400/20 bg-[#041321] p-3"><p className="text-[10px] font-bold text-cyan-300">{h}</p><p className="mt-1 text-xs text-white">{p}</p></div>)}</div></div></MarketingContainer></MarketingSection>
 
-              <div className="mt-5 grid grid-cols-2 gap-2">
-                {problemPoints.map((point) => (
-                  <div
-                    key={point}
-                    className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200"
-                  >
-                    {point}
-                  </div>
-                ))}
-              </div>
-            </div>
+    <MarketingSection atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro eyebrow="Work from your AI" title="Use the AI interface you already prefer." body="ChatGPT, Claude and Manus can act as interfaces into AlphaClone while AlphaClone supplies the business context, tools, permissions and execution layer underneath." center/><div className="mx-auto mt-9 grid max-w-5xl gap-4 lg:grid-cols-[1fr_auto_1.1fr_auto_1fr] lg:items-center"><div className="space-y-2">{[[SiOpenai,"ChatGPT","Show me the customers that need follow-up today."],[Bot,"Claude","Review these opportunities and tell me which need attention."],[MessageSquareText,"Manus","Find 20 leads, create CRM records and prepare outreach."]].map(([Icon,name,q])=><article key={String(name)} className="rounded-xl border border-white/10 bg-slate-900/50 p-3"><div className="flex items-center gap-2"><Icon className="h-4 w-4 text-white"/><p className="text-xs font-bold text-white">{String(name)}</p><span className="ml-auto text-[9px] uppercase text-slate-500">AI interface</span></div><p className="mt-2 text-[10px] leading-4 text-slate-400">“{String(q)}”</p></article>)}</div><ArrowRight className="mx-auto hidden h-5 w-5 text-cyan-400 lg:block"/><div className="rounded-2xl border border-cyan-400/40 bg-cyan-400/[.08] p-6 text-center"><Database className="mx-auto h-6 w-6 text-cyan-300"/><h3 className="mt-3 text-lg font-black text-white">AlphaClone</h3><p className="mt-1 text-xs font-semibold text-cyan-200">Business context + execution</p><div className="mt-4 h-px bg-cyan-400/20"/><p className="mt-4 text-[10px] text-slate-300">Context · permissions · tools · audit history</p></div><ArrowRight className="mx-auto hidden h-5 w-5 text-cyan-400 lg:block"/><div className="grid grid-cols-2 gap-2">{["CRM","Outreach","Calendar","Projects","Documents","Invoices","Money"].map(x=><div key={x} className="rounded-lg border border-white/[.08] bg-slate-900/50 px-3 py-2 text-[11px] font-semibold text-slate-200">{x}</div>)}</div></div></MarketingContainer></MarketingSection>
 
-            <div className="lg:col-span-7">
-              <div className="grid gap-4 md:grid-cols-[1fr_0.9fr]">
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/65 p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-bold text-white">
-                      Fragmented Stack
-                    </h3>
-                    <span className="text-[11px] font-semibold text-rose-300">
-                      11 disconnected tools
-                    </span>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {disconnectedTools.map((tool) => (
-                      <span
-                        key={tool}
-                        className="rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-1 text-[11px] text-slate-300"
-                      >
-                        {tool}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="Business integrations, grouped by the work they do." body="Recognizable tools stay visible. AlphaClone connects their context and execution instead of hiding everything behind generic platform labels."/><div className="mt-8 grid gap-5 lg:grid-cols-2">{integrationGroups.map(g=><section key={g.title}><h3 className="mb-2 text-[10px] font-black uppercase tracking-[.18em] text-slate-500">{g.title}</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">{g.items.map(item=><article key={item.name} className="min-w-0 rounded-xl border border-white/[.08] bg-slate-900/45 p-3"><item.icon className="h-5 w-5" style={{color:item.color}}/><p className="mt-3 truncate text-xs font-bold text-white">{item.name}</p><p className="mt-1 text-[9px] leading-4 text-slate-500">{item.detail}</p></article>)}</div></section>)}</div><div className="mt-8 border-t border-white/[.08] pt-7"><p className="mb-4 text-[10px] font-black uppercase tracking-[.18em] text-slate-500">AI interfaces</p><div className="flex gap-2 overflow-x-auto pb-2">{[[SiOpenai,"ChatGPT"],[Bot,"Claude"],[MessageSquareText,"Manus"]].map(([Icon,name])=><div key={String(name)} className="flex min-w-36 items-center gap-3 rounded-xl border border-white/10 bg-[#030b19] px-4 py-3"><Icon className="h-5 w-5 text-cyan-300"/><div><p className="text-xs font-bold text-white">{String(name)}</p><p className="text-[9px] text-slate-500">AI interface</p></div></div>)}</div></div></MarketingContainer></MarketingSection>
 
-                <div className="rounded-2xl border border-teal-500/30 bg-teal-500/10 p-5">
-                  <h3 className="text-sm font-bold text-teal-200">
-                    The AlphaClone Contrast
-                  </h3>
-                  <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-emerald-300">
-                    Connected Execution
-                  </p>
-                  <div className="mt-5 space-y-3 text-xs font-bold text-white">
-                    <div className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-2">
-                      One opportunity
-                    </div>
-                    <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-teal-300" />
-                    <div className="rounded-xl bg-teal-400 px-3 py-2 text-center text-slate-950">
-                      AlphaClone
-                    </div>
-                    <ArrowRight className="mx-auto h-4 w-4 rotate-90 text-teal-300" />
-                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/15 px-3 py-2 text-center text-emerald-200">
-                      Revenue
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
+    <MarketingSection atmosphere="trust" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="Your business stays yours." body="See exactly what each connection can do, keep sensitive actions behind approval, and disconnect whenever you choose." center/><div className="mx-auto mt-9 grid max-w-4xl gap-4 md:grid-cols-2">{[{name:"Outlook",icon:FaMicrosoft,permissions:[["Read email",true],["Send email",true],["Delete email",false]]},{name:"LinkedIn",icon:FaLinkedin,permissions:[["Read profile",true],["Publish",true],["Send actions require approval",true]]}].map(app=><article key={app.name} className="overflow-hidden rounded-2xl border border-white/10 bg-[#030b19]"><div className="flex items-center gap-3 border-b border-white/[.07] p-4"><app.icon className="h-5 w-5 text-cyan-300"/><div><h3 className="text-sm font-bold text-white">{app.name}</h3><p className="text-[10px] text-emerald-300">Connected</p></div><button type="button" className="ml-auto rounded-lg border border-white/10 px-3 py-1.5 text-[10px] font-bold text-slate-300 hover:text-rose-200">Disconnect</button></div><div className="divide-y divide-white/[.06]">{app.permissions.map(([p,yes])=><div key={String(p)} className="flex items-center justify-between px-4 py-3 text-xs text-slate-300"><span>{String(p)}</span>{yes?<Check className="h-4 w-4 text-emerald-300"/>:<X className="h-4 w-4 text-rose-300"/>}</div>)}</div></article>)}</div><div className="mx-auto mt-6 flex max-w-4xl flex-wrap justify-center gap-x-6 gap-y-3 text-[11px] font-semibold text-slate-300">{[[LockKeyhole,"OAuth connections"],[ShieldCheck,"Granular permissions"],[UserRoundCheck,"Human approval"],[FileCheck2,"Audit history"],[Database,"Data export"]].map(([Icon,x])=><span key={String(x)} className="flex items-center gap-2"><Icon className="h-4 w-4 text-cyan-300"/>{String(x)}</span>)}</div></MarketingContainer></MarketingSection>
 
-      <MarketingSection
-        id="bonnie"
-        atmosphere="platform"
-        className="py-12 sm:py-16"
-      >
-        <MarketingContainer>
-          <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-5">
-              <span className="text-xs font-bold uppercase tracking-widest text-teal-400">
-                Bonnie Coordination
-              </span>
-              <h2 className="mt-3 font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-4xl">
-                Bonnie works with the operating system, not beside it.
-              </h2>
-              <p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">
-                Ask for twenty potential customers, unpaid invoice follow-ups,
-                or tomorrow's delivery risks. Bonnie researches, prepares
-                records, drafts messages and queues actions for review across
-                the connected workspace.
-              </p>
-            </div>
+    <MarketingSection id="company" atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><div className="grid gap-8 rounded-3xl border border-white/10 bg-slate-900/35 p-5 sm:p-8 lg:grid-cols-[1fr_1.1fr] lg:items-center"><Intro eyebrow="About AlphaClone Systems" title="A connected operating system for service businesses." body="AlphaClone Systems, LLC is a registered Wyoming software company building one workspace for customer relationships, delivery, communication, documents, invoicing and AI-assisted execution."/><nav aria-label="Explore AlphaClone Systems" className="grid grid-cols-2 gap-2 sm:grid-cols-3">{[["Product","/services"],["Solutions","/who-we-serve"],["Resources","/docs"],["Pricing","/pricing"],["About","/about"],["Documentation","/docs"],["Integrations","/ecosystem"],["Book a demo","/book-demo"],["Platform status","/platform-status"]].map(([label,href])=><Link key={label} href={href} className="group flex items-center justify-between rounded-xl border border-white/[.08] bg-[#030b19] px-3 py-3 text-xs font-bold text-slate-200 transition hover:border-cyan-400/30 hover:text-cyan-200"><span>{label}</span><ArrowRight className="h-3.5 w-3.5 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-cyan-300"/></Link>)}</nav></div></MarketingContainer></MarketingSection>
 
-            <div className="lg:col-span-7">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5 shadow-2xl sm:p-6">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-                    <p className="text-xs font-bold text-slate-300">
-                      Standalone Chat
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-slate-400">
-                      User asks. Answer appears. Manual work happens somewhere
-                      else.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-teal-500/30 bg-teal-500/10 p-4">
-                    <p className="text-xs font-bold text-teal-200">
-                      AlphaClone Bonnie
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-slate-300">
-                      Request comes in. Records, tasks, outreach and approvals
-                      are prepared in the right modules.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal-300" />
-                    <div>
-                      <h3 className="text-sm font-bold text-white">
-                        "Find 20 potential customers and prepare outreach."
-                      </h3>
-                      <p className="mt-1 text-xs leading-5 text-slate-300">
-                        Bonnie turns that request into lead records, scores, CRM
-                        updates, drafts and follow-up tasks.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 grid gap-2 text-xs text-slate-300 sm:grid-cols-2">
-                    {[
-                      "Discover prospects from public business data",
-                      "Score fit and create qualified lead records",
-                      "Prepare outreach for owner approval",
-                      "Create follow-up tasks in the CRM timeline",
-                    ].map((action) => (
-                      <div
-                        key={action}
-                        className="flex items-start gap-2 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
-                      >
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" />
-                        <span>{action}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
-
-      <MarketingSection atmosphere="outcomes" className="py-12 sm:py-16">
-        <MarketingContainer>
-          <div className="mx-auto mb-9 max-w-3xl text-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-teal-400">
-              Business Outcomes
-            </span>
-            <h2 className="mt-2 font-marketing-heading text-2xl font-extrabold text-white sm:text-4xl">
-              One system. Less operational drag.
-            </h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {outcomes.map((outcome) => {
-              const Icon = outcome.icon;
-              return (
-                <article
-                  key={outcome.title}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
-                >
-                  <Icon className="h-5 w-5 text-teal-300" />
-                  <h3 className="mt-4 text-base font-bold text-white">
-                    {outcome.title}
-                  </h3>
-                  <p className="mt-2 text-xs leading-5 text-slate-300">
-                    {outcome.body}
-                  </p>
-                </article>
-              );
-            })}
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
-
-      <MarketingSection
-        id="platform"
-        atmosphere="platform"
-        className="py-12 sm:py-16"
-      >
-        <MarketingContainer>
-          <div className="mx-auto mb-9 max-w-3xl text-center">
-            <span className="text-xs font-bold uppercase tracking-widest text-teal-400">
-              Capabilities
-            </span>
-            <h2 className="mt-2 font-marketing-heading text-2xl font-extrabold text-white sm:text-4xl">
-              Capabilities grouped by business outcome.
-            </h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {capabilities.map((capability) => {
-              const Icon = capability.icon;
-              return (
-                <article
-                  key={capability.title}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5"
-                >
-                  <Icon className="h-5 w-5 text-slate-300" />
-                  <h3 className="mt-4 text-sm font-bold text-white">
-                    {capability.title}
-                  </h3>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {capability.items.map((item) => (
-                      <span
-                        key={item}
-                        className="rounded-md border border-slate-800 bg-slate-950 px-2 py-1 text-[11px] text-slate-300"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
-
-      <MarketingSection atmosphere="trust" className="py-12 sm:py-16">
-        <MarketingContainer>
-          <div className="mx-auto max-w-4xl text-center">
-            <ShieldCheck className="mx-auto h-7 w-7 text-teal-300" />
-            <h2 className="mt-4 font-marketing-heading text-2xl font-extrabold text-white sm:text-4xl">
-              Your business data deserves serious infrastructure.
-            </h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              AlphaClone keeps core controls visible: OAuth connection
-              management, privacy settings, export and deletion flows, DPA
-              terms, service status and human approval for sensitive AI actions.
-            </p>
-            <div className="mt-7">
-              <VerifiedIntegrationsStrip />
-            </div>
-            <p className="mx-auto mt-5 max-w-3xl text-xs leading-5 text-slate-400 sm:text-sm">
-              Use AlphaClone through ChatGPT, Claude, Manus or Grok. WhatsApp,
-              PayPal and Cal.com are coming soon.
-            </p>
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
-
-      <MarketingSection atmosphere="cta" className="py-14 sm:py-20">
-        <MarketingContainer>
-          <div className="mx-auto max-w-3xl px-4 text-center">
-            <h2 className="font-marketing-heading text-3xl font-extrabold leading-tight text-white sm:text-5xl">
-              Start with the connected business OS for $15/month.
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">
-              Built for founders and small service teams that have outgrown
-              spreadsheets but don't want ten different platforms.
-            </p>
-            <div className="mx-auto mt-8 flex max-w-md flex-col items-stretch justify-center gap-3 sm:max-w-none sm:flex-row sm:items-center">
-              <PrimaryCTA
-                href={TRIAL_HREF}
-                className="w-full sm:w-auto mkt-btn-large"
-              >
-                Start for $15/month
-              </PrimaryCTA>
-              <SecondaryCTA
-                href={DEMO_HREF}
-                className="w-full sm:w-auto mkt-btn-large"
-              >
-                Book a demo
-              </SecondaryCTA>
-            </div>
-          </div>
-        </MarketingContainer>
-      </MarketingSection>
-    </MarketingShell>
-  );
+    <MarketingSection atmosphere="cta" className="py-12 sm:py-20 lg:py-28"><MarketingContainer><div className="relative mx-auto max-w-5xl overflow-hidden rounded-3xl border border-cyan-400/20 bg-[#030c1b] px-5 py-10 text-center shadow-2xl shadow-cyan-950/30 sm:px-10 sm:py-16"><div className="absolute inset-x-[15%] top-0 h-px bg-gradient-to-r from-transparent via-cyan-300 to-transparent"/><h2 className="font-marketing-heading text-2xl font-extrabold leading-tight text-white sm:text-5xl">Stop rebuilding your business context in every app.</h2><p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">CRM, outreach, communication, projects, documents, invoices and AI execution stay connected around the same customer.</p><p className="mt-7 font-marketing-heading text-xl font-extrabold text-cyan-200 sm:text-3xl">One customer. One context. One operating system.</p><div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center"><PrimaryCTA href={TRIAL_HREF} className="w-full sm:w-auto mkt-btn-large">Start for $15/month</PrimaryCTA><SecondaryCTA href={DEMO_HREF} className="w-full sm:w-auto mkt-btn-large">Book a demo</SecondaryCTA></div></div></MarketingContainer></MarketingSection>
+  </MarketingShell>;
 }
