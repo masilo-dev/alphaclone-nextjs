@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { IconType } from "react-icons";
-import { FaFacebook, FaLinkedin, FaMicrosoft } from "react-icons/fa6";
-import { SiCalendly, SiOpenai, SiResend, SiStripe, SiZoho } from "react-icons/si";
+import { FaFacebook, FaGoogle, FaHubspot, FaLinkedin, FaMicrosoft, FaSlack, FaWhatsapp } from "react-icons/fa6";
+import { SiCalendly, SiOpenai, SiQuickbooks, SiResend, SiStripe, SiZapier, SiZoho } from "react-icons/si";
 import { ArrowDown, ArrowRight, Bot, BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, Database, FileCheck2, FileText, LockKeyhole, Mail, MessageSquareText, ReceiptText, Search, Send, ShieldCheck, UserRoundCheck, Users, WalletCards, X } from "lucide-react";
 import { DEMO_HREF, TRIAL_HREF } from "@/lib/marketing/cta";
 import { PrimaryCTA, SecondaryCTA } from "./CtaButtons";
@@ -12,7 +12,7 @@ import { MarketingContainer, MarketingSection } from "./LayoutPrimitives";
 import MarketingShell from "./MarketingShell";
 import { CurvedDotField, HeroDataWaves, SectionAmbientLight } from "./atmosphere";
 
-type Integration = { name: string; detail: string; icon: IconType | typeof Mail; color: string };
+type Integration = { name: string; detail: string; badge: string; icon: IconType | typeof Mail; color: string };
 const executionRows = [
   ["Research prospects", "20 / 20 found", "Done", "done", "09:42"],
   ["Check fit", "Industry · size · web · location", "Done", "done", "09:44"],
@@ -29,21 +29,29 @@ const lifecycle = [
   ["05", "Get paid", CircleDollarSign, "Invoices · Stripe · Revenue · Reporting"],
 ] as const;
 const integrationGroups: Array<{ title: string; items: Integration[] }> = [
-  { title: "Communication", items: [
-    { name: "Outlook", detail: "Read & send email", icon: FaMicrosoft, color: "#35a7ff" },
-    { name: "Zoho Mail", detail: "Mailbox & replies", icon: SiZoho, color: "#f6c344" },
-    { name: "Brevo", detail: "Campaigns & transactional", icon: Mail, color: "#35d39a" },
-    { name: "Resend", detail: "Transactional email", icon: SiResend, color: "#fff" },
+  { title: "Communication & Email", items: [
+    { name: "Outlook 365", detail: "Inbox sync & email delivery", badge: "OAuth 2.0", icon: FaMicrosoft, color: "#0078d4" },
+    { name: "Google Gmail", detail: "Read & send email threads", badge: "Direct API", icon: FaGoogle, color: "#ea4335" },
+    { name: "Zoho Mail", detail: "Mailbox & reply tracking", badge: "2-way sync", icon: SiZoho, color: "#f6c344" },
+    { name: "WhatsApp", detail: "Customer messaging & alerts", badge: "Meta API", icon: FaWhatsapp, color: "#25d366" },
+    { name: "Brevo", detail: "Email outreach & campaigns", badge: "API Key", icon: Mail, color: "#0092ff" },
+    { name: "Resend", detail: "Automated transactional mail", badge: "Realtime", icon: SiResend, color: "#ffffff" },
   ]},
-  { title: "CRM & sales", items: [
-    { name: "Zoho CRM", detail: "Customer records", icon: SiZoho, color: "#f6c344" },
-    { name: "LinkedIn", detail: "Profile & outreach", icon: FaLinkedin, color: "#4aa7ff" },
-    { name: "Calendly", detail: "Bookings", icon: SiCalendly, color: "#2f8cff" },
+  { title: "CRM, Sales & Scheduling", items: [
+    { name: "Zoho CRM", detail: "Contacts, deals & accounts", badge: "Bi-directional", icon: SiZoho, color: "#f6c344" },
+    { name: "LinkedIn", detail: "Profile research & outreach", badge: "Webhook", icon: FaLinkedin, color: "#0a66c2" },
+    { name: "HubSpot", detail: "Pipeline & lead sync", badge: "OAuth 2.0", icon: FaHubspot, color: "#ff7a59" },
+    { name: "Calendly", detail: "Meeting booking & scheduling", badge: "Realtime", icon: SiCalendly, color: "#006bfc" },
   ]},
-  { title: "Payments", items: [{ name: "Stripe", detail: "Payments", icon: SiStripe, color: "#8b85ff" }] },
-  { title: "Social", items: [
-    { name: "Facebook Pages", detail: "Social publishing", icon: FaFacebook, color: "#3b82f6" },
-    { name: "LinkedIn Pages", detail: "Organization publishing", icon: FaLinkedin, color: "#4aa7ff" },
+  { title: "Financials & Payments", items: [
+    { name: "Stripe", detail: "Payments & subscriptions", badge: "Verified", icon: SiStripe, color: "#635bff" },
+    { name: "QuickBooks", detail: "Accounting & ledger sync", badge: "OAuth 2.0", icon: SiQuickbooks, color: "#2ca01c" },
+  ]},
+  { title: "Social & Productivity", items: [
+    { name: "Facebook Pages", detail: "Post publishing & lead forms", badge: "Meta Graph", icon: FaFacebook, color: "#1877f2" },
+    { name: "LinkedIn Pages", detail: "Company updates & stats", badge: "OAuth 2.0", icon: FaLinkedin, color: "#0a66c2" },
+    { name: "Slack", detail: "Internal alerts & notifications", badge: "Bot API", icon: FaSlack, color: "#e01e5a" },
+    { name: "Zapier", detail: "Multi-app trigger automation", badge: "Webhooks", icon: SiZapier, color: "#ff4a00" },
   ]},
 ];
 
@@ -100,7 +108,7 @@ export default function MarketingHomePage() {
 
     <MarketingSection atmosphere="platform" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro eyebrow="Work from your AI" title="Use the AI interface you already prefer." body="ChatGPT, Claude and Manus can act as interfaces into AlphaClone while AlphaClone supplies the business context, tools, permissions and execution layer underneath." center/><div className="mx-auto mt-9 grid max-w-5xl gap-4 lg:grid-cols-[1fr_auto_1.1fr_auto_1fr] lg:items-center"><div className="space-y-2">{[[SiOpenai,"ChatGPT","Show me the customers that need follow-up today."],[Bot,"Claude","Review these opportunities and tell me which need attention."],[MessageSquareText,"Manus","Find 20 leads, create CRM records and prepare outreach."]].map(([Icon,name,q])=><article key={String(name)} className="rounded-xl border border-white/10 bg-slate-900/50 p-3"><div className="flex items-center gap-2"><Icon className="h-4 w-4 text-white"/><p className="text-xs font-bold text-white">{String(name)}</p><span className="ml-auto text-[9px] uppercase text-slate-500">AI interface</span></div><p className="mt-2 text-[10px] leading-4 text-slate-400">“{String(q)}”</p></article>)}</div><ArrowRight className="mx-auto hidden h-5 w-5 text-cyan-400 lg:block"/><div className="rounded-2xl border border-cyan-400/40 bg-cyan-400/[.08] p-6 text-center"><Database className="mx-auto h-6 w-6 text-cyan-300"/><h3 className="mt-3 text-lg font-black text-white">AlphaClone</h3><p className="mt-1 text-xs font-semibold text-cyan-200">Business context + execution</p><div className="mt-4 h-px bg-cyan-400/20"/><p className="mt-4 text-[10px] text-slate-300">Context · permissions · tools · audit history</p></div><ArrowRight className="mx-auto hidden h-5 w-5 text-cyan-400 lg:block"/><div className="grid grid-cols-2 gap-2">{["CRM","Outreach","Calendar","Projects","Documents","Invoices","Money"].map(x=><div key={x} className="rounded-lg border border-white/[.08] bg-slate-900/50 px-3 py-2 text-[11px] font-semibold text-slate-200">{x}</div>)}</div></div></MarketingContainer></MarketingSection>
 
-    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="Business integrations, grouped by the work they do." body="Recognizable tools stay visible. AlphaClone connects their context and execution instead of hiding everything behind generic platform labels."/><div className="mt-8 grid gap-5 lg:grid-cols-2">{integrationGroups.map(g=><section key={g.title}><h3 className="mb-2 text-[10px] font-black uppercase tracking-[.18em] text-slate-500">{g.title}</h3><div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">{g.items.map(item=><article key={item.name} className="min-w-0 rounded-xl border border-white/[.08] bg-slate-900/45 p-3"><item.icon className="h-5 w-5" style={{color:item.color}}/><p className="mt-3 truncate text-xs font-bold text-white">{item.name}</p><p className="mt-1 text-[9px] leading-4 text-slate-500">{item.detail}</p></article>)}</div></section>)}</div><div className="mt-8 border-t border-white/[.08] pt-7"><p className="mb-4 text-[10px] font-black uppercase tracking-[.18em] text-slate-500">AI interfaces</p><div className="flex gap-2 overflow-x-auto pb-2">{[[SiOpenai,"ChatGPT"],[Bot,"Claude"],[MessageSquareText,"Manus"]].map(([Icon,name])=><div key={String(name)} className="flex min-w-36 items-center gap-3 rounded-xl border border-white/10 bg-[#030b19] px-4 py-3"><Icon className="h-5 w-5 text-cyan-300"/><div><p className="text-xs font-bold text-white">{String(name)}</p><p className="text-[9px] text-slate-500">AI interface</p></div></div>)}</div></div></MarketingContainer></MarketingSection>
+    <MarketingSection atmosphere="outcomes" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="Business integrations, grouped by the work they do." body="Recognizable tools stay visible. AlphaClone connects their context and execution instead of hiding everything behind generic platform labels."/><div className="mt-8 grid gap-6 lg:grid-cols-2">{integrationGroups.map(g=><section key={g.title} className="rounded-2xl border border-white/10 bg-[#020815]/90 p-5"><h3 className="mb-4 text-[11px] font-black uppercase tracking-[.2em] text-cyan-300">{g.title}</h3><div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">{g.items.map(item=><article key={item.name} className="group relative flex flex-col justify-between rounded-xl border border-white/[.09] bg-[#030c1b] p-3.5 transition-all duration-200 hover:border-cyan-400/40 hover:bg-slate-900/60 hover:shadow-lg hover:shadow-cyan-950/20"><div><div className="flex items-center justify-between gap-2"><item.icon className="h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110" style={{color:item.color}}/><span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[9px] font-bold text-cyan-300">{item.badge}</span></div><p className="mt-3 truncate text-xs font-bold text-white group-hover:text-cyan-200">{item.name}</p><p className="mt-1 text-[10px] leading-4 text-slate-400">{item.detail}</p></div><div className="mt-3 flex items-center gap-1.5 border-t border-white/[.05] pt-2 text-[9px] font-semibold text-emerald-400"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"/><span>Live Sync Active</span></div></article>)}</div></section>)}</div><div className="mt-8 border-t border-white/[.08] pt-7"><p className="mb-4 text-[10px] font-black uppercase tracking-[.18em] text-slate-500">AI interfaces</p><div className="flex gap-2 overflow-x-auto pb-2">{[[SiOpenai,"ChatGPT"],[Bot,"Claude"],[MessageSquareText,"Manus"]].map(([Icon,name])=><div key={String(name)} className="flex min-w-36 items-center gap-3 rounded-xl border border-white/10 bg-[#030b19] px-4 py-3"><Icon className="h-5 w-5 text-cyan-300"/><div><p className="text-xs font-bold text-white">{String(name)}</p><p className="text-[9px] text-slate-500">AI interface</p></div></div>)}</div></div></MarketingContainer></MarketingSection>
 
     <MarketingSection atmosphere="trust" className="py-10 sm:py-16 lg:py-24"><MarketingContainer><Intro title="Your business stays yours." body="See exactly what each connection can do, keep sensitive actions behind approval, and disconnect whenever you choose." center/><div className="mx-auto mt-9 grid max-w-4xl gap-4 md:grid-cols-2">{[{name:"Outlook",icon:FaMicrosoft,permissions:[["Read email",true],["Send email",true],["Delete email",false]]},{name:"LinkedIn",icon:FaLinkedin,permissions:[["Read profile",true],["Publish",true],["Send actions require approval",true]]}].map(app=><article key={app.name} className="overflow-hidden rounded-2xl border border-white/10 bg-[#030b19]"><div className="flex items-center gap-3 border-b border-white/[.07] p-4"><app.icon className="h-5 w-5 text-cyan-300"/><div><h3 className="text-sm font-bold text-white">{app.name}</h3><p className="text-[10px] text-emerald-300">Connected</p></div><button type="button" className="ml-auto rounded-lg border border-white/10 px-3 py-1.5 text-[10px] font-bold text-slate-300 hover:text-rose-200">Disconnect</button></div><div className="divide-y divide-white/[.06]">{app.permissions.map(([p,yes])=><div key={String(p)} className="flex items-center justify-between px-4 py-3 text-xs text-slate-300"><span>{String(p)}</span>{yes?<Check className="h-4 w-4 text-emerald-300"/>:<X className="h-4 w-4 text-rose-300"/>}</div>)}</div></article>)}</div><div className="mx-auto mt-6 flex max-w-4xl flex-wrap justify-center gap-x-6 gap-y-3 text-[11px] font-semibold text-slate-300">{[[LockKeyhole,"OAuth connections"],[ShieldCheck,"Granular permissions"],[UserRoundCheck,"Human approval"],[FileCheck2,"Audit history"],[Database,"Data export"]].map(([Icon,x])=><span key={String(x)} className="flex items-center gap-2"><Icon className="h-4 w-4 text-cyan-300"/>{String(x)}</span>)}</div></MarketingContainer></MarketingSection>
 
