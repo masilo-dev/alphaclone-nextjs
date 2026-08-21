@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS proposals (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+ALTER TABLE proposals ADD COLUMN IF NOT EXISTS public_token TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_document_themes_tenant ON document_themes(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_document_templates_tenant ON document_templates(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_proposals_token ON proposals(public_token);

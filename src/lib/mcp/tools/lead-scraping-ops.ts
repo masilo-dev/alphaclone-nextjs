@@ -249,12 +249,16 @@ defineConnectorTool({
   permission: 'crm:read',
   inputSchema: z.object({
     tenant_id: tenantIdField.optional(),
-    client_id: z.string().min(1),
+    client_id: z.string().uuid(),
   }),
   jsonSchema: {
     type: 'object',
     properties: {
-      client_id: { type: 'string' },
+      client_id: {
+        type: 'string',
+        format: 'uuid',
+        description: 'Literal CRM client UUID. Do not pass SQL or a lookup expression.',
+      },
     },
     required: ['client_id'],
   },
