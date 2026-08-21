@@ -25,7 +25,6 @@ const COLUMNS = [
       { label: 'CRM', path: '/crm' },
       { label: 'Project management', path: '/project-management' },
       { label: 'Bonnie AI', path: '/ai-agents' },
-      { label: 'Marketing automation', path: '/marketing/automation' },
       { label: 'Pricing', path: '/pricing' },
     ],
   },
@@ -43,40 +42,21 @@ const COLUMNS = [
     title: 'Resources',
     links: [
       { label: 'Documentation', path: '/docs' },
-      { label: 'Getting started guide', path: '/guide' },
+      { label: 'Getting started', path: '/guide' },
       { label: 'Blog', path: '/blog' },
-      { label: 'Integration ecosystem', path: '/ecosystem' },
+      { label: 'Integrations', path: '/ecosystem' },
       { label: 'Book a demo', path: '/book-demo' },
     ],
   },
   {
-    title: 'Company',
+    title: 'Company & Legal',
     links: [
       { label: 'About AlphaClone', path: '/about' },
       { label: 'Contact us', path: '/contact' },
-      { label: 'Legal & Trust Center', path: '/legal' },
-      { label: 'Security policy', path: '/security-policy' },
-      { label: 'Platform status', path: '/platform-status' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
       { label: 'Privacy Policy', path: '/privacy-policy' },
       { label: 'Terms of Service', path: '/terms-of-service' },
-      { label: 'Cookie Policy', path: '/cookie-policy' },
-      { label: 'Data Processing Agreement', path: '/dpa' },
-      { label: 'Your Privacy Choices', path: '/privacy-choices' },
-      { label: 'Data deletion', path: '/data-deletion' },
-      { label: 'Service SLA', path: '/sla' },
-    ],
-  },
-  {
-    title: 'Follow AlphaClone',
-    links: [
-      { label: 'LinkedIn', path: SOCIAL_PROFILES.linkedin, external: true },
-      { label: 'Facebook', path: SOCIAL_PROFILES.facebook, external: true },
-      { label: 'X (Twitter)', path: SOCIAL_PROFILES.x, external: true },
+      { label: 'Security Policy', path: '/security-policy' },
+      { label: 'Platform status', path: '/platform-status' },
     ],
   },
 ] as const satisfies readonly FooterColumn[];
