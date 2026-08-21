@@ -144,7 +144,7 @@ export async function verifyFacebookPostExists(params: {
   graphVersion?: string;
   fetchImpl?: FetchLike;
 }): Promise<VerifiedFacebookPost> {
-  const version = params.graphVersion || 'v19.0';
+  const version = params.graphVersion || 'v21.0';
   const fetchImpl = params.fetchImpl || fetch;
   const url = new URL(`https://graph.facebook.com/${version}/${encodeURIComponent(params.postId)}`);
   // permalink_url is not available on all Facebook post types (video posts, some photo posts)

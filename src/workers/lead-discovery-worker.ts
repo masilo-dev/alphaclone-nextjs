@@ -273,9 +273,25 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
         query = query.eq('search_id', options.searchId);
       }
 
-      const { data: unclaimed, error: selectErr } = await query
+      let { data: unclaimed, error: selectErr } = await query
         .order('created_at', { ascending: true })
         .limit(claimLimit);
+
+      // Fallback query if 'retrying' is not yet in the DB enum (22P02 error)
+      if (selectErr && (selectErr.code === '22P02' || /retrying/i.test(selectErr.message))) {
+        let fallbackQuery = supabase
+          .from('lead_search_jobs')
+          .select('id, workspace_id, created_by, search_id, attempt_count, max_attempts')
+          .in('status', ['queued', 'pending']);
+        if (options?.searchId) {
+          fallbackQuery = fallbackQuery.eq('search_id', options.searchId);
+        }
+        const res = await fallbackQuery
+          .order('created_at', { ascending: true })
+          .limit(claimLimit);
+        unclaimed = res.data;
+        selectErr = res.error;
+      }
 
       if (!selectErr && unclaimed && unclaimed.length > 0) {
         const jobIds = unclaimed.map((j) => j.id);
@@ -307,13 +323,24 @@ export async function processLeadDiscoveryBatch(options?: { workerId?: string; c
       const attemptCount = typeof job.attempt_count === 'number' ? job.attempt_count : 1;
       const maxAttempts = typeof job.max_attempts === 'number' ? job.max_attempts : 3;
       const retry = attemptCount < maxAttempts;
-      await supabase.from('lead_search_jobs').update({
+      const updateRes = await supabase.from('lead_search_jobs').update({
         status: retry ? 'retrying' : 'failed',
         locked_at: null,
         next_run_at: new Date(Date.now() + Math.min(30 * 60_000, 2 ** attemptCount * 30_000)).toISOString(),
         error_code: error instanceof Error ? error.message.slice(0, 80) : 'WORKER_ERROR',
         error_message: 'Discovery job failed; retry policy applied.',
       }).eq('id', job.id);
+
+      if (updateRes.error && (updateRes.error.code === '22P02' || /retrying/i.test(updateRes.error.message)) && retry) {
+        await supabase.from('lead_search_jobs').update({
+          status: 'queued',
+          locked_at: null,
+          next_run_at: new Date(Date.now() + Math.min(30 * 60_000, 2 ** attemptCount * 30_000)).toISOString(),
+          error_code: error instanceof Error ? error.message.slice(0, 80) : 'WORKER_ERROR',
+          error_message: 'Discovery job failed; retry policy applied.',
+        }).eq('id', job.id);
+      }
+
       if (!retry) {
         await supabase.from('lead_searches').update({ status: 'failed', error_count: 1 }).eq('id', job.search_id);
       }

@@ -125,9 +125,9 @@ async function publishToFacebook(postId: string): Promise<PublishResult> {
       }
     }
 
-    const endpoint = mediaUrl
-      ? `https://graph.facebook.com/v19.0/${post.facebook_page_id}/${isVideo ? "videos" : "photos"}`
-      : `https://graph.facebook.com/v19.0/${post.facebook_page_id}/feed`;
+    const endpoint = isVideo
+      ? `https://graph.facebook.com/v21.0/${post.facebook_page_id}/${isVideo ? "videos" : "photos"}`
+      : `https://graph.facebook.com/v21.0/${post.facebook_page_id}/feed`;
 
     const res = await fetchWithTimeout(endpoint, {
       method: "POST",

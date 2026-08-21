@@ -307,7 +307,7 @@ test("status migration extends enum not CHECK-only (source)", async () => {
   const fs = await import("node:fs");
   const src = fs.readFileSync(
     new URL(
-      "../../supabase/migrations/20260724120000_social_publishing_repair.sql",
+      "../../supabase/migrations/20260724120002_social_publishing_repair.sql",
       import.meta.url,
     ),
     "utf8",

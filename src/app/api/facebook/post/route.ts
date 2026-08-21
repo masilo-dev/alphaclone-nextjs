@@ -72,8 +72,8 @@ export async function POST(req: NextRequest) {
     if (link) body.link = link;
 
     const endpoint = imageUrl
-        ? `https://graph.facebook.com/v19.0/${pageId}/photos`
-        : `https://graph.facebook.com/v19.0/${pageId}/feed`;
+        ? `https://graph.facebook.com/v21.0/${pageId}/photos`
+        : `https://graph.facebook.com/v21.0/${pageId}/feed`;
 
     if (imageUrl) body.url = imageUrl;
 
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
             if (imageUrl) {
                 igBody.image_url = imageUrl;
                 const igRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${instagramAccount.instagram_account_id}/media`,
+                    `https://graph.facebook.com/v21.0/${instagramAccount.instagram_account_id}/media`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
                 if (igData.id) {
                     // Publish the media
                     await fetch(
-                        `https://graph.facebook.com/v19.0/${instagramAccount.instagram_account_id}/media_publish`,
+                        `https://graph.facebook.com/v21.0/${instagramAccount.instagram_account_id}/media_publish`,
                         {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },

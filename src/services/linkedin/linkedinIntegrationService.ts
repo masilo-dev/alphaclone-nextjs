@@ -174,7 +174,9 @@ async function fetchLinkedInCompanyPagesForRole(
   while (true) {
     const roleParam = role ? `&role=${encodeURIComponent(role)}` : '';
     const projection =
-      '&projection=(elements*(role,organization,organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))),paging)';
+      options.api === 'rest'
+        ? ''
+        : '&projection=(elements*(role,organization,organizationalTarget~(id,localizedName,vanityName,logoV2(original~:playableStreams))),paging)';
     const prefix =
       options.api === 'rest'
         ? 'https://api.linkedin.com/rest/organizationAcls'

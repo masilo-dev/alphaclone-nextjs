@@ -82,16 +82,31 @@ export async function GET(req: NextRequest) {
     }
 
     if (!code || !stateStr) {
-        return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
+        return NextResponse.redirect(`${zohoMailReturnUrl}?error=zoho_callback_failed&reason=Missing%20authorization%20code%20or%20state`);
     }
 
     try {
         const admin = createSupabaseAdminClient();
-        const { data: stateData, error: stateError } = await admin.from('oauth_states')
+        let { data: stateData, error: stateError } = await admin.from('oauth_states')
             .delete().eq('id', stateStr).select('user_id, tenant_id, metadata, created_at').single();
+        
+        // Fallback lookup if state was already deleted by a browser pre-fetch or race condition
+        if (stateError || !stateData) {
+            const { data: maybeState } = await admin.from('oauth_states')
+                .select('user_id, tenant_id, metadata, created_at')
+                .eq('id', stateStr)
+                .maybeSingle();
+            if (maybeState) {
+                stateData = maybeState;
+                stateError = null;
+                await admin.from('oauth_states').delete().eq('id', stateStr);
+            }
+        }
+
         const stateCreatedAt = stateData?.created_at ? new Date(stateData.created_at).getTime() : 0;
         if (stateError || !stateData?.user_id || !stateData?.tenant_id || stateData.metadata?.provider !== 'zoho' || !stateCreatedAt || Date.now() - stateCreatedAt > 10 * 60_000) {
-            throw new Error('Invalid OAuth state payload');
+            console.error('[zoho/callback] Invalid or expired OAuth state:', { stateStr, stateError, stateData });
+            return NextResponse.redirect(`${zohoMailReturnUrl}?error=zoho_callback_failed&reason=Invalid%20or%20expired%20OAuth%20state`);
         }
         const userId = String(stateData.user_id);
         const tenantId = String(stateData.tenant_id);

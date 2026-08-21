@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
       'comments.limit(10){id,message,created_time,from,like_count}',
     ].join(',');
 
-    const url = `https://graph.facebook.com/v19.0/${postId}/comments?fields=${fields}&filter=stream&order=reverse_chronological&limit=${limit}&access_token=${token}`;
+    const url = `https://graph.facebook.com/v21.0/${postId}/comments?fields=${fields}&filter=stream&order=reverse_chronological&limit=${limit}&access_token=${token}`;
     const response = await fetch(url, { next: { revalidate: 0 } });
     const data = await response.json();
 

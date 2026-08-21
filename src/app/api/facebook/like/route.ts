@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const endpoint = `https://graph.facebook.com/v19.0/${targetId}/likes`;
+    const endpoint = `https://graph.facebook.com/v21.0/${targetId}/likes`;
 
     const params = new URLSearchParams();
     params.set('access_token', token);

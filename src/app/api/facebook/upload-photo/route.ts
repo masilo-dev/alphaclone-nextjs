@@ -106,8 +106,8 @@ export async function POST(req: NextRequest) {
     }
 
     const endpoint = isVideo
-        ? `https://graph.facebook.com/v19.0/${pageId}/videos`
-        : `https://graph.facebook.com/v19.0/${pageId}/photos`;
+        ? `https://graph.facebook.com/v21.0/${pageId}/videos`
+        : `https://graph.facebook.com/v21.0/${pageId}/photos`;
 
     let res: Response;
     try {

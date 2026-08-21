@@ -1538,7 +1538,7 @@ registerTool('social-publishing', {
       });
       if (integration?.pageAccessToken) {
         const resp = await fetch(
-          `https://graph.facebook.com/v19.0/${encodeURIComponent(post.facebook_post_id)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`,
+          `https://graph.facebook.com/v21.0/${encodeURIComponent(post.facebook_post_id)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`,
           { method: 'DELETE' }
         );
         const body = await resp.json().catch(() => ({}));
@@ -1613,7 +1613,7 @@ registerTool('social-publishing', {
         'post_clicks',
       ].join(',');
       const resp = await fetch(
-        `https://graph.facebook.com/v19.0/${encodeURIComponent(post.facebook_post_id)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`
+        `https://graph.facebook.com/v21.0/${encodeURIComponent(post.facebook_post_id)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`
       );
       const body = await resp.json();
       if (!resp.ok || body?.error) {

@@ -369,7 +369,7 @@ export class SocialPublishingService {
             };
           }
           const uploadRes = await fetchWithTimeout(
-            `https://graph.facebook.com/v19.0/${pageId}/photos`,
+            `https://graph.facebook.com/v21.0/${pageId}/photos`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -398,7 +398,7 @@ export class SocialPublishingService {
           }
           attached.push({ media_fbid: String(uploadBody.id) });
         }
-        const feedRes = await fetchWithTimeout(`https://graph.facebook.com/v19.0/${pageId}/feed`, {
+        const feedRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/feed`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -445,8 +445,8 @@ export class SocialPublishingService {
           fbBody.message = post.caption;
         }
         const endpoint = mediaUrl
-          ? `https://graph.facebook.com/v19.0/${pageId}/${isVideo ? 'videos' : 'photos'}`
-          : `https://graph.facebook.com/v19.0/${pageId}/feed`;
+          ? `https://graph.facebook.com/v21.0/${pageId}/${isVideo ? 'videos' : 'photos'}`
+          : `https://graph.facebook.com/v21.0/${pageId}/feed`;
         const res = await fetchWithTimeout(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

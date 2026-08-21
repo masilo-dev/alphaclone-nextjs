@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
 
     const targetId = parentCommentId || postId;
-    const endpoint = `https://graph.facebook.com/v19.0/${targetId}/comments`;
+    const endpoint = `https://graph.facebook.com/v21.0/${targetId}/comments`;
 
     const params = new URLSearchParams();
     params.set('message', message);

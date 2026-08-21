@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
-  const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`;
+  const url = `https://graph.facebook.com/v21.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`;
   const res = await fetch(url, { method: 'DELETE' });
   const data = await res.json().catch(() => ({}));
 

@@ -113,19 +113,50 @@ export async function upsertMicrosoftConnection(params: {
   displayName: string | null;
 }): Promise<void> {
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.from('microsoft_connections').upsert(
-    {
-      user_id: params.userId,
-      access_token: null,
-      refresh_token: null,
-      token_expiry: params.tokenExpiry,
-      microsoft_email: params.microsoftEmail,
-      display_name: params.displayName,
-      updated_at: new Date().toISOString(),
-    },
+  const payload = {
+    user_id: params.userId,
+    access_token: '',
+    refresh_token: '',
+    token_expiry: params.tokenExpiry,
+    microsoft_email: params.microsoftEmail,
+    display_name: params.displayName,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: upsertError } = await admin.from('microsoft_connections').upsert(
+    payload,
     { onConflict: 'user_id' }
   );
-  if (error) throw error;
+
+  if (upsertError) {
+    if (
+      upsertError.code === '42P10' ||
+      upsertError.code === '23502' ||
+      upsertError.message?.includes('ON CONFLICT')
+    ) {
+      const { data: existing } = await admin
+        .from('microsoft_connections')
+        .select('id')
+        .eq('user_id', params.userId)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error: updateError } = await admin
+          .from('microsoft_connections')
+          .update(payload)
+          .eq('id', existing.id);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await admin
+          .from('microsoft_connections')
+          .insert(payload);
+        if (insertError) throw insertError;
+      }
+    } else {
+      throw upsertError;
+    }
+  }
+
   await writeSecrets(admin, params.userId, {
     accessToken: params.accessToken,
     refreshToken: params.refreshToken,

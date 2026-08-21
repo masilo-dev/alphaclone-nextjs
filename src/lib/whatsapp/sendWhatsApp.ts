@@ -174,7 +174,7 @@ async function sendViaMeta(params: {
   }
 
   try {
-    const url = `https://graph.facebook.com/v18.0/${resolvedPhoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v21.0/${resolvedPhoneNumberId}/messages`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -526,7 +526,7 @@ export async function sendWhatsAppTemplate(params: {
   }
 
   try {
-    const url = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {

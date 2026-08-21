@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     const redirectUri = `${appUrl}/api/auth/facebook/callback`;
 
     const tokenRes = await fetch(
-        `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`
+        `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`
     );
     const tokenData = await tokenRes.json();
 
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
     }
 
     const longLivedRes = await fetch(
-        `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${tokenData.access_token}`
+        `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${tokenData.access_token}`
     );
     const longLivedData = await longLivedRes.json();
     if (!longLivedRes.ok || !longLivedData.access_token) {
@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
     const userToken = longLivedData.access_token;
 
     const pagesRes = await fetch(
-        `https://graph.facebook.com/v19.0/me/accounts?access_token=${userToken}&fields=id,name,access_token,tasks,category,instagram_business_account`
+        `https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}&fields=id,name,access_token,tasks,category,instagram_business_account`
     );
     const pagesData = await pagesRes.json();
 
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
     }
 
     const profileRes = await fetch(
-        `https://graph.facebook.com/v19.0/me?access_token=${userToken}&fields=id,name,email`
+        `https://graph.facebook.com/v21.0/me?access_token=${userToken}&fields=id,name,email`
     );
     const profileData = await profileRes.json();
 
@@ -184,7 +184,7 @@ export async function GET(req: NextRequest) {
             if (page.instagram_business_account?.id) {
                 const igId = page.instagram_business_account.id;
                 const igRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${igId}?fields=username,name,profile_picture_url,followers_count,media_count&access_token=${page.access_token}`
+                    `https://graph.facebook.com/v21.0/${igId}?fields=username,name,profile_picture_url,followers_count,media_count&access_token=${page.access_token}`
                 );
                 const igData = await igRes.json();
 

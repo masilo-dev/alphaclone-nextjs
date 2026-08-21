@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
 
                 // Fetch lead details from Graph API
                 const leadRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${integration.pageAccessToken}&fields=id,created_time,field_data,ad_id,form_id`
+                    `https://graph.facebook.com/v21.0/${leadgenId}?access_token=${integration.pageAccessToken}&fields=id,created_time,field_data,ad_id,form_id`
                 );
                 const leadData = await leadRes.json();
 

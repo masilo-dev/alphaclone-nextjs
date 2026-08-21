@@ -3579,7 +3579,7 @@ class AlphaCloneMCPServer {
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for insights.');
           const metrics = ['post_impressions', 'post_impressions_unique', 'post_engaged_users', 'post_clicks'].join(',');
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`);
+          const resp = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(postId)}/insights?metric=${metrics}&access_token=${encodeURIComponent(integration.pageAccessToken)}`);
           const fb = await resp.json();
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook insights unavailable');
           result = { content: [{ type: 'text', text: JSON.stringify({ post_id: postId, insights: fb.data || [] }, null, 2) }] };
@@ -3599,7 +3599,7 @@ class AlphaCloneMCPServer {
           integration = pageId ? ((rows || [])[0] as FacebookIntegrationIdentity | undefined) || null : pickPreferredFacebookIdentity((rows || []) as FacebookIntegrationIdentity[]);
           if (!integration?.pageAccessToken) throw new Error('No Facebook Page token found for delete.');
           pageId = integration.page_id;
-          const resp = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`, { method: 'DELETE' });
+          const resp = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(postId)}?access_token=${encodeURIComponent(integration.pageAccessToken)}`, { method: 'DELETE' });
           const fb = await resp.json().catch(() => ({}));
           if (!resp.ok || fb?.error) throw new Error(fb?.error?.message || 'Facebook delete failed');
           await supabaseAdmin.from('facebook_page_posts').delete().eq('fb_post_id', postId).eq('page_id', pageId);
@@ -3908,7 +3908,7 @@ class AlphaCloneMCPServer {
               );
             }
 
-            const graph = new URL(`https://graph.facebook.com/v19.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
+            const graph = new URL(`https://graph.facebook.com/v21.0/${resolvedPageId}/${isVideoMedia ? 'videos' : firstMediaUrl ? 'photos' : 'feed'}`);
             graph.searchParams.set('access_token', assuredIntegration.pageAccessToken);
             const body = new URLSearchParams();
             if (firstMediaUrl) {
@@ -4088,7 +4088,7 @@ class AlphaCloneMCPServer {
           }
 
           const response = await fetch(
-            `https://graph.facebook.com/v19.0/${post_id}/comments`,
+            `https://graph.facebook.com/v21.0/${post_id}/comments`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

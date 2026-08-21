@@ -22,7 +22,7 @@ test('demo CTA is explicit and Calendly bookings notify the host', async () => {
   const home = await read('src/components/marketing/system/MarketingHomePage.tsx');
   const calendly = await read('src/lib/calendly/syncToNative.ts');
   assert.equal((home.match(/Book a demo/g) || []).length, 2);
-  for (const client of ['ChatGPT', 'Claude', 'Manus', 'Grok', 'WhatsApp', 'PayPal', 'Cal.com']) {
+  for (const client of ['ChatGPT', 'Claude', 'Manus', 'WhatsApp', 'Stripe', 'Calendly', 'Brevo']) {
     assert.match(home, new RegExp(client.replace('.', '\\.')));
   }
   assert.match(calendly, /calendlyHostNotification/);

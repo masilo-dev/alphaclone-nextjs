@@ -296,7 +296,7 @@ async function checkFacebookIntegration(tenantId: string, supabase: any, userId:
   if (withToken.pageAccessToken && percentage >= 80) {
     try {
       const testResponse = await fetch(
-        `https://graph.facebook.com/v19.0/${integration.page_id}?fields=id,name&access_token=${encodeURIComponent(withToken.pageAccessToken)}`
+        `https://graph.facebook.com/v21.0/${integration.page_id}?fields=id,name&access_token=${encodeURIComponent(withToken.pageAccessToken)}`
       );
       if (!testResponse.ok) {
         issues.push('Facebook API access failed');
@@ -357,7 +357,7 @@ async function checkInstagramIntegration(tenantId: string, _supabase: any, userI
   if (integration.pageAccessToken && percentage >= 80) {
     try {
       const res = await fetch(
-        `https://graph.facebook.com/v19.0/${integration.instagram_account_id}?fields=id,username&access_token=${encodeURIComponent(integration.pageAccessToken)}`
+        `https://graph.facebook.com/v21.0/${integration.instagram_account_id}?fields=id,username&access_token=${encodeURIComponent(integration.pageAccessToken)}`
       );
       if (res.ok) percentage = 100;
       else {
@@ -484,7 +484,7 @@ async function checkWhatsAppIntegration(tenantId: string, _supabase: any) {
   if (integration.accessToken && percentage >= 70) {
     try {
       const res = await fetch(
-        `https://graph.facebook.com/v18.0/${integration.phone_number_id}?fields=id&access_token=${encodeURIComponent(integration.accessToken)}`
+        `https://graph.facebook.com/v21.0/${integration.phone_number_id}?fields=id&access_token=${encodeURIComponent(integration.accessToken)}`
       );
       if (res.ok) percentage = 100;
       else {

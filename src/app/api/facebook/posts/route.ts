@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
     ].join(',');
 
     const cursorParam = after ? `&after=${encodeURIComponent(after)}` : '';
-    const graphUrl = `https://graph.facebook.com/v19.0/${pageId}/feed?fields=${fields}&limit=${limit}${cursorParam}&access_token=${token}`;
+    const graphUrl = `https://graph.facebook.com/v21.0/${pageId}/feed?fields=${fields}&limit=${limit}${cursorParam}&access_token=${token}`;
     const res = await fetchWithRetry(graphUrl, { next: { revalidate: 0 } });
     const fbData = await res.json();
 

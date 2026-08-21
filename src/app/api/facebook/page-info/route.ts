@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       'picture{url}',
     ].join(',');
 
-    const response = await fetch(`https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`);
+    const response = await fetch(`https://graph.facebook.com/v21.0/${encodeURIComponent(pageId)}?fields=${encodeURIComponent(fields)}&access_token=${encodeURIComponent(token)}`);
     const data = await response.json();
 
     if (!response.ok || data?.error) {

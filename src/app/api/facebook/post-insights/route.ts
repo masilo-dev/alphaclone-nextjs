@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   ].join(',');
 
   try {
-    const url = `https://graph.facebook.com/v19.0/${postId}/insights?metric=${metrics}&access_token=${token}`;
+    const url = `https://graph.facebook.com/v21.0/${postId}/insights?metric=${metrics}&access_token=${token}`;
     const res = await fetch(url, { next: { revalidate: 0 } });
     const data = await res.json();
     if (data.error) {

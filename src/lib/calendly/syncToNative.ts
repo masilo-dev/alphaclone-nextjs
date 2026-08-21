@@ -231,28 +231,33 @@ export async function upsertCalendlyEvent(input: UpsertInput): Promise<void> {
 export async function registerCalendlyWebhook(
   accessToken: string,
   calendlyUserUri: string,
-  callbackUrl: string
+  callbackUrl: string,
+  organizationUri?: string
 ): Promise<string | null> {
+  const bodyPayload: Record<string, unknown> = {
+    url: callbackUrl,
+    events: [
+      'invitee.created',
+      'invitee.canceled',
+      'invitee_no_show.created',
+      'meeting_recap.created',
+      'contact.created',
+      'contact.updated',
+      'contact.deleted',
+    ],
+    user: calendlyUserUri,
+    scope: 'user',
+  };
+  if (organizationUri) {
+    bodyPayload.organization = organizationUri;
+  }
   const res = await fetch('https://api.calendly.com/webhook_subscriptions', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      url: callbackUrl,
-      events: [
-        'invitee.created',
-        'invitee.canceled',
-        'invitee.no_show.created',
-        'meeting_recap.created',
-        'contact.created',
-        'contact.updated',
-        'contact.deleted',
-      ],
-      user: calendlyUserUri,
-      scope: 'user',
-    }),
+    body: JSON.stringify(bodyPayload),
   });
 
   if (!res.ok) {

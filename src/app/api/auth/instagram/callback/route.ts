@@ -53,43 +53,37 @@ export async function GET(req: NextRequest) {
 
   // 1. Exchange code for short-lived token
   const tokenRes = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`,
+    `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`
   );
   const tokenData = await tokenRes.json();
-
-  if (!tokenData.access_token) {
-    console.error('[Instagram Callback] Token exchange failed:', tokenData);
-    return redirectError(appUrl, 'token_exchange_failed');
+  if (!tokenRes.ok || !tokenData.access_token) {
+    return redirectError(appUrl, tokenData.error?.message || 'token_exchange_failed');
   }
 
   // 2. Exchange for long-lived token
   const longLivedRes = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${tokenData.access_token}`,
+    `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${tokenData.access_token}`
   );
   const longLivedData = await longLivedRes.json();
-
   if (!longLivedRes.ok || !longLivedData.access_token) {
-    console.error('[Instagram Callback] Long-lived token exchange failed:', longLivedData);
-    return redirectError(appUrl, 'token_refresh_failed');
+    return redirectError(appUrl, longLivedData.error?.message || 'token_refresh_failed');
   }
   const userToken = longLivedData.access_token;
 
   // 3. Get user's Facebook Pages
   const pagesRes = await fetch(
-    `https://graph.facebook.com/v19.0/me/accounts?access_token=${userToken}&fields=id,name,access_token,instagram_business_account`,
+    `https://graph.facebook.com/v21.0/me/accounts?access_token=${userToken}&fields=id,name,access_token,instagram_business_account`
   );
   const pagesData = await pagesRes.json();
-
-  if (pagesData.error) {
-    console.error('[Instagram Callback] Failed to fetch pages:', pagesData.error);
-    return redirectError(appUrl, 'pages_fetch_failed');
+  if (!pagesRes.ok || !Array.isArray(pagesData.data)) {
+    return redirectError(appUrl, pagesData.error?.message || 'pages_fetch_failed');
   }
 
   // 4. Get FB user profile
-  const profileRes = await fetch(
-    `https://graph.facebook.com/v19.0/me?access_token=${userToken}&fields=id,name`,
+  const userRes = await fetch(
+    `https://graph.facebook.com/v21.0/me?access_token=${userToken}&fields=id,name`
   );
-  const profileData = await profileRes.json();
+  const profileData = await userRes.json();
   const fbUserId = profileData?.id ? String(profileData.id) : null;
 
   if (!fbUserId) {
@@ -128,7 +122,7 @@ export async function GET(req: NextRequest) {
 
     // 5. Fetch Instagram Business Account details
     const igRes = await fetch(
-      `https://graph.facebook.com/v19.0/${igAccount.id}?fields=id,username,name,profile_picture_url,followers_count,media_count&access_token=${page.access_token}`,
+      `https://graph.facebook.com/v21.0/${igAccount.id}?fields=id,username,name,profile_picture_url,followers_count,media_count&access_token=${page.access_token}`,
     );
     const igData = await igRes.json();
 

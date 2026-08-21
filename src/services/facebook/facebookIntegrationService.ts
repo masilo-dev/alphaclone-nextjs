@@ -193,6 +193,34 @@ export async function upsertFacebookIntegration(params: {
     error = legacy.error;
   }
 
+  // Fallback: If PostgREST upsert fails due to missing DB unique constraint (SQL 42P10), perform explicit lookup then update or insert
+  if (error) {
+    let q = admin.from('facebook_integrations').select('id').eq('user_id', params.userId).eq('page_id', params.pageId);
+    if (params.tenantId) {
+      q = q.eq('tenant_id', params.tenantId);
+    }
+    const { data: existing } = await q.maybeSingle();
+
+    if (existing?.id) {
+      const upd = await admin
+        .from('facebook_integrations')
+        .update(row)
+        .eq('id', existing.id)
+        .select('id')
+        .single();
+      data = upd.data;
+      error = upd.error;
+    } else {
+      const ins = await admin
+        .from('facebook_integrations')
+        .insert(row)
+        .select('id')
+        .single();
+      data = ins.data;
+      error = ins.error;
+    }
+  }
+
   if (error || !data?.id) return { integrationId: null, error: error?.message || 'upsert failed' };
   const integrationId = String(data.id);
   await writeSecrets(admin, integrationId, {
@@ -205,7 +233,7 @@ export async function upsertFacebookIntegration(params: {
 export async function revokeFacebookPermissions(userAccessToken: string): Promise<void> {
   if (!userAccessToken) return;
   await fetch(
-    `https://graph.facebook.com/v19.0/me/permissions?access_token=${encodeURIComponent(userAccessToken)}`,
+    `https://graph.facebook.com/v21.0/me/permissions?access_token=${encodeURIComponent(userAccessToken)}`,
     { method: 'DELETE' }
   ).catch(() => undefined);
 }

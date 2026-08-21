@@ -190,7 +190,7 @@ async function handleFacebookAction(tenantId: string, action: string, config: an
         }
 
         const leadsResponse = await fetch(
-          `https://graph.facebook.com/v18.0/${integration.page_id}/leadgen_forms?access_token=${integration.pageAccessToken}`
+          `https://graph.facebook.com/v21.0/${integration.page_id}/leadgen_forms?access_token=${integration.pageAccessToken}`
         );
         
         const leadsData = await leadsResponse.json();
@@ -549,7 +549,7 @@ async function testSlackIntegration(webhookUrl: string) {
 async function testFacebookIntegration(accessToken: string) {
   try {
     const response = await fetch(
-      `https://graph.facebook.com/v18.0/me?access_token=${accessToken}&fields=id,name`
+      `https://graph.facebook.com/v21.0/me?access_token=${accessToken}&fields=id,name`
     );
     
     const data = await response.json();

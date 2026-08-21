@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
-import { clientErrorResponse } from '@/lib/api/clientErrorResponse';
 import { publicAppUrl } from '@/lib/config/public-origin';
 import { ENV } from '@/config/env';
 import {
@@ -11,6 +10,12 @@ import {
 
 export const runtime = 'nodejs';
 
+function redirectWithError(reason: string) {
+  return NextResponse.redirect(
+    publicAppUrl(`/dashboard/settings?tab=booking&error=${encodeURIComponent(reason)}`)
+  );
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
@@ -19,24 +24,35 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('[cal/callback] OAuth error from Cal.com:', error);
-    return NextResponse.redirect(
-      publicAppUrl(`/dashboard/settings?tab=booking&error=${encodeURIComponent(error)}`)
-    );
+    return redirectWithError(error);
   }
 
   if (!code || !state) {
-    return NextResponse.json({ error: 'Missing code or state' }, { status: 400 });
+    return redirectWithError('Missing authorization code or state');
   }
 
   const admin = createSupabaseAdminClient();
 
   // Consume and validate the state nonce (10-minute window)
-  const { data: stateData, error: stateError } = await admin
+  let { data: stateData, error: stateError } = await admin
     .from('oauth_states')
     .delete()
     .eq('id', state)
     .select('user_id, tenant_id, metadata, created_at')
     .single();
+
+  if (stateError || !stateData) {
+    const { data: maybeState } = await admin
+      .from('oauth_states')
+      .select('user_id, tenant_id, metadata, created_at')
+      .eq('id', state)
+      .maybeSingle();
+    if (maybeState) {
+      stateData = maybeState;
+      stateError = null;
+      await admin.from('oauth_states').delete().eq('id', state);
+    }
+  }
 
   const stateCreatedAt = stateData?.created_at
     ? new Date(stateData.created_at).getTime()
@@ -50,10 +66,8 @@ export async function GET(req: NextRequest) {
     !stateCreatedAt ||
     Date.now() - stateCreatedAt > 10 * 60_000
   ) {
-    return NextResponse.json(
-      { error: 'Invalid or expired OAuth state — please try connecting again' },
-      { status: 400 }
-    );
+    console.error('[cal/callback] Invalid or expired state:', { state, stateError, stateData });
+    return redirectWithError('Invalid or expired OAuth state — please try connecting again');
   }
 
   const tenantId = stateData.tenant_id;
@@ -100,6 +114,7 @@ export async function GET(req: NextRequest) {
     );
   } catch (err: unknown) {
     console.error('[cal/callback] Error:', err);
-    return clientErrorResponse(err, { request: req, scope: 'auth/cal/callback' });
+    const msg = err instanceof Error ? err.message : 'calcom_callback_failed';
+    return redirectWithError(msg);
   }
 }
