@@ -242,6 +242,7 @@ export function initializeRegistry() {
   loadToolModule(() => require('./tools/platform-ops'), './tools/platform-ops');
   loadToolModule(() => require('./tools/bonnie-inspect'), './tools/bonnie-inspect');
   loadToolModule(() => require('./tools/crm-ops'), './tools/crm-ops');
+  loadToolModule(() => require('./tools/bulk-operations'), './tools/bulk-operations');
   loadToolModule(() => require('./tools/social-ops'), './tools/social-ops');
   loadToolModule(() => require('./tools/marketing-ops'), './tools/marketing-ops');
   loadToolModule(() => require('./tools/sales-ops'), './tools/sales-ops');

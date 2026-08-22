@@ -102,6 +102,11 @@ import { routeAIRequest } from '../aiRouter';
 import { resolveMcpEmailRecipient } from '../../lib/email/resolveMcpEmailRecipient';
 import { resolveEmailAttachmentsFromFileIds } from '../../lib/files/resolveEmailAttachments';
 import { resolveEmailTemplateVars } from '../../lib/email/resolveEmailTemplateVars';
+import {
+  executeBulkEmail,
+  executeBulkUpdateRecords,
+  executeBulkUploadMedia,
+} from '../../lib/mcp/bulkOperations';
 
 
 const UUID_RE =
@@ -6329,6 +6334,33 @@ class AlphaCloneMCPServer {
             .single();
           if (error) throw supabaseErrorToMcpClientError('unsubscribe_event', error.message);
           result = { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+          break;
+        }
+
+        case 'bulk_update_records': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const output = await executeBulkUpdateRecords(a as any, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: safeJsonText(output) }] };
+          break;
+        }
+
+        case 'bulk_upload_media': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const output = await executeBulkUploadMedia(a as any, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: safeJsonText(output) }] };
+          break;
+        }
+
+        case 'send_bulk_email': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const user_id = this.requireProfileUser(a);
+          const output = await executeBulkEmail(a as any, { tenantId: tenant_id, userId: user_id });
+          result = { content: [{ type: 'text', text: safeJsonText(output) }] };
           break;
         }
 

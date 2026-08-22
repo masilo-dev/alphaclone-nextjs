@@ -2246,6 +2246,58 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'bulk_update_records',
+    description: 'Safely simulate or apply one common patch to up to 250 leads, clients, contacts, invoices, projects, or tasks. Dry run is the default; execution requires explicit confirmation and idempotency.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        record_type: { type: 'string', enum: ['lead', 'client', 'contact', 'invoice', 'project', 'task'] },
+        record_ids: { type: 'array', items: { type: 'string' }, maxItems: 250 },
+        patch: { type: 'object', description: 'One shared patch; supported fields depend on record_type.' },
+        dry_run: { type: 'boolean', description: 'Default true. Returns the proposed changes without writing.' },
+        confirm_execute: { type: 'boolean', description: 'Must be true when dry_run is false.' },
+        idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
+        reason: { type: 'string' },
+      },
+      required: ['record_type', 'record_ids', 'patch'],
+    },
+  },
+  {
+    name: 'bulk_upload_media',
+    description: 'Ingest up to 50 image, video, or document inputs into permanent tenant storage with per-item receipts. Does not publish content.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        files: { type: 'array', maxItems: 50, items: { type: 'object' } },
+      },
+      required: ['files'],
+    },
+  },
+  {
+    name: 'send_bulk_email',
+    description: 'Safely simulate or send one message to up to 100 unique lead, contact, or client recipients. Dry run is the default; sending requires confirm_send and idempotency.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lead_ids: { type: 'array', maxItems: 100, items: { type: 'string' } },
+        contact_ids: { type: 'array', maxItems: 100, items: { type: 'string' } },
+        client_ids: { type: 'array', maxItems: 100, items: { type: 'string' } },
+        subject: { type: 'string' },
+        text: { type: 'string' },
+        html: { type: 'string' },
+        provider: { type: 'string', enum: ['zoho', 'brevo', 'gmail', 'outlook', 'resend', 'sendgrid'] },
+        from_name: { type: 'string' },
+        dry_run: { type: 'boolean', description: 'Default true. Returns recipient preview without sending.' },
+        confirm_send: { type: 'boolean', description: 'Must be true when dry_run is false.' },
+        idempotency_key: { type: 'string', description: 'Required when dry_run is false.' },
+      },
+      required: ['subject'],
+    },
+  },
+  {
     name: 'get_quotes',
     description: 'Read-only: List quotes and proposals with their statuses.',
     inputSchema: {

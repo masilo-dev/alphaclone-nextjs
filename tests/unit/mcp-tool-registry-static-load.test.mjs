@@ -20,6 +20,7 @@ describe("mcp tool-registry production loading", () => {
     const source = readFileSync(registryPath, "utf8");
     assert.match(source, /require\('\.\/tools\/platform-ops'\)/);
     assert.match(source, /require\('\.\/tools\/document-os'\)/);
+    assert.match(source, /require\('\.\/tools\/bulk-operations'\)/);
     assert.match(source, /require\('\.\/tools\/social-publishing'\)/);
     assert.doesNotMatch(
       source,
@@ -39,5 +40,8 @@ describe("mcp tool-registry production loading", () => {
     assert.equal(hasTool("search_leads"), true);
     assert.equal(hasTool("get_social_identities"), true);
     assert.equal(hasTool("publish_post"), true);
+    assert.equal(hasTool("bulk_update_records"), true);
+    assert.equal(hasTool("bulk_upload_media"), true);
+    assert.equal(hasTool("send_bulk_email"), true);
   });
 });
