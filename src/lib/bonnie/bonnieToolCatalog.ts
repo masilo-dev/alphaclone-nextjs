@@ -81,6 +81,9 @@ export const BONNIE_MCP_SERVER_TOOLS = [
 ] as const;
 
 export const BONNIE_CUSTOM_TOOLS = [
+  'get_daily_operations_summary',
+  'get_tenant_activity_timeline',
+  'get_unreplied_emails_and_sla_risks',
   'delegate_to_hermes',
   'run_autonomous_scan',
   'summarize_workspace',
@@ -133,7 +136,7 @@ export const BONNIE_MODULE_HINTS: Record<
 > = {
   crm: {
     label: 'CRM',
-    tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity', 'client_pulse', 'owner_autopilot_queue', 'revenue_recovery_agent'],
+    tools: ['get_contacts', 'create_contact', 'get_clients', 'log_contact_activity', 'client_pulse', 'owner_autopilot_queue', 'revenue_recovery_agent', 'get_tenant_activity_timeline'],
     examples: ['Show my top contacts', 'Which clients need attention?', 'Recover overdue invoice cash'],
   },
   leads: {
@@ -200,8 +203,8 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   mail: {
     label: 'Mail',
-    tools: ['microsoft_get_emails', 'microsoft_send_email', 'send_bulk_email_campaign'],
-    examples: ['Summarize unread mail', 'Send follow-up email to client'],
+    tools: ['microsoft_get_emails', 'microsoft_send_email', 'send_bulk_email_campaign', 'get_unreplied_emails_and_sla_risks'],
+    examples: ['Summarize unread mail', 'Send follow-up email to client', 'Check SLA risks'],
   },
   accounting: {
     label: 'Accounting',
@@ -262,13 +265,13 @@ export const BONNIE_MODULE_HINTS: Record<
   },
   inbox: {
     label: 'Unified inbox',
-    tools: ['microsoft_get_emails', 'search_email_lead_context', 'draft_reply', 'get_recent_messages'],
-    examples: ['Who is this email from?', 'Draft reply to latest client email'],
+    tools: ['microsoft_get_emails', 'search_email_lead_context', 'draft_reply', 'get_recent_messages', 'get_unreplied_emails_and_sla_risks'],
+    examples: ['Who is this email from?', 'Draft reply to latest client email', 'Check unreplied emails'],
   },
   analytics: {
     label: 'Analytics',
-    tools: ['get_dashboard_stats', 'get_revenue_summary', 'get_api_health', 'get_business_snapshot'],
-    examples: ['How is the business performing?', 'Revenue this month vs last'],
+    tools: ['get_dashboard_stats', 'get_revenue_summary', 'get_api_health', 'get_business_snapshot', 'get_daily_operations_summary'],
+    examples: ['How is the business performing?', 'Revenue this month vs last', 'What happened in my business today?'],
   },
   automation: {
     label: 'Automation',
@@ -278,6 +281,9 @@ export const BONNIE_MODULE_HINTS: Record<
   general: {
     label: 'Workspace',
     tools: [
+      'get_daily_operations_summary',
+      'get_tenant_activity_timeline',
+      'get_unreplied_emails_and_sla_risks',
       'get_account_overview',
       'delegate_to_hermes',
       'get_integration_health',
@@ -294,6 +300,7 @@ export const BONNIE_MODULE_HINTS: Record<
       'start_contract_lifecycle',
     ],
     examples: [
+      'What happened in my business today?',
       'Give me full account overview',
       'Run full workspace scan',
       'Give me chief of staff briefing',

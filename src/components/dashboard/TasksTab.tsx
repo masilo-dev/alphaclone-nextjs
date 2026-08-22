@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { StandardStatusBadge, resolveStatusVariant } from '@/components/ui/design-system';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { TASKS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
 
 type Priority = 'low' | 'medium' | 'high';
 type TaskStatus = 'todo' | 'in_progress' | 'completed';
@@ -787,6 +788,40 @@ const TasksTab: React.FC<TasksTabProps> = ({ user }) => {
         header={(
           <div className="px-4 pt-2 space-y-2.5">
             <OperationalWorkflowStrip moduleId="projects" userRole={user.role} />
+            <UniversalModuleExecutionHeader
+              moduleName="Task Execution"
+              recordTitle="Work Queue & Commitment Tracking"
+              nextActionState={{
+                currentState: `${taskDecision.active} open · ${taskDecision.inProgress} in-progress · ${taskDecision.completionRate}% done`,
+                owner: user.name || user.email || 'Task Owner',
+                nextAction: taskDecision.overdueHigh > 0
+                  ? `Resolve ${taskDecision.overdueHigh} high-priority overdue task(s) first`
+                  : taskDecision.dueToday > 0
+                    ? `Complete ${taskDecision.dueToday} task(s) due today`
+                    : 'Review backlog and advance in-progress items',
+                deadline: taskDecision.overdue > 0 ? `${taskDecision.overdue} overdue` : 'On schedule',
+                blocker: taskDecision.inProgress === 0 && taskDecision.active > 0 ? 'Nothing in-progress — work is stalled' : null,
+                expectedOutcome: 'All due-today tasks completed, zero high-priority overdue',
+                outcomeStatus: taskDecision.overdue === 0 && taskDecision.active > 0 ? 'verified' : 'pending',
+                verifiedResult: taskDecision.overdue === 0
+                  ? `${taskDecision.completed} tasks completed at ${taskDecision.completionRate}% rate`
+                  : `${taskDecision.overdue} overdue (${taskDecision.overdueHigh} high-priority) requires action`,
+                authorityLevel: 'automatic_logged',
+              }}
+              questions={{
+                whatCameIn: taskDecision.bonnie.whatChanged[0] || 'Task queue data',
+                whatDoesItMean: taskDecision.bonnie.whyItMatters[0] || 'Active work commitments',
+                whatShouldHappen: taskDecision.bonnie.whatToDo[0] || 'Execute highest-priority tasks',
+                whoOwnsIt: user.name || user.email || 'Task Owner',
+                canAlphaCloneAct: 'automatic_logged',
+                whatActuallyHappened: `${taskDecision.active} active tasks, ${taskDecision.dueToday} due today, ${taskDecision.inProgress} in-progress`,
+                didItProduceExpectedOutcome: taskDecision.overdue === 0 ? 'YES' : 'BLOCKED',
+                whatHappensNext: taskDecision.overdueHigh > 0
+                  ? `Clear ${taskDecision.overdueHigh} high-priority overdue items then re-assess backlog`
+                  : 'Continue current task cadence, maintain completion velocity',
+              }}
+              onExecuteNextAction={() => setCreateOpen(true)}
+            />
             <ExecutionDecisionGuide
               steps={TASKS_EXECUTION_STEPS}
               onNavigate={(href) => router.push(href)}

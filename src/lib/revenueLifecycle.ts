@@ -62,6 +62,8 @@ export type RevenueLeakageInput = {
     leads: Array<{ id: string; status?: string; stage?: string; created_at?: string }>;
     recentSocialPostCount: number;
     sentCampaignCount: number;
+    decisions?: Array<{ id: string; tool_name?: string; outcome?: string; created_at?: string }>;
+    unlinkedMeetingActionsCount?: number;
 };
 
 function dealIdsWithQuotes(quotes: RevenueLeakageInput['quotes']): Set<string> {
@@ -270,6 +272,18 @@ export function computeRevenueLeakage(input: RevenueLeakageInput): CrmNextStepIt
             detail: 'Outreach without a place to land replies wastes spend. Capture submissions and convert to deals within 48 hours.',
             actionLabel: 'Submissions',
             href: '/dashboard/business/contact-submissions',
+        });
+    }
+
+    // Unlinked meeting decisions / actions
+    if (input.unlinkedMeetingActionsCount && input.unlinkedMeetingActionsCount > 0) {
+        items.push({
+            id: 'leak-unlinked-meeting-actions',
+            tone: 'urgent',
+            title: `${input.unlinkedMeetingActionsCount} meeting decision(s) unassigned to projects`,
+            detail: 'Meeting commitments must produce structured, traceable tasks with assigned owners.',
+            actionLabel: 'Calendar & Meetings',
+            href: '/dashboard/calendar',
         });
     }
 

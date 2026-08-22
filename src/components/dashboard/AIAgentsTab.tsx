@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
 
 type PlaybookStatus = 'idle' | 'running' | 'success' | 'failed' | 'skipped';
 
@@ -339,7 +340,55 @@ const AIAgentsTab: React.FC = () => {
   }
 
   return (
-    <div className="overflow-y-auto pb-24 space-y-6 px-4 pt-4">
+    <div className="overflow-y-auto pb-24 space-y-4 px-4 pt-4">
+
+      {/* Universal Execution Header */}
+      <UniversalModuleExecutionHeader
+        moduleName="AI Agents & Autonomous Execution"
+        recordTitle="Nexus Playbook Orchestration & Decision Automation"
+        nextActionState={{
+          currentState: rules.enabled
+            ? (rules.auto_send_enabled ? 'SOVEREIGN AUTOPILOT ENGAGED' : `Active — ${runs.length} runs logged`)
+            : 'DISABLED — No autonomous execution',
+          owner: 'AlphaClone Nexus Orchestrator',
+          nextAction: pendingApprovalsCount > 0
+            ? `Review and resolve ${pendingApprovalsCount} pending approval(s)`
+            : 'Trigger Nexus Sync to execute all playbooks',
+          deadline: pendingApprovalsCount > 0 ? 'Action required — approvals blocking pipeline' : 'Continuous / Event-driven',
+          blocker: !rules.enabled
+            ? 'Autonomous execution is disabled'
+            : failures > 0
+              ? `${failures} execution failure(s) detected — check logs`
+              : null,
+          expectedOutcome: 'All playbooks executed successfully — leads scored, deals triaged, invoices escalated',
+          outcomeStatus: failures === 0 && runs.length > 0 ? 'verified' : 'pending',
+          verifiedResult: runs.length > 0
+            ? `${successRate}% success rate across ${runs.length} total runs · ${completedRuns.length} completed`
+            : 'No runs recorded yet — trigger first sync',
+          authorityLevel: rules.auto_send_enabled
+            ? 'automatic'
+            : rules.high_risk_approval_required
+              ? 'approval_required'
+              : 'automatic_logged',
+        }}
+        questions={{
+          whatCameIn: `${runs.length} autonomous execution runs · ${pendingApprovalsCount} actions pending approval · ${PLAYBOOKS.length} active playbooks`,
+          whatDoesItMean: 'Business automation events requiring execution, gate review, or escalation across CRM, billing, and social channels',
+          whatShouldHappen: pendingApprovalsCount > 0
+            ? `Resolve ${pendingApprovalsCount} queued action(s) — approve or reject within SLA`
+            : 'System is healthy — trigger next scheduled sync or wait for event-driven triggers',
+          whoOwnsIt: 'AlphaClone Nexus Orchestrator (Founder Override Available)',
+          canAlphaCloneAct: rules.auto_send_enabled ? 'automatic' : 'approval_required',
+          whatActuallyHappened: `${completedRuns.length} completed runs · ${failures} failures · ${pendingApprovalsCount} held for approval`,
+          didItProduceExpectedOutcome: failures === 0 ? 'YES' : 'PARTIALLY',
+          whatHappensNext: failures > 0
+            ? 'Investigate failed playbook steps in Execution Logs tab'
+            : pendingApprovalsCount > 0
+              ? 'Approve or reject queued actions to continue pipeline flow'
+              : 'Continue monitoring — next trigger will execute automatically',
+        }}
+        onExecuteNextAction={triggerAutonomousRunner}
+      />
 
       {/* Primary Global Action Board */}
       <div className={`bg-gradient-to-r ${rules.auto_send_enabled ? 'from-amber-950/20 via-purple-950/20 to-slate-900 border-amber-500/25' : 'from-purple-900/40 to-slate-900 border-purple-500/10'} border rounded-3xl p-5 relative overflow-hidden`}>

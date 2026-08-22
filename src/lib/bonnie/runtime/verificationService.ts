@@ -170,3 +170,145 @@ export async function verifyTaskSideEffect(params: {
   }
   return { ok: true, detail: `Found ${refs.length} provider reference(s)` };
 }
+
+/**
+ * Business Outcome Verification
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Asserts that a completed agent task produced a **verifiable business effect**,
+ * not just a technical HTTP 200 response.
+ *
+ * verification_tier:
+ *   'technical'  → tool returned success (necessary but not sufficient)
+ *   'provider'   → external provider reference recorded (e.g. LinkedIn post ID)
+ *   'db_state'   → downstream DB record reached the expected state
+ *   'delivery'   → confirmed read/delivery signal from provider
+ */
+export type OutcomeVerificationTier =
+  | 'technical'
+  | 'provider'
+  | 'db_state'
+  | 'delivery';
+
+export type BusinessOutcomeResult = {
+  taskId: string;
+  tier: OutcomeVerificationTier;
+  verified: boolean;
+  detail: string;
+};
+
+/**
+ * Verify a task produced a real business outcome beyond a technical success flag.
+ * Maps task_type to the appropriate evidence check.
+ */
+export async function verifyBusinessOutcome(params: {
+  tenantId: string;
+  taskId: string;
+  taskType?: string;
+  structuredOutput?: Record<string, unknown>;
+}): Promise<BusinessOutcomeResult> {
+  const admin = createSupabaseAdminClient();
+  const { tenantId, taskId, taskType, structuredOutput } = params;
+
+  // 1. Social / outreach publishing — require provider external reference
+  if (
+    taskType === 'communicate' ||
+    taskType === 'publish' ||
+    (structuredOutput?.tool_name as string | undefined)?.startsWith('publish_')
+  ) {
+    const { data: refs } = await admin
+      .from('agent_external_references')
+      .select('id, provider, external_id')
+      .eq('tenant_id', tenantId)
+      .eq('task_id', taskId)
+      .limit(1);
+
+    if (!refs?.length) {
+      return {
+        taskId,
+        tier: 'technical',
+        verified: false,
+        detail: 'Social/outreach tool returned success but no provider post ID was recorded. Technical 200 ≠ published.',
+      };
+    }
+    return {
+      taskId,
+      tier: 'provider',
+      verified: true,
+      detail: `Provider ${refs[0].provider} confirmed with external ID ${refs[0].external_id}.`,
+    };
+  }
+
+  // 2. Invoice / billing — require invoice row in terminal state
+  if (taskType === 'billing' || (structuredOutput?.tool_name as string | undefined)?.includes('invoice')) {
+    const invoiceId = structuredOutput?.invoice_id as string | undefined;
+    if (invoiceId) {
+      const { data: invoice } = await admin
+        .from('invoices')
+        .select('id, status')
+        .eq('tenant_id', tenantId)
+        .eq('id', invoiceId)
+        .maybeSingle();
+
+      if (!invoice) {
+        return { taskId, tier: 'technical', verified: false, detail: `Invoice ${invoiceId} not found in DB.` };
+      }
+      const terminalStates = ['sent', 'paid', 'overdue', 'cancelled'];
+      const isTerminal = terminalStates.includes(invoice.status);
+      return {
+        taskId,
+        tier: 'db_state',
+        verified: isTerminal,
+        detail: isTerminal
+          ? `Invoice ${invoiceId} is in state: ${invoice.status}.`
+          : `Invoice ${invoiceId} still in draft state. Was it actually sent?`,
+      };
+    }
+  }
+
+  // 3. Contract — require contract row in non-draft state
+  if (taskType === 'contract' || (structuredOutput?.tool_name as string | undefined)?.includes('contract')) {
+    const contractId = structuredOutput?.contract_id as string | undefined;
+    if (contractId) {
+      const { data: contract } = await admin
+        .from('contracts')
+        .select('id, status')
+        .eq('tenant_id', tenantId)
+        .eq('id', contractId)
+        .maybeSingle();
+
+      if (!contract) {
+        return { taskId, tier: 'technical', verified: false, detail: `Contract ${contractId} not found in DB.` };
+      }
+      const actionStates = ['sent', 'signed', 'countered', 'accepted', 'active'];
+      const isActioned = actionStates.includes(contract.status);
+      return {
+        taskId,
+        tier: 'db_state',
+        verified: isActioned,
+        detail: isActioned
+          ? `Contract ${contractId} is in state: ${contract.status}.`
+          : `Contract ${contractId} still in draft/pending. No business action confirmed.`,
+      };
+    }
+  }
+
+  // 4. General specialist tasks — fall back to provider ref check
+  const { data: refs } = await admin
+    .from('agent_external_references')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('task_id', taskId)
+    .limit(1);
+
+  if (refs?.length) {
+    return { taskId, tier: 'provider', verified: true, detail: 'Provider reference recorded.' };
+  }
+
+  // Fallback: cannot verify beyond technical execution
+  return {
+    taskId,
+    tier: 'technical',
+    verified: false,
+    detail: 'No downstream business evidence found. Tool may have succeeded technically but outcome is unverified.',
+  };
+}

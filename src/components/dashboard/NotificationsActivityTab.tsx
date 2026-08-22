@@ -36,19 +36,29 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
         notificationService.getNotifications(user.id, tenantId),
         supabase
           .from('audit_logs')
-          .select('action, entity_type, created_at, metadata')
+          .select('action, entity_type, created_at, metadata, severity')
           .eq('tenant_id', tenantId)
           .order('created_at', { ascending: false })
-          .limit(25),
+          .limit(30),
       ]);
 
       if (loaded) setNotifications(loaded);
 
-      const feed: DashboardFeedItem[] = (activityRes.data || []).map((row: any) => ({
-        dot: '#14b8a6',
-        text: `${row.action || row.entity_type}${row.metadata?.name ? `: ${row.metadata.name}` : ''}`,
-        time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
-      }));
+      const feed: DashboardFeedItem[] = (activityRes.data || []).map((row: any) => {
+        const meta = row.metadata || {};
+        const isFailure = row.severity === 'high' || meta.status === 'failed' || meta.status === 'blocked';
+        const isAtRisk = meta.status === 'at_risk';
+
+        const eventTitle = meta.event || row.action || row.entity_type;
+        const actorName = meta.actor ? ` (${meta.actor})` : '';
+        const resultText = meta.result ? ` — ${meta.result}` : '';
+
+        return {
+          dot: isFailure ? '#f43f5e' : isAtRisk ? '#f59e0b' : '#14b8a6',
+          text: `${eventTitle}${actorName}${resultText}`,
+          time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
+        };
+      });
       setActivity(feed);
     } finally {
       setLoading(false);
@@ -162,7 +172,7 @@ export function NotificationsActivityTab({ user }: NotificationsActivityTabProps
           <div className={`p-4 ${WORKSPACE.panel.base} ${WORKSPACE.panel.radius}`}>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-teal-400" />
-              <span className="text-sm font-semibold text-white">Activity timeline</span>
+              <span className="text-sm font-semibold text-white">Business activity timeline</span>
             </div>
             <ActivityFeed items={activity} title="" subtitle="" />
           </div>

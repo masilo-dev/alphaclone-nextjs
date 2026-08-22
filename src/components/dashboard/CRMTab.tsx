@@ -55,6 +55,8 @@ import { Input } from '../ui/UIComponents';
 import { isValidEmail } from '@/lib/email/isValidEmail';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { ModuleFrame, RecordHeader, AskBonnieButton } from '@/components/ui/os';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
+import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { CRM_WORKSPACE_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
@@ -2211,6 +2213,32 @@ const CRMTab: React.FC<CRMTabProps> = ({ user }) => {
                 <CrmSyncToolbar />
               </div>
             </div>
+            <UniversalModuleExecutionHeader
+              moduleName="CRM & Relationship Management"
+              recordTitle="Customer Lifecycle & Lead Qualification Pipeline"
+              nextActionState={{
+                currentState: subView === 'leads' ? 'Leads Pipeline' : subView === 'clients' ? 'Client Accounts' : 'Contact Directory',
+                owner: user.name || user.email || 'CRM Team Lead',
+                nextAction: 'Qualify inbound leads → Move to Deals pipeline → Engage contacts',
+                deadline: '24-hour SLA response',
+                blocker: totalLeadsCount === 0 ? 'No active leads in pipeline' : null,
+                expectedOutcome: 'Converted leads into qualified sales opportunities & client accounts',
+                outcomeStatus: activeClientsCount > 0 ? 'verified' : 'pending',
+                verifiedResult: activeClientsCount > 0 ? `${activeClientsCount} active clients ($${totalClientValue.toLocaleString()})` : 'Awaiting conversion verification',
+                authorityLevel: 'automatic_logged',
+              }}
+              questions={{
+                whatCameIn: `Inbound leads and client relationship records (${totalLeadsCount} active leads, ${activeClientsCount} clients)`,
+                whatDoesItMean: 'Prospects and clients requiring systematic outreach, qualification, and relationship nurturing',
+                whatShouldHappen: 'Outreach via email/phone, qualification, and stage progression to deals pipeline',
+                whoOwnsIt: user.name || user.email || 'CRM Team Lead',
+                canAlphaCloneAct: 'automatic_logged',
+                whatActuallyHappened: `${totalLeadsCount} leads processed across status stages`,
+                didItProduceExpectedOutcome: activeClientsCount > 0 ? 'YES' : 'IN_PROGRESS',
+                whatHappensNext: 'Advance qualified leads to pipeline deals or schedule follow-up outreach',
+              }}
+              onExecuteNextAction={() => setIsCreateOpen(true)}
+            />
             <ExecutionDecisionGuide
               steps={CRM_WORKSPACE_EXECUTION_STEPS}
               onNavigate={(href) => router.push(href)}

@@ -17,6 +17,37 @@
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
+/**
+ * Tools that carry irreversible financial, legal, or public-reputation consequences.
+ * These always require admin approval — no auto_send bypass is permitted.
+ */
+export const CRITICAL_CONSEQUENCE_TOOLS = new Set<string>([
+  // Contracts
+  'sign_contract',
+  'send_contract',
+  'counter_contract',
+  'void_contract',
+  'approve_contract',
+  // Billing
+  'charge_invoice',
+  'issue_refund',
+  'write_off_invoice',
+  'create_invoice',
+  'send_invoice',
+  // Social / public comms
+  'publish_post',
+  'publish_linkedin_post',
+  'publish_facebook_post',
+  'publish_instagram_post',
+  'send_mass_email',
+  'launch_campaign',
+  // Destructive data ops
+  'delete_contact',
+  'delete_project',
+  'delete_deal',
+  'bulk_delete',
+]);
+
 export type RiskDecision =
   | 'auto_execute'
   | 'require_approval'
@@ -35,8 +66,15 @@ export type BonnieRulePolicy = {
  */
 export function evaluateRiskPolicy(
   riskLevel: string | undefined | null,
-  rules: BonnieRulePolicy
+  rules: BonnieRulePolicy,
+  toolName?: string
 ): RiskDecision {
+  // Hard gate: critical-consequence tools always require admin approval,
+  // regardless of auto_send_enabled or risk_level classification.
+  if (toolName && CRITICAL_CONSEQUENCE_TOOLS.has(toolName)) {
+    return 'require_admin_approval';
+  }
+
   const level = (riskLevel || 'medium').toLowerCase() as RiskLevel;
 
   switch (level) {
@@ -57,6 +95,22 @@ export function evaluateRiskPolicy(
       // Unknown risk level → treat conservatively as medium
       return 'require_approval';
   }
+}
+
+/**
+ * Derive a risk level from a tool name alone, useful when the caller has no
+ * explicit risk classification from the action row.
+ */
+export function classifyToolRisk(toolName: string): RiskLevel {
+  if (CRITICAL_CONSEQUENCE_TOOLS.has(toolName)) return 'critical';
+  if (
+    toolName.startsWith('send_') ||
+    toolName.startsWith('publish_') ||
+    toolName.startsWith('charge_') ||
+    toolName.startsWith('delete_')
+  ) return 'high';
+  if (toolName.startsWith('create_') || toolName.startsWith('update_')) return 'medium';
+  return 'low';
 }
 
 /**

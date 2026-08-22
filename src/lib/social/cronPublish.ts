@@ -387,6 +387,28 @@ export async function publishSocialPost(postId: string) {
       status: "failed",
       error_message: message,
     });
+
+    const { dispatchBusinessNotification } = await import("@/lib/notifications/businessNotificationEngine");
+    await dispatchBusinessNotification({
+      tenantId: post.tenant_id,
+      level: "level3_urgent_email",
+      type: "social_publishing",
+      title: "Social Media Post Publication Failed",
+      message: `Failed to publish post to social channels (${message}).`,
+      actionUrl: `/dashboard/social/posts?id=${postId}`,
+      topic: "Social Publishing Failure",
+      actionRequired: "Check social channel authorization or content formatting.",
+      responsibleRole: "operations_owner",
+      actorName: "System Publishing Automation",
+      businessContext: "Scheduled social media broadcast failed.",
+      relatedRecordType: "social_post",
+      relatedRecordId: postId,
+      result: `Publishing failed: ${message}`,
+      status: "failed",
+      nextAction: "Reconnect social media token or modify post content.",
+      technicalDetails: { failures: failed },
+    }).catch((err) => console.error("[cron/social-publish] notification dispatch failed:", err));
+
     return;
   }
 

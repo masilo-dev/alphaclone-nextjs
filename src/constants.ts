@@ -97,6 +97,7 @@ export const CLIENT_NAV_ITEMS: NavItem[] = [
 // --- ADMIN NAVIGATION ---
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Operations Command', href: '/dashboard/operations', icon: Activity },
   { label: 'Tenants', href: '/dashboard/admin/tenants', icon: Users },
   { label: 'Ops & logs', href: '/dashboard/admin/operations', icon: Activity },
   { label: 'Pre-customer review', href: '/dashboard/admin/improvements', icon: Zap },
@@ -132,6 +133,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 // --- TENANT_ADMIN NAVIGATION (purpose groups: Customers → Settings + Bonnie) ---
 export const TENANT_ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Home', href: '/dashboard', icon: Zap },
+  { label: 'Operations Command', href: '/dashboard/operations', icon: Activity },
 
   {
     label: 'Relationships',

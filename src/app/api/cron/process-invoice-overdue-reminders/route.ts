@@ -52,6 +52,29 @@ async function processInvoiceOverdueReminders() {
                 eventData: { from: invoice.status, to: 'overdue', reason: 'past_due_date' },
                 performedBy: 'system',
             });
+
+            // Dispatch Level 3 Business Notification & Activity Record
+            const { dispatchBusinessNotification } = await import('@/lib/notifications/businessNotificationEngine');
+            await dispatchBusinessNotification({
+                tenantId: invoice.tenant_id,
+                level: 'level3_urgent_email',
+                type: 'finance',
+                title: `Invoice #${invoice.invoice_number} is Overdue`,
+                message: `Invoice #${invoice.invoice_number} has passed its due date (${invoice.due_date}) and requires immediate follow-up.`,
+                actionUrl: `/dashboard/finance/invoices?id=${invoice.id}`,
+                topic: `Invoice #${invoice.invoice_number}`,
+                actionRequired: 'Follow up with client for payment or re-send payment link.',
+                responsibleRole: 'finance_owner',
+                actorName: 'System Automation',
+                businessContext: 'Past due date reached without payment confirmation.',
+                relatedRecordType: 'invoice',
+                relatedRecordId: invoice.id,
+                result: 'Invoice status updated to overdue',
+                status: 'at_risk',
+                nextAction: 'Contact client finance team for payment status.',
+                technicalDetails: { due_date: invoice.due_date, previous_status: invoice.status },
+            }).catch((err) => console.error('[cron/process-invoice-overdue-reminders] dispatch notification error:', err));
+
             markedOverdue += 1;
         }
 

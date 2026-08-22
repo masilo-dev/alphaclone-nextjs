@@ -85,8 +85,9 @@ const UnifiedInbox = React.lazy(() => import('./UnifiedInbox'));
 const BonnieModulePageShell = React.lazy(() =>
   import('../bonnie/BonnieModulePageShell').then((m) => ({ default: m.BonnieModulePageShell }))
 );
-const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
+const OperationsCommandCenter = React.lazy(() => import('../operations/OperationsCommandCenter'));
 const BusinessPerformanceDashboard = React.lazy(() => import('./BusinessPerformanceDashboard'));
+const ZohoCRMIntegration = React.lazy(() => import('../zoho/ZohoCRMIntegration'));
 
 
 const QuotaManager = React.lazy(() => import('./QuotaManager'));
@@ -479,6 +480,14 @@ export default function BusinessDashboard({ currentTenant: propTenant, user, onL
         }
 
         switch (tab) {
+            case '/dashboard/operations':
+            case '/dashboard/business/operations':
+            case '/dashboard/admin/operations':
+                return (
+                    <React.Suspense fallback={<div className="p-8"><TableSkeleton rows={8} columns={4} /></div>}>
+                        <OperationsCommandCenter />
+                    </React.Suspense>
+                );
             case '/dashboard':
             case '/dashboard/business':
                 return <BusinessHome user={user} />;

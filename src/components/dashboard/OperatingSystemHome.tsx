@@ -38,6 +38,7 @@ import {
   OpportunityHighlight,
   FunnelVisualization,
 } from '@/components/ui/intelligence';
+import { UniversalModuleExecutionHeader } from '@/components/dashboard/common/UniversalModuleExecutionHeader';
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -366,6 +367,60 @@ export function OperatingSystemHome() {
           </a>
         </div>
       </header>
+
+      {/* OS-wide execution state: reads live KPIs to compute system posture */}
+      <UniversalModuleExecutionHeader
+        moduleName="AlphaClone Business OS"
+        recordTitle="Operational Command Overview — All Systems"
+        nextActionState={{
+          currentState: loading ? 'Loading…' : `${revenue > 0 ? `£${Math.round(revenue / 1000)}k rev` : 'No revenue yet'} · ${leads} leads · ${dealsWon} deals won`,
+          owner: user?.name || user?.email || 'Business Owner',
+          nextAction: pendingCount > 0
+            ? `Review ${pendingCount} Bonnie approval(s) — actions are blocked`
+            : overdueInvoices > 0
+              ? `Chase ${overdueInvoices} overdue invoice(s) — cash is locked`
+              : openTasks > 0
+                ? `Execute ${openTasks} open task(s) to advance delivery`
+                : 'No critical blockers — continue growth execution',
+          deadline: overdueInvoices > 0 ? `${overdueInvoices} invoices overdue` : 'Rolling 30-day window',
+          blocker: pendingCount > 0
+            ? `${pendingCount} Bonnie action(s) awaiting approval`
+            : overdueInvoices > 0
+              ? `${overdueInvoices} unpaid invoice(s) — cash flow risk`
+              : null,
+          expectedOutcome: 'Revenue growing, leads converting, tasks completing, invoices paid',
+          outcomeStatus: !loading && overdueInvoices === 0 && pendingCount === 0 ? 'verified' : 'pending',
+          verifiedResult: !loading
+            ? `Revenue £${Math.round(revenue / 1000)}k · ${leads} leads · ${dealsWon} deals won · ${tasksCompleted} tasks done`
+            : 'Loading KPIs…',
+          authorityLevel: pendingCount > 0 ? 'approval_required' : 'automatic_logged',
+        }}
+        questions={{
+          whatCameIn: `Business OS dashboard data: revenue, leads, deals, tasks, invoices, approvals`,
+          whatDoesItMean: `Live business health across all modules — ${leads} leads, ${dealsWon} deals won, ${overdueInvoices} overdue invoices, ${openTasks} open tasks`,
+          whatShouldHappen: pendingCount > 0
+            ? 'Review and action pending Bonnie approvals before anything else'
+            : overdueInvoices > 0
+              ? 'Send payment chasers for overdue invoices — cash flow is the priority'
+              : 'Continue current growth execution across CRM, pipeline, and delivery',
+          whoOwnsIt: user?.name || user?.email || 'Business Owner',
+          canAlphaCloneAct: pendingCount > 0 ? 'approval_required' : 'automatic_logged',
+          whatActuallyHappened: !loading
+            ? `Revenue £${Math.round(revenue / 1000)}k · ${leads} leads · ${dealsWon} deals won · ${tasksCompleted} tasks completed · ${overdueInvoices} overdue invoices`
+            : 'Loading…',
+          didItProduceExpectedOutcome: overdueInvoices > 0 || pendingCount > 0 ? 'PARTIALLY' : 'YES',
+          whatHappensNext: pendingCount > 0
+            ? 'Go to Bonnie Approvals and action all pending items'
+            : overdueInvoices > 0
+              ? 'Open Billing and send payment reminders for overdue invoices'
+              : 'Open Tasks module and work the highest-priority items for today',
+        }}
+        onExecuteNextAction={() => {
+          if (pendingCount > 0) window.location.href = '/dashboard/business/bonnie/approvals';
+          else if (overdueInvoices > 0) window.location.href = '/dashboard/business/billing/manage';
+          else window.location.href = '/dashboard/tasks';
+        }}
+      />
 
       <section
         className="grid grid-cols-1 min-[576px]:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"

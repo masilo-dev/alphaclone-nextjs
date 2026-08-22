@@ -4,6 +4,7 @@ import { paymentService } from '@/services/paymentService';
 import { denyIfCronUnauthorized } from '@/lib/cronAuth';
 import { runUserDigestEmails } from '@/lib/email/runUserDigestEmails';
 import { runMorningBriefingEmails } from '@/lib/email/runMorningBriefingEmails';
+import { runDailyBusinessSummaryEmails } from '@/lib/email/runDailyBusinessSummaryEmails';
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import { integratedIntelligenceService } from '@/services/intelligence/integratedIntelligenceService';
 
@@ -40,6 +41,13 @@ export async function GET(req: NextRequest) {
             morning = await runMorningBriefingEmails();
         } catch (morningErr) {
             console.error('Morning briefing emails:', morningErr);
+        }
+
+        let businessSummary: { tenantsProcessed: number; emailsSent: number; failed: number } | null = null;
+        try {
+            businessSummary = await runDailyBusinessSummaryEmails();
+        } catch (summaryErr) {
+            console.error('Daily business summary emails:', summaryErr);
         }
         console.log(`[Cron] Emails took ${Date.now() - emailStart}ms`);
 
@@ -81,6 +89,7 @@ export async function GET(req: NextRequest) {
             billing: billingResults,
             digest,
             morning,
+            businessSummary,
             intelligence,
             accountDeletions,
             dataDeletionRequests,

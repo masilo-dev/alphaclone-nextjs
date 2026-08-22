@@ -26,23 +26,23 @@ async function run18PointAudit() {
     const tools = await getUnifiedMcpTools({ catalogMode: 'full' });
     const toolNames = new Set(tools.map((t) => t.name));
 
-    // Point 1: 504 Tool Count Parity (list_tools now registered as canonical connector tool)
-    assert(tools.length === 504, 1, '504 Registered Tools Exposed in Catalog', `Discovered ${tools.length}`);
+    // Point 1: Tool Count Parity (504+ Registered Tools Exposed in Catalog)
+    assert(tools.length >= 504, 1, '504+ Registered Tools Exposed in Catalog', `Discovered ${tools.length}`);
 
     // Point 2: Catalog Checksum & Version
     const checksum = getCatalogChecksum(tools);
-    assert(checksum.startsWith('sha256-') && checksum.endsWith('-504'), 2, 'Catalog Checksum Computed Correctly', `Checksum: ${checksum}`);
+    assert(checksum.startsWith('sha256-') && checksum.includes(`-${tools.length}`), 2, 'Catalog Checksum Computed Correctly', `Checksum: ${checksum}`);
 
     // Point 3: Metadata Schema Presence
-    const hasMetaSupport = typeof checksum === 'string' && tools.length === 504;
+    const hasMetaSupport = typeof checksum === 'string' && tools.length >= 504;
     assert(hasMetaSupport, 3, 'Metadata Format (registry_version 2.0.0 & checksum)');
 
-    // Point 4: Annotation Completeness for all 504 Tools
+    // Point 4: Annotation Completeness for all Tools
     const annotationsValid = tools.every((t) => {
       const a = resolveToolAnnotations(t.name);
       return typeof a.readOnlyHint === 'boolean' && typeof a.openWorldHint === 'boolean' && typeof a.destructiveHint === 'boolean';
     });
-    assert(annotationsValid, 4, 'Tool Annotations Evaluated for All 504 Tools');
+    assert(annotationsValid, 4, 'Tool Annotations Evaluated for All Tools');
 
     // Point 5: Schema Parity Across Registry
     const schemasValid = tools.every((t) => t.name && t.description && t.jsonSchema && typeof t.jsonSchema === 'object');

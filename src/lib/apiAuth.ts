@@ -187,6 +187,29 @@ export async function requirePlatformSuperAdmin() {
  * Standard utility for returning error responses from API routes.
  * Does not expose internal Error.message to the client (fallbackMessage is safe copy only).
  */
+/**
+ * Helper to get authenticated user and tenantId from request.
+ */
+export async function getApiAuthUser(req?: Request) {
+  try {
+    const { user, supabase } = await requireAuthenticatedUser(req);
+    const tenantIdHeader = req?.headers.get('x-tenant-id');
+    let tenantId = tenantIdHeader || undefined;
+    if (!tenantId) {
+      const { data: member } = await supabase
+        .from('tenant_users')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      tenantId = member?.tenant_id;
+    }
+    return { user, tenantId };
+  } catch {
+    return null;
+  }
+}
+
 export function routeErrorResponse(
     error: unknown,
     fallbackMessage = 'The request failed on our side. Try again; if it repeats, send support the request ID.',

@@ -8,6 +8,92 @@ export async function executeCustomTool(
   userId: string,
   args: Record<string, unknown> = {}
 ): Promise<BonnieToolResult> {
+  if (tool === 'get_daily_operations_summary') {
+    const { generateDailyOperationsSummary } = await import('@/lib/daily/dailyOperationsEngine');
+    const targetDate = args.date ? String(args.date) : undefined;
+    const summary = await generateDailyOperationsSummary(tenantId, targetDate);
+
+    const brief = summary.executiveBrief;
+    const textSummary = [
+      `Headline: ${brief.headline}`,
+      `Highlights: ${brief.businessHighlights.join(' | ')}`,
+      `Delivery: ${brief.deliveryStatus}`,
+      `Communication: ${brief.communicationStatus}`,
+      `Finance: ${brief.financeStatus}`,
+      `Systems: ${brief.systemsStatus}`,
+      `Attention Needed: ${brief.yourAttentionNeeded.length ? brief.yourAttentionNeeded.join('; ') : 'None'}`,
+      `Current Bottleneck: ${brief.currentBottleneck}`,
+      `Recommended Action: ${brief.recommendedFirstAction}`,
+    ].join('\n');
+
+    return {
+      tool,
+      success: true,
+      summary: `Daily Operations Summary loaded: ${summary.executiveBrief.headline}`,
+      details: JSON.stringify({ brief: summary.executiveBrief, textSummary, fullSummary: summary }, null, 2).slice(0, 4000),
+    };
+  }
+
+  if (tool === 'get_tenant_activity_timeline') {
+    const { createSupabaseAdminClient } = await import('@/lib/supabase-admin');
+    const supabase = createSupabaseAdminClient();
+    const limit = args.limit != null ? Number(args.limit) : 30;
+
+    let query = supabase
+      .from('tenant_operational_events')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('occurred_at', { ascending: false })
+      .limit(limit);
+
+    if (args.module || args.source_module) {
+      query = query.eq('source_module', String(args.module || args.source_module));
+    }
+    if (args.clientId || args.client_id) {
+      query = query.eq('client_id', String(args.clientId || args.client_id));
+    }
+    if (args.projectId || args.project_id) {
+      query = query.eq('project_id', String(args.projectId || args.project_id));
+    }
+    if (args.status) {
+      query = query.eq('status', String(args.status));
+    }
+
+    const { data: events, error } = await query;
+    if (error) {
+      return { tool, success: false, summary: `Failed to fetch activity timeline: ${error.message}` };
+    }
+
+    const evts = events || [];
+    const formatted = evts.map((e) => `[${e.occurred_at.slice(11, 16)}] [${e.source_module}] [${e.actor_type}] ${e.title} (${e.status})`).join('\n');
+
+    return {
+      tool,
+      success: true,
+      summary: `Loaded ${evts.length} recent activity events.`,
+      details: formatted || 'No activity records found.',
+    };
+  }
+
+  if (tool === 'get_unreplied_emails_and_sla_risks') {
+    const { scanNoReplyEmails } = await import('@/lib/email/noReplyEngine');
+    const { evaluateTenantSlas } = await import('@/lib/email/slaEngine');
+
+    const [noReply, sla] = await Promise.all([
+      scanNoReplyEmails(tenantId),
+      evaluateTenantSlas(tenantId),
+    ]);
+
+    const summaryText = `No-Reply Items: ${noReply.unanswered} waiting. SLA Risks: ${sla.approachingBreach} approaching, ${sla.breached} breached.`;
+
+    return {
+      tool,
+      success: true,
+      summary: summaryText,
+      details: JSON.stringify({ noReply, sla }, null, 2).slice(0, 4000),
+    };
+  }
+
   if (tool === 'delegate_to_hermes') {
     const prompt = String(args.prompt || args.task || args.instruction || args.goal || '').trim();
     if (!prompt) {

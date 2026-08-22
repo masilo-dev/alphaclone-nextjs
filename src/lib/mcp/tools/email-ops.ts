@@ -669,3 +669,159 @@ defineConnectorTool({
     });
   },
 });
+
+// ── read_emails / list_received_emails ───────────────────────────────────────
+defineConnectorTool({
+  module: 'email-ops',
+  name: 'read_emails',
+  description:
+    'List received emails and recent email dispatches/threads for the authenticated workspace. Returns message IDs, senders, subjects, dates, and preview snippets.',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    limit: z.number().int().min(1).max(50).optional().default(20),
+    folder: z.string().optional().default('inbox'),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      limit: { type: 'number' },
+      folder: { type: 'string' },
+    },
+    required: [],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = ctx.tenantId;
+    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
+    const supabase = createSupabaseAdminClient();
+
+    const { data: dispatches } = await supabase
+      .from('project_email_dispatches')
+      .select('id, project_id, client_id, stage, recipient_email, subject, body_text, sent_at, approval_status, created_at')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(args.limit || 20);
+
+    const messages = (dispatches || []).map((row) => ({
+      message_id: row.id,
+      project_id: row.project_id,
+      client_id: row.client_id,
+      stage: row.stage,
+      sender_email: 'system@alphaclone.ai',
+      recipient_email: row.recipient_email,
+      subject: row.subject,
+      snippet: (row.body_text || '').slice(0, 150),
+      sent_at: row.sent_at || row.created_at,
+      approval_status: row.approval_status,
+    }));
+
+    return okResult('read_emails', {
+      total: messages.length,
+      folder: args.folder || 'inbox',
+      messages,
+    });
+  },
+});
+
+// ── read_email_content ───────────────────────────────────────────────────────
+defineConnectorTool({
+  module: 'email-ops',
+  name: 'read_email_content',
+  description:
+    'Read full body text, HTML, headers, and attachments of a specific email message by message_id.',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    message_id: z.string().min(1),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      message_id: { type: 'string' },
+    },
+    required: ['message_id'],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = ctx.tenantId;
+    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
+    const supabase = createSupabaseAdminClient();
+
+    const { data: dispatch } = await supabase
+      .from('project_email_dispatches')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('id', args.message_id)
+      .maybeSingle();
+
+    if (!dispatch) {
+      throwConnectorError('RESOURCE_NOT_FOUND', `Email message with ID "${args.message_id}" not found`);
+    }
+
+    return okResult('read_email_content', {
+      message_id: dispatch.id,
+      tenant_id: dispatch.tenant_id,
+      project_id: dispatch.project_id,
+      client_id: dispatch.client_id,
+      recipient_email: dispatch.recipient_email,
+      subject: dispatch.subject,
+      body_text: dispatch.body_text,
+      body_html: dispatch.body_text ? `<p>${dispatch.body_text.replace(/\n/g, '<br/>')}</p>` : '',
+      autonomy_level: dispatch.autonomy_level,
+      approval_status: dispatch.approval_status,
+      sent_at: dispatch.sent_at || dispatch.created_at,
+    });
+  },
+});
+
+// ── search_emails ─────────────────────────────────────────────────────────────
+defineConnectorTool({
+  module: 'email-ops',
+  name: 'search_emails',
+  description:
+    'Search workspace emails by keyword query, recipient email, or project/client context.',
+  permission: 'integrations:read',
+  inputSchema: z.object({
+    tenant_id: tenantIdField.optional(),
+    query: z.string().min(1),
+    limit: z.number().int().min(1).max(50).optional().default(20),
+  }),
+  jsonSchema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string' },
+      limit: { type: 'number' },
+    },
+    required: ['query'],
+  },
+  handler: async (args, ctx) => {
+    const tenantId = ctx.tenantId;
+    if (!tenantId) throwConnectorError('TENANT_ACCESS_DENIED', 'Active workspace required');
+    const supabase = createSupabaseAdminClient();
+
+    const pattern = `%${args.query.replace(/[%_]/g, '')}%`;
+    const { data: dispatches } = await supabase
+      .from('project_email_dispatches')
+      .select('id, project_id, client_id, stage, recipient_email, subject, body_text, sent_at, approval_status, created_at')
+      .eq('tenant_id', tenantId)
+      .or(`subject.ilike.${pattern},recipient_email.ilike.${pattern},body_text.ilike.${pattern}`)
+      .order('created_at', { ascending: false })
+      .limit(args.limit || 20);
+
+    const matches = (dispatches || []).map((row) => ({
+      message_id: row.id,
+      project_id: row.project_id,
+      client_id: row.client_id,
+      recipient_email: row.recipient_email,
+      subject: row.subject,
+      snippet: (row.body_text || '').slice(0, 150),
+      sent_at: row.sent_at || row.created_at,
+      approval_status: row.approval_status,
+    }));
+
+    return okResult('search_emails', {
+      query: args.query,
+      count: matches.length,
+      matches,
+    });
+  },
+});

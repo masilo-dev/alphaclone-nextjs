@@ -40,6 +40,8 @@ import { CrmSyncToolbar } from './crm/CrmSyncToolbar';
 import { OperationalWorkflowStrip } from './OperationalWorkflowStrip';
 import { usePathname } from 'next/navigation';
 import { buildMailComposeUrl } from '@/lib/email/composeNavigation';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
+import type { UniversalNextActionState, ModuleExecutionQuestions } from '@/types/moduleExecution';
 import { ExecutionDecisionGuide } from '@/components/dashboard/ExecutionDecisionGuide';
 import { DEALS_EXECUTION_STEPS } from '@/lib/ui/dashboardExecutionSteps';
 
@@ -1153,6 +1155,32 @@ const DealsTab: React.FC<DealsTabProps> = ({ user }) => {
         <CRMNav pathname={pathname} />
         <CrmSyncToolbar />
         <OperationalWorkflowStrip moduleId="crm" userRole={user.role} />
+        <UniversalModuleExecutionHeader
+          moduleName="Deals & Sales Pipeline"
+          recordTitle="Opportunity Progression & Revenue Forecasting"
+          nextActionState={{
+            currentState: 'Opportunity Pipeline',
+            owner: user.name || user.email || 'Sales Lead',
+            nextAction: 'Advance deal stages → Draft quotes & contracts → Close won',
+            deadline: '7-day stage stall threshold',
+            blocker: deals.length === 0 ? 'No active deals' : null,
+            expectedOutcome: 'Closed won revenue & converted contracts',
+            outcomeStatus: totalPipelineValue > 0 ? 'verified' : 'pending',
+            verifiedResult: `$${totalPipelineValue.toLocaleString()} active open pipeline across ${deals.length} deals`,
+            authorityLevel: 'automatic_logged',
+          }}
+          questions={{
+            whatCameIn: `${deals.length} active deals totaling $${totalPipelineValue.toLocaleString()} in open opportunity value`,
+            whatDoesItMean: 'Sales opportunities in active proposal, negotiation, or qualification stages',
+            whatShouldHappen: 'Progress forward stage-by-stage, complete quotes, and execute contracts',
+            whoOwnsIt: user.name || user.email || 'Sales Lead',
+            canAlphaCloneAct: 'automatic_logged',
+            whatActuallyHappened: `${deals.length} deals actively tracked across board columns`,
+            didItProduceExpectedOutcome: totalPipelineValue > 0 ? 'YES' : 'IN_PROGRESS',
+            whatHappensNext: 'Generate invoice upon closing deal or send proposal follow-up',
+          }}
+          onExecuteNextAction={() => setShowCreateModal(true)}
+        />
         <ExecutionDecisionGuide
           steps={DEALS_EXECUTION_STEPS}
           onNavigate={(href) => router.push(href)}

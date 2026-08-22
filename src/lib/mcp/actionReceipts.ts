@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase-admin';
 import type { ActionReceipt } from '@/lib/mcp/standardResponse';
+import { recordTenantEvent, type SourceModule } from '@/lib/events/tenantEventLogger';
 
 const SENSITIVE_KEYS = new Set([
   'password',
@@ -38,6 +39,18 @@ export function sanitizeForAudit(value: unknown, depth = 0): unknown {
     return out;
   }
   return value;
+}
+
+function inferSourceModule(toolName: string): SourceModule {
+  const t = toolName.toLowerCase();
+  if (t.includes('crm') || t.includes('lead') || t.includes('contact') || t.includes('customer')) return 'CRM';
+  if (t.includes('social') || t.includes('linkedin') || t.includes('facebook') || t.includes('x_')) return 'SOCIAL';
+  if (t.includes('email') || t.includes('outreach') || t.includes('mail')) return 'EMAIL';
+  if (t.includes('invoice') || t.includes('payment') || t.includes('billing') || t.includes('accounting')) return 'INVOICES';
+  if (t.includes('project') || t.includes('task')) return 'PROJECTS';
+  if (t.includes('contract') || t.includes('proposal') || t.includes('quote')) return 'CONTRACTS';
+  if (t.includes('meeting') || t.includes('calendar')) return 'MEETINGS';
+  return 'MCP';
 }
 
 export async function persistActionReceipt(params: {
@@ -81,6 +94,32 @@ export async function persistActionReceipt(params: {
       })
       .select('id')
       .maybeSingle();
+
+    // Mirror to tenant_operational_events for universal event timeline
+    recordTenantEvent({
+      tenantId: params.tenantId,
+      actorId: params.userId || null,
+      actorType: 'MCP',
+      sourceModule: inferSourceModule(params.tool),
+      action: params.tool,
+      title: `MCP Executed: ${params.tool}`,
+      description: params.success
+        ? `Executed successfully. Entity: ${params.receipt.entity_type || 'N/A'} (${params.receipt.entity_id || 'N/A'})`
+        : `Execution failed: ${params.errorMessage || 'Unknown error'}`,
+      status: params.success ? 'SUCCESS' : 'FAILED',
+      notificationLevel: params.success ? 'LEVEL_1_RECORD' : 'LEVEL_3_IMMEDIATE',
+      evidence: {
+        actionId: params.receipt.action_id,
+        provider: params.receipt.provider,
+        providerReference: params.receipt.provider_reference,
+        liveUrl: params.receipt.live_url,
+        verification: params.receipt.verification,
+      },
+      nextAction: {
+        recommendedAction: params.success ? 'Action verified' : 'Review failed tool execution details',
+      },
+    }).catch((evtErr) => console.warn('[actionReceipts] Failed to record tenant operational event:', evtErr));
+
     if (error) {
       // Idempotent replay
       if (params.idempotencyKey && /duplicate|unique/i.test(error.message)) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, Plus, FolderPlus, CheckSquare, Flag, Calendar,
@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { useTenant } from '../../contexts/TenantContext';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { UniversalModuleExecutionHeader } from './common/UniversalModuleExecutionHeader';
 
 type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed';
 type ProjectTab = 'overview' | 'tasks' | 'milestones' | 'timeline';
@@ -283,6 +284,18 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
 
   useEffect(() => { load(); }, [load]);
 
+  // ── Execution state derived from live project data ────────────────────────────
+  const executionState = useMemo(() => {
+    const active = projects.filter(p => p.status === 'active');
+    const onHold = projects.filter(p => p.status === 'on_hold');
+    const completed = projects.filter(p => p.status === 'completed');
+    const overdue = projects.filter(p => p.due_date && new Date(p.due_date) < new Date() && p.status !== 'completed');
+    const avgProgress = active.length > 0
+      ? Math.round(active.reduce((s, p) => s + (p.progress || 0), 0) / active.length)
+      : 0;
+    return { active, onHold, completed, overdue, avgProgress };
+  }, [projects]);
+
   if (selected) {
     return (
       <ProjectDetail
@@ -295,6 +308,37 @@ const ProjectsTab: React.FC<ProjectsTabProps> = ({ user }) => {
 
   return (
     <div className="relative flex flex-col h-full ac-scroll-full ac-enterprise-module" data-tour="my-projects">
+      <div className="px-4 pt-3 pb-2 shrink-0">
+        <UniversalModuleExecutionHeader
+          moduleName="Project Delivery"
+          recordTitle="Project Portfolio & Milestone Execution"
+          nextActionState={{
+            currentState: `${executionState.active.length} active / ${executionState.completed.length} completed`,
+            owner: user.name || user.email || 'Project Manager',
+            nextAction: 'Update task progress → Close milestones → Review at-risk projects',
+            deadline: executionState.overdue.length > 0 ? `${executionState.overdue.length} overdue project(s)` : 'On schedule',
+            blocker: executionState.onHold.length > 0 ? `${executionState.onHold.length} project(s) on hold` : null,
+            expectedOutcome: 'All active projects progressing with completed milestones',
+            outcomeStatus: executionState.overdue.length === 0 && executionState.active.length > 0 ? 'verified' : 'pending',
+            verifiedResult: `Avg progress ${executionState.avgProgress}% across ${executionState.active.length} active projects`,
+            authorityLevel: 'automatic_logged',
+          }}
+          questions={{
+            whatCameIn: `${projects.length} projects: ${executionState.active.length} active, ${executionState.onHold.length} on hold, ${executionState.completed.length} completed`,
+            whatDoesItMean: 'Active project commitments that must advance toward delivery milestones',
+            whatShouldHappen: 'Review stalled projects, update task progress, close completed milestones',
+            whoOwnsIt: user.name || user.email || 'Project Manager',
+            canAlphaCloneAct: 'automatic_logged',
+            whatActuallyHappened: `${executionState.active.length} projects tracked at avg ${executionState.avgProgress}% progress`,
+            didItProduceExpectedOutcome: executionState.overdue.length === 0 ? 'YES' : 'BLOCKED',
+            whatHappensNext: executionState.overdue.length > 0
+              ? `Resolve ${executionState.overdue.length} overdue project(s), re-schedule deadlines`
+              : 'Continue milestone progression and task execution',
+          }}
+          onExecuteNextAction={() => setShowCreate(true)}
+          className="mb-2"
+        />
+      </div>
       <div className="flex-1 pb-20">
         {loading ? (
           <div className="space-y-px">{[...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-900/40 animate-pulse mx-4 my-1 rounded-2xl" />)}</div>
