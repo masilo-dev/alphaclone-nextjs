@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
             healthDetails: health.details,
             mailReady,
             campaignsReady,
-            baseConnected,
+            baseConnected: health.tokenValid,
             configuredRegion,
         });
     } catch (err: unknown) {
