@@ -55,7 +55,20 @@ CREATE TRIGGER trg_guard_profile_self_promotion
   FOR EACH ROW
   EXECUTE FUNCTION public.guard_profile_self_promotion();
 
--- 4. Ensure primary Bonnie account is super_admin
+-- 4. Ensure 'super_admin' exists in user_role enum (idempotent)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_enum e
+    JOIN pg_type t ON t.oid = e.enumtypid
+    WHERE t.typname = 'user_role' AND e.enumlabel = 'super_admin'
+  ) THEN
+    ALTER TYPE user_role ADD VALUE 'super_admin';
+  END IF;
+END$$;
+
+-- 5. Ensure primary Bonnie account is super_admin
 UPDATE public.profiles
-SET role = 'super_admin', updated_at = NOW()
-WHERE lower(email) = 'bonnie@alphaclonesystems.com' AND COALESCE(role::text, '') <> 'super_admin';
+SET role = 'super_admin'::user_role, updated_at = NOW()
+WHERE lower(email) = 'bonnie@alphaclonesystems.com'
+  AND COALESCE(role::text, '') <> 'super_admin';
