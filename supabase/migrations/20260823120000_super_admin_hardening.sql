@@ -67,8 +67,25 @@ BEGIN
   END IF;
 END$$;
 
--- 5. Ensure primary Bonnie account is super_admin
+-- 5. Ensure primary Bonnie accounts are super_admin (both emails)
 UPDATE public.profiles
 SET role = 'super_admin'::user_role, updated_at = NOW()
-WHERE lower(email) = 'bonnie@alphaclonesystems.com'
+WHERE lower(email) IN ('bonnie@alphaclonesystems.com', 'bonnie@alphaclone.tech')
   AND COALESCE(role::text, '') <> 'super_admin';
+
+-- 6. Auto-assign super_admin on INSERT for bonnie@alphaclonesystems.com
+CREATE OR REPLACE FUNCTION public.auto_assign_super_admin_on_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF lower(NEW.email) = 'bonnie@alphaclonesystems.com' THEN
+    NEW.role := 'super_admin'::user_role;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_auto_super_admin ON public.profiles;
+CREATE TRIGGER trg_auto_super_admin
+  BEFORE INSERT ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.auto_assign_super_admin_on_insert();
