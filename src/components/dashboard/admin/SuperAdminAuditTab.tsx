@@ -134,3 +134,5 @@ export const SuperAdminAuditTab: React.FC = () => {
     </div>
   );
 };
+
+export default SuperAdminAuditTab;

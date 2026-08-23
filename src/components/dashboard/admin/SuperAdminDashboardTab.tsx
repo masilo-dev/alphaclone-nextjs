@@ -163,3 +163,5 @@ export const SuperAdminDashboardTab: React.FC = () => {
     </div>
   );
 };
+
+export default SuperAdminDashboardTab;
