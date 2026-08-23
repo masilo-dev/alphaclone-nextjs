@@ -24,30 +24,31 @@ export async function GET(req: NextRequest) {
         const zohoService = new ZohoService(user.id, tenantId);
         const config = await zohoService.getConfig();
         const configuredRegion = inferZohoRegionFromAccountsServer(config?.accountsServer);
-        const baseConnected = await zohoService.checkIntegration();
-        if (!baseConnected) {
-            return NextResponse.json({ isConnected: false, mailReady: false, configuredRegion });
-        }
+        const health = await zohoService.getDetailedHealthStatus();
 
         let mailReady = false;
         let campaignsReady = false;
-        try {
-            const zohoMailService = new ZohoMailService(user.id, tenantId);
-            const senderAddresses = await zohoMailService.getSenderAddresses();
-            mailReady = senderAddresses.length > 0;
-        } catch {
-            mailReady = false;
-        }
+        if (health.tokenValid) {
+            try {
+                const zohoMailService = new ZohoMailService(user.id, tenantId);
+                const senderAddresses = await zohoMailService.getSenderAddresses();
+                mailReady = senderAddresses.length > 0;
+            } catch {
+                mailReady = false;
+            }
 
-        try {
-            const zohoCampaignsService = new ZohoCampaignsService(user.id, tenantId);
-            campaignsReady = await zohoCampaignsService.checkCampaignsReady();
-        } catch {
-            campaignsReady = false;
+            try {
+                const zohoCampaignsService = new ZohoCampaignsService(user.id, tenantId);
+                campaignsReady = await zohoCampaignsService.checkCampaignsReady();
+            } catch {
+                campaignsReady = false;
+            }
         }
 
         return NextResponse.json({
-            isConnected: mailReady || campaignsReady,
+            isConnected: health.status === 'connected_and_ready' || health.status === 'connected_sender_setup_required',
+            healthStatus: health.status,
+            healthDetails: health.details,
             mailReady,
             campaignsReady,
             baseConnected,

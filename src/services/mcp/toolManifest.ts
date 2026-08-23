@@ -2264,6 +2264,147 @@ export const MCP_TOOLS = [
     },
   },
   {
+    name: 'bulk_upsert_contacts',
+    description: 'Bulk upsert up to 500 contacts with deduplication on email/phone, partial success reporting, and audit receipt.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        contacts: {
+          type: 'array',
+          maxItems: 500,
+          items: {
+            type: 'object',
+            properties: {
+              email: { type: 'string' },
+              name: { type: 'string' },
+              phone: { type: 'string' },
+              company: { type: 'string' },
+              notes: { type: 'string' },
+              metadata: { type: 'object' },
+            },
+            required: ['email'],
+          },
+        },
+        idempotency_key: { type: 'string' },
+      },
+      required: ['contacts'],
+    },
+  },
+  {
+    name: 'bulk_create_leads',
+    description: 'Bulk create up to 500 leads with auto-enrichment scheduling and validation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        leads: {
+          type: 'array',
+          maxItems: 500,
+          items: {
+            type: 'object',
+            properties: {
+              business_name: { type: 'string' },
+              email: { type: 'string' },
+              phone: { type: 'string' },
+              website: { type: 'string' },
+              category: { type: 'string' },
+              source: { type: 'string' },
+              notes: { type: 'string' },
+            },
+            required: ['business_name'],
+          },
+        },
+        idempotency_key: { type: 'string' },
+      },
+      required: ['leads'],
+    },
+  },
+  {
+    name: 'bulk_update_leads',
+    description: 'Bulk update fields on up to 500 leads with filter/ID matching and partial status report.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lead_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
+        patch: { type: 'object' },
+        idempotency_key: { type: 'string' },
+      },
+      required: ['lead_ids', 'patch'],
+    },
+  },
+  {
+    name: 'bulk_add_to_segment',
+    description: 'Bulk assign up to 500 leads or contacts to a target tag or segment.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        record_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
+        record_type: { type: 'string', enum: ['lead', 'contact'] },
+        segment_name: { type: 'string' },
+      },
+      required: ['record_ids', 'record_type', 'segment_name'],
+    },
+  },
+  {
+    name: 'bulk_assign_campaign',
+    description: 'Bulk assign up to 500 qualified leads/contacts to an email or outreach campaign.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        campaign_id: { type: 'string' },
+        record_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
+      },
+      required: ['campaign_id', 'record_ids'],
+    },
+  },
+  {
+    name: 'bulk_archive_leads',
+    description: 'Bulk archive up to 500 leads with reason tracking.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'AlphaClone Workspace ID' },
+        lead_ids: { type: 'array', maxItems: 500, items: { type: 'string' } },
+        reason: { type: 'string' },
+      },
+      required: ['lead_ids'],
+    },
+  },
+  {
+    name: 'upload_file',
+    description: 'Upload a file asset into tenant object storage returning file_id and public/storage URL.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        filename: { type: 'string' },
+        content_base64: { type: 'string' },
+        mime_type: { type: 'string' },
+      },
+      required: ['filename', 'content_base64'],
+    },
+  },
+  {
+    name: 'ingest_document',
+    description: 'Atomically ingest a document file: uploads to storage, creates file & document records, queues text extraction and vector chunking.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string' },
+        filename: { type: 'string' },
+        content_base64: { type: 'string' },
+        mime_type: { type: 'string' },
+        title: { type: 'string' },
+        category: { type: 'string' },
+      },
+      required: ['filename', 'content_base64'],
+    },
+  },
+  {
     name: 'bulk_upload_media',
     description: 'Ingest up to 50 image, video, or document inputs into permanent tenant storage with per-item receipts. Does not publish content.',
     inputSchema: {

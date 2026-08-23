@@ -67,6 +67,9 @@ export const contactSchema = z.object({
         .max(2000, 'Message must be less than 2000 characters'),
     subject: z.string().max(200, 'Subject must be less than 200 characters').optional(),
     company: z.string().max(200, 'Company must be less than 200 characters').optional(),
+    phone: z.string().max(50, 'Phone must be less than 50 characters').optional(),
+    website: z.string().optional(), // Honeypot field - bots fill this in
+    source: z.string().optional(),
 });
 
 export const leadsManagementSchema = z.object({

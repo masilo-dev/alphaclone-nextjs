@@ -15,6 +15,95 @@ import {
 import { insertOutboxEvent } from "@/lib/bonnie/runtime/outboxService";
 import { sendScheduledCampaignServer } from "@/lib/server/sendScheduledCampaignServer";
 
+export async function reconcileStaleCampaigns(tenantId?: string): Promise<{
+  reconciled: number;
+  autoCompleted: number;
+  autoPaused: number;
+}> {
+  const admin = createSupabaseAdminClient();
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+
+  let query = admin
+    .from('email_campaigns')
+    .select('id, tenant_id, status, updated_at')
+    .in('status', ['sending', 'processing', 'queued'])
+    .lt('updated_at', fifteenMinutesAgo);
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { data: staleCampaigns } = await query;
+  if (!staleCampaigns || staleCampaigns.length === 0) {
+    return { reconciled: 0, autoCompleted: 0, autoPaused: 0 };
+  }
+
+  let autoCompleted = 0;
+  let autoPaused = 0;
+
+  for (const campaign of staleCampaigns) {
+    const { data: recipients } = await admin
+      .from('campaign_recipients')
+      .select('status')
+      .eq('campaign_id', campaign.id);
+
+    const list = recipients || [];
+    const pendingCount = list.filter((r) => r.status === 'pending').length;
+    const sentCount = list.filter((r) => r.status === 'sent').length;
+    const failedCount = list.filter((r) => r.status === 'failed').length;
+
+    if (pendingCount === 0) {
+      await admin
+        .from('email_campaigns')
+        .update({
+          status: 'sent',
+          total_sent: sentCount,
+          total_failed: failedCount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', campaign.id);
+
+      await insertOutboxEvent({
+        tenantId: campaign.tenant_id,
+        eventType: 'campaign.execution.completed',
+        payload: { campaignId: campaign.id, totalSent: sentCount, totalFailed: failedCount, staleRecovery: true },
+      });
+      autoCompleted++;
+    } else {
+      await admin
+        .from('email_campaigns')
+        .update({
+          status: 'paused',
+          total_sent: sentCount,
+          total_failed: failedCount,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', campaign.id);
+
+      await admin.from('activity_logs').insert({
+        tenant_id: campaign.tenant_id,
+        action: 'campaign_execution_stale_paused',
+        entity_type: 'email_campaign',
+        entity_id: campaign.id,
+        metadata: {
+          reason: 'Worker execution timed out after 15 minutes of inactivity',
+          pendingRecipients: pendingCount,
+          sentCount,
+        },
+      });
+
+      await insertOutboxEvent({
+        tenantId: campaign.tenant_id,
+        eventType: 'campaign.execution.stale_paused',
+        payload: { campaignId: campaign.id, pendingCount, sentCount },
+      });
+      autoPaused++;
+    }
+  }
+
+  return { reconciled: staleCampaigns.length, autoCompleted, autoPaused };
+}
+
 export async function executeCampaignDurableFanOut(campaignId: string): Promise<{
   success: boolean;
   runId?: string;
@@ -34,6 +123,12 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
   if (!campaign) {
     return { success: false, processedRecipients: 0, sentCount: 0, failedCount: 0, error: "campaign_not_found" };
   }
+
+  // Set status to processing
+  await admin
+    .from("email_campaigns")
+    .update({ status: "processing", updated_at: new Date().toISOString() })
+    .eq("id", campaignId);
 
   // Create parent durable run for the campaign
   const runResult = await createRunForObjective({
@@ -68,6 +163,11 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
   const pendingRecipients = recipients || [];
 
   if (pendingRecipients.length === 0) {
+    await admin
+      .from("email_campaigns")
+      .update({ status: "sent", updated_at: new Date().toISOString() })
+      .eq("id", campaignId);
+
     return { success: true, runId, processedRecipients: 0, sentCount: 0, failedCount: 0 };
   }
 
@@ -76,6 +176,12 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
 
   // Execute actual campaign sending loop with recipient-level idempotency
   for (const recipient of pendingRecipients) {
+    // Touch campaign timestamp for heartbeat
+    await admin
+      .from("email_campaigns")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", campaignId);
+
     const idempotencyKey = buildIdempotencyKey({
       tenantId: campaign.tenant_id,
       taskId: `camp-${campaignId}-rec-${recipient.id}`,
@@ -122,6 +228,24 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
     }
   }
 
+  // Re-check remaining pending recipients
+  const { count: remainingPending } = await admin
+    .from("campaign_recipients")
+    .select("id", { count: "exact", head: true })
+    .eq("campaign_id", campaignId)
+    .eq("status", "pending");
+
+  const finalStatus = (remainingPending || 0) === 0 ? "sent" : "paused";
+  await admin
+    .from("email_campaigns")
+    .update({
+      status: finalStatus,
+      total_sent: sentCount,
+      total_failed: failedCount,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", campaignId);
+
   return {
     success: true,
     runId,
@@ -130,3 +254,4 @@ export async function executeCampaignDurableFanOut(campaignId: string): Promise<
     failedCount,
   };
 }
+

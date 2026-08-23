@@ -20,6 +20,8 @@ import { setupGlobalErrorHandlers } from '@/utils/errorHandlers';
 import { registerPlatformQueryClient } from '@/lib/platformReset';
 import { alphacloneChakraTheme } from '@/theme/chakraTheme';
 import { BonnieDrawer } from '@/components/ui/os/BonnieDrawer';
+import { BookingModalProvider } from '@/contexts/BookingModalContext';
+import AlphaCloneBookingModal from '@/components/marketing/system/AlphaCloneBookingModal';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside component to avoid server/client hydration mismatch
@@ -62,8 +64,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <TenantProvider>
                         <BackgroundTaskProvider>
                           <BonnieDrawerProvider>
-                            {children}
-                            <BonnieDrawer />
+                            <BookingModalProvider>
+                              {children}
+                              <AlphaCloneBookingModal />
+                              <BonnieDrawer />
+                            </BookingModalProvider>
                           </BonnieDrawerProvider>
                         </BackgroundTaskProvider>
                       </TenantProvider>

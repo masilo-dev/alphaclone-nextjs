@@ -19,6 +19,9 @@ export async function GET(req: NextRequest) {
         const now = new Date().toISOString();
         const admin = createSupabaseAdminClient();
 
+        const { reconcileStaleCampaigns } = await import('@/lib/server/durableCampaignFanOut');
+        const staleReport = await reconcileStaleCampaigns();
+
         const { data: campaigns, error } = await admin
             .from('email_campaigns')
             .select('id, tenant_id, status, scheduled_at')
@@ -28,7 +31,7 @@ export async function GET(req: NextRequest) {
         if (error) throw error;
 
         if (!campaigns?.length) {
-            return NextResponse.json({ message: 'No campaigns to process' });
+            return NextResponse.json({ message: 'No scheduled campaigns to process', staleReport });
         }
 
         const { assertCronRowTenantContext, quarantineTenantIsolationRow } = await import(

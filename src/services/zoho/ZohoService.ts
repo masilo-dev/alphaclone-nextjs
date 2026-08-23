@@ -362,8 +362,71 @@ export class ZohoService {
     }
 
     async checkIntegration(): Promise<boolean> {
+        const health = await this.getDetailedHealthStatus();
+        return health.status === 'connected_and_ready' || health.status === 'connected_sender_setup_required';
+    }
+
+    async getDetailedHealthStatus(): Promise<{
+        status: 'connected_and_ready' | 'connected_sender_setup_required' | 'auth_expired' | 'permission_missing' | 'disconnected';
+        senderConfigured: boolean;
+        tokenValid: boolean;
+        details: string;
+    }> {
         const config = await this.getConfig();
-        return !!(config?.refreshToken);
+        if (!config?.refreshToken) {
+            return {
+                status: 'disconnected',
+                senderConfigured: false,
+                tokenValid: false,
+                details: 'Zoho integration is not connected.',
+            };
+        }
+
+        if (config.authExpiredAt) {
+            return {
+                status: 'auth_expired',
+                senderConfigured: false,
+                tokenValid: false,
+                details: config.authExpiredReason || 'Zoho authentication expired. Reconnect required.',
+            };
+        }
+
+        const senderConfigured = !!(config.mailApiHost || config.crmApiHost);
+
+        try {
+            const token = await this.getAccessToken();
+            if (!token) {
+                return {
+                    status: 'auth_expired',
+                    senderConfigured,
+                    tokenValid: false,
+                    details: 'Failed to refresh Zoho access token.',
+                };
+            }
+
+            if (!senderConfigured) {
+                return {
+                    status: 'connected_sender_setup_required',
+                    senderConfigured: false,
+                    tokenValid: true,
+                    details: 'Connected, but Zoho mail/CRM host or sender email is not configured.',
+                };
+            }
+
+            return {
+                status: 'connected_and_ready',
+                senderConfigured: true,
+                tokenValid: true,
+                details: 'Zoho integration is healthy, authenticated, and ready for operations.',
+            };
+        } catch (err: any) {
+            return {
+                status: 'permission_missing',
+                senderConfigured,
+                tokenValid: false,
+                details: err.message || 'Zoho API call failed during health check.',
+            };
+        }
     }
 
     async disconnect(): Promise<void> {

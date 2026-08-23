@@ -142,14 +142,14 @@ export async function ingestMediaInput(params: {
     }
 
     case 'data_url': {
-      const extracted = rejectOrExtractDataUri(media.dataUrl);
+      const extracted = rejectOrExtractDataUri(media.dataUrl || '');
       if (!extracted.isDataUri || !extracted.base64) {
         throw new Error('Invalid data_url');
       }
       const mime = extracted.mimeType || 'image/png';
       const filename =
         media.filename ||
-        `generated.${mime.includes('jpeg') ? 'jpg' : mime.split('/')[1] || 'png'}`;
+        `generated.${(mime || '').includes('jpeg') ? 'jpg' : (mime || '').split('/')[1] || 'png'}`;
       const uploaded = await uploadSocialMedia({
         tenantId,
         userId,
@@ -161,21 +161,22 @@ export async function ingestMediaInput(params: {
     }
 
     case 'url': {
-      if (isDataUri(media.url)) {
+      const targetUrl = media.url || '';
+      if (isDataUri(targetUrl)) {
         return ingestMediaInput({
           tenantId,
           userId,
-          media: { type: 'data_url', dataUrl: media.url, filename: media.filename },
+          media: { type: 'data_url', dataUrl: targetUrl, filename: media.filename },
           purpose: params.purpose,
         });
       }
-      const remote = await downloadRemoteUrl(media.url);
+      const remote = await downloadRemoteUrl(targetUrl);
       const uploaded = await uploadSocialMedia({
         tenantId,
         userId,
         filename: media.filename || remote.filename,
-        mimeType: remote.mimeType.startsWith('image/') ||
-          remote.mimeType.startsWith('video/') ||
+        mimeType: (remote.mimeType || '').startsWith('image/') ||
+          (remote.mimeType || '').startsWith('video/') ||
           remote.mimeType === 'application/pdf'
           ? remote.mimeType
           : 'image/png',
@@ -186,14 +187,15 @@ export async function ingestMediaInput(params: {
 
     case 'storage_path': {
       const supabase = createSupabaseAdminClient();
+      const pathStr = media.path || '';
       // Tenant must own the path prefix
-      if (!media.path.includes(tenantId)) {
+      if (!pathStr.includes(tenantId)) {
         throw new Error('storage_path is not tenant-scoped');
       }
-      const { data, error } = await supabase.storage.from(media.bucket).download(media.path);
+      const { data, error } = await supabase.storage.from(media.bucket || 'media').download(pathStr);
       if (error || !data) throw new Error(error?.message || 'Failed to download storage object');
       const buffer = Buffer.from(await data.arrayBuffer());
-      const filename = media.path.split('/').pop() || 'storage-object';
+      const filename = pathStr.split('/').pop() || 'storage-object';
       const uploaded = await uploadSocialMedia({
         tenantId,
         userId,

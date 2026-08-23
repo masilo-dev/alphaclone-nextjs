@@ -132,16 +132,30 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
             return;
         }
 
-        const frame = window.requestAnimationFrame(() => {
+        let retries = 0;
+        const maxRetries = 10;
+        let timerId: NodeJS.Timeout;
+
+        const checkAndStartTour = () => {
             const available = steps.filter((step) =>
                 typeof step.target === 'string' ? Boolean(document.querySelector(step.target)) : true
             );
-            setMountedSteps(available);
-            setStepIndex(0);
-            setRun(available.length > 0);
-        });
 
-        return () => window.cancelAnimationFrame(frame);
+            if (available.length > 0 || retries >= maxRetries) {
+                setMountedSteps(available.length > 0 ? available : steps);
+                setStepIndex(0);
+                setRun(true);
+            } else {
+                retries++;
+                timerId = setTimeout(checkAndStartTour, 200);
+            }
+        };
+
+        checkAndStartTour();
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
     }, [isOpen, userRole]);
 
     const handleJoyrideCallback = (data: CallBackProps) => {
@@ -149,6 +163,11 @@ const ProductTour: React.FC<ProductTourProps> = ({ isOpen, onComplete, userRole 
 
         if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
             setRun(false);
+            fetch('/api/account/profile', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walkthrough_completed: true }),
+            }).catch((err) => console.error('ProductTour: save walkthrough status failed', err));
             onComplete();
         } else if (status === STATUS.RUNNING) {
             setStepIndex(index);

@@ -51,19 +51,70 @@ export async function onLeadCreated(options: {
       metadata: { source: 'auto_on_create', business_name: options.businessName || lead?.business_name },
     });
 
-    const followUpAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
-    const { error: taskErr } = await admin.from('tasks').insert({
-      tenant_id: options.tenantId,
-      title: `Follow up: ${options.businessName || lead?.business_name || 'new lead'}`,
-      description: 'Auto-scheduled 2-day follow-up from lead creation.',
-      related_to_lead: options.leadId,
-      priority: 'medium',
-      status: 'todo',
-      due_date: followUpAt,
-      created_by: options.userId,
-      metadata: { auto_follow_up: true, sequence_step: 2 },
-    });
-    followUpScheduled = !taskErr;
+    // Check tenant setting for outreach_automation_mode ('reminder_only' vs 'execute_automatically')
+    const { data: tenantSettings } = await admin
+      .from('tenant_settings')
+      .select('outreach_automation_mode')
+      .eq('tenant_id', options.tenantId)
+      .maybeSingle();
+
+    const automationMode = tenantSettings?.outreach_automation_mode || 'reminder_only';
+
+    if (automationMode === 'execute_automatically') {
+      // Queue automated outreach email background job
+      await admin.from('agent_tasks').insert({
+        tenant_id: options.tenantId,
+        task_type: 'lead_auto_outreach',
+        title: `Queue Auto Outreach: ${options.businessName || lead?.business_name || 'new lead'}`,
+        status: 'pending',
+        metadata: {
+          lead_id: options.leadId,
+          business_name: options.businessName || lead?.business_name,
+          email: lead?.email,
+          automation_mode: 'execute_automatically',
+        },
+      });
+
+      await admin.from('activity_logs').insert({
+        tenant_id: options.tenantId,
+        user_id: options.userId,
+        action: 'lead_outreach_queued',
+        entity_type: 'lead',
+        entity_id: options.leadId,
+        metadata: {
+          automation_mode: 'execute_automatically',
+          description: 'Queued automated email outreach.',
+        },
+      });
+      followUpScheduled = true;
+    } else {
+      // Create reminder task only
+      const followUpAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: taskErr } = await admin.from('tasks').insert({
+        tenant_id: options.tenantId,
+        title: `Follow up: ${options.businessName || lead?.business_name || 'new lead'}`,
+        description: 'Auto-scheduled 2-day follow-up reminder task.',
+        related_to_lead: options.leadId,
+        priority: 'medium',
+        status: 'todo',
+        due_date: followUpAt,
+        created_by: options.userId,
+        metadata: { auto_follow_up: true, sequence_step: 2, mode: 'reminder_only' },
+      });
+
+      await admin.from('activity_logs').insert({
+        tenant_id: options.tenantId,
+        user_id: options.userId,
+        action: 'lead_reminder_task_created',
+        entity_type: 'lead',
+        entity_id: options.leadId,
+        metadata: {
+          automation_mode: 'reminder_only',
+          description: 'Outreach mode is set to Reminder Only. Created follow-up task instead of auto-sending outreach.',
+        },
+      });
+      followUpScheduled = !taskErr;
+    }
   } catch (err) {
     console.error('[onLeadCreated]', options.leadId, err);
   }

@@ -159,11 +159,11 @@ export async function requireTenantRole(tenantId: string, allowedRoles: string[]
  * Business/workspace owners are intentionally excluded — they manage membership, not platform accounts.
  */
 export async function requirePlatformSuperAdmin() {
-    const { supabase, user } = await requireAuthenticatedUser();
+    const { supabase, user, admin } = await requireAuthenticatedUser();
 
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('id, role, email, account_status')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -180,7 +180,24 @@ export async function requirePlatformSuperAdmin() {
         );
     }
 
-    return { supabase, user, profile };
+    return { supabase, user, profile, admin };
+}
+
+/**
+ * Counts total active super admins in the system to prevent accidental lockout.
+ */
+export async function countActiveSuperAdmins(adminClient?: any): Promise<number> {
+    const admin = adminClient || createSupabaseAdminClient();
+    const { data, error } = await admin
+        .from('profiles')
+        .select('id, role, account_status');
+
+    if (error || !data) return 0;
+    const active = data.filter(
+        (p: { role?: string; account_status?: string }) =>
+            isPlatformAdminRole(p.role) && (p.account_status === 'active' || !p.account_status)
+    );
+    return active.length;
 }
 
 /**

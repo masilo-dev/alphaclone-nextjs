@@ -351,18 +351,126 @@ export const userService = {
     },
 
     /**
-     * Delete a user account (Super Admin only — server-side)
+     * Delete a user account (Super Admin only — server-side soft or hard delete)
      */
     async deleteUser(userId: string): Promise<{ error: string | null }> {
+        return this.deleteUserAccount(userId, false);
+    },
+
+    /**
+     * Delete user account with options (soft or permanent delete with workspace ownership protection)
+     */
+    async deleteUserAccount(userId: string, permanent: boolean = false, reason?: string): Promise<{ error: string | null; requiresOwnershipTransfer?: boolean; tenantId?: string }> {
         try {
-            const res = await fetch(`/api/admin/users?userId=${encodeURIComponent(userId)}`, {
-                method: 'DELETE',
+            const res = await fetch('/api/admin/users/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, permanent, reason }),
             });
             const data = await res.json().catch(() => ({}));
-            if (!res.ok) return { error: data.error || 'Failed to delete user' };
+            if (!res.ok) {
+                return {
+                    error: data.error || 'Failed to delete user account',
+                    requiresOwnershipTransfer: !!data.requiresOwnershipTransfer,
+                    tenantId: data.tenantId || undefined,
+                };
+            }
             return { error: null };
         } catch (err) {
-            return { error: err instanceof Error ? err.message : 'Failed to delete user' };
+            return { error: err instanceof Error ? err.message : 'Failed to delete user account' };
+        }
+    },
+
+    /**
+     * Change user role (Super Admin only — server-side RBAC & lockout protection)
+     */
+    async changeUserRole(userId: string, newRole: string, confirmationGiven: boolean = false, reason?: string): Promise<{ error: string | null; requiresConfirmation?: boolean }> {
+        try {
+            const res = await fetch('/api/admin/users/role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, newRole, confirmationGiven, reason }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                return {
+                    error: data.error || 'Failed to update user role',
+                    requiresConfirmation: !!data.requiresConfirmation,
+                };
+            }
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to update user role' };
+        }
+    },
+
+    /**
+     * Transfer workspace ownership to another active user
+     */
+    async transferWorkspaceOwnership(tenantId: string, currentOwnerUserId: string, newOwnerUserId: string, reason?: string): Promise<{ error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/users/transfer-ownership', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tenantId, currentOwnerUserId, newOwnerUserId, reason }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to transfer workspace ownership' };
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to transfer workspace ownership' };
+        }
+    },
+
+    /**
+     * Get platform audit logs (Super Admin only)
+     */
+    async getAuditLogs(params?: { action?: string; search?: string; page?: number; limit?: number }): Promise<{ logs: any[]; total: number; error: string | null }> {
+        try {
+            const query = new URLSearchParams();
+            if (params?.action) query.set('action', params.action);
+            if (params?.search) query.set('search', params.search);
+            if (params?.page) query.set('page', String(params.page));
+            if (params?.limit) query.set('limit', String(params.limit));
+
+            const res = await fetch(`/api/admin/audit?${query.toString()}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { logs: [], total: 0, error: data.error || 'Failed to fetch audit logs' };
+            return { logs: data.logs || [], total: data.total || 0, error: null };
+        } catch (err) {
+            return { logs: [], total: 0, error: err instanceof Error ? err.message : 'Failed to fetch audit logs' };
+        }
+    },
+
+    /**
+     * Get Super Admin dashboard metric summary
+     */
+    async getAdminDashboardStats(): Promise<{ metrics: any | null; error: string | null }> {
+        try {
+            const res = await fetch('/api/admin/dashboard');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { metrics: null, error: data.error || 'Failed to fetch dashboard metrics' };
+            return { metrics: data.metrics || null, error: null };
+        } catch (err) {
+            return { metrics: null, error: err instanceof Error ? err.message : 'Failed to fetch dashboard metrics' };
+        }
+    },
+
+    /**
+     * Submit forced password reset when password_change_required is true
+     */
+    async submitPasswordChangeRequired(newPassword: string): Promise<{ error: string | null }> {
+        try {
+            const res = await fetch('/api/auth/change-password-required', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newPassword }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return { error: data.error || 'Failed to update password' };
+            return { error: null };
+        } catch (err) {
+            return { error: err instanceof Error ? err.message : 'Failed to update password' };
         }
     },
 
@@ -380,3 +488,4 @@ export const userService = {
         }
     }
 };
+

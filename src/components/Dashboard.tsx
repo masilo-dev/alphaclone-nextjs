@@ -184,6 +184,13 @@ const ArticleEditor = React.lazy(() => import("./dashboard/ArticleEditor"));
 const CalendarComponent = React.lazy(
   () => import("./dashboard/CalendarComponent"),
 );
+import { PasswordChangeRequiredModal } from "./auth/PasswordChangeRequiredModal";
+const SuperAdminDashboardTab = React.lazy(
+  () => import("./dashboard/admin/SuperAdminDashboardTab"),
+);
+const SuperAdminAuditTab = React.lazy(
+  () => import("./dashboard/admin/SuperAdminAuditTab"),
+);
 const SuperAdminTenantsTab = React.lazy(
   () => import("./dashboard/admin/SuperAdminTenantsTab"),
 );
@@ -1644,6 +1651,37 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       // New Enterprise Views
+      case "/dashboard/admin":
+      case "/dashboard/admin/overview":
+        return isPlatformAdminRole(user.role) ? (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <SuperAdminDashboardTab />
+          </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">
+              Platform administrator access required.
+            </p>
+          </div>
+        );
+
+      case "/dashboard/admin/audit":
+        return isPlatformAdminRole(user.role) ? (
+          <React.Suspense fallback={<TabSkeleton />}>
+            <SuperAdminAuditTab />
+          </React.Suspense>
+        ) : (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] text-center p-8">
+            <ShieldCheck className="w-12 h-12 text-slate-500 mb-4" />
+            <h2 className="text-lg font-bold text-white">Access restricted</h2>
+            <p className="text-slate-400 text-sm mt-2">
+              Platform administrator access required.
+            </p>
+          </div>
+        );
+
       case "/dashboard/admin/tenants":
         return isPlatformAdminRole(user.role) ? (
           <React.Suspense fallback={<TabSkeleton />}>
@@ -2654,6 +2692,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         onClose={() => setCelebration((p) => ({ ...p, show: false }))}
         title={celebration.title}
         message={celebration.message}
+      />
+      <PasswordChangeRequiredModal
+        isOpen={!!(user as any)?.password_change_required}
+        onSuccess={() => window.location.reload()}
       />
       {!location.startsWith("/dashboard/bonnie") &&
         location !== "/dashboard/business/bonnie" && <BonnieWidget />}

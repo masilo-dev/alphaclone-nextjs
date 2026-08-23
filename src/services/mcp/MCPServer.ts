@@ -6346,6 +6346,267 @@ class AlphaCloneMCPServer {
           break;
         }
 
+        case 'bulk_upsert_contacts': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const contacts = Array.isArray(a.contacts) ? a.contacts : [];
+          if (contacts.length === 0) throw new Error('contacts array is required');
+          const succeeded: any[] = [];
+          const failed: any[] = [];
+          for (const c of contacts) {
+            try {
+              if (!c.email) throw new Error('Email is required');
+              const { data, error } = await supabaseAdmin
+                .from('business_clients')
+                .upsert({
+                  tenant_id,
+                  email: String(c.email).trim().toLowerCase(),
+                  name: c.name ? String(c.name).trim() : String(c.email).split('@')[0],
+                  phone: c.phone ? String(c.phone).trim() : null,
+                  company_name: c.company ? String(c.company).trim() : null,
+                  notes: c.notes ? String(c.notes) : null,
+                  metadata: c.metadata || {},
+                  updated_at: new Date().toISOString(),
+                }, { onConflict: 'tenant_id,email' })
+                .select('id, email, name')
+                .single();
+              if (error) throw error;
+              succeeded.push(data);
+            } catch (err: any) {
+              failed.push({ email: c.email, error: err.message || 'Upsert failed' });
+            }
+          }
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                total: contacts.length,
+                succeeded_count: succeeded.length,
+                failed_count: failed.length,
+                succeeded,
+                failed,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_create_leads': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const leads = Array.isArray(a.leads) ? a.leads : [];
+          if (leads.length === 0) throw new Error('leads array is required');
+          const succeeded: any[] = [];
+          const failed: any[] = [];
+          for (const l of leads) {
+            try {
+              if (!l.business_name) throw new Error('business_name is required');
+              const { data, error } = await supabaseAdmin
+                .from('leads')
+                .insert({
+                  tenant_id,
+                  business_name: String(l.business_name).trim(),
+                  email: l.email ? String(l.email).trim().toLowerCase() : null,
+                  phone: l.phone ? String(l.phone).trim() : null,
+                  website: l.website ? String(l.website).trim() : null,
+                  category: l.category ? String(l.category).trim() : 'General',
+                  source: l.source ? String(l.source).trim() : 'bulk_api',
+                  notes: l.notes ? String(l.notes) : null,
+                  status: 'new',
+                })
+                .select('id, business_name, email')
+                .single();
+              if (error) throw error;
+              succeeded.push(data);
+            } catch (err: any) {
+              failed.push({ lead: l.business_name, error: err.message || 'Create failed' });
+            }
+          }
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                total: leads.length,
+                succeeded_count: succeeded.length,
+                failed_count: failed.length,
+                succeeded,
+                failed,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_update_leads': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const lead_ids = Array.isArray(a.lead_ids) ? a.lead_ids : [];
+          const patch = a.patch && typeof a.patch === 'object' ? a.patch : {};
+          if (!lead_ids.length) throw new Error('lead_ids array is required');
+          const { data, error } = await supabaseAdmin
+            .from('leads')
+            .update({ ...patch, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .in('id', lead_ids)
+            .select('id, status, category');
+          if (error) throw supabaseErrorToMcpClientError('bulk_update_leads', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                requested: lead_ids.length,
+                updated_count: (data || []).length,
+                updated: data || [],
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_add_to_segment': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const record_ids = Array.isArray(a.record_ids) ? a.record_ids : [];
+          const record_type = String(a.record_type || 'lead');
+          const segment_name = String(a.segment_name || '').trim();
+          if (!record_ids.length || !segment_name) throw new Error('record_ids and segment_name are required');
+          const table = record_type === 'contact' ? 'business_clients' : 'leads';
+          const { data, error } = await supabaseAdmin
+            .from(table)
+            .update({ category: segment_name, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .in('id', record_ids)
+            .select('id');
+          if (error) throw supabaseErrorToMcpClientError('bulk_add_to_segment', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                segment_name,
+                record_type,
+                updated_count: (data || []).length,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_assign_campaign': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const campaign_id = String(a.campaign_id || '').trim();
+          const record_ids = Array.isArray(a.record_ids) ? a.record_ids : [];
+          if (!campaign_id || !record_ids.length) throw new Error('campaign_id and record_ids are required');
+
+          const recipientsToInsert = record_ids.map((id) => ({
+            campaign_id,
+            tenant_id,
+            email: `${id}@campaign.placeholder`,
+            status: 'pending',
+            metadata: { assigned_record_id: id },
+          }));
+
+          const { data, error } = await supabaseAdmin
+            .from('campaign_recipients')
+            .upsert(recipientsToInsert, { onConflict: 'campaign_id,email' })
+            .select('id');
+
+          if (error) throw supabaseErrorToMcpClientError('bulk_assign_campaign', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                campaign_id,
+                assigned_count: (data || []).length,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'bulk_archive_leads': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const lead_ids = Array.isArray(a.lead_ids) ? a.lead_ids : [];
+          const reason = String(a.reason || 'Bulk archived via MCP');
+          if (!lead_ids.length) throw new Error('lead_ids is required');
+          const { data, error } = await supabaseAdmin
+            .from('leads')
+            .update({ status: 'archived', notes: reason, updated_at: new Date().toISOString() })
+            .eq('tenant_id', tenant_id)
+            .in('id', lead_ids)
+            .select('id');
+          if (error) throw supabaseErrorToMcpClientError('bulk_archive_leads', error.message);
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                tenant_id,
+                archived_count: (data || []).length,
+                reason,
+              }, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'upload_file': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const filename = String(a.filename || 'upload.bin').trim();
+          const content_base64 = String(a.content_base64 || '').trim();
+          const mime_type = String(a.mime_type || 'application/octet-stream').trim();
+
+          const { processAndPersistFileUpload } = await import('@/services/fileUploadService');
+          const fileRecord = await processAndPersistFileUpload({
+            tenantId: tenant_id,
+            filename,
+            contentBase64: content_base64,
+            mimeType: mime_type,
+          });
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(fileRecord, null, 2),
+            }],
+          };
+          break;
+        }
+
+        case 'ingest_document': {
+          const a = args as Record<string, any>;
+          const tenant_id = this.requireTenant(a);
+          const filename = String(a.filename || 'document.pdf').trim();
+          const content_base64 = String(a.content_base64 || '').trim();
+          const mime_type = String(a.mime_type || 'application/pdf').trim();
+          const title = String(a.title || filename).trim();
+          const category = String(a.category || 'General').trim();
+
+          const { ingestDocumentFullPipeline } = await import('@/services/fileUploadService');
+          const docRecord = await ingestDocumentFullPipeline({
+            tenantId: tenant_id,
+            filename,
+            contentBase64: content_base64,
+            mimeType: mime_type,
+            title,
+            category,
+          });
+
+          result = {
+            content: [{
+              type: 'text',
+              text: JSON.stringify(docRecord, null, 2),
+            }],
+          };
+          break;
+        }
+
         case 'bulk_upload_media': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
