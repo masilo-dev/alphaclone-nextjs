@@ -70,7 +70,7 @@ const ContactPage: React.FC = () => {
     });
 
     if (!validationResult.success) {
-      const firstError = validationResult.error.errors[0];
+      const firstError = validationResult.error.issues[0];
       setStatus('error');
       setErrorMessage(firstError?.message || 'Please check your form inputs and try again.');
       return;
