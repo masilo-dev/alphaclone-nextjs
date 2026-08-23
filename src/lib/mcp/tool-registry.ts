@@ -95,6 +95,21 @@ async function executeChunkedOutreach(
   };
 }
 
+import { quotaService, type QuotaResourceType } from '@/services/quotaService';
+
+function determineSpecificMetric(toolName: string): QuotaResourceType | null {
+  const lower = toolName.toLowerCase();
+  if (lower.includes('lead')) return 'leads';
+  if (lower.includes('outreach')) return 'outreach_actions';
+  if (lower.includes('linkedin')) return 'linkedin_posts';
+  if (lower.includes('facebook')) return 'facebook_posts';
+  if (lower.includes('instagram')) return 'instagram_posts';
+  if (lower.includes('email') || lower.includes('mail')) return 'email_actions';
+  if (lower.includes('contract')) return 'contracts';
+  if (lower.includes('invoice')) return 'invoices';
+  return null;
+}
+
 export async function executeTool(
   tenantId: string,
   userId: string,
@@ -108,6 +123,57 @@ export async function executeTool(
   let resolvedToolName = requestedTool;
 
   try {
+    // 1. Enforce atomic MCP execution quota
+    const mcpQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, 'mcp_executions');
+    if (!mcpQuota.allowed) {
+      errorMessage = mcpQuota.message;
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              error: 'QUOTA_EXCEEDED',
+              metric: 'mcp_executions',
+              message: mcpQuota.message,
+              limit: mcpQuota.limit,
+              currentUsage: mcpQuota.currentUsage,
+              plan: mcpQuota.plan,
+              upgradeUrl: '/pricing',
+            }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // 2. Enforce specific resource quota if tool targets a limited resource
+    const specificMetric = determineSpecificMetric(requestedTool);
+    if (specificMetric) {
+      const specificQuota = await quotaService.consumeQuotaAtomically(tenantId, userId, specificMetric);
+      if (!specificQuota.allowed) {
+        // Release MCP execution count since action was rejected prior to execution
+        await quotaService.releaseQuotaAtomically(tenantId, userId, 'mcp_executions');
+        errorMessage = specificQuota.message;
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                error: 'QUOTA_EXCEEDED',
+                metric: specificMetric,
+                message: specificQuota.message,
+                limit: specificQuota.limit,
+                currentUsage: specificQuota.currentUsage,
+                plan: specificQuota.plan,
+                upgradeUrl: '/pricing',
+              }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+
     const chunkConfig = shouldChunkOutreach(requestedTool);
     if (chunkConfig) {
       const result = await executeChunkedOutreach(

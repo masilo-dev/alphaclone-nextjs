@@ -12,7 +12,7 @@ const bodySchema = z
     plan: z.enum(['free', 'starter', 'pro', 'enterprise']).optional(),
     referralCode: z.string().min(1).max(100).optional(),
     mode: z.enum(['ensure', 'create']).optional().default('ensure'),
-    idempotencyKey: z.string().uuid().optional(),
+    idempotencyKey: z.string().min(4).max(200).optional(),
   })
   .optional();
 

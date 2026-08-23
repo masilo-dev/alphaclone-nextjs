@@ -387,5 +387,39 @@ export const analyticsService = {
             },
         };
     },
+
+    pricingAnalytics: {
+        async trackEvent(
+            eventName: 
+                | 'pricing_page_viewed'
+                | 'plan_selected'
+                | 'checkout_started'
+                | 'checkout_completed'
+                | 'upgrade_started'
+                | 'upgrade_completed'
+                | 'downgrade'
+                | 'cancellation'
+                | 'quota_80_percent'
+                | 'quota_reached',
+            properties: Record<string, any> = {},
+            tenantId?: string,
+            userId?: string
+        ): Promise<void> {
+            try {
+                const effectiveTenantId = tenantId || tenantService.getCurrentTenantId() || null;
+                const { data: { user } } = await supabase.auth.getUser();
+                const effectiveUserId = userId || user?.id || null;
+
+                await supabase.from('pricing_analytics_events').insert({
+                    tenant_id: effectiveTenantId,
+                    user_id: effectiveUserId,
+                    event_name: eventName,
+                    properties,
+                });
+            } catch (err) {
+                console.warn('[pricingAnalytics] Failed to track event:', eventName, err);
+            }
+        },
+    },
 };
 

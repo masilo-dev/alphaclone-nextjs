@@ -104,6 +104,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: 'Platform Users', href: '/dashboard/admin/users', icon: Users },
   { label: 'Security', href: '/dashboard/security', icon: ShieldCheck },
   { label: 'Global Settings', href: '/dashboard/admin/settings', icon: Settings },
+  { label: 'Subscriptions', href: '/dashboard/admin/subscriptions', icon: CreditCard },
   { label: 'Contact intake', href: '/dashboard/contact-submissions', icon: Mail },
   { label: 'Bonnie AI', href: '/dashboard/bonnie', icon: Brain },
   { label: 'Approvals', href: '/dashboard/bonnie/approvals', icon: ShieldAlert },

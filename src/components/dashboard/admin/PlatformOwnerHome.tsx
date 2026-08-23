@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Building2,
   ClipboardList,
+  CreditCard,
   HeartPulse,
   KeyRound,
   RefreshCw,
@@ -80,6 +81,12 @@ const QUICK_LINKS = [
     label: 'Global settings',
     description: 'Platform-wide configuration and integration keys.',
     icon: Activity,
+  },
+  {
+    href: '/dashboard/admin/subscriptions',
+    label: 'Subscriptions',
+    description: 'Real-time billing, Stripe IDs, MRR, and daily usage per tenant.',
+    icon: CreditCard,
   },
 ];
 

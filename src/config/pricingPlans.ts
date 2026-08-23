@@ -7,7 +7,7 @@
  * upgrade screen should always tell the same story.
  */
 
-export type PublicPlanId = 'starter' | 'pro' | 'enterprise';
+export type PublicPlanId = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export interface PublicPricingPlan {
   id: PublicPlanId;
@@ -22,71 +22,154 @@ export interface PublicPricingPlan {
   features: string[];
   cta: string;
   ctaLink: string;
+  limits: {
+    leadsPerDay: string;
+    outreachPerDay: string;
+    socialPostsPerDay: string;
+    emailActionsPerDay: string;
+    mcpExecutionsPerDay: string;
+    activeAutomations: string;
+    connectedIntegrations: string;
+    crmContacts: string;
+  };
 }
 
 export const PUBLIC_PRICING_PLANS: PublicPricingPlan[] = [
   {
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    yearly: 0,
+    tagline: 'Let founders genuinely experience AlphaClone and MCP with essential daily execution capability.',
+    features: [
+      '50 MCP lead creations / day',
+      '20 Outreach actions / day',
+      '1 LinkedIn post / day',
+      '1 Facebook post / day',
+      '1 Instagram post / day',
+      '25 Email actions / day',
+      '50 MCP/AI executions / day',
+      '3 Active automations',
+      '3 Connected integrations',
+      '500 CRM contacts',
+      'Basic reporting',
+    ],
+    cta: 'Start Free',
+    ctaLink: '/auth/login?register=true&type=business&plan=free',
+    limits: {
+      leadsPerDay: '50/day',
+      outreachPerDay: '20/day',
+      socialPostsPerDay: '1/day each',
+      emailActionsPerDay: '25/day',
+      mcpExecutionsPerDay: '50/day',
+      activeAutomations: '3',
+      connectedIntegrations: '3',
+      crmContacts: '500',
+    },
+  },
+  {
     id: 'starter',
     name: 'Starter',
-    price: 15,
-    yearly: 144,
-    tagline: 'Win clients, send invoices, and deliver work — without a scattered tool stack.',
+    price: 29,
+    yearly: 278,
+    tagline: 'For solo founders actively running their business through AlphaClone.',
     features: [
-      'Up to 25 team members',
-      '50 active projects',
-      '25GB secure storage',
-      'Unified CRM & deal pipeline',
-      'Automated invoicing & P&L',
-      'Contract engine with e-signatures',
-      'Native 1-hour video meetings',
-      'Advanced booking & scheduling',
-      'Automated workflows',
-      'Email support',
+      '100 MCP lead creations / day',
+      '100 Outreach actions / day',
+      '3 LinkedIn posts / day',
+      '3 Facebook posts / day',
+      '3 Instagram posts / day',
+      '150 Email actions / day',
+      '250 MCP/AI executions / day',
+      '15 Active automations',
+      '10 Connected integrations',
+      '5,000 CRM contacts',
+      'Standard reporting',
     ],
-    cta: 'Start free for 14 days',
+    cta: 'Choose Starter',
     ctaLink: '/auth/login?register=true&type=business&plan=starter',
+    limits: {
+      leadsPerDay: '100/day',
+      outreachPerDay: '100/day',
+      socialPostsPerDay: '3/day each',
+      emailActionsPerDay: '150/day',
+      mcpExecutionsPerDay: '250/day',
+      activeAutomations: '15',
+      connectedIntegrations: '10',
+      crmContacts: '5,000',
+    },
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: 45,
-    yearly: 432,
-    tagline: 'Scale outreach and automation when manual follow-up becomes the bottleneck.',
+    price: 59,
+    yearly: 566,
+    tagline: 'For founders who want AlphaClone to actively execute sales, marketing and business operations.',
     highlight: true,
-    badge: 'Best for growing teams',
+    badge: 'MOST POPULAR',
     features: [
-      'Everything in Starter, plus:',
-      'Unlimited team members & projects',
-      '100GB secure storage',
-      'Unlimited video meetings',
-      'Bonnie AI sales assistant',
-      'Custom API access',
-      'Custom domain',
-      'Priority support',
+      '500 MCP lead creations / day',
+      '500 Outreach actions / day',
+      '10 LinkedIn posts / day',
+      '10 Facebook posts / day',
+      '10 Instagram posts / day',
+      '750 Email actions / day',
+      '1,500 MCP/AI executions / day',
+      '50 Active automations',
+      '25 Connected integrations',
+      '25,000 CRM contacts',
+      'Advanced reporting',
+      'Priority processing & support',
     ],
-    cta: 'Start free for 14 days',
+    cta: 'Go Pro',
     ctaLink: '/auth/login?register=true&type=business&plan=pro',
+    limits: {
+      leadsPerDay: '500/day',
+      outreachPerDay: '500/day',
+      socialPostsPerDay: '10/day each',
+      emailActionsPerDay: '750/day',
+      mcpExecutionsPerDay: '1,500/day',
+      activeAutomations: '50',
+      connectedIntegrations: '25',
+      crmContacts: '25,000',
+    },
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
-    price: 80,
-    yearly: 768,
-    tagline: 'Priority support and headroom when client volume and data needs grow.',
+    price: 149,
+    yearly: 1430,
+    tagline: 'For businesses that need maximum AlphaClone execution capacity.',
     features: [
-      'Everything in Pro, plus:',
-      '500GB secure storage',
-      'Advanced AI features & higher AI limits',
-      'Priority infrastructure',
-      'Dedicated onboarding',
-      'Priority + SLA support',
+      'Unlimited MCP lead creation*',
+      'Unlimited outreach actions*',
+      'Unlimited social publishing*',
+      'Unlimited supported email actions*',
+      'Unlimited MCP/AI usage*',
+      'Unlimited workflows & automations',
+      'Unlimited integrations',
+      'Unlimited CRM contacts',
+      'Advanced reporting & priority support',
+      'Custom integrations where agreed',
+      'Higher infrastructure limits',
     ],
-    cta: 'Start free for 14 days',
-    ctaLink: '/auth/login?register=true&type=business&plan=enterprise',
+    cta: 'Contact Sales',
+    ctaLink: '/contact?topic=enterprise',
+    limits: {
+      leadsPerDay: 'Unlimited*',
+      outreachPerDay: 'Unlimited*',
+      socialPostsPerDay: 'Unlimited*',
+      emailActionsPerDay: 'Unlimited*',
+      mcpExecutionsPerDay: 'Unlimited*',
+      activeAutomations: 'Unlimited',
+      connectedIntegrations: 'Unlimited',
+      crmContacts: 'Unlimited',
+    },
   },
 ];
 
-/** Lowest public monthly price, handy for "from $X/mo" copy. */
-export const PRICING_FROM = Math.min(...PUBLIC_PRICING_PLANS.map((p) => p.price));
+/** Lowest paid public monthly price */
+export const PRICING_FROM = 29;
 /** Highest public monthly price. */
-export const PRICING_TO = Math.max(...PUBLIC_PRICING_PLANS.map((p) => p.price));
+export const PRICING_TO = 149;
+

@@ -212,13 +212,13 @@ export async function POST(req: Request) {
                     const subscription = await stripe.subscriptions.retrieve(session.subscription);
 
                     // Update tenant subscription
-                    // Update tenant subscription
                     await supabaseAdmin
                         .from('tenants')
                         .update({
                             subscription_status: 'active',
                             subscription_plan: session.metadata?.plan || 'starter', // Default to starter if metadata missing
                             stripe_customer_id: session.customer,
+                            stripe_subscription_id: session.subscription || null,
                             current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
                             trial_ends_at: null, // Clear trial once paid
                         })
@@ -413,8 +413,20 @@ export async function POST(req: Request) {
                 break;
             }
 
+            case 'customer.subscription.created':
             case 'customer.subscription.updated': {
                 tenantId = session.metadata?.tenantId;
+
+                // Fallback tenant lookup by customer ID if metadata isn't present
+                if (!tenantId && session.customer) {
+                    const { data: tenantLookup } = await supabaseAdmin
+                        .from('tenants')
+                        .select('id')
+                        .eq('stripe_customer_id', session.customer)
+                        .maybeSingle();
+                    tenantId = tenantLookup?.id;
+                }
+
                 if (tenantId) {
                     if (session.metadata?.type === 'addon') {
                         const addonActive = ['active', 'trialing'].includes(session.status);
@@ -422,7 +434,20 @@ export async function POST(req: Request) {
                             .eq('tenant_id', tenantId).eq('addon_type', session.metadata.addonType);
                         break;
                     }
-                    // Map Stripe subscription status to our status
+
+                    // Resolve plan by metadata or price ID lookup
+                    let detectedPlan = session.metadata?.plan || session.metadata?.planId;
+                    if (!detectedPlan && session.items?.data?.[0]?.price?.id) {
+                        const priceId = session.items.data[0].price.id;
+                        if (priceId === process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || priceId === process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID) {
+                            detectedPlan = 'enterprise';
+                        } else if (priceId === process.env.STRIPE_PRO_MONTHLY_PRICE_ID || priceId === process.env.STRIPE_PRO_ANNUAL_PRICE_ID) {
+                            detectedPlan = 'pro';
+                        } else if (priceId === process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || priceId === process.env.STRIPE_STARTER_ANNUAL_PRICE_ID) {
+                            detectedPlan = 'starter';
+                        }
+                    }
+
                     const statusMap: Record<string, string> = {
                         'active': 'active',
                         'past_due': 'past_due',
@@ -433,17 +458,27 @@ export async function POST(req: Request) {
                         'incomplete_expired': 'cancelled',
                         'paused': 'suspended',
                     };
+
+                    const updateData: any = {
+                        subscription_status: statusMap[session.status] || 'suspended',
+                        stripe_subscription_id: session.id,
+                        stripe_customer_id: session.customer,
+                        cancel_at_period_end: Boolean(session.cancel_at_period_end),
+                        current_period_end: new Date(session.current_period_end * 1000).toISOString(),
+                        trial_ends_at: session.status === 'trialing' ? new Date(session.trial_end * 1000).toISOString() : null,
+                        updated_at: new Date().toISOString(),
+                    };
+
+                    if (detectedPlan) {
+                        updateData.subscription_plan = detectedPlan;
+                    }
+
                     await supabaseAdmin
                         .from('tenants')
-                        .update({
-                            subscription_status: statusMap[session.status] || 'suspended',
-                            subscription_plan: session.metadata?.plan || 'starter',
-                            current_period_end: new Date(session.current_period_end * 1000).toISOString(),
-                            trial_ends_at: session.status === 'trialing' ? new Date(session.trial_end * 1000).toISOString() : null,
-                        })
+                        .update(updateData)
                         .eq('id', tenantId);
 
-                    console.log(`Tenant ${tenantId} subscription updated to ${session.status}.`);
+                    console.log(`Tenant ${tenantId} subscription updated to ${session.status} (${detectedPlan || 'unchanged'}).`);
                 }
                 break;
             }

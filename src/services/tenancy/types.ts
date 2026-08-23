@@ -190,51 +190,54 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
     free: {
         monthly: 0,
         yearly: 0,
-        description: 'Perfect for exploring the platform and basic video conferencing.',
+        description: 'Baseline access to AlphaClone platform and MCP daily capabilities.',
         featureList: [
-            '1 Team Member',
-            '3 Active Projects',
-            '1GB Cloud Storage',
-            '2 Video Meetings/mo',
-            '30 mins per meeting',
-            'Basic Video Conferencing'
+            '50 Lead creations/day',
+            '20 Outreach actions/day',
+            '1 Post per social network/day',
+            '25 Email actions/day',
+            '50 MCP/AI executions/day',
+            '3 Active Automations',
+            '3 Connected Integrations',
+            '500 CRM Contacts'
         ],
         features: {
             maxUsers: 1,
-            maxProjects: 3,
-            maxStorage: 1,
-            maxVideoMeetingsPerMonth: 2,
-            maxVideoMinutesPerMeeting: 30,
-            contractGeneration: false,
-            paymentProcessing: false,
-            fullCRM: false,
+            maxProjects: 5,
+            maxStorage: 5,
+            maxVideoMeetingsPerMonth: 5,
+            maxVideoMinutesPerMeeting: 45,
+            contractGeneration: true,
+            paymentProcessing: true,
+            fullCRM: true,
             advancedBookings: false,
-            workflows: false,
-            aiAssistant: false,
+            workflows: true,
+            aiAssistant: true,
             videoConferencing: true,
             customDomain: false,
             prioritySupport: false,
-            apiAccess: false
+            apiAccess: true
         }
     },
     starter: {
-        monthly: 15,
-        yearly: 144,
-        description: 'Ideal for small businesses starting their automation journey.',
-        isDiscountable: true, // Eligible for START35 (35% off for 3 months)
-        stripePriceId: 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
+        monthly: 29,
+        yearly: 278,
+        description: 'For solo founders actively running their business through AlphaClone.',
+        isDiscountable: true,
+        stripePriceId: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1T0PCcCCIq5cPz4Hvazdrvtb',
         featureList: [
-            '25 Team Members',
-            '50 Active Projects',
-            '25GB Cloud Storage',
-            '25 Video Meetings/mo',
-            '60 mins per meeting',
-            'Advanced Booking System',
-            'Payment Processing',
-            'Automated Workflows'
+            '100 Lead creations/day',
+            '100 Outreach actions/day',
+            '3 Social posts per network/day',
+            '150 Email actions/day',
+            '250 MCP/AI executions/day',
+            '15 Active Automations',
+            '10 Connected Integrations',
+            '5,000 CRM Contacts',
+            'Standard Reporting'
         ],
         features: {
-            maxUsers: 25,
+            maxUsers: 5,
             maxProjects: 50,
             maxStorage: 25,
             maxVideoMeetingsPerMonth: 25,
@@ -244,29 +247,29 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
             fullCRM: true,
             advancedBookings: true,
             workflows: true,
-            aiAssistant: false,
+            aiAssistant: true,
             videoConferencing: true,
             customDomain: false,
             prioritySupport: false,
-            apiAccess: false
+            apiAccess: true
         }
     },
     pro: {
-        monthly: 45,
-        yearly: 432,
-        description: 'Comprehensive tools for growing teams and advanced AI features.',
-        stripePriceId: 'price_1T0PChCCIq5cPz4HiD85RMtD',
+        monthly: 59,
+        yearly: 566,
+        description: 'For founders who want AlphaClone to actively execute sales, marketing and business operations.',
+        stripePriceId: process.env.STRIPE_PRO_MONTHLY_PRICE_ID || 'price_1T0PChCCIq5cPz4HiD85RMtD',
         featureList: [
-            'Unlimited Team Members',
-            'Unlimited Active Projects',
-            '100GB Cloud Storage',
-            'Unlimited Video Meetings',
-            'AI Sales Assistant',
-            'Contract Generation',
-            'Full CRM & Automation',
-            'Custom API Access',
-            'Priority Support',
-            'Everything Included'
+            '500 Lead creations/day',
+            '500 Outreach actions/day',
+            '10 Social posts per network/day',
+            '750 Email actions/day',
+            '1,500 MCP/AI executions/day',
+            '50 Active Automations',
+            '25 Connected Integrations',
+            '25,000 CRM Contacts',
+            'Advanced Reporting',
+            'Priority Processing & Support'
         ],
         features: {
             maxUsers: -1,
@@ -287,20 +290,20 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     enterprise: {
-        monthly: 80,
-        yearly: 768,
-        description: 'Maximum scale, full CRM, and priority infrastructure.',
-        stripePriceId: 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
+        monthly: 149,
+        yearly: 1430,
+        description: 'For businesses that need maximum AlphaClone execution capacity.',
+        stripePriceId: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1T0PCqCCIq5cPz4HtjeFQZSG',
         featureList: [
-            'Unlimited Team Members',
-            'Unlimited Projects',
-            '500GB Cloud Storage',
-            'Unlimited Video Meetings',
-            'Full CRM & Automation',
-            'Advanced AI Features',
-            'Custom Domain',
-            'Priority Infrastructure',
-            'Everything Included'
+            'Unlimited Lead creations*',
+            'Unlimited Outreach actions*',
+            'Unlimited Social posts*',
+            'Unlimited Email actions*',
+            'Unlimited MCP/AI executions*',
+            'Unlimited Workflows & Automations',
+            'Unlimited Integrations',
+            'Unlimited CRM Contacts',
+            'Custom Integrations & SLA Support'
         ],
         features: {
             maxUsers: -1,
@@ -321,8 +324,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
         }
     },
     custom: {
-        monthly: 0, // Quote based
-        yearly: 0,
+        monthly: 149,
+        yearly: 1430,
         featureList: [
             'Unrestricted Scale',
             'Custom Storage Tiers',
@@ -335,8 +338,8 @@ export const PLAN_PRICING: Record<SubscriptionPlan, {
             maxUsers: -1,
             maxProjects: -1,
             maxStorage: -1,
-            maxVideoMeetingsPerMonth: -1, // Unlimited
-            maxVideoMinutesPerMeeting: -1, // Unlimited
+            maxVideoMeetingsPerMonth: -1,
+            maxVideoMinutesPerMeeting: -1,
             contractGeneration: true,
             paymentProcessing: true,
             fullCRM: true,
