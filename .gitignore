@@ -123,3 +123,7 @@ scratch_mcp_server.ts
 scratch_test_bridge.ts
 scratch_test_progressive.ts
 scratch_tool_matrix.ts
+
+# Railway CLI config
+.railway
+

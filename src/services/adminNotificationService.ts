@@ -1,4 +1,4 @@
-import { sendEmailServer } from '@/lib/server/emailSendingServer';
+import { sendEmailServer } from '@/lib/email/sendEmailServer';
 
 export interface UserSignupPayload {
   userId: string;

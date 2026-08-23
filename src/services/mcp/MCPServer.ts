@@ -6558,17 +6558,20 @@ class AlphaCloneMCPServer {
         case 'upload_file': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = a.user_id ? String(a.user_id) : 'system';
           const filename = String(a.filename || 'upload.bin').trim();
           const content_base64 = String(a.content_base64 || '').trim();
           const mime_type = String(a.mime_type || 'application/octet-stream').trim();
 
-          const { processAndPersistFileUpload } = await import('@/services/fileUploadService');
-          const fileRecord = await processAndPersistFileUpload({
-            tenantId: tenant_id,
+          const { fileUploadService } = await import('@/services/fileUploadService');
+          const buffer = Buffer.from(content_base64, 'base64');
+          const fileRecord = await fileUploadService.uploadFileFromBuffer(
+            buffer,
             filename,
-            contentBase64: content_base64,
-            mimeType: mime_type,
-          });
+            mime_type,
+            tenant_id,
+            user_id
+          );
 
           result = {
             content: [{
@@ -6582,21 +6585,23 @@ class AlphaCloneMCPServer {
         case 'ingest_document': {
           const a = args as Record<string, any>;
           const tenant_id = this.requireTenant(a);
+          const user_id = a.user_id ? String(a.user_id) : 'system';
           const filename = String(a.filename || 'document.pdf').trim();
           const content_base64 = String(a.content_base64 || '').trim();
           const mime_type = String(a.mime_type || 'application/pdf').trim();
           const title = String(a.title || filename).trim();
           const category = String(a.category || 'General').trim();
 
-          const { ingestDocumentFullPipeline } = await import('@/services/fileUploadService');
-          const docRecord = await ingestDocumentFullPipeline({
-            tenantId: tenant_id,
+          const { fileUploadService } = await import('@/services/fileUploadService');
+          const buffer = Buffer.from(content_base64, 'base64');
+          const docRecord = await fileUploadService.uploadFileFromBuffer(
+            buffer,
             filename,
-            contentBase64: content_base64,
-            mimeType: mime_type,
-            title,
-            category,
-          });
+            mime_type,
+            tenant_id,
+            user_id,
+            { category, aiSummary: title }
+          );
 
           result = {
             content: [{

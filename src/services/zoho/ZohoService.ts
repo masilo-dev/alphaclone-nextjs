@@ -394,7 +394,7 @@ export class ZohoService {
         const senderConfigured = !!(config.mailApiHost || config.crmApiHost);
 
         try {
-            const token = await this.getAccessToken();
+            const token = await this.getValidAccessToken();
             if (!token) {
                 return {
                     status: 'auth_expired',
