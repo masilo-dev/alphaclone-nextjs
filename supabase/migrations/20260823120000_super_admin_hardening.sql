@@ -58,4 +58,4 @@ CREATE TRIGGER trg_guard_profile_self_promotion
 -- 4. Ensure primary Bonnie account is super_admin
 UPDATE public.profiles
 SET role = 'super_admin', updated_at = NOW()
-WHERE lower(email) = 'bonnie@alphaclonesystems.com' AND COALESCE(role, '') <> 'super_admin';
+WHERE lower(email) = 'bonnie@alphaclonesystems.com' AND COALESCE(role::text, '') <> 'super_admin';
